@@ -1,0 +1,52 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "identity" )
+                    [ CCall
+                        ( CVar "compose" )
+                        [ CVar "appendY"
+                        , CVar "appendX"
+                        , CCall
+                            ( CVar "const" )
+                            [ CString "a"
+                            , CString "b"
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "const"
+            [ "x"
+            , "y"
+            ]
+            ( CVar "x" )
+        , CFunDef "identity" [ "x" ]
+            ( CVar "x" )
+        , CFunDef "appendX" [ "s" ]
+            ( CCall ( CPrim PrimConcat )
+                [ CVar "s"
+                , CString "x"
+                ]
+            )
+        , CFunDef "appendY" [ "s" ]
+            ( CCall ( CPrim PrimConcat )
+                [ CVar "s"
+                , CString "y"
+                ]
+            )
+        , CFunDef "compose"
+            [ "g"
+            , "f"
+            , "x"
+            ]
+            ( CCall
+                ( CVar "g" )
+                [ CCall
+                    ( CVar "f" )
+                    [ CVar "x" ]
+                ]
+            )
+        ]
+    }

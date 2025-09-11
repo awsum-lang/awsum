@@ -1,0 +1,232 @@
+-- | Awsum compiler CLI
+--   This entrypoint wires together parsing, typechecking, formatting,
+--   code generation (JS/Lua), and a tiny runner for those targets.
+module Main (main) where
+
+import Awsum.Codegen
+import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.Lua (codegenLua)
+import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.Format (formatSource)
+import Awsum.Parser (parseProgram)
+import Awsum.Syntax
+import Awsum.Typing (prettyPrintTypeError, typecheckProgram)
+import Common.File
+import Data.Text qualified as T
+import Data.Text.IO qualified as TIO
+import Data.Version (showVersion)
+import Options.Applicative qualified as OA
+import Paths_awsum qualified as Meta
+import Relude
+import System.Exit (ExitCode (..))
+import System.FilePath ((</>))
+import System.IO.Temp (withSystemTempDirectory)
+import System.Process (readProcessWithExitCode)
+import Text.Pretty.Simple (pPrint)
+
+-- | Rendered version string, e.g. "awsum 0.0.1".
+awsumVersion :: Text
+awsumVersion = toText (showVersion Meta.version)
+
+-- | Top-level CLI command.
+data Command
+  = CmdVersion
+  | CmdCheck FilePath
+  | -- | file, target, out
+    CmdBuild FilePath Target (Maybe FilePath)
+  | -- | file, target, inArg, useStdin
+    CmdRun FilePath Target (Maybe Text) Bool
+  | CmdAST FilePath
+  | CmdCore FilePath
+  | -- | file, inPlace
+    CmdFormat FilePath Bool
+  deriving stock (Show)
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- CLI parsers
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Required positional: path to a source file.
+argFilePath :: OA.Parser FilePath
+argFilePath = OA.strArgument (OA.metavar "FILE")
+
+-- | Optional target backend selector.
+optTarget :: OA.Parser Target
+optTarget =
+  OA.option
+    (OA.maybeReader readTarget)
+    ( OA.long "target"
+        <> OA.short 't'
+        <> OA.metavar "TARGET"
+        <> OA.help "Target backend: js | lua"
+        <> OA.completeWith ["js", "lua"]
+    )
+  where
+    readTarget :: String -> Maybe Target
+    readTarget = \case
+      "js" -> Just TargetJS
+      "lua" -> Just TargetLua
+      _ -> Nothing
+
+-- | Optional: output file path (defaults to stdout).
+optOutputPath :: OA.Parser (Maybe FilePath)
+optOutputPath =
+  optional
+    $ OA.strOption
+      ( OA.long "out"
+          <> OA.short 'o'
+          <> OA.metavar "OUT"
+          <> OA.help "Output file (default: stdout)"
+      )
+
+-- | Optional: input text for 'run' (passed to 'main' when not using stdin).
+optInputText :: OA.Parser (Maybe Text)
+optInputText =
+  optional
+    $ fmap (toText :: String -> Text)
+    $ OA.strOption
+      ( OA.long "input"
+          <> OA.metavar "TEXT"
+          <> OA.help "Input string passed to main"
+      )
+
+-- | Flag: read input for 'run' from STDIN instead of --input.
+optUseStdin :: OA.Parser Bool
+optUseStdin = OA.switch (OA.long "stdin" <> OA.help "Read input for main from stdin")
+
+-- | Flag: rewrite the file in place when formatting.
+optInPlace :: OA.Parser Bool
+optInPlace =
+  OA.switch
+    ( OA.long "in-place"
+        <> OA.short 'i'
+        <> OA.help "Rewrite FILE with formatted source"
+    )
+
+-- | Subcommand builder.
+subcmd :: String -> String -> OA.Parser a -> OA.Mod OA.CommandFields a
+subcmd name desc p = OA.command name (OA.info p (OA.progDesc desc))
+
+-- | Global '--version' option parser (returns CmdVersion when present).
+pVersionFlag :: OA.Parser Command
+pVersionFlag =
+  OA.flag'
+    CmdVersion
+    ( OA.long "version"
+        <> OA.help "Print version and exit"
+    )
+
+-- | Command parser.
+pCommand :: OA.Parser Command
+pCommand =
+  -- Allow the global --version flag alongside subcommands.
+  pVersionFlag
+    <|> OA.hsubparser
+      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath)
+          <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optTarget <*> optOutputPath)
+          <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optTarget <*> optInputText <*> optUseStdin)
+          <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
+          <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath)
+          <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
+      )
+
+-- | Top-level Options.Applicative info.
+cliInfo :: OA.ParserInfo Command
+cliInfo =
+  OA.info
+    (OA.helper <*> pCommand)
+    ( OA.fullDesc
+        <> OA.progDesc "Awsum compiler CLI"
+        <> OA.header "Awsum — strict FP with capabilities"
+    )
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Main/dispatch
+-- ════════════════════════════════════════════════════════════════════════════
+
+main :: IO ()
+main = do
+  cmd <- OA.execParser cliInfo
+  runCommand cmd
+
+-- | Execute a parsed command.
+runCommand :: Command -> IO ()
+runCommand = \case
+  CmdVersion -> putTextLn awsumVersion
+  CmdCheck filePath -> do
+    prog <- parseFileOrDie filePath
+    case typecheckProgram prog of
+      Left err -> die $ toString (prettyPrintTypeError err)
+      Right () -> putTextLn "OK"
+  CmdBuild filePath target mOut -> do
+    code <- compileToTarget target filePath
+    case mOut of
+      Nothing -> putTextLn code
+      Just out -> writeFileText out code
+  CmdRun filePath target mInput useStdin -> do
+    code <- compileToTarget target filePath
+    input <-
+      if useStdin
+        then T.stripEnd <$> TIO.getContents
+        else pure (fromMaybe "" mInput)
+    runOnTarget target code input
+  CmdAST filePath -> do
+    prog <- parseFileOrDie filePath
+    pPrint prog
+  CmdCore filePath -> do
+    prog <- parseFileOrDie filePath
+    case elaborateLowerProgram prog of
+      Left err -> die $ toString (prettyPrintTypeError err)
+      Right ir -> pPrint ir
+  CmdFormat filePath inPlace -> do
+    src <- readFileTextUtf8 filePath
+    case formatSource src of
+      Left e -> die $ toString e
+      Right formatted ->
+        if inPlace
+          then writeFileText filePath formatted
+          else putTextLn formatted
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Helpers
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Parse → typecheck → lower to Core → codegen.
+compileToTarget :: Target -> FilePath -> IO Text
+compileToTarget target filePath = do
+  prog <- parseFileOrDie filePath
+  case elaborateLowerProgram prog of
+    Left err -> die $ toString (prettyPrintTypeError err)
+    Right core ->
+      case target of
+        TargetJS -> pure (codegenJS core)
+        TargetLua -> pure (codegenLua core)
+
+-- | Run emitted code using a system interpreter for the chosen target.
+runOnTarget :: Target -> Text -> Text -> IO ()
+runOnTarget target code input =
+  case target of
+    TargetJS ->
+      withSystemTempDirectory "awsum" $ \dir -> do
+        let outPath = dir </> "out.js"
+        writeFileText outPath code
+        (exit, stdoutS, stderrS) <- readProcessWithExitCode "node" [outPath, toString input] ""
+        case exit of
+          ExitSuccess -> putTextLn (toText stdoutS)
+          ExitFailure _ -> die $ toString ("node error:\n" <> toText stderrS)
+    TargetLua ->
+      withSystemTempDirectory "awsum" $ \dir -> do
+        let outPath = dir </> "out.lua"
+        writeFileText outPath code
+        (exit, stdoutS, stderrS) <- readProcessWithExitCode "lua" [outPath, toString input] ""
+        case exit of
+          ExitSuccess -> putTextLn (toText stdoutS)
+          ExitFailure _ -> die $ toString ("lua error:\n" <> toText stderrS)
+
+-- | Read a file as UTF-8 and parse a 'Program' or terminate with an error.
+parseFileOrDie :: FilePath -> IO Program
+parseFileOrDie filePath = do
+  text <- readFileTextUtf8 filePath
+  case parseProgram text of
+    Left err -> die $ toString err
+    Right p -> pure p

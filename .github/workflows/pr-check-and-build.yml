@@ -1,0 +1,41 @@
+name: Check and Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      # "synchronize" means new commits pushed to the HEAD of the pull request branch
+      - synchronize
+
+concurrency:
+  # Cancel the previous run of the same workflow on the same branch.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # But don't cancel the workflow runs on the main branch.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  main-job:
+    name: Check and Build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up NODE
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.19
+
+      - name: Set up Lua
+        uses: leafo/gh-actions-lua@v11
+        with:
+          luaVersion: "5.4.8"
+
+      - name: Build and test
+        uses: freckle/stack-action@v5
+        id: stack
+        with:
+          test: true
+          stack-build-arguments: --pedantic --copy-bins --local-bin-path target
