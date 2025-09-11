@@ -56,6 +56,8 @@ data TypeError
     MainWrongType Type'
   | -- | Qualified name used without importing its module path.
     NotImported QName
+  | -- | Lowering error
+    TELowering Text
   deriving stock (Show, Eq)
 
 prettyPrintTypeError :: TypeError -> Text

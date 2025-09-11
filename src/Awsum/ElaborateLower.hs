@@ -19,7 +19,7 @@ module Awsum.ElaborateLower (elaborateLowerProgram) where
 
 import Awsum.Core
 import Awsum.Syntax
-import Awsum.Typing (TypeError, typecheckProgram)
+import Awsum.Typing (TypeError (..), typecheckProgram)
 import Data.Text qualified as T
 import Relude
 
@@ -29,37 +29,39 @@ elaborateLowerProgram :: Program -> Either TypeError CoreProgram
 elaborateLowerProgram prog = do
   -- 1) Elaboration step (MVP): just typecheck; no evidence/dictionaries yet.
   typecheckProgram prog
-  -- 2) Lowering: drop signatures, convert defs/exprs.
-  let ds = toList (decls prog)
-  pure $ CoreProgram (mapMaybe lowerDecl ds)
+  -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
+  mds <- traverse lowerDecl (toList (decls prog))
+  pure $ CoreProgram (catMaybes mds)
 
 -- | Lower a top-level declaration.
 --   • Type signatures are erased (they already influenced checking).
 --   • Zero-arg defs become constants ('CValDef'), others become first-order functions.
-lowerDecl :: Decl -> Maybe CDecl
+lowerDecl :: Decl -> Either TypeError (Maybe CDecl)
 lowerDecl = \case
-  Sig _ _ _ -> Nothing
-  FunDef n args body _ ->
-    Just
-      $ case args of
-        [] -> CValDef n (lowerExpr body) -- zero-arg def ⇒ constant
-        _ -> CFunDef n args (lowerExpr body)
-  CommentDecl _ -> Nothing
+  Sig _ _ _ -> Right Nothing
+  CommentDecl _ -> Right Nothing
+  FunDef n args body _ -> do
+    body' <- lowerExpr body
+    pure $ Just $ case args of
+      [] -> CValDef n body' -- zero-arg def ⇒ constant
+      _ -> CFunDef n args body'
 
 -- | Lower a surface expression to Core.
 --     • drop explicit parentheses,
 --     • translate string literals verbatim,
 --     • map @e1 ++ e2@ to a primitive call,
 --     • flatten left-associated application into a single 'CCall'.
-lowerExpr :: Expr -> CExpr
+lowerExpr :: Expr -> Either TypeError CExpr
 lowerExpr = \case
   EParens e -> lowerExpr e
   EVar qn -> lowerVar qn
-  ELit (LString t) -> CString t
-  EInfix OpConcat l r -> CCall (CPrim PrimConcat) [lowerExpr l, lowerExpr r]
-  EApp f x ->
+  ELit (LString t) -> Right (CString t)
+  EInfix OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr l, lowerExpr r]
+  EApp f x -> do
     let (f0, xs) = collectApps f [x]
-     in CCall (lowerExpr f0) (map lowerExpr xs)
+    f0' <- lowerExpr f0
+    xs' <- traverse lowerExpr xs
+    Right (CCall f0' xs')
 
 -- | Collect a chain of applications into (head, args) in left-to-right order.
 --   Example:
@@ -74,16 +76,19 @@ collectApps f acc = case f of
 --   the surface names of built-ins for the MVP.
 --
 --   Supported:
---     • @IO.Stdout.print@   → 'PrimPrint'
+--     • @IO.Stdout.print@  → 'PrimPrint'
 --     • Unqualified names  → Core variables.
 --
 --   Everything else: fail fast with a helpful message.
-lowerVar :: (HasCallStack) => QName -> CExpr
+lowerVar :: QName -> Either TypeError CExpr
 lowerVar (QName mods n) =
   case mods of
-    [] -> CVar n
-    ["IO", "Stdout"] | n == "print" -> CPrim PrimPrint
+    [] -> Right (CVar n)
+    ["IO", "Stdout"] | n == "print" -> Right (CPrim PrimPrint)
     _ ->
-      error
-        $ "ElaborateLower: unsupported qualified name: "
-        <> T.intercalate "." (mods <> [n])
+      Left
+        $ TELowering
+        $ "unsupported qualified name: "
+        <> prettyQName mods n
+  where
+    prettyQName ms name = T.intercalate "." (ms <> [name])
