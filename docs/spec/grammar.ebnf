@@ -1,0 +1,52 @@
+(* Awsum surface grammar — EBNF.
+   Applies-to: Awsum 0.0.1
+*)
+
+Program             = { Import }, { TopItem , Terminator }, [ Terminator ] ;
+
+Import              = "import" , ModulePath ;
+ModulePath          = UIdent , { "." , UIdent } ;
+
+TopItem             = TopComment | Sig | FunDef ;
+
+Sig                 = LIdent , ":" , Type , [ TrailingLineComment ] ;
+FunDef              = LIdent , { LIdent } , "=" , Expr , [ TrailingLineComment ] ;
+
+TopComment          = LineComment | BlockComment ;
+LineComment         = "--" , LineText ;
+BlockComment        = "{-" , BlockText , "-}" ;
+TrailingLineComment = "--" , LineText ;
+
+(* Types: right-associative arrow *)
+Type                = TypeAtom , { "->" , Type } ;
+TypeAtom            = UIdent | "(" , Type , ")" ;
+
+(* Expressions: ++ < application < atoms (both left-associative) *)
+Expr                = Concat ;
+Concat              = App , { "++" , App } ;
+App                 = Atom , { Atom } ;
+Atom                = QName | "(" , Expr , ")" | String ;
+
+QName               = { UIdent , "." } , LIdent ;
+
+(* Lexical sketch (exact rules implemented by the lexer):
+   - String escapes: \n \t \r \" \\ \0
+   - Block comment nesting is handled lexically
+*)
+LIdent              = lower , { identTail } ;
+UIdent              = upper , { identTail } ;
+identTail           = lower | upper | digit | "_" | "'" ;
+
+String              = '"' , { stringChar } , '"' ;
+stringChar          = escape | ( any - ['"' | '\\'] ) ;
+escape              = "\\" , ( "n" | "t" | "r" | "\"" | "\\" | "0" ) ;
+
+LineText            = { any - ['\n'] } ;
+BlockText           = { any } ;
+
+Terminator          = NEWLINE | EOF ;
+
+lower               = 'a'…'z' ;
+upper               = 'A'…'Z' ;
+digit               = '0'…'9' ;
+any                 = U+0000…U+10FFFF ;

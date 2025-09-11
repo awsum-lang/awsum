@@ -1,0 +1,131 @@
+-- | Lua code generator for Awsum 'Core'.
+--
+-- Design goals:
+--   • Emit tiny, readable Lua with a minimal runtime in 'header'.
+--   • Keep output stable for snapshot tests (no formatting noise).
+--   • Mirror JS backend semantics where possible (concat, print).
+--
+-- Semantics & assumptions:
+--   • Strings: we concatenate with Lua's "..". The typechecker guarantees both
+--     operands are 'String' in Awsum, so no coercion surprises here.
+--   • Zero-arg surface defs are lowered to Core 'CValDef' and become /globals/
+--     (see 'emitDecl'): this keeps them visible from any function regardless of
+--     declaration order. Functions ('CFunDef') are top-level too.
+--     By the time the footer calls 'main', all top-level assignments have run,
+--     so globals (constants) are initialized.
+--   • The footer tries to run the chunk only when executed as a script, not when
+--     loaded via 'require'. Lua lacks a perfect "main module" check, so we use
+--     a best-effort 'debug.getinfo' probe (guarded by pcall).
+module Awsum.Codegen.Lua (codegenLua) where
+
+import Awsum.Core
+import Data.Char qualified as Char
+import Data.Text qualified as T
+import Relude
+
+-- | Produce a complete Lua chunk: header (runtime) + declarations + footer (runner).
+codegenLua :: CoreProgram -> Text
+codegenLua (CoreProgram decls) =
+  T.intercalate
+    "\n"
+    [ header,
+      T.intercalate "\n\n" (map emitDecl decls),
+      footer
+    ]
+
+-- | Minimal runtime:
+--   • '__print' writes without a newline (Awsum's IO.Stdout.print is "print exactly").
+header :: Text
+header =
+  T.unlines
+    [ "local function __print(s) io.write(tostring(s)); return nil end"
+    ]
+
+-- | Best-effort "run if this is the main chunk":
+--   • If 'debug' is available, check current chunk's 'what' == 'main'.
+--   • Otherwise assume it's a script (common for embedded Lua).
+--   Then call 'main' with a single argument (or empty string) if it exists.
+footer :: Text
+footer =
+  T.unlines
+    [ "",
+      "local ok, dbg = pcall(require, 'debug')",
+      "local should_run = false",
+      "if ok and dbg and dbg.getinfo then",
+      "  local info = dbg.getinfo(1, 'S')",
+      "  should_run = info and info.what == 'main'",
+      "else",
+      "  should_run = true",
+      "end",
+      "if should_run then",
+      "  local input = (_G and _G.arg and _G.arg[1]) or \"\"",
+      "  if type(main) == 'function' then main(input) end",
+      "end"
+    ]
+
+-- | Top-level declarations:
+--   • 'CFunDef' → 'function name(args) ... end'
+--   • 'CValDef' → /global/ assignment 'name = <expr>' (see module notes above).
+emitDecl :: CDecl -> Text
+emitDecl = \case
+  CFunDef nm args body ->
+    "function "
+      <> mangle nm
+      <> "("
+      <> T.intercalate ", " (map mangle args)
+      <> ")\n"
+      <> "  return "
+      <> emitExpr body
+      <> "\n"
+      <> "end"
+  CValDef nm rhs ->
+    mangle nm <> " = " <> emitExpr rhs
+
+-- | Expressions:
+--   • 'CPrim' is never a standalone value — only appears as the callee of 'CCall'.
+--   • 'PrimConcat' → '(a .. b)'.
+--   • 'PrimPrint'  → '__print(x)'.
+--   • Generic calls: '(callee)(args...)' with a safe parenthesized callee.
+emitExpr :: CExpr -> Text
+emitExpr = \case
+  CString s -> luaString s
+  CVar n -> mangle n
+  CPrim PrimConcat -> "--<prim concat>"
+  CPrim PrimPrint -> "--<prim print>"
+  CCall f xs ->
+    case f of
+      CPrim PrimConcat ->
+        case xs of
+          [a, b] -> "(" <> emitExpr a <> " .. " <> emitExpr b <> ")"
+          _ -> error "__concat: arity mismatch"
+      CPrim PrimPrint ->
+        case xs of
+          [x] -> "__print(" <> emitExpr x <> ")"
+          _ -> error "__print: arity mismatch"
+      _ ->
+        "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
+
+-- | Encode a Haskell 'Text' as a Lua string literal with escapes.
+--   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0
+luaString :: Text -> Text
+luaString = \t -> "\"" <> T.concatMap esc t <> "\""
+  where
+    esc c = case c of
+      '\n' -> "\\n"
+      '\t' -> "\\t"
+      '\r' -> "\\r"
+      '\"' -> "\\\""
+      '\\' -> "\\\\"
+      '\0' -> "\\0"
+      _ -> T.singleton c
+
+-- | Simple name mangling:
+--   • keep 'main' unchanged (needed by the runner),
+--   • otherwise prefix with 'v_' and replace non [A-Za-z0-9_'] with '_'.
+mangle :: Text -> Text
+mangle t
+  | t == "main" = "main"
+  | otherwise =
+      let ok c = Char.isAlphaNum c || c == '_' || c == '\''
+          body = T.map (\c -> if ok c then c else '_') t
+       in "v_" <> body

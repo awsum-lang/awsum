@@ -1,0 +1,11 @@
+# Some commonly used options have been documented as comments in this file.
+# For advanced use and comprehensive documentation of the format, please see:
+# https://docs.haskellstack.org/en/stable/yaml_configuration/
+ghc-options:
+  "$locals": -fwrite-ide-info -hiedir=.hie -optP-Wno-nonportable-include-path
+
+snapshot:
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/9.yaml
+
+packages:
+  - .
