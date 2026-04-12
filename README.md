@@ -15,6 +15,8 @@ A functional language where computation results are guaranteed equivalent across
 - **JS** — Node.js 14+, browser (planned)
 - **Lua** — Lua 5.1+
 - **LLVM** — native binary via Clang (LLVM 15+)
+- **JVM** — Java 7+ bytecode (generated directly, no Jasmin/javac)
+- **WASM** — WebAssembly via WASI (planned)
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
@@ -51,6 +53,7 @@ See [Target Implementation Details](docs/targets.md) for how each backend works 
 - Install Node.js via NVM (for targeting JS)
 - Install Lua via `brew install lua` (for targeting Lua)
 - Install Clang/LLVM 15+ (for targeting LLVM)
+- Install Java 7+ (for targeting JVM)
 - `stack build`
 - `stack install`
 - Make sure `~/.local/bin` is in `PATH`
@@ -71,14 +74,17 @@ Examples:
 awsum build test/sources/hello.aww -t js   -o out.js  && node out.js "world"
 awsum build test/sources/hello.aww -t lua  -o out.lua && lua out.lua "world"
 awsum build test/sources/hello.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
+awsum build test/sources/hello.aww -t jvm  -o out.j    # Jasmin-like text output
 
 awsum run test/sources/hello.aww -t js   --input "world"
 awsum run test/sources/hello.aww -t lua  --input "world"
 awsum run test/sources/hello.aww -t llvm --input "world"
+awsum run test/sources/hello.aww -t jvm  --input "world"
 
 echo "world" | awsum run test/sources/hello.aww -t js   --stdin
 echo "world" | awsum run test/sources/hello.aww -t lua  --stdin
 echo "world" | awsum run test/sources/hello.aww -t llvm --stdin
+echo "world" | awsum run test/sources/hello.aww -t jvm  --stdin
 
 awsum check  test/sources/hello.aww
 awsum format test/sources/hello.aww -i

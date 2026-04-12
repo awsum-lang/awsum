@@ -18,6 +18,8 @@ library
   exposed-modules:
       Awsum.Codegen
       Awsum.Codegen.JS
+      Awsum.Codegen.JVM
+      Awsum.Codegen.JVM.Assemble
       Awsum.Codegen.LLVM
       Awsum.Codegen.Lua
       Awsum.Core
@@ -43,8 +45,10 @@ library
   ghc-options: -j8 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , megaparsec
     , relude
+    , text
   default-language: GHC2024
 
 executable awsum

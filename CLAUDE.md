@@ -1,6 +1,6 @@
 # Awsum Compiler
 
-Awsum is a functional programming language compiler written in Haskell. It compiles `.aww` source files to JavaScript, Lua, and LLVM IR with verified cross-backend equivalence.
+Awsum is a functional programming language compiler written in Haskell. It compiles `.aww` source files to JavaScript, Lua, LLVM IR, and JVM bytecode with verified cross-backend equivalence.
 
 ## Quick Reference
 
@@ -15,8 +15,8 @@ just precommit-fix  # Full precommit checks
 ## CLI Commands
 
 ```bash
-awsum build FILE [-t js|lua|llvm] [-o OUT]   # Compile to file/stdout
-awsum run FILE [-t js|lua|llvm] [--input X]  # Compile and execute
+awsum build FILE [-t js|lua|llvm|jvm] [-o OUT]   # Compile to file/stdout
+awsum run FILE [-t js|lua|llvm|jvm] [--input X]  # Compile and execute
 awsum check FILE                              # Typecheck only
 awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
@@ -32,10 +32,12 @@ src/Awsum/
 ├── Typing.hs         # Type checker
 ├── ElaborateLower.hs # Surface → Core lowering
 ├── Core.hs           # Core IR
-├── Codegen.hs        # Target enum (JS, Lua, LLVM)
+├── Codegen.hs        # Target enum (JS, Lua, LLVM, JVM)
 ├── Codegen/JS.hs     # JavaScript backend
 ├── Codegen/Lua.hs    # Lua backend
 ├── Codegen/LLVM.hs   # LLVM IR backend
+├── Codegen/JVM.hs    # JVM text codegen (Jasmin-like, for snapshots)
+├── Codegen/JVM/Assemble.hs  # JVM binary .class assembler
 ├── Format.hs         # Formatter entry point
 ├── Render.hs         # Pretty printer
 └── Normalize.hs      # Normalization pass
@@ -50,7 +52,7 @@ docs/spec/grammar.ebnf # Formal grammar
 ## Compilation Pipeline
 
 ```
-Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core → Codegen → JS/Lua/LLVM
+Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core → Codegen → JS/Lua/LLVM/JVM
 ```
 
 ## Language Features (v0.0.1)
@@ -64,9 +66,9 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 ## Testing
 
 Tests use Hspec with golden snapshots. Each test program generates snapshots for:
-- AST, Core IR, formatted source, JS output, Lua output, LLVM output, runtime output
+- AST, Core IR, formatted source, JS output, Lua output, LLVM output, JVM output, runtime output
 
-Cross-backend verification ensures JS, Lua, and LLVM produce identical stdout.
+Cross-backend verification ensures JS, Lua, LLVM, and JVM produce identical stdout.
 
 ## Why Claude likes working on this
 

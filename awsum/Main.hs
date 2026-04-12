@@ -1,10 +1,13 @@
 -- | Awsum compiler CLI
 --   This entrypoint wires together parsing, typechecking, formatting,
---   code generation (JS/Lua), and a tiny runner for those targets.
+--   code generation (JS/Lua/LLVM/JVM), and a tiny runner for those targets.
 module Main (main) where
 
 import Awsum.Codegen
 import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.JVM (codegenJVM)
+import Awsum.Codegen.JVM.Assemble (assembleJVM)
+import Awsum.Core (CoreProgram)
 import Awsum.Codegen.LLVM (codegenLLVM)
 import Awsum.Codegen.Lua (codegenLua)
 import Awsum.ElaborateLower (elaborateLowerProgram)
@@ -19,6 +22,7 @@ import Data.Version (showVersion)
 import Options.Applicative qualified as OA
 import Paths_awsum qualified as Meta
 import Relude
+import Data.ByteString qualified as BS
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
@@ -59,8 +63,8 @@ optTarget =
     ( OA.long "target"
         <> OA.short 't'
         <> OA.metavar "TARGET"
-        <> OA.help "Target backend: js | lua | llvm"
-        <> OA.completeWith ["js", "lua", "llvm"]
+        <> OA.help "Target backend: js | lua | llvm | jvm"
+        <> OA.completeWith ["js", "lua", "llvm", "jvm"]
     )
   where
     readTarget :: String -> Maybe Target
@@ -68,6 +72,7 @@ optTarget =
       "js" -> Just TargetJS
       "lua" -> Just TargetLua
       "llvm" -> Just TargetLLVM
+      "jvm" -> Just TargetJVM
       _ -> Nothing
 
 -- | Optional: output file path (defaults to stdout).
@@ -166,12 +171,12 @@ runCommand = \case
       Nothing -> putTextLn code
       Just out -> writeFileText out code
   CmdRun filePath target mInput useStdin -> do
-    code <- compileToTarget target filePath
     input <-
       if useStdin
         then T.stripEnd <$> TIO.getContents
         else pure (fromMaybe "" mInput)
-    runOnTarget target code input
+    core <- compileToCoreOrDie filePath
+    runOnTarget target core input
   CmdAST filePath -> do
     prog <- parseFileOrDie filePath
     pPrint prog
@@ -193,51 +198,63 @@ runCommand = \case
 -- Helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Parse → typecheck → lower to Core → codegen.
+-- | Parse → typecheck → lower to Core → codegen to text.
 compileToTarget :: Target -> FilePath -> IO Text
 compileToTarget target filePath = do
+  core <- compileToCoreOrDie filePath
+  pure $ case target of
+    TargetJS -> codegenJS core
+    TargetLua -> codegenLua core
+    TargetLLVM -> codegenLLVM core
+    TargetJVM -> codegenJVM core
+
+-- | Compile Core to target and run using the appropriate system runtime.
+runOnTarget :: Target -> CoreProgram -> Text -> IO ()
+runOnTarget target core input = case target of
+  TargetJS ->
+    runText "node" ".js" (codegenJS core) input
+  TargetLua ->
+    runText "lua" ".lua" (codegenLua core) input
+  TargetLLVM ->
+    withSystemTempDirectory "awsum" $ \dir -> do
+      let llPath = dir </> "out.ll"
+          binPath = dir </> "out"
+      writeFileText llPath (codegenLLVM core)
+      (exitClang, _, stderrClang) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
+      case exitClang of
+        ExitFailure _ -> die $ toString ("clang error:\n" <> toText stderrClang)
+        ExitSuccess -> do
+          (exit, stdoutS, stderrS) <- readProcessWithExitCode binPath [toString input] ""
+          case exit of
+            ExitSuccess -> putTextLn (toText stdoutS)
+            ExitFailure _ -> die $ toString ("runtime error:\n" <> toText stderrS)
+  TargetJVM ->
+    withSystemTempDirectory "awsum" $ \dir -> do
+      let classPath = dir </> "AwsumMain.class"
+      BS.writeFile classPath (assembleJVM core)
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "java" ["-cp", dir, "AwsumMain", toString input] ""
+      case exit of
+        ExitSuccess -> putTextLn (toText stdoutS)
+        ExitFailure _ -> die $ toString ("java error:\n" <> toText stderrS)
+
+-- | Write text code to a temp file and run with the given interpreter.
+runText :: String -> String -> Text -> Text -> IO ()
+runText cmd ext code input =
+  withSystemTempDirectory "awsum" $ \dir -> do
+    let outPath = dir </> "out" <> ext
+    writeFileText outPath code
+    (exit, stdoutS, stderrS) <- readProcessWithExitCode cmd [outPath, toString input] ""
+    case exit of
+      ExitSuccess -> putTextLn (toText stdoutS)
+      ExitFailure _ -> die $ toString (toText cmd <> " error:\n" <> toText stderrS)
+
+-- | Parse → typecheck → lower to Core, or terminate with an error.
+compileToCoreOrDie :: FilePath -> IO CoreProgram
+compileToCoreOrDie filePath = do
   prog <- parseFileOrDie filePath
   case elaborateLowerProgram prog of
     Left err -> die $ toString (prettyPrintTypeError err)
-    Right core ->
-      case target of
-        TargetJS -> pure (codegenJS core)
-        TargetLua -> pure (codegenLua core)
-        TargetLLVM -> pure (codegenLLVM core)
-
--- | Run emitted code using a system interpreter for the chosen target.
-runOnTarget :: Target -> Text -> Text -> IO ()
-runOnTarget target code input =
-  case target of
-    TargetJS ->
-      withSystemTempDirectory "awsum" $ \dir -> do
-        let outPath = dir </> "out.js"
-        writeFileText outPath code
-        (exit, stdoutS, stderrS) <- readProcessWithExitCode "node" [outPath, toString input] ""
-        case exit of
-          ExitSuccess -> putTextLn (toText stdoutS)
-          ExitFailure _ -> die $ toString ("node error:\n" <> toText stderrS)
-    TargetLua ->
-      withSystemTempDirectory "awsum" $ \dir -> do
-        let outPath = dir </> "out.lua"
-        writeFileText outPath code
-        (exit, stdoutS, stderrS) <- readProcessWithExitCode "lua" [outPath, toString input] ""
-        case exit of
-          ExitSuccess -> putTextLn (toText stdoutS)
-          ExitFailure _ -> die $ toString ("lua error:\n" <> toText stderrS)
-    TargetLLVM ->
-      withSystemTempDirectory "awsum" $ \dir -> do
-        let llPath = dir </> "out.ll"
-            binPath = dir </> "out"
-        writeFileText llPath code
-        (exitClang, _, stderrClang) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
-        case exitClang of
-          ExitFailure _ -> die $ toString ("clang error:\n" <> toText stderrClang)
-          ExitSuccess -> do
-            (exit, stdoutS, stderrS) <- readProcessWithExitCode binPath [toString input] ""
-            case exit of
-              ExitSuccess -> putTextLn (toText stdoutS)
-              ExitFailure _ -> die $ toString ("runtime error:\n" <> toText stderrS)
+    Right core -> pure core
 
 -- | Read a file as UTF-8 and parse a 'Program' or terminate with an error.
 parseFileOrDie :: FilePath -> IO Program
