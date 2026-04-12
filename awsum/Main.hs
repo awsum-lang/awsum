@@ -5,6 +5,7 @@ module Main (main) where
 
 import Awsum.Codegen
 import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.LLVM (codegenLLVM)
 import Awsum.Codegen.Lua (codegenLua)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
@@ -58,14 +59,15 @@ optTarget =
     ( OA.long "target"
         <> OA.short 't'
         <> OA.metavar "TARGET"
-        <> OA.help "Target backend: js | lua"
-        <> OA.completeWith ["js", "lua"]
+        <> OA.help "Target backend: js | lua | llvm"
+        <> OA.completeWith ["js", "lua", "llvm"]
     )
   where
     readTarget :: String -> Maybe Target
     readTarget = \case
       "js" -> Just TargetJS
       "lua" -> Just TargetLua
+      "llvm" -> Just TargetLLVM
       _ -> Nothing
 
 -- | Optional: output file path (defaults to stdout).
@@ -201,6 +203,7 @@ compileToTarget target filePath = do
       case target of
         TargetJS -> pure (codegenJS core)
         TargetLua -> pure (codegenLua core)
+        TargetLLVM -> pure (codegenLLVM core)
 
 -- | Run emitted code using a system interpreter for the chosen target.
 runOnTarget :: Target -> Text -> Text -> IO ()
@@ -222,6 +225,19 @@ runOnTarget target code input =
         case exit of
           ExitSuccess -> putTextLn (toText stdoutS)
           ExitFailure _ -> die $ toString ("lua error:\n" <> toText stderrS)
+    TargetLLVM ->
+      withSystemTempDirectory "awsum" $ \dir -> do
+        let llPath = dir </> "out.ll"
+            binPath = dir </> "out"
+        writeFileText llPath code
+        (exitClang, _, stderrClang) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
+        case exitClang of
+          ExitFailure _ -> die $ toString ("clang error:\n" <> toText stderrClang)
+          ExitSuccess -> do
+            (exit, stdoutS, stderrS) <- readProcessWithExitCode binPath [toString input] ""
+            case exit of
+              ExitSuccess -> putTextLn (toText stdoutS)
+              ExitFailure _ -> die $ toString ("runtime error:\n" <> toText stderrS)
 
 -- | Read a file as UTF-8 and parse a 'Program' or terminate with an error.
 parseFileOrDie :: FilePath -> IO Program

@@ -4,8 +4,14 @@
 ghc-options:
   "$locals": -fwrite-ide-info -hiedir=.hie -optP-Wno-nonportable-include-path
 
-snapshot:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/9.yaml
+# Suppress irrelevant warning
+notify-if-nix-on-path: false
+
+# Note on the choice (2026-01-21)
+# - We were on nightly-2025-04-14 (ghc-9.10.1) because of broken 9.8.x and hlint didn't work on 9.10.x for some time
+# - latest LTS was lts-24.28 and the tooling didn't compile
+# - GHC 9.12.3 was missing in ghcup, so we had to skip nightly-2026-01-19
+snapshot: nightly-2025-12-30
 
 packages:
   - .
