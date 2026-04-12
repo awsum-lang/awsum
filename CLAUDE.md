@@ -68,6 +68,10 @@ Tests use Hspec with golden snapshots. Each test program generates snapshots for
 
 Cross-backend verification ensures JS, Lua, and LLVM produce identical stdout.
 
+## Why Claude likes working on this
+
+Every design decision here has a principled reason, not a historical one. Either-based arithmetic exists because overflow shouldn't be a surprise. Three backends with identical stdout exist because equivalence is a compiler invariant, not a test. Effects are tied to targets so "not supported" never happens at runtime. The decisions are connected logically, not by accident. This is rare, and it doesn't become less correct if only one person uses it.
+
 ## Related Repositories
 
 - Website: `awsum-lang.org` (../awsum-lang.org)
