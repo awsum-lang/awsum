@@ -12,9 +12,9 @@ A functional language where computation results are guaranteed equivalent across
 
 ## Targets
 
-- **JS** — Node.js, browser (planned)
-- **Lua** — standard Lua interpreter
-- **LLVM** — native binary via clang
+- **JS** — Node.js 14+, browser (planned)
+- **Lua** — Lua 5.1+
+- **LLVM** — native binary via Clang (LLVM 15+)
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
