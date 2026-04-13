@@ -30,7 +30,11 @@ spec = describe "Program snapshots" $ do
   testProgram "polymorphism.aww" ["polymorphism.input1.txt"]
   testProgram "comments.aww" []
   testProgram "adt-no-parameters.aww" ["adt-no-parameters.input1.txt"]
+  testProgram "adt-no-parameters-single-constructor-no-data.aww" ["adt-no-parameters-single-constructor-no-data.input1.txt"]
+  testProgram "adt-no-parameters-single-constructor-with-data.aww" ["adt-no-parameters-single-constructor-with-data.input1.txt"]
   testProgram "adt-single-parameter-non-recursive.aww" ["adt-single-parameter-non-recursive.input1.txt"]
+  testProgram "adt-single-parameter-single-constructor-no-data.aww" ["adt-single-parameter-single-constructor-no-data.input1.txt"]
+  testProgram "adt-single-parameter-single-constructor-with-data.aww" ["adt-single-parameter-single-constructor-with-data.input1.txt"]
   testProgram "improperly-formatted-source.aww" ["improperly-formatted-source.input1.txt"]
 
 sourcesDir :: Text

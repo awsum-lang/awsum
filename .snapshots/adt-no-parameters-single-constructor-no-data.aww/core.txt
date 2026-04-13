@@ -1,0 +1,21 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "show" [ "u" ]
+            ( CCase
+                ( CVar "u" )
+                [
+                    ( 0
+                    , []
+                    , CString "Unit"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "show" )
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }
