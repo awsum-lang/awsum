@@ -189,6 +189,29 @@ emitExprText ctx paramMap = \case
         "    ldnull"
   CPrim _ ->
     "    ldnull"
+  CCon tag _ ->
+    T.intercalate
+      "\n"
+      [ emitLdcI4 tag,
+        "    box [System.Runtime]System.Int32"
+      ]
+  CCase scrut alts ->
+    let sorted = sortWith (\(t, _, _) -> t) alts
+        scrutText = emitExprText ctx paramMap scrut
+        unboxText :: Text
+        unboxText = "    unbox.any [System.Runtime]System.Int32"
+        armLabels = ["IL_arm_" <> show tag | (tag, _, _) <- sorted]
+        joinLabel :: Text
+        joinLabel = "IL_join"
+        switchText = "    switch (" <> T.intercalate ", " armLabels <> ")"
+        armTexts =
+          [ "  " <> lbl <> ":\n" <> emitExprText ctx paramMap body <> "\n    br.s " <> joinLabel
+          | ((_, _, body), lbl) <- zip sorted armLabels
+          ]
+     in T.intercalate "\n"
+          $ [scrutText, unboxText, switchText]
+          <> armTexts
+          <> ["  " <> joinLabel <> ":"]
   CCall f xs ->
     case f of
       CPrim PrimConcat
@@ -247,3 +270,10 @@ ldargSuffix :: Int -> Text
 ldargSuffix n
   | n <= 3 = "." <> show n
   | otherwise = " " <> show n
+
+emitLdcI4 :: Int -> Text
+emitLdcI4 n
+  | n >= 0 && n <= 8 = "    ldc.i4." <> show n
+  | n == -1 = "    ldc.i4.m1"
+  | n >= -128 && n <= 127 = "    ldc.i4.s " <> show n
+  | otherwise = "    ldc.i4 " <> show n

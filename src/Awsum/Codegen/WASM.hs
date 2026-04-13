@@ -110,6 +110,8 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CPrim _ -> []
+  CCon _ _ -> []
+  CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
 
 -- | Collect arities used in indirect calls (CCall where callee is a param, not a known fun/prim).
@@ -363,6 +365,10 @@ emitExpr ctx = \case
         "(i32.const 0)"
   CPrim _ ->
     "(i32.const 0)"
+  CCon tag _ ->
+    "(i32.const " <> show tag <> ")"
+  CCase scrut alts ->
+    emitCaseExpr ctx scrut alts
   CCall f xs ->
     case f of
       CPrim PrimConcat
@@ -383,6 +389,26 @@ emitExpr ctx = \case
               <> " "
               <> emitExpr ctx f
               <> ")"
+
+-- | Emit a case expression as nested @if\/else@ in WAT.
+--   Sorts alternatives by tag and builds a right-nested chain.
+emitCaseExpr :: WasmCtx -> CExpr -> [(Int, [Text], CExpr)] -> Text
+emitCaseExpr ctx scrut alts =
+  let sorted = sortWith (\(t, _, _) -> t) alts
+   in buildChain sorted
+  where
+    buildChain [] = "(unreachable)"
+    buildChain [(_, _, body)] = emitExpr ctx body
+    buildChain ((tag, _, body) : rest) =
+      "(if (result i32) (i32.eq "
+        <> emitExpr ctx scrut
+        <> " (i32.const "
+        <> show tag
+        <> ")) (then "
+        <> emitExpr ctx body
+        <> ") (else "
+        <> buildChain rest
+        <> "))"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling

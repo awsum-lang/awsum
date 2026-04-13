@@ -30,31 +30,43 @@
     ret
   }
 
+  .method public hidebysig static object v_show(object) cil managed
+  {
+    ldarg.0
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1, IL_arm_2)
+  IL_arm_0:
+    ldstr "Red"
+    br.s IL_join
+  IL_arm_1:
+    ldstr "Green"
+    br.s IL_join
+  IL_arm_2:
+    ldstr "Blue"
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
   .method public hidebysig static object v_main(object) cil managed
   {
-    ldarg.0
-    call object AwsumMain::v_addGreeting(object)
-    call object AwsumMain::__print(object)
-    ret
-  }
-
-
-  .method public hidebysig static object v_greeting() cil managed
-  {
-    ldstr "Hello"
-    ret
-  }
-
-
-  .method public hidebysig static object v_addGreeting(object) cil managed
-  {
-    call object AwsumMain::v_greeting()
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    call object AwsumMain::v_show(object)
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    ldarg.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    call object AwsumMain::v_show(object)
     call object AwsumMain::__concat(object, object)
-    ldstr "!"
+    ldstr ", "
     call object AwsumMain::__concat(object, object)
+    ldc.i4.2
+    box [System.Runtime]System.Int32
+    call object AwsumMain::v_show(object)
+    call object AwsumMain::__concat(object, object)
+    call object AwsumMain::__print(object)
     ret
   }
 

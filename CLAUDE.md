@@ -14,7 +14,7 @@ just lint-fix       # Run hlint with auto-fix
 just fix            # Full precommit checks (format, lint, build, test)
 ```
 
-After completing a plan, run `just fix` to verify everything passes (format, lint, build, test).
+After completing a plan, run `just fix` to verify everything passes (format, lint, build, test), then `stack install` to update the global `awsum` binary.
 
 ## CLI Commands
 
@@ -64,11 +64,11 @@ docs/spec/grammar.ebnf # Formal grammar
 Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core → Codegen → LLVM/JVM/CLR/WASM/JS/Lua
 ```
 
-## Language Features (v0.0.1)
+## Language Features
 
-- Types: `String`, `IOUnit`, polymorphic type variables
-- Expressions: string literals, `++` concatenation, function application
-- Declarations: type signatures required, function definitions
+- Types: `String`, `IOUnit`, polymorphic type variables, sum types (`type Bool = True | False`)
+- Expressions: string literals, `++` concatenation, function application, constructors, `case`/`of` pattern matching
+- Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking
 - Comments: `--` line, `{- -}` block (preserved through formatting)
 - Built-in: `IO.Stdout.print : String -> IOUnit`
 

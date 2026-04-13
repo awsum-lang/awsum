@@ -47,10 +47,14 @@ groupDeclBlocks = \case
     renderDecl d : groupDeclBlocks rest
   [] -> []
 
--- | Render a single import.
+-- | Render a single import (with optional leading comments and trailing comment).
 renderImport :: ImportDecl -> Text
-renderImport (ImportDecl mods) =
-  "import " <> T.intercalate "." (toList mods)
+renderImport (ImportDecl comments mods tcom) =
+  let commentLines = map renderComment comments
+      importLine = "import " <> T.intercalate "." (toList mods) <> maybe "" (" --" <>) tcom
+   in case commentLines of
+        [] -> importLine
+        _ -> T.intercalate "\n" commentLines <> "\n" <> importLine
 
 -- | Render a top-level declaration.
 renderDecl :: Decl -> Text
@@ -62,6 +66,12 @@ renderDecl = \case
         [] -> name <> " = " <> renderExpr e
         _ -> name <> " " <> T.intercalate " " args <> " = " <> renderExpr e
     )
+      <> renderTrailingComment mc
+  TypeDecl name _tvars cons mc ->
+    "type "
+      <> name
+      <> " = "
+      <> T.intercalate " | " [n | ConDef n _ <- toList cons]
       <> renderTrailingComment mc
   CommentDecl c ->
     renderComment c
@@ -109,10 +119,15 @@ renderExprPrec ctx e =
     EParens e' ->
       -- Preserve user parentheses exactly as written.
       parens (renderExprPrec 0 e')
+    ECase scrut alts trailingComments ->
+      -- Case is always at top precedence; parenthesize if nested.
+      let s = "case " <> renderExprPrec 0 scrut <> " of\n" <> renderCaseAlts alts trailingComments
+       in if 0 < ctx then parens s else s
     _ ->
       let (prec, s) = case e of
             EVar q -> (3, renderQName q)
             ELit (LString t) -> (3, "\"" <> escape t <> "\"")
+            ECon n -> (3, n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.
             EApp f x ->
@@ -138,6 +153,26 @@ renderExprPrec ctx e =
       '\\' -> "\\\\"
       '\0' -> "\\0"
       _ -> one c
+
+renderCaseAlts :: NonEmpty CaseAlt -> [Comment] -> Text
+renderCaseAlts alts trailingComments =
+  T.intercalate "\n" (map renderCaseAlt (toList alts) <> map renderIndentedComment trailingComments)
+  where
+    renderCaseAlt (CaseAlt leadingComments pat body mc) =
+      T.intercalate
+        "\n"
+        ( map renderIndentedComment leadingComments
+            <> ["  " <> renderPattern pat <> " -> " <> renderExprPrec 0 body <> renderTrailingComment mc]
+        )
+    renderIndentedComment c = "  " <> renderComment c
+    renderTrailingComment = maybe ("" :: Text) (" --" <>)
+
+renderPattern :: Pattern -> Text
+renderPattern = \case
+  PCon n [] -> n
+  PCon n ps -> n <> " " <> T.intercalate " " (map renderPattern ps)
+  PVar n -> n
+  PWild -> "_"
 
 -- | Utility: surround text with parentheses.
 parens :: Text -> Text

@@ -41,6 +41,7 @@ normalizeDecl :: Decl -> Decl
 normalizeDecl = \case
   Sig n t mc -> Sig n t mc
   FunDef n as e mc -> FunDef n as (normalizeExpr e) mc
+  TypeDecl n tvs cs mc -> TypeDecl n tvs cs mc
   CommentDecl c -> CommentDecl c
 
 -- | Normalize an expression by recursively normalizing children and
@@ -56,3 +57,7 @@ normalizeExpr = \case
   EApp f x -> EApp (normalizeExpr f) (normalizeExpr x)
   EInfix OpConcat l r -> EInfix OpConcat (normalizeExpr l) (normalizeExpr r)
   EParens e -> normalizeExpr e
+  ECon n -> ECon n
+  ECase scrut alts cs -> ECase (normalizeExpr scrut) (fmap normalizeAlt alts) cs
+  where
+    normalizeAlt (CaseAlt lc pat body mc) = CaseAlt lc pat (normalizeExpr body) mc

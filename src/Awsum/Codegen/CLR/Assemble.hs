@@ -262,6 +262,9 @@ sigInstance retType pts = [0x20, fromIntegral (length pts), retType] <> pts
 mkTok :: Word8 -> Word32 -> Word32
 mkTok tbl row = (fromIntegral tbl `shiftL` 24) .|. row
 
+tokTR :: Word32 -> Word32
+tokTR = mkTok 0x01 -- TypeRef
+
 tokMD :: Word32 -> Word32
 tokMD = mkTok 0x06 -- MethodDef
 
@@ -305,6 +308,17 @@ cilLdelemRef = [0x9A]
 cilBgeS, cilBrS :: Word8 -> [Word8]
 cilBgeS off = [0x2F, off]
 cilBrS off = [0x2B, off]
+
+cilBox, cilUnboxAny :: Word32 -> [Word8]
+cilBox tok = 0x8C : w32le tok
+cilUnboxAny tok = 0xA5 : w32le tok
+
+cilLdcI4 :: Int -> [Word8]
+cilLdcI4 n
+  | n >= 0 && n <= 8 = [fromIntegral (0x16 + n)] -- ldc.i4.0 .. ldc.i4.8
+  | n == -1 = [0x15] -- ldc.i4.m1
+  | n >= -128 && n <= 127 = [0x1F, fromIntegral n] -- ldc.i4.s
+  | otherwise = 0x20 : w32le (fromIntegral n) -- ldc.i4
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Byte helpers
@@ -498,6 +512,36 @@ emitExpr ctx = \case
     | otherwise ->
         pure cilLdnull
   CPrim _ -> pure cilLdnull
+  CCon tag _ -> do
+    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+    pure (cilLdcI4 tag <> cilBox (tokTR trInt32))
+  CCase scrut alts -> do
+    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+    scrutCode <- emitExpr ctx scrut
+    let sorted = sortWith (\(t, _, _) -> t) alts
+    armCodes <- traverse (\(_, _, body) -> emitExpr ctx body) sorted
+    -- Build if/else chain: dup, ldc tag, bne.un.s <skip>, pop, body, br.s <join>, <rest>
+    let buildChain :: [(Int, [Word8])] -> [Word8]
+        buildChain [] = cilLdnull
+        buildChain [(_, armCode)] = [0x26] <> armCode -- pop remaining int32 from dup
+        buildChain ((tag', armCode) : rest) =
+          let restCode = buildChain rest
+              popLen :: Int
+              popLen = 1
+              brSLen :: Int
+              brSLen = 2
+              skipLen = popLen + length armCode + brSLen
+              joinLen = length restCode
+           in [0x25] -- dup
+                <> cilLdcI4 tag'
+                <> [0x33, fromIntegral skipLen] -- bne.un.s
+                <> [0x26] -- pop
+                <> armCode
+                <> [0x2B, fromIntegral joinLen] -- br.s
+                <> restCode
+        tags = [t | (t, _, _) <- sorted]
+        chainCode = buildChain (zip tags armCodes)
+    pure (scrutCode <> cilUnboxAny (tokTR trInt32) <> chainCode)
   CCall f xs -> case f of
     CPrim PrimConcat | [a, b] <- xs -> do
       ca <- emitExpr ctx a

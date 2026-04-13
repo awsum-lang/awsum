@@ -165,6 +165,37 @@ emitExprText ctx paramMap = \case
         "  aconst_null"
   CPrim _ ->
     "  aconst_null"
+  CCon tag _ ->
+    T.intercalate
+      "\n"
+      [ emitIconst tag,
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;"
+      ]
+  CCase scrut alts ->
+    let sorted = sortWith (\(t, _, _) -> t) alts
+        scrutText = emitExprText ctx paramMap scrut
+        unboxText =
+          T.intercalate
+            "\n"
+            [ "  checkcast java/lang/Integer",
+              "  invokevirtual java/lang/Integer/intValue()I"
+            ]
+        armLabels = ["L_arm_" <> show tag | (tag, _, _) <- sorted]
+        joinLabel :: Text
+        joinLabel = "L_join"
+        switchText =
+          "  lookupswitch"
+            <> T.concat ["\n    " <> show tag <> ": " <> lbl | ((tag, _, _), lbl) <- zip sorted armLabels]
+            <> "\n    default: "
+            <> fromMaybe "L_default" (viaNonEmpty head armLabels)
+        armTexts =
+          [ lbl <> ":\n" <> emitExprText ctx paramMap body <> "\n  goto " <> joinLabel
+          | ((_, _, body), lbl) <- zip sorted armLabels
+          ]
+     in T.intercalate "\n"
+          $ [scrutText, unboxText, switchText]
+          <> armTexts
+          <> [joinLabel <> ":"]
   CCall f xs ->
     case f of
       CPrim PrimConcat
@@ -197,6 +228,12 @@ emitExprText ctx paramMap = \case
               $ [fText, "  checkcast java/lang/invoke/MethodHandle"]
               <> argTexts
               <> ["  invokevirtual java/lang/invoke/MethodHandle/invoke" <> desc]
+
+emitIconst :: Int -> Text
+emitIconst n
+  | n >= 0 && n <= 5 = "  iconst_" <> show n
+  | n >= -128 && n <= 127 = "  bipush " <> show n
+  | otherwise = "  sipush " <> show n
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

@@ -1,7 +1,7 @@
 Program
     { imports =
-        [ ImportDecl
-            ( "IO" :| [ "Stdout" ] )
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig "main"
         ( TyArrow
@@ -28,6 +28,15 @@ Program
                     )
                 )
             ) Nothing
+        , CommentDecl
+            ( BlockComment " Block comment " )
+        , Sig "greeting"
+            ( TyCon "String" ) Nothing
+        , FunDef "greeting" []
+            ( ELit
+                ( LString "Hello" )
+            )
+            ( Just " Line comment" )
         , Sig "addGreeting"
             ( TyArrow
                 ( TyCon "String" )
@@ -52,14 +61,5 @@ Program
                     ( LString "!" )
                 )
             ) Nothing
-        , CommentDecl
-            ( BlockComment " Block comment " )
-        , Sig "greeting"
-            ( TyCon "String" ) Nothing
-        , FunDef "greeting" []
-            ( ELit
-                ( LString "Hello" )
-            )
-            ( Just " Line comment" )
         ]
     }

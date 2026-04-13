@@ -1,7 +1,7 @@
 Program
     { imports =
-        [ ImportDecl
-            ( "IO" :| [ "Stdout" ] )
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig "main"
         ( TyArrow

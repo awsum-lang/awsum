@@ -1,0 +1,90 @@
+Program
+    { imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl "Color" []
+        ( ConDef "Red" [] :|
+            [ ConDef "Green" []
+            , ConDef "Blue" []
+            ]
+        ) Nothing :|
+        [ Sig "show"
+            ( TyArrow
+                ( TyCon "Color" )
+                ( TyCon "String" )
+            ) Nothing
+        , FunDef "show" [ "c" ]
+            ( ECase
+                ( EVar
+                    ( QName [] "c" )
+                )
+                ( CaseAlt []
+                    ( PCon "Red" [] )
+                    ( ELit
+                        ( LString "Red" )
+                    ) Nothing :|
+                    [ CaseAlt []
+                        ( PCon "Green" [] )
+                        ( ELit
+                            ( LString "Green" )
+                        ) Nothing
+                    , CaseAlt []
+                        ( PCon "Blue" [] )
+                        ( ELit
+                            ( LString "Blue" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing
+        , Sig "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            ) Nothing
+        , FunDef "main" [ "input" ]
+            ( EApp
+                ( EVar
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( EInfix OpConcat
+                        ( EInfix OpConcat
+                            ( EInfix OpConcat
+                                ( EInfix OpConcat
+                                    ( EApp
+                                        ( EVar
+                                            ( QName [] "show" )
+                                        )
+                                        ( ECon "Red" )
+                                    )
+                                    ( ELit
+                                        ( LString ", " )
+                                    )
+                                )
+                                ( EApp
+                                    ( EVar
+                                        ( QName [] "show" )
+                                    )
+                                    ( ECon "Green" )
+                                )
+                            )
+                            ( ELit
+                                ( LString ", " )
+                            )
+                        )
+                        ( EApp
+                            ( EVar
+                                ( QName [] "show" )
+                            )
+                            ( ECon "Blue" )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

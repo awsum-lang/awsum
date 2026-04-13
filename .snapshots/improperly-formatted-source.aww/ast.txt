@@ -1,0 +1,118 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ LineComment " top file comment"
+            , BlockComment " block comment
+              before imports "
+            ]
+            ( "IO" :| [ "Stdout" ] )
+            ( Just " import trailing comment" )
+        ]
+    , decls = CommentDecl
+        ( BlockComment " block
+        comment " ) :|
+        [ CommentDecl
+            ( LineComment " top comment 1" )
+        , CommentDecl
+            ( LineComment " top comment 2" )
+        , TypeDecl "Color" []
+            ( ConDef "Red" [] :|
+                [ ConDef "Green" []
+                , ConDef "Blue" []
+                ]
+            ) Nothing
+        , CommentDecl
+            ( LineComment " before show sig" )
+        , Sig "show"
+            ( TyArrow
+                ( TyCon "Color" )
+                ( TyCon "String" )
+            ) Nothing
+        , CommentDecl
+            ( BlockComment " between show sig and def " )
+        , FunDef "show" [ "c" ]
+            ( ECase
+                ( EVar
+                    ( QName [] "c" )
+                )
+                ( CaseAlt
+                    [ LineComment " deep leading"
+                    , LineComment " shallow leading"
+                    , BlockComment " block comment in case "
+                    ]
+                    ( PCon "Red" [] )
+                    ( ELit
+                        ( LString "Red" )
+                    )
+                    ( Just " inline 1" ) :|
+                    [ CaseAlt
+                        [ LineComment " deep between" ]
+                        ( PCon "Green" [] )
+                        ( ELit
+                            ( LString "Green" )
+                        )
+                        ( Just " inline 2" )
+                    , CaseAlt []
+                        ( PCon "Blue" [] )
+                        ( ELit
+                            ( LString "Blue" )
+                        ) Nothing
+                    ]
+                )
+                [ LineComment " trailing case comment" ]
+            ) Nothing
+        , CommentDecl
+            ( LineComment " before main sig" )
+        , Sig "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            ) Nothing
+        , CommentDecl
+            ( LineComment " between main sig and def" )
+        , FunDef "main" [ "input" ]
+            ( EApp
+                ( EVar
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( EInfix OpConcat
+                        ( EInfix OpConcat
+                            ( EInfix OpConcat
+                                ( EInfix OpConcat
+                                    ( EApp
+                                        ( EVar
+                                            ( QName [] "show" )
+                                        )
+                                        ( ECon "Red" )
+                                    )
+                                    ( ELit
+                                        ( LString ", " )
+                                    )
+                                )
+                                ( EApp
+                                    ( EVar
+                                        ( QName [] "show" )
+                                    )
+                                    ( ECon "Green" )
+                                )
+                            )
+                            ( ELit
+                                ( LString ", " )
+                            )
+                        )
+                        ( EApp
+                            ( EVar
+                                ( QName [] "show" )
+                            )
+                            ( ECon "Blue" )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

@@ -92,6 +92,13 @@ emitExpr = \case
   CVar n -> mangle n
   CPrim PrimConcat -> "--<prim concat>"
   CPrim PrimPrint -> "--<prim print>"
+  CCon tag _ -> show tag
+  CCase scrut alts ->
+    "(function(s) "
+      <> emitAlts alts
+      <> " end)("
+      <> emitExpr scrut
+      <> ")"
   CCall f xs ->
     case f of
       CPrim PrimConcat ->
@@ -104,6 +111,16 @@ emitExpr = \case
           _ -> error "__print: arity mismatch"
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
+  where
+    emitAlts [] = ""
+    emitAlts ((tag, _vars, body) : rest) =
+      "if s == "
+        <> show tag
+        <> " then return "
+        <> emitExpr body
+        <> case rest of
+          [] -> " end"
+          _ -> " else" <> emitAlts rest
 
 -- | Encode a Haskell 'Text' as a Lua string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0

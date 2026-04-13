@@ -34,7 +34,7 @@ parserSpec = do
               ]
           expected =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
@@ -59,7 +59,7 @@ parserSpec = do
               ]
           expected =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
@@ -91,7 +91,7 @@ parserSpec = do
               ]
           ast =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
@@ -116,7 +116,7 @@ parserSpec = do
               ]
           ast =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef

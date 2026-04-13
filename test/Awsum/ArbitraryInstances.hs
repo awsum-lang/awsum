@@ -19,6 +19,9 @@ identTailChar =
 reserved :: [Text]
 reserved =
   [ "import",
+    "type",
+    "case",
+    "of",
     "class",
     "instance",
     "where",
@@ -70,8 +73,8 @@ shrinkNonEmpty sh (x :| xs) =
 -- ───────────────────────── Arbitrary instances ─────────────────────────
 
 instance Arbitrary ImportDecl where
-  arbitrary = ImportDecl <$> genNonEmpty genUIdent
-  shrink (ImportDecl ne) = ImportDecl <$> shrinkNonEmpty shrinkIdent ne
+  arbitrary = ImportDecl [] <$> genNonEmpty genUIdent <*> genComment
+  shrink (ImportDecl _ ne _) = ImportDecl [] <$> shrinkNonEmpty shrinkIdent ne <*> pure Nothing
 
 -- | Prefer producing useful types for tests:
 --   • 'TyVar' appears often (so polymorphic sigs like 'a -> b -> a' show up),
@@ -154,11 +157,15 @@ instance Arbitrary Expr where
     ELit (LString t) -> [ELit (LString t') | t' <- shrinkIdent t]
     EVar q -> EVar <$> shrink q
     EParens e -> e : [EParens e' | e' <- shrink e]
+    ECon n -> ECon <$> shrinkIdent n
     EApp f x -> [f, x] <> [EApp f' x | f' <- shrink f] <> [EApp f x' | x' <- shrink x]
     EInfix OpConcat l r ->
       [l, r]
         <> [EInfix OpConcat l' r | l' <- shrink l]
         <> [EInfix OpConcat l r' | r' <- shrink r]
+    ECase scrut alts cs ->
+      [scrut]
+        <> [ECase s' alts cs | s' <- shrink scrut]
 
 instance Arbitrary Decl where
   arbitrary =
@@ -174,6 +181,7 @@ instance Arbitrary Decl where
         <> [FunDef n (take i as) e mc | i <- [0 .. length as - 1]]
         <> [FunDef n as e' mc | e' <- shrink e]
     CommentDecl c -> [CommentDecl c]
+    TypeDecl {} -> []
 
 instance Arbitrary Program where
   arbitrary = do

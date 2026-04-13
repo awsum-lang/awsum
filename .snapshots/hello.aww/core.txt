@@ -7,6 +7,8 @@ CoreProgram
                     [ CVar "input" ]
                 ]
             )
+        , CValDef "greeting"
+            ( CString "Hello" )
         , CFunDef "addGreeting" [ "name" ]
             ( CCall ( CPrim PrimConcat )
                 [ CCall ( CPrim PrimConcat )
@@ -19,7 +21,5 @@ CoreProgram
                 , CString "!"
                 ]
             )
-        , CValDef "greeting"
-            ( CString "Hello" )
         ]
     }

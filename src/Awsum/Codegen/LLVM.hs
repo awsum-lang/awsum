@@ -64,6 +64,12 @@ freshTemp = do
   modify' (+ 1)
   pure ("%t" <> show n)
 
+freshLabel :: Text -> CodegenM Text
+freshLabel prefix = do
+  n <- get
+  modify' (+ 1)
+  pure (prefix <> "." <> show n)
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- String constant pool
 -- ════════════════════════════════════════════════════════════════════════════
@@ -85,6 +91,8 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CPrim _ -> []
+  CCon _ _ -> []
+  CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
 
 emitStringConstants :: StringPool -> Text
@@ -258,6 +266,42 @@ emitExpr ctx = \case
         pure ("", "@" <> mangle n)
   CPrim _ ->
     pure ("", "null")
+  CCon tag _ -> do
+    tmp <- freshTemp
+    pure
+      ( "  " <> tmp <> " = inttoptr i64 " <> show tag <> " to ptr\n",
+        tmp
+      )
+  CCase scrut alts -> do
+    (instrS, resS) <- emitExpr ctx scrut
+    tagTmp <- freshTemp
+    let tagInstr = "  " <> tagTmp <> " = ptrtoint ptr " <> resS <> " to i64\n"
+    -- Generate labels
+    defLabel <- freshLabel "case.default"
+    joinLabel <- freshLabel "case.join"
+    altLabelsAndBodies <- forM alts $ \(tag, _vars, body) -> do
+      lbl <- freshLabel ("case.arm." <> show tag)
+      (instrB, resB) <- emitExpr ctx body
+      pure (tag, lbl, instrB, resB)
+    -- switch instruction
+    let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _, _) <- altLabelsAndBodies]
+        switchInstr = "  switch i64 " <> tagTmp <> ", label %" <> defLabel <> " [" <> switchCases <> " ]\n"
+    -- arm blocks
+    let armBlocks =
+          T.concat
+            [ lbl <> ":\n" <> instrB <> "  br label %" <> joinLabel <> "\n"
+            | (_, lbl, instrB, _) <- altLabelsAndBodies
+            ]
+    -- default block (unreachable)
+    let defBlock = defLabel <> ":\n  unreachable\n"
+    -- phi at join
+    phiTmp <- freshTemp
+    let phiIncoming = T.intercalate ", " ["[" <> resB <> ", %" <> lbl <> "]" | (_, lbl, _, resB) <- altLabelsAndBodies]
+        joinBlock = joinLabel <> ":\n  " <> phiTmp <> " = phi ptr " <> phiIncoming <> "\n"
+    pure
+      ( instrS <> tagInstr <> switchInstr <> armBlocks <> defBlock <> joinBlock,
+        phiTmp
+      )
   CCall f xs ->
     case f of
       CPrim PrimConcat ->

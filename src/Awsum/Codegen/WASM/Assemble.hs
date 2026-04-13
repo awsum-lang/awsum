@@ -193,6 +193,8 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CPrim _ -> []
+  CCon _ _ -> []
+  CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
 
 collectIndirectArities :: CoreProgram -> Set Text -> Set Int
@@ -825,6 +827,11 @@ emitExpr ctx = \case
         [op_i32_const] <> encodeSLEB128 0
   CPrim _ ->
     [op_i32_const] <> encodeSLEB128 0
+  CCon tag _ ->
+    [op_i32_const] <> encodeSLEB128 (fromIntegral tag)
+  CCase scrut alts ->
+    let sorted = sortWith (\(t, _, _) -> t) alts
+     in emitCaseChain ctx scrut sorted
   CCall f xs ->
     case f of
       CPrim PrimConcat
@@ -852,6 +859,21 @@ emitExpr ctx = \case
               <> [op_call_indirect]
               <> encodeULEB128 typeIdx
               <> encodeULEB128 0 -- table index 0
+
+-- | Emit a case expression as nested if/else in binary WASM.
+emitCaseChain :: ExprCtx -> CExpr -> [(Int, [Text], CExpr)] -> [Word8]
+emitCaseChain _ctx _scrut [] = [op_i32_const] <> encodeSLEB128 0 -- unreachable
+emitCaseChain ctx _scrut [(_, _, body)] = emitExpr ctx body
+emitCaseChain ctx scrut ((tag, _, body) : rest) =
+  emitExpr ctx scrut
+    <> [op_i32_const]
+    <> encodeSLEB128 (fromIntegral tag)
+    <> [0x46] -- i32.eq
+    <> [op_if, blocktype_i32]
+    <> emitExpr ctx body
+    <> [op_else]
+    <> emitCaseChain ctx scrut rest
+    <> [op_end]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Data section

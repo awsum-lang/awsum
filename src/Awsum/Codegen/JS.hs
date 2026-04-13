@@ -79,6 +79,13 @@ emitExpr = \case
   CVar n -> mangle n
   CPrim PrimConcat -> "/*<prim concat>*/" -- invariant: not a standalone term
   CPrim PrimPrint -> "/*<prim print>*/" -- invariant: not a standalone term
+  CCon tag _ -> show tag
+  CCase scrut alts ->
+    "((s) => { switch(s) { "
+      <> T.intercalate " " (map emitAlt alts)
+      <> " } })("
+      <> emitExpr scrut
+      <> ")"
   CCall f xs ->
     case f of
       CPrim PrimConcat ->
@@ -91,6 +98,9 @@ emitExpr = \case
           _ -> error "__print: arity mismatch"
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
+  where
+    emitAlt (tag, _vars, body) =
+      "case " <> show tag <> ": return " <> emitExpr body <> ";"
 
 -- | Encode a Haskell 'Text' as a JavaScript string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0

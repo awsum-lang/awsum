@@ -7,13 +7,14 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 76))
+  (global $heap (mut i32) (i32.const 83))
   (data (i32.const 64) "\00")
-  (data (i32.const 65) "Hello\00")
-  (data (i32.const 71) ", \00")
-  (data (i32.const 74) "!\00")
+  (data (i32.const 65) "Red\00")
+  (data (i32.const 69) "Green\00")
+  (data (i32.const 75) "Blue\00")
+  (data (i32.const 80) ", \00")
   (table 2 funcref)
-  (elem (i32.const 0) $v_main $v_addGreeting)
+  (elem (i32.const 0) $v_show $v_main)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -76,14 +77,11 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
+  (func $v_show (export "v_show") (param $v_c i32) (result i32)
+    (if (result i32) (i32.eq (local.get $v_c) (i32.const 0)) (then (i32.const 65)) (else (if (result i32) (i32.eq (local.get $v_c) (i32.const 1)) (then (i32.const 69)) (else (i32.const 75))))))
+
   (func $v_main (export "v_main") (param $v_input i32) (result i32)
-    (call $__print (call $v_addGreeting (local.get $v_input))))
-
-  (func $v_greeting (export "v_greeting") (result i32)
-    (i32.const 65))
-
-  (func $v_addGreeting (export "v_addGreeting") (param $v_name i32) (result i32)
-    (call $__concat (call $__concat (call $__concat (call $v_greeting) (i32.const 71)) (local.get $v_name)) (i32.const 74)))
+    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $v_show (i32.const 0)) (i32.const 80)) (call $v_show (i32.const 1))) (i32.const 80)) (call $v_show (i32.const 2)))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

@@ -38,6 +38,10 @@ data CExpr
     CString Text
   | -- | Function/primitive application; left-associated by construction.
     CCall CExpr [CExpr]
+  | -- | Constructor: integer tag + fields (fields empty for nullary constructors).
+    CCon Int [CExpr]
+  | -- | Case expression: scrutinee + alternatives @[(tag, bound-var names, body)]@.
+    CCase CExpr [(Int, [Name], CExpr)]
   deriving stock (Show, Eq)
 
 -- | Top-level Core declarations.
