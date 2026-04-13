@@ -53,7 +53,7 @@ format-fix:
   @echo "\n\n✅ Formatting completed!\n\n"
 
 # Run precommit for backend and webapp, fix issues where possible
-precommit-fix:
+fix:
   #!/bin/sh
   set -eu
   echo "Detecting cyrillic..."

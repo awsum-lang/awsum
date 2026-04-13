@@ -7,4 +7,5 @@ data Target
   | TargetLua
   | TargetLLVM
   | TargetJVM
+  | TargetWASM
   deriving stock (Eq, Show)

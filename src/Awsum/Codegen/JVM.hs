@@ -23,8 +23,8 @@ codegenJVM (CoreProgram decls) =
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
       ctx = Ctx {cValDefs = valNames, cFunDefs = funNames, cArities = arities}
-   in T.intercalate "\n" $
-        filter
+   in T.intercalate "\n"
+        $ filter
           (not . T.null)
           [ classHeader,
             "",
@@ -167,31 +167,34 @@ emitExprText ctx paramMap = \case
     "  aconst_null"
   CCall f xs ->
     case f of
-      CPrim PrimConcat | [a, b] <- xs ->
-        T.intercalate "\n" $
-          [ emitExprText ctx paramMap a,
-            emitExprText ctx paramMap b,
-            "  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
-          ]
-      CPrim PrimPrint | [x] <- xs ->
-        T.intercalate "\n" $
-          [ emitExprText ctx paramMap x,
-            "  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;"
-          ]
-      CVar n | n `Set.member` ctx.cFunDefs ->
-        let argTexts = map (emitExprText ctx paramMap) xs
-            desc = objMethodDescText (length xs)
-         in T.intercalate "\n" $
-              argTexts
-                <> ["  invokestatic AwsumMain/" <> mangle n <> desc]
+      CPrim PrimConcat
+        | [a, b] <- xs ->
+            T.intercalate "\n"
+              $ [ emitExprText ctx paramMap a,
+                  emitExprText ctx paramMap b,
+                  "  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+                ]
+      CPrim PrimPrint
+        | [x] <- xs ->
+            T.intercalate "\n"
+              $ [ emitExprText ctx paramMap x,
+                  "  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;"
+                ]
+      CVar n
+        | n `Set.member` ctx.cFunDefs ->
+            let argTexts = map (emitExprText ctx paramMap) xs
+                desc = objMethodDescText (length xs)
+             in T.intercalate "\n"
+                  $ argTexts
+                  <> ["  invokestatic AwsumMain/" <> mangle n <> desc]
       _ ->
         let fText = emitExprText ctx paramMap f
             argTexts = map (emitExprText ctx paramMap) xs
             desc = objMethodDescText (length xs)
-         in T.intercalate "\n" $
-              [fText, "  checkcast java/lang/invoke/MethodHandle"]
-                <> argTexts
-                <> ["  invokevirtual java/lang/invoke/MethodHandle/invoke" <> desc]
+         in T.intercalate "\n"
+              $ [fText, "  checkcast java/lang/invoke/MethodHandle"]
+              <> argTexts
+              <> ["  invokevirtual java/lang/invoke/MethodHandle/invoke" <> desc]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

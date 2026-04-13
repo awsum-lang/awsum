@@ -42,6 +42,11 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Set up Wasmtime
+        uses: bytecodealliance/actions/wasmtime/setup@v1
+        with:
+          version: "latest"
+
       - name: Build and test
         uses: freckle/stack-action@v5
         id: stack

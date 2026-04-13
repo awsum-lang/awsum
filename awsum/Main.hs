@@ -1,28 +1,30 @@
 -- | Awsum compiler CLI
 --   This entrypoint wires together parsing, typechecking, formatting,
---   code generation (JS/Lua/LLVM/JVM), and a tiny runner for those targets.
+--   code generation (JS/Lua/LLVM/JVM/WASM), and a tiny runner for those targets.
 module Main (main) where
 
 import Awsum.Codegen
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Core (CoreProgram)
 import Awsum.Codegen.LLVM (codegenLLVM)
 import Awsum.Codegen.Lua (codegenLua)
+import Awsum.Codegen.WASM (codegenWASM)
+import Awsum.Codegen.WASM.Assemble (assembleWASM)
+import Awsum.Core (CoreProgram)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Awsum.Typing (prettyPrintTypeError, typecheckProgram)
 import Common.File
+import Data.ByteString qualified as BS
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Data.Version (showVersion)
 import Options.Applicative qualified as OA
 import Paths_awsum qualified as Meta
 import Relude
-import Data.ByteString qualified as BS
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
@@ -43,6 +45,8 @@ data Command
     CmdRun FilePath Target (Maybe Text) Bool
   | CmdAST FilePath
   | CmdCore FilePath
+  | -- | file, target (JVM/WASM only)
+    CmdAsm FilePath Target
   | -- | file, inPlace
     CmdFormat FilePath Bool
   deriving stock (Show)
@@ -63,8 +67,8 @@ optTarget =
     ( OA.long "target"
         <> OA.short 't'
         <> OA.metavar "TARGET"
-        <> OA.help "Target backend: js | lua | llvm | jvm"
-        <> OA.completeWith ["js", "lua", "llvm", "jvm"]
+        <> OA.help "Target backend: js | lua | llvm | jvm | wasm"
+        <> OA.completeWith ["js", "lua", "llvm", "jvm", "wasm"]
     )
   where
     readTarget :: String -> Maybe Target
@@ -73,6 +77,7 @@ optTarget =
       "lua" -> Just TargetLua
       "llvm" -> Just TargetLLVM
       "jvm" -> Just TargetJVM
+      "wasm" -> Just TargetWASM
       _ -> Nothing
 
 -- | Optional: output file path (defaults to stdout).
@@ -134,6 +139,7 @@ pCommand =
           <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optTarget <*> optInputText <*> optUseStdin)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
           <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath)
+          <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optTarget)
           <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
       )
 
@@ -166,10 +172,23 @@ runCommand = \case
       Left err -> die $ toString (prettyPrintTypeError err)
       Right () -> putTextLn "OK"
   CmdBuild filePath target mOut -> do
-    code <- compileToTarget target filePath
-    case mOut of
-      Nothing -> putTextLn code
-      Just out -> writeFileText out code
+    core <- compileToCoreOrDie filePath
+    case target of
+      TargetJVM -> do
+        let bytes = assembleJVM core
+        case mOut of
+          Nothing -> BS.hPut stdout bytes
+          Just out -> BS.writeFile out bytes
+      TargetWASM -> do
+        let bytes = assembleWASM core
+        case mOut of
+          Nothing -> BS.hPut stdout bytes
+          Just out -> BS.writeFile out bytes
+      _ -> do
+        let code = codegenText target core
+        case mOut of
+          Nothing -> putTextLn code
+          Just out -> writeFileText out code
   CmdRun filePath target mInput useStdin -> do
     input <-
       if useStdin
@@ -185,6 +204,12 @@ runCommand = \case
     case elaborateLowerProgram prog of
       Left err -> die $ toString (prettyPrintTypeError err)
       Right ir -> pPrint ir
+  CmdAsm filePath target -> do
+    core <- compileToCoreOrDie filePath
+    case target of
+      TargetJVM -> putTextLn (codegenJVM core)
+      TargetWASM -> putTextLn (codegenWASM core)
+      _ -> die "asm is only supported for jvm and wasm targets"
   CmdFormat filePath inPlace -> do
     src <- readFileTextUtf8 filePath
     case formatSource src of
@@ -198,15 +223,14 @@ runCommand = \case
 -- Helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Parse → typecheck → lower to Core → codegen to text.
-compileToTarget :: Target -> FilePath -> IO Text
-compileToTarget target filePath = do
-  core <- compileToCoreOrDie filePath
-  pure $ case target of
-    TargetJS -> codegenJS core
-    TargetLua -> codegenLua core
-    TargetLLVM -> codegenLLVM core
-    TargetJVM -> codegenJVM core
+-- | Select the text codegen for a target.
+codegenText :: Target -> CoreProgram -> Text
+codegenText = \case
+  TargetJS -> codegenJS
+  TargetLua -> codegenLua
+  TargetLLVM -> codegenLLVM
+  TargetJVM -> codegenJVM
+  TargetWASM -> codegenWASM
 
 -- | Compile Core to target and run using the appropriate system runtime.
 runOnTarget :: Target -> CoreProgram -> Text -> IO ()
@@ -236,6 +260,14 @@ runOnTarget target core input = case target of
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("java error:\n" <> toText stderrS)
+  TargetWASM ->
+    withSystemTempDirectory "awsum" $ \dir -> do
+      let wasmPath = dir </> "out.wasm"
+      BS.writeFile wasmPath (assembleWASM core)
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
+      case exit of
+        ExitSuccess -> putTextLn (toText stdoutS)
+        ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
 
 -- | Write text code to a temp file and run with the given interpreter.
 runText :: String -> String -> Text -> Text -> IO ()

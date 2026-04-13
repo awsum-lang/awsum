@@ -16,7 +16,7 @@ A functional language where computation results are guaranteed equivalent across
 - **Lua** — Lua 5.1+
 - **LLVM** — native binary via Clang (LLVM 15+)
 - **JVM** — Java 7+ bytecode (generated directly, no Jasmin/javac)
-- **WASM** — WebAssembly via WASI (planned)
+- **WASM** — WebAssembly via WASI (wasmtime)
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
@@ -49,23 +49,52 @@ See [Target Implementation Details](docs/targets.md) for how each backend works 
 
 ## Installation
 
-- Install Stack via `ghcup`
-- Install Node.js via NVM (for targeting JS)
-- Install Lua via `brew install lua` (for targeting Lua)
-- Install Clang/LLVM 15+ (for targeting LLVM)
-- Install Java 7+ (for targeting JVM)
-- `stack build`
-- `stack install`
-- Make sure `~/.local/bin` is in `PATH`
+### Compiler
+
+```sh
+# Install Stack (Haskell build tool)
+ghcup install stack
+
+# Build and install the compiler
+stack build
+stack install
+
+# Make sure ~/.local/bin is in PATH
+```
+
+### Target runtimes
+
+Install only the runtimes for the targets you need:
+
+```sh
+# JS — Node.js interpreter
+nvm install 22
+
+# Lua — Lua interpreter
+brew install lua
+
+# LLVM — native binary compiler (opaque pointer support requires 15+)
+brew install llvm@15
+
+# JVM — Java runtime (class version 51.0 requires 7+)
+brew install openjdk
+
+# WASM — WebAssembly runtime with WASI support
+brew install wasmtime
+
+# WABT — WebAssembly Binary Toolkit (optional, for validating generated .wasm)
+brew install wabt
+```
 
 ## Usage
 
-- `awsum build FILE [-t js] [-o OUT]` — compile to target and write to file (or stdout).
+- `awsum build FILE [-t js] [-o OUT]` — compile to target and write to file (or stdout). For JVM and WASM, outputs binary (`.class`/`.wasm`).
 - `awsum run FILE [-t js] [--input TEXT | --stdin]` — compile to a temp file and execute with the system runtime, passing input to main.
 - `awsum check FILE` — parse and typecheck; prints `OK` or a descriptive error.
 - `awsum format FILE [-i|--in-place]` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
+- `awsum asm FILE [-t jvm|wasm]` — print target assembly text: Jasmin-like for JVM, WAT for WASM (for debugging).
 - `awsum --version` — show version
 
 Examples:
@@ -74,17 +103,23 @@ Examples:
 awsum build test/sources/hello.aww -t js   -o out.js  && node out.js "world"
 awsum build test/sources/hello.aww -t lua  -o out.lua && lua out.lua "world"
 awsum build test/sources/hello.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
-awsum build test/sources/hello.aww -t jvm  -o out.j    # Jasmin-like text output
+awsum build test/sources/hello.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
+awsum build test/sources/hello.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
+
+awsum asm test/sources/hello.aww -t jvm   # Jasmin-like text (for inspection)
+awsum asm test/sources/hello.aww -t wasm  # WAT text (for inspection)
 
 awsum run test/sources/hello.aww -t js   --input "world"
 awsum run test/sources/hello.aww -t lua  --input "world"
 awsum run test/sources/hello.aww -t llvm --input "world"
 awsum run test/sources/hello.aww -t jvm  --input "world"
+awsum run test/sources/hello.aww -t wasm --input "world"
 
 echo "world" | awsum run test/sources/hello.aww -t js   --stdin
 echo "world" | awsum run test/sources/hello.aww -t lua  --stdin
 echo "world" | awsum run test/sources/hello.aww -t llvm --stdin
 echo "world" | awsum run test/sources/hello.aww -t jvm  --stdin
+echo "world" | awsum run test/sources/hello.aww -t wasm --stdin
 
 awsum check  test/sources/hello.aww
 awsum format test/sources/hello.aww -i

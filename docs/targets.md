@@ -4,21 +4,21 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 ## Overview
 
-| | JS | Lua | LLVM | JVM |
-|---|---|---|---|---|
-| **Runtime** | Node.js 14+ | Lua 5.1+ | Native binary (via Clang 15+) | Java 7+ |
-| **String type** | Native JS string | Native Lua string | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) |
-| **Concat** | `+` | `..` | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` |
-| **Print** | `process.stdout.write(s)` | `io.write(s)` | `printf("%s", s)` | `System.out.print(s)` |
-| **Constants** | `const name = expr;` | `name = expr` (global) | Zero-arg function, called on each use | Zero-arg static method, called on each use |
-| **Functions** | `function` declaration (hoisted) | `function ... end` | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` |
-| **Higher-order** | First-class values | First-class values | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) |
-| **Memory** | GC | GC | Manual (`malloc`, no `free`) | GC |
-| **Name mangling** | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) |
+| | JS | Lua | LLVM | JVM | WASM |
+|---|---|---|---|---|---|
+| **Runtime** | Node.js 14+ | Lua 5.1+ | Native binary (via Clang 15+) | Java 7+ | wasmtime (WASI) |
+| **String type** | Native JS string | Native Lua string | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) | `i32` pointer to null-terminated bytes in linear memory |
+| **Concat** | `+` | `..` | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` | `__concat`: strlen + bump alloc + memcpy |
+| **Print** | `process.stdout.write(s)` | `io.write(s)` | `printf("%s", s)` | `System.out.print(s)` | WASI `fd_write` via iovec |
+| **Constants** | `const name = expr;` | `name = expr` (global) | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use |
+| **Functions** | `function` declaration (hoisted) | `function ... end` | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` |
+| **Higher-order** | First-class values | First-class values | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `funcref` table + `call_indirect` |
+| **Memory** | GC | GC | Manual (`malloc`, no `free`) | GC | Bump allocator (no free) |
+| **Name mangling** | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) |
 
 ## String Concatenation
 
-All four backends guarantee identical results because the type checker ensures both operands are `String`.
+All five backends guarantee identical results because the type checker ensures both operands are `String`.
 
 **JS** — uses native `+`, which is string concatenation when both sides are strings:
 ```javascript
@@ -49,6 +49,12 @@ define ptr @__concat(ptr %a, ptr %b) {
 invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 ```
 
+**WASM** — runtime helper computes lengths, bump-allocates a new buffer, copies both strings, and null-terminates:
+```wasm
+(call $__concat (local.get $a) (local.get $b))
+;; strlen(a) + strlen(b) → alloc(la+lb+1) → memcpy(buf,a,la) → memcpy(buf+la,b,lb) → store8 0
+```
+
 ## Print
 
 All backends print without a trailing newline — `IO.Stdout.print` outputs exactly what it receives.
@@ -61,6 +67,8 @@ All backends print without a trailing newline — `IO.Stdout.print` outputs exac
 
 **JVM**: `System.out.print(s)` — buffered PrintStream, flushed on JVM exit.
 
+**WASM**: WASI `fd_write` — stores an iovec (pointer + length) at scratch memory offset 0, calls `fd_write(1, iov, 1, nwritten)`.
+
 ## Constants (CValDef)
 
 Zero-argument definitions like `greeting = "Hello"` are compiled differently per target:
@@ -72,6 +80,8 @@ Zero-argument definitions like `greeting = "Hello"` are compiled differently per
 **LLVM**: Zero-arg function `define ptr @v_greeting() { ... }` — called each time the value is referenced. Safe because all expressions are pure (same result every time). Avoids the complexity of LLVM global initializers for non-constant expressions.
 
 **JVM**: Zero-arg static method `static Object v_greeting() { ... }` — same approach as LLVM, called each time. The JVM JIT compiler can inline these.
+
+**WASM**: Zero-arg function `(func $v_greeting (result i32) ...)` — same approach as LLVM and JVM.
 
 ## Higher-Order Functions
 
@@ -110,6 +120,15 @@ This uses LLVM 15+ opaque pointers — no `bitcast` or typed function pointer an
 ```
 
 Direct calls to known functions use `invokestatic` — no MethodHandle overhead.
+
+**WASM**: Function values are table indices (`i32`). All user `CFunDef`s are placed in a `funcref` table. When a function is used as a value, it becomes `(i32.const <table_index>)`. Indirect calls use `call_indirect` with a per-arity type signature:
+```wasm
+;; compose g f x = g (f x)
+(func $v_compose (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
+  (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)) (local.get $v_g)))
+```
+
+Direct calls to known functions use `call $v_fn` — no table indirection.
 
 ## Entry Points
 
@@ -176,6 +195,16 @@ call_main:
   return
 ```
 
+**WASM** (WASI `_start`):
+```wasm
+(func $__get_arg (result i32)  ;; returns argv[1] or ""
+  (call $args_sizes_get ...)
+  (if (i32.lt_u argc 2) (then (i32.const <empty_string_offset>))
+    (else (call $args_get ...) (i32.load (i32.add ptrs 4)))))
+(func $_start (export "_start")
+  (drop (call $v_main (call $__get_arg))))
+```
+
 ## Name Mangling
 
 All targets prefix user names with `v_` and replace non-alphanumeric characters (except `_` and `'`) with `_`.
@@ -222,4 +251,20 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **StackMapTable**: JVM 7+ requires `StackMapTable` attributes for methods with branches. Currently only the generated `main(String[])` has branches (for argument handling). User-defined methods are branch-free (no `if`/`let` in the language yet).
 
-**Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum build -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for actual execution via `awsum run -t jvm`.
+**Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum asm -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for `awsum build -t jvm` (outputs `.class`) and `awsum run -t jvm`.
+
+## WASM-Specific Details
+
+**Binary format**: The `.wasm` binary is generated directly in Haskell (`Awsum.Codegen.WASM.Assemble`), with no external tools — no `wat2wasm`, no WABT. Only `wasmtime` is needed to run. Uses LEB128 encoding (unlike JVM's big-endian fixed-width integers).
+
+**WASI imports**: Three WASI functions are imported from `wasi_snapshot_preview1`: `fd_write` (stdout), `args_sizes_get` and `args_get` (CLI arguments).
+
+**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. IOUnit is `0`.
+
+**Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
+
+**Runtime helpers**: Six helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
+
+**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
+
+**~30 opcodes**: The assembler uses approximately 30 WASM opcodes — enough for string manipulation, control flow, memory access, and indirect calls.
