@@ -33,7 +33,7 @@ codegenJS (CoreProgram decls) =
 --   are statically strings under our typechecker.
 header :: Text
 header =
-  T.unlines
+  unlines
     [ "\"use strict\";",
       "function __print(s){ process.stdout.write(String(s)); return undefined; }"
     ]
@@ -42,7 +42,7 @@ header =
 --   when run as a script, call 'main' with a single command-line argument (or empty).
 footer :: Text
 footer =
-  T.unlines
+  unlines
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",
       "  const arg = process.argv[2] ?? \"\";",
@@ -105,7 +105,7 @@ jsString = \t -> "\"" <> T.concatMap esc t <> "\""
       '\"' -> "\\\""
       '\\' -> "\\\\"
       '\0' -> "\\0"
-      _ -> T.singleton c
+      _ -> one c
 
 -- | Simple name mangling:
 --   • keep 'main' unchanged (needed by the runner),

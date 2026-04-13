@@ -8,4 +8,5 @@ data Target
   | TargetLLVM
   | TargetJVM
   | TargetWASM
+  | TargetCLR
   deriving stock (Eq, Show)

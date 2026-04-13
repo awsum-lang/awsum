@@ -4,21 +4,21 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 ## Overview
 
-| | JS | Lua | LLVM | JVM | WASM |
-|---|---|---|---|---|---|
-| **Runtime** | Node.js 14+ | Lua 5.1+ | Native binary (via Clang 15+) | Java 7+ | wasmtime (WASI) |
-| **String type** | Native JS string | Native Lua string | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) | `i32` pointer to null-terminated bytes in linear memory |
-| **Concat** | `+` | `..` | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` | `__concat`: strlen + bump alloc + memcpy |
-| **Print** | `process.stdout.write(s)` | `io.write(s)` | `printf("%s", s)` | `System.out.print(s)` | WASI `fd_write` via iovec |
-| **Constants** | `const name = expr;` | `name = expr` (global) | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use |
-| **Functions** | `function` declaration (hoisted) | `function ... end` | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` |
-| **Higher-order** | First-class values | First-class values | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `funcref` table + `call_indirect` |
-| **Memory** | GC | GC | Manual (`malloc`, no `free`) | GC | Bump allocator (no free) |
-| **Name mangling** | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) |
+| | JS | Lua | LLVM | JVM | WASM | CLR |
+|---|---|---|---|---|---|---|
+| **Runtime** | Node.js 14+ | Lua 5.1+ | Native binary (via Clang 15+) | Java 7+ | wasmtime (WASI) | .NET 9+ (dotnet) |
+| **String type** | Native JS string | Native Lua string | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) | `i32` pointer to null-terminated bytes in linear memory | `System.String` (boxed as `object`) |
+| **Concat** | `+` | `..` | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` | `__concat`: strlen + bump alloc + memcpy | `System.String.Concat(object, object)` |
+| **Print** | `process.stdout.write(s)` | `io.write(s)` | `printf("%s", s)` | `System.out.print(s)` | WASI `fd_write` via iovec | `System.Console.Write(object)` |
+| **Constants** | `const name = expr;` | `name = expr` (global) | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use | Zero-arg static method, called on each use |
+| **Functions** | `function` declaration (hoisted) | `function ... end` | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` | `static object v_name(object ...) { ... }` |
+| **Higher-order** | First-class values | First-class values | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `funcref` table + `call_indirect` | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) |
+| **Memory** | GC | GC | Manual (`malloc`, no `free`) | GC | Bump allocator (no free) | GC |
+| **Name mangling** | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) | `v_` prefix for all (including `main` → `v_main`) |
 
 ## String Concatenation
 
-All five backends guarantee identical results because the type checker ensures both operands are `String`.
+All six backends guarantee identical results because the type checker ensures both operands are `String`.
 
 **JS** — uses native `+`, which is string concatenation when both sides are strings:
 ```javascript
@@ -55,6 +55,12 @@ invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/
 ;; strlen(a) + strlen(b) → alloc(la+lb+1) → memcpy(buf,a,la) → memcpy(buf+la,b,lb) → store8 0
 ```
 
+**CLR** — casts both operands to `object` and calls `System.String.Concat`:
+```
+call object AwsumMain::__concat(object, object)
+// where __concat calls: string [System.Runtime]System.String::Concat(object, object)
+```
+
 ## Print
 
 All backends print without a trailing newline — `IO.Stdout.print` outputs exactly what it receives.
@@ -69,6 +75,8 @@ All backends print without a trailing newline — `IO.Stdout.print` outputs exac
 
 **WASM**: WASI `fd_write` — stores an iovec (pointer + length) at scratch memory offset 0, calls `fd_write(1, iov, 1, nwritten)`.
 
+**CLR**: `System.Console.Write(object)` — calls `ToString()` implicitly, buffered, flushed on exit.
+
 ## Constants (CValDef)
 
 Zero-argument definitions like `greeting = "Hello"` are compiled differently per target:
@@ -82,6 +90,8 @@ Zero-argument definitions like `greeting = "Hello"` are compiled differently per
 **JVM**: Zero-arg static method `static Object v_greeting() { ... }` — same approach as LLVM, called each time. The JVM JIT compiler can inline these.
 
 **WASM**: Zero-arg function `(func $v_greeting (result i32) ...)` — same approach as LLVM and JVM.
+
+**CLR**: Zero-arg static method `static object v_greeting() { ... }` — same approach as JVM. The .NET JIT can inline these.
 
 ## Higher-Order Functions
 
@@ -129,6 +139,24 @@ Direct calls to known functions use `invokestatic` — no MethodHandle overhead.
 ```
 
 Direct calls to known functions use `call $v_fn` — no table indirection.
+
+**CLR**: Function values are `System.Func<object,...,object>` delegates. When a function is used as a value, it is wrapped via `ldftn` + `newobj Func`. Indirect calls use `callvirt Invoke(...)`:
+```
+; compose g f x = g (f x)
+.method public hidebysig static object v_compose(object, object, object) cil managed
+  ldarg.1                          ; f (Func delegate)
+  castclass Func`2<object, object>
+  ldarg.2                          ; x
+  callvirt instance object Func`2<object, object>::Invoke(object)
+  ; g(result)
+  ldarg.0                          ; g (Func delegate)
+  castclass Func`2<object, object>
+  swap
+  callvirt instance object Func`2<object, object>::Invoke(object)
+  ret
+```
+
+Direct calls to known functions use `call object AwsumMain::v_fn(...)` — no delegate overhead.
 
 ## Entry Points
 
@@ -205,11 +233,34 @@ call_main:
   (drop (call $v_main (call $__get_arg))))
 ```
 
+**CLR** (`.entrypoint` static `Main(string[])`):
+```
+.method public hidebysig static void Main(string[]) cil managed
+{
+  .entrypoint
+  ldarg.0
+  ldlen
+  conv.i4
+  ldc.i4.1
+  bge.s has_arg
+  ldstr ""
+  br.s call_main
+has_arg:
+  ldarg.0
+  ldc.i4.0
+  ldelem.ref
+call_main:
+  call object AwsumMain::v_main(object)
+  pop
+  ret
+}
+```
+
 ## Name Mangling
 
 All targets prefix user names with `v_` and replace non-alphanumeric characters (except `_` and `'`) with `_`.
 
-The difference: JS and Lua keep `main` unchanged because their runners call `main(arg)` by name. LLVM and JVM mangle `main` to `v_main` because `main` is reserved as the entry point in both targets.
+The difference: JS and Lua keep `main` unchanged because their runners call `main(arg)` by name. LLVM, JVM, WASM, and CLR mangle `main` to `v_main` because `main`/`_start`/`Main` is reserved as the entry point in those targets.
 
 ## LLVM-Specific Details
 
@@ -268,3 +319,21 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 **Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
 
 **~30 opcodes**: The assembler uses approximately 30 WASM opcodes — enough for string manipulation, control flow, memory access, and indirect calls.
+
+## CLR-Specific Details
+
+**Binary format**: The `.dll` is a PE (Portable Executable) file generated directly in Haskell (`Awsum.Codegen.CLR.Assemble`), with no external tools — no `ilasm`, no `csc`. Only `dotnet` is needed to run. The assembler emits DOS header, PE/COFF headers, a `.text` section with CLR metadata and CIL method bodies.
+
+**Metadata**: The PE file contains 8 CLR metadata tables (Module, TypeRef, TypeDef, MethodDef, Param, MemberRef, TypeSpec, Assembly, AssemblyRef) and 4 metadata heaps (#Strings, #US for user strings in UTF-16LE, #Blob for signatures, #GUID).
+
+**Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. IOUnit is `null`.
+
+**Func delegates for higher-order functions**: When a function is used as a value (passed as an argument), it is wrapped in a `System.Func` delegate via `ldftn` + `newobj`. The arity determines the generic instantiation: a 1-arg function becomes `Func<object, object>`, a 2-arg function becomes `Func<object, object, object>`, etc. Indirect calls use `callvirt Invoke(...)` on the delegate. Direct calls to known functions use `call` directly — no delegate overhead.
+
+**Generic type variables in signatures**: MemberRef signatures for `Invoke` on generic Func TypeSpec instantiations use `ELEMENT_TYPE_VAR` (0x13) for type parameters, not concrete `object` types. This is required by the CLR metadata specification.
+
+**Runtime configuration**: Running with `dotnet` requires an `AwsumMain.runtimeconfig.json` alongside the DLL. The compiler generates a fixed template targeting .NET 9.0 with `"rollForward": "LatestMajor"` for forward-compatibility with newer .NET versions.
+
+**Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
+
+**~15 CIL opcodes**: The assembler uses approximately 15 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`/`ldc.i4.1`, `bge.s`, `br.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`.

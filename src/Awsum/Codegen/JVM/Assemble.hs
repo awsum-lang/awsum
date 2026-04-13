@@ -11,12 +11,10 @@ module Awsum.Codegen.JVM.Assemble (assembleJVM) where
 import Awsum.Core
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
-import Data.ByteString.Lazy qualified as BL
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as TE
 import Relude
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -27,7 +25,7 @@ import Relude
 assembleJVM :: CoreProgram -> BS.ByteString
 assembleJVM prog =
   let (methods, finalSt) = runState (doAssemble prog) emptyPool
-   in BL.toStrict (B.toLazyByteString (buildClassFile finalSt methods))
+   in toStrict (B.toLazyByteString (buildClassFile finalSt methods))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Constant pool types
@@ -83,7 +81,7 @@ addEntry key entry = do
       pure idx
 
 addUtf8 :: Text -> AsmM Word16
-addUtf8 t = addEntry (KUtf8 t) (CPUtf8 (TE.encodeUtf8 t))
+addUtf8 t = addEntry (KUtf8 t) (CPUtf8 (encodeUtf8 t))
 
 addClass :: Text -> AsmM Word16
 addClass name = do

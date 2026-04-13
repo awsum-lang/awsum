@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  workflow_call:
+
+jobs:
+  hlint:
+    name: HLint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up HLint
+        uses: haskell-actions/hlint-setup@v2
+        with:
+          # Note: The quotes are important:
+          # "3.10" -> 3.10 will be installed
+          # 3.10 -> 3.1 will be installed
+          version: "3.10"
+
+      - name: Run HLint
+        uses: haskell-actions/hlint-run@v2
+        with:
+          path: .
+          hlint-bin: hlint --hint=.hlint.yaml
+          fail-on: warning
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Set up Lua
+        uses: leafo/gh-actions-lua@v11
+        with:
+          luaVersion: "5.4.8"
+
+      - name: Set up Clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Set up Wasmtime
+        uses: bytecodealliance/actions/wasmtime/setup@v1
+        with:
+          version: "latest"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9"
+
+      - name: Set up Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: latest
+          stack-no-global: true
+
+      - name: Restore ~/.stack cache
+        id: cache-stack-global
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+
+      - name: Restore .stack-work cache
+        id: cache-stack-work
+        uses: actions/cache/restore@v5
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal', 'src/**/*.hs', 'test/**/*.hs', 'awsum/**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+
+      - name: Build dependencies
+        run: stack build --only-dependencies --test --no-run-tests
+
+      - name: Build
+        run: stack build --pedantic --copy-bins --local-bin-path target --test --no-run-tests
+
+      - name: Test
+        run: stack test --pedantic
+
+      - name: Save ~/.stack cache
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.stack
+          key: ${{ steps.cache-stack-global.outputs.cache-primary-key }}
+
+      - name: Save .stack-work cache
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: .stack-work
+          key: ${{ steps.cache-stack-work.outputs.cache-primary-key }}

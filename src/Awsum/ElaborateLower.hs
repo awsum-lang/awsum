@@ -38,7 +38,7 @@ elaborateLowerProgram prog = do
 --   • Zero-arg defs become constants ('CValDef'), others become first-order functions.
 lowerDecl :: Decl -> Either TypeError (Maybe CDecl)
 lowerDecl = \case
-  Sig _ _ _ -> Right Nothing
+  Sig {} -> Right Nothing
   CommentDecl _ -> Right Nothing
   FunDef n args body _ -> do
     body' <- lowerExpr body

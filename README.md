@@ -17,6 +17,7 @@ A functional language where computation results are guaranteed equivalent across
 - **LLVM** — native binary via Clang (LLVM 15+)
 - **JVM** — Java 7+ bytecode (generated directly, no Jasmin/javac)
 - **WASM** — WebAssembly via WASI (wasmtime)
+- **CLR** — .NET 9+ DLL (generated directly, no ilasm/csc)
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
@@ -68,7 +69,7 @@ Install only the runtimes for the targets you need:
 
 ```sh
 # JS — Node.js interpreter
-nvm install 22
+# https://www.nvmnode.com/
 
 # Lua — Lua interpreter
 brew install lua
@@ -76,25 +77,29 @@ brew install lua
 # LLVM — native binary compiler (opaque pointer support requires 15+)
 brew install llvm@15
 
-# JVM — Java runtime (class version 51.0 requires 7+)
-brew install openjdk
+# JVM — Java runtime (Java 7+)
+# https://get-coursier.io/
 
 # WASM — WebAssembly runtime with WASI support
 brew install wasmtime
 
 # WABT — WebAssembly Binary Toolkit (optional, for validating generated .wasm)
 brew install wabt
+
+# CLR — .NET runtime (.NET 9+)
+# https://dotnet.microsoft.com/download
+brew install dotnet
 ```
 
 ## Usage
 
-- `awsum build FILE [-t js] [-o OUT]` — compile to target and write to file (or stdout). For JVM and WASM, outputs binary (`.class`/`.wasm`).
+- `awsum build FILE [-t js] [-o OUT]` — compile to target and write to file (or stdout). For JVM, WASM, and CLR, outputs binary (`.class`/`.wasm`/`.dll`).
 - `awsum run FILE [-t js] [--input TEXT | --stdin]` — compile to a temp file and execute with the system runtime, passing input to main.
 - `awsum check FILE` — parse and typecheck; prints `OK` or a descriptive error.
 - `awsum format FILE [-i|--in-place]` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
-- `awsum asm FILE [-t jvm|wasm]` — print target assembly text: Jasmin-like for JVM, WAT for WASM (for debugging).
+- `awsum asm FILE [-t jvm|wasm|clr]` — print target assembly text: Jasmin-like for JVM, WAT for WASM, CIL for CLR (for debugging).
 - `awsum --version` — show version
 
 Examples:
@@ -105,21 +110,25 @@ awsum build test/sources/hello.aww -t lua  -o out.lua && lua out.lua "world"
 awsum build test/sources/hello.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
 awsum build test/sources/hello.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
 awsum build test/sources/hello.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
+awsum build test/sources/hello.aww -t clr  -o AwsumMain.dll   && dotnet AwsumMain.dll "world"
 
 awsum asm test/sources/hello.aww -t jvm   # Jasmin-like text (for inspection)
 awsum asm test/sources/hello.aww -t wasm  # WAT text (for inspection)
+awsum asm test/sources/hello.aww -t clr   # CIL text (for inspection)
 
 awsum run test/sources/hello.aww -t js   --input "world"
 awsum run test/sources/hello.aww -t lua  --input "world"
 awsum run test/sources/hello.aww -t llvm --input "world"
 awsum run test/sources/hello.aww -t jvm  --input "world"
 awsum run test/sources/hello.aww -t wasm --input "world"
+awsum run test/sources/hello.aww -t clr  --input "world"
 
 echo "world" | awsum run test/sources/hello.aww -t js   --stdin
 echo "world" | awsum run test/sources/hello.aww -t lua  --stdin
 echo "world" | awsum run test/sources/hello.aww -t llvm --stdin
 echo "world" | awsum run test/sources/hello.aww -t jvm  --stdin
 echo "world" | awsum run test/sources/hello.aww -t wasm --stdin
+echo "world" | awsum run test/sources/hello.aww -t clr  --stdin
 
 awsum check  test/sources/hello.aww
 awsum format test/sources/hello.aww -i
@@ -144,25 +153,7 @@ When making trade-offs, the compiler follows this priority:
 
 ## Roadmap
 
-### Language
-
-- Numbers and `Either`-based arithmetic with equivalent semantics across targets
-- Algebraic data types and pattern matching
-- Let-bindings and where-clauses
-- Platform-aware effects: compile-time gating of `Terminal`, `DOM`, `Window`, `Ports`
-- Application formats: CLI, browser, library
-
-### AI tooling
-
-- MCP server exposing compiler intelligence to AI agents:
-  - `awsum/typecheck` — typecheck a snippet without writing to disk
-  - `awsum/typeof` — get the type of an expression or definition by name
-  - `awsum/completions` — list valid completions at a given position
-  - `awsum/signature` — look up a function signature by name
-  - `awsum/errors` — structured errors as JSON with source spans
-  - `awsum/available-effects` — list effects available for a given target
-  - `awsum/project-index` — all definitions with types, without function bodies
-- Grammar-constrained generation via EBNF for syntactically valid AI output
+See [Roadmap](docs/roadmap.md) for planned features and design notes.
 
 ## Notes
 

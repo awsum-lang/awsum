@@ -66,7 +66,7 @@ renderDecl = \case
   CommentDecl c ->
     renderComment c
   where
-    renderTrailingComment = maybe ("" :: Text) (\t -> " --" <> t)
+    renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 renderComment :: Comment -> Text
 renderComment = \case
@@ -137,7 +137,7 @@ renderExprPrec ctx e =
       '\"' -> "\\\""
       '\\' -> "\\\\"
       '\0' -> "\\0"
-      _ -> T.singleton c
+      _ -> one c
 
 -- | Utility: surround text with parentheses.
 parens :: Text -> Text

@@ -6,8 +6,15 @@ _default:
 # TODO: check-tooling
 # TODO: weeder
 # TODO: rerun-weeder
-# TODO: lint-check
-# TODO: lint-fix
+lint-check:
+  hlint .
+
+lint-fix:
+  #!/bin/sh
+  set -eu
+  # Note: on `find`: it produces a list of all .hs files instead of passing the current directory to hlint. It is required for `--refactor` to work:
+  # `hlint: Refactor flag can only be used with an individual file`
+  find . -name '*.hs' | xargs -L1 hlint --refactor --refactor-options="--inplace"
 
 # Run tests
 test:
@@ -60,8 +67,8 @@ fix:
   bash scripts/detect-cyrillic.sh
   echo "Format..."
   just format-fix
-  # echo "Lint..."
-  # just lint-fix  # disabled for nightly
+  echo "Lint..."
+  just lint-fix
   echo "Clean..."
   just clean
   echo "Build..."

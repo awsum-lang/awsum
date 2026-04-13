@@ -1,5 +1,7 @@
 module Awsum.ProgramSnapshotsSpec (spec) where
 
+import Awsum.Codegen.CLR (codegenCLR)
+import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
@@ -14,7 +16,6 @@ import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Common.File
 import Control.Exception (IOException, try)
-import Data.ByteString qualified as BS
 import Matchers
 import Relude
 import System.Exit (ExitCode (..))
@@ -42,7 +43,9 @@ data CompileResult = CompileResult
     jvmCompiledCode :: Text,
     jvmClassBytes :: ByteString,
     wasmCompiledCode :: Text,
-    wasmBinary :: ByteString
+    wasmBinary :: ByteString,
+    clrCompiledCode :: Text,
+    clrBinary :: ByteString
   }
 
 compileAll :: Text -> IO CompileResult
@@ -68,7 +71,9 @@ compileAll sourceFile = do
         jvmCompiledCode = codegenJVM core,
         jvmClassBytes = assembleJVM core,
         wasmCompiledCode = codegenWASM core,
-        wasmBinary = assembleWASM core
+        wasmBinary = assembleWASM core,
+        clrCompiledCode = codegenCLR core,
+        clrBinary = assembleCLR core
       }
 
 testProgram :: Text -> [Text] -> Spec
@@ -90,12 +95,14 @@ testProgram sourceFile inputFiles = do
       res.jvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.j")
     it "WASM code should match snapshot" $ \res -> do
       res.wasmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.wat")
+    it "CLR code should match snapshot" $ \res -> do
+      res.clrCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.il")
 
   traverse_ (testProgramAgainstInput sourceFile) inputFiles
 
 testProgramAgainstInput :: Text -> Text -> Spec
 testProgramAgainstInput sourceFile inputFile = do
-  let prepare :: IO (Text, Text, Text, Text, Text) = do
+  let prepare :: IO (Text, Text, Text, Text, Text, Text) = do
         input <- readFileTextUtf8 $ toString $ sourcesDir <> inputFile
 
         -- TODO: Make program compile and files be written exactly once per sourceFile
@@ -121,18 +128,24 @@ testProgramAgainstInput sourceFile inputFile = do
         wasmOutput <- case wasmRes of
           Left e -> error $ "WASM failed" <> e
           Right x -> pure x
-        pure (jsOutput, luaOutput, llvmOutput, jvmOutput, wasmOutput)
-  beforeAll prepare $ describe (toString $ inputFile) $ do
-    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, _wasmOutput) -> do
+        clrRes <- runCLR res.clrBinary input
+        clrOutput <- case clrRes of
+          Left e -> error $ "CLR failed" <> e
+          Right x -> pure x
+        pure (jsOutput, luaOutput, llvmOutput, jvmOutput, wasmOutput, clrOutput)
+  beforeAll prepare $ describe (toString inputFile) $ do
+    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, _wasmOutput, _clrOutput) -> do
       jsOutput `shouldMatchTextSnapshot` (sourceFile <> "/output." <> inputFile)
-    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput, _llvmOutput, _jvmOutput, _wasmOutput) -> do
+    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput, _llvmOutput, _jvmOutput, _wasmOutput, _clrOutput) -> do
       jsOutput `shouldBe` luaOutput
-    it "JS stdout and LLVM stdout should be equivalent" $ \(jsOutput, _luaOutput, llvmOutput, _jvmOutput, _wasmOutput) -> do
+    it "JS stdout and LLVM stdout should be equivalent" $ \(jsOutput, _luaOutput, llvmOutput, _jvmOutput, _wasmOutput, _clrOutput) -> do
       jsOutput `shouldBe` llvmOutput
-    it "JS stdout and JVM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, jvmOutput, _wasmOutput) -> do
+    it "JS stdout and JVM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, jvmOutput, _wasmOutput, _clrOutput) -> do
       jsOutput `shouldBe` jvmOutput
-    it "JS stdout and WASM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, wasmOutput) -> do
+    it "JS stdout and WASM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, wasmOutput, _clrOutput) -> do
       jsOutput `shouldBe` wasmOutput
+    it "JS stdout and CLR stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, _wasmOutput, clrOutput) -> do
+      jsOutput `shouldBe` clrOutput
 
 runJs :: Text -> Text -> IO (Either Text Text)
 runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -177,7 +190,7 @@ runLLVM code input = withSystemTempDirectory "awsum" $ \dir -> do
 runJVM :: ByteString -> Text -> IO (Either Text Text)
 runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let classFile = dir </> "AwsumMain.class"
-  BS.writeFile classFile classBytes
+  writeFileBS classFile classBytes
   eRes <- try @IOException (readProcessWithExitCode "java" ["-cp", dir, "AwsumMain", toString input] "")
   case eRes of
     Left ex -> pure (Left ("failed to start java: " <> show ex))
@@ -188,10 +201,36 @@ runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
 runWASM :: ByteString -> Text -> IO (Either Text Text)
 runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let wasmFile = dir </> "out.wasm"
-  BS.writeFile wasmFile wasmBytes
+  writeFileBS wasmFile wasmBytes
   eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
   case eRes of
     Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
     Right (ExitSuccess, out, _) -> pure (Right (toText out))
     Right (ExitFailure _, _out, err) ->
       pure (Left ("wasmtime exited with non-zero status:\n" <> toText err))
+
+runCLR :: ByteString -> Text -> IO (Either Text Text)
+runCLR dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let dllFile = dir </> "AwsumMain.dll"
+      rcFile = dir </> "AwsumMain.runtimeconfig.json"
+  writeFileBS dllFile dllBytes
+  writeFileText rcFile runtimeConfigJson
+  eRes <- try @IOException (readProcessWithExitCode "dotnet" [dllFile, toString input] "")
+  case eRes of
+    Left ex -> pure (Left ("failed to start dotnet: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left ("dotnet exited with non-zero status:\n" <> toText err))
+
+runtimeConfigJson :: Text
+runtimeConfigJson =
+  "{\n\
+  \  \"runtimeOptions\": {\n\
+  \    \"tfm\": \"net9.0\",\n\
+  \    \"framework\": {\n\
+  \      \"name\": \"Microsoft.NETCore.App\",\n\
+  \      \"version\": \"9.0.0\"\n\
+  \    },\n\
+  \    \"rollForward\": \"LatestMajor\"\n\
+  \  }\n\
+  \}\n"

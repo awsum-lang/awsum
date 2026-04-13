@@ -1,4 +1,5 @@
 name: Check and Build
+
 on:
   push:
     branches:
@@ -16,40 +17,5 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  main-job:
-    name: Check and Build
-    runs-on: ubuntu-24.04
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up NODE
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22.19
-
-      - name: Set up Lua
-        uses: leafo/gh-actions-lua@v11
-        with:
-          luaVersion: "5.4.8"
-
-      - name: Set up Clang
-        run: sudo apt-get update && sudo apt-get install -y clang
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Set up Wasmtime
-        uses: bytecodealliance/actions/wasmtime/setup@v1
-        with:
-          version: "latest"
-
-      - name: Build and test
-        uses: freckle/stack-action@v5
-        id: stack
-        with:
-          test: true
-          stack-build-arguments: --pedantic --copy-bins --local-bin-path target
+  ci:
+    uses: ./.github/workflows/check-and-build.yml

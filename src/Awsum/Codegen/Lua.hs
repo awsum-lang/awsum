@@ -37,7 +37,7 @@ codegenLua (CoreProgram decls) =
 --   • '__print' writes without a newline (Awsum's IO.Stdout.print is "print exactly").
 header :: Text
 header =
-  T.unlines
+  unlines
     [ "local function __print(s) io.write(tostring(s)); return nil end"
     ]
 
@@ -47,7 +47,7 @@ header =
 --   Then call 'main' with a single argument (or empty string) if it exists.
 footer :: Text
 footer =
-  T.unlines
+  unlines
     [ "",
       "local ok, dbg = pcall(require, 'debug')",
       "local should_run = false",
@@ -117,7 +117,7 @@ luaString = \t -> "\"" <> T.concatMap esc t <> "\""
       '\"' -> "\\\""
       '\\' -> "\\\\"
       '\0' -> "\\0"
-      _ -> T.singleton c
+      _ -> one c
 
 -- | Simple name mangling:
 --   • keep 'main' unchanged (needed by the runner),
