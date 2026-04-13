@@ -1,8 +1,12 @@
 module Awsum.ProgramSnapshotsSpec (spec) where
 
 import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.JVM (codegenJVM)
+import Awsum.Codegen.JVM.Assemble (assembleJVM)
+import Awsum.Codegen.LLVM (codegenLLVM)
 import Awsum.Codegen.Lua (codegenLua)
 import Awsum.Core
+import Data.ByteString qualified as BS
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram)
@@ -31,7 +35,10 @@ data CompileResult = CompileResult
     core :: CoreProgram,
     formattedSource :: Text,
     jsCompiledCode :: Text,
-    luaCompiledCode :: Text
+    luaCompiledCode :: Text,
+    llvmCompiledCode :: Text,
+    jvmCompiledCode :: Text,
+    jvmClassBytes :: ByteString
   }
 
 compileAll :: Text -> IO CompileResult
@@ -52,7 +59,10 @@ compileAll sourceFile = do
         core = core,
         formattedSource = formattedSource,
         jsCompiledCode = codegenJS core,
-        luaCompiledCode = codegenLua core
+        luaCompiledCode = codegenLua core,
+        llvmCompiledCode = codegenLLVM core,
+        jvmCompiledCode = codegenJVM core,
+        jvmClassBytes = assembleJVM core
       }
 
 testProgram :: Text -> [Text] -> Spec
@@ -68,12 +78,16 @@ testProgram sourceFile inputFiles = do
       res.jsCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.js")
     it "Lua code should match snapshot" $ \res -> do
       res.luaCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.lua")
+    it "LLVM code should match snapshot" $ \res -> do
+      res.llvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.ll")
+    it "JVM code should match snapshot" $ \res -> do
+      res.jvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.j")
 
   traverse_ (testProgramAgainstInput sourceFile) inputFiles
 
 testProgramAgainstInput :: Text -> Text -> Spec
 testProgramAgainstInput sourceFile inputFile = do
-  let prepare :: IO (Text, Text) = do
+  let prepare :: IO (Text, Text, Text, Text) = do
         input <- readFileTextUtf8 $ toString $ sourcesDir <> inputFile
 
         -- TODO: Make program compile and files be written exactly once per sourceFile
@@ -87,12 +101,24 @@ testProgramAgainstInput sourceFile inputFile = do
         luaOutput <- case luaRes of
           Left e -> error $ "Lua failed" <> e
           Right x -> pure x
-        pure (jsOutput, luaOutput)
+        llvmRes <- runLLVM res.llvmCompiledCode input
+        llvmOutput <- case llvmRes of
+          Left e -> error $ "LLVM failed" <> e
+          Right x -> pure x
+        jvmRes <- runJVM res.jvmClassBytes input
+        jvmOutput <- case jvmRes of
+          Left e -> error $ "JVM failed" <> e
+          Right x -> pure x
+        pure (jsOutput, luaOutput, llvmOutput, jvmOutput)
   beforeAll prepare $ describe (toString $ inputFile) $ do
-    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput) -> do
+    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput) -> do
       jsOutput `shouldMatchTextSnapshot` (sourceFile <> "/output." <> inputFile)
-    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput) -> do
+    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput, _llvmOutput, _jvmOutput) -> do
       jsOutput `shouldBe` luaOutput
+    it "JS stdout and LLVM stdout should be equivalent" $ \(jsOutput, _luaOutput, llvmOutput, _jvmOutput) -> do
+      jsOutput `shouldBe` llvmOutput
+    it "JS stdout and JVM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, jvmOutput) -> do
+      jsOutput `shouldBe` jvmOutput
 
 runJs :: Text -> Text -> IO (Either Text Text)
 runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -115,3 +141,32 @@ runLua code input = withSystemTempDirectory "awsum" $ \dir -> do
     Right (ExitSuccess, out, _) -> pure (Right (toText out))
     Right (ExitFailure _, _out, err) ->
       pure (Left ("lua exited with non-zero status:\n" <> toText err))
+
+runLLVM :: Text -> Text -> IO (Either Text Text)
+runLLVM code input = withSystemTempDirectory "awsum" $ \dir -> do
+  let llFile = dir </> "out.ll"
+      binFile = dir </> "out"
+  writeFileText llFile code
+  eClang <- try @IOException (readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] "")
+  case eClang of
+    Left ex -> pure (Left ("failed to start clang: " <> show ex))
+    Right (ExitFailure _, _, err) ->
+      pure (Left ("clang exited with non-zero status:\n" <> toText err))
+    Right (ExitSuccess, _, _) -> do
+      eRun <- try @IOException (readProcessWithExitCode binFile [toString input] "")
+      case eRun of
+        Left ex -> pure (Left ("failed to run binary: " <> show ex))
+        Right (ExitSuccess, out, _) -> pure (Right (toText out))
+        Right (ExitFailure _, _, err) ->
+          pure (Left ("binary exited with non-zero status:\n" <> toText err))
+
+runJVM :: ByteString -> Text -> IO (Either Text Text)
+runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let classFile = dir </> "AwsumMain.class"
+  BS.writeFile classFile classBytes
+  eRes <- try @IOException (readProcessWithExitCode "java" ["-cp", dir, "AwsumMain", toString input] "")
+  case eRes of
+    Left ex -> pure (Left ("failed to start java: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left ("java exited with non-zero status:\n" <> toText err))

@@ -71,7 +71,9 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+    - bytestring # for JVM bytecode assembler
     - megaparsec # for parser
+    - text # for Data.Text.Encoding (JVM assembler)
 
 executables:
   awsum:
