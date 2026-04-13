@@ -23,11 +23,10 @@ Program
                 , spanEndCol = 42
                 }
             ) "Color" []
-            ( ConDef "Red" [] :|
-                [ ConDef "Green" []
-                , ConDef "Blue" []
-                ]
-            ) Nothing
+            [ ConDef "Red" []
+            , ConDef "Green" []
+            , ConDef "Blue" []
+            ] Nothing
         , CommentDecl
             ( LineComment " before show sig" )
         , Sig

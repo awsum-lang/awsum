@@ -3,6 +3,7 @@ module Main (main) where
 import Awsum.ArbitraryInstances ()
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.ProgramSnapshotsSpec qualified
@@ -20,6 +21,7 @@ main = hspec $ do
   typecheckerSpec
   elaborateSpec
   Awsum.ProgramSnapshotsSpec.spec
+  Awsum.ErrorSnapshotsSpec.spec
 
 parserSpec :: Spec
 parserSpec = do
@@ -325,6 +327,28 @@ typecheckerSpec = do
                 "main input = IO.Stdout.print (show Red)"
               ]
           expectedErr = UnreachableCase noSpan "Green"
+      case parseProgram src of
+        Left e -> expectationFailure (toString e)
+        Right p -> typecheckProgram p `shouldBe` Left expectedErr
+
+    it "fails on unreachable case arm for uninhabited constructor (UnreachableCaseUninhabited)" $ do
+      let src =
+            unlines
+              [ "import IO.Stdout",
+                "",
+                "type Never",
+                "",
+                "type Result a e = Ok a | Err e",
+                "",
+                "unwrap : Result String Never -> String",
+                "unwrap r = case r of",
+                "  Ok value -> value",
+                "  Err val -> \"s\"",
+                "",
+                "main : String -> IOUnit",
+                "main input = IO.Stdout.print (unwrap (Ok \"hello\"))"
+              ]
+          expectedErr = UnreachableCaseUninhabited noSpan "Err" (TyCon "Never")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr

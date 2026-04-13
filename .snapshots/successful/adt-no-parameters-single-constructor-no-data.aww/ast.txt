@@ -8,25 +8,20 @@ Program
             { spanStartLine = 3
             , spanStartCol = 1
             , spanEndLine = 3
-            , spanEndCol = 19
+            , spanEndCol = 17
             }
-        ) "Box" [ "a" ]
-        ( ConDef "Box"
-            [ TyVar "a" ] :| []
-        ) Nothing :|
+        ) "Unit" []
+        [ ConDef "Unit" [] ] Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 5
                 , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 30
+                , spanEndCol = 22
                 }
-            ) "unwrap"
+            ) "show"
             ( TyArrow
-                ( TyApp
-                    ( TyCon "Box" )
-                    ( TyCon "String" )
-                )
+                ( TyCon "Unit" )
                 ( TyCon "String" )
             ) Nothing
         , FunDef
@@ -34,40 +29,38 @@ Program
                 { spanStartLine = 6
                 , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 21
+                , spanEndCol = 17
                 }
-            ) "unwrap" [ "b" ]
+            ) "show" [ "u" ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 6
-                    , spanStartCol = 12
+                    , spanStartCol = 10
                     , spanEndLine = 7
-                    , spanEndCol = 21
+                    , spanEndCol = 17
                     }
                 )
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 6
-                        , spanStartCol = 17
+                        , spanStartCol = 15
                         , spanEndLine = 6
-                        , spanEndCol = 19
+                        , spanEndCol = 17
                         }
                     )
-                    ( QName [] "b" )
+                    ( QName [] "u" )
                 )
                 ( CaseAlt []
-                    ( PCon "Box"
-                        [ PVar "value" ]
-                    )
-                    ( EVar
+                    ( PCon "Unit" [] )
+                    ( ELit
                         ( SrcSpan
                             { spanStartLine = 7
-                            , spanStartCol = 16
+                            , spanStartCol = 11
                             , spanEndLine = 7
-                            , spanEndCol = 21
+                            , spanEndCol = 17
                             }
                         )
-                        ( QName [] "value" )
+                        ( LString "Unit" )
                     ) Nothing :| []
                 ) []
             ) Nothing
@@ -88,7 +81,7 @@ Program
                 { spanStartLine = 10
                 , spanStartCol = 1
                 , spanEndLine = 10
-                , spanEndCol = 52
+                , spanEndCol = 41
                 }
             ) "main" [ "input" ]
             ( EApp
@@ -96,7 +89,7 @@ Program
                     { spanStartLine = 10
                     , spanStartCol = 14
                     , spanEndLine = 10
-                    , spanEndCol = 52
+                    , spanEndCol = 41
                     }
                 )
                 ( EVar
@@ -118,7 +111,7 @@ Program
                         { spanStartLine = 10
                         , spanStartCol = 30
                         , spanEndLine = 10
-                        , spanEndCol = 52
+                        , spanEndCol = 41
                         }
                     )
                     ( EApp
@@ -126,7 +119,7 @@ Program
                             { spanStartLine = 10
                             , spanStartCol = 31
                             , spanEndLine = 10
-                            , spanEndCol = 51
+                            , spanEndCol = 40
                             }
                         )
                         ( EVar
@@ -134,47 +127,19 @@ Program
                                 { spanStartLine = 10
                                 , spanStartCol = 31
                                 , spanEndLine = 10
-                                , spanEndCol = 38
+                                , spanEndCol = 36
                                 }
                             )
-                            ( QName [] "unwrap" )
+                            ( QName [] "show" )
                         )
-                        ( EParens
+                        ( ECon
                             ( SrcSpan
                                 { spanStartLine = 10
-                                , spanStartCol = 38
+                                , spanStartCol = 36
                                 , spanEndLine = 10
-                                , spanEndCol = 51
+                                , spanEndCol = 40
                                 }
-                            )
-                            ( EApp
-                                ( SrcSpan
-                                    { spanStartLine = 10
-                                    , spanStartCol = 39
-                                    , spanEndLine = 10
-                                    , spanEndCol = 50
-                                    }
-                                )
-                                ( ECon
-                                    ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 39
-                                        , spanEndLine = 10
-                                        , spanEndCol = 43
-                                        }
-                                    ) "Box"
-                                )
-                                ( ELit
-                                    ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 43
-                                        , spanEndLine = 10
-                                        , spanEndCol = 50
-                                        }
-                                    )
-                                    ( LString "hello" )
-                                )
-                            )
+                            ) "Unit"
                         )
                     )
                 )

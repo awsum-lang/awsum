@@ -96,8 +96,8 @@ data Decl
     --   Lowering will treat zero-arg defs as /constants/.
     FunDef SrcSpan Name [Name] Expr (Maybe Text)
   | -- | Sum type declaration: @type Bool = True | False@.
-    --   Type parameters (e.g. @type Maybe a = …@) are stored but not yet supported by the checker.
-    TypeDecl SrcSpan Name [Name] (NonEmpty ConDef) (Maybe Text)
+    --   Empty constructor list means uninhabited type (e.g. @type Never@).
+    TypeDecl SrcSpan Name [Name] [ConDef] (Maybe Text)
   | CommentDecl Comment
   deriving stock (Show, Eq)
 

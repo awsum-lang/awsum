@@ -71,8 +71,7 @@ renderDecl = \case
     "type "
       <> name
       <> (if null tvars then "" else " " <> T.intercalate " " tvars)
-      <> " = "
-      <> T.intercalate " | " (map renderConDef (toList cons))
+      <> (if null cons then "" else " = " <> T.intercalate " | " (map renderConDef cons))
       <> renderTrailingComment mc
   CommentDecl c ->
     renderComment c

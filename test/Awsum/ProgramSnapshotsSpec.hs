@@ -35,10 +35,11 @@ spec = describe "Program snapshots" $ do
   testProgram "adt-single-parameter-non-recursive.aww" ["adt-single-parameter-non-recursive.input1.txt"]
   testProgram "adt-single-parameter-single-constructor-no-data.aww" ["adt-single-parameter-single-constructor-no-data.input1.txt"]
   testProgram "adt-single-parameter-single-constructor-with-data.aww" ["adt-single-parameter-single-constructor-with-data.input1.txt"]
+  testProgram "adt-empty-type.aww" ["adt-empty-type.input1.txt"]
   testProgram "improperly-formatted-source.aww" ["improperly-formatted-source.input1.txt"]
 
 sourcesDir :: Text
-sourcesDir = "test/sources/"
+sourcesDir = "test/sources/successful/"
 
 data CompileResult = CompileResult
   { ast :: Program,
@@ -85,25 +86,26 @@ compileAll sourceFile = do
 
 testProgram :: Text -> [Text] -> Spec
 testProgram sourceFile inputFiles = do
+  let snap = "successful/" <> sourceFile
   beforeAll (compileAll sourceFile) $ describe (toString sourceFile) $ do
     it "AST should match snapshot" $ \res -> do
-      res.ast `shouldMatchShowSnapshot` (sourceFile <> "/ast.txt")
+      res.ast `shouldMatchShowSnapshot` (snap <> "/ast.txt")
     it "Core should match snapshot" $ \res -> do
-      res.core `shouldMatchShowSnapshot` (sourceFile <> "/core.txt")
+      res.core `shouldMatchShowSnapshot` (snap <> "/core.txt")
     it "Formatted source should match snapshot" $ \res -> do
-      res.formattedSource `shouldMatchTextSnapshot` (sourceFile <> "/formatted." <> sourceFile)
+      res.formattedSource `shouldMatchTextSnapshot` (snap <> "/formatted." <> sourceFile)
     it "LLVM code should match snapshot" $ \res -> do
-      res.llvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.ll")
+      res.llvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.ll")
     it "JVM code should match snapshot" $ \res -> do
-      res.jvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.j")
+      res.jvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.j")
     it "CLR code should match snapshot" $ \res -> do
-      res.clrCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.il")
+      res.clrCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.il")
     it "WASM code should match snapshot" $ \res -> do
-      res.wasmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.wat")
+      res.wasmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.wat")
     it "JS code should match snapshot" $ \res -> do
-      res.jsCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.js")
+      res.jsCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.js")
     it "Lua code should match snapshot" $ \res -> do
-      res.luaCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.lua")
+      res.luaCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.lua")
 
   traverse_ (testProgramAgainstInput sourceFile) inputFiles
 
@@ -142,7 +144,7 @@ testProgramAgainstInput sourceFile inputFile = do
         pure (llvmOutput, jvmOutput, clrOutput, wasmOutput, jsOutput, luaOutput)
   beforeAll prepare $ describe (toString inputFile) $ do
     it "LLVM stdout should match snapshot" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
-      llvmOutput `shouldMatchTextSnapshot` (sourceFile <> "/output." <> inputFile)
+      llvmOutput `shouldMatchTextSnapshot` ("successful/" <> sourceFile <> "/output." <> inputFile)
     it "LLVM stdout and JVM stdout should be equivalent" $ \(llvmOutput, jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
       llvmOutput `shouldBe` jvmOutput
     it "LLVM stdout and CLR stdout should be equivalent" $ \(llvmOutput, _jvmOutput, clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do

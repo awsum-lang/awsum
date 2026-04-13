@@ -11,10 +11,10 @@ Program
             , spanEndCol = 35
             }
         ) "Lookup" [ "a" ]
-        ( ConDef "Found"
-            [ TyVar "a" ] :|
-            [ ConDef "NotFound" [] ]
-        ) Nothing :|
+        [ ConDef "Found"
+            [ TyVar "a" ]
+        , ConDef "NotFound" []
+        ] Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 5

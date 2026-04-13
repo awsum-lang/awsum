@@ -85,6 +85,7 @@ test-suite awsum-test
   main-is: Main.hs
   other-modules:
       Awsum.ArbitraryInstances
+      Awsum.ErrorSnapshotsSpec
       Awsum.ProgramSnapshotsSpec
       Matchers
       Paths_awsum

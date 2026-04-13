@@ -9,7 +9,7 @@ ModulePath          = UIdent , { "." , UIdent } ;
 
 TopItem             = TopComment | TypeDecl | Sig | FunDef ;
 
-TypeDecl            = "type" , UIdent , { LIdent } , "=" , ConDef , { "|" , ConDef } ;
+TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , ConDef } ] ;
 ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = LIdent , ":" , Type , [ TrailingLineComment ] ;

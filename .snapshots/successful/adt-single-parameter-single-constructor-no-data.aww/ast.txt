@@ -8,20 +8,23 @@ Program
             { spanStartLine = 3
             , spanStartCol = 1
             , spanEndLine = 3
-            , spanEndCol = 17
+            , spanEndCol = 25
             }
-        ) "Unit" []
-        ( ConDef "Unit" [] :| [] ) Nothing :|
+        ) "Phantom" [ "a" ]
+        [ ConDef "Phantom" [] ] Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 5
                 , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 22
+                , spanEndCol = 32
                 }
             ) "show"
             ( TyArrow
-                ( TyCon "Unit" )
+                ( TyApp
+                    ( TyCon "Phantom" )
+                    ( TyCon "String" )
+                )
                 ( TyCon "String" )
             ) Nothing
         , FunDef
@@ -29,15 +32,15 @@ Program
                 { spanStartLine = 6
                 , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 17
+                , spanEndCol = 23
                 }
-            ) "show" [ "u" ]
+            ) "show" [ "p" ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 6
                     , spanStartCol = 10
                     , spanEndLine = 7
-                    , spanEndCol = 17
+                    , spanEndCol = 23
                     }
                 )
                 ( EVar
@@ -48,19 +51,19 @@ Program
                         , spanEndCol = 17
                         }
                     )
-                    ( QName [] "u" )
+                    ( QName [] "p" )
                 )
                 ( CaseAlt []
-                    ( PCon "Unit" [] )
+                    ( PCon "Phantom" [] )
                     ( ELit
                         ( SrcSpan
                             { spanStartLine = 7
-                            , spanStartCol = 11
+                            , spanStartCol = 14
                             , spanEndLine = 7
-                            , spanEndCol = 17
+                            , spanEndCol = 23
                             }
                         )
-                        ( LString "Unit" )
+                        ( LString "Phantom" )
                     ) Nothing :| []
                 ) []
             ) Nothing
@@ -81,7 +84,7 @@ Program
                 { spanStartLine = 10
                 , spanStartCol = 1
                 , spanEndLine = 10
-                , spanEndCol = 41
+                , spanEndCol = 44
                 }
             ) "main" [ "input" ]
             ( EApp
@@ -89,7 +92,7 @@ Program
                     { spanStartLine = 10
                     , spanStartCol = 14
                     , spanEndLine = 10
-                    , spanEndCol = 41
+                    , spanEndCol = 44
                     }
                 )
                 ( EVar
@@ -111,7 +114,7 @@ Program
                         { spanStartLine = 10
                         , spanStartCol = 30
                         , spanEndLine = 10
-                        , spanEndCol = 41
+                        , spanEndCol = 44
                         }
                     )
                     ( EApp
@@ -119,7 +122,7 @@ Program
                             { spanStartLine = 10
                             , spanStartCol = 31
                             , spanEndLine = 10
-                            , spanEndCol = 40
+                            , spanEndCol = 43
                             }
                         )
                         ( EVar
@@ -137,9 +140,9 @@ Program
                                 { spanStartLine = 10
                                 , spanStartCol = 36
                                 , spanEndLine = 10
-                                , spanEndCol = 40
+                                , spanEndCol = 43
                                 }
-                            ) "Unit"
+                            ) "Phantom"
                         )
                     )
                 )

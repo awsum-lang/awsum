@@ -68,6 +68,8 @@ data TypeError
     NonExhaustiveCase SrcSpan Name [Name]
   | -- | A case arm that can never be reached (duplicate constructor).
     UnreachableCase SrcSpan Name
+  | -- | A case arm on a constructor whose field type is uninhabited.
+    UnreachableCaseUninhabited SrcSpan Name Type'
   | -- | Arms of a case expression have different types.
     CaseBranchTypeMismatch Type' Type' Expr
   | -- | Scrutinee of case is not a sum type.
@@ -94,6 +96,7 @@ typeErrorSpan = \case
   UnknownConstructor sp _ -> Just sp
   NonExhaustiveCase sp _ _ -> Just sp
   UnreachableCase sp _ -> Just sp
+  UnreachableCaseUninhabited sp _ _ -> Just sp
   CaseBranchTypeMismatch _ _ e -> Just (exprSpan e)
   CaseOnNonSumType sp _ -> Just sp
 
@@ -116,6 +119,7 @@ prettyPrintTypeError = \case
   UnknownConstructor _ name -> "Unknown constructor: " <> name
   NonExhaustiveCase _ tyName missing -> "Non-exhaustive case on " <> tyName <> ": missing " <> show missing
   UnreachableCase _ name -> "Unreachable case: " <> name <> " is already covered"
+  UnreachableCaseUninhabited _ conName ty -> "Unreachable case: " <> conName <> " can never match because " <> showType ty <> " has no constructors"
   CaseBranchTypeMismatch expected actual _ -> "Case branch type mismatch: expected " <> showType expected <> ", got " <> showType actual
   CaseOnNonSumType _ ty -> "Case on non-sum type: " <> showType ty
   where
@@ -227,9 +231,12 @@ conReturnType tName tvs = foldl' TyApp (TyCon tName) (map TyVar tvs)
 conType :: Name -> [Name] -> [Type'] -> Type'
 conType tName tvs = foldr TyArrow (conReturnType tName tvs)
 
+-- | Type-constructor map: type name → list of constructor names (including empty types).
+type TypeConsMap = M.Map Name [Name]
+
 -- | Build a constructor environment from @type@ declarations.
---   Returns (set of type names, constructor env, constructor value env).
-buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env)
+--   Returns (set of type names, constructor env, constructor value env, type-constructor map).
+buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env, TypeConsMap)
 buildConEnv decls = do
   let typeDefs = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ <- decls]
   -- Check for duplicate type names.
@@ -241,10 +248,15 @@ buildConEnv decls = do
         M.fromList
           [ (qLocal cName, conType tName tvs flds)
           | (_sp, tName, tvs, cs) <- typeDefs,
-            ConDef cName flds <- toList cs
+            ConDef cName flds <- cs
           ]
       typeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDefs]
-  pure (typeNames, conEnv, conValEnv)
+      typeConsMap =
+        M.fromList
+          [ (tName, [cName | ConDef cName _ <- cs])
+          | (_sp, tName, _tvs, cs) <- typeDefs
+          ]
+  pure (typeNames, conEnv, conValEnv, typeConsMap)
   where
     checkDupType seen (sp, n, _tvs, _) =
       if S.member n seen
@@ -252,14 +264,14 @@ buildConEnv decls = do
         else Right (S.insert n seen)
 
     insertCons m (sp, tName, tvs, cs) = do
-      let conNames = [cName | ConDef cName _ <- toList cs]
+      let conNames = [cName | ConDef cName _ <- cs]
       foldM (insertOne sp tName tvs conNames cs) m conNames
 
     insertOne sp tName tvs allCons cs m cName =
       if M.member cName m
         then Left (DuplicateConstructor sp cName)
         else
-          let flds = [fs | ConDef cn fs <- toList cs, cn == cName]
+          let flds = [fs | ConDef cn fs <- cs, cn == cName]
            in Right (M.insert cName (ConInfo tName tvs (concat flds) allCons) m)
 
 -- | Check a whole program against explicit signatures.
@@ -267,7 +279,7 @@ buildConEnv decls = do
 typecheckProgram :: Program -> Either TypeError ()
 typecheckProgram Program {imports, decls} = do
   -- 1) Build constructor environment from type declarations.
-  (userTypeNames, conEnv, conValEnv) <- buildConEnv (toList decls)
+  (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList decls)
 
   -- 2) Partition top-level decls into signatures and definitions.
   let (sigsList, defsList) = partitionEithers (mapMaybe toEither (toList decls))
@@ -300,7 +312,7 @@ typecheckProgram Program {imports, decls} = do
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         env = M.unions [envBuiltins, conValEnv, envParams, envTop]
 
-    bodyTy <- typeOfExpr conEnv env body
+    bodyTy <- typeOfExpr conEnv typeConsMap env body
     unless (bodyTy == retTy)
       $ Left (TypeMismatch retTy bodyTy body)
 
@@ -325,8 +337,8 @@ typecheckProgram Program {imports, decls} = do
 
 -- | Infer/check the type of an expression under the given environment.
 --   This function /checks/ consistency; it does not invent polymorphism.
-typeOfExpr :: ConEnv -> Env -> Expr -> Either TypeError Type'
-typeOfExpr conEnv env = \case
+typeOfExpr :: ConEnv -> TypeConsMap -> Env -> Expr -> Either TypeError Type'
+typeOfExpr conEnv tcm env = \case
   ELit _sp (LString _) -> Right (TyCon "String")
   EVar sp q ->
     case M.lookup q env of
@@ -336,24 +348,24 @@ typeOfExpr conEnv env = \case
           QName (_ : _) _ -> Left (NotImported sp q) -- looks qualified but missing import
           _ -> Left (UnknownVar sp q)
   EParens _sp e ->
-    typeOfExpr conEnv env e
+    typeOfExpr conEnv tcm env e
   ECon sp name ->
     case M.lookup (qLocal name) env of
       Just t -> Right t
       Nothing -> Left (UnknownConstructor sp name)
   EApp _sp f x -> do
-    tf <- typeOfExpr conEnv env f
+    tf <- typeOfExpr conEnv tcm env f
     case tf of
       TyArrow a b -> do
-        tx <- typeOfExpr conEnv env x
+        tx <- typeOfExpr conEnv tcm env x
         case match a tx of
           Just s -> Right (applySubst s b)
           Nothing -> Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
   -- String concatenation is only defined for (String, String) → String.
   EInfix sp OpConcat l r -> do
-    tl <- typeOfExpr conEnv env l
-    tr <- typeOfExpr conEnv env r
+    tl <- typeOfExpr conEnv tcm env l
+    tr <- typeOfExpr conEnv tcm env r
     if tl == TyCon "String" && tr == TyCon "String"
       then Right (TyCon "String")
       else
@@ -361,12 +373,12 @@ typeOfExpr conEnv env = \case
         let blame = if tl /= TyCon "String" then tl else tr
          in Left (TypeMismatch (TyCon "String") blame (EInfix sp OpConcat l r))
   ECase sp scrut alts _ -> do
-    scrutTy <- typeOfExpr conEnv env scrut
+    scrutTy <- typeOfExpr conEnv tcm env scrut
     -- Scrutinee must be a user-defined sum type.
     tyName <- case extractTyCon scrutTy of
-      Just n | M.member n (allTypeConstructors conEnv) -> Right n
+      Just n | M.member n tcm -> Right n
       _ -> Left (CaseOnNonSumType sp scrutTy)
-    let allCons = fromMaybe [] (M.lookup tyName (allTypeConstructors conEnv))
+    let allCons = fromMaybe [] (M.lookup tyName tcm)
     -- Compute substitution from type parameters to concrete types.
     -- E.g. for Lookup String: match (Lookup a) against (Lookup String) → {a → String}
     let scrutSubst = case anyConInfo tyName conEnv of
@@ -376,9 +388,12 @@ typeOfExpr conEnv env = \case
           Nothing -> M.empty
     -- Type-check each arm; collect arm types and covered constructors.
     (armTypes, coveredCons) <- foldM (checkArm sp env scrutSubst) ([], []) (toList alts)
-    -- Exhaustiveness: every constructor must appear exactly once.
+    -- Exhaustiveness: every inhabited constructor must appear exactly once.
+    -- A constructor is uninhabited if any of its field types (after substitution)
+    -- resolves to a type with no constructors (e.g. Never).
     let missing = filter (`notElem` coveredCons) allCons
-    unless (null missing) $ Left (NonExhaustiveCase sp tyName missing)
+        inhabitedMissing = filter (isConInhabited conEnv tcm scrutSubst) missing
+    unless (null inhabitedMissing) $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
     -- All arms must agree on the result type.
     case armTypes of
       [] -> Left (NonExhaustiveCase sp tyName allCons)
@@ -393,11 +408,15 @@ typeOfExpr conEnv env = \case
       ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
       -- Reject duplicate (unreachable) patterns.
       when (cName `elem` cons) $ Left (UnreachableCase caseSp cName)
+      -- Reject patterns on uninhabited constructors (unreachable).
+      case uninhabitedFieldType conEnv tcm scrutSubst cName of
+        Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
+        Nothing -> pass
       -- Bind pattern variables from constructor fields.
       let fieldTys = map (applySubst scrutSubst) (ciFieldTypes ci)
           bindings = patternBindings pats fieldTys
           envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
-      bodyTy <- typeOfExpr conEnv envWithBindings body
+      bodyTy <- typeOfExpr conEnv tcm envWithBindings body
       pure (tys <> [bodyTy], cons <> [cName])
     checkArm _ _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
@@ -417,7 +436,42 @@ anyConInfo :: Name -> ConEnv -> Maybe ConInfo
 anyConInfo tyName conEnv =
   find (\ci -> ciTypeName ci == tyName) (M.elems conEnv)
 
--- | Helper: build a map from type name → list of constructor names.
-allTypeConstructors :: ConEnv -> M.Map Name [Name]
-allTypeConstructors conEnv =
-  M.fromListWith (<>) [(ciTypeName ci, [cName]) | (cName, ci) <- M.toList conEnv]
+-- | A constructor is inhabited if all its field types (after substitution) are inhabited.
+--   A type is uninhabited if it has no constructors (e.g. @type Never@),
+--   or all its constructors require an uninhabited field (e.g. @Box Never@).
+isConInhabited :: ConEnv -> TypeConsMap -> Subst -> Name -> Bool
+isConInhabited conEnv tcm subst cName =
+  case M.lookup cName conEnv of
+    Nothing -> True
+    Just ci ->
+      let fieldTys = map (applySubst subst) (ciFieldTypes ci)
+       in all (isTypeInhabited conEnv tcm) fieldTys
+
+-- | If a constructor has an uninhabited field type, return that type.
+uninhabitedFieldType :: ConEnv -> TypeConsMap -> Subst -> Name -> Maybe Type'
+uninhabitedFieldType conEnv tcm subst cName =
+  case M.lookup cName conEnv of
+    Nothing -> Nothing
+    Just ci ->
+      let fieldTys = map (applySubst subst) (ciFieldTypes ci)
+       in find (not . isTypeInhabited conEnv tcm) fieldTys
+
+-- | A type is inhabited unless it resolves to a user-defined type whose
+--   constructors all require an uninhabited field (recursively).
+--   @type Never@ → uninhabited (0 constructors).
+--   @Box Never@  → uninhabited (Box requires Never which is uninhabited).
+isTypeInhabited :: ConEnv -> TypeConsMap -> Type' -> Bool
+isTypeInhabited conEnv tcm ty =
+  case extractTyCon ty of
+    Just n -> case M.lookup n tcm of
+      Nothing -> True -- built-in, inhabited
+      Just [] -> False -- 0 constructors
+      Just cons ->
+        -- Compute substitution for this concrete type (e.g. Box Never → {a → Never})
+        let subst = case anyConInfo n conEnv of
+              Just ci ->
+                let genericRetTy = conReturnType n (ciTypeParams ci)
+                 in fromMaybe M.empty (match genericRetTy ty)
+              Nothing -> M.empty
+         in any (isConInhabited conEnv tcm subst) cons
+    Nothing -> True

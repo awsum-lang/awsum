@@ -34,7 +34,7 @@ buildConTagEnv ds =
   M.fromList
     [ (cName, idx)
     | TypeDecl _sp _ _ cs _ <- ds,
-      (ConDef cName _, idx) <- zip (toList cs) [0 ..]
+      (ConDef cName _, idx) <- zip cs [0 ..]
     ]
 
 -- | Check the surface program (types) and lower it to Core IR.

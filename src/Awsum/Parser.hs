@@ -279,20 +279,22 @@ pSigWithEnd = do
   pure (Sig (toSrcSpan start end) name ty tcom)
 
 -- | Sum type declaration: @type Lookup a = Found a | NotFound@.
---   Constructors are separated by @|@ on a single line (for now).
+--   Empty constructor list (no @=@) declares an uninhabited type: @type Never@.
 pTypeDeclWithEnd :: Parser Decl
 pTypeDeclWithEnd = do
   start <- P.getSourcePos
   rwordS "type"
   name <- uident
   tvars <- P.many lidentNoLine
-  _ <- sym "="
-  firstCon <- pConDefNoLine
-  restCons <- P.many (symNoLine "|" *> pConDefNoLine)
+  cons <- P.option [] $ do
+    _ <- sym "="
+    firstCon <- pConDefNoLine
+    restCons <- P.many (symNoLine "|" *> pConDefNoLine)
+    pure (firstCon : restCons)
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
   endLineOrEOF
-  pure (TypeDecl (toSrcSpan start end) name tvars (firstCon :| restCons) tcom)
+  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom)
 
 -- | Constructor definition: @Found a@ or @NotFound@.
 pConDefNoLine :: Parser ConDef

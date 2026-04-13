@@ -11,11 +11,10 @@ Program
             , spanEndCol = 32
             }
         ) "Color" []
-        ( ConDef "Red" [] :|
-            [ ConDef "Green" []
-            , ConDef "Blue" []
-            ]
-        ) Nothing :|
+        [ ConDef "Red" []
+        , ConDef "Green" []
+        , ConDef "Blue" []
+        ] Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 5
