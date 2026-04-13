@@ -37,15 +37,15 @@ data CompileResult = CompileResult
   { ast :: Program,
     core :: CoreProgram,
     formattedSource :: Text,
-    jsCompiledCode :: Text,
-    luaCompiledCode :: Text,
     llvmCompiledCode :: Text,
     jvmCompiledCode :: Text,
     jvmClassBytes :: ByteString,
+    clrCompiledCode :: Text,
+    clrBinary :: ByteString,
     wasmCompiledCode :: Text,
     wasmBinary :: ByteString,
-    clrCompiledCode :: Text,
-    clrBinary :: ByteString
+    jsCompiledCode :: Text,
+    luaCompiledCode :: Text
   }
 
 compileAll :: Text -> IO CompileResult
@@ -65,15 +65,15 @@ compileAll sourceFile = do
       { ast = ast,
         core = core,
         formattedSource = formattedSource,
-        jsCompiledCode = codegenJS core,
-        luaCompiledCode = codegenLua core,
         llvmCompiledCode = codegenLLVM core,
         jvmCompiledCode = codegenJVM core,
         jvmClassBytes = assembleJVM core,
+        clrCompiledCode = codegenCLR core,
+        clrBinary = assembleCLR core,
         wasmCompiledCode = codegenWASM core,
         wasmBinary = assembleWASM core,
-        clrCompiledCode = codegenCLR core,
-        clrBinary = assembleCLR core
+        jsCompiledCode = codegenJS core,
+        luaCompiledCode = codegenLua core
       }
 
 testProgram :: Text -> [Text] -> Spec
@@ -85,18 +85,18 @@ testProgram sourceFile inputFiles = do
       res.core `shouldMatchShowSnapshot` (sourceFile <> "/core.txt")
     it "Formatted source should match snapshot" $ \res -> do
       res.formattedSource `shouldMatchTextSnapshot` (sourceFile <> "/formatted." <> sourceFile)
-    it "JS code should match snapshot" $ \res -> do
-      res.jsCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.js")
-    it "Lua code should match snapshot" $ \res -> do
-      res.luaCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.lua")
     it "LLVM code should match snapshot" $ \res -> do
       res.llvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.ll")
     it "JVM code should match snapshot" $ \res -> do
       res.jvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.j")
-    it "WASM code should match snapshot" $ \res -> do
-      res.wasmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.wat")
     it "CLR code should match snapshot" $ \res -> do
       res.clrCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.il")
+    it "WASM code should match snapshot" $ \res -> do
+      res.wasmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.wat")
+    it "JS code should match snapshot" $ \res -> do
+      res.jsCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.js")
+    it "Lua code should match snapshot" $ \res -> do
+      res.luaCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.lua")
 
   traverse_ (testProgramAgainstInput sourceFile) inputFiles
 
@@ -108,14 +108,6 @@ testProgramAgainstInput sourceFile inputFile = do
         -- TODO: Make program compile and files be written exactly once per sourceFile
         res <- compileAll sourceFile
 
-        jsRes <- runJs res.jsCompiledCode input
-        jsOutput <- case jsRes of
-          Left e -> error $ "JS failed" <> e
-          Right x -> pure x
-        luaRes <- runLua res.luaCompiledCode input
-        luaOutput <- case luaRes of
-          Left e -> error $ "Lua failed" <> e
-          Right x -> pure x
         llvmRes <- runLLVM res.llvmCompiledCode input
         llvmOutput <- case llvmRes of
           Left e -> error $ "LLVM failed" <> e
@@ -124,50 +116,36 @@ testProgramAgainstInput sourceFile inputFile = do
         jvmOutput <- case jvmRes of
           Left e -> error $ "JVM failed" <> e
           Right x -> pure x
-        wasmRes <- runWASM res.wasmBinary input
-        wasmOutput <- case wasmRes of
-          Left e -> error $ "WASM failed" <> e
-          Right x -> pure x
         clrRes <- runCLR res.clrBinary input
         clrOutput <- case clrRes of
           Left e -> error $ "CLR failed" <> e
           Right x -> pure x
-        pure (jsOutput, luaOutput, llvmOutput, jvmOutput, wasmOutput, clrOutput)
+        wasmRes <- runWASM res.wasmBinary input
+        wasmOutput <- case wasmRes of
+          Left e -> error $ "WASM failed" <> e
+          Right x -> pure x
+        jsRes <- runJs res.jsCompiledCode input
+        jsOutput <- case jsRes of
+          Left e -> error $ "JS failed" <> e
+          Right x -> pure x
+        luaRes <- runLua res.luaCompiledCode input
+        luaOutput <- case luaRes of
+          Left e -> error $ "Lua failed" <> e
+          Right x -> pure x
+        pure (llvmOutput, jvmOutput, clrOutput, wasmOutput, jsOutput, luaOutput)
   beforeAll prepare $ describe (toString inputFile) $ do
-    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, _wasmOutput, _clrOutput) -> do
-      jsOutput `shouldMatchTextSnapshot` (sourceFile <> "/output." <> inputFile)
-    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput, _llvmOutput, _jvmOutput, _wasmOutput, _clrOutput) -> do
-      jsOutput `shouldBe` luaOutput
-    it "JS stdout and LLVM stdout should be equivalent" $ \(jsOutput, _luaOutput, llvmOutput, _jvmOutput, _wasmOutput, _clrOutput) -> do
-      jsOutput `shouldBe` llvmOutput
-    it "JS stdout and JVM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, jvmOutput, _wasmOutput, _clrOutput) -> do
-      jsOutput `shouldBe` jvmOutput
-    it "JS stdout and WASM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, wasmOutput, _clrOutput) -> do
-      jsOutput `shouldBe` wasmOutput
-    it "JS stdout and CLR stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, _wasmOutput, clrOutput) -> do
-      jsOutput `shouldBe` clrOutput
-
-runJs :: Text -> Text -> IO (Either Text Text)
-runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
-  let tempFile = dir </> "out.js"
-  writeFileText tempFile code
-  eRes <- try @IOException (readProcessWithExitCode "node" [toString tempFile, toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start node: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("node exited with non-zero status:\n" <> toText err))
-
-runLua :: Text -> Text -> IO (Either Text Text)
-runLua code input = withSystemTempDirectory "awsum" $ \dir -> do
-  let tempFile = dir </> "out.lua"
-  writeFileText tempFile code
-  eRes <- try @IOException (readProcessWithExitCode "lua" [toString tempFile, toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start lua: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("lua exited with non-zero status:\n" <> toText err))
+    it "LLVM stdout should match snapshot" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldMatchTextSnapshot` (sourceFile <> "/output." <> inputFile)
+    it "LLVM stdout and JVM stdout should be equivalent" $ \(llvmOutput, jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` jvmOutput
+    it "LLVM stdout and CLR stdout should be equivalent" $ \(llvmOutput, _jvmOutput, clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` clrOutput
+    it "LLVM stdout and WASM stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` wasmOutput
+    it "LLVM stdout and JS stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` jsOutput
+    it "LLVM stdout and Lua stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, luaOutput) -> do
+      llvmOutput `shouldBe` luaOutput
 
 runLLVM :: Text -> Text -> IO (Either Text Text)
 runLLVM code input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -198,17 +176,6 @@ runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
     Right (ExitFailure _, _out, err) ->
       pure (Left ("java exited with non-zero status:\n" <> toText err))
 
-runWASM :: ByteString -> Text -> IO (Either Text Text)
-runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
-  let wasmFile = dir </> "out.wasm"
-  writeFileBS wasmFile wasmBytes
-  eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
-  case eRes of
-    Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
-    Right (ExitSuccess, out, _) -> pure (Right (toText out))
-    Right (ExitFailure _, _out, err) ->
-      pure (Left ("wasmtime exited with non-zero status:\n" <> toText err))
-
 runCLR :: ByteString -> Text -> IO (Either Text Text)
 runCLR dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let dllFile = dir </> "AwsumMain.dll"
@@ -221,6 +188,39 @@ runCLR dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
     Right (ExitSuccess, out, _) -> pure (Right (toText out))
     Right (ExitFailure _, _out, err) ->
       pure (Left ("dotnet exited with non-zero status:\n" <> toText err))
+
+runWASM :: ByteString -> Text -> IO (Either Text Text)
+runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let wasmFile = dir </> "out.wasm"
+  writeFileBS wasmFile wasmBytes
+  eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
+  case eRes of
+    Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left ("wasmtime exited with non-zero status:\n" <> toText err))
+
+runJs :: Text -> Text -> IO (Either Text Text)
+runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
+  let tempFile = dir </> "out.js"
+  writeFileText tempFile code
+  eRes <- try @IOException (readProcessWithExitCode "node" [toString tempFile, toString input] "")
+  case eRes of
+    Left ex -> pure (Left ("failed to start node: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left ("node exited with non-zero status:\n" <> toText err))
+
+runLua :: Text -> Text -> IO (Either Text Text)
+runLua code input = withSystemTempDirectory "awsum" $ \dir -> do
+  let tempFile = dir </> "out.lua"
+  writeFileText tempFile code
+  eRes <- try @IOException (readProcessWithExitCode "lua" [toString tempFile, toString input] "")
+  case eRes of
+    Left ex -> pure (Left ("failed to start lua: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left ("lua exited with non-zero status:\n" <> toText err))
 
 runtimeConfigJson :: Text
 runtimeConfigJson =

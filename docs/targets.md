@@ -4,31 +4,21 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 ## Overview
 
-| | JS | Lua | LLVM | JVM | WASM | CLR |
+| | LLVM | JVM | CLR | WASM | JS | Lua |
 |---|---|---|---|---|---|---|
-| **Runtime** | Node.js 14+ | Lua 5.1+ | Native binary (via Clang 15+) | Java 7+ | wasmtime (WASI) | .NET 9+ (dotnet) |
-| **String type** | Native JS string | Native Lua string | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) | `i32` pointer to null-terminated bytes in linear memory | `System.String` (boxed as `object`) |
-| **Concat** | `+` | `..` | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` | `__concat`: strlen + bump alloc + memcpy | `System.String.Concat(object, object)` |
-| **Print** | `process.stdout.write(s)` | `io.write(s)` | `printf("%s", s)` | `System.out.print(s)` | WASI `fd_write` via iovec | `System.Console.Write(object)` |
-| **Constants** | `const name = expr;` | `name = expr` (global) | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use | Zero-arg static method, called on each use |
-| **Functions** | `function` declaration (hoisted) | `function ... end` | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` | `static object v_name(object ...) { ... }` |
-| **Higher-order** | First-class values | First-class values | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `funcref` table + `call_indirect` | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) |
-| **Memory** | GC | GC | Manual (`malloc`, no `free`) | GC | Bump allocator (no free) | GC |
-| **Name mangling** | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) | `v_` prefix for all (including `main` → `v_main`) |
+| **Runtime** | Native binary (via Clang 15+) | Java 7+ | .NET 9+ (dotnet) | wasmtime (WASI) | Node.js 14+ | Lua 5.1+ |
+| **String type** | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) | `System.String` (boxed as `object`) | `i32` pointer to null-terminated bytes in linear memory | Native JS string | Native Lua string |
+| **Concat** | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` | `System.String.Concat(object, object)` | `__concat`: strlen + bump alloc + memcpy | `+` | `..` |
+| **Print** | `printf("%s", s)` | `System.out.print(s)` | `System.Console.Write(object)` | WASI `fd_write` via iovec | `process.stdout.write(s)` | `io.write(s)` |
+| **Constants** | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use | `const name = expr;` | `name = expr` (global) |
+| **Functions** | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `static object v_name(object ...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` | `function` declaration (hoisted) | `function ... end` |
+| **Higher-order** | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) | `funcref` table + `call_indirect` | First-class values | First-class values |
+| **Memory** | Manual (`malloc`, no `free`) | GC | GC | Bump allocator (no free) | GC | GC |
+| **Name mangling** | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged |
 
 ## String Concatenation
 
 All six backends guarantee identical results because the type checker ensures both operands are `String`.
-
-**JS** — uses native `+`, which is string concatenation when both sides are strings:
-```javascript
-("Hello" + ", " + name + "!")
-```
-
-**Lua** — uses native `..`, which is string concatenation:
-```lua
-("Hello" .. ", " .. name .. "!")
-```
 
 **LLVM** — runtime helper allocates a new buffer and copies both strings:
 ```llvm
@@ -49,58 +39,63 @@ define ptr @__concat(ptr %a, ptr %b) {
 invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 ```
 
-**WASM** — runtime helper computes lengths, bump-allocates a new buffer, copies both strings, and null-terminates:
-```wasm
-(call $__concat (local.get $a) (local.get $b))
-;; strlen(a) + strlen(b) → alloc(la+lb+1) → memcpy(buf,a,la) → memcpy(buf+la,b,lb) → store8 0
-```
-
 **CLR** — casts both operands to `object` and calls `System.String.Concat`:
 ```
 call object AwsumMain::__concat(object, object)
 // where __concat calls: string [System.Runtime]System.String::Concat(object, object)
 ```
 
+**WASM** — runtime helper computes lengths, bump-allocates a new buffer, copies both strings, and null-terminates:
+```wasm
+(call $__concat (local.get $a) (local.get $b))
+;; strlen(a) + strlen(b) → alloc(la+lb+1) → memcpy(buf,a,la) → memcpy(buf+la,b,lb) → store8 0
+```
+
+**JS** — uses native `+`, which is string concatenation when both sides are strings:
+```javascript
+("Hello" + ", " + name + "!")
+```
+
+**Lua** — uses native `..`, which is string concatenation:
+```lua
+("Hello" .. ", " .. name .. "!")
+```
+
 ## Print
 
 All backends print without a trailing newline — `IO.Stdout.print` outputs exactly what it receives.
-
-**JS**: `process.stdout.write(String(s))` — unbuffered for TTY, buffered for pipes, flushed on exit.
-
-**Lua**: `io.write(tostring(s))` — buffered, flushed on exit.
 
 **LLVM**: `printf("%s", s)` — C stdio buffering, implicit flush on `return 0` from `main`.
 
 **JVM**: `System.out.print(s)` — buffered PrintStream, flushed on JVM exit.
 
+**CLR**: `System.Console.Write(object)` — calls `ToString()` implicitly, buffered, flushed on exit.
+
 **WASM**: WASI `fd_write` — stores an iovec (pointer + length) at scratch memory offset 0, calls `fd_write(1, iov, 1, nwritten)`.
 
-**CLR**: `System.Console.Write(object)` — calls `ToString()` implicitly, buffered, flushed on exit.
+**JS**: `process.stdout.write(String(s))` — unbuffered for TTY, buffered for pipes, flushed on exit.
+
+**Lua**: `io.write(tostring(s))` — buffered, flushed on exit.
 
 ## Constants (CValDef)
 
 Zero-argument definitions like `greeting = "Hello"` are compiled differently per target:
 
-**JS**: `const v_greeting = "Hello";` — evaluated once, hoisted by the runner.
-
-**Lua**: `v_greeting = "Hello"` — global assignment, evaluated once before `main` runs.
-
 **LLVM**: Zero-arg function `define ptr @v_greeting() { ... }` — called each time the value is referenced. Safe because all expressions are pure (same result every time). Avoids the complexity of LLVM global initializers for non-constant expressions.
 
 **JVM**: Zero-arg static method `static Object v_greeting() { ... }` — same approach as LLVM, called each time. The JVM JIT compiler can inline these.
 
+**CLR**: Zero-arg static method `static object v_greeting() { ... }` — same approach as JVM. The .NET JIT can inline these.
+
 **WASM**: Zero-arg function `(func $v_greeting (result i32) ...)` — same approach as LLVM and JVM.
 
-**CLR**: Zero-arg static method `static object v_greeting() { ... }` — same approach as JVM. The .NET JIT can inline these.
+**JS**: `const v_greeting = "Hello";` — evaluated once, hoisted by the runner.
+
+**Lua**: `v_greeting = "Hello"` — global assignment, evaluated once before `main` runs.
 
 ## Higher-Order Functions
 
 `compose g f x = g (f x)` — parameters `g` and `f` can be functions.
-
-**JS/Lua**: Functions are first-class values. Parameters that are functions are called with `(callee)(args...)`:
-```javascript
-function v_compose(v_g, v_f, v_x){ return (v_g)((v_f)(v_x)); }
-```
 
 **LLVM**: Functions are passed as opaque pointers (`ptr`). Indirect calls work because all user functions have the same shape — take `ptr` args, return `ptr`:
 ```llvm
@@ -131,15 +126,6 @@ This uses LLVM 15+ opaque pointers — no `bitcast` or typed function pointer an
 
 Direct calls to known functions use `invokestatic` — no MethodHandle overhead.
 
-**WASM**: Function values are table indices (`i32`). All user `CFunDef`s are placed in a `funcref` table. When a function is used as a value, it becomes `(i32.const <table_index>)`. Indirect calls use `call_indirect` with a per-arity type signature:
-```wasm
-;; compose g f x = g (f x)
-(func $v_compose (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
-  (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)) (local.get $v_g)))
-```
-
-Direct calls to known functions use `call $v_fn` — no table indirection.
-
 **CLR**: Function values are `System.Func<object,...,object>` delegates. When a function is used as a value, it is wrapped via `ldftn` + `newobj Func`. Indirect calls use `callvirt Invoke(...)`:
 ```
 ; compose g f x = g (f x)
@@ -158,33 +144,23 @@ Direct calls to known functions use `call $v_fn` — no table indirection.
 
 Direct calls to known functions use `call object AwsumMain::v_fn(...)` — no delegate overhead.
 
+**WASM**: Function values are table indices (`i32`). All user `CFunDef`s are placed in a `funcref` table. When a function is used as a value, it becomes `(i32.const <table_index>)`. Indirect calls use `call_indirect` with a per-arity type signature:
+```wasm
+;; compose g f x = g (f x)
+(func $v_compose (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
+  (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)) (local.get $v_g)))
+```
+
+Direct calls to known functions use `call $v_fn` — no table indirection.
+
+**JS/Lua**: Functions are first-class values. Parameters that are functions are called with `(callee)(args...)`:
+```javascript
+function v_compose(v_g, v_f, v_x){ return (v_g)((v_f)(v_x)); }
+```
+
 ## Entry Points
 
 Each target has a runner that reads a command-line argument and passes it to `main`.
-
-**JS** (Node.js):
-```javascript
-if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
-}
-```
-
-**Lua** (best-effort main-chunk detection):
-```lua
-local ok, dbg = pcall(require, 'debug')
-local should_run = false
-if ok and dbg and dbg.getinfo then
-  local info = dbg.getinfo(1, 'S')
-  should_run = info and info.what == 'main'
-else
-  should_run = true
-end
-if should_run then
-  local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
-end
-```
 
 **LLVM** (C `main`):
 ```llvm
@@ -223,16 +199,6 @@ call_main:
   return
 ```
 
-**WASM** (WASI `_start`):
-```wasm
-(func $__get_arg (result i32)  ;; returns argv[1] or ""
-  (call $args_sizes_get ...)
-  (if (i32.lt_u argc 2) (then (i32.const <empty_string_offset>))
-    (else (call $args_get ...) (i32.load (i32.add ptrs 4)))))
-(func $_start (export "_start")
-  (drop (call $v_main (call $__get_arg))))
-```
-
 **CLR** (`.entrypoint` static `Main(string[])`):
 ```
 .method public hidebysig static void Main(string[]) cil managed
@@ -256,11 +222,45 @@ call_main:
 }
 ```
 
+**WASM** (WASI `_start`):
+```wasm
+(func $__get_arg (result i32)  ;; returns argv[1] or ""
+  (call $args_sizes_get ...)
+  (if (i32.lt_u argc 2) (then (i32.const <empty_string_offset>))
+    (else (call $args_get ...) (i32.load (i32.add ptrs 4)))))
+(func $_start (export "_start")
+  (drop (call $v_main (call $__get_arg))))
+```
+
+**JS** (Node.js):
+```javascript
+if (typeof require !== 'undefined' && require.main === module) {
+  const arg = process.argv[2] ?? "";
+  if (typeof main === 'function') main(arg);
+}
+```
+
+**Lua** (best-effort main-chunk detection):
+```lua
+local ok, dbg = pcall(require, 'debug')
+local should_run = false
+if ok and dbg and dbg.getinfo then
+  local info = dbg.getinfo(1, 'S')
+  should_run = info and info.what == 'main'
+else
+  should_run = true
+end
+if should_run then
+  local input = (_G and _G.arg and _G.arg[1]) or ""
+  if type(main) == 'function' then main(input) end
+end
+```
+
 ## Name Mangling
 
 All targets prefix user names with `v_` and replace non-alphanumeric characters (except `_` and `'`) with `_`.
 
-The difference: JS and Lua keep `main` unchanged because their runners call `main(arg)` by name. LLVM, JVM, WASM, and CLR mangle `main` to `v_main` because `main`/`_start`/`Main` is reserved as the entry point in those targets.
+The difference: LLVM, JVM, CLR, and WASM mangle `main` to `v_main` because `main`/`_start`/`Main` is reserved as the entry point in those targets. JS and Lua keep `main` unchanged because their runners call `main(arg)` by name.
 
 ## LLVM-Specific Details
 
@@ -304,22 +304,6 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum asm -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for `awsum build -t jvm` (outputs `.class`) and `awsum run -t jvm`.
 
-## WASM-Specific Details
-
-**Binary format**: The `.wasm` binary is generated directly in Haskell (`Awsum.Codegen.WASM.Assemble`), with no external tools — no `wat2wasm`, no WABT. Only `wasmtime` is needed to run. Uses LEB128 encoding (unlike JVM's big-endian fixed-width integers).
-
-**WASI imports**: Three WASI functions are imported from `wasi_snapshot_preview1`: `fd_write` (stdout), `args_sizes_get` and `args_get` (CLI arguments).
-
-**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. IOUnit is `0`.
-
-**Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
-
-**Runtime helpers**: Six helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
-
-**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
-
-**~30 opcodes**: The assembler uses approximately 30 WASM opcodes — enough for string manipulation, control flow, memory access, and indirect calls.
-
 ## CLR-Specific Details
 
 **Binary format**: The `.dll` is a PE (Portable Executable) file generated directly in Haskell (`Awsum.Codegen.CLR.Assemble`), with no external tools — no `ilasm`, no `csc`. Only `dotnet` is needed to run. The assembler emits DOS header, PE/COFF headers, a `.text` section with CLR metadata and CIL method bodies.
@@ -337,3 +321,19 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
 
 **~15 CIL opcodes**: The assembler uses approximately 15 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`/`ldc.i4.1`, `bge.s`, `br.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`.
+
+## WASM-Specific Details
+
+**Binary format**: The `.wasm` binary is generated directly in Haskell (`Awsum.Codegen.WASM.Assemble`), with no external tools — no `wat2wasm`, no WABT. Only `wasmtime` is needed to run. Uses LEB128 encoding (unlike JVM's big-endian fixed-width integers).
+
+**WASI imports**: Three WASI functions are imported from `wasi_snapshot_preview1`: `fd_write` (stdout), `args_sizes_get` and `args_get` (CLI arguments).
+
+**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. IOUnit is `0`.
+
+**Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
+
+**Runtime helpers**: Six helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
+
+**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
+
+**~30 opcodes**: The assembler uses approximately 30 WASM opcodes — enough for string manipulation, control flow, memory access, and indirect calls.
