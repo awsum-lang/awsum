@@ -45,6 +45,8 @@ data Command
     CmdRun FilePath Target (Maybe Text) Bool
   | CmdAST FilePath
   | CmdCore FilePath
+  | -- | file, target (JVM/WASM only)
+    CmdAsm FilePath Target
   | -- | file, inPlace
     CmdFormat FilePath Bool
   deriving stock (Show)
@@ -137,6 +139,7 @@ pCommand =
           <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optTarget <*> optInputText <*> optUseStdin)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
           <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath)
+          <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optTarget)
           <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
       )
 
@@ -169,10 +172,23 @@ runCommand = \case
       Left err -> die $ toString (prettyPrintTypeError err)
       Right () -> putTextLn "OK"
   CmdBuild filePath target mOut -> do
-    code <- compileToTarget target filePath
-    case mOut of
-      Nothing -> putTextLn code
-      Just out -> writeFileText out code
+    core <- compileToCoreOrDie filePath
+    case target of
+      TargetJVM -> do
+        let bytes = assembleJVM core
+        case mOut of
+          Nothing -> BS.hPut stdout bytes
+          Just out -> BS.writeFile out bytes
+      TargetWASM -> do
+        let bytes = assembleWASM core
+        case mOut of
+          Nothing -> BS.hPut stdout bytes
+          Just out -> BS.writeFile out bytes
+      _ -> do
+        let code = codegenText target core
+        case mOut of
+          Nothing -> putTextLn code
+          Just out -> writeFileText out code
   CmdRun filePath target mInput useStdin -> do
     input <-
       if useStdin
@@ -188,6 +204,12 @@ runCommand = \case
     case elaborateLowerProgram prog of
       Left err -> die $ toString (prettyPrintTypeError err)
       Right ir -> pPrint ir
+  CmdAsm filePath target -> do
+    core <- compileToCoreOrDie filePath
+    case target of
+      TargetJVM -> putTextLn (codegenJVM core)
+      TargetWASM -> putTextLn (codegenWASM core)
+      _ -> die "asm is only supported for jvm and wasm targets"
   CmdFormat filePath inPlace -> do
     src <- readFileTextUtf8 filePath
     case formatSource src of
@@ -201,16 +223,14 @@ runCommand = \case
 -- Helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Parse → typecheck → lower to Core → codegen to text.
-compileToTarget :: Target -> FilePath -> IO Text
-compileToTarget target filePath = do
-  core <- compileToCoreOrDie filePath
-  pure $ case target of
-    TargetJS -> codegenJS core
-    TargetLua -> codegenLua core
-    TargetLLVM -> codegenLLVM core
-    TargetJVM -> codegenJVM core
-    TargetWASM -> codegenWASM core
+-- | Select the text codegen for a target.
+codegenText :: Target -> CoreProgram -> Text
+codegenText = \case
+  TargetJS -> codegenJS
+  TargetLua -> codegenLua
+  TargetLLVM -> codegenLLVM
+  TargetJVM -> codegenJVM
+  TargetWASM -> codegenWASM
 
 -- | Compile Core to target and run using the appropriate system runtime.
 runOnTarget :: Target -> CoreProgram -> Text -> IO ()

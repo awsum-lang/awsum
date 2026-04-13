@@ -251,7 +251,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **StackMapTable**: JVM 7+ requires `StackMapTable` attributes for methods with branches. Currently only the generated `main(String[])` has branches (for argument handling). User-defined methods are branch-free (no `if`/`let` in the language yet).
 
-**Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum build -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for actual execution via `awsum run -t jvm`.
+**Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum asm -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for `awsum build -t jvm` (outputs `.class`) and `awsum run -t jvm`.
 
 ## WASM-Specific Details
 
@@ -265,6 +265,6 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Runtime helpers**: Six helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
 
-**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum build -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for actual execution via `awsum run -t wasm`.
+**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
 
 **~30 opcodes**: The assembler uses approximately 30 WASM opcodes — enough for string manipulation, control flow, memory access, and indirect calls.

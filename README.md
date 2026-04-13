@@ -88,12 +88,13 @@ brew install wabt
 
 ## Usage
 
-- `awsum build FILE [-t js] [-o OUT]` — compile to target and write to file (or stdout).
+- `awsum build FILE [-t js] [-o OUT]` — compile to target and write to file (or stdout). For JVM and WASM, outputs binary (`.class`/`.wasm`).
 - `awsum run FILE [-t js] [--input TEXT | --stdin]` — compile to a temp file and execute with the system runtime, passing input to main.
 - `awsum check FILE` — parse and typecheck; prints `OK` or a descriptive error.
 - `awsum format FILE [-i|--in-place]` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
+- `awsum asm FILE [-t jvm|wasm]` — print target assembly text: Jasmin-like for JVM, WAT for WASM (for debugging).
 - `awsum --version` — show version
 
 Examples:
@@ -102,8 +103,11 @@ Examples:
 awsum build test/sources/hello.aww -t js   -o out.js  && node out.js "world"
 awsum build test/sources/hello.aww -t lua  -o out.lua && lua out.lua "world"
 awsum build test/sources/hello.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
-awsum build test/sources/hello.aww -t jvm  -o out.j    # Jasmin-like text output
-awsum build test/sources/hello.aww -t wasm -o out.wat  # WAT text output
+awsum build test/sources/hello.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
+awsum build test/sources/hello.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
+
+awsum asm test/sources/hello.aww -t jvm   # Jasmin-like text (for inspection)
+awsum asm test/sources/hello.aww -t wasm  # WAT text (for inspection)
 
 awsum run test/sources/hello.aww -t js   --input "world"
 awsum run test/sources/hello.aww -t lua  --input "world"

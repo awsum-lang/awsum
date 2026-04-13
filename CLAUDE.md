@@ -15,12 +15,13 @@ just fix  # Full precommit checks
 ## CLI Commands
 
 ```bash
-awsum build FILE [-t js|lua|llvm|jvm|wasm] [-o OUT]   # Compile to file/stdout
+awsum build FILE [-t js|lua|llvm|jvm|wasm] [-o OUT]   # Compile to file/stdout (binary for jvm/wasm)
 awsum run FILE [-t js|lua|llvm|jvm|wasm] [--input X]  # Compile and execute
 awsum check FILE                              # Typecheck only
 awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
 awsum core FILE                               # Print Core IR
+awsum asm FILE [-t jvm|wasm]                  # Print target assembly text
 ```
 
 ## Project Structure
