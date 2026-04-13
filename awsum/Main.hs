@@ -16,9 +16,9 @@ import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
-import Awsum.Parser (parseProgram)
+import Awsum.Parser (parseProgram, parseProgramDiagnostic)
 import Awsum.Syntax
-import Awsum.Typing (prettyPrintTypeError, typecheckProgram)
+import Awsum.Typing (prettyPrintTypeError, typeErrorSpan, typecheckProgram)
 import Common.File
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
@@ -40,7 +40,8 @@ awsumVersion = toText (showVersion Meta.version)
 -- | Top-level CLI command.
 data Command
   = CmdVersion
-  | CmdCheck FilePath
+  | -- | file, useJson
+    CmdCheck FilePath Bool
   | -- | file, target, out
     CmdBuild FilePath Target (Maybe FilePath)
   | -- | file, target, inArg, useStdin
@@ -119,6 +120,10 @@ optInPlace =
         <> OA.help "Rewrite FILE with formatted source"
     )
 
+-- | Flag: output diagnostics as JSON.
+optJson :: OA.Parser Bool
+optJson = OA.switch (OA.long "json" <> OA.help "Output diagnostics as JSON")
+
 -- | Subcommand builder.
 subcmd :: String -> String -> OA.Parser a -> OA.Mod OA.CommandFields a
 subcmd name desc p = OA.command name (OA.info p (OA.progDesc desc))
@@ -138,7 +143,7 @@ pCommand =
   -- Allow the global --version flag alongside subcommands.
   pVersionFlag
     <|> OA.hsubparser
-      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath)
+      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optJson)
           <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optTarget <*> optOutputPath)
           <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optTarget <*> optInputText <*> optUseStdin)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
@@ -170,11 +175,25 @@ main = do
 runCommand :: Command -> IO ()
 runCommand = \case
   CmdVersion -> putTextLn awsumVersion
-  CmdCheck filePath -> do
-    prog <- parseFileOrDie filePath
-    case typecheckProgram prog of
-      Left err -> die $ toString (prettyPrintTypeError err)
-      Right () -> putTextLn "OK"
+  CmdCheck filePath useJson
+    | useJson -> do
+        src <- readFileTextUtf8 filePath
+        case parseProgramDiagnostic src of
+          Left parseErrs -> do
+            putTextLn (diagnosticsToJson [(sp, msg) | (sp, msg) <- parseErrs])
+            exitFailure
+          Right prog ->
+            case typecheckProgram prog of
+              Left typeErr -> do
+                let sp = fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan typeErr)
+                putTextLn (diagnosticsToJson [(sp, prettyPrintTypeError typeErr)])
+                exitFailure
+              Right () -> putTextLn "[]"
+    | otherwise -> do
+        prog <- parseFileOrDie filePath
+        case typecheckProgram prog of
+          Left err -> die $ toString (prettyPrintTypeError err)
+          Right () -> putTextLn "OK"
   CmdBuild filePath target mOut -> do
     core <- compileToCoreOrDie filePath
     case target of
@@ -333,3 +352,38 @@ parseFileOrDie filePath = do
   case parseProgram text of
     Left err -> die $ toString err
     Right p -> pure p
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- JSON diagnostics (hand-written, no aeson dependency)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Render diagnostics as a JSON array.
+diagnosticsToJson :: [(SrcSpan, Text)] -> Text
+diagnosticsToJson errs = "[" <> T.intercalate "," (map diagToJson errs) <> "]"
+
+diagToJson :: (SrcSpan, Text) -> Text
+diagToJson (SrcSpan sl sc el ec, msg) =
+  "{\"startLine\":"
+    <> show sl
+    <> ",\"startCol\":"
+    <> show sc
+    <> ",\"endLine\":"
+    <> show el
+    <> ",\"endCol\":"
+    <> show ec
+    <> ",\"message\":"
+    <> jsonString msg
+    <> "}"
+
+-- | Escape a text value for JSON string embedding.
+jsonString :: Text -> Text
+jsonString t = "\"" <> T.concatMap escapeJsonChar t <> "\""
+
+escapeJsonChar :: Char -> Text
+escapeJsonChar = \case
+  '"' -> "\\\""
+  '\\' -> "\\\\"
+  '\n' -> "\\n"
+  '\r' -> "\\r"
+  '\t' -> "\\t"
+  c -> one c

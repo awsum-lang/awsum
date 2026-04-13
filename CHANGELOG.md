@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Language**
+
+  - Sum types (`type Color = Red | Green | Blue`) and exhaustive `case`/`of` pattern matching.
+
+- **Compiler**
+
+  - Source positions (`SrcSpan`) tracked through the entire pipeline — error messages now include line and column numbers.
+  - `awsum check --json` outputs structured diagnostics as a JSON array with source positions.
+
+- **Editor support**
+
+  - VSCode extension shows inline error diagnostics (red underlines) on open, save, and as-you-type with debounce.
+
 ## [0.0.1] - 2025-09-11
 
 ### Added

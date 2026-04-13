@@ -31,7 +31,7 @@
 --
 -- NOTE: We treat a /declaration terminator/ as either an explicit newline or EOF.
 --       This makes multi-decl files unambiguous without semicolons.
-module Awsum.Parser (parseProgram) where
+module Awsum.Parser (parseProgram, parseProgramDiagnostic) where
 
 import Awsum.Syntax
 import Data.Char qualified as Char
@@ -156,6 +156,48 @@ parseProgram src =
     Left e -> Left (toText (P.errorBundlePretty e))
     Right p -> Right p
 
+-- | Parse with structured error output (line, column, message) for IDE integration.
+parseProgramDiagnostic :: Text -> Either [(SrcSpan, Text)] Program
+parseProgramDiagnostic src =
+  case P.parse (pProgram <* eof) "<stdin>" src of
+    Right p -> Right p
+    Left bundle ->
+      let errs = toList (P.bundleErrors bundle)
+          posState = P.bundlePosState bundle
+       in Left (extractErrors posState errs)
+  where
+    extractErrors :: P.PosState Text -> [P.ParseError Text Void] -> [(SrcSpan, Text)]
+    extractErrors _ [] = []
+    extractErrors ps (e : rest) =
+      let (_, ps') = P.reachOffset (P.errorOffset e) ps
+          pos = P.pstateSourcePos ps'
+          l = P.unPos (P.sourceLine pos)
+          c = P.unPos (P.sourceColumn pos)
+          sp = SrcSpan l c l c
+          msg = toText (P.parseErrorTextPretty e)
+       in (sp, T.stripEnd msg) : extractErrors ps' rest
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- Source position helpers
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- | Convert a Megaparsec 'P.SourcePos' pair to a 'SrcSpan'.
+toSrcSpan :: P.SourcePos -> P.SourcePos -> SrcSpan
+toSrcSpan start end =
+  SrcSpan
+    (P.unPos (P.sourceLine start))
+    (P.unPos (P.sourceColumn start))
+    (P.unPos (P.sourceLine end))
+    (P.unPos (P.sourceColumn end))
+
+-- | Run a parser and capture the span around it.
+withSpan :: Parser a -> Parser (SrcSpan, a)
+withSpan p = do
+  start <- P.getSourcePos
+  result <- p
+  end <- P.getSourcePos
+  pure (toSrcSpan start end, result)
+
 -- Program ────────────────────────────────────────────────────────────────────
 
 pProgram :: Parser Program
@@ -227,42 +269,49 @@ pBlockCommentText = do
 -- | Signature line: keep inline trailing '-- …' if present.
 pSigWithEnd :: Parser Decl
 pSigWithEnd = do
+  start <- P.getSourcePos
   name <- lident
   _ <- sym ":"
   ty <- pTypeNoLineComments
   tcom <- pTrailingLineCommentMaybe
+  end <- P.getSourcePos
   endLineOrEOF
-  pure (Sig name ty tcom)
+  pure (Sig (toSrcSpan start end) name ty tcom)
 
 -- | Sum type declaration: @type Bool = True | False@.
 --   Constructors are separated by @|@ on a single line (for now).
 pTypeDeclWithEnd :: Parser Decl
 pTypeDeclWithEnd = do
+  start <- P.getSourcePos
   rwordS "type"
   name <- uident
   _ <- sym "="
   firstCon <- ConDef <$> uidentNoLine <*> pure []
   restCons <- P.many (symNoLine "|" *> (ConDef <$> uidentNoLine <*> pure []))
   tcom <- pTrailingLineCommentMaybe
+  end <- P.getSourcePos
   endLineOrEOF
-  pure (TypeDecl name [] (firstCon :| restCons) tcom)
+  pure (TypeDecl (toSrcSpan start end) name [] (firstCon :| restCons) tcom)
 
 -- | Definition line: keep inline trailing '-- …' if present.
 pFunDefWithEnd :: Parser Decl
 pFunDefWithEnd = do
+  start <- P.getSourcePos
   name <- lident
   args <- P.many lident
   _ <- sym "="
   e <- pExprNoLineComments
   case e of
     ECase {} -> do
+      end <- P.getSourcePos
       -- Multi-line case expression already consumed trailing newlines.
       -- We may be at the start of the next content line or EOF.
-      pure (FunDef name args e Nothing)
+      pure (FunDef (toSrcSpan start end) name args e Nothing)
     _ -> do
       tcom <- pTrailingLineCommentMaybe
+      end <- P.getSourcePos
       endLineOrEOF
-      pure (FunDef name args e tcom)
+      pure (FunDef (toSrcSpan start end) name args e tcom)
 
 -- | Consume spaces (not comments), then an optional trailing line comment.
 pTrailingLineCommentMaybe :: Parser (Maybe Text)
@@ -301,7 +350,7 @@ pConcatNoLineComments = do
         ( do
             _ <- symNoLine "++"
             y <- pAppNoLineComments
-            rest (EInfix OpConcat acc y)
+            rest (EInfix (spanBetween (exprSpan acc) (exprSpan y)) OpConcat acc y)
         )
           <|> pure acc
   rest x
@@ -311,15 +360,34 @@ pAppNoLineComments :: Parser Expr
 pAppNoLineComments = do
   t0 <- pAtomNoLineComments
   ts <- P.many pAtomNoLineComments
-  pure (foldl' EApp t0 ts)
+  pure (foldl' (\f x -> EApp (spanBetween (exprSpan f) (exprSpan x)) f x) t0 ts)
 
 -- Atomic expression: qualified/unqualified name, constructor, parenthesized expr, or string literal.
 pAtomNoLineComments :: Parser Expr
 pAtomNoLineComments =
   pQualifiedNameExprNoLineComments
-    <|> (ECon <$> uidentNoLine)
-    <|> (EParens <$> P.between (symNoLine "(") (symNoLine ")") pExprNoLineComments)
-    <|> (ELit . LString <$> pStringLitNoLineComments)
+    <|> pConNoLineComments
+    <|> pParensNoLineComments
+    <|> pLitNoLineComments
+
+pConNoLineComments :: Parser Expr
+pConNoLineComments = do
+  (sp, n) <- withSpan uidentNoLine
+  pure (ECon sp n)
+
+pParensNoLineComments :: Parser Expr
+pParensNoLineComments = do
+  start <- P.getSourcePos
+  _ <- symNoLine "("
+  e <- pExprNoLineComments
+  _ <- symNoLine ")"
+  end <- P.getSourcePos
+  pure (EParens (toSrcSpan start end) e)
+
+pLitNoLineComments :: Parser Expr
+pLitNoLineComments = do
+  (sp, s) <- withSpan pStringLitNoLineComments
+  pure (ELit sp (LString s))
 
 -- Literals ──────────────────────────────────────────────────────────────────
 
@@ -355,11 +423,13 @@ escape =
 --     input           →  QName [] "input"
 pQualifiedNameExprNoLineComments :: Parser Expr
 pQualifiedNameExprNoLineComments = do
-  let qualified = do
-        mods <- P.some (try (uidentNoLine <* symNoLine ".")) -- IO.
-        QName mods <$> lidentNoLine -- print
-      unqual = QName [] <$> lidentNoLine
-  EVar <$> (try qualified <|> unqual)
+  (sp, q) <- withSpan $ do
+    let qualified = do
+          mods <- P.some (try (uidentNoLine <* symNoLine ".")) -- IO.
+          QName mods <$> lidentNoLine -- print
+        unqual = QName [] <$> lidentNoLine
+    try qualified <|> unqual
+  pure (EVar sp q)
 
 -- Case expressions ─────────────────────────────────────────────────────────
 
@@ -394,6 +464,7 @@ pCaseArmItem = do
 --   comment (a leading comment at a weird column must not shift the reference).
 pCaseNoLineComments :: Parser Expr
 pCaseNoLineComments = do
+  start <- P.getSourcePos
   rwordNoLine "case"
   scrut <- pConcatNoLineComments
   rwordNoLine "of"
@@ -424,9 +495,10 @@ pCaseNoLineComments = do
           (guard (lvl > P.pos1) *> (CaseItemComment <$> pCaseComment <* hspaceNoComments))
             <|> (guard (lvl == ref) *> pCaseArmItem)
       )
+  end <- P.getSourcePos
   let (alts, trailingComments) = groupCaseItems (leadComments ++ [firstArm] ++ restItems)
   case alts of
-    a : rest -> pure (ECase scrut (a :| rest) trailingComments)
+    a : rest -> pure (ECase (toSrcSpan start end) scrut (a :| rest) trailingComments)
     [] -> fail "case expression must have at least one alternative"
 
 -- | Group flat case items into structured alternatives.

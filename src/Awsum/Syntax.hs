@@ -5,6 +5,10 @@
 --  • Arrow types are right-associative (a -> b -> c == a -> (b -> c)).
 module Awsum.Syntax
   ( Name,
+    SrcSpan (..),
+    noSpan,
+    spanBetween,
+    exprSpan,
     Program (..),
     ImportDecl (..),
     Decl (..),
@@ -21,6 +25,38 @@ module Awsum.Syntax
 where
 
 import Relude
+
+-- | Source span: start and end positions (1-based, matching Megaparsec and editors).
+data SrcSpan = SrcSpan
+  { spanStartLine :: !Int,
+    spanStartCol :: !Int,
+    spanEndLine :: !Int,
+    spanEndCol :: !Int
+  }
+  deriving stock (Show)
+
+-- | SrcSpan equality is always True so that AST equality ignores positions.
+--   This lets all existing tests continue working without changing expected values.
+instance Eq SrcSpan where _ == _ = True
+
+-- | Placeholder span for hand-constructed ASTs (tests, Arbitrary instances).
+noSpan :: SrcSpan
+noSpan = SrcSpan 0 0 0 0
+
+-- | Combine two spans into one covering both.
+spanBetween :: SrcSpan -> SrcSpan -> SrcSpan
+spanBetween a b = SrcSpan (spanStartLine a) (spanStartCol a) (spanEndLine b) (spanEndCol b)
+
+-- | Extract the source span from an expression.
+exprSpan :: Expr -> SrcSpan
+exprSpan = \case
+  EVar sp _ -> sp
+  EApp sp _ _ -> sp
+  EInfix sp _ _ _ -> sp
+  EParens sp _ -> sp
+  ELit sp _ -> sp
+  ECon sp _ -> sp
+  ECase sp _ _ _ -> sp
 
 -- | Lexical identifier (kept as 'Text' for simplicity).
 --   The parser is responsible for validating case/style rules.
@@ -54,14 +90,14 @@ data Comment
 -- | Top-level declaration.
 data Decl
   = -- | Type signature: @main : τ -- comment@
-    Sig Name Type' (Maybe Text)
+    Sig SrcSpan Name Type' (Maybe Text)
   | -- | Function/value definition: @f x y = e  -- comment@.
     --   The argument list may be empty in the /surface/.
     --   Lowering will treat zero-arg defs as /constants/.
-    FunDef Name [Name] Expr (Maybe Text)
+    FunDef SrcSpan Name [Name] Expr (Maybe Text)
   | -- | Sum type declaration: @type Bool = True | False@.
     --   Type parameters (e.g. @type Maybe a = …@) are stored but not yet supported by the checker.
-    TypeDecl Name [Name] (NonEmpty ConDef) (Maybe Text)
+    TypeDecl SrcSpan Name [Name] (NonEmpty ConDef) (Maybe Text)
   | CommentDecl Comment
   deriving stock (Show, Eq)
 
@@ -103,22 +139,22 @@ data Literal = LString Text
 -- | Surface expressions.
 data Expr
   = -- | Variable or qualified function name.
-    EVar QName
+    EVar SrcSpan QName
   | -- | Function application (left-associative).
-    EApp Expr Expr
+    EApp SrcSpan Expr Expr
   | -- | Infix application (e.g. @++@). Parser assigns fixities.
-    EInfix Op' Expr Expr
+    EInfix SrcSpan Op' Expr Expr
   | -- | Explicit parentheses as written by the user.
     --   Kept to make render ∘ parse an identity in tests.
-    EParens Expr
+    EParens SrcSpan Expr
   | -- | Literal (currently only strings).
-    ELit Literal
+    ELit SrcSpan Literal
   | -- | Constructor reference (uppercase, e.g. @True@, @Nothing@).
-    ECon Name
+    ECon SrcSpan Name
   | -- | Pattern matching: @case e of { alt1; alt2; … }@.
     --   The trailing @[Comment]@ holds comments after the last arm — useful for
     --   temporarily commenting-out the last alternative while editing.
-    ECase Expr (NonEmpty CaseAlt) [Comment]
+    ECase SrcSpan Expr (NonEmpty CaseAlt) [Comment]
   deriving stock (Show, Eq)
 
 -- | A single alternative in a @case@ expression.

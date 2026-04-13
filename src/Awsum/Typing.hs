@@ -25,6 +25,7 @@ module Awsum.Typing
     typeOfExpr,
     TypeError (..),
     prettyPrintTypeError,
+    typeErrorSpan,
   )
 where
 
@@ -37,42 +38,88 @@ import Relude
 -- | User-facing typing errors.
 data TypeError
   = -- | Unqualified or unknown name not present in the environment.
-    UnknownVar QName
+    UnknownVar SrcSpan QName
   | -- | Application where callee does not have an arrow type.
     NotAFunction Expr Type'
   | -- | (expected, actual, in expression)
     TypeMismatch Type' Type' Expr
   | -- | (function name, expected #args, actual #args)
-    ArityMismatch Name Int Int
+    ArityMismatch SrcSpan Name Int Int
   | -- | Top-level definition without a signature.
-    MissingSignature Name
-  | DuplicateSignature Name
-  | DuplicateDefinition Name
+    MissingSignature SrcSpan Name
+  | DuplicateSignature SrcSpan Name
+  | DuplicateDefinition SrcSpan Name
   | -- | A 'TyCon' the checker does not recognize.
-    UnknownTypeCon Name
+    UnknownTypeCon SrcSpan Name
   | MainMissing
   | -- | 'main' present but with a different type.
     MainWrongType Type'
   | -- | Qualified name used without importing its module path.
-    NotImported QName
+    NotImported SrcSpan QName
   | -- | Lowering error
     TELowering Text
   | -- | Duplicate type name in @type@ declarations.
-    DuplicateTypeDef Name
+    DuplicateTypeDef SrcSpan Name
   | -- | Constructor name used in multiple @type@ declarations.
-    DuplicateConstructor Name
+    DuplicateConstructor SrcSpan Name
   | -- | Constructor not defined by any @type@ declaration.
-    UnknownConstructor Name
+    UnknownConstructor SrcSpan Name
   | -- | Case expression does not cover all constructors.
-    NonExhaustiveCase Name [Name]
+    NonExhaustiveCase SrcSpan Name [Name]
   | -- | Arms of a case expression have different types.
     CaseBranchTypeMismatch Type' Type' Expr
   | -- | Scrutinee of case is not a sum type.
-    CaseOnNonSumType Type'
+    CaseOnNonSumType SrcSpan Type'
   deriving stock (Show, Eq)
 
+-- | Extract the source span from a TypeError, if available.
+typeErrorSpan :: TypeError -> Maybe SrcSpan
+typeErrorSpan = \case
+  UnknownVar sp _ -> Just sp
+  NotAFunction e _ -> Just (exprSpan e)
+  TypeMismatch _ _ e -> Just (exprSpan e)
+  ArityMismatch sp _ _ _ -> Just sp
+  MissingSignature sp _ -> Just sp
+  DuplicateSignature sp _ -> Just sp
+  DuplicateDefinition sp _ -> Just sp
+  UnknownTypeCon sp _ -> Just sp
+  MainMissing -> Nothing
+  MainWrongType _ -> Nothing
+  NotImported sp _ -> Just sp
+  TELowering _ -> Nothing
+  DuplicateTypeDef sp _ -> Just sp
+  DuplicateConstructor sp _ -> Just sp
+  UnknownConstructor sp _ -> Just sp
+  NonExhaustiveCase sp _ _ -> Just sp
+  CaseBranchTypeMismatch _ _ e -> Just (exprSpan e)
+  CaseOnNonSumType sp _ -> Just sp
+
 prettyPrintTypeError :: TypeError -> Text
-prettyPrintTypeError = show
+prettyPrintTypeError = \case
+  UnknownVar _ (QName _ n) -> "Unknown variable: " <> n
+  NotAFunction _ ty -> "Not a function; has type " <> showType ty
+  TypeMismatch expected actual _ -> "Type mismatch: expected " <> showType expected <> ", got " <> showType actual
+  ArityMismatch _ name expected actual -> "Arity mismatch for " <> name <> ": expected " <> show expected <> " arguments, got " <> show actual
+  MissingSignature _ name -> "Missing type signature for: " <> name
+  DuplicateSignature _ name -> "Duplicate type signature for: " <> name
+  DuplicateDefinition _ name -> "Duplicate definition for: " <> name
+  UnknownTypeCon _ name -> "Unknown type constructor: " <> name
+  MainMissing -> "Missing 'main' function"
+  MainWrongType ty -> "Wrong type for 'main': expected String -> IOUnit, got " <> showType ty
+  NotImported _ (QName _ n) -> "Not imported: " <> n
+  TELowering msg -> msg
+  DuplicateTypeDef _ name -> "Duplicate type definition: " <> name
+  DuplicateConstructor _ name -> "Duplicate constructor: " <> name
+  UnknownConstructor _ name -> "Unknown constructor: " <> name
+  NonExhaustiveCase _ tyName missing -> "Non-exhaustive case on " <> tyName <> ": missing " <> show missing
+  CaseBranchTypeMismatch expected actual _ -> "Case branch type mismatch: expected " <> showType expected <> ", got " <> showType actual
+  CaseOnNonSumType _ ty -> "Case on non-sum type: " <> showType ty
+  where
+    showType :: Type' -> Text
+    showType = \case
+      TyVar n -> n
+      TyCon n -> n
+      TyArrow a b -> showType a <> " -> " <> showType b
 
 -- | Typing environment: maps fully-qualified names to types.
 --   We use 'QName' to keep the door open for qualified built-ins.
@@ -110,15 +157,15 @@ splitArrow = go []
     go acc t = (acc, t)
 
 -- | Validate that a written type only mentions known constructors.
-wellFormedTypeWith :: S.Set Name -> Type' -> Either TypeError ()
-wellFormedTypeWith userTypes = \case
+wellFormedTypeWith :: SrcSpan -> S.Set Name -> Type' -> Either TypeError ()
+wellFormedTypeWith sp userTypes = \case
   TyVar _ -> Right ()
   TyCon "String" -> Right ()
   TyCon "IOUnit" -> Right ()
   TyCon n
     | S.member n userTypes -> Right ()
-    | otherwise -> Left (UnknownTypeCon n)
-  TyArrow a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
+    | otherwise -> Left (UnknownTypeCon sp n)
+  TyArrow a b -> wellFormedTypeWith sp userTypes a >> wellFormedTypeWith sp userTypes b
 
 type Subst = M.Map Name Type'
 
@@ -148,7 +195,7 @@ match = go
 --   Returns (set of type names, constructor env, constructor value env).
 buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env)
 buildConEnv decls = do
-  let typeDefs = [(n, cs) | TypeDecl n _ cs _ <- decls]
+  let typeDefs = [(sp, n, cs) | TypeDecl sp n _ cs _ <- decls]
   -- Check for duplicate type names.
   foldM_ checkDupType S.empty typeDefs
   -- Build the constructor environment.
@@ -157,24 +204,24 @@ buildConEnv decls = do
   let conValEnv =
         M.fromList
           [ (qLocal cName, TyCon tName)
-          | (tName, cs) <- typeDefs,
+          | (_sp, tName, cs) <- typeDefs,
             ConDef cName _ <- toList cs
           ]
-      typeNames = S.fromList (map fst typeDefs)
+      typeNames = S.fromList [n | (_sp, n, _cs) <- typeDefs]
   pure (typeNames, conEnv, conValEnv)
   where
-    checkDupType seen (n, _) =
+    checkDupType seen (sp, n, _) =
       if S.member n seen
-        then Left (DuplicateTypeDef n)
+        then Left (DuplicateTypeDef sp n)
         else Right (S.insert n seen)
 
-    insertCons m (tName, cs) = do
+    insertCons m (sp, tName, cs) = do
       let conNames = [cName | ConDef cName _ <- toList cs]
-      foldM (insertOne tName conNames) m conNames
+      foldM (insertOne sp tName conNames) m conNames
 
-    insertOne tName allCons m cName =
+    insertOne sp tName allCons m cName =
       if M.member cName m
-        then Left (DuplicateConstructor cName)
+        then Left (DuplicateConstructor sp cName)
         else Right (M.insert cName (tName, allCons) m)
 
 -- | Check a whole program against explicit signatures.
@@ -187,8 +234,8 @@ typecheckProgram Program {imports, decls} = do
   -- 2) Partition top-level decls into signatures and definitions.
   let (sigsList, defsList) = partitionEithers (mapMaybe toEither (toList decls))
       toEither = \case
-        Sig n t _ -> Just (Left (n, t))
-        FunDef n as e _ -> Just (Right (n, as, e))
+        Sig sp n t _ -> Just (Left (sp, n, t))
+        FunDef sp n as e _ -> Just (Right (sp, n, as, e))
         CommentDecl _ -> Nothing
         TypeDecl {} -> Nothing
 
@@ -196,23 +243,23 @@ typecheckProgram Program {imports, decls} = do
   sigEnv <- foldM insertSig M.empty sigsList
 
   -- Validate every written type (no unknown TyCons).
-  mapM_ (wellFormedTypeWith userTypeNames . snd) sigsList
+  mapM_ (\(sp, _, t) -> wellFormedTypeWith sp userTypeNames t) sigsList
 
   -- Ensure unique definition names (shadowing is not allowed at top level).
   foldM_ insertDefName S.empty defsList
 
   -- Check each definition body against its declared type.
-  forM_ defsList $ \(n, args, body) -> do
-    ty <- maybeToRight (MissingSignature n) (M.lookup n sigEnv)
+  forM_ defsList $ \(sp, n, args, body) -> do
+    ty <- maybeToRight (MissingSignature sp n) (M.lookup n sigEnv)
     let (argTys, retTy) = splitArrow ty
     when (length argTys /= length args)
-      $ Left (ArityMismatch n (length argTys) (length args))
+      $ Left (ArityMismatch sp n (length argTys) (length args))
 
     -- Build an environment visible inside the body:
     --   built-ins from imports ⊔ constructors ⊔ parameters ⊔ all top-level signatures.
     let envBuiltins = builtinEnvFromImports imports
         envParams = M.fromList [(qLocal x, t) | (x, t) <- zip args argTys]
-        envTop = M.fromList [(qLocal n', t') | (n', t') <- sigsList]
+        envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         env = M.unions [envBuiltins, conValEnv, envParams, envTop]
 
     bodyTy <- typeOfExpr conEnv env body
@@ -228,35 +275,35 @@ typecheckProgram Program {imports, decls} = do
 
   Right ()
   where
-    insertSig m (n, t) =
+    insertSig m (sp, n, t) =
       if M.member n m
-        then Left (DuplicateSignature n)
+        then Left (DuplicateSignature sp n)
         else Right (M.insert n t m)
 
-    insertDefName s (n, _, _) =
+    insertDefName s (sp, n, _, _) =
       if S.member n s
-        then Left (DuplicateDefinition n)
+        then Left (DuplicateDefinition sp n)
         else Right (S.insert n s)
 
 -- | Infer/check the type of an expression under the given environment.
 --   This function /checks/ consistency; it does not invent polymorphism.
 typeOfExpr :: ConEnv -> Env -> Expr -> Either TypeError Type'
 typeOfExpr conEnv env = \case
-  ELit (LString _) -> Right (TyCon "String")
-  EVar q ->
+  ELit _sp (LString _) -> Right (TyCon "String")
+  EVar sp q ->
     case M.lookup q env of
       Just t -> Right t
       Nothing ->
         case q of
-          QName (_ : _) _ -> Left (NotImported q) -- looks qualified but missing import
-          _ -> Left (UnknownVar q)
-  EParens e ->
+          QName (_ : _) _ -> Left (NotImported sp q) -- looks qualified but missing import
+          _ -> Left (UnknownVar sp q)
+  EParens _sp e ->
     typeOfExpr conEnv env e
-  ECon name ->
+  ECon sp name ->
     case M.lookup name conEnv of
       Just (tyName, _) -> Right (TyCon tyName)
-      Nothing -> Left (UnknownConstructor name)
-  EApp f x -> do
+      Nothing -> Left (UnknownConstructor sp name)
+  EApp _sp f x -> do
     tf <- typeOfExpr conEnv env f
     case tf of
       TyArrow a b -> do
@@ -266,7 +313,7 @@ typeOfExpr conEnv env = \case
           Nothing -> Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
   -- String concatenation is only defined for (String, String) → String.
-  EInfix OpConcat l r -> do
+  EInfix sp OpConcat l r -> do
     tl <- typeOfExpr conEnv env l
     tr <- typeOfExpr conEnv env r
     if tl == TyCon "String" && tr == TyCon "String"
@@ -274,22 +321,22 @@ typeOfExpr conEnv env = \case
       else
         -- pick the first offender for a more helpful message
         let blame = if tl /= TyCon "String" then tl else tr
-         in Left (TypeMismatch (TyCon "String") blame (EInfix OpConcat l r))
-  ECase scrut alts _ -> do
+         in Left (TypeMismatch (TyCon "String") blame (EInfix sp OpConcat l r))
+  ECase sp scrut alts _ -> do
     scrutTy <- typeOfExpr conEnv env scrut
     -- Scrutinee must be a user-defined sum type.
     tyName <- case scrutTy of
       TyCon n | M.member n (allTypeConstructors conEnv) -> Right n
-      _ -> Left (CaseOnNonSumType scrutTy)
+      _ -> Left (CaseOnNonSumType sp scrutTy)
     let allCons = fromMaybe [] (M.lookup tyName (allTypeConstructors conEnv))
     -- Type-check each arm; collect arm types and covered constructors.
     (armTypes, coveredCons) <- foldM (checkArm env) ([], []) (toList alts)
     -- Exhaustiveness: every constructor must appear exactly once.
     let missing = filter (`notElem` coveredCons) allCons
-    unless (null missing) $ Left (NonExhaustiveCase tyName missing)
+    unless (null missing) $ Left (NonExhaustiveCase sp tyName missing)
     -- All arms must agree on the result type.
     case armTypes of
-      [] -> Left (NonExhaustiveCase tyName allCons)
+      [] -> Left (NonExhaustiveCase sp tyName allCons)
       (firstTy : restTys) -> do
         forM_ restTys $ \ty ->
           unless (ty == firstTy)
@@ -298,7 +345,7 @@ typeOfExpr conEnv env = \case
   where
     checkArm envLocal (tys, cons) (CaseAlt _ (PCon cName _) body _) = do
       -- Verify the constructor belongs to the scrutinee type.
-      whenNothing_ (M.lookup cName conEnv) (Left (UnknownConstructor cName))
+      whenNothing_ (M.lookup cName conEnv) (Left (UnknownConstructor (exprSpan body) cName))
       bodyTy <- typeOfExpr conEnv envLocal body
       pure (tys <> [bodyTy], cons <> [cName])
     checkArm _ _ CaseAlt {} =

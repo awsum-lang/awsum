@@ -33,7 +33,7 @@ buildConTagEnv :: [Decl] -> ConTagEnv
 buildConTagEnv ds =
   M.fromList
     [ (cName, idx)
-    | TypeDecl _ _ cs _ <- ds,
+    | TypeDecl _sp _ _ cs _ <- ds,
       (ConDef cName _, idx) <- zip (toList cs) [0 ..]
     ]
 
@@ -56,7 +56,7 @@ lowerDecl tags = \case
   Sig {} -> Right Nothing
   CommentDecl _ -> Right Nothing
   TypeDecl {} -> Right Nothing
-  FunDef n args body _ -> do
+  FunDef _sp n args body _ -> do
     body' <- lowerExpr tags body
     pure $ Just $ case args of
       [] -> CValDef n body' -- zero-arg def ⇒ constant
@@ -71,18 +71,18 @@ lowerDecl tags = \case
 --     • map @case@ to tag-based dispatch.
 lowerExpr :: ConTagEnv -> Expr -> Either TypeError CExpr
 lowerExpr tags = \case
-  EParens e -> lowerExpr tags e
-  EVar qn -> lowerVar qn
-  ELit (LString t) -> Right (CString t)
-  EInfix OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr tags l, lowerExpr tags r]
-  ECon name -> case M.lookup name tags of
+  EParens _sp e -> lowerExpr tags e
+  EVar _sp qn -> lowerVar qn
+  ELit _sp (LString t) -> Right (CString t)
+  EInfix _sp OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr tags l, lowerExpr tags r]
+  ECon _sp name -> case M.lookup name tags of
     Just tag -> Right (CCon tag [])
     Nothing -> Left (TELowering ("unknown constructor: " <> name))
-  ECase scrut alts _ -> do
+  ECase _sp scrut alts _ -> do
     scrut' <- lowerExpr tags scrut
     alts' <- traverse (lowerAlt tags) (toList alts)
     Right (CCase scrut' alts')
-  EApp f x -> do
+  EApp _sp f x -> do
     let (f0, xs) = collectApps f [x]
     f0' <- lowerExpr tags f0
     xs' <- traverse (lowerExpr tags) xs
@@ -102,7 +102,7 @@ lowerAlt _ CaseAlt {} =
 --     collectApps (f a b) []  ==>  (f, [a,b])
 collectApps :: Expr -> [Expr] -> (Expr, [Expr])
 collectApps f acc = case f of
-  EApp f' x' -> collectApps f' (x' : acc)
+  EApp _sp f' x' -> collectApps f' (x' : acc)
   _ -> (f, acc)
 
 -- | Lower a (possibly qualified) variable to either a Core variable

@@ -21,7 +21,7 @@ After completing a plan, run `just fix` to verify everything passes (format, lin
 ```bash
 awsum build FILE [-t llvm|jvm|clr|wasm|js|lua] [-o OUT]   # Compile to file/stdout (binary for jvm/clr/wasm)
 awsum run FILE [-t llvm|jvm|clr|wasm|js|lua] [--input X]  # Compile and execute
-awsum check FILE                              # Typecheck only
+awsum check FILE [--json]                      # Typecheck only (--json for structured diagnostics)
 awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
 awsum core FILE                               # Print Core IR

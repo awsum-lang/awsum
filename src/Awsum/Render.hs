@@ -40,9 +40,9 @@ renderProgram Program {imports, decls} =
 --   separated by a blank line by 'renderProgram'.
 groupDeclBlocks :: [Decl] -> [Text]
 groupDeclBlocks = \case
-  (Sig n ty sigComment : FunDef n' args e defComment : rest)
+  (Sig sp1 n ty sigComment : FunDef sp2 n' args e defComment : rest)
     | n == n' ->
-        (renderDecl (Sig n ty sigComment) <> "\n" <> renderDecl (FunDef n' args e defComment)) : groupDeclBlocks rest
+        (renderDecl (Sig sp1 n ty sigComment) <> "\n" <> renderDecl (FunDef sp2 n' args e defComment)) : groupDeclBlocks rest
   (d : rest) ->
     renderDecl d : groupDeclBlocks rest
   [] -> []
@@ -59,15 +59,15 @@ renderImport (ImportDecl comments mods tcom) =
 -- | Render a top-level declaration.
 renderDecl :: Decl -> Text
 renderDecl = \case
-  Sig name ty mc ->
+  Sig _sp name ty mc ->
     name <> " : " <> renderType ty <> renderTrailingComment mc
-  FunDef name args e mc ->
+  FunDef _sp name args e mc ->
     ( case args of
         [] -> name <> " = " <> renderExpr e
         _ -> name <> " " <> T.intercalate " " args <> " = " <> renderExpr e
     )
       <> renderTrailingComment mc
-  TypeDecl name _tvars cons mc ->
+  TypeDecl _sp name _tvars cons mc ->
     "type "
       <> name
       <> " = "
@@ -116,28 +116,28 @@ renderExpr = renderExprPrec 0
 renderExprPrec :: Int -> Expr -> Text
 renderExprPrec ctx e =
   case e of
-    EParens e' ->
+    EParens _sp e' ->
       -- Preserve user parentheses exactly as written.
       parens (renderExprPrec 0 e')
-    ECase scrut alts trailingComments ->
+    ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
       let s = "case " <> renderExprPrec 0 scrut <> " of\n" <> renderCaseAlts alts trailingComments
        in if 0 < ctx then parens s else s
     _ ->
       let (prec, s) = case e of
-            EVar q -> (3, renderQName q)
-            ELit (LString t) -> (3, "\"" <> escape t <> "\"")
-            ECon n -> (3, n)
+            EVar _sp' q -> (3, renderQName q)
+            ELit _sp' (LString t) -> (3, "\"" <> escape t <> "\"")
+            ECon _sp' n -> (3, n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.
-            EApp f x ->
+            EApp _sp' f x ->
               let f' = renderExprPrec 2 f
                   x' = renderExprPrec 3 x
                in (2, f' <> " " <> x')
             -- For left-assoc @++@: we print the right operand at a tighter
             -- context (2) so a chained ++ on the right becomes parenthesized.
             -- This preserves the original associativity in round-trips.
-            EInfix OpConcat l r ->
+            EInfix _sp' OpConcat l r ->
               let l' = renderExprPrec 1 l
                   r' = renderExprPrec 2 r
                in (1, l' <> " ++ " <> r')

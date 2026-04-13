@@ -25,7 +25,7 @@ See [Target Implementation Details](docs/targets.md) for how each backend works 
 
 ### VSCode
 
-- Install the `Awsum` extension to enable syntax highlight and code formatting
+- Install the `Awsum` extension to enable syntax highlighting, code formatting, and inline error diagnostics
 - Enable format on save
 
 ```json
@@ -95,7 +95,7 @@ brew install lua
 
 - `awsum build FILE [-t llvm] [-o OUT]` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
 - `awsum run FILE [-t llvm] [--input TEXT | --stdin]` — compile to a temp file and execute with the system runtime, passing input to main.
-- `awsum check FILE` — parse and typecheck; prints `OK` or a descriptive error.
+- `awsum check FILE [--json]` — parse and typecheck; prints `OK` or a descriptive error. With `--json`, outputs a JSON array of diagnostics with source positions: `[{"startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"..."}]`.
 - `awsum format FILE [-i|--in-place]` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
@@ -131,6 +131,7 @@ echo "world" | awsum run test/sources/hello.aww -t js   --stdin
 echo "world" | awsum run test/sources/hello.aww -t lua  --stdin
 
 awsum check  test/sources/hello.aww
+awsum check  test/sources/hello.aww --json
 awsum format test/sources/hello.aww -i
 awsum ast    test/sources/hello.aww
 awsum core   test/sources/hello.aww

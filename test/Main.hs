@@ -36,13 +36,15 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
-                               (EVar (QName [] "input"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                               (EVar noSpan (QName [] "input"))
                            )
                            Nothing
                        ]
@@ -61,17 +63,21 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
                                ( EParens
+                                   noSpan
                                    ( EInfix
+                                       noSpan
                                        OpConcat
-                                       (EVar (QName [] "input"))
-                                       (EVar (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
                                    )
                                )
                            )
@@ -93,13 +99,15 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
-                               (EVar (QName [] "input"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                               (EVar noSpan (QName [] "input"))
                            )
                            Nothing
                        ]
@@ -118,17 +126,21 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
                                ( EParens
+                                   noSpan
                                    ( EInfix
+                                       noSpan
                                        OpConcat
-                                       (EVar (QName [] "input"))
-                                       (EVar (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
                                    )
                                )
                            )
@@ -179,7 +191,7 @@ typecheckerSpec = do
               [ "main : String -> IOUnit",
                 "main input = IO.Stdout.print input"
               ]
-          expectedErr = NotImported (QName ["IO", "Stdout"] "print")
+          expectedErr = NotImported noSpan (QName ["IO", "Stdout"] "print")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -205,7 +217,7 @@ typecheckerSpec = do
                 "main : String -> IOUnit",
                 "main input = IO.Stdout.print input"
               ]
-          expectedErr = ArityMismatch "foo" 1 0
+          expectedErr = ArityMismatch noSpan "foo" 1 0
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -217,7 +229,7 @@ typecheckerSpec = do
                 "main : String -> IOUnit",
                 "main input = IO.Stdout.print x"
               ]
-          expectedErr = UnknownVar (QName [] "x")
+          expectedErr = UnknownVar noSpan (QName [] "x")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -228,7 +240,7 @@ typecheckerSpec = do
               [ "main : String -> IOUnit",
                 "main input = input input"
               ]
-          expectedErr = NotAFunction (EVar (QName [] "input")) (TyCon "String")
+          expectedErr = NotAFunction (EVar noSpan (QName [] "input")) (TyCon "String")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -242,9 +254,10 @@ typecheckerSpec = do
               ]
           badExpr =
             EInfix
+              noSpan
               OpConcat
-              (EVar (QName ["IO", "Stdout"] "print"))
-              (EVar (QName [] "input"))
+              (EVar noSpan (QName ["IO", "Stdout"] "print"))
+              (EVar noSpan (QName [] "input"))
           expectedErr =
             TypeMismatch
               (TyCon "String")
@@ -263,7 +276,7 @@ typecheckerSpec = do
                 "main : String -> IOUnit",
                 "main input = input"
               ]
-          expectedErr = DuplicateSignature "foo"
+          expectedErr = DuplicateSignature noSpan "foo"
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -277,7 +290,7 @@ typecheckerSpec = do
                 "main : String -> IOUnit",
                 "main input = input"
               ]
-          expectedErr = DuplicateDefinition "foo"
+          expectedErr = DuplicateDefinition noSpan "foo"
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -289,7 +302,7 @@ typecheckerSpec = do
                 "main : X -> IOUnit",
                 "main x = IO.Stdout.print x"
               ]
-          expectedErr = UnknownTypeCon "X"
+          expectedErr = UnknownTypeCon noSpan "X"
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
@@ -302,7 +315,7 @@ typecheckerSpec = do
                 "main : String -> IOUnit",
                 "main input = input"
               ]
-          expectedErr = MissingSignature "foo"
+          expectedErr = MissingSignature noSpan "foo"
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
