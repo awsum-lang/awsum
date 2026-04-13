@@ -204,28 +204,28 @@ emitDecl ctx = \case
         localCtx = ctx {params = paramSet}
         llvmArgs = T.intercalate ", " (map (\a -> "ptr %" <> mangle a) args)
     (instrs, result) <- emitExpr localCtx body
-    pure $
-      "define ptr @"
-        <> mangle nm
-        <> "("
-        <> llvmArgs
-        <> ") {\n"
-        <> instrs
-        <> "  ret ptr "
-        <> result
-        <> "\n}"
+    pure
+      $ "define ptr @"
+      <> mangle nm
+      <> "("
+      <> llvmArgs
+      <> ") {\n"
+      <> instrs
+      <> "  ret ptr "
+      <> result
+      <> "\n}"
   CValDef nm rhs -> do
     put 0
     let localCtx = ctx {params = Set.empty}
     (instrs, result) <- emitExpr localCtx rhs
-    pure $
-      "define ptr @"
-        <> mangle nm
-        <> "() {\n"
-        <> instrs
-        <> "  ret ptr "
-        <> result
-        <> "\n}"
+    pure
+      $ "define ptr @"
+      <> mangle nm
+      <> "() {\n"
+      <> instrs
+      <> "  ret ptr "
+      <> result
+      <> "\n}"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expressions

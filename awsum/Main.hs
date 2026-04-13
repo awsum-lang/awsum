@@ -1,28 +1,30 @@
 -- | Awsum compiler CLI
 --   This entrypoint wires together parsing, typechecking, formatting,
---   code generation (JS/Lua/LLVM/JVM), and a tiny runner for those targets.
+--   code generation (JS/Lua/LLVM/JVM/WASM), and a tiny runner for those targets.
 module Main (main) where
 
 import Awsum.Codegen
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Core (CoreProgram)
 import Awsum.Codegen.LLVM (codegenLLVM)
 import Awsum.Codegen.Lua (codegenLua)
+import Awsum.Codegen.WASM (codegenWASM)
+import Awsum.Codegen.WASM.Assemble (assembleWASM)
+import Awsum.Core (CoreProgram)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Awsum.Typing (prettyPrintTypeError, typecheckProgram)
 import Common.File
+import Data.ByteString qualified as BS
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Data.Version (showVersion)
 import Options.Applicative qualified as OA
 import Paths_awsum qualified as Meta
 import Relude
-import Data.ByteString qualified as BS
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
@@ -63,8 +65,8 @@ optTarget =
     ( OA.long "target"
         <> OA.short 't'
         <> OA.metavar "TARGET"
-        <> OA.help "Target backend: js | lua | llvm | jvm"
-        <> OA.completeWith ["js", "lua", "llvm", "jvm"]
+        <> OA.help "Target backend: js | lua | llvm | jvm | wasm"
+        <> OA.completeWith ["js", "lua", "llvm", "jvm", "wasm"]
     )
   where
     readTarget :: String -> Maybe Target
@@ -73,6 +75,7 @@ optTarget =
       "lua" -> Just TargetLua
       "llvm" -> Just TargetLLVM
       "jvm" -> Just TargetJVM
+      "wasm" -> Just TargetWASM
       _ -> Nothing
 
 -- | Optional: output file path (defaults to stdout).
@@ -207,6 +210,7 @@ compileToTarget target filePath = do
     TargetLua -> codegenLua core
     TargetLLVM -> codegenLLVM core
     TargetJVM -> codegenJVM core
+    TargetWASM -> codegenWASM core
 
 -- | Compile Core to target and run using the appropriate system runtime.
 runOnTarget :: Target -> CoreProgram -> Text -> IO ()
@@ -236,6 +240,14 @@ runOnTarget target core input = case target of
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("java error:\n" <> toText stderrS)
+  TargetWASM ->
+    withSystemTempDirectory "awsum" $ \dir -> do
+      let wasmPath = dir </> "out.wasm"
+      BS.writeFile wasmPath (assembleWASM core)
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
+      case exit of
+        ExitSuccess -> putTextLn (toText stdoutS)
+        ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
 
 -- | Write text code to a temp file and run with the given interpreter.
 runText :: String -> String -> Text -> Text -> IO ()

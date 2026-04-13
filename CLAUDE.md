@@ -1,6 +1,6 @@
 # Awsum Compiler
 
-Awsum is a functional programming language compiler written in Haskell. It compiles `.aww` source files to JavaScript, Lua, LLVM IR, and JVM bytecode with verified cross-backend equivalence.
+Awsum is a functional programming language compiler written in Haskell. It compiles `.aww` source files to JavaScript, Lua, LLVM IR, JVM bytecode, and WebAssembly with verified cross-backend equivalence.
 
 ## Quick Reference
 
@@ -9,14 +9,14 @@ just build          # Build with pedantic warnings
 just test           # Run all tests
 just test-watch     # TDD watch mode
 just format-fix     # Autoformat Haskell with Ormolu
-just precommit-fix  # Full precommit checks
+just fix  # Full precommit checks
 ```
 
 ## CLI Commands
 
 ```bash
-awsum build FILE [-t js|lua|llvm|jvm] [-o OUT]   # Compile to file/stdout
-awsum run FILE [-t js|lua|llvm|jvm] [--input X]  # Compile and execute
+awsum build FILE [-t js|lua|llvm|jvm|wasm] [-o OUT]   # Compile to file/stdout
+awsum run FILE [-t js|lua|llvm|jvm|wasm] [--input X]  # Compile and execute
 awsum check FILE                              # Typecheck only
 awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
@@ -32,12 +32,14 @@ src/Awsum/
 ├── Typing.hs         # Type checker
 ├── ElaborateLower.hs # Surface → Core lowering
 ├── Core.hs           # Core IR
-├── Codegen.hs        # Target enum (JS, Lua, LLVM, JVM)
+├── Codegen.hs        # Target enum (JS, Lua, LLVM, JVM, WASM)
 ├── Codegen/JS.hs     # JavaScript backend
 ├── Codegen/Lua.hs    # Lua backend
 ├── Codegen/LLVM.hs   # LLVM IR backend
 ├── Codegen/JVM.hs    # JVM text codegen (Jasmin-like, for snapshots)
 ├── Codegen/JVM/Assemble.hs  # JVM binary .class assembler
+├── Codegen/WASM.hs   # WASM text codegen (WAT, for snapshots)
+├── Codegen/WASM/Assemble.hs # WASM binary .wasm assembler
 ├── Format.hs         # Formatter entry point
 ├── Render.hs         # Pretty printer
 └── Normalize.hs      # Normalization pass
@@ -52,7 +54,7 @@ docs/spec/grammar.ebnf # Formal grammar
 ## Compilation Pipeline
 
 ```
-Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core → Codegen → JS/Lua/LLVM/JVM
+Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core → Codegen → JS/Lua/LLVM/JVM/WASM
 ```
 
 ## Language Features (v0.0.1)
@@ -66,9 +68,12 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 ## Testing
 
 Tests use Hspec with golden snapshots. Each test program generates snapshots for:
-- AST, Core IR, formatted source, JS output, Lua output, LLVM output, JVM output, runtime output
 
-Cross-backend verification ensures JS, Lua, LLVM, and JVM produce identical stdout.
+- AST, Core IR, formatted source, JS output, Lua output, LLVM output, JVM output, WASM output, runtime output
+
+Cross-backend verification ensures JS, Lua, LLVM, JVM, and WASM produce identical stdout.
+
+To regenerate snapshots, delete the `.snapshots/` directory and re-run `just test`.
 
 ## Why Claude likes working on this
 

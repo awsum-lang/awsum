@@ -299,8 +299,8 @@ mkMain = do
         [hi8 smtNameIdx, lo8 smtNameIdx]
           <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
               in [fromIntegral (totalLen `div` 16777216), fromIntegral ((totalLen `div` 65536) `mod` 256), fromIntegral ((totalLen `div` 256) `mod` 256), fromIntegral (totalLen `mod` 256)]
-          <> [0, 2] -- number_of_entries = 2
-          <> smtEntries
+                   <> [0, 2] -- number_of_entries = 2
+                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0009,

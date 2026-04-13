@@ -5,14 +5,16 @@ import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
 import Awsum.Codegen.LLVM (codegenLLVM)
 import Awsum.Codegen.Lua (codegenLua)
+import Awsum.Codegen.WASM (codegenWASM)
+import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core
-import Data.ByteString qualified as BS
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Common.File
 import Control.Exception (IOException, try)
+import Data.ByteString qualified as BS
 import Matchers
 import Relude
 import System.Exit (ExitCode (..))
@@ -38,7 +40,9 @@ data CompileResult = CompileResult
     luaCompiledCode :: Text,
     llvmCompiledCode :: Text,
     jvmCompiledCode :: Text,
-    jvmClassBytes :: ByteString
+    jvmClassBytes :: ByteString,
+    wasmCompiledCode :: Text,
+    wasmBinary :: ByteString
   }
 
 compileAll :: Text -> IO CompileResult
@@ -62,7 +66,9 @@ compileAll sourceFile = do
         luaCompiledCode = codegenLua core,
         llvmCompiledCode = codegenLLVM core,
         jvmCompiledCode = codegenJVM core,
-        jvmClassBytes = assembleJVM core
+        jvmClassBytes = assembleJVM core,
+        wasmCompiledCode = codegenWASM core,
+        wasmBinary = assembleWASM core
       }
 
 testProgram :: Text -> [Text] -> Spec
@@ -82,12 +88,14 @@ testProgram sourceFile inputFiles = do
       res.llvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.ll")
     it "JVM code should match snapshot" $ \res -> do
       res.jvmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.j")
+    it "WASM code should match snapshot" $ \res -> do
+      res.wasmCompiledCode `shouldMatchTextSnapshot` (sourceFile <> "/compiled.wat")
 
   traverse_ (testProgramAgainstInput sourceFile) inputFiles
 
 testProgramAgainstInput :: Text -> Text -> Spec
 testProgramAgainstInput sourceFile inputFile = do
-  let prepare :: IO (Text, Text, Text, Text) = do
+  let prepare :: IO (Text, Text, Text, Text, Text) = do
         input <- readFileTextUtf8 $ toString $ sourcesDir <> inputFile
 
         -- TODO: Make program compile and files be written exactly once per sourceFile
@@ -109,16 +117,22 @@ testProgramAgainstInput sourceFile inputFile = do
         jvmOutput <- case jvmRes of
           Left e -> error $ "JVM failed" <> e
           Right x -> pure x
-        pure (jsOutput, luaOutput, llvmOutput, jvmOutput)
+        wasmRes <- runWASM res.wasmBinary input
+        wasmOutput <- case wasmRes of
+          Left e -> error $ "WASM failed" <> e
+          Right x -> pure x
+        pure (jsOutput, luaOutput, llvmOutput, jvmOutput, wasmOutput)
   beforeAll prepare $ describe (toString $ inputFile) $ do
-    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput) -> do
+    it "JS stdout should match snapshot" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, _wasmOutput) -> do
       jsOutput `shouldMatchTextSnapshot` (sourceFile <> "/output." <> inputFile)
-    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput, _llvmOutput, _jvmOutput) -> do
+    it "JS stdout and Lua stdout should be equivalent" $ \(jsOutput, luaOutput, _llvmOutput, _jvmOutput, _wasmOutput) -> do
       jsOutput `shouldBe` luaOutput
-    it "JS stdout and LLVM stdout should be equivalent" $ \(jsOutput, _luaOutput, llvmOutput, _jvmOutput) -> do
+    it "JS stdout and LLVM stdout should be equivalent" $ \(jsOutput, _luaOutput, llvmOutput, _jvmOutput, _wasmOutput) -> do
       jsOutput `shouldBe` llvmOutput
-    it "JS stdout and JVM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, jvmOutput) -> do
+    it "JS stdout and JVM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, jvmOutput, _wasmOutput) -> do
       jsOutput `shouldBe` jvmOutput
+    it "JS stdout and WASM stdout should be equivalent" $ \(jsOutput, _luaOutput, _llvmOutput, _jvmOutput, wasmOutput) -> do
+      jsOutput `shouldBe` wasmOutput
 
 runJs :: Text -> Text -> IO (Either Text Text)
 runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
@@ -170,3 +184,14 @@ runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
     Right (ExitSuccess, out, _) -> pure (Right (toText out))
     Right (ExitFailure _, _out, err) ->
       pure (Left ("java exited with non-zero status:\n" <> toText err))
+
+runWASM :: ByteString -> Text -> IO (Either Text Text)
+runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let wasmFile = dir </> "out.wasm"
+  BS.writeFile wasmFile wasmBytes
+  eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
+  case eRes of
+    Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left ("wasmtime exited with non-zero status:\n" <> toText err))

@@ -22,6 +22,8 @@ library
       Awsum.Codegen.JVM.Assemble
       Awsum.Codegen.LLVM
       Awsum.Codegen.Lua
+      Awsum.Codegen.WASM
+      Awsum.Codegen.WASM.Assemble
       Awsum.Core
       Awsum.ElaborateLower
       Awsum.Format
