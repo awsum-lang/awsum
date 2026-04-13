@@ -52,8 +52,12 @@ src/Awsum/
 └── Normalize.hs      # Normalization pass
 
 awsum/Main.hs         # CLI entry point
-test/sources/         # Test programs (.aww)
-.snapshots/           # Golden test outputs
+test/sources/
+├── successful/       # Programs that compile and run (cross-backend verification)
+└── errors/           # Programs that should fail (JSON diagnostics snapshots)
+.snapshots/
+├── successful/       # Golden outputs for successful programs
+└── errors/           # Golden diagnostics for error programs
 docs/targets.md       # Target implementation details
 docs/spec/grammar.ebnf # Formal grammar
 ```
@@ -66,9 +70,9 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 
 ## Language Features
 
-- Types: `String`, `IOUnit`, polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`)
+- Types: `String`, `IOUnit`, polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
 - Expressions: string literals, `++` concatenation, function application, constructors, `case`/`of` pattern matching with field bindings
-- Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking and constructor fields
+- Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection
 - Comments: `--` line, `{- -}` block (preserved through formatting)
 - Built-in: `IO.Stdout.print : String -> IOUnit`
 
