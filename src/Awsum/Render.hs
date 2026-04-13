@@ -67,15 +67,18 @@ renderDecl = \case
         _ -> name <> " " <> T.intercalate " " args <> " = " <> renderExpr e
     )
       <> renderTrailingComment mc
-  TypeDecl _sp name _tvars cons mc ->
+  TypeDecl _sp name tvars cons mc ->
     "type "
       <> name
+      <> (if null tvars then "" else " " <> T.intercalate " " tvars)
       <> " = "
-      <> T.intercalate " | " [n | ConDef n _ <- toList cons]
+      <> T.intercalate " | " (map renderConDef (toList cons))
       <> renderTrailingComment mc
   CommentDecl c ->
     renderComment c
   where
+    renderConDef (ConDef n []) = n
+    renderConDef (ConDef n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 renderComment :: Comment -> Text
@@ -90,12 +93,15 @@ renderType :: Type' -> Text
 renderType = renderTypePrec 0
 
 -- | @ctx@ is the precedence context we are printing into:
---   0 (top) < 1 (->) < 2 (atom).
+--   0 (top) < 1 (->) < 2 (app) < 3 (atom).
 --   We parenthesize when the inner precedence is strictly lower than the context.
 renderTypePrec :: Int -> Type' -> Text
 renderTypePrec ctx = \case
   TyVar n -> n
   TyCon n -> n
+  TyApp f x ->
+    let s = renderTypePrec 2 f <> " " <> renderTypePrec 3 x
+     in if 2 < ctx then parens s else s
   TyArrow t1 t2 ->
     let l = renderTypePrec 2 t1
         r = renderTypePrec 1 t2

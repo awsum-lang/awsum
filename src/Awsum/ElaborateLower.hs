@@ -84,16 +84,25 @@ lowerExpr tags = \case
     Right (CCase scrut' alts')
   EApp _sp f x -> do
     let (f0, xs) = collectApps f [x]
-    f0' <- lowerExpr tags f0
-    xs' <- traverse (lowerExpr tags) xs
-    Right (CCall f0' xs')
+    case f0 of
+      ECon _sp' name -> case M.lookup name tags of
+        Just tag -> do
+          xs' <- traverse (lowerExpr tags) xs
+          Right (CCon tag xs')
+        Nothing -> Left (TELowering ("unknown constructor: " <> name))
+      _ -> do
+        f0' <- lowerExpr tags f0
+        xs' <- traverse (lowerExpr tags) xs
+        Right (CCall f0' xs')
 
--- | Lower a single case alternative: look up the constructor tag and lower the body.
+-- | Lower a single case alternative: look up the constructor tag,
+--   extract bound variable names from patterns, and lower the body.
 lowerAlt :: ConTagEnv -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
-lowerAlt tags (CaseAlt _ (PCon cName _) body _) = do
+lowerAlt tags (CaseAlt _ (PCon cName pats) body _) = do
   tag <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName tags)
+  let boundVars = [n | PVar n <- pats]
   body' <- lowerExpr tags body
-  Right (tag, [], body')
+  Right (tag, boundVars, body')
 lowerAlt _ CaseAlt {} =
   Left (TELowering "only constructor patterns are supported in case")
 

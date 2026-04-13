@@ -92,7 +92,8 @@ emitExpr = \case
   CVar n -> mangle n
   CPrim PrimConcat -> "--<prim concat>"
   CPrim PrimPrint -> "--<prim print>"
-  CCon tag _ -> show tag
+  CCon tag fields ->
+    "{" <> T.intercalate ", " (show tag : map emitExpr fields) <> "}"
   CCase scrut alts ->
     "(function(s) "
       <> emitAlts alts
@@ -113,14 +114,17 @@ emitExpr = \case
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
   where
     emitAlts [] = ""
-    emitAlts ((tag, _vars, body) : rest) =
-      "if s == "
-        <> show tag
-        <> " then return "
-        <> emitExpr body
-        <> case rest of
-          [] -> " end"
-          _ -> " else" <> emitAlts rest
+    emitAlts ((tag, vars, body) : rest) =
+      let bindings = T.concat [" local " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [2 ..]]
+       in "if s[1] == "
+            <> show tag
+            <> " then"
+            <> bindings
+            <> " return "
+            <> emitExpr body
+            <> case rest of
+              [] -> " end"
+              _ -> " else" <> emitAlts rest
 
 -- | Encode a Haskell 'Text' as a Lua string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0

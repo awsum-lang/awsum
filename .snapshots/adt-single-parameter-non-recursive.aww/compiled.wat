@@ -7,14 +7,13 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 83))
+  (global $heap (mut i32) (i32.const 84))
   (data (i32.const 64) "\00")
-  (data (i32.const 65) "Red\00")
-  (data (i32.const 69) "Green\00")
-  (data (i32.const 75) "Blue\00")
-  (data (i32.const 80) ", \00")
+  (data (i32.const 65) "not found\00")
+  (data (i32.const 75) "hello\00")
+  (data (i32.const 81) ", \00")
   (table 2 funcref)
-  (elem (i32.const 0) $v_show $v_main)
+  (elem (i32.const 0) $v_unwrap $v_main)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -77,11 +76,13 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_show (export "v_show") (param $v_c i32) (result i32)
-    (if (result i32) (i32.eq (local.get $v_c) (i32.const 0)) (then (i32.const 65)) (else (if (result i32) (i32.eq (local.get $v_c) (i32.const 1)) (then (i32.const 69)) (else (i32.const 75))))))
+  (func $v_unwrap (export "v_unwrap") (param $v_x i32) (result i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.const 65)))))
 
   (func $v_main (export "v_main") (param $v_input i32) (result i32)
-    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $v_show (i32.const 0)) (i32.const 80)) (call $v_show (i32.const 1))) (i32.const 80)) (call $v_show (i32.const 2)))))
+    (local $__con i32)
+    (call $__print (call $__concat (call $__concat (call $v_unwrap (block (result i32) (i32.store (local.tee $__con (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con) (i32.const 75)) (local.get $__con))) (i32.const 81)) (call $v_unwrap (block (result i32) (i32.store (local.tee $__con (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con))))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

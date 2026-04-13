@@ -94,6 +94,7 @@ instance Arbitrary Type' where
           [ (4, TyVar <$> genTyVarName),
             (3, TyCon <$> genKnownTyCon),
             (2, TyCon <$> genUIdent),
+            (3, TyApp <$> go (n `div` 2) <*> go (n `div` 2)),
             (6, TyArrow <$> go (n `div` 2) <*> go (n `div` 2))
           ]
 
@@ -111,6 +112,10 @@ instance Arbitrary Type' where
   shrink = \case
     TyVar v -> TyVar <$> shrinkIdent v
     TyCon n -> TyCon <$> shrinkIdent n
+    TyApp f x ->
+      [f, x]
+        <> [TyApp f' x | f' <- shrink f]
+        <> [TyApp f x' | x' <- shrink x]
     TyArrow a b ->
       [a, b]
         <> [TyArrow a' b | a' <- shrink a]

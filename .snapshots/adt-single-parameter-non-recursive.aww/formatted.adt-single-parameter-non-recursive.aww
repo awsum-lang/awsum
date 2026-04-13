@@ -1,0 +1,11 @@
+import IO.Stdout
+
+type Lookup a = Found a | NotFound
+
+unwrap : Lookup String -> String
+unwrap x = case x of
+  Found value -> value
+  NotFound -> "not found"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Found "hello") ++ ", " ++ unwrap NotFound)

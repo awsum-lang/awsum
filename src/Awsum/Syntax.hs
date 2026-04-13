@@ -106,13 +106,14 @@ data Decl
 data ConDef = ConDef Name [Type']
   deriving stock (Show, Eq)
 
--- | Surface types. For MVP we only have type constructors (e.g. @String@, @IOUnit@)
---   and arrows. Application (like @IO ()@) is not modeled here yet.
+-- | Surface types.
 data Type'
   = -- | type variable, e.g. 'a'
     TyVar Name
   | -- | Type constructor, e.g. @\"String\"@, @\"IOUnit\"@.
     TyCon Name
+  | -- | Type application, e.g. @Lookup String@.
+    TyApp Type' Type'
   | -- | Arrow type @a -> b@ (right-associative by convention).
     TyArrow Type' Type'
   deriving stock (Show, Eq)

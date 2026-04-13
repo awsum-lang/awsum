@@ -165,19 +165,34 @@ emitExprText ctx paramMap = \case
         "  aconst_null"
   CPrim _ ->
     "  aconst_null"
-  CCon tag _ ->
-    T.intercalate
-      "\n"
-      [ emitIconst tag,
-        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;"
-      ]
+  CCon tag fields ->
+    let nSlots = 1 + length fields
+        storeTag =
+          [ "  dup",
+            emitIconst 0,
+            emitIconst tag,
+            "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+            "  aastore"
+          ]
+        storeFields =
+          [ "  dup\n" <> emitIconst (i :: Int) <> "\n" <> emitExprText ctx paramMap fld <> "\n  aastore"
+          | (fld, i) <- zip fields [1 ..]
+          ]
+     in T.intercalate "\n"
+          $ [emitIconst nSlots, "  anewarray java/lang/Object"]
+          <> storeTag
+          <> storeFields
   CCase scrut alts ->
     let sorted = sortWith (\(t, _, _) -> t) alts
         scrutText = emitExprText ctx paramMap scrut
-        unboxText =
+        -- Extract tag: arr[0] → unbox Integer → int
+        extractTag =
           T.intercalate
             "\n"
-            [ "  checkcast java/lang/Integer",
+            [ "  dup",
+              emitIconst 0,
+              "  aaload",
+              "  checkcast java/lang/Integer",
               "  invokevirtual java/lang/Integer/intValue()I"
             ]
         armLabels = ["L_arm_" <> show tag | (tag, _, _) <- sorted]
@@ -188,12 +203,20 @@ emitExprText ctx paramMap = \case
             <> T.concat ["\n    " <> show tag <> ": " <> lbl | ((tag, _, _), lbl) <- zip sorted armLabels]
             <> "\n    default: "
             <> fromMaybe "L_default" (viaNonEmpty head armLabels)
-        armTexts =
-          [ lbl <> ":\n" <> emitExprText ctx paramMap body <> "\n  goto " <> joinLabel
-          | ((_, _, body), lbl) <- zip sorted armLabels
-          ]
+        nextSlot = foldl' max (-1) (Map.elems paramMap) + 1
+        -- Each arm: store bound vars to locals, pop array, emit body
+        emitArm (_, vars, body) lbl =
+          let bindings = zip vars [nextSlot ..]
+              storeCode =
+                T.concat
+                  [ "  dup\n" <> emitIconst (i :: Int) <> "\n  aaload\n  astore" <> astoreSuffix slot <> "\n"
+                  | ((_, slot), i) <- zip bindings [1 :: Int ..]
+                  ]
+              paramMap' = foldl' (\m (v, slot) -> Map.insert v slot m) paramMap bindings
+           in lbl <> ":\n" <> storeCode <> "  pop\n" <> emitExprText ctx paramMap' body <> "\n  goto " <> joinLabel
+        armTexts = [emitArm alt lbl | (alt, lbl) <- zip sorted armLabels]
      in T.intercalate "\n"
-          $ [scrutText, unboxText, switchText]
+          $ [scrutText, extractTag, switchText]
           <> armTexts
           <> [joinLabel <> ":"]
   CCall f xs ->
@@ -254,5 +277,10 @@ objMethodDescText n =
 
 aloadSuffix :: Int -> Text
 aloadSuffix n
+  | n <= 3 = "_" <> show n
+  | otherwise = " " <> show n
+
+astoreSuffix :: Int -> Text
+astoreSuffix n
   | n <= 3 = "_" <> show n
   | otherwise = " " <> show n

@@ -1,11 +1,11 @@
 local function __print(s) io.write(tostring(s)); return nil end
 
-function v_show(v_c)
-  return (function(s) if s[1] == 0 then return "Red" elseif s[1] == 1 then return "Green" elseif s[1] == 2 then return "Blue" end end)(v_c)
+function v_unwrap(v_x)
+  return (function(s) if s[1] == 0 then local v_value = s[2]; return v_value elseif s[1] == 1 then return "not found" end end)(v_x)
 end
 
 function main(v_input)
-  return __print((((((v_show)({0}) .. ", ") .. (v_show)({1})) .. ", ") .. (v_show)({2})))
+  return __print((((v_unwrap)({0, "hello"}) .. ", ") .. (v_unwrap)({1})))
 end
 
 local ok, dbg = pcall(require, 'debug')

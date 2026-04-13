@@ -29,7 +29,8 @@ spec = describe "Program snapshots" $ do
   testProgram "hello.aww" ["hello.input1.txt", "hello.input2.txt", "hello.input3.txt"]
   testProgram "polymorphism.aww" ["polymorphism.input1.txt"]
   testProgram "comments.aww" []
-  testProgram "sum-types-and-pattern-matching.aww" ["sum-types-and-pattern-matching.input1.txt"]
+  testProgram "adt-no-parameters.aww" ["adt-no-parameters.input1.txt"]
+  testProgram "adt-single-parameter-non-recursive.aww" ["adt-single-parameter-non-recursive.input1.txt"]
   testProgram "improperly-formatted-source.aww" ["improperly-formatted-source.input1.txt"]
 
 sourcesDir :: Text

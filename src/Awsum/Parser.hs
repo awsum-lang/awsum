@@ -278,20 +278,25 @@ pSigWithEnd = do
   endLineOrEOF
   pure (Sig (toSrcSpan start end) name ty tcom)
 
--- | Sum type declaration: @type Bool = True | False@.
+-- | Sum type declaration: @type Lookup a = Found a | NotFound@.
 --   Constructors are separated by @|@ on a single line (for now).
 pTypeDeclWithEnd :: Parser Decl
 pTypeDeclWithEnd = do
   start <- P.getSourcePos
   rwordS "type"
   name <- uident
+  tvars <- P.many lidentNoLine
   _ <- sym "="
-  firstCon <- ConDef <$> uidentNoLine <*> pure []
-  restCons <- P.many (symNoLine "|" *> (ConDef <$> uidentNoLine <*> pure []))
+  firstCon <- pConDefNoLine
+  restCons <- P.many (symNoLine "|" *> pConDefNoLine)
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
   endLineOrEOF
-  pure (TypeDecl (toSrcSpan start end) name [] (firstCon :| restCons) tcom)
+  pure (TypeDecl (toSrcSpan start end) name tvars (firstCon :| restCons) tcom)
+
+-- | Constructor definition: @Found a@ or @NotFound@.
+pConDefNoLine :: Parser ConDef
+pConDefNoLine = ConDef <$> uidentNoLine <*> P.many pTypeAtomNoLineComments
 
 -- | Definition line: keep inline trailing '-- …' if present.
 pFunDefWithEnd :: Parser Decl
@@ -326,15 +331,26 @@ endLineOrEOF = void C.eol <|> P.eof
 -- Types (right-assoc arrows) ────────────────────────────────────────────────
 
 -- | Types with a space consumer that does not skip line comments.
+--   Grammar: Type = TypeApp , { "->" , Type } ;
 pTypeNoLineComments :: Parser Type'
 pTypeNoLineComments = do
-  t1 <- pTypeAtomNoLineComments
+  t1 <- pTypeAppNoLineComments
   (TyArrow t1 <$> (symNoLine "->" *> pTypeNoLineComments)) <|> pure t1
-  where
-    pTypeAtomNoLineComments =
-      (TyCon <$> uidentNoLine)
-        <|> (TyVar <$> lidentNoLine)
-        <|> P.between (symNoLine "(") (symNoLine ")") pTypeNoLineComments
+
+-- | Type application: @Lookup String@, left-associative.
+--   Grammar: TypeApp = TypeAtom , { TypeAtom } ;
+pTypeAppNoLineComments :: Parser Type'
+pTypeAppNoLineComments = do
+  t <- pTypeAtomNoLineComments
+  ts <- P.many pTypeAtomNoLineComments
+  pure (foldl' TyApp t ts)
+
+-- | A single type atom: constructor, variable, or parenthesized type.
+pTypeAtomNoLineComments :: Parser Type'
+pTypeAtomNoLineComments =
+  (TyCon <$> uidentNoLine)
+    <|> (TyVar <$> lidentNoLine)
+    <|> P.between (symNoLine "(") (symNoLine ")") pTypeNoLineComments
 
 -- Expressions ───────────────────────────────────────────────────────────────
 
@@ -514,6 +530,15 @@ groupCaseItems = go []
           (alts, trailing) = go [] rest
        in (alt : alts, trailing)
 
--- | Pattern: currently only nullary constructor patterns.
+-- | Pattern: constructor with optional sub-patterns, or variable binding.
+--   @Found value@ parses as @PCon "Found" [PVar "value"]@.
 pPatternNoLineComments :: Parser Pattern
-pPatternNoLineComments = PCon <$> uidentNoLine <*> pure []
+pPatternNoLineComments =
+  (PCon <$> uidentNoLine <*> P.many pPatternAtomNoLineComments)
+    <|> (PVar <$> lidentNoLine)
+
+-- | Atomic pattern: a constructor (no args) or variable.
+pPatternAtomNoLineComments :: Parser Pattern
+pPatternAtomNoLineComments =
+  (PVar <$> lidentNoLine)
+    <|> ((`PCon` []) <$> uidentNoLine)

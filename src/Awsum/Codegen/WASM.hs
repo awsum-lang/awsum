@@ -41,7 +41,8 @@ codegenWASM prog@(CoreProgram decls) =
             wArities = arities,
             wStringPool = pool,
             wTableMap = tableMap,
-            wIndirectArities = indirectArities
+            wIndirectArities = indirectArities,
+            wLocalExprs = Map.empty
           }
    in T.intercalate
         "\n"
@@ -71,7 +72,8 @@ data WasmCtx = WasmCtx
     wArities :: Map Text Int,
     wStringPool :: Map Text Int,
     wTableMap :: Map Text Int,
-    wIndirectArities :: Set Int
+    wIndirectArities :: Set Int,
+    wLocalExprs :: Map Text Text -- case-bound variable → inline WAT expression
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -110,7 +112,7 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CPrim _ -> []
-  CCon _ _ -> []
+  CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
 
@@ -323,24 +325,30 @@ emitDecl :: WasmCtx -> CDecl -> Text
 emitDecl ctx = \case
   CFunDef nm args body ->
     let paramSet = Set.fromList args
-        localCtx = ctx {wParams = paramSet}
+        localCtx = ctx {wParams = paramSet, wLocalExprs = Map.empty}
         wasmParams = T.intercalate " " (map (\a -> "(param $" <> mangle a <> " i32)") args)
+        locals = collectLocals body
      in "  (func $"
           <> mangle nm
           <> " (export \""
           <> mangle nm
           <> "\") "
           <> wasmParams
-          <> " (result i32)\n    "
+          <> " (result i32)"
+          <> locals
+          <> "\n    "
           <> emitExpr localCtx body
           <> ")"
   CValDef nm rhs ->
-    let localCtx = ctx {wParams = Set.empty}
+    let localCtx = ctx {wParams = Set.empty, wLocalExprs = Map.empty}
+        locals = collectLocals rhs
      in "  (func $"
           <> mangle nm
           <> " (export \""
           <> mangle nm
-          <> "\") (result i32)\n    "
+          <> "\") (result i32)"
+          <> locals
+          <> "\n    "
           <> emitExpr localCtx rhs
           <> ")"
 
@@ -354,6 +362,7 @@ emitExpr ctx = \case
     let offset = fromMaybe (error $ "string not in pool: " <> show s) (Map.lookup s ctx.wStringPool)
      in "(i32.const " <> show offset <> ")"
   CVar n
+    | Just expr <- Map.lookup n ctx.wLocalExprs -> expr
     | n `Set.member` ctx.wParams ->
         "(local.get $" <> mangle n <> ")"
     | n `Set.member` ctx.wValDefs ->
@@ -365,8 +374,14 @@ emitExpr ctx = \case
         "(i32.const 0)"
   CPrim _ ->
     "(i32.const 0)"
-  CCon tag _ ->
-    "(i32.const " <> show tag <> ")"
+  CCon tag fields ->
+    let nSlots = 1 + length fields
+        storeTag = "(i32.store (local.tee $__con (call $__alloc (i32.const " <> show (nSlots * 4 :: Int) <> "))) (i32.const " <> show tag <> "))"
+        storeFields =
+          [ "(i32.store offset=" <> show (i * 4 :: Int) <> " (local.get $__con) " <> emitExpr ctx fld <> ")"
+          | (fld, i) <- zip fields [1 :: Int ..]
+          ]
+     in "(block (result i32) " <> T.intercalate " " (storeTag : storeFields <> ["(local.get $__con)"]) <> ")"
   CCase scrut alts ->
     emitCaseExpr ctx scrut alts
   CCall f xs ->
@@ -391,24 +406,48 @@ emitExpr ctx = \case
               <> ")"
 
 -- | Emit a case expression as nested @if\/else@ in WAT.
---   Sorts alternatives by tag and builds a right-nested chain.
+--   Stores the scrutinee in @$__scrut@, extracts the tag from offset 0,
+--   and binds field values via inline @i32.load offset=N@ expressions.
 emitCaseExpr :: WasmCtx -> CExpr -> [(Int, [Text], CExpr)] -> Text
 emitCaseExpr ctx scrut alts =
   let sorted = sortWith (\(t, _, _) -> t) alts
-   in buildChain sorted
+      scrutCode = emitExpr ctx scrut
+   in "(block (result i32) (local.set $__scrut " <> scrutCode <> ") " <> buildChain sorted <> ")"
   where
+    bindVars vars =
+      let entries = [(v, "(i32.load offset=" <> show (i * 4 :: Int) <> " (local.get $__scrut))") | (v, i) <- zip vars [1 :: Int ..]]
+       in ctx {wLocalExprs = foldl' (\m (k, e) -> Map.insert k e m) ctx.wLocalExprs entries}
     buildChain [] = "(unreachable)"
-    buildChain [(_, _, body)] = emitExpr ctx body
-    buildChain ((tag, _, body) : rest) =
-      "(if (result i32) (i32.eq "
-        <> emitExpr ctx scrut
-        <> " (i32.const "
+    buildChain [(_, vars, body)] = emitExpr (bindVars vars) body
+    buildChain ((tag, vars, body) : rest) =
+      "(if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const "
         <> show tag
         <> ")) (then "
-        <> emitExpr ctx body
+        <> emitExpr (bindVars vars) body
         <> ") (else "
         <> buildChain rest
         <> "))"
+
+-- | Determine which locals a function body needs and emit their declarations.
+collectLocals :: CExpr -> Text
+collectLocals body =
+  let nc = hasCCon body
+      ns = hasCCase body
+   in (if nc then "\n    (local $__con i32)" else "")
+        <> (if ns then "\n    (local $__scrut i32)" else "")
+
+hasCCon :: CExpr -> Bool
+hasCCon = \case
+  CCon {} -> True
+  CCase s alts -> hasCCon s || any (\(_, _, b) -> hasCCon b) alts
+  CCall f xs -> hasCCon f || any hasCCon xs
+  _ -> False
+
+hasCCase :: CExpr -> Bool
+hasCCase = \case
+  CCase {} -> True
+  CCall f xs -> hasCCase f || any hasCCase xs
+  _ -> False
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling

@@ -79,9 +79,10 @@ emitExpr = \case
   CVar n -> mangle n
   CPrim PrimConcat -> "/*<prim concat>*/" -- invariant: not a standalone term
   CPrim PrimPrint -> "/*<prim print>*/" -- invariant: not a standalone term
-  CCon tag _ -> show tag
+  CCon tag fields ->
+    "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
   CCase scrut alts ->
-    "((s) => { switch(s) { "
+    "((s) => { switch(s[0]) { "
       <> T.intercalate " " (map emitAlt alts)
       <> " } })("
       <> emitExpr scrut
@@ -99,8 +100,9 @@ emitExpr = \case
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
   where
-    emitAlt (tag, _vars, body) =
-      "case " <> show tag <> ": return " <> emitExpr body <> ";"
+    emitAlt (tag, vars, body) =
+      let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]
+       in "case " <> show tag <> ":" <> bindings <> " return " <> emitExpr body <> ";"
 
 -- | Encode a Haskell 'Text' as a JavaScript string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0

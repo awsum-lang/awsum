@@ -27,23 +27,28 @@
   areturn
 .end method
 
-.method public static v_show(Ljava/lang/Object;)Ljava/lang/Object;
+.method public static v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
+  dup
+  iconst_0
+  aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
     0: L_arm_0
     1: L_arm_1
-    2: L_arm_2
     default: L_arm_0
 L_arm_0:
-  ldc "Red"
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  aload_1
   goto L_join
 L_arm_1:
-  ldc "Green"
-  goto L_join
-L_arm_2:
-  ldc "Blue"
+  pop
+  ldc "not found"
   goto L_join
 L_join:
   areturn
@@ -51,20 +56,28 @@ L_join:
 
 
 .method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
+  aastore
+  dup
+  iconst_1
+  ldc "hello"
+  aastore
+  invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   ldc ", "
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  ldc ", "
-  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_2
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
+  aastore
+  invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
   areturn

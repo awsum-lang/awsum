@@ -66,9 +66,9 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 
 ## Language Features
 
-- Types: `String`, `IOUnit`, polymorphic type variables, sum types (`type Bool = True | False`)
-- Expressions: string literals, `++` concatenation, function application, constructors, `case`/`of` pattern matching
-- Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking
+- Types: `String`, `IOUnit`, polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`)
+- Expressions: string literals, `++` concatenation, function application, constructors, `case`/`of` pattern matching with field bindings
+- Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking and constructor fields
 - Comments: `--` line, `{- -}` block (preserved through formatting)
 - Built-in: `IO.Stdout.print : String -> IOUnit`
 

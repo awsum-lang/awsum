@@ -33,15 +33,21 @@
   .method public hidebysig static object v_show(object) cil managed
   {
     ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
     unbox.any [System.Runtime]System.Int32
     switch (IL_arm_0, IL_arm_1, IL_arm_2)
   IL_arm_0:
+    pop
     ldstr "Red"
     br.s IL_join
   IL_arm_1:
+    pop
     ldstr "Green"
     br.s IL_join
   IL_arm_2:
+    pop
     ldstr "Blue"
     br.s IL_join
   IL_join:
@@ -51,19 +57,34 @@
 
   .method public hidebysig static object v_main(object) cil managed
   {
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
+    stelem.ref
     call object AwsumMain::v_show(object)
     ldstr ", "
     call object AwsumMain::__concat(object, object)
     ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
     box [System.Runtime]System.Int32
+    stelem.ref
     call object AwsumMain::v_show(object)
     call object AwsumMain::__concat(object, object)
     ldstr ", "
     call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
     ldc.i4.2
     box [System.Runtime]System.Int32
+    stelem.ref
     call object AwsumMain::v_show(object)
     call object AwsumMain::__concat(object, object)
     call object AwsumMain::__print(object)

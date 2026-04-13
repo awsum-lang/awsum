@@ -123,14 +123,28 @@ prettyPrintTypeError = \case
     showType = \case
       TyVar n -> n
       TyCon n -> n
+      TyApp f x -> showType f <> " " <> showTypeAtom x
       TyArrow a b -> showType a <> " -> " <> showType b
+    showTypeAtom :: Type' -> Text
+    showTypeAtom t@TyApp {} = "(" <> showType t <> ")"
+    showTypeAtom t@TyArrow {} = "(" <> showType t <> ")"
+    showTypeAtom t = showType t
 
 -- | Typing environment: maps fully-qualified names to types.
 --   We use 'QName' to keep the door open for qualified built-ins.
 type Env = M.Map QName Type'
 
--- | Constructor environment: maps constructor name → (type name, list of all constructor names).
-type ConEnv = M.Map Name (Name, [Name])
+-- | Constructor info: type name, type parameters, field types, sibling constructors.
+data ConInfo = ConInfo
+  { ciTypeName :: Name,
+    ciTypeParams :: [Name],
+    ciFieldTypes :: [Type'],
+    ciSiblings :: [Name]
+  }
+  deriving stock (Show, Eq)
+
+-- | Constructor environment: maps constructor name → 'ConInfo'.
+type ConEnv = M.Map Name ConInfo
 
 -- | Helper to create a local (unqualified) 'QName'.
 qLocal :: Name -> QName
@@ -169,6 +183,7 @@ wellFormedTypeWith sp userTypes = \case
   TyCon n
     | S.member n userTypes -> Right ()
     | otherwise -> Left (UnknownTypeCon sp n)
+  TyApp f x -> wellFormedTypeWith sp userTypes f >> wellFormedTypeWith sp userTypes x
   TyArrow a b -> wellFormedTypeWith sp userTypes a >> wellFormedTypeWith sp userTypes b
 
 type Subst = M.Map Name Type'
@@ -177,6 +192,7 @@ applySubst :: Subst -> Type' -> Type'
 applySubst s = \case
   TyVar v -> fromMaybe (TyVar v) (M.lookup v s)
   TyCon c -> TyCon c
+  TyApp f x -> TyApp (applySubst s f) (applySubst s x)
   TyArrow a b -> TyArrow (applySubst s a) (applySubst s b)
 
 compose :: Subst -> Subst -> Subst
@@ -186,47 +202,65 @@ match :: Type' -> Type' -> Maybe Subst
 match = go
   where
     go (TyVar v) t = Just (M.singleton v t)
+    go t (TyVar v) = Just (M.singleton v t)
     go (TyCon c1) (TyCon c2)
       | c1 == c2 = Just M.empty
       | otherwise = Nothing
+    go (TyApp f1 x1) (TyApp f2 x2) = do
+      s1 <- go f1 f2
+      s2 <- go (applySubst s1 x1) (applySubst s1 x2)
+      pure (compose s2 s1)
     go (TyArrow a1 b1) (TyArrow a2 b2) = do
       s1 <- go a1 a2
       s2 <- go (applySubst s1 b1) (applySubst s1 b2)
       pure (compose s2 s1)
     go _ _ = Nothing
 
+-- | Build the return type of a constructor given the type name and type parameters.
+--   @conReturnType "Color" []@    → @TyCon "Color"@
+--   @conReturnType "Lookup" ["a"]@ → @TyApp (TyCon "Lookup") (TyVar "a")@
+conReturnType :: Name -> [Name] -> Type'
+conReturnType tName [] = TyCon tName
+conReturnType tName tvs = foldl' TyApp (TyCon tName) (map TyVar tvs)
+
+-- | Build the full type of a constructor: @fieldType1 -> ... -> returnType@.
+conType :: Name -> [Name] -> [Type'] -> Type'
+conType tName tvs = foldr TyArrow (conReturnType tName tvs)
+
 -- | Build a constructor environment from @type@ declarations.
 --   Returns (set of type names, constructor env, constructor value env).
 buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env)
 buildConEnv decls = do
-  let typeDefs = [(sp, n, cs) | TypeDecl sp n _ cs _ <- decls]
+  let typeDefs = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ <- decls]
   -- Check for duplicate type names.
   foldM_ checkDupType S.empty typeDefs
   -- Build the constructor environment.
   conEnv <- foldM insertCons M.empty typeDefs
-  -- Build the value environment for constructors (each constructor has the type of its parent).
+  -- Build the value environment for constructors with proper polymorphic types.
   let conValEnv =
         M.fromList
-          [ (qLocal cName, TyCon tName)
-          | (_sp, tName, cs) <- typeDefs,
-            ConDef cName _ <- toList cs
+          [ (qLocal cName, conType tName tvs flds)
+          | (_sp, tName, tvs, cs) <- typeDefs,
+            ConDef cName flds <- toList cs
           ]
-      typeNames = S.fromList [n | (_sp, n, _cs) <- typeDefs]
+      typeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDefs]
   pure (typeNames, conEnv, conValEnv)
   where
-    checkDupType seen (sp, n, _) =
+    checkDupType seen (sp, n, _tvs, _) =
       if S.member n seen
         then Left (DuplicateTypeDef sp n)
         else Right (S.insert n seen)
 
-    insertCons m (sp, tName, cs) = do
+    insertCons m (sp, tName, tvs, cs) = do
       let conNames = [cName | ConDef cName _ <- toList cs]
-      foldM (insertOne sp tName conNames) m conNames
+      foldM (insertOne sp tName tvs conNames cs) m conNames
 
-    insertOne sp tName allCons m cName =
+    insertOne sp tName tvs allCons cs m cName =
       if M.member cName m
         then Left (DuplicateConstructor sp cName)
-        else Right (M.insert cName (tName, allCons) m)
+        else
+          let flds = [fs | ConDef cn fs <- toList cs, cn == cName]
+           in Right (M.insert cName (ConInfo tName tvs (concat flds) allCons) m)
 
 -- | Check a whole program against explicit signatures.
 --   Returns 'Right ()' on success; otherwise a descriptive 'TypeError'.
@@ -304,8 +338,8 @@ typeOfExpr conEnv env = \case
   EParens _sp e ->
     typeOfExpr conEnv env e
   ECon sp name ->
-    case M.lookup name conEnv of
-      Just (tyName, _) -> Right (TyCon tyName)
+    case M.lookup (qLocal name) env of
+      Just t -> Right t
       Nothing -> Left (UnknownConstructor sp name)
   EApp _sp f x -> do
     tf <- typeOfExpr conEnv env f
@@ -329,12 +363,19 @@ typeOfExpr conEnv env = \case
   ECase sp scrut alts _ -> do
     scrutTy <- typeOfExpr conEnv env scrut
     -- Scrutinee must be a user-defined sum type.
-    tyName <- case scrutTy of
-      TyCon n | M.member n (allTypeConstructors conEnv) -> Right n
+    tyName <- case extractTyCon scrutTy of
+      Just n | M.member n (allTypeConstructors conEnv) -> Right n
       _ -> Left (CaseOnNonSumType sp scrutTy)
     let allCons = fromMaybe [] (M.lookup tyName (allTypeConstructors conEnv))
+    -- Compute substitution from type parameters to concrete types.
+    -- E.g. for Lookup String: match (Lookup a) against (Lookup String) → {a → String}
+    let scrutSubst = case anyConInfo tyName conEnv of
+          Just ci ->
+            let genericRetTy = conReturnType tyName (ciTypeParams ci)
+             in fromMaybe M.empty (match genericRetTy scrutTy)
+          Nothing -> M.empty
     -- Type-check each arm; collect arm types and covered constructors.
-    (armTypes, coveredCons) <- foldM (checkArm sp env) ([], []) (toList alts)
+    (armTypes, coveredCons) <- foldM (checkArm sp env scrutSubst) ([], []) (toList alts)
     -- Exhaustiveness: every constructor must appear exactly once.
     let missing = filter (`notElem` coveredCons) allCons
     unless (null missing) $ Left (NonExhaustiveCase sp tyName missing)
@@ -347,17 +388,36 @@ typeOfExpr conEnv env = \case
             $ Left (CaseBranchTypeMismatch firstTy ty scrut)
         Right firstTy
   where
-    checkArm caseSp envLocal (tys, cons) (CaseAlt _ (PCon cName _) body _) = do
+    checkArm caseSp envLocal scrutSubst (tys, cons) (CaseAlt _ (PCon cName pats) body _) = do
       -- Verify the constructor belongs to the scrutinee type.
-      whenNothing_ (M.lookup cName conEnv) (Left (UnknownConstructor (exprSpan body) cName))
+      ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
       -- Reject duplicate (unreachable) patterns.
       when (cName `elem` cons) $ Left (UnreachableCase caseSp cName)
-      bodyTy <- typeOfExpr conEnv envLocal body
+      -- Bind pattern variables from constructor fields.
+      let fieldTys = map (applySubst scrutSubst) (ciFieldTypes ci)
+          bindings = patternBindings pats fieldTys
+          envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
+      bodyTy <- typeOfExpr conEnv envWithBindings body
       pure (tys <> [bodyTy], cons <> [cName])
-    checkArm _ _ _ CaseAlt {} =
+    checkArm _ _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
+
+-- | Extract variable bindings from patterns and their corresponding types.
+patternBindings :: [Pattern] -> [Type'] -> [(Name, Type')]
+patternBindings pats tys = [(n, t) | (PVar n, t) <- zip pats tys]
+
+-- | Extract the type constructor name from a type (peeling off TyApp).
+extractTyCon :: Type' -> Maybe Name
+extractTyCon (TyCon n) = Just n
+extractTyCon (TyApp f _) = extractTyCon f
+extractTyCon _ = Nothing
+
+-- | Get 'ConInfo' for any constructor of the given type.
+anyConInfo :: Name -> ConEnv -> Maybe ConInfo
+anyConInfo tyName conEnv =
+  find (\ci -> ciTypeName ci == tyName) (M.elems conEnv)
 
 -- | Helper: build a map from type name → list of constructor names.
 allTypeConstructors :: ConEnv -> M.Map Name [Name]
 allTypeConstructors conEnv =
-  M.fromListWith (<>) [(tyName, [cName]) | (cName, (tyName, _)) <- M.toList conEnv]
+  M.fromListWith (<>) [(ciTypeName ci, [cName]) | (cName, ci) <- M.toList conEnv]

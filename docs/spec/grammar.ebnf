@@ -9,8 +9,8 @@ ModulePath          = UIdent , { "." , UIdent } ;
 
 TopItem             = TopComment | TypeDecl | Sig | FunDef ;
 
-TypeDecl            = "type" , UIdent , "=" , ConDef , { "|" , ConDef } ;
-ConDef              = UIdent ;
+TypeDecl            = "type" , UIdent , { LIdent } , "=" , ConDef , { "|" , ConDef } ;
+ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = LIdent , ":" , Type , [ TrailingLineComment ] ;
 FunDef              = LIdent , { LIdent } , "=" , Expr , [ TrailingLineComment ] ;
@@ -22,7 +22,7 @@ TrailingLineComment = "--" , LineText ;
 
 (* Types: right-associative arrow *)
 Type                = TypeAtom , { "->" , Type } ;
-TypeAtom            = UIdent | "(" , Type , ")" ;
+TypeAtom            = UIdent , { TypeAtom } | LIdent | "(" , Type , ")" ;
 
 (* Expressions: ++ < application < atoms (both left-associative) *)
 Expr                = Concat ;
@@ -35,7 +35,7 @@ Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String ;
    A blank line terminates the case block. *)
 CaseExpr            = "case" , Expr , "of" , NEWLINE , { CaseItem } ;
 CaseItem            = ( LineComment | BlockComment ) , Terminator
-                    | ConName , "->" , Expr , [ TrailingLineComment ] , Terminator ;
+                    | ConName , { LIdent } , "->" , Expr , [ TrailingLineComment ] , Terminator ;
 ConName             = UIdent ;
 
 QName               = { UIdent , "." } , LIdent ;
