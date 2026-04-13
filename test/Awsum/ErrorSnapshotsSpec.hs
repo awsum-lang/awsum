@@ -11,8 +11,19 @@ import Test.Hspec
 
 spec :: Spec
 spec = describe "Error snapshots" $ do
+  testError "not-imported.aww"
+  testError "main-wrong-type.aww"
+  testError "arity-mismatch.aww"
+  testError "unknown-variable.aww"
+  testError "not-a-function.aww"
+  testError "type-mismatch-concat.aww"
+  testError "duplicate-signature.aww"
+  testError "duplicate-definition.aww"
+  testError "unknown-type-constructor.aww"
+  testError "unreachable-case-duplicate.aww"
   testError "unreachable-case-uninhabited.aww"
   testError "unreachable-case-uninhabited-nested.aww"
+  testError "missing-signature.aww"
 
 sourcesDir :: Text
 sourcesDir = "test/sources/errors/"

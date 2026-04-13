@@ -1,0 +1,7 @@
+import IO.Stdout
+
+foo : String -> IOUnit
+foo = IO.Stdout.print
+
+main : String -> IOUnit
+main input = IO.Stdout.print input

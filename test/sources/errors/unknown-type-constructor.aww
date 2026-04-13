@@ -1,0 +1,4 @@
+import IO.Stdout
+
+main : X -> IOUnit
+main x = IO.Stdout.print x
