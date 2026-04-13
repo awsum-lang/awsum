@@ -161,7 +161,7 @@ pImport = do
   rwordS "import"
   imp <- ImportDecl <$> pModPath
   -- We don't preserve trailing comments on imports (by design).
-  _ <- (lexeme (void C.eol)) <|> P.eof
+  _ <- lexeme (void C.eol) <|> P.eof
   pure imp
 
 pModPath :: Parser (NonEmpty Name)
@@ -231,7 +231,7 @@ pTrailingLineCommentMaybe = do
 
 -- | End of declaration: newline or EOF.
 endLineOrEOF :: Parser ()
-endLineOrEOF = (void C.eol) <|> P.eof
+endLineOrEOF = void C.eol <|> P.eof
 
 -- Types (right-assoc arrows) ────────────────────────────────────────────────
 
@@ -310,7 +310,6 @@ pQualifiedNameExprNoLineComments :: Parser Expr
 pQualifiedNameExprNoLineComments = do
   let qualified = do
         mods <- P.some (try (uidentNoLine <* symNoLine ".")) -- IO.
-        nm <- lidentNoLine -- print
-        pure (QName mods nm)
+        QName mods <$> lidentNoLine -- print
       unqual = QName [] <$> lidentNoLine
   EVar <$> (try qualified <|> unqual)

@@ -3,7 +3,7 @@
 module Awsum.ArbitraryInstances () where
 
 import Awsum.Syntax
-import Data.Char (isAlphaNum, toLower, toUpper)
+import Data.Char (isAlphaNum, isAsciiLower, isAsciiUpper, toLower, toUpper)
 import Data.Text qualified as T
 import Relude
 import Test.QuickCheck
@@ -37,10 +37,10 @@ mkSafe firstCase = sized $ \n -> do
   k <- chooseInt (0, max 0 (min 6 n)) -- tail length
   c0 <- suchThat arbitrary isAlpha -- first char must be a letter
   cs <- vectorOf k identTailChar
-  let raw = T.pack (firstCase c0 : cs)
+  let raw = toText (firstCase c0 : cs)
   if T.toLower raw `elem` reserved then mkSafe firstCase else pure raw
   where
-    isAlpha c = c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+    isAlpha c = isAsciiLower c || isAsciiUpper c
 
 genLIdent :: Gen Name
 genLIdent = mkSafe toLower
@@ -50,8 +50,8 @@ genUIdent = mkSafe toUpper
 
 shrinkIdent :: Name -> [Name]
 shrinkIdent t =
-  let s = T.unpack t
-   in [T.pack (take k s) | k <- [1 .. length s - 1]]
+  let s = toString t
+   in [toText (take k s) | k <- [1 .. length s - 1]]
 
 genNonEmpty :: Gen a -> Gen (NonEmpty a)
 genNonEmpty g = (:|) <$> g <*> listOf g
@@ -98,7 +98,7 @@ instance Arbitrary Type' where
       genTyVarName :: Gen Name
       genTyVarName =
         frequency
-          [ (6, elements (map (T.singleton) ['a' .. 'f'])), -- common short vars
+          [ (6, elements (map one ['a' .. 'f'])), -- common short vars
             (4, genLIdent)
           ]
 
@@ -118,8 +118,7 @@ instance Arbitrary QName where
     -- 0..2 module segments (UIdent), then name (lident)
     k <- frequency [(3, pure 0), (2, pure 1), (1, pure 2)]
     mods <- replicateM k genUIdent
-    nm <- genLIdent
-    pure (QName mods nm)
+    QName mods <$> genLIdent
   shrink (QName ms n) =
     -- shrink module prefix and the base name
     [QName (take i ms) n | i <- [0 .. length ms - 1]]
@@ -129,7 +128,7 @@ genStr :: Gen Text
 genStr = do
   k <- chooseInt (0, 8)
   let ok c = isAlphaNum c || c == ' ' || c == '_' || c == '-' -- avoid quotes/backslash
-  T.pack <$> vectorOf k (suchThat arbitrary ok)
+  toText <$> vectorOf k (suchThat arbitrary ok)
 
 genComment :: Gen (Maybe Text)
 genComment = frequency [(3, pure Nothing), (1, Just <$> genStr)]
@@ -140,7 +139,7 @@ instance Arbitrary Expr where
       go 0 =
         oneof
           [ EVar <$> arbitrary,
-            EParens <$> (EVar <$> arbitrary), -- parentheses around atom for round-trip tests
+            EParens . EVar <$> arbitrary, -- parentheses around atom for round-trip tests
             ELit . LString <$> genStr
           ]
       go n =

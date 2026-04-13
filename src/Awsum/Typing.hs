@@ -30,7 +30,7 @@ module Awsum.Typing
 where
 
 import Awsum.Syntax
-import Control.Monad (foldM)
+import Control.Monad (foldM, foldM_)
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
 import Relude
@@ -69,7 +69,7 @@ type Env = M.Map QName Type'
 
 -- | Helper to create a local (unqualified) 'QName'.
 qLocal :: Name -> QName
-qLocal n = QName [] n
+qLocal = QName []
 
 -- | Populate built-ins based on the set of imports present in the file.
 --   Currently only provides:
@@ -77,7 +77,7 @@ qLocal n = QName [] n
 builtinEnvFromImports :: [ImportDecl] -> Env
 builtinEnvFromImports imps =
   let modLists = [toList ns | ImportDecl ns <- imps]
-      hasImport xs = any (== xs) modLists
+      hasImport xs = elem xs modLists
       ioPrint =
         if hasImport ["IO", "Stdout"]
           then
@@ -117,7 +117,7 @@ compose :: Subst -> Subst -> Subst
 compose s2 s1 = (applySubst s2 <$> s1) `M.union` s2
 
 match :: Type' -> Type' -> Maybe Subst
-match expT actT = go expT actT
+match = go
   where
     go (TyVar v) t = Just (M.singleton v t)
     go (TyCon c1) (TyCon c2)
@@ -147,11 +147,11 @@ typecheckProgram Program {imports, decls} = do
   mapM_ (wellFormedType . snd) sigsList
 
   -- Ensure unique definition names (shadowing is not allowed at top level).
-  _ <- foldM insertDefName S.empty defsList
+  foldM_ insertDefName S.empty defsList
 
   -- Check each definition body against its declared type.
   forM_ defsList $ \(n, args, body) -> do
-    ty <- maybe (Left (MissingSignature n)) Right (M.lookup n sigEnv)
+    ty <- maybeToRight (MissingSignature n) (M.lookup n sigEnv)
     let (argTys, retTy) = splitArrow ty
     when (length argTys /= length args)
       $ Left (ArityMismatch n (length argTys) (length args))

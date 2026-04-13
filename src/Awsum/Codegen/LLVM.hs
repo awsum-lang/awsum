@@ -91,7 +91,7 @@ emitStringConstants :: StringPool -> Text
 emitStringConstants pool
   | Map.null pool = ""
   | otherwise =
-      T.intercalate "\n" (map emitOne (sortOn snd $ Map.toList pool)) <> "\n"
+      T.intercalate "\n" (map emitOne (sortWith snd $ Map.toList pool)) <> "\n"
   where
     emitOne (s, i) =
       let escaped = llvmEscapeString s
@@ -116,15 +116,15 @@ llvmEscapeString = T.concatMap escChar
       | c == '\t' = "\\09"
       | c == '\r' = "\\0D"
       | c == '\0' = "\\00"
-      | Char.isPrint c = T.singleton c
+      | Char.isPrint c = one c
       | otherwise =
           let n = Char.ord c
               hi = n `div` 16
               lo = n `mod` 16
               hexChar x
-                | x < 10 = Char.chr (Char.ord '0' + x)
-                | otherwise = Char.chr (Char.ord 'A' + x - 10)
-           in "\\" <> T.pack [hexChar hi, hexChar lo]
+                | x < 10 = chr (Char.ord '0' + x)
+                | otherwise = chr (Char.ord 'A' + x - 10)
+           in "\\" <> toText [hexChar hi, hexChar lo]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Header: external declarations + format strings
@@ -132,7 +132,7 @@ llvmEscapeString = T.concatMap escChar
 
 header :: Text
 header =
-  T.unlines
+  unlines
     [ "; External C declarations",
       "declare ptr @malloc(i64)",
       "declare ptr @strcpy(ptr, ptr)",
@@ -150,7 +150,7 @@ header =
 
 runtime :: Text
 runtime =
-  T.unlines
+  unlines
     [ "define ptr @__concat(ptr %a, ptr %b) {",
       "  %la = call i64 @strlen(ptr %a)",
       "  %lb = call i64 @strlen(ptr %b)",
@@ -174,7 +174,7 @@ runtime =
 
 footer :: Text
 footer =
-  T.unlines
+  unlines
     [ "",
       "define i32 @main(i32 %argc, ptr %argv) {",
       "  %has_arg = icmp sgt i32 %argc, 1",

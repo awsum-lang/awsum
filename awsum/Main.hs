@@ -1,9 +1,11 @@
 -- | Awsum compiler CLI
 --   This entrypoint wires together parsing, typechecking, formatting,
---   code generation (JS/Lua/LLVM/JVM/WASM), and a tiny runner for those targets.
+--   code generation (LLVM/JVM/CLR/WASM/JS/Lua), and a tiny runner for those targets.
 module Main (main) where
 
 import Awsum.Codegen
+import Awsum.Codegen.CLR (codegenCLR)
+import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
@@ -26,7 +28,7 @@ import Options.Applicative qualified as OA
 import Paths_awsum qualified as Meta
 import Relude
 import System.Exit (ExitCode (..))
-import System.FilePath ((</>))
+import System.FilePath (dropExtension, (</>))
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process (readProcessWithExitCode)
 import Text.Pretty.Simple (pPrint)
@@ -67,17 +69,18 @@ optTarget =
     ( OA.long "target"
         <> OA.short 't'
         <> OA.metavar "TARGET"
-        <> OA.help "Target backend: js | lua | llvm | jvm | wasm"
-        <> OA.completeWith ["js", "lua", "llvm", "jvm", "wasm"]
+        <> OA.help "Target backend: llvm | jvm | clr | wasm | js | lua"
+        <> OA.completeWith ["llvm", "jvm", "clr", "wasm", "js", "lua"]
     )
   where
     readTarget :: String -> Maybe Target
     readTarget = \case
-      "js" -> Just TargetJS
-      "lua" -> Just TargetLua
       "llvm" -> Just TargetLLVM
       "jvm" -> Just TargetJVM
+      "clr" -> Just TargetCLR
       "wasm" -> Just TargetWASM
+      "js" -> Just TargetJS
+      "lua" -> Just TargetLua
       _ -> Nothing
 
 -- | Optional: output file path (defaults to stdout).
@@ -95,12 +98,13 @@ optOutputPath =
 optInputText :: OA.Parser (Maybe Text)
 optInputText =
   optional
-    $ fmap (toText :: String -> Text)
-    $ OA.strOption
-      ( OA.long "input"
-          <> OA.metavar "TEXT"
-          <> OA.help "Input string passed to main"
-      )
+    ( (toText :: String -> Text)
+        <$> OA.strOption
+          ( OA.long "input"
+              <> OA.metavar "TEXT"
+              <> OA.help "Input string passed to main"
+          )
+    )
 
 -- | Flag: read input for 'run' from STDIN instead of --input.
 optUseStdin :: OA.Parser Bool
@@ -178,12 +182,20 @@ runCommand = \case
         let bytes = assembleJVM core
         case mOut of
           Nothing -> BS.hPut stdout bytes
-          Just out -> BS.writeFile out bytes
+          Just out -> writeFileBS out bytes
+      TargetCLR -> do
+        let bytes = assembleCLR core
+        case mOut of
+          Nothing -> BS.hPut stdout bytes
+          Just out -> do
+            writeFileBS out bytes
+            let rcPath = dropExtension out <> ".runtimeconfig.json"
+            writeFileText rcPath runtimeConfigJson
       TargetWASM -> do
         let bytes = assembleWASM core
         case mOut of
           Nothing -> BS.hPut stdout bytes
-          Just out -> BS.writeFile out bytes
+          Just out -> writeFileBS out bytes
       _ -> do
         let code = codegenText target core
         case mOut of
@@ -208,8 +220,9 @@ runCommand = \case
     core <- compileToCoreOrDie filePath
     case target of
       TargetJVM -> putTextLn (codegenJVM core)
+      TargetCLR -> putTextLn (codegenCLR core)
       TargetWASM -> putTextLn (codegenWASM core)
-      _ -> die "asm is only supported for jvm and wasm targets"
+      _ -> die "asm is only supported for jvm, clr, and wasm targets"
   CmdFormat filePath inPlace -> do
     src <- readFileTextUtf8 filePath
     case formatSource src of
@@ -226,19 +239,16 @@ runCommand = \case
 -- | Select the text codegen for a target.
 codegenText :: Target -> CoreProgram -> Text
 codegenText = \case
-  TargetJS -> codegenJS
-  TargetLua -> codegenLua
   TargetLLVM -> codegenLLVM
   TargetJVM -> codegenJVM
+  TargetCLR -> codegenCLR
   TargetWASM -> codegenWASM
+  TargetJS -> codegenJS
+  TargetLua -> codegenLua
 
 -- | Compile Core to target and run using the appropriate system runtime.
 runOnTarget :: Target -> CoreProgram -> Text -> IO ()
 runOnTarget target core input = case target of
-  TargetJS ->
-    runText "node" ".js" (codegenJS core) input
-  TargetLua ->
-    runText "lua" ".lua" (codegenLua core) input
   TargetLLVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
@@ -255,19 +265,33 @@ runOnTarget target core input = case target of
   TargetJVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let classPath = dir </> "AwsumMain.class"
-      BS.writeFile classPath (assembleJVM core)
+      writeFileBS classPath (assembleJVM core)
       (exit, stdoutS, stderrS) <- readProcessWithExitCode "java" ["-cp", dir, "AwsumMain", toString input] ""
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("java error:\n" <> toText stderrS)
+  TargetCLR ->
+    withSystemTempDirectory "awsum" $ \dir -> do
+      let dllPath = dir </> "AwsumMain.dll"
+          rcPath = dir </> "AwsumMain.runtimeconfig.json"
+      writeFileBS dllPath (assembleCLR core)
+      writeFileText rcPath runtimeConfigJson
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "dotnet" [dllPath, toString input] ""
+      case exit of
+        ExitSuccess -> putTextLn (toText stdoutS)
+        ExitFailure _ -> die $ toString ("dotnet error:\n" <> toText stderrS)
   TargetWASM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let wasmPath = dir </> "out.wasm"
-      BS.writeFile wasmPath (assembleWASM core)
+      writeFileBS wasmPath (assembleWASM core)
       (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
+  TargetJS ->
+    runText "node" ".js" (codegenJS core) input
+  TargetLua ->
+    runText "lua" ".lua" (codegenLua core) input
 
 -- | Write text code to a temp file and run with the given interpreter.
 runText :: String -> String -> Text -> Text -> IO ()
@@ -279,6 +303,20 @@ runText cmd ext code input =
     case exit of
       ExitSuccess -> putTextLn (toText stdoutS)
       ExitFailure _ -> die $ toString (toText cmd <> " error:\n" <> toText stderrS)
+
+-- | .NET runtime configuration template for CLR target.
+runtimeConfigJson :: Text
+runtimeConfigJson =
+  "{\n\
+  \  \"runtimeOptions\": {\n\
+  \    \"tfm\": \"net9.0\",\n\
+  \    \"framework\": {\n\
+  \      \"name\": \"Microsoft.NETCore.App\",\n\
+  \      \"version\": \"9.0.0\"\n\
+  \    },\n\
+  \    \"rollForward\": \"LatestMajor\"\n\
+  \  }\n\
+  \}\n"
 
 -- | Parse → typecheck → lower to Core, or terminate with an error.
 compileToCoreOrDie :: FilePath -> IO CoreProgram

@@ -10,11 +10,9 @@ import Awsum.Core
 import Data.Bits (shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
-import Data.ByteString.Lazy qualified as BL
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as TE
 import Relude
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -23,7 +21,7 @@ import Relude
 
 -- | Produce a complete .wasm binary as a strict ByteString.
 assembleWASM :: CoreProgram -> BS.ByteString
-assembleWASM prog = BL.toStrict (B.toLazyByteString (buildModule prog))
+assembleWASM prog = toStrict (B.toLazyByteString (buildModule prog))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- LEB128 encoding
@@ -47,7 +45,7 @@ encodeBytes bs = encodeULEB128 (fromIntegral (length bs)) <> bs
 
 encodeName :: Text -> [Word8]
 encodeName t =
-  let bs = BS.unpack (TE.encodeUtf8 t)
+  let bs = BS.unpack (encodeUtf8 t)
    in encodeULEB128 (fromIntegral (length bs)) <> bs
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -241,12 +239,11 @@ buildTypeSection info (CoreProgram decls) =
       needed :: [FuncType]
       needed =
         ordNub
-          $
           -- WASI imports
-          [ FuncType 4 True, -- fd_write
-            FuncType 2 True, -- args_sizes_get
-            FuncType 2 True -- args_get (dedup with above)
-          ]
+          $ [ FuncType 4 True, -- fd_write
+              FuncType 2 True, -- args_sizes_get
+              FuncType 2 True -- args_get (dedup with above)
+            ]
           -- Runtime helpers
           <> [ FuncType 1 True, -- __strlen(i32)->i32
                FuncType 1 True, -- __alloc (dedup)
@@ -862,13 +859,13 @@ emitExpr ctx = \case
 
 buildDataSection :: WasmInfo -> [Word8]
 buildDataSection info =
-  let pool = sortOn snd (Map.toList info.wiStringPool)
+  let pool = sortWith snd (Map.toList info.wiStringPool)
       mkSegment (s, off) =
         [0x00] -- active, memory 0
           <> [op_i32_const]
           <> encodeSLEB128 (fromIntegral off)
           <> [op_end]
-          <> encodeBytes (BS.unpack (TE.encodeUtf8 s) <> [0x00]) -- null-terminated
+          <> encodeBytes (BS.unpack (encodeUtf8 s) <> [0x00]) -- null-terminated
       content = encodeVec (map mkSegment pool)
    in buildSection 11 content
 
