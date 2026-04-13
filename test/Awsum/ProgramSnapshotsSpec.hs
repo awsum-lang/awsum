@@ -15,6 +15,7 @@ import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Common.File
+import Control.Concurrent.MVar (modifyMVar)
 import Control.Exception (IOException, try)
 import Matchers
 import Relude
@@ -86,8 +87,15 @@ compileAll sourceFile = do
 
 testProgram :: Text -> [Text] -> Spec
 testProgram sourceFile inputFiles = do
+  compileOnce <- runIO $ do
+    ref <- newMVar Nothing
+    pure $ modifyMVar ref $ \case
+      Just r -> pure (Just r, r)
+      Nothing -> do
+        r <- compileAll sourceFile
+        pure (Just r, r)
   let snap = "successful/" <> sourceFile
-  beforeAll (compileAll sourceFile) $ describe (toString sourceFile) $ do
+  beforeAll compileOnce $ describe (toString sourceFile) $ do
     it "AST should match snapshot" $ \res -> do
       res.ast `shouldMatchShowSnapshot` (snap <> "/ast.txt")
     it "Core should match snapshot" $ \res -> do
@@ -107,15 +115,14 @@ testProgram sourceFile inputFiles = do
     it "Lua code should match snapshot" $ \res -> do
       res.luaCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.lua")
 
-  traverse_ (testProgramAgainstInput sourceFile) inputFiles
+  traverse_ (testProgramAgainstInput sourceFile compileOnce) inputFiles
 
-testProgramAgainstInput :: Text -> Text -> Spec
-testProgramAgainstInput sourceFile inputFile = do
+testProgramAgainstInput :: Text -> IO CompileResult -> Text -> Spec
+testProgramAgainstInput sourceFile compileOnce inputFile = do
   let prepare :: IO (Text, Text, Text, Text, Text, Text) = do
         input <- readFileTextUtf8 $ toString $ sourcesDir <> inputFile
 
-        -- TODO: Make program compile and files be written exactly once per sourceFile
-        res <- compileAll sourceFile
+        res <- compileOnce
 
         llvmRes <- runLLVM res.llvmCompiledCode input
         llvmOutput <- case llvmRes of
