@@ -307,6 +307,28 @@ typecheckerSpec = do
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Left expectedErr
 
+    it "fails on unreachable case arm (UnreachableCase)" $ do
+      let src =
+            unlines
+              [ "import IO.Stdout",
+                "",
+                "type Color = Red | Green | Blue",
+                "",
+                "show : Color -> String",
+                "show c = case c of",
+                "  Red -> \"Red\"",
+                "  Green -> \"Green\"",
+                "  Green -> \"even more Green\"",
+                "  Blue -> \"Blue\"",
+                "",
+                "main : String -> IOUnit",
+                "main input = IO.Stdout.print (show Red)"
+              ]
+          expectedErr = UnreachableCase noSpan "Green"
+      case parseProgram src of
+        Left e -> expectationFailure (toString e)
+        Right p -> typecheckProgram p `shouldBe` Left expectedErr
+
     it "fails on missing signature (MissingSignature)" $ do
       let src =
             unlines

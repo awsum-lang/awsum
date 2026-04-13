@@ -66,6 +66,8 @@ data TypeError
     UnknownConstructor SrcSpan Name
   | -- | Case expression does not cover all constructors.
     NonExhaustiveCase SrcSpan Name [Name]
+  | -- | A case arm that can never be reached (duplicate constructor).
+    UnreachableCase SrcSpan Name
   | -- | Arms of a case expression have different types.
     CaseBranchTypeMismatch Type' Type' Expr
   | -- | Scrutinee of case is not a sum type.
@@ -91,6 +93,7 @@ typeErrorSpan = \case
   DuplicateConstructor sp _ -> Just sp
   UnknownConstructor sp _ -> Just sp
   NonExhaustiveCase sp _ _ -> Just sp
+  UnreachableCase sp _ -> Just sp
   CaseBranchTypeMismatch _ _ e -> Just (exprSpan e)
   CaseOnNonSumType sp _ -> Just sp
 
@@ -112,6 +115,7 @@ prettyPrintTypeError = \case
   DuplicateConstructor _ name -> "Duplicate constructor: " <> name
   UnknownConstructor _ name -> "Unknown constructor: " <> name
   NonExhaustiveCase _ tyName missing -> "Non-exhaustive case on " <> tyName <> ": missing " <> show missing
+  UnreachableCase _ name -> "Unreachable case: " <> name <> " is already covered"
   CaseBranchTypeMismatch expected actual _ -> "Case branch type mismatch: expected " <> showType expected <> ", got " <> showType actual
   CaseOnNonSumType _ ty -> "Case on non-sum type: " <> showType ty
   where
@@ -330,7 +334,7 @@ typeOfExpr conEnv env = \case
       _ -> Left (CaseOnNonSumType sp scrutTy)
     let allCons = fromMaybe [] (M.lookup tyName (allTypeConstructors conEnv))
     -- Type-check each arm; collect arm types and covered constructors.
-    (armTypes, coveredCons) <- foldM (checkArm env) ([], []) (toList alts)
+    (armTypes, coveredCons) <- foldM (checkArm sp env) ([], []) (toList alts)
     -- Exhaustiveness: every constructor must appear exactly once.
     let missing = filter (`notElem` coveredCons) allCons
     unless (null missing) $ Left (NonExhaustiveCase sp tyName missing)
@@ -343,12 +347,14 @@ typeOfExpr conEnv env = \case
             $ Left (CaseBranchTypeMismatch firstTy ty scrut)
         Right firstTy
   where
-    checkArm envLocal (tys, cons) (CaseAlt _ (PCon cName _) body _) = do
+    checkArm caseSp envLocal (tys, cons) (CaseAlt _ (PCon cName _) body _) = do
       -- Verify the constructor belongs to the scrutinee type.
       whenNothing_ (M.lookup cName conEnv) (Left (UnknownConstructor (exprSpan body) cName))
+      -- Reject duplicate (unreachable) patterns.
+      when (cName `elem` cons) $ Left (UnreachableCase caseSp cName)
       bodyTy <- typeOfExpr conEnv envLocal body
       pure (tys <> [bodyTy], cons <> [cName])
-    checkArm _ _ CaseAlt {} =
+    checkArm _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
 
 -- | Helper: build a map from type name → list of constructor names.
