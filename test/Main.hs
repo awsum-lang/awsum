@@ -4,6 +4,7 @@ import Awsum.ArbitraryInstances ()
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.ErrorSnapshotsSpec qualified
+import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.ProgramSnapshotsSpec qualified
@@ -21,6 +22,7 @@ main = hspec $ do
   typecheckerSpec
   elaborateSpec
   Awsum.ProgramSnapshotsSpec.spec
+  Awsum.FormattingSnapshotsSpec.spec
   Awsum.ErrorSnapshotsSpec.spec
 
 parserSpec :: Spec

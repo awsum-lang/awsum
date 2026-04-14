@@ -11,7 +11,6 @@ import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
-import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Common.File
@@ -40,13 +39,15 @@ spec = describe "Program snapshots" $ do
   testProgram "adt-single-parameter-single-constructor-with-data-nested-case.aww" ["adt-single-parameter-single-constructor-with-data-nested-case.input1.txt"]
   testProgram "adt-empty-type.aww" ["adt-empty-type.input1.txt"]
   testProgram "adt-empty-type-nested.aww" ["adt-empty-type-nested.input1.txt"]
-  testProgram "improperly-formatted-source.aww" ["improperly-formatted-source.input1.txt"]
   testProgram "recursive-function-call.aww" ["recursive-function-call.input1.txt"]
   testProgram "adt-result.aww" ["adt-result.input1.txt"]
   testProgram "adt-result-nested-string.aww" ["adt-result-nested-string.input1.txt"]
   testProgram "adt-result-nested-string-2.aww" ["adt-result-nested-string-2.input1.txt"]
   testProgram "adt-result-nested-poly.aww" ["adt-result-nested-poly.input1.txt"]
   testProgram "adt-result-nested-poly-2.aww" ["adt-result-nested-poly-2.input1.txt"]
+  testProgram "adt-result-nested-deep-poly.aww" ["adt-result-nested-deep-poly.input1.txt"]
+  testProgram "adt-result-nested-deep-poly-2.aww" ["adt-result-nested-deep-poly-2.input1.txt"]
+  testProgram "adt-list-minimal.aww" ["adt-list-minimal.input1.txt"]
 
 sourcesDir :: Text
 sourcesDir = "test/sources/successful/"
@@ -54,7 +55,6 @@ sourcesDir = "test/sources/successful/"
 data CompileResult = CompileResult
   { ast :: Program,
     core :: CoreProgram,
-    formattedSource :: Text,
     llvmCompiledCode :: Text,
     jvmCompiledCode :: Text,
     jvmClassBytes :: ByteString,
@@ -75,14 +75,10 @@ compileAll sourceFile = do
   core <- case elaborateLowerProgram ast of
     Left err -> error $ "elaborate failed" <> show err
     Right x -> pure x
-  formattedSource <- case formatSource src of
-    Left err -> error $ "format failed" <> show err
-    Right x -> pure x
   pure
     CompileResult
       { ast = ast,
         core = core,
-        formattedSource = formattedSource,
         llvmCompiledCode = codegenLLVM core,
         jvmCompiledCode = codegenJVM core,
         jvmClassBytes = assembleJVM core,
@@ -109,8 +105,6 @@ testProgram sourceFile inputFiles = do
       res.ast `shouldMatchShowSnapshot` (snap <> "/ast.txt")
     it "Core should match snapshot" $ \res -> do
       res.core `shouldMatchShowSnapshot` (snap <> "/core.txt")
-    it "Formatted source should match snapshot" $ \res -> do
-      res.formattedSource `shouldMatchTextSnapshot` (snap <> "/formatted." <> sourceFile)
     it "LLVM code should match snapshot" $ \res -> do
       res.llvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.ll")
     it "JVM code should match snapshot" $ \res -> do

@@ -116,7 +116,7 @@ data Type'
     TyApp Type' Type'
   | -- | Arrow type @a -> b@ (right-associative by convention).
     TyArrow Type' Type'
-  deriving stock (Show, Eq)
+  deriving stock (Show, Eq, Ord)
 
 -- | Qualified value name: module path (possibly empty) + base name.
 --   Examples:

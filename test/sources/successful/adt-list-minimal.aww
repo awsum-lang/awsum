@@ -1,0 +1,14 @@
+import IO.Stdout
+
+type List a = Cons a (List a) | Nil
+
+show : List String -> String
+show xs = case xs of
+  Cons h t -> h ++ "," ++ (show t)
+  Nil -> ""
+
+exampleList : List String
+exampleList = Cons "a" (Cons "b" (Cons "c" Nil))
+
+main : String -> IOUnit
+main input = IO.Stdout.print (show exampleList)
