@@ -86,6 +86,7 @@ test-suite awsum-test
   other-modules:
       Awsum.ArbitraryInstances
       Awsum.ErrorSnapshotsSpec
+      Awsum.FormattingSnapshotsSpec
       Awsum.ProgramSnapshotsSpec
       Matchers
       Paths_awsum
