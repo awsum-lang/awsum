@@ -35,8 +35,9 @@ Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String ;
    A blank line terminates the case block. *)
 CaseExpr            = "case" , Expr , "of" , NEWLINE , { CaseItem } ;
 CaseItem            = ( LineComment | BlockComment ) , Terminator
-                    | ConName , { LIdent } , "->" , Expr , [ TrailingLineComment ] , Terminator ;
-ConName             = UIdent ;
+                    | Pattern , "->" , Expr , [ TrailingLineComment ] , Terminator ;
+Pattern             = UIdent , { PatternAtom } | LIdent ;
+PatternAtom         = LIdent | UIdent | "(" , Pattern , ")" ;
 
 QName               = { UIdent , "." } , LIdent ;
 

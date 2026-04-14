@@ -175,9 +175,14 @@ renderCaseAlts alts trailingComments =
 renderPattern :: Pattern -> Text
 renderPattern = \case
   PCon n [] -> n
-  PCon n ps -> n <> " " <> T.intercalate " " (map renderPattern ps)
+  PCon n ps -> n <> " " <> T.intercalate " " (map renderPatternAtom ps)
   PVar n -> n
   PWild -> "_"
+
+-- | Render an atomic pattern, parenthesizing nested constructor applications.
+renderPatternAtom :: Pattern -> Text
+renderPatternAtom p@(PCon _ (_ : _)) = "(" <> renderPattern p <> ")"
+renderPatternAtom p = renderPattern p
 
 -- | Utility: surround text with parentheses.
 parens :: Text -> Text

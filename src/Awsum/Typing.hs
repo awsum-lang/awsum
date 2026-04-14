@@ -414,7 +414,7 @@ typeOfExpr conEnv tcm env = \case
         Nothing -> pass
       -- Bind pattern variables from constructor fields.
       let fieldTys = map (applySubst scrutSubst) (ciFieldTypes ci)
-          bindings = patternBindings pats fieldTys
+          bindings = patternBindings conEnv pats fieldTys
           envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
       bodyTy <- typeOfExpr conEnv tcm envWithBindings body
       pure (tys <> [bodyTy], cons <> [cName])
@@ -422,8 +422,20 @@ typeOfExpr conEnv tcm env = \case
       Left (TELowering "only constructor patterns are supported")
 
 -- | Extract variable bindings from patterns and their corresponding types.
-patternBindings :: [Pattern] -> [Type'] -> [(Name, Type')]
-patternBindings pats tys = [(n, t) | (PVar n, t) <- zip pats tys]
+--   Recurses into nested constructor patterns to bind deeply nested variables.
+patternBindings :: ConEnv -> [Pattern] -> [Type'] -> [(Name, Type')]
+patternBindings conEnv pats tys = concatMap go (zip pats tys)
+  where
+    go (PVar n, t) = [(n, t)]
+    go (PWild, _) = []
+    go (PCon cName innerPats, ty) =
+      case M.lookup cName conEnv of
+        Nothing -> []
+        Just ci ->
+          let genericRetTy = conReturnType (ciTypeName ci) (ciTypeParams ci)
+              innerSubst = fromMaybe M.empty (match genericRetTy ty)
+              fieldTys = map (applySubst innerSubst) (ciFieldTypes ci)
+           in patternBindings conEnv innerPats fieldTys
 
 -- | Extract the type constructor name from a type (peeling off TyApp).
 extractTyCon :: Type' -> Maybe Name

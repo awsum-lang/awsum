@@ -747,12 +747,13 @@ codeGetArg info =
 -- User declaration code
 -- ════════════════════════════════════════════════════════════════════════════
 
-exprHasCCon :: CExpr -> Bool
-exprHasCCon = \case
-  CCon {} -> True
-  CCase scrut alts -> exprHasCCon scrut || any (\(_, _, b) -> exprHasCCon b) alts
-  CCall f xs -> exprHasCCon f || any exprHasCCon xs
-  _ -> False
+-- | Maximum CCon nesting depth (number of $__con_N locals needed).
+exprMaxConDepth :: CExpr -> Int
+exprMaxConDepth = \case
+  CCon _ fields -> 1 + foldl' max 0 (map exprMaxConDepth fields)
+  CCase s alts -> max (exprMaxConDepth s) (foldl' max 0 [exprMaxConDepth b | (_, _, b) <- alts])
+  CCall f xs -> foldl' max (exprMaxConDepth f) (map exprMaxConDepth xs)
+  _ -> 0
 
 exprHasCCase :: CExpr -> Bool
 exprHasCCase = \case
@@ -771,10 +772,10 @@ codeUserDecl info typeMap = \case
   CFunDef _nm args body ->
     let nParams = fromIntegral (length args) :: Word32
         paramMap = Map.fromList (zip args [0 :: Word32 ..])
-        needsCon = exprHasCCon body
+        conDepthNeeded = exprMaxConDepth body
         needsScrut = exprHasCCase body
-        conSlot = nParams
-        nextAfterCon = if needsCon then conSlot + 1 else conSlot
+        conBaseSlot = nParams
+        nextAfterCon = conBaseSlot + fromIntegral conDepthNeeded
         scrutSlot = nextAfterCon
         nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
         boundBase = nextAfterScrut
@@ -793,16 +794,17 @@ codeUserDecl info typeMap = \case
               ecFuncIdx = info.wiFuncIdx,
               ecTypeMap = typeMap,
               ecIndirectArities = info.wiIndirectArities,
-              ecConSlot = conSlot,
+              ecConBaseSlot = conBaseSlot,
+              ecConDepth = 0,
               ecScrutSlot = scrutSlot,
               ecBoundBase = boundBase
             }
      in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx body)
   CValDef _nm rhs ->
-    let needsCon = exprHasCCon rhs
+    let conDepthNeeded = exprMaxConDepth rhs
         needsScrut = exprHasCCase rhs
-        conSlot = 0 :: Word32
-        nextAfterCon = if needsCon then conSlot + 1 else conSlot
+        conBaseSlot = 0 :: Word32
+        nextAfterCon = conBaseSlot + fromIntegral conDepthNeeded
         scrutSlot = nextAfterCon
         nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
         boundBase = nextAfterScrut
@@ -821,7 +823,8 @@ codeUserDecl info typeMap = \case
               ecFuncIdx = info.wiFuncIdx,
               ecTypeMap = typeMap,
               ecIndirectArities = info.wiIndirectArities,
-              ecConSlot = conSlot,
+              ecConBaseSlot = conBaseSlot,
+              ecConDepth = 0,
               ecScrutSlot = scrutSlot,
               ecBoundBase = boundBase
             }
@@ -856,7 +859,8 @@ data ExprCtx = ExprCtx
     ecFuncIdx :: Map Text Word32,
     ecTypeMap :: Map FuncType Word32,
     ecIndirectArities :: Set Int,
-    ecConSlot :: Word32, -- local slot for $__con
+    ecConBaseSlot :: Word32, -- first local slot for $__con_N
+    ecConDepth :: Int, -- current CCon nesting depth
     ecScrutSlot :: Word32, -- local slot for $__scrut
     ecBoundBase :: Word32 -- first local slot for case-bound variables
   }
@@ -883,7 +887,8 @@ emitExpr ctx = \case
     [op_i32_const] <> encodeSLEB128 0
   CCon tag fields ->
     let nSlots = 1 + length fields
-        conSlot = ctx.ecConSlot
+        conSlot = ctx.ecConBaseSlot + fromIntegral ctx.ecConDepth
+        nestedCtx = ctx {ecConDepth = ctx.ecConDepth + 1}
         -- allocate (nSlots * 4) bytes, store pointer to conSlot
         allocCode =
           [op_i32_const]
@@ -905,7 +910,7 @@ emitExpr ctx = \case
         storeField (fld, i) =
           [op_local_get]
             <> encodeULEB128 conSlot
-            <> emitExpr ctx fld
+            <> emitExpr nestedCtx fld
             <> [op_i32_store]
             <> encodeULEB128 2
             <> encodeULEB128 (fromIntegral ((i + 1) * 4 :: Int))

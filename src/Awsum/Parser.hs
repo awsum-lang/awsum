@@ -539,8 +539,9 @@ pPatternNoLineComments =
   (PCon <$> uidentNoLine <*> P.many pPatternAtomNoLineComments)
     <|> (PVar <$> lidentNoLine)
 
--- | Atomic pattern: a constructor (no args) or variable.
+-- | Atomic pattern: a variable, a constructor (no args), or a parenthesized pattern.
 pPatternAtomNoLineComments :: Parser Pattern
 pPatternAtomNoLineComments =
   (PVar <$> lidentNoLine)
     <|> ((`PCon` []) <$> uidentNoLine)
+    <|> P.between (symNoLine "(") (symNoLine ")") pPatternNoLineComments

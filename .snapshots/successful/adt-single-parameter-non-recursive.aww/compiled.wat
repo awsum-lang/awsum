@@ -81,8 +81,8 @@
     (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.const 65)))))
 
   (func $v_main (export "v_main") (param $v_input i32) (result i32)
-    (local $__con i32)
-    (call $__print (call $__concat (call $__concat (call $v_unwrap (block (result i32) (i32.store (local.tee $__con (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con) (i32.const 75)) (local.get $__con))) (i32.const 81)) (call $v_unwrap (block (result i32) (i32.store (local.tee $__con (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con))))))
+    (local $__con_0 i32)
+    (call $__print (call $__concat (call $__concat (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 75)) (local.get $__con_0))) (i32.const 81)) (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

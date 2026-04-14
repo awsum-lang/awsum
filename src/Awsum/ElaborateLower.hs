@@ -96,15 +96,34 @@ lowerExpr tags = \case
         Right (CCall f0' xs')
 
 -- | Lower a single case alternative: look up the constructor tag,
---   extract bound variable names from patterns, and lower the body.
+--   desugar nested patterns into nested CCase, and lower the body.
 lowerAlt :: ConTagEnv -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
 lowerAlt tags (CaseAlt _ (PCon cName pats) body _) = do
   tag <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName tags)
-  let boundVars = [n | PVar n <- pats]
   body' <- lowerExpr tags body
-  Right (tag, boundVars, body')
+  let (topVars, wrappedBody) = desugarPats tags "__" 0 pats body'
+  Right (tag, topVars, wrappedBody)
 lowerAlt _ CaseAlt {} =
   Left (TELowering "only constructor patterns are supported in case")
+
+-- | Desugar a list of sub-patterns into flat variable bindings,
+--   wrapping the body in nested CCase for any nested constructor patterns.
+--   Uses path-based naming (e.g. @__p0@, @__p0_p0@) for fresh variables.
+desugarPats :: ConTagEnv -> Text -> Int -> [Pattern] -> CExpr -> ([Name], CExpr)
+desugarPats _ _ _ [] body = ([], body)
+desugarPats tags prefix idx (p : ps) body =
+  let (restVars, restBody) = desugarPats tags prefix (idx + 1) ps body
+   in case p of
+        PVar n -> (n : restVars, restBody)
+        PWild ->
+          let fresh = prefix <> "w" <> show idx
+           in (fresh : restVars, restBody)
+        PCon innerCon innerPats ->
+          let fresh = prefix <> "p" <> show idx
+              innerTag = fromMaybe 0 (M.lookup innerCon tags)
+              innerPrefix = fresh <> "_"
+              (innerVars, innerBody) = desugarPats tags innerPrefix 0 innerPats restBody
+           in (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
 
 -- | Collect a chain of applications into (head, args) in left-to-right order.
 --   Example:

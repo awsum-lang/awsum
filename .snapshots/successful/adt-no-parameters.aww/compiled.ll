@@ -33,21 +33,27 @@ define ptr @v_show(ptr %v_c) {
   %t0 = getelementptr ptr, ptr %v_c, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.7 i64 2, label %case.arm.2.9 ]
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.8 i64 2, label %case.arm.2.11 ]
 case.arm.0.5:
-  %t6 = getelementptr [4 x i8], ptr @.str.0, i64 0, i64 0
+  %t7 = getelementptr [4 x i8], ptr @.str.0, i64 0, i64 0
+  br label %case.end.0.6
+case.end.0.6:
   br label %case.join.4
-case.arm.1.7:
-  %t8 = getelementptr [6 x i8], ptr @.str.1, i64 0, i64 0
+case.arm.1.8:
+  %t10 = getelementptr [6 x i8], ptr @.str.1, i64 0, i64 0
+  br label %case.end.1.9
+case.end.1.9:
   br label %case.join.4
-case.arm.2.9:
-  %t10 = getelementptr [5 x i8], ptr @.str.2, i64 0, i64 0
+case.arm.2.11:
+  %t13 = getelementptr [5 x i8], ptr @.str.2, i64 0, i64 0
+  br label %case.end.2.12
+case.end.2.12:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t11 = phi ptr [%t6, %case.arm.0.5], [%t8, %case.arm.1.7], [%t10, %case.arm.2.9]
-  ret ptr %t11
+  %t14 = phi ptr [%t7, %case.end.0.6], [%t10, %case.end.1.9], [%t13, %case.end.2.12]
+  ret ptr %t14
 }
 
 define ptr @v_main(ptr %v_input) {

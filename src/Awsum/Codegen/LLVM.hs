@@ -343,6 +343,7 @@ emitExpr ctx = \case
     joinLabel <- freshLabel "case.join"
     altLabelsAndBodies <- forM alts $ \(tag, vars, body) -> do
       lbl <- freshLabel ("case.arm." <> show tag)
+      endLbl <- freshLabel ("case.end." <> show tag)
       -- Extract bound variables from container fields
       varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
         slotT <- freshTemp
@@ -367,21 +368,21 @@ emitExpr ctx = \case
       -- Emit body with bound variables in context
       let ctx' = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
       (instrB, resB) <- emitExpr ctx' body
-      pure (tag, lbl, varInstrCode <> instrB, resB)
+      pure (tag, lbl, endLbl, varInstrCode <> instrB, resB)
     -- switch instruction
-    let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _, _) <- altLabelsAndBodies]
+    let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _, _, _) <- altLabelsAndBodies]
         switchInstr = "  switch i64 " <> tagTmp <> ", label %" <> defLabel <> " [" <> switchCases <> " ]\n"
-    -- arm blocks
+    -- arm blocks (body may create new blocks; endLbl is always the direct predecessor of join)
     let armBlocks =
           T.concat
-            [ lbl <> ":\n" <> instrB <> "  br label %" <> joinLabel <> "\n"
-            | (_, lbl, instrB, _) <- altLabelsAndBodies
+            [ lbl <> ":\n" <> instrB <> "  br label %" <> endLbl <> "\n" <> endLbl <> ":\n  br label %" <> joinLabel <> "\n"
+            | (_, lbl, endLbl, instrB, _) <- altLabelsAndBodies
             ]
     -- default block (unreachable)
     let defBlock = defLabel <> ":\n  unreachable\n"
-    -- phi at join
+    -- phi at join (references endLbl, the actual predecessor)
     phiTmp <- freshTemp
-    let phiIncoming = T.intercalate ", " ["[" <> resB <> ", %" <> lbl <> "]" | (_, lbl, _, resB) <- altLabelsAndBodies]
+    let phiIncoming = T.intercalate ", " ["[" <> resB <> ", %" <> endLbl <> "]" | (_, _, endLbl, _, resB) <- altLabelsAndBodies]
         joinBlock = joinLabel <> ":\n  " <> phiTmp <> " = phi ptr " <> phiIncoming <> "\n"
     pure
       ( instrS <> tagInstr <> switchInstr <> armBlocks <> defBlock <> joinBlock,

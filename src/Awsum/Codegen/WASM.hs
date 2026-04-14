@@ -42,7 +42,8 @@ codegenWASM prog@(CoreProgram decls) =
             wStringPool = pool,
             wTableMap = tableMap,
             wIndirectArities = indirectArities,
-            wLocalExprs = Map.empty
+            wLocalExprs = Map.empty,
+            wConDepth = 0
           }
    in T.intercalate
         "\n"
@@ -73,7 +74,8 @@ data WasmCtx = WasmCtx
     wStringPool :: Map Text Int,
     wTableMap :: Map Text Int,
     wIndirectArities :: Set Int,
-    wLocalExprs :: Map Text Text -- case-bound variable → inline WAT expression
+    wLocalExprs :: Map Text Text, -- case-bound variable → inline WAT expression
+    wConDepth :: Int -- nesting depth for $__con_N locals
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -375,13 +377,15 @@ emitExpr ctx = \case
   CPrim _ ->
     "(i32.const 0)"
   CCon tag fields ->
-    let nSlots = 1 + length fields
-        storeTag = "(i32.store (local.tee $__con (call $__alloc (i32.const " <> show (nSlots * 4 :: Int) <> "))) (i32.const " <> show tag <> "))"
+    let conLocal = "$__con_" <> show ctx.wConDepth
+        nestedCtx = ctx {wConDepth = ctx.wConDepth + 1}
+        nSlots = 1 + length fields
+        storeTag = "(i32.store (local.tee " <> conLocal <> " (call $__alloc (i32.const " <> show (nSlots * 4 :: Int) <> "))) (i32.const " <> show tag <> "))"
         storeFields =
-          [ "(i32.store offset=" <> show (i * 4 :: Int) <> " (local.get $__con) " <> emitExpr ctx fld <> ")"
+          [ "(i32.store offset=" <> show (i * 4 :: Int) <> " (local.get " <> conLocal <> ") " <> emitExpr nestedCtx fld <> ")"
           | (fld, i) <- zip fields [1 :: Int ..]
           ]
-     in "(block (result i32) " <> T.intercalate " " (storeTag : storeFields <> ["(local.get $__con)"]) <> ")"
+     in "(block (result i32) " <> T.intercalate " " (storeTag : storeFields <> ["(local.get " <> conLocal <> ")"]) <> ")"
   CCase scrut alts ->
     emitCaseExpr ctx scrut alts
   CCall f xs ->
@@ -431,17 +435,19 @@ emitCaseExpr ctx scrut alts =
 -- | Determine which locals a function body needs and emit their declarations.
 collectLocals :: CExpr -> Text
 collectLocals body =
-  let nc = hasCCon body
+  let depth = maxConDepth body
+      conLocals = T.concat ["\n    (local $__con_" <> show i <> " i32)" | i <- [0 .. depth - 1]]
       ns = hasCCase body
-   in (if nc then "\n    (local $__con i32)" else "")
+   in conLocals
         <> (if ns then "\n    (local $__scrut i32)" else "")
 
-hasCCon :: CExpr -> Bool
-hasCCon = \case
-  CCon {} -> True
-  CCase s alts -> hasCCon s || any (\(_, _, b) -> hasCCon b) alts
-  CCall f xs -> hasCCon f || any hasCCon xs
-  _ -> False
+-- | Compute the maximum CCon nesting depth in an expression.
+maxConDepth :: CExpr -> Int
+maxConDepth = \case
+  CCon _ fields -> 1 + foldl' max 0 (map maxConDepth fields)
+  CCase s alts -> max (maxConDepth s) (foldl' max 0 [maxConDepth b | (_, _, b) <- alts])
+  CCall f xs -> foldl' max (maxConDepth f) (map maxConDepth xs)
+  _ -> 0
 
 hasCCase :: CExpr -> Bool
 hasCCase = \case

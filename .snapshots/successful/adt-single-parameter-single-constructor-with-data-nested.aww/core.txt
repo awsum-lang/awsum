@@ -1,0 +1,41 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "unwrap" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , [ "__p0" ]
+                    , CCase
+                        ( CVar "__p0" )
+                        [
+                            ( 0
+                            , [ "__p0_p0" ]
+                            , CCase
+                                ( CVar "__p0_p0" )
+                                [
+                                    ( 0
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "unwrap" )
+                    [ CCon 0
+                        [ CCon 0
+                            [ CCon 0
+                                [ CString "hello" ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

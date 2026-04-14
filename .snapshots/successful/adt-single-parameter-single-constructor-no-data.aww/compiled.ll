@@ -32,13 +32,15 @@ define ptr @v_show(ptr %v_p) {
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 ]
 case.arm.0.5:
-  %t6 = getelementptr [8 x i8], ptr @.str.0, i64 0, i64 0
+  %t7 = getelementptr [8 x i8], ptr @.str.0, i64 0, i64 0
+  br label %case.end.0.6
+case.end.0.6:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t7 = phi ptr [%t6, %case.arm.0.5]
-  ret ptr %t7
+  %t8 = phi ptr [%t7, %case.end.0.6]
+  ret ptr %t8
 }
 
 define ptr @v_main(ptr %v_input) {

@@ -32,19 +32,23 @@ define ptr @v_unwrap(ptr %v_x) {
   %t0 = getelementptr ptr, ptr %v_x, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.8 ]
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.9 ]
 case.arm.0.5:
-  %t6 = getelementptr ptr, ptr %v_x, i32 1
-  %t7 = load ptr, ptr %t6
+  %t7 = getelementptr ptr, ptr %v_x, i32 1
+  %t8 = load ptr, ptr %t7
+  br label %case.end.0.6
+case.end.0.6:
   br label %case.join.4
-case.arm.1.8:
-  %t9 = getelementptr [10 x i8], ptr @.str.0, i64 0, i64 0
+case.arm.1.9:
+  %t11 = getelementptr [10 x i8], ptr @.str.0, i64 0, i64 0
+  br label %case.end.1.10
+case.end.1.10:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t10 = phi ptr [%t7, %case.arm.0.5], [%t9, %case.arm.1.8]
-  ret ptr %t10
+  %t12 = phi ptr [%t8, %case.end.0.6], [%t11, %case.end.1.10]
+  ret ptr %t12
 }
 
 define ptr @v_main(ptr %v_input) {
