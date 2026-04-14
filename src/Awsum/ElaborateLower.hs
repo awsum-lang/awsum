@@ -20,6 +20,8 @@ module Awsum.ElaborateLower (elaborateLowerProgram) where
 import Awsum.Core
 import Awsum.Syntax
 import Awsum.Typing (TypeError (..), typecheckProgram)
+import Control.Monad (foldM)
+import Data.List (groupBy)
 import Data.Map.Strict qualified as M
 import Data.Text qualified as T
 import Relude
@@ -81,7 +83,9 @@ lowerExpr tags = \case
   ECase _sp scrut alts _ -> do
     scrut' <- lowerExpr tags scrut
     alts' <- traverse (lowerAlt tags) (toList alts)
-    Right (CCase scrut' alts')
+    -- Group alts by tag and merge nested patterns
+    merged <- mergeAlts alts'
+    Right (CCase scrut' merged)
   EApp _sp f x -> do
     let (f0, xs) = collectApps f [x]
     case f0 of
@@ -105,6 +109,40 @@ lowerAlt tags (CaseAlt _ (PCon cName pats) body _) = do
   Right (tag, topVars, wrappedBody)
 lowerAlt _ CaseAlt {} =
   Left (TELowering "only constructor patterns are supported in case")
+
+-- | Merge case alternatives that have the same outer tag.
+--   When multiple alts match the same constructor with nested patterns,
+--   merge their inner case expressions into a single nested case.
+--   Example: @Ok (Ok x) -> ...@ and @Ok (Err x) -> ...@ both have tag 0 for Ok,
+--   so we merge them into a single alt with a nested case on the inner Result.
+mergeAlts :: [(Int, [Name], CExpr)] -> Either TypeError [(Int, [Name], CExpr)]
+mergeAlts alts =
+  let grouped = groupBy (\(t1, _, _) (t2, _, _) -> t1 == t2) (sortOn (\(t, _, _) -> t) alts)
+   in traverse mergeGroup grouped >>= Right . concat
+  where
+    mergeGroup :: [(Int, [Name], CExpr)] -> Either TypeError [(Int, [Name], CExpr)]
+    mergeGroup [] = Right []
+    mergeGroup [alt] = Right [alt]
+    mergeGroup ((tag, vars, body) : rest) = do
+      -- Check if all alts in this group have the same structure
+      -- (same number of vars, all bodies are CCase on the first var)
+      case (body, map (\(_, vs, b) -> (vs, b)) rest) of
+        (CCase (CVar scrutVar) innerAlts, otherBodies) -> do
+          -- Check if all other bodies are also CCase on their first var
+          allInnerAlts <- foldM collectInnerAlts innerAlts otherBodies
+          -- Use a consistent variable name (take from first alt)
+          Right [(tag, vars, CCase (CVar scrutVar) allInnerAlts)]
+        _ ->
+          -- Not all bodies are CCase, or they don't match - this is an error
+          -- (patterns with same outer constructor but different nesting structure)
+          Left (TELowering $ "conflicting pattern shapes for constructor tag " <> show tag)
+
+    collectInnerAlts :: [(Int, [Name], CExpr)] -> ([Name], CExpr) -> Either TypeError [(Int, [Name], CExpr)]
+    collectInnerAlts acc (_vars, CCase (CVar _scrutVar) innerAlts) =
+      -- TODO: we should verify that the scrutVar matches, but for now we trust the lowering
+      Right (acc <> innerAlts)
+    collectInnerAlts _ _ =
+      Left (TELowering "conflicting pattern shapes in merge")
 
 -- | Desugar a list of sub-patterns into flat variable bindings,
 --   wrapping the body in nested CCase for any nested constructor patterns.

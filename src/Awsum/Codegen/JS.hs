@@ -102,7 +102,7 @@ emitExpr = \case
   where
     emitAlt (tag, vars, body) =
       let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]
-       in "case " <> show tag <> ":" <> bindings <> " return " <> emitExpr body <> ";"
+       in "case " <> show tag <> ": {" <> bindings <> " return " <> emitExpr body <> "; }"
 
 -- | Encode a Haskell 'Text' as a JavaScript string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0

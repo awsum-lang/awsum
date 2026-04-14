@@ -355,6 +355,22 @@ data ECtx = ECtx
     cNextLocal :: Int
   }
 
+-- | Metadata about branch targets (for StackMapTable generation)
+data BranchTarget = BranchTarget
+  { btOffset :: Int, -- bytecode offset of the branch target
+    btLocals :: Int, -- number of local variables at this point
+    btArrSlot :: Int, -- slot number for the array local (if applicable)
+    btTagSlot :: Int, -- slot number for the tag local (if applicable)
+    btIsJoinPoint :: Bool -- True for join points (gotos), False for if_icmpne targets
+  }
+  deriving stock (Show, Eq)
+
+-- | Result of expression compilation with branch metadata
+data CodeWithMeta = CodeWithMeta
+  { cwCode :: [Word8],
+    cwBranchTargets :: [BranchTarget]
+  }
+
 mkDecl :: Set Text -> Set Text -> Map Text Int -> CDecl -> AsmM MInfo
 mkDecl valDefs funDefs arities = \case
   CFunDef nm args body -> do
@@ -370,9 +386,9 @@ mkDecl valDefs funDefs arities = \case
             }
     ni <- addUtf8 (mangle nm)
     di <- addUtf8 (objMethodDesc (length args))
-    code <- emitExpr ctx body
-    (smtCount, smtBytes) <- caseSMT ctx body
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = code <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
+    codeMeta <- emitExpr ctx body
+    (smtCount, smtBytes) <- caseSMT ctx codeMeta.cwBranchTargets
+    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = codeMeta.cwCode <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
   CValDef nm rhs -> do
     let ctx =
           ECtx
@@ -385,36 +401,37 @@ mkDecl valDefs funDefs arities = \case
             }
     ni <- addUtf8 (mangle nm)
     di <- addUtf8 "()Ljava/lang/Object;"
-    code <- emitExpr ctx rhs
-    (smtCount, smtBytes) <- caseSMT ctx rhs
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = code <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
+    codeMeta <- emitExpr ctx rhs
+    (smtCount, smtBytes) <- caseSMT ctx codeMeta.cwBranchTargets
+    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = codeMeta.cwCode <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression codegen (bytecode bytes)
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Emit bytecode that leaves the expression result on top of the operand stack.
-emitExpr :: ECtx -> CExpr -> AsmM [Word8]
+--   Returns bytecode and metadata about branch targets for StackMapTable generation.
+emitExpr :: ECtx -> CExpr -> AsmM CodeWithMeta
 emitExpr ctx = \case
   CString s -> do
     idx <- addStr s
-    pure (bcLdc idx)
+    pure $ CodeWithMeta (bcLdc idx) []
   CVar n
     | Just slot <- Map.lookup n ctx.cLocals ->
-        pure (bcAload slot)
+        pure $ CodeWithMeta (bcAload slot) []
     | Just slot <- Map.lookup n ctx.cParams ->
-        pure (bcAload slot)
+        pure $ CodeWithMeta (bcAload slot) []
     | n `Set.member` ctx.cValDefs -> do
         ref <- addMRef "AwsumMain" (mangle n) "()Ljava/lang/Object;"
-        pure (bcInvokeStatic ref)
+        pure $ CodeWithMeta (bcInvokeStatic ref) []
     | n `Set.member` ctx.cFunDefs -> do
         let arity = fromMaybe 0 (Map.lookup n ctx.cArities)
         hi <- addMHandle 6 "AwsumMain" (mangle n) (objMethodDesc arity)
-        pure (bcLdc hi)
+        pure $ CodeWithMeta (bcLdc hi) []
     | otherwise ->
-        pure [0x01] -- aconst_null
+        pure $ CodeWithMeta [0x01] [] -- aconst_null
   CPrim _ ->
-    pure [0x01] -- aconst_null
+    pure $ CodeWithMeta [0x01] [] -- aconst_null
   CCon tag fields -> do
     -- Create Object[] container: [tag_as_Integer, field1, field2, ...]
     let nSlots = 1 + length fields
@@ -427,15 +444,17 @@ emitExpr ctx = \case
             <> bcIconst tag
             <> bcInvokeStatic intRef
             <> [0x53] -- aastore
-    fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
-      fldCode <- emitExpr ctx fld
-      pure ([0x59] <> bcIconst i <> fldCode <> [0x53]) -- dup, iconst i, <field>, aastore
-    pure (allocCode <> storeTag <> concat fieldCodes)
+    fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+      fldMeta <- emitExpr ctx fld
+      pure (CodeWithMeta ([0x59] <> bcIconst i <> fldMeta.cwCode <> [0x53]) fldMeta.cwBranchTargets)
+    let allTargets = concatMap cwBranchTargets fieldMetas
+        allCode = allocCode <> storeTag <> concatMap cwCode fieldMetas
+    pure $ CodeWithMeta allCode allTargets
   CCase scrut alts -> do
     intCls <- addClass "java/lang/Integer"
     intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
     arrCls <- addClass "[Ljava/lang/Object;"
-    scrutCode <- emitExpr ctx scrut
+    scrutMeta <- emitExpr ctx scrut
     let sorted = sortWith (\(t, _, _) -> t) alts
         -- Local slots: arrSlot stores the Object[], tagSlot stores the int tag
         arrSlot = ctx.cNextLocal
@@ -443,35 +462,38 @@ emitExpr ctx = \case
         bindSlotStart = tagSlot + 1
         loadArr = bcAload arrSlot
     -- Emit arm bodies with bound variables
-    armCodes <- forM sorted $ \(_, vars, body) -> do
+    let maxBindingsCount = foldl' max 0 [length vars | (_, vars, _) <- sorted]
+    armMetasWithLocals <- forM sorted $ \(_, vars, body) -> do
       let bindings = zip vars [bindSlotStart ..]
-          ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings}
+          ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings, cNextLocal = bindSlotStart + length vars}
           bindCode =
             concatMap
               ( \((_, slot), i) ->
                   loadArr <> bcIconst (i :: Int) <> [0x32] <> bcAstore slot
               )
               (zip bindings [1 :: Int ..])
-      bodyCode <- emitExpr ctx' body
-      pure (bindCode <> bodyCode)
-    let tags = [t | (t, _, _) <- sorted]
+          -- Pad unused binding slots with null to match maxBindingsCount
+          numUnusedSlots = maxBindingsCount - length vars
+          paddingCode =
+            if numUnusedSlots > 0
+              then
+                concatMap
+                  (\slot -> [0x01] <> bcAstore slot) -- aconst_null, astore
+                  [bindSlotStart + length vars .. bindSlotStart + maxBindingsCount - 1]
+              else []
+          -- Only count this arm's bindings, not nested case locals
+          armLocals = bindSlotStart + maxBindingsCount
+          bindCodeLen = length bindCode + length paddingCode
+      bodyMeta <- emitExpr ctx' body
+      -- Branch targets will be adjusted later in buildChainWithTargets
+      pure ((CodeWithMeta (bindCode <> paddingCode <> bodyMeta.cwCode) bodyMeta.cwBranchTargets, bindCodeLen), armLocals)
+    let armMetasWithBindLen = map fst armMetasWithLocals
+        armMetas = map fst armMetasWithBindLen
+        bindLens = map snd armMetasWithBindLen
+        tags = [t | (t, _, _) <- sorted]
         loadTag = bcIload tagSlot
-        buildChain [] = [0x01] -- aconst_null fallback
-        buildChain [(_, armCode)] = armCode
-        buildChain ((tag', armCode) : rest) =
-          let restCode = buildChain rest
-              bodyLen = length armCode
-              gotoLen :: Int
-              gotoLen = 3
-              skipOffset = 3 + bodyLen + gotoLen
-              restLen = length restCode
-              gotoOffset = restLen + gotoLen
-              cmpCode = loadTag <> bcIconst tag' <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
-              gotoCode = [0xA7, fromIntegral (gotoOffset `div` 256), fromIntegral (gotoOffset `mod` 256)]
-           in cmpCode <> armCode <> gotoCode <> restCode
-        chainCode = buildChain (zip tags armCodes)
         extractAndStore =
-          bcCheckCast arrCls -- cast to Object[] for verifier
+          bcCheckCast arrCls
             <> bcAstore arrSlot
             <> loadArr
             <> bcIconst 0
@@ -479,133 +501,166 @@ emitExpr ctx = \case
             <> bcCheckCast intCls
             <> bcInvokeVirtual intValRef
             <> bcIstore tagSlot
-    pure (scrutCode <> extractAndStore <> chainCode)
+        preambleLen = length scrutMeta.cwCode + length extractAndStore
+
+        -- Build chain and collect branch targets
+        buildChainWithTargets :: Int -> [(Int, CodeWithMeta, Int)] -> ([Word8], [BranchTarget])
+        buildChainWithTargets _ [] = ([0x01], [])
+        buildChainWithTargets offset [(_, armMeta, bindLen)] =
+          -- Single arm: adjust nested targets to account for offset + bindCode
+          let adjustedTargets = map (\bt -> bt {btOffset = bt.btOffset + offset + bindLen}) armMeta.cwBranchTargets
+           in (armMeta.cwCode, adjustedTargets)
+        buildChainWithTargets offset ((tag', armMeta, bindLen) : rest) =
+          let loadLen = length loadTag
+              iconLen = length (bcIconst tag')
+              bodyLen = length armMeta.cwCode
+              gotoLen :: Int
+              gotoLen = 3
+              skipOffset = 3 + bodyLen + gotoLen
+              -- The branch target is where if_icmpne jumps: after current arm + goto
+              nextBranchOffset = offset + loadLen + iconLen + skipOffset
+              (restCode, restTargets) = buildChainWithTargets nextBranchOffset rest
+              restLen = length restCode
+              gotoOffset = restLen + gotoLen
+              cmpCode = loadTag <> bcIconst tag' <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
+              gotoCode = [0xA7, fromIntegral (gotoOffset `div` 256), fromIntegral (gotoOffset `mod` 256)]
+              myTarget = BranchTarget nextBranchOffset bindSlotStart arrSlot tagSlot False -- if_icmpne target
+              -- Adjust nested branch target offsets: body starts after cmpCode + bindCode
+              armBodyStartOffset = offset + loadLen + iconLen + 3 + bindLen
+              adjustedArmTargets = map (\bt -> bt {btOffset = bt.btOffset + armBodyStartOffset}) armMeta.cwBranchTargets
+              combinedTargets = myTarget : adjustedArmTargets ++ restTargets
+           in (cmpCode <> armMeta.cwCode <> gotoCode <> restCode, combinedTargets)
+
+        (chainCode, branchTargets) = buildChainWithTargets preambleLen (zip3 tags armMetas bindLens)
+        -- Add join point for multi-arm cases (where goto jumps)
+        -- For nested cases this is needed; for top-level it points past the end but won't be used
+        hasMultipleArms = length sorted > 1
+        joinPointOffset = preambleLen + length chainCode
+        maxLocals = bindSlotStart + maxBindingsCount
+        joinPointTarget = ([BranchTarget joinPointOffset maxLocals arrSlot tagSlot True | hasMultipleArms]) -- join point
+        allTargets = scrutMeta.cwBranchTargets ++ branchTargets ++ joinPointTarget
+        finalCode = scrutMeta.cwCode <> extractAndStore <> chainCode
+    pure $ CodeWithMeta finalCode allTargets
   CCall f xs ->
     case f of
       CPrim PrimConcat | [a, b] <- xs -> do
-        ca <- emitExpr ctx a
-        cb <- emitExpr ctx b
+        aMeta <- emitExpr ctx a
+        bMeta <- emitExpr ctx b
         ref <- addMRef "AwsumMain" "__concat" "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
-        pure (ca <> cb <> bcInvokeStatic ref)
+        pure
+          $ CodeWithMeta
+            (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
+            (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
       CPrim PrimPrint | [x] <- xs -> do
-        cx <- emitExpr ctx x
+        xMeta <- emitExpr ctx x
         ref <- addMRef "AwsumMain" "__print" "(Ljava/lang/Object;)Ljava/lang/Object;"
-        pure (cx <> bcInvokeStatic ref)
+        pure
+          $ CodeWithMeta
+            (xMeta.cwCode <> bcInvokeStatic ref)
+            xMeta.cwBranchTargets
       CVar n | n `Set.member` ctx.cFunDefs -> do
         -- Direct call to known function
-        argCodes <- traverse (emitExpr ctx) xs
+        argMetas <- traverse (emitExpr ctx) xs
         ref <- addMRef "AwsumMain" (mangle n) (objMethodDesc (length xs))
-        pure (concat argCodes <> bcInvokeStatic ref)
+        let allCode = concatMap cwCode argMetas <> bcInvokeStatic ref
+            allTargets = concatMap cwBranchTargets argMetas
+        pure $ CodeWithMeta allCode allTargets
       _ -> do
         -- Indirect call via MethodHandle
         -- Stack layout: MethodHandle arg1 arg2 ...
-        fCode <- emitExpr ctx f
+        fMeta <- emitExpr ctx f
         mhCls <- addClass "java/lang/invoke/MethodHandle"
-        argCodes <- traverse (emitExpr ctx) xs
+        argMetas <- traverse (emitExpr ctx) xs
         let invokeDesc = objMethodDesc (length xs)
         ref <- addMRef "java/lang/invoke/MethodHandle" "invoke" invokeDesc
-        pure (fCode <> bcCheckCast mhCls <> concat argCodes <> bcInvokeVirtual ref)
+        let allCode = fMeta.cwCode <> bcCheckCast mhCls <> concatMap cwCode argMetas <> bcInvokeVirtual ref
+            allTargets = fMeta.cwBranchTargets ++ concatMap cwBranchTargets argMetas
+        pure $ CodeWithMeta allCode allTargets
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- StackMapTable for CCase branches
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Compute StackMapTable attribute for methods with top-level CCase.
--- Must mirror the bytecode layout from emitExpr CCase exactly:
---   preamble: scrutCode + astore(arrSlot) + aload(arrSlot) + iconst_0 + aaload
---             + checkcast + invokevirtual + istore(tagSlot)
---   chain:    [iload(tagSlot) + iconst(tag) + if_icmpne + armCode + goto]* + lastArmCode
-caseSMT :: ECtx -> CExpr -> AsmM (Word16, [Word8])
-caseSMT ctx (CCase scrut alts) = do
-  let sorted = sortWith (\(t, _, _) -> t) alts
-      nAlts = length sorted
-  if nAlts <= 1
-    then pure (0, [])
-    else do
+-- | Compute StackMapTable attribute from collected branch targets.
+caseSMT :: ECtx -> [BranchTarget] -> AsmM (Word16, [Word8])
+caseSMT _ctx targets
+  | null targets = pure (0, [])
+  | otherwise = do
       smtNameIdx <- addUtf8 "StackMapTable"
       objClsIdx <- addClass "java/lang/Object"
       arrClsIdx <- addClass "[Ljava/lang/Object;"
-      scrutCode <- emitExpr ctx scrut
-      let arrSlot = ctx.cNextLocal
-          tagSlot = arrSlot + 1
-          bindSlotStart = tagSlot + 1
-          loadArr = bcAload arrSlot
-      -- Compute arm codes INCLUDING bind code (must match emitExpr CCase)
-      armCodes <- forM sorted $ \(_, vars, body) -> do
-        let bindings = zip vars [bindSlotStart ..]
-            ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings}
-            bindCode =
-              concatMap
-                ( \((_, slot), i) ->
-                    loadArr <> bcIconst (i :: Int) <> [0x32] <> bcAstore slot
-                )
-                (zip bindings [1 :: Int ..])
-        bodyCode <- emitExpr ctx' body
-        pure (bindCode <> bodyCode)
-      let tags = [t | (t, _, _) <- sorted]
-          -- Preamble: scrutCode + checkcast(arrCls) + astore + aload + iconst_0 + aaload + checkcast(intCls) + invokevirtual + istore
-          astoreLen = length (bcAstore arrSlot)
-          aloadLen = length (bcAload arrSlot)
-          istoreLen = length (bcIstore tagSlot)
-          loadLen = length (bcIload tagSlot)
-          preambleLen = length scrutCode + 3 + astoreLen + aloadLen + 1 + 1 + 3 + 3 + istoreLen
-          armLens = map length armCodes
-          iconLens = map (length . bcIconst) tags
-          computeTargets pos [] = ([], pos)
-          computeTargets pos ((il, al) : rest) =
-            let target = pos + loadLen + il + 3 + al + 3
-                (ts, final) = computeTargets target rest
-             in (target : ts, final)
-          initInfo = zip iconLens (take (nAlts - 1) armLens)
-          (ifTargets, lastArmStart) = computeTargets preambleLen initInfo
-          lastArmLen = case drop (nAlts - 1) armLens of
-            (len : _) -> len
-            _ -> 0
-          joinPoint = lastArmStart + lastArmLen
-          targets = ifTargets ++ [joinPoint]
-      pure (1, buildSMTAttr smtNameIdx arrClsIdx objClsIdx targets)
-caseSMT _ _ = pure (0, [])
-
--- | Build StackMapTable attribute bytes for CCase branch targets.
--- Locals at branch targets: [Object^N, Object[](arr), int(tag)] where N = method params.
--- First frame uses append_frame (adding Object[] + int locals), middle frames use same_frame,
--- last frame (join point) uses same_locals_1_stack_item_frame with Object on stack.
-buildSMTAttr :: Word16 -> Word16 -> Word16 -> [Int] -> [Word8]
-buildSMTAttr smtNameIdx arrClsIdx objClsIdx targets =
-  let nEntries = length targets
-      frameBytes = buildFrames (-1) targets
-      attrLen = 2 + length frameBytes
-   in [hi8 smtNameIdx, lo8 smtNameIdx]
-        <> encodeU4 attrLen
-        <> [fromIntegral (nEntries `div` 256), fromIntegral (nEntries `mod` 256)]
-        <> frameBytes
+      let sorted = sortOn btOffset targets
+          -- Deduplicate by offset, keeping the one with max btLocals
+          deduped = Map.elems $ Map.fromListWith (\a b -> if a.btLocals >= b.btLocals then a else b) [(t.btOffset, t) | t <- sorted]
+          dedupedSorted = sortOn btOffset deduped
+      pure (1, buildSMTAttr smtNameIdx arrClsIdx objClsIdx dedupedSorted)
   where
-    buildFrames :: Int -> [Int] -> [Word8]
-    buildFrames _ [] = []
-    buildFrames prev (t : rest) =
-      let delta = t - prev - 1
-          frame
-            | prev == -1 =
-                -- append_frame tag 253: adds 2 locals (Object[] for arr, int for tag)
-                [253, fromIntegral (delta `div` 256), fromIntegral (delta `mod` 256), 7, hi8 arrClsIdx, lo8 arrClsIdx, 1]
-            | null rest =
-                -- same_locals_1_stack_item_frame: Object on stack (join point)
-                if delta <= 63
-                  then [fromIntegral (64 + delta), 7, hi8 objClsIdx, lo8 objClsIdx]
-                  else [247, fromIntegral (delta `div` 256), fromIntegral (delta `mod` 256), 7, hi8 objClsIdx, lo8 objClsIdx]
-            | otherwise =
-                -- same_frame: empty stack, same locals (if_icmpne target)
-                if delta <= 63
-                  then [fromIntegral delta]
-                  else [251, fromIntegral (delta `div` 256), fromIntegral (delta `mod` 256)]
-       in frame <> buildFrames t rest
-    encodeU4 :: Int -> [Word8]
-    encodeU4 n =
-      [ fromIntegral (n `div` 16777216),
-        fromIntegral ((n `div` 65536) `mod` 256),
-        fromIntegral ((n `div` 256) `mod` 256),
-        fromIntegral (n `mod` 256)
-      ]
+    buildSMTAttr :: Word16 -> Word16 -> Word16 -> [BranchTarget] -> [Word8]
+    buildSMTAttr smtNameIdx arrClsIdx objClsIdx targets' =
+      let frameBytes = buildFrames targets' (-1) targets'
+          attrLen = 2 + length frameBytes
+          nTargets = length targets'
+       in [hi8 smtNameIdx, lo8 smtNameIdx]
+            <> encodeU4 attrLen
+            <> [fromIntegral (nTargets `div` 256), fromIntegral (nTargets `mod` 256)]
+            <> frameBytes
+      where
+        -- Collect all (arrSlot, tagSlot) pairs from all targets for type resolution
+        buildFrames :: [BranchTarget] -> Int -> [BranchTarget] -> [Word8]
+        buildFrames _ _ [] = []
+        buildFrames allTgts prev (bt : rest) =
+          let delta = if prev == -1 then bt.btOffset else bt.btOffset - prev - 1
+              isLastFrame = null rest
+              currentLocals = bt.btLocals
+              allArrTagPairs = [(t.btArrSlot, t.btTagSlot) | t <- allTgts]
+              localsTypes = buildLocalsTypes allArrTagPairs bt
+              -- Use full_frame for everything except simple cases
+              frame
+                | bt.btIsJoinPoint || isLastFrame =
+                    -- Join point or last frame: has return value on stack
+                    [255]
+                      <> encodeDelta delta
+                      <> encodeU2 currentLocals
+                      <> localsTypes
+                      <> encodeU2 1
+                      <> [0x07, hi8 objClsIdx, lo8 objClsIdx] -- 1 Object on stack
+                | otherwise =
+                    -- if_icmpne target: empty stack
+                    [255]
+                      <> encodeDelta delta
+                      <> encodeU2 currentLocals
+                      <> localsTypes
+                      <> encodeU2 0 -- empty stack
+           in frame <> buildFrames allTgts bt.btOffset rest
+
+        buildLocalsTypes :: [(Int, Int)] -> BranchTarget -> [Word8]
+        buildLocalsTypes allArrTagPairs bt =
+          let n = bt.btLocals
+           in if n <= 1
+                then concat (replicate n [0x07, hi8 objClsIdx, lo8 objClsIdx])
+                else
+                  -- Build types for each slot, checking all arr/tag pairs
+                  let slotTypes = [slotType i | i <- [0 .. n - 1]]
+                      slotType i
+                        | i == 0 = [0x07, hi8 objClsIdx, lo8 objClsIdx] -- param
+                        | any (\(arr, _) -> arr == i) allArrTagPairs = [0x07, hi8 arrClsIdx, lo8 arrClsIdx] -- array
+                        | any (\(_, tag) -> tag == i) allArrTagPairs = [0x01] -- int tag
+                        | otherwise = [0x07, hi8 objClsIdx, lo8 objClsIdx] -- binding
+                   in concat slotTypes
+
+        encodeDelta :: Int -> [Word8]
+        encodeDelta d = [fromIntegral (d `div` 256), fromIntegral (d `mod` 256)]
+
+        encodeU2 :: Int -> [Word8]
+        encodeU2 n = [fromIntegral (n `div` 256), fromIntegral (n `mod` 256)]
+
+        encodeU4 :: Int -> [Word8]
+        encodeU4 n =
+          [ fromIntegral (n `div` 16777216),
+            fromIntegral ((n `div` 65536) `mod` 256),
+            fromIntegral ((n `div` 256) `mod` 256),
+            fromIntegral (n `mod` 256)
+          ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling & descriptors

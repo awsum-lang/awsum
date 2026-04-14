@@ -220,6 +220,21 @@ match = go
       pure (compose s2 s1)
     go _ _ = Nothing
 
+-- | Freshen type variables in a type by adding a suffix.
+--   Used to avoid name collisions when matching generic types against concrete types.
+freshenType :: Text -> Type' -> Type'
+freshenType suffix ty = applySubst subst ty
+  where
+    vars = collectTypeVars ty
+    subst = M.fromList [(v, TyVar (v <> suffix)) | v <- toList vars]
+
+-- | Collect all type variables in a type.
+collectTypeVars :: Type' -> S.Set Name
+collectTypeVars (TyVar n) = S.singleton n
+collectTypeVars (TyCon _) = S.empty
+collectTypeVars (TyApp f x) = collectTypeVars f <> collectTypeVars x
+collectTypeVars (TyArrow a b) = collectTypeVars a <> collectTypeVars b
+
 -- | Build the return type of a constructor given the type name and type parameters.
 --   @conReturnType "Color" []@    → @TyCon "Color"@
 --   @conReturnType "Lookup" ["a"]@ → @TyApp (TyCon "Lookup") (TyVar "a")@
@@ -351,7 +366,11 @@ typeOfExpr conEnv tcm env = \case
     typeOfExpr conEnv tcm env e
   ECon sp name ->
     case M.lookup (qLocal name) env of
-      Just t -> Right t
+      Just t ->
+        -- Freshen type variables using source position as unique suffix
+        -- to ensure each constructor usage gets a fresh polymorphic instance.
+        let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
+         in Right (freshenType suffix t)
       Nothing -> Left (UnknownConstructor sp name)
   EApp _sp f x -> do
     tf <- typeOfExpr conEnv tcm env f
@@ -381,17 +400,21 @@ typeOfExpr conEnv tcm env = \case
     let allCons = fromMaybe [] (M.lookup tyName tcm)
     -- Compute substitution from type parameters to concrete types.
     -- E.g. for Lookup String: match (Lookup a) against (Lookup String) → {a → String}
+    -- Freshen generic type variables to avoid name collisions with scrutinee type variables.
     let scrutSubst = case anyConInfo tyName conEnv of
           Just ci ->
             let genericRetTy = conReturnType tyName (ciTypeParams ci)
-             in fromMaybe M.empty (match genericRetTy scrutTy)
+                freshGenericRetTy = freshenType "$scrut" genericRetTy
+             in fromMaybe M.empty (match freshGenericRetTy scrutTy)
           Nothing -> M.empty
-    -- Type-check each arm; collect arm types and covered constructors.
-    (armTypes, coveredCons) <- foldM (checkArm sp env scrutSubst) ([], []) (toList alts)
-    -- Exhaustiveness: every inhabited constructor must appear exactly once.
-    -- A constructor is uninhabited if any of its field types (after substitution)
-    -- resolves to a type with no constructors (e.g. Never).
-    let missing = filter (`notElem` coveredCons) allCons
+    -- Type-check each arm; collect arm types and covered patterns.
+    -- We track full patterns (not just constructor names) to handle nested patterns correctly.
+    (armTypes, coveredPatterns) <- foldM (checkArm sp env scrutSubst) ([], []) (toList alts)
+    -- Exhaustiveness: every inhabited constructor must appear at least once.
+    -- For simple patterns (no nesting), each constructor should appear exactly once.
+    -- For nested patterns, we just check that all top-level constructors are covered.
+    let topLevelCons = [cName | (cName, _) <- coveredPatterns]
+        missing = filter (`notElem` topLevelCons) allCons
         inhabitedMissing = filter (isConInhabited conEnv tcm scrutSubst) missing
     unless (null inhabitedMissing) $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
     -- All arms must agree on the result type.
@@ -403,21 +426,26 @@ typeOfExpr conEnv tcm env = \case
             $ Left (CaseBranchTypeMismatch firstTy ty scrut)
         Right firstTy
   where
-    checkArm caseSp envLocal scrutSubst (tys, cons) (CaseAlt _ (PCon cName pats) body _) = do
+    checkArm caseSp envLocal scrutSubst (tys, patterns) (CaseAlt _ (PCon cName pats) body _) = do
       -- Verify the constructor belongs to the scrutinee type.
       ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
-      -- Reject duplicate (unreachable) patterns.
-      when (cName `elem` cons) $ Left (UnreachableCase caseSp cName)
+      -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
+      let currentPattern = (cName, pats)
+      when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
+      -- Compute field types with proper freshening and substitution.
+      -- First freshen the constructor's field types with the same suffix used for scrutSubst,
+      -- then apply the matched substitution.
+      let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
+          fieldTys = map (applySubst scrutSubst) freshFieldTys
       -- Reject patterns on uninhabited constructors (unreachable).
-      case uninhabitedFieldType conEnv tcm scrutSubst cName of
+      case find (not . isTypeInhabited conEnv tcm) fieldTys of
         Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
         Nothing -> pass
       -- Bind pattern variables from constructor fields.
-      let fieldTys = map (applySubst scrutSubst) (ciFieldTypes ci)
-          bindings = patternBindings conEnv pats fieldTys
+      let bindings = patternBindings conEnv pats fieldTys
           envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
       bodyTy <- typeOfExpr conEnv tcm envWithBindings body
-      pure (tys <> [bodyTy], cons <> [cName])
+      pure (tys <> [bodyTy], patterns <> [currentPattern])
     checkArm _ _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
 
@@ -433,8 +461,11 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
         Nothing -> []
         Just ci ->
           let genericRetTy = conReturnType (ciTypeName ci) (ciTypeParams ci)
-              innerSubst = fromMaybe M.empty (match genericRetTy ty)
-              fieldTys = map (applySubst innerSubst) (ciFieldTypes ci)
+              -- Freshen generic type variables to avoid collisions with scrutinee type variables.
+              freshGenericRetTy = freshenType "$inner" genericRetTy
+              freshFieldTys = map (freshenType "$inner") (ciFieldTypes ci)
+              innerSubst = fromMaybe M.empty (match freshGenericRetTy ty)
+              fieldTys = map (applySubst innerSubst) freshFieldTys
            in patternBindings conEnv innerPats fieldTys
 
 -- | Extract the type constructor name from a type (peeling off TyApp).
@@ -456,17 +487,10 @@ isConInhabited conEnv tcm subst cName =
   case M.lookup cName conEnv of
     Nothing -> True
     Just ci ->
-      let fieldTys = map (applySubst subst) (ciFieldTypes ci)
+      -- Freshen field types with the same suffix used in scrutSubst, then apply substitution.
+      let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
+          fieldTys = map (applySubst subst) freshFieldTys
        in all (isTypeInhabited conEnv tcm) fieldTys
-
--- | If a constructor has an uninhabited field type, return that type.
-uninhabitedFieldType :: ConEnv -> TypeConsMap -> Subst -> Name -> Maybe Type'
-uninhabitedFieldType conEnv tcm subst cName =
-  case M.lookup cName conEnv of
-    Nothing -> Nothing
-    Just ci ->
-      let fieldTys = map (applySubst subst) (ciFieldTypes ci)
-       in find (not . isTypeInhabited conEnv tcm) fieldTys
 
 -- | A type is inhabited unless it resolves to a user-defined type whose
 --   constructors all require an uninhabited field (recursively).
@@ -480,10 +504,32 @@ isTypeInhabited conEnv tcm ty =
       Just [] -> False -- 0 constructors
       Just cons ->
         -- Compute substitution for this concrete type (e.g. Box Never → {a → Never})
+        -- Freshen generic type variables to avoid collisions with concrete type variables.
         let subst = case anyConInfo n conEnv of
               Just ci ->
                 let genericRetTy = conReturnType n (ciTypeParams ci)
-                 in fromMaybe M.empty (match genericRetTy ty)
+                    freshGenericRetTy = freshenType "$scrut" genericRetTy
+                 in fromMaybe M.empty (match freshGenericRetTy ty)
               Nothing -> M.empty
          in any (isConInhabited conEnv tcm subst) cons
     Nothing -> True
+
+-- | Check if a pattern is already covered by any pattern in the list.
+--   Compares full pattern structure (constructor name + nested patterns).
+--   This handles nested patterns like @Ok (Ok value)@ vs @Ok (Err value)@.
+patternMatches :: ConEnv -> (Name, [Pattern]) -> [(Name, [Pattern])] -> Bool
+patternMatches _conEnv (cName, pats) = any (\(coveredName, coveredPats) -> cName == coveredName && patternsEqual pats coveredPats)
+  where
+    patternsEqual :: [Pattern] -> [Pattern] -> Bool
+    patternsEqual ps1 ps2
+      | length ps1 /= length ps2 = False
+      | otherwise = and (zipWith patternEqual ps1 ps2)
+
+    patternEqual :: Pattern -> Pattern -> Bool
+    patternEqual (PVar _) (PVar _) = True -- all variables match
+    patternEqual PWild PWild = True
+    patternEqual PWild (PVar _) = True -- wildcard matches variable
+    patternEqual (PVar _) PWild = True -- variable matches wildcard
+    patternEqual (PCon c1 ps1) (PCon c2 ps2) =
+      c1 == c2 && patternsEqual ps1 ps2
+    patternEqual _ _ = False
