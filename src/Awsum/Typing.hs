@@ -514,8 +514,7 @@ isTypeInhabited conEnv tcm ty =
 --   Compares full pattern structure (constructor name + nested patterns).
 --   This handles nested patterns like @Ok (Ok value)@ vs @Ok (Err value)@.
 patternMatches :: ConEnv -> (Name, [Pattern]) -> [(Name, [Pattern])] -> Bool
-patternMatches _conEnv (cName, pats) covered =
-  any (\(coveredName, coveredPats) -> cName == coveredName && patternsEqual pats coveredPats) covered
+patternMatches _conEnv (cName, pats) = any (\(coveredName, coveredPats) -> cName == coveredName && patternsEqual pats coveredPats)
   where
     patternsEqual :: [Pattern] -> [Pattern] -> Bool
     patternsEqual ps1 ps2

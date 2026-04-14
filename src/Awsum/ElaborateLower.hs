@@ -21,7 +21,7 @@ import Awsum.Core
 import Awsum.Syntax
 import Awsum.Typing (TypeError (..), typecheckProgram)
 import Control.Monad (foldM)
-import Data.List (groupBy, sortOn)
+import Data.List (groupBy)
 import Data.Map.Strict qualified as M
 import Data.Text qualified as T
 import Relude
