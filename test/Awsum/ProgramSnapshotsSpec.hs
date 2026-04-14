@@ -37,6 +37,7 @@ spec = describe "Program snapshots" $ do
   testProgram "adt-single-parameter-single-constructor-no-data.aww" ["adt-single-parameter-single-constructor-no-data.input1.txt"]
   testProgram "adt-single-parameter-single-constructor-with-data.aww" ["adt-single-parameter-single-constructor-with-data.input1.txt"]
   testProgram "adt-single-parameter-single-constructor-with-data-nested.aww" ["adt-single-parameter-single-constructor-with-data-nested.input1.txt"]
+  testProgram "adt-single-parameter-single-constructor-with-data-nested-case.aww" ["adt-single-parameter-single-constructor-with-data-nested-case.input1.txt"]
   testProgram "adt-empty-type.aww" ["adt-empty-type.input1.txt"]
   testProgram "adt-empty-type-nested.aww" ["adt-empty-type-nested.input1.txt"]
   testProgram "improperly-formatted-source.aww" ["improperly-formatted-source.input1.txt"]

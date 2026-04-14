@@ -111,22 +111,23 @@ renderTypePrec ctx = \case
 
 -- | Entry point for expressions (small precedence machine mirroring the parser).
 renderExpr :: Expr -> Text
-renderExpr = renderExprPrec 0
+renderExpr = renderExprPrec 0 0
 
 -- | @ctx@ is the precedence context:
 --   0 (top) < 1 (++) < 2 (app) < 3 (atom).
+--   @indent@ is the current indentation level (number of spaces) for case branches.
 --   We parenthesize when inner precedence is strictly lower than @ctx@.
 --   Special case: explicit 'EParens' are always preserved verbatim to make
 --   parse ∘ render round-trip possible in tests.
-renderExprPrec :: Int -> Expr -> Text
-renderExprPrec ctx e =
+renderExprPrec :: Int -> Int -> Expr -> Text
+renderExprPrec ctx indent e =
   case e of
     EParens _sp e' ->
       -- Preserve user parentheses exactly as written.
-      parens (renderExprPrec 0 e')
+      parens (renderExprPrec 0 indent e')
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
-      let s = "case " <> renderExprPrec 0 scrut <> " of\n" <> renderCaseAlts alts trailingComments
+      let s = "case " <> renderExprPrec 0 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
        in if 0 < ctx then parens s else s
     _ ->
       let (prec, s) = case e of
@@ -136,15 +137,15 @@ renderExprPrec ctx e =
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.
             EApp _sp' f x ->
-              let f' = renderExprPrec 2 f
-                  x' = renderExprPrec 3 x
+              let f' = renderExprPrec 2 indent f
+                  x' = renderExprPrec 3 indent x
                in (2, f' <> " " <> x')
             -- For left-assoc @++@: we print the right operand at a tighter
             -- context (2) so a chained ++ on the right becomes parenthesized.
             -- This preserves the original associativity in round-trips.
             EInfix _sp' OpConcat l r ->
-              let l' = renderExprPrec 1 l
-                  r' = renderExprPrec 2 r
+              let l' = renderExprPrec 1 indent l
+                  r' = renderExprPrec 2 indent r
                in (1, l' <> " ++ " <> r')
        in if prec < ctx then parens s else s
   where
@@ -159,17 +160,18 @@ renderExprPrec ctx e =
       '\0' -> "\\0"
       _ -> one c
 
-renderCaseAlts :: NonEmpty CaseAlt -> [Comment] -> Text
-renderCaseAlts alts trailingComments =
+renderCaseAlts :: Int -> NonEmpty CaseAlt -> [Comment] -> Text
+renderCaseAlts indent alts trailingComments =
   T.intercalate "\n" (map renderCaseAlt (toList alts) <> map renderIndentedComment trailingComments)
   where
+    pad = T.replicate indent " "
     renderCaseAlt (CaseAlt leadingComments pat body mc) =
       T.intercalate
         "\n"
         ( map renderIndentedComment leadingComments
-            <> ["  " <> renderPattern pat <> " -> " <> renderExprPrec 0 body <> renderTrailingComment mc]
+            <> [pad <> renderPattern pat <> " -> " <> renderExprPrec 0 indent body <> renderTrailingComment mc]
         )
-    renderIndentedComment c = "  " <> renderComment c
+    renderIndentedComment c = pad <> renderComment c
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 renderPattern :: Pattern -> Text
