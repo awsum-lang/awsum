@@ -1,0 +1,17 @@
+import IO.Stdout
+
+type Result a e = Ok a | Err e
+
+unwrap : Result (Result (Result a a) (Result a a)) (Result (Result a a) (Result a a)) -> a
+unwrap r = case r of
+  Ok (Ok (Ok value)) -> value
+  Ok (Ok (Err value)) -> value
+  Ok (Err (Ok value)) -> value
+  Ok (Err (Err value)) -> value
+  Err (Ok (Ok value)) -> value
+  Err (Ok (Err value)) -> value
+  Err (Err (Ok value)) -> value
+  Err (Err (Err value)) -> value
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Ok (Ok (Ok "1"))) ++ "," ++ unwrap (Ok (Ok (Err "2"))) ++ "," ++ unwrap (Ok (Err (Ok "3"))) ++ "," ++ unwrap (Ok (Err (Err "4"))) ++ "," ++ unwrap (Err (Ok (Ok "5"))) ++ "," ++ unwrap (Err (Ok (Err "6"))) ++ "," ++ unwrap (Err (Err (Ok "7"))) ++ "," ++ unwrap (Err (Err (Err "8"))))

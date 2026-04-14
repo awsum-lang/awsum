@@ -130,8 +130,10 @@ mergeAlts alts =
         (CCase (CVar scrutVar) innerAlts, otherBodies) -> do
           -- Check if all other bodies are also CCase on their first var
           allInnerAlts <- foldM collectInnerAlts innerAlts otherBodies
+          -- Recursively merge the collected inner alternatives
+          mergedInnerAlts <- mergeAlts allInnerAlts
           -- Use a consistent variable name (take from first alt)
-          Right [(tag, vars, CCase (CVar scrutVar) allInnerAlts)]
+          Right [(tag, vars, CCase (CVar scrutVar) mergedInnerAlts)]
         _ ->
           -- Not all bodies are CCase, or they don't match - this is an error
           -- (patterns with same outer constructor but different nesting structure)
@@ -139,7 +141,6 @@ mergeAlts alts =
 
     collectInnerAlts :: [(Int, [Name], CExpr)] -> ([Name], CExpr) -> Either TypeError [(Int, [Name], CExpr)]
     collectInnerAlts acc (_vars, CCase (CVar _scrutVar) innerAlts) =
-      -- TODO: we should verify that the scrutVar matches, but for now we trust the lowering
       Right (acc <> innerAlts)
     collectInnerAlts _ _ =
       Left (TELowering "conflicting pattern shapes in merge")
