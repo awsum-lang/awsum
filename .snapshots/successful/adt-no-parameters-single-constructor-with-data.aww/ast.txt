@@ -1,0 +1,180 @@
+Program
+    { imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl
+        ( SrcSpan
+            { spanStartLine = 3
+            , spanStartCol = 1
+            , spanEndLine = 3
+            , spanEndCol = 27
+            }
+        ) "Wrapper" []
+        [ ConDef "Wrap"
+            [ TyCon "String" ]
+        ] Nothing :|
+        [ Sig
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 1
+                , spanEndLine = 5
+                , spanEndCol = 27
+                }
+            ) "unwrap"
+            ( TyArrow
+                ( TyCon "Wrapper" )
+                ( TyCon "String" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 7
+                , spanEndCol = 22
+                }
+            ) "unwrap" [ "w" ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 12
+                    , spanEndLine = 7
+                    , spanEndCol = 22
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 17
+                        , spanEndLine = 6
+                        , spanEndCol = 19
+                        }
+                    )
+                    ( QName [] "w" )
+                )
+                ( CaseAlt []
+                    ( PCon "Wrap"
+                        [ PVar "value" ]
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 17
+                            , spanEndLine = 7
+                            , spanEndCol = 22
+                            }
+                        )
+                        ( QName [] "value" )
+                    ) Nothing :| []
+                ) []
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 24
+                }
+            ) "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 53
+                }
+            ) "main" [ "input" ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 14
+                    , spanEndLine = 10
+                    , spanEndCol = 53
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 14
+                        , spanEndLine = 10
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 30
+                        , spanEndLine = 10
+                        , spanEndCol = 53
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 31
+                            , spanEndLine = 10
+                            , spanEndCol = 52
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 31
+                                , spanEndLine = 10
+                                , spanEndCol = 38
+                                }
+                            )
+                            ( QName [] "unwrap" )
+                        )
+                        ( EParens
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 38
+                                , spanEndLine = 10
+                                , spanEndCol = 52
+                                }
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 39
+                                    , spanEndLine = 10
+                                    , spanEndCol = 51
+                                    }
+                                )
+                                ( ECon
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 39
+                                        , spanEndLine = 10
+                                        , spanEndCol = 44
+                                        }
+                                    ) "Wrap"
+                                )
+                                ( ELit
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 44
+                                        , spanEndLine = 10
+                                        , spanEndCol = 51
+                                        }
+                                    )
+                                    ( LString "hello" )
+                                )
+                            )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

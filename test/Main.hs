@@ -3,12 +3,13 @@ module Main (main) where
 import Awsum.ArbitraryInstances ()
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.ProgramSnapshotsSpec qualified
 import Awsum.Render (renderProgram)
 import Awsum.Syntax
-import Awsum.Typing (TypeError (..), typecheckProgram)
+import Awsum.Typing (typecheckProgram)
 import Relude
 import Test.Hspec
 import Test.QuickCheck
@@ -20,6 +21,7 @@ main = hspec $ do
   typecheckerSpec
   elaborateSpec
   Awsum.ProgramSnapshotsSpec.spec
+  Awsum.ErrorSnapshotsSpec.spec
 
 parserSpec :: Spec
 parserSpec = do
@@ -34,15 +36,17 @@ parserSpec = do
               ]
           expected =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
-                               (EVar (QName [] "input"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                               (EVar noSpan (QName [] "input"))
                            )
                            Nothing
                        ]
@@ -59,19 +63,23 @@ parserSpec = do
               ]
           expected =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
                                ( EParens
+                                   noSpan
                                    ( EInfix
+                                       noSpan
                                        OpConcat
-                                       (EVar (QName [] "input"))
-                                       (EVar (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
                                    )
                                )
                            )
@@ -91,15 +99,17 @@ parserSpec = do
               ]
           ast =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
-                               (EVar (QName [] "input"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
+                               (EVar noSpan (QName [] "input"))
                            )
                            Nothing
                        ]
@@ -116,19 +126,23 @@ parserSpec = do
               ]
           ast =
             Program
-              { imports = [ImportDecl ("IO" :| ["Stdout"])],
+              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
                     :| [ FunDef
+                           noSpan
                            "main"
                            ["input"]
                            ( EApp
-                               (EVar (QName ["IO", "Stdout"] "print"))
+                               noSpan
+                               (EVar noSpan (QName ["IO", "Stdout"] "print"))
                                ( EParens
+                                   noSpan
                                    ( EInfix
+                                       noSpan
                                        OpConcat
-                                       (EVar (QName [] "input"))
-                                       (EVar (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
+                                       (EVar noSpan (QName [] "input"))
                                    )
                                )
                            )
@@ -172,140 +186,6 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Right ()
-
-    it "fails when IO.Stdout not imported (NotImported)" $ do
-      let src =
-            unlines
-              [ "main : String -> IOUnit",
-                "main input = IO.Stdout.print input"
-              ]
-          expectedErr = NotImported (QName ["IO", "Stdout"] "print")
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails when main has wrong type (MainWrongType)" $ do
-      let src =
-            unlines
-              [ "main : String -> String",
-                "main input = input"
-              ]
-          expectedErr = MainWrongType (TyArrow (TyCon "String") (TyCon "String"))
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on arity mismatch (ArityMismatch)" $ do
-      let src =
-            unlines
-              [ "import IO.Stdout",
-                "foo : String -> IOUnit",
-                "foo = IO.Stdout.print",
-                "",
-                "main : String -> IOUnit",
-                "main input = IO.Stdout.print input"
-              ]
-          expectedErr = ArityMismatch "foo" 1 0
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on unknown variable (UnknownVar)" $ do
-      let src =
-            unlines
-              [ "import IO.Stdout",
-                "main : String -> IOUnit",
-                "main input = IO.Stdout.print x"
-              ]
-          expectedErr = UnknownVar (QName [] "x")
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on using non-function as a function (NotAFunction)" $ do
-      let src =
-            unlines
-              [ "main : String -> IOUnit",
-                "main input = input input"
-              ]
-          expectedErr = NotAFunction (EVar (QName [] "input")) (TyCon "String")
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on bad (++) types (TypeMismatch)" $ do
-      let src =
-            unlines
-              [ "import IO.Stdout",
-                "main : String -> IOUnit",
-                "main input = IO.Stdout.print ++ input"
-              ]
-          badExpr =
-            EInfix
-              OpConcat
-              (EVar (QName ["IO", "Stdout"] "print"))
-              (EVar (QName [] "input"))
-          expectedErr =
-            TypeMismatch
-              (TyCon "String")
-              (TyArrow (TyCon "String") (TyCon "IOUnit"))
-              badExpr
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on duplicate signature (DuplicateSignature)" $ do
-      let src =
-            unlines
-              [ "foo : String -> IOUnit",
-                "foo : String -> IOUnit",
-                "",
-                "main : String -> IOUnit",
-                "main input = input"
-              ]
-          expectedErr = DuplicateSignature "foo"
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on duplicate definition (DuplicateDefinition)" $ do
-      let src =
-            unlines
-              [ "foo = foo",
-                "foo = foo",
-                "",
-                "main : String -> IOUnit",
-                "main input = input"
-              ]
-          expectedErr = DuplicateDefinition "foo"
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on unknown type constructor in signature (UnknownTypeCon)" $ do
-      let src =
-            unlines
-              [ "import IO.Stdout",
-                "main : X -> IOUnit",
-                "main x = IO.Stdout.print x"
-              ]
-          expectedErr = UnknownTypeCon "X"
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
-
-    it "fails on missing signature (MissingSignature)" $ do
-      let src =
-            unlines
-              [ "foo x = x",
-                "",
-                "main : String -> IOUnit",
-                "main input = input"
-              ]
-          expectedErr = MissingSignature "foo"
-      case parseProgram src of
-        Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Left expectedErr
 
 elaborateSpec :: Spec
 elaborateSpec = do

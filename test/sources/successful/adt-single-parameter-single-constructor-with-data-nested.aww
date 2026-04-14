@@ -1,0 +1,10 @@
+import IO.Stdout
+
+type Box a = Box a
+
+unwrap : Box (Box (Box String)) -> String
+unwrap b = case b of
+  Box (Box (Box value)) -> value
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Box (Box (Box "hello"))))

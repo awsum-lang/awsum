@@ -39,8 +39,9 @@ normalizeProgram p@Program {imports, decls} =
 --   Signatures are kept verbatim; function/value bodies are normalized.
 normalizeDecl :: Decl -> Decl
 normalizeDecl = \case
-  Sig n t mc -> Sig n t mc
-  FunDef n as e mc -> FunDef n as (normalizeExpr e) mc
+  Sig sp n t mc -> Sig sp n t mc
+  FunDef sp n as e mc -> FunDef sp n as (normalizeExpr e) mc
+  TypeDecl sp n tvs cs mc -> TypeDecl sp n tvs cs mc
   CommentDecl c -> CommentDecl c
 
 -- | Normalize an expression by recursively normalizing children and
@@ -51,8 +52,12 @@ normalizeDecl = \case
 --   • The tree shape is otherwise preserved (no re-association beyond recursion).
 normalizeExpr :: Expr -> Expr
 normalizeExpr = \case
-  EVar q -> EVar q
-  ELit (LString s) -> ELit (LString s)
-  EApp f x -> EApp (normalizeExpr f) (normalizeExpr x)
-  EInfix OpConcat l r -> EInfix OpConcat (normalizeExpr l) (normalizeExpr r)
-  EParens e -> normalizeExpr e
+  EVar sp q -> EVar sp q
+  ELit sp (LString s) -> ELit sp (LString s)
+  EApp sp f x -> EApp sp (normalizeExpr f) (normalizeExpr x)
+  EInfix sp OpConcat l r -> EInfix sp OpConcat (normalizeExpr l) (normalizeExpr r)
+  EParens _sp e -> normalizeExpr e
+  ECon sp n -> ECon sp n
+  ECase sp scrut alts cs -> ECase sp (normalizeExpr scrut) (fmap normalizeAlt alts) cs
+  where
+    normalizeAlt (CaseAlt lc pat body mc) = CaseAlt lc pat (normalizeExpr body) mc

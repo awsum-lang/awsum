@@ -1,0 +1,74 @@
+Program
+    { imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = CommentDecl
+        ( BlockComment " Block comment 1
+        Block comment 2
+        " ) :|
+        [ CommentDecl
+            ( LineComment " Line comment 2" )
+        , CommentDecl
+            ( LineComment " Line comment 3" )
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 45
+                }
+            ) "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            )
+            ( Just " Signature comment" )
+        , CommentDecl
+            ( LineComment " Line comment 4" )
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 15
+                , spanStartCol = 1
+                , spanEndLine = 15
+                , spanEndCol = 57
+                }
+            ) "main" [ "input" ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 14
+                    , spanEndLine = 15
+                    , spanEndCol = 36
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 14
+                        , spanEndLine = 15
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 30
+                        , spanEndLine = 15
+                        , spanEndCol = 36
+                        }
+                    )
+                    ( QName [] "input" )
+                )
+            )
+            ( Just " Definition comment" )
+        , CommentDecl
+            ( LineComment " Line comment 5" )
+        ]
+    }

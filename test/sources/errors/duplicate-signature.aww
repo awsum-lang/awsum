@@ -1,0 +1,5 @@
+foo : String -> IOUnit
+foo : String -> IOUnit
+
+main : String -> IOUnit
+main input = input

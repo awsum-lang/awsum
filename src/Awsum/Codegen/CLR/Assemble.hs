@@ -73,7 +73,10 @@ data Pool = Pool
     pMRc :: Map (Word16, Text, [Word8]) Word32,
     -- Param table rows: (flags, sequence, nameStrIdx)
     pPM :: [(Word16, Word16, Word16)],
-    pPMn :: Word32
+    pPMn :: Word32,
+    -- StandAloneSig table rows: blobIdx (for LocalVarSig)
+    pSAS :: [Word16],
+    pSASn :: Word32
   }
 
 type AsmM = State Pool
@@ -100,7 +103,9 @@ emptyPool =
       pMRn = 0,
       pMRc = Map.empty,
       pPM = [],
-      pPMn = 0
+      pPMn = 0,
+      pSAS = [],
+      pSASn = 0
     }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -214,6 +219,30 @@ addParams n = do
   put st {pPM = st.pPM <> newPs, pPMn = st.pPMn + fromIntegral n}
   pure startRow
 
+-- | Add a StandAloneSig row for a LocalVarSig.
+-- nLocals = number of locals: local 0 is object[], rest are object.
+-- Returns the metadata token (table 0x11 << 24 | row).
+addLocalSig :: Int -> AsmM Word32
+addLocalSig nLocals = do
+  let -- LocalVarSig: 0x07, count, types...
+      -- local 0: object[] (SZARRAY + OBJECT), rest: object
+      localTypes = [0x1D, 0x1C] <> replicate (nLocals - 1) 0x1C
+      blob = 0x07 : fromIntegral nLocals : localTypes
+  bi <- addBlob blob
+  st <- get
+  let row = st.pSASn + 1
+  put st {pSAS = st.pSAS <> [w16 bi], pSASn = row}
+  pure (0x11000000 .|. row)
+
+-- | Count the number of local variable slots needed for a CExpr.
+-- Returns 0 if no CCase is present; otherwise 1 (arrSlot) + max bound vars.
+exprLocalsNeeded :: CExpr -> Int
+exprLocalsNeeded = \case
+  CCase _ alts -> 1 + foldl' max 0 [length vs | (_, vs, _) <- alts]
+  CCall f xs -> foldl' max 0 (exprLocalsNeeded f : map exprLocalsNeeded xs)
+  CCon _ fields -> foldl' max 0 (map exprLocalsNeeded fields)
+  _ -> 0
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Coded index helpers
 -- ════════════════════════════════════════════════════════════════════════════
@@ -262,6 +291,9 @@ sigInstance retType pts = [0x20, fromIntegral (length pts), retType] <> pts
 mkTok :: Word8 -> Word32 -> Word32
 mkTok tbl row = (fromIntegral tbl `shiftL` 24) .|. row
 
+tokTR :: Word32 -> Word32
+tokTR = mkTok 0x01 -- TypeRef
+
 tokMD :: Word32 -> Word32
 tokMD = mkTok 0x06 -- MethodDef
 
@@ -306,6 +338,37 @@ cilBgeS, cilBrS :: Word8 -> [Word8]
 cilBgeS off = [0x2F, off]
 cilBrS off = [0x2B, off]
 
+cilBox, cilUnboxAny :: Word32 -> [Word8]
+cilBox tok = 0x8C : w32le tok
+cilUnboxAny tok = 0xA5 : w32le tok
+
+cilLdcI4 :: Int -> [Word8]
+cilLdcI4 n
+  | n >= 0 && n <= 8 = [fromIntegral (0x16 + n)] -- ldc.i4.0 .. ldc.i4.8
+  | n == -1 = [0x15] -- ldc.i4.m1
+  | n >= -128 && n <= 127 = [0x1F, fromIntegral n] -- ldc.i4.s
+  | otherwise = 0x20 : w32le (fromIntegral n) -- ldc.i4
+
+cilStloc :: Int -> [Word8]
+cilStloc n
+  | n <= 3 = [fromIntegral (0x0A + n)] -- stloc.0..stloc.3
+  | n <= 255 = [0x13, fromIntegral n] -- stloc.s
+  | otherwise = [0xFE, 0x0E] <> w16le (fromIntegral n)
+
+cilLdloc :: Int -> [Word8]
+cilLdloc n
+  | n <= 3 = [fromIntegral (0x06 + n)] -- ldloc.0..ldloc.3
+  | n <= 255 = [0x11, fromIntegral n] -- ldloc.s
+  | otherwise = [0xFE, 0x0C] <> w16le (fromIntegral n)
+
+cilDup, cilStelemRef, cilLdelemRef' :: [Word8]
+cilDup = [0x25]
+cilStelemRef = [0xA2]
+cilLdelemRef' = [0x9A]
+
+cilNewarr :: Word32 -> [Word8]
+cilNewarr tok = 0x8D : w32le tok
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Byte helpers
 -- ════════════════════════════════════════════════════════════════════════════
@@ -346,7 +409,8 @@ data MInfo = MInfo
     mName :: Word16, -- #Strings index
     mSig :: Word16, -- #Blob index
     mParamList :: Word32, -- first Param row (1-based)
-    mCode :: [Word8] -- CIL bytecode
+    mCode :: [Word8], -- CIL bytecode
+    mLocalSigTok :: Word32 -- StandAloneSig token for locals (0 = no locals)
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -386,7 +450,7 @@ doAssemble (CoreProgram decls) = do
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
-      ctx = ECtx {eParams = Map.empty, eValDefs = valNames, eFunDefs = funNames, eArities = arities, eToks = tokMap}
+      ctx = ECtx {eParams = Map.empty, eLocals = Map.empty, eValDefs = valNames, eFunDefs = funNames, eArities = arities, eToks = tokMap}
 
   m0 <- mkInit
   m1 <- mkConcat
@@ -405,7 +469,7 @@ mkInit = do
   si <- w16 <$> addBlob (sigInstance etVoid [])
   ps <- addParams 0
   let code = cilLdarg 0 <> cilCall (tokMR 1) <> cilRet -- MemberRef 1 = Object::.ctor
-  pure MInfo {mImplFlags = 0, mFlags = 0x1886, mName = ni, mSig = si, mParamList = ps, mCode = code}
+  pure MInfo {mImplFlags = 0, mFlags = 0x1886, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
 
 mkConcat :: AsmM MInfo
 mkConcat = do
@@ -413,7 +477,7 @@ mkConcat = do
   si <- w16 <$> addBlob (sigStatic etObject 2)
   ps <- addParams 2
   let code = cilLdarg 0 <> cilLdarg 1 <> cilCall (tokMR 2) <> cilRet -- MemberRef 2 = String.Concat
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
 
 mkPrint :: AsmM MInfo
 mkPrint = do
@@ -421,7 +485,7 @@ mkPrint = do
   si <- w16 <$> addBlob (sigStatic etObject 1)
   ps <- addParams 1
   let code = cilLdarg 0 <> cilCall (tokMR 3) <> cilLdnull <> cilRet -- MemberRef 3 = Console.Write
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
 
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
@@ -444,7 +508,7 @@ mkMain tokMap = do
           <> cilCall vMainTok -- 16: 5 (call_main)
           <> cilPop -- 21: 1
           <> cilRet -- 22: 1
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods
@@ -452,6 +516,7 @@ mkMain tokMap = do
 
 data ECtx = ECtx
   { eParams :: Map Text Int,
+    eLocals :: Map Text Int, -- case-bound variable → ldloc slot
     eValDefs :: Set Text,
     eFunDefs :: Set Text,
     eArities :: Map Text Int,
@@ -462,18 +527,22 @@ mkDecl :: ECtx -> CDecl -> AsmM MInfo
 mkDecl baseCtx = \case
   CFunDef nm args body -> do
     let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..])}
+        nLocals = exprLocalsNeeded body
     ni <- w16 <$> addStr (mangle nm)
     si <- w16 <$> addBlob (sigStatic etObject (length args))
     ps <- addParams (length args)
+    localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
     code <- emitExpr ctx body
-    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet}
+    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok}
   CValDef nm rhs -> do
     let ctx = baseCtx {eParams = Map.empty}
+        nLocals = exprLocalsNeeded rhs
     ni <- w16 <$> addStr (mangle nm)
     si <- w16 <$> addBlob (sigStatic etObject 0)
     ps <- addParams 0
+    localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
     code <- emitExpr ctx rhs
-    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet}
+    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression codegen
@@ -485,6 +554,8 @@ emitExpr ctx = \case
     tok <- addUS s
     pure (cilLdstr tok)
   CVar n
+    | Just slot <- Map.lookup n ctx.eLocals ->
+        pure (cilLdloc slot)
     | Just slot <- Map.lookup n ctx.eParams ->
         pure (cilLdarg slot)
     | n `Set.member` ctx.eValDefs ->
@@ -498,6 +569,71 @@ emitExpr ctx = \case
     | otherwise ->
         pure cilLdnull
   CPrim _ -> pure cilLdnull
+  CCon tag fields -> do
+    -- Create Object[] container: [tag_as_boxed_Int32, field1, field2, ...]
+    let nSlots = 1 + length fields
+    trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+    let allocCode = cilLdcI4 nSlots <> cilNewarr (tokTR trObj)
+        storeTag =
+          cilDup
+            <> cilLdcI4 0
+            <> cilLdcI4 tag
+            <> cilBox (tokTR trInt32)
+            <> cilStelemRef
+    fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+      fldCode <- emitExpr ctx fld
+      pure (cilDup <> cilLdcI4 i <> fldCode <> cilStelemRef)
+    pure (allocCode <> storeTag <> concat fieldCodes)
+  CCase scrut alts -> do
+    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+    scrutCode <- emitExpr ctx scrut
+    let sorted = sortWith (\(t, _, _) -> t) alts
+        -- Store array to local 0, extract tag to local 1
+        arrSlot = 0 :: Int
+        bindSlotStart = 1 :: Int
+    -- Emit arm bodies with bound variables
+    armCodes <- forM sorted $ \(_, vars, body) -> do
+      let bindings = zip vars [bindSlotStart ..]
+          ctx' = ctx {eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings}
+          -- Extract bound vars: for each, ldloc arr, ldc index, ldelem.ref, stloc slot
+          bindCode =
+            concatMap
+              ( \((_, slot), i) ->
+                  cilLdloc arrSlot <> cilLdcI4 (i :: Int) <> cilLdelemRef' <> cilStloc slot
+              )
+              (zip bindings [1 :: Int ..])
+      bodyCode <- emitExpr ctx' body
+      pure (bindCode <> bodyCode)
+    let tags = [t | (t, _, _) <- sorted]
+        -- Extract tag: stloc arr; ldloc arr; ldc 0; ldelem.ref; unbox.any Int32
+        extractAndStore =
+          cilStloc arrSlot
+            <> cilLdloc arrSlot
+            <> cilLdcI4 0
+            <> cilLdelemRef'
+            <> cilUnboxAny (tokTR trInt32)
+        -- Build if/else chain on the int tag value
+        buildChain :: [(Int, [Word8])] -> [Word8]
+        buildChain [] = cilLdnull
+        buildChain [(_, armCode)] = [0x26] <> armCode -- pop tag int, emit body
+        buildChain ((tag', armCode) : rest) =
+          let restCode = buildChain rest
+              popLen :: Int
+              popLen = 1
+              brSLen :: Int
+              brSLen = 2
+              skipLen = popLen + length armCode + brSLen
+              joinLen = length restCode
+           in [0x25] -- dup
+                <> cilLdcI4 tag'
+                <> [0x33, fromIntegral skipLen] -- bne.un.s
+                <> [0x26] -- pop
+                <> armCode
+                <> [0x2B, fromIntegral joinLen] -- br.s
+                <> restCode
+        chainCode = buildChain (zip tags armCodes)
+    pure (scrutCode <> extractAndStore <> chainCode)
   CCall f xs -> case f of
     CPrim PrimConcat | [a, b] <- xs -> do
       ca <- emitExpr ctx a
@@ -549,10 +685,12 @@ funcTokens arity = do
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Encode method body with CIL tiny or fat header.
-encodeBody :: [Word8] -> [Word8]
-encodeBody code
-  | len < 64 = fromIntegral ((len `shiftL` 2) .|. 0x02) : code -- tiny
-  | otherwise = w16le 0x3003 <> w16le 16 <> w32le (fromIntegral len) <> w32le 0 <> code -- fat
+encodeBody :: Word32 -> [Word8] -> [Word8]
+encodeBody localSigTok code
+  | len < 64 && localSigTok == 0 = fromIntegral ((len `shiftL` 2) .|. 0x02) : code -- tiny
+  | otherwise =
+      let flags = if localSigTok /= 0 then 0x3013 else 0x3003 -- 0x0010 = InitLocals
+       in w16le flags <> w16le 16 <> w32le (fromIntegral len) <> w32le localSigTok <> code -- fat
   where
     len = length code
 
@@ -563,9 +701,10 @@ layoutBodies = go peCliHdrSize [] []
     go off rvas bytes [] = (reverse rvas, concat (reverse bytes), off)
     go off rvas bytes (m : ms) =
       let code = m.mCode
-          off' = if length code >= 64 then align4 off else off
+          hasFat = length code >= 64 || m.mLocalSigTok /= 0
+          off' = if hasFat then align4 off else off
           pad = replicate (off' - off) 0x00
-          body = encodeBody code
+          body = encodeBody m.mLocalSigTok code
           rva = fromIntegral peTextRVA + fromIntegral off'
        in go (off' + length body) (rva : rvas) ((pad <> body) : bytes) ms
 
@@ -779,7 +918,9 @@ buildTables st methods methodRVAs =
       nPM = st.pPMn
       nMR = st.pMRn
       nTS = st.pTSn
+      nSAS = st.pSASn
       hasTS = nTS > 0
+      hasSAS = nSAS > 0
 
       valid :: Word64
       valid =
@@ -789,6 +930,7 @@ buildTables st methods methodRVAs =
           .|. 0x40 -- MethodDef
           .|. 0x100 -- Param
           .|. 0x400 -- MemberRef
+          .|. (if hasSAS then 0x20000 else 0) -- StandAloneSig (table 0x11)
           .|. (if hasTS then 0x08000000 else 0) -- TypeSpec
           .|. 0x100000000 -- Assembly
           .|. 0x800000000 -- AssemblyRef
@@ -799,6 +941,7 @@ buildTables st methods methodRVAs =
           <> w32le nMD
           <> w32le nPM
           <> w32le nMR
+          <> (if hasSAS then w32le nSAS else [])
           <> (if hasTS then w32le nTS else [])
           <> w32le 1 -- Assembly
           <> w32le 2 -- AssemblyRef
@@ -847,6 +990,9 @@ buildTables st methods methodRVAs =
       -- MemberRef rows (6 bytes each)
       memberRefRows = concatMap (\(c, n, s) -> w16le c <> w16le n <> w16le s) st.pMR
 
+      -- StandAloneSig rows (2 bytes each, table 0x11)
+      standAloneSigRows = if hasSAS then concatMap w16le st.pSAS else []
+
       -- TypeSpec rows (2 bytes each)
       typeSpecRows = if hasTS then concatMap w16le st.pTS else []
 
@@ -883,6 +1029,7 @@ buildTables st methods methodRVAs =
         <> methodDefRows
         <> paramRows
         <> memberRefRows
+        <> standAloneSigRows
         <> typeSpecRows
         <> assemblyRow
         <> assemblyRefRows

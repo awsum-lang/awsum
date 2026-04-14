@@ -1,0 +1,4 @@
+foo x = x
+
+main : String -> IOUnit
+main input = input

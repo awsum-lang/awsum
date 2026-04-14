@@ -40,32 +40,44 @@ renderProgram Program {imports, decls} =
 --   separated by a blank line by 'renderProgram'.
 groupDeclBlocks :: [Decl] -> [Text]
 groupDeclBlocks = \case
-  (Sig n ty sigComment : FunDef n' args e defComment : rest)
+  (Sig sp1 n ty sigComment : FunDef sp2 n' args e defComment : rest)
     | n == n' ->
-        (renderDecl (Sig n ty sigComment) <> "\n" <> renderDecl (FunDef n' args e defComment)) : groupDeclBlocks rest
+        (renderDecl (Sig sp1 n ty sigComment) <> "\n" <> renderDecl (FunDef sp2 n' args e defComment)) : groupDeclBlocks rest
   (d : rest) ->
     renderDecl d : groupDeclBlocks rest
   [] -> []
 
--- | Render a single import.
+-- | Render a single import (with optional leading comments and trailing comment).
 renderImport :: ImportDecl -> Text
-renderImport (ImportDecl mods) =
-  "import " <> T.intercalate "." (toList mods)
+renderImport (ImportDecl comments mods tcom) =
+  let commentLines = map renderComment comments
+      importLine = "import " <> T.intercalate "." (toList mods) <> maybe "" (" --" <>) tcom
+   in case commentLines of
+        [] -> importLine
+        _ -> T.intercalate "\n" commentLines <> "\n" <> importLine
 
 -- | Render a top-level declaration.
 renderDecl :: Decl -> Text
 renderDecl = \case
-  Sig name ty mc ->
+  Sig _sp name ty mc ->
     name <> " : " <> renderType ty <> renderTrailingComment mc
-  FunDef name args e mc ->
+  FunDef _sp name args e mc ->
     ( case args of
         [] -> name <> " = " <> renderExpr e
         _ -> name <> " " <> T.intercalate " " args <> " = " <> renderExpr e
     )
       <> renderTrailingComment mc
+  TypeDecl _sp name tvars cons mc ->
+    "type "
+      <> name
+      <> (if null tvars then "" else " " <> T.intercalate " " tvars)
+      <> (if null cons then "" else " = " <> T.intercalate " | " (map renderConDef cons))
+      <> renderTrailingComment mc
   CommentDecl c ->
     renderComment c
   where
+    renderConDef (ConDef n []) = n
+    renderConDef (ConDef n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 renderComment :: Comment -> Text
@@ -80,12 +92,15 @@ renderType :: Type' -> Text
 renderType = renderTypePrec 0
 
 -- | @ctx@ is the precedence context we are printing into:
---   0 (top) < 1 (->) < 2 (atom).
+--   0 (top) < 1 (->) < 2 (app) < 3 (atom).
 --   We parenthesize when the inner precedence is strictly lower than the context.
 renderTypePrec :: Int -> Type' -> Text
 renderTypePrec ctx = \case
   TyVar n -> n
   TyCon n -> n
+  TyApp f x ->
+    let s = renderTypePrec 2 f <> " " <> renderTypePrec 3 x
+     in if 2 < ctx then parens s else s
   TyArrow t1 t2 ->
     let l = renderTypePrec 2 t1
         r = renderTypePrec 1 t2
@@ -96,35 +111,41 @@ renderTypePrec ctx = \case
 
 -- | Entry point for expressions (small precedence machine mirroring the parser).
 renderExpr :: Expr -> Text
-renderExpr = renderExprPrec 0
+renderExpr = renderExprPrec 0 0
 
 -- | @ctx@ is the precedence context:
 --   0 (top) < 1 (++) < 2 (app) < 3 (atom).
+--   @indent@ is the current indentation level (number of spaces) for case branches.
 --   We parenthesize when inner precedence is strictly lower than @ctx@.
 --   Special case: explicit 'EParens' are always preserved verbatim to make
 --   parse ∘ render round-trip possible in tests.
-renderExprPrec :: Int -> Expr -> Text
-renderExprPrec ctx e =
+renderExprPrec :: Int -> Int -> Expr -> Text
+renderExprPrec ctx indent e =
   case e of
-    EParens e' ->
+    EParens _sp e' ->
       -- Preserve user parentheses exactly as written.
-      parens (renderExprPrec 0 e')
+      parens (renderExprPrec 0 indent e')
+    ECase _sp scrut alts trailingComments ->
+      -- Case is always at top precedence; parenthesize if nested.
+      let s = "case " <> renderExprPrec 0 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
+       in if 0 < ctx then parens s else s
     _ ->
       let (prec, s) = case e of
-            EVar q -> (3, renderQName q)
-            ELit (LString t) -> (3, "\"" <> escape t <> "\"")
+            EVar _sp' q -> (3, renderQName q)
+            ELit _sp' (LString t) -> (3, "\"" <> escape t <> "\"")
+            ECon _sp' n -> (3, n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.
-            EApp f x ->
-              let f' = renderExprPrec 2 f
-                  x' = renderExprPrec 3 x
+            EApp _sp' f x ->
+              let f' = renderExprPrec 2 indent f
+                  x' = renderExprPrec 3 indent x
                in (2, f' <> " " <> x')
             -- For left-assoc @++@: we print the right operand at a tighter
             -- context (2) so a chained ++ on the right becomes parenthesized.
             -- This preserves the original associativity in round-trips.
-            EInfix OpConcat l r ->
-              let l' = renderExprPrec 1 l
-                  r' = renderExprPrec 2 r
+            EInfix _sp' OpConcat l r ->
+              let l' = renderExprPrec 1 indent l
+                  r' = renderExprPrec 2 indent r
                in (1, l' <> " ++ " <> r')
        in if prec < ctx then parens s else s
   where
@@ -138,6 +159,32 @@ renderExprPrec ctx e =
       '\\' -> "\\\\"
       '\0' -> "\\0"
       _ -> one c
+
+renderCaseAlts :: Int -> NonEmpty CaseAlt -> [Comment] -> Text
+renderCaseAlts indent alts trailingComments =
+  T.intercalate "\n" (map renderCaseAlt (toList alts) <> map renderIndentedComment trailingComments)
+  where
+    pad = T.replicate indent " "
+    renderCaseAlt (CaseAlt leadingComments pat body mc) =
+      T.intercalate
+        "\n"
+        ( map renderIndentedComment leadingComments
+            <> [pad <> renderPattern pat <> " -> " <> renderExprPrec 0 indent body <> renderTrailingComment mc]
+        )
+    renderIndentedComment c = pad <> renderComment c
+    renderTrailingComment = maybe ("" :: Text) (" --" <>)
+
+renderPattern :: Pattern -> Text
+renderPattern = \case
+  PCon n [] -> n
+  PCon n ps -> n <> " " <> T.intercalate " " (map renderPatternAtom ps)
+  PVar n -> n
+  PWild -> "_"
+
+-- | Render an atomic pattern, parenthesizing nested constructor applications.
+renderPatternAtom :: Pattern -> Text
+renderPatternAtom p@(PCon _ (_ : _)) = "(" <> renderPattern p <> ")"
+renderPatternAtom p = renderPattern p
 
 -- | Utility: surround text with parentheses.
 parens :: Text -> Text

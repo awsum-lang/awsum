@@ -1,0 +1,205 @@
+Program
+    { imports =
+        [ ImportDecl []
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 3
+            , spanStartCol = 1
+            , spanEndLine = 3
+            , spanEndCol = 24
+            }
+        ) "main"
+        ( TyArrow
+            ( TyCon "String" )
+            ( TyCon "IOUnit" )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 1
+                , spanEndLine = 4
+                , spanEndCol = 49
+                }
+            ) "main" [ "input" ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 14
+                    , spanEndLine = 4
+                    , spanEndCol = 49
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 14
+                        , spanEndLine = 4
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 30
+                        , spanEndLine = 4
+                        , spanEndCol = 49
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 4
+                            , spanStartCol = 31
+                            , spanEndLine = 4
+                            , spanEndCol = 48
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 4
+                                , spanStartCol = 31
+                                , spanEndLine = 4
+                                , spanEndCol = 43
+                                }
+                            )
+                            ( QName [] "addGreeting" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 4
+                                , spanStartCol = 43
+                                , spanEndLine = 4
+                                , spanEndCol = 48
+                                }
+                            )
+                            ( QName [] "input" )
+                        )
+                    )
+                )
+            ) Nothing
+        , CommentDecl
+            ( BlockComment " Block comment " )
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 18
+                }
+            ) "greeting"
+            ( TyCon "String" ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 35
+                }
+            ) "greeting" []
+            ( ELit
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 12
+                    , spanEndLine = 9
+                    , spanEndCol = 20
+                    }
+                )
+                ( LString "Hello" )
+            )
+            ( Just " Line comment" )
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 31
+                }
+            ) "addGreeting"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "String" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 12
+                , spanEndCol = 51
+                }
+            ) "addGreeting" [ "name" ]
+            ( EInfix
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 20
+                    , spanEndLine = 12
+                    , spanEndCol = 51
+                    }
+                ) OpConcat
+                ( EInfix
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 20
+                        , spanEndLine = 12
+                        , spanEndCol = 45
+                        }
+                    ) OpConcat
+                    ( EInfix
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 20
+                            , spanEndLine = 12
+                            , spanEndCol = 37
+                            }
+                        ) OpConcat
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 20
+                                , spanEndLine = 12
+                                , spanEndCol = 29
+                                }
+                            )
+                            ( QName [] "greeting" )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 32
+                                , spanEndLine = 12
+                                , spanEndCol = 37
+                                }
+                            )
+                            ( LString ", " )
+                        )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 40
+                            , spanEndLine = 12
+                            , spanEndCol = 45
+                            }
+                        )
+                        ( QName [] "name" )
+                    )
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 48
+                        , spanEndLine = 12
+                        , spanEndCol = 51
+                        }
+                    )
+                    ( LString "!" )
+                )
+            ) Nothing
+        ]
+    }

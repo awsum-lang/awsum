@@ -141,9 +141,9 @@ mainMethod =
 emitDecl :: Ctx -> CDecl -> Text
 emitDecl ctx = \case
   CFunDef nm args body ->
-    let paramCtx = Map.fromList (zip args [0 ..])
+    let varMap = Map.fromList [(a, "    ldarg" <> ldargSuffix i) | (a, i) <- zip args [0 ..]]
         desc = objMethodDesc (length args)
-        bodyText = emitExprText ctx paramCtx body
+        bodyText = emitExprText ctx varMap body
      in unlines
           [ "  .method public hidebysig static object " <> mangle nm <> desc <> " cil managed",
             "  {",
@@ -165,13 +165,12 @@ emitDecl ctx = \case
 -- Expression emission (text)
 -- ════════════════════════════════════════════════════════════════════════════
 
-emitExprText :: Ctx -> Map Text Int -> CExpr -> Text
-emitExprText ctx paramMap = \case
+emitExprText :: Ctx -> Map Text Text -> CExpr -> Text
+emitExprText ctx varMap = \case
   CString s ->
     "    ldstr " <> show s
   CVar n
-    | Just slot <- Map.lookup n paramMap ->
-        "    ldarg" <> ldargSuffix slot
+    | Just instr <- Map.lookup n varMap -> instr
     | n `Set.member` ctx.cValDefs ->
         "    call object AwsumMain::" <> mangle n <> "()"
     | n `Set.member` ctx.cFunDefs ->
@@ -189,33 +188,80 @@ emitExprText ctx paramMap = \case
         "    ldnull"
   CPrim _ ->
     "    ldnull"
+  CCon tag fields ->
+    let nSlots = 1 + length fields
+        storeTag =
+          [ "    dup",
+            emitLdcI4 0,
+            emitLdcI4 tag,
+            "    box [System.Runtime]System.Int32",
+            "    stelem.ref"
+          ]
+        storeFields =
+          [ "    dup\n" <> emitLdcI4 (i :: Int) <> "\n" <> emitExprText ctx varMap fld <> "\n    stelem.ref"
+          | (fld, i) <- zip fields [1 ..]
+          ]
+     in T.intercalate "\n"
+          $ [emitLdcI4 nSlots, "    newarr [System.Runtime]System.Object"]
+          <> storeTag
+          <> storeFields
+  CCase scrut alts ->
+    let sorted = sortWith (\(t, _, _) -> t) alts
+        scrutText = emitExprText ctx varMap scrut
+        -- Extract tag: dup arr, ldc 0, ldelem.ref, unbox Int32
+        extractTag =
+          T.intercalate
+            "\n"
+            [ "    dup",
+              emitLdcI4 0,
+              "    ldelem.ref",
+              "    unbox.any [System.Runtime]System.Int32"
+            ]
+        armLabels = ["IL_arm_" <> show tag | (tag, _, _) <- sorted]
+        joinLabel :: Text
+        joinLabel = "IL_join"
+        switchText = "    switch (" <> T.intercalate ", " armLabels <> ")"
+        emitArm (_, vars, body) lbl =
+          let bindings = zip vars [0 :: Int ..]
+              storeCode =
+                T.concat
+                  [ "    dup\n" <> emitLdcI4 (i :: Int) <> "\n    ldelem.ref\n    stloc" <> ldlocSuffix slot <> "\n"
+                  | ((_, slot), i) <- zip bindings [1 :: Int ..]
+                  ]
+              varMap' = foldl' (\m (v, slot) -> Map.insert v ("    ldloc" <> ldlocSuffix slot) m) varMap bindings
+           in "  " <> lbl <> ":\n" <> storeCode <> "    pop\n" <> emitExprText ctx varMap' body <> "\n    br.s " <> joinLabel
+        armTexts = [emitArm alt lbl | (alt, lbl) <- zip sorted armLabels]
+     in T.intercalate "\n"
+          $ [scrutText, extractTag, switchText]
+          <> armTexts
+          <> ["  " <> joinLabel <> ":"]
   CCall f xs ->
     case f of
       CPrim PrimConcat
         | [a, b] <- xs ->
             T.intercalate
               "\n"
-              [ emitExprText ctx paramMap a,
-                emitExprText ctx paramMap b,
+              [ emitExprText ctx varMap a,
+                emitExprText ctx varMap b,
                 "    call object AwsumMain::__concat(object, object)"
               ]
       CPrim PrimPrint
         | [x] <- xs ->
             T.intercalate
               "\n"
-              [ emitExprText ctx paramMap x,
+              [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__print(object)"
               ]
       CVar n
         | n `Set.member` ctx.cFunDefs ->
-            let argTexts = map (emitExprText ctx paramMap) xs
+            let argTexts = map (emitExprText ctx varMap) xs
                 desc = objMethodDesc (length xs)
              in T.intercalate "\n"
                   $ argTexts
                   <> ["    call object AwsumMain::" <> mangle n <> desc]
       _ ->
-        let fText = emitExprText ctx paramMap f
-            argTexts = map (emitExprText ctx paramMap) xs
+        let fText = emitExprText ctx varMap f
+            argTexts = map (emitExprText ctx varMap) xs
             arity = length xs
             funcType =
               "class [System.Runtime]System.Func`"
@@ -247,3 +293,15 @@ ldargSuffix :: Int -> Text
 ldargSuffix n
   | n <= 3 = "." <> show n
   | otherwise = " " <> show n
+
+ldlocSuffix :: Int -> Text
+ldlocSuffix n
+  | n <= 3 = "." <> show n
+  | otherwise = ".s " <> show n
+
+emitLdcI4 :: Int -> Text
+emitLdcI4 n
+  | n >= 0 && n <= 8 = "    ldc.i4." <> show n
+  | n == -1 = "    ldc.i4.m1"
+  | n >= -128 && n <= 127 = "    ldc.i4.s " <> show n
+  | otherwise = "    ldc.i4 " <> show n

@@ -1,0 +1,4 @@
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print ++ input

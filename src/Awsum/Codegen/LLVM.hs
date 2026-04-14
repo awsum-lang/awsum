@@ -31,7 +31,7 @@ codegenLLVM :: CoreProgram -> Text
 codegenLLVM prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
-      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool}
+      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty}
       userCode = evalState (T.intercalate "\n\n" <$> traverse (emitDecl ctx) decls) 0
    in T.intercalate
         "\n"
@@ -49,7 +49,8 @@ codegenLLVM prog@(CoreProgram decls) =
 data EmitCtx = EmitCtx
   { params :: Set Text,
     valDefs :: Set Text,
-    stringPool :: StringPool
+    stringPool :: StringPool,
+    locals :: Map Text Text -- case-bound variable name → SSA temp
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -63,6 +64,12 @@ freshTemp = do
   n <- get
   modify' (+ 1)
   pure ("%t" <> show n)
+
+freshLabel :: Text -> CodegenM Text
+freshLabel prefix = do
+  n <- get
+  modify' (+ 1)
+  pure (prefix <> "." <> show n)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- String constant pool
@@ -85,6 +92,8 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CPrim _ -> []
+  CCon _ fields -> concatMap stringsInExpr fields
+  CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
 
 emitStringConstants :: StringPool -> Text
@@ -246,6 +255,8 @@ emitExpr ctx = \case
         tmp
       )
   CVar n
+    | Just tmp <- Map.lookup n ctx.locals ->
+        pure ("", tmp)
     | n `Set.member` ctx.params ->
         pure ("", "%" <> mangle n)
     | n `Set.member` ctx.valDefs -> do
@@ -258,6 +269,125 @@ emitExpr ctx = \case
         pure ("", "@" <> mangle n)
   CPrim _ ->
     pure ("", "null")
+  CCon tag fields -> do
+    -- Allocate container: [tag_as_ptr, field1, field2, ...]
+    let nSlots = 1 + length fields
+    arrTmp <- freshTemp
+    let allocInstr = "  " <> arrTmp <> " = call ptr @malloc(i64 " <> show (nSlots * 8 :: Int) <> ")\n"
+    -- Store tag at index 0
+    tagPtr <- freshTemp
+    tagSlot <- freshTemp
+    let tagInstr =
+          "  "
+            <> tagPtr
+            <> " = inttoptr i64 "
+            <> show tag
+            <> " to ptr\n"
+            <> "  "
+            <> tagSlot
+            <> " = getelementptr ptr, ptr "
+            <> arrTmp
+            <> ", i32 0\n"
+            <> "  store ptr "
+            <> tagPtr
+            <> ", ptr "
+            <> tagSlot
+            <> "\n"
+    -- Store each field
+    fieldInstrs <- forM (zip fields [1 :: Int ..]) $ \(fExpr, idx) -> do
+      (instrF, resF) <- emitExpr ctx fExpr
+      slotTmp <- freshTemp
+      pure
+        ( instrF
+            <> "  "
+            <> slotTmp
+            <> " = getelementptr ptr, ptr "
+            <> arrTmp
+            <> ", i32 "
+            <> show idx
+            <> "\n"
+            <> "  store ptr "
+            <> resF
+            <> ", ptr "
+            <> slotTmp
+            <> "\n"
+        )
+    pure
+      ( allocInstr <> tagInstr <> T.concat fieldInstrs,
+        arrTmp
+      )
+  CCase scrut alts -> do
+    (instrS, resS) <- emitExpr ctx scrut
+    -- Extract tag from container[0]
+    tagSlot <- freshTemp
+    tagLoaded <- freshTemp
+    tagTmp <- freshTemp
+    let tagInstr =
+          "  "
+            <> tagSlot
+            <> " = getelementptr ptr, ptr "
+            <> resS
+            <> ", i32 0\n"
+            <> "  "
+            <> tagLoaded
+            <> " = load ptr, ptr "
+            <> tagSlot
+            <> "\n"
+            <> "  "
+            <> tagTmp
+            <> " = ptrtoint ptr "
+            <> tagLoaded
+            <> " to i64\n"
+    -- Generate labels
+    defLabel <- freshLabel "case.default"
+    joinLabel <- freshLabel "case.join"
+    altLabelsAndBodies <- forM alts $ \(tag, vars, body) -> do
+      lbl <- freshLabel ("case.arm." <> show tag)
+      endLbl <- freshLabel ("case.end." <> show tag)
+      -- Extract bound variables from container fields
+      varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
+        slotT <- freshTemp
+        valT <- freshTemp
+        pure
+          ( "  "
+              <> slotT
+              <> " = getelementptr ptr, ptr "
+              <> resS
+              <> ", i32 "
+              <> show idx
+              <> "\n"
+              <> "  "
+              <> valT
+              <> " = load ptr, ptr "
+              <> slotT
+              <> "\n",
+            (v, valT)
+          )
+      let varInstrCode = T.concat (map fst varInstrs)
+          varBindings = map snd varInstrs
+      -- Emit body with bound variables in context
+      let ctx' = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+      (instrB, resB) <- emitExpr ctx' body
+      pure (tag, lbl, endLbl, varInstrCode <> instrB, resB)
+    -- switch instruction
+    let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _, _, _) <- altLabelsAndBodies]
+        switchInstr = "  switch i64 " <> tagTmp <> ", label %" <> defLabel <> " [" <> switchCases <> " ]\n"
+    -- arm blocks (body may create new blocks; endLbl is always the direct predecessor of join)
+    let armBlocks =
+          T.concat
+            [ lbl <> ":\n" <> instrB <> "  br label %" <> endLbl <> "\n" <> endLbl <> ":\n  br label %" <> joinLabel <> "\n"
+            | (_, lbl, endLbl, instrB, _) <- altLabelsAndBodies
+            ]
+    -- default block (unreachable)
+    let defBlock = defLabel <> ":\n  unreachable\n"
+    -- phi at join (references endLbl, the actual predecessor)
+    phiTmp <- freshTemp
+    let phiIncoming = T.intercalate ", " ["[" <> resB <> ", %" <> endLbl <> "]" | (_, _, endLbl, _, resB) <- altLabelsAndBodies]
+        joinBlock = joinLabel <> ":\n  " <> phiTmp <> " = phi ptr " <> phiIncoming <> "\n"
+    pure
+      ( instrS <> tagInstr <> switchInstr <> armBlocks <> defBlock <> joinBlock,
+        phiTmp
+      )
   CCall f xs ->
     case f of
       CPrim PrimConcat ->

@@ -19,6 +19,9 @@ identTailChar =
 reserved :: [Text]
 reserved =
   [ "import",
+    "type",
+    "case",
+    "of",
     "class",
     "instance",
     "where",
@@ -70,8 +73,8 @@ shrinkNonEmpty sh (x :| xs) =
 -- ───────────────────────── Arbitrary instances ─────────────────────────
 
 instance Arbitrary ImportDecl where
-  arbitrary = ImportDecl <$> genNonEmpty genUIdent
-  shrink (ImportDecl ne) = ImportDecl <$> shrinkNonEmpty shrinkIdent ne
+  arbitrary = ImportDecl [] <$> genNonEmpty genUIdent <*> genComment
+  shrink (ImportDecl _ ne _) = ImportDecl [] <$> shrinkNonEmpty shrinkIdent ne <*> pure Nothing
 
 -- | Prefer producing useful types for tests:
 --   • 'TyVar' appears often (so polymorphic sigs like 'a -> b -> a' show up),
@@ -91,6 +94,7 @@ instance Arbitrary Type' where
           [ (4, TyVar <$> genTyVarName),
             (3, TyCon <$> genKnownTyCon),
             (2, TyCon <$> genUIdent),
+            (3, TyApp <$> go (n `div` 2) <*> go (n `div` 2)),
             (6, TyArrow <$> go (n `div` 2) <*> go (n `div` 2))
           ]
 
@@ -108,6 +112,10 @@ instance Arbitrary Type' where
   shrink = \case
     TyVar v -> TyVar <$> shrinkIdent v
     TyCon n -> TyCon <$> shrinkIdent n
+    TyApp f x ->
+      [f, x]
+        <> [TyApp f' x | f' <- shrink f]
+        <> [TyApp f x' | x' <- shrink x]
     TyArrow a b ->
       [a, b]
         <> [TyArrow a' b | a' <- shrink a]
@@ -138,42 +146,47 @@ instance Arbitrary Expr where
     where
       go 0 =
         oneof
-          [ EVar <$> arbitrary,
-            EParens . EVar <$> arbitrary, -- parentheses around atom for round-trip tests
-            ELit . LString <$> genStr
+          [ EVar noSpan <$> arbitrary,
+            EParens noSpan . EVar noSpan <$> arbitrary, -- parentheses around atom for round-trip tests
+            ELit noSpan . LString <$> genStr
           ]
       go n =
         frequency
-          [ (4, EVar <$> arbitrary),
-            (2, EParens <$> go (n - 1)),
-            (2, ELit . LString <$> genStr),
-            (5, EApp <$> go (n `div` 2) <*> go (n `div` 2)),
-            (5, EInfix OpConcat <$> go (n `div` 2) <*> go (n `div` 2))
+          [ (4, EVar noSpan <$> arbitrary),
+            (2, EParens noSpan <$> go (n - 1)),
+            (2, ELit noSpan . LString <$> genStr),
+            (5, EApp noSpan <$> go (n `div` 2) <*> go (n `div` 2)),
+            (5, EInfix noSpan OpConcat <$> go (n `div` 2) <*> go (n `div` 2))
           ]
   shrink = \case
-    ELit (LString t) -> [ELit (LString t') | t' <- shrinkIdent t]
-    EVar q -> EVar <$> shrink q
-    EParens e -> e : [EParens e' | e' <- shrink e]
-    EApp f x -> [f, x] <> [EApp f' x | f' <- shrink f] <> [EApp f x' | x' <- shrink x]
-    EInfix OpConcat l r ->
+    ELit _sp (LString t) -> [ELit noSpan (LString t') | t' <- shrinkIdent t]
+    EVar _sp q -> EVar noSpan <$> shrink q
+    EParens _sp e -> e : [EParens noSpan e' | e' <- shrink e]
+    ECon _sp n -> ECon noSpan <$> shrinkIdent n
+    EApp _sp f x -> [f, x] <> [EApp noSpan f' x | f' <- shrink f] <> [EApp noSpan f x' | x' <- shrink x]
+    EInfix _sp OpConcat l r ->
       [l, r]
-        <> [EInfix OpConcat l' r | l' <- shrink l]
-        <> [EInfix OpConcat l r' | r' <- shrink r]
+        <> [EInfix noSpan OpConcat l' r | l' <- shrink l]
+        <> [EInfix noSpan OpConcat l r' | r' <- shrink r]
+    ECase _sp scrut alts cs ->
+      [scrut]
+        <> [ECase noSpan s' alts cs | s' <- shrink scrut]
 
 instance Arbitrary Decl where
   arbitrary =
     oneof
-      [ Sig <$> genLIdent <*> arbitrary <*> genComment,
-        FunDef <$> genLIdent <*> listOf genLIdent <*> arbitrary <*> genComment
+      [ Sig noSpan <$> genLIdent <*> arbitrary <*> genComment,
+        FunDef noSpan <$> genLIdent <*> listOf genLIdent <*> arbitrary <*> genComment
       ]
   shrink = \case
-    Sig n t mc ->
-      [Sig n' t mc | n' <- shrinkIdent n] <> [Sig n t' mc | t' <- shrink t]
-    FunDef n as e mc ->
-      [FunDef n' as e mc | n' <- shrinkIdent n]
-        <> [FunDef n (take i as) e mc | i <- [0 .. length as - 1]]
-        <> [FunDef n as e' mc | e' <- shrink e]
+    Sig _sp n t mc ->
+      [Sig noSpan n' t mc | n' <- shrinkIdent n] <> [Sig noSpan n t' mc | t' <- shrink t]
+    FunDef _sp n as e mc ->
+      [FunDef noSpan n' as e mc | n' <- shrinkIdent n]
+        <> [FunDef noSpan n (take i as) e mc | i <- [0 .. length as - 1]]
+        <> [FunDef noSpan n as e' mc | e' <- shrink e]
     CommentDecl c -> [CommentDecl c]
+    TypeDecl {} -> []
 
 instance Arbitrary Program where
   arbitrary = do

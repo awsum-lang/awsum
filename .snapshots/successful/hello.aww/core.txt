@@ -1,0 +1,25 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "addGreeting" )
+                    [ CVar "input" ]
+                ]
+            )
+        , CValDef "greeting"
+            ( CString "Hello" )
+        , CFunDef "addGreeting" [ "name" ]
+            ( CCall ( CPrim PrimConcat )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CVar "greeting"
+                        , CString ", "
+                        ]
+                    , CVar "name"
+                    ]
+                , CString "!"
+                ]
+            )
+        ]
+    }

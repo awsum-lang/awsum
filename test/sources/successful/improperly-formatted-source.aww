@@ -1,0 +1,28 @@
+ -- top file comment
+  {- block comment
+before imports -}
+import IO.Stdout   -- import trailing comment
+
+  {- block
+comment -}
+ -- top comment 1
+   -- top comment 2
+type Color =   Red   |   Green   |   Blue
+
+ -- before show sig
+show :   Color  ->  String
+  {- between show sig and def -}
+show   c  =  case c of
+      -- deep leading
+ -- shallow leading
+   {- block comment in case -}
+  Red   ->   "Red"  -- inline 1
+       -- deep between
+  Green   ->  "Green"     -- inline 2
+  Blue   ->   "Blue"
+    -- trailing case comment
+
+ -- before main sig
+main :  String  ->  IOUnit
+   -- between main sig and def
+main  input  =  IO.Stdout.print    (   show  Red   ++   ", "   ++  show   Green   ++   ", "   ++   show   Blue  )

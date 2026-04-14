@@ -1,0 +1,13 @@
+import IO.Stdout
+
+type Color = Red | Green | Blue
+
+show : Color -> String
+show c = case c of
+  Red -> "Red"
+  Green -> "Green"
+  Green -> "even more Green"
+  Blue -> "Blue"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (show Red)

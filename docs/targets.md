@@ -13,6 +13,8 @@ How the same Awsum program maps to each compilation target. All targets produce 
 | **Constants** | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use | `const name = expr;` | `name = expr` (global) |
 | **Functions** | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `static object v_name(object ...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` | `function` declaration (hoisted) | `function ... end` |
 | **Higher-order** | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) | `funcref` table + `call_indirect` | First-class values | First-class values |
+| **Constructors** | `malloc`'d `ptr` array: `[tag, fields...]` | `Object[]`: `[Integer(tag), fields...]` | `object[]`: `[box(tag), fields...]` | Linear memory: `[i32 tag, i32 fields...]` | Array: `[tag, fields...]` | Table: `{tag, fields...}` |
+| **Pattern match** | `ptrtoint` tag → `icmp eq` → `br` | `aaload` tag → `intValue` → `ifeq` | `ldelem.ref` tag → `unbox.any` → `beq.s` | `i32.load` tag → `i32.eq` → `if`/`else` | `s[0] === N ? ...` | `s[1] == N and ...` |
 | **Memory** | Manual (`malloc`, no `free`) | GC | GC | Bump allocator (no free) | GC | GC |
 | **Name mangling** | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged |
 
@@ -158,6 +160,96 @@ Direct calls to known functions use `call $v_fn` — no table indirection.
 function v_compose(v_g, v_f, v_x){ return (v_g)((v_f)(v_x)); }
 ```
 
+## Sum Types & Pattern Matching
+
+`type Lookup a = Found a | NotFound` — constructors with fields, matched via `case`/`of`.
+
+All six backends use the same container representation: an array/block where index 0 is the constructor tag (integer) and subsequent indices hold constructor fields. Nullary constructors (no fields) also allocate a container with just a tag — this keeps the representation uniform and simplifies pattern matching.
+
+**LLVM**: Container is a `malloc`'d array of `ptr`. Tag is stored as an `i64` cast to `ptr` at index 0. Fields are `ptr` values at indices 1, 2, ...:
+```llvm
+; Found "hello" → [tag=0, "hello"]
+%t0 = call ptr @malloc(i64 16)           ; 2 slots × 8 bytes
+%t1 = getelementptr ptr, ptr %t0, i64 0
+store ptr inttoptr (i64 0 to ptr), ptr %t1  ; tag 0
+%t2 = getelementptr ptr, ptr %t0, i64 1
+store ptr @.str.0, ptr %t2                 ; field: "hello"
+```
+
+Pattern matching loads the tag and branches:
+```llvm
+%tag = load ptr, ptr %scrut
+%tag_i = ptrtoint ptr %tag to i64
+%is_0 = icmp eq i64 %tag_i, 0
+br i1 %is_0, label %arm_0, label %next_0
+```
+
+**JVM**: Container is `Object[]`. Tag is a boxed `Integer` at index 0. Fields are `Object` at indices 1, 2, ...:
+```
+; Found "hello" → new Object[] { Integer(0), "hello" }
+iconst_2
+anewarray java/lang/Object
+dup; iconst_0; iconst_0; invokestatic Integer.valueOf(int); aastore  ; tag 0
+dup; iconst_1; ldc "hello"; aastore                                  ; field
+```
+
+Pattern matching casts to `Object[]`, extracts and unboxes the tag:
+```
+checkcast [Ljava/lang/Object;   ; verify array type for aaload
+astore <arr>
+aload <arr>; iconst_0; aaload; checkcast Integer; invokevirtual intValue()I; istore <tag>
+iload <tag>; ifeq arm_0         ; if tag == 0, branch to arm_0
+```
+
+Field binding in matched arm: `aload <arr>; iconst_N; aaload` (loads field N from container).
+
+**CLR**: Container is `object[]` via `newarr`. Tag is a boxed `Int32` at index 0. Fields are `object` at indices 1, 2, ...:
+```
+; Found "hello" → new object[] { box(0), "hello" }
+ldc.i4.2
+newarr [System.Runtime]System.Object
+dup; ldc.i4.0; ldc.i4.0; box Int32; stelem.ref      ; tag 0
+dup; ldc.i4.1; ldstr "hello"; stelem.ref             ; field
+```
+
+Pattern matching stores the container, extracts and unboxes the tag:
+```
+stloc.0                                              ; store container
+ldloc.0; ldc.i4.0; ldelem.ref; unbox.any Int32       ; extract tag
+ldc.i4.0; beq.s arm_0                                ; if tag == 0
+```
+
+Field binding: `ldloc.0; ldc.i4.N; ldelem.ref` (loads field N). Methods with locals require a `StandAloneSig` metadata entry and a fat method header with `InitLocals`.
+
+**WASM**: Container is a linear memory block allocated via `$__alloc`. Tag is `i32` at byte offset 0. Fields are `i32` at byte offsets 4, 8, ...:
+```wasm
+;; Found "hello" → alloc 8 bytes, store tag=0 at +0, str ptr at +4
+(i32.store offset=0 (local.tee $con (call $__alloc (i32.const 8))) (i32.const 0))
+(i32.store offset=4 (local.get $con) (i32.const <str_ptr>))
+```
+
+Pattern matching loads the tag and uses an if/else chain:
+```wasm
+(local.set $scrut (... scrutinee ...))
+(if (result i32) (i32.eq (i32.load offset=0 (local.get $scrut)) (i32.const 0))
+  (then ... arm 0: (i32.load offset=4 (local.get $scrut)) for field binding ...)
+  (else ... next arm ...))
+```
+
+**JS**: Container is an array literal. Tag is a number at index 0:
+```javascript
+const v_found = (a) => [0, a];     // Found a
+const v_notFound = [1];            // NotFound
+// case: s[0] === 0 ? s[1] : "not found"
+```
+
+**Lua**: Container is a table (1-indexed). Tag is at index 1:
+```lua
+function v_found(a) return {0, a} end
+v_notFound = {1}
+-- case: s[1] == 0 and s[2] or "not found"
+```
+
 ## Entry Points
 
 Each target has a runner that reads a command-line argument and passes it to `main`.
@@ -300,7 +392,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **MethodHandle for higher-order functions**: When a function is used as a value (passed as an argument), it is loaded via `ldc` with a `CONSTANT_MethodHandle` constant pool entry (kind `REF_invokeStatic = 6`). The callee uses `invokevirtual MethodHandle.invoke(...)` for the indirect call. Direct calls to known functions skip the MethodHandle and use `invokestatic` directly.
 
-**StackMapTable**: JVM 7+ requires `StackMapTable` attributes for methods with branches. Currently only the generated `main(String[])` has branches (for argument handling). User-defined methods are branch-free (no `if`/`let` in the language yet).
+**StackMapTable**: JVM 7+ requires `StackMapTable` attributes for methods with branches. The generated `main(String[])` has branches for argument handling. User-defined methods with `case`/`of` pattern matching also have branches (if/else chain over constructor tags) and require StackMapTable entries.
 
 **Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum asm -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for `awsum build -t jvm` (outputs `.class`) and `awsum run -t jvm`.
 
@@ -308,7 +400,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Binary format**: The `.dll` is a PE (Portable Executable) file generated directly in Haskell (`Awsum.Codegen.CLR.Assemble`), with no external tools — no `ilasm`, no `csc`. Only `dotnet` is needed to run. The assembler emits DOS header, PE/COFF headers, a `.text` section with CLR metadata and CIL method bodies.
 
-**Metadata**: The PE file contains 8 CLR metadata tables (Module, TypeRef, TypeDef, MethodDef, Param, MemberRef, TypeSpec, Assembly, AssemblyRef) and 4 metadata heaps (#Strings, #US for user strings in UTF-16LE, #Blob for signatures, #GUID).
+**Metadata**: The PE file contains 9 CLR metadata tables (Module, TypeRef, TypeDef, MethodDef, Param, MemberRef, StandAloneSig, TypeSpec, Assembly, AssemblyRef) and 4 metadata heaps (#Strings, #US for user strings in UTF-16LE, #Blob for signatures, #GUID). The StandAloneSig table declares local variables for methods that use `stloc`/`ldloc` (e.g. pattern matching).
 
 **Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. IOUnit is `null`.
 
@@ -320,7 +412,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
 
-**~15 CIL opcodes**: The assembler uses approximately 15 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`/`ldc.i4.1`, `bge.s`, `br.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`.
+**~25 CIL opcodes**: The assembler uses approximately 25 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`–`ldc.i4.8`/`ldc.i4.s`, `bge.s`, `br.s`, `beq.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`, `newarr`, `stelem.ref`, `box`, `unbox.any`, `stloc.0`–`stloc.3`, `ldloc.0`–`ldloc.3`.
 
 ## WASM-Specific Details
 

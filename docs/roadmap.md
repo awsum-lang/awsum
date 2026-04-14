@@ -5,7 +5,7 @@ Design notes and future directions for the Awsum compiler.
 ## Language
 
 - Numbers and `Either`-based arithmetic with equivalent semantics across targets
-- Algebraic data types and pattern matching
+- ~~Algebraic data types and pattern matching~~ ✓ (sum types + exhaustive `case`/`of`)
 - Let-bindings and where-clauses
 - Platform-aware effects: compile-time gating of `Terminal`, `DOM`, `Window`, `Ports`
 - Application formats: CLI, browser, library
@@ -17,7 +17,7 @@ Design notes and future directions for the Awsum compiler.
   - `awsum/typeof` — get the type of an expression or definition by name
   - `awsum/completions` — list valid completions at a given position
   - `awsum/signature` — look up a function signature by name
-  - `awsum/errors` — structured errors as JSON with source spans
+  - ~~`awsum/errors` — structured errors as JSON with source spans~~ ✓ (`awsum check --json`)
   - `awsum/available-effects` — list effects available for a given target
   - `awsum/project-index` — all definitions with types, without function bodies
 - Grammar-constrained generation via EBNF for syntactically valid AI output

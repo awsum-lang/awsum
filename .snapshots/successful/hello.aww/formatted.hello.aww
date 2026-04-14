@@ -1,0 +1,12 @@
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print (addGreeting input)
+
+{- Block comment -}
+
+greeting : String
+greeting = "Hello" -- Line comment
+
+addGreeting : String -> String
+addGreeting name = greeting ++ ", " ++ name ++ "!"

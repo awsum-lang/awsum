@@ -1,0 +1,15 @@
+import IO.Stdout
+
+type Never
+
+type Box a = Box a
+
+type Result a e = Ok a | Err e
+
+unwrap : Result String (Box Never) -> String
+unwrap r = case r of
+  Ok value -> value
+  Err value -> ""
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Ok "hello"))

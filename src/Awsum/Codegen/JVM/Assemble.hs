@@ -140,6 +140,21 @@ bcAload n
   | n <= 3 = [fromIntegral (0x2A + n)]
   | otherwise = [0x19, fromIntegral n]
 
+bcAstore :: Int -> [Word8]
+bcAstore n
+  | n <= 3 = [fromIntegral (0x4B + n)] -- astore_0..astore_3
+  | otherwise = [0x3A, fromIntegral n]
+
+bcIload :: Int -> [Word8]
+bcIload n
+  | n <= 3 = [fromIntegral (0x1A + n)] -- iload_0..iload_3
+  | otherwise = [0x15, fromIntegral n]
+
+bcIstore :: Int -> [Word8]
+bcIstore n
+  | n <= 3 = [fromIntegral (0x3B + n)] -- istore_0..istore_3
+  | otherwise = [0x36, fromIntegral n]
+
 bcInvokeStatic :: Word16 -> [Word8]
 bcInvokeStatic ref = [0xB8, hi8 ref, lo8 ref]
 
@@ -154,6 +169,12 @@ bcCheckCast cls = [0xC0, hi8 cls, lo8 cls]
 
 bcGetStatic :: Word16 -> [Word8]
 bcGetStatic ref = [0xB2, hi8 ref, lo8 ref]
+
+bcIconst :: Int -> [Word8]
+bcIconst n
+  | n >= 0 && n <= 5 = [fromIntegral (0x03 + n)] -- iconst_0..iconst_5
+  | n >= -128 && n <= 127 = [0x10, fromIntegral n] -- bipush
+  | otherwise = [0x11, fromIntegral (n `div` 256), fromIntegral (n `mod` 256)] -- sipush
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Method type
@@ -327,6 +348,7 @@ mkMain = do
 
 data ECtx = ECtx
   { cParams :: Map Text Int,
+    cLocals :: Map Text Int, -- case-bound variable → aload slot
     cValDefs :: Set Text,
     cFunDefs :: Set Text,
     cArities :: Map Text Int,
@@ -340,6 +362,7 @@ mkDecl valDefs funDefs arities = \case
         ctx =
           ECtx
             { cParams = paramMap,
+              cLocals = Map.empty,
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
@@ -348,11 +371,13 @@ mkDecl valDefs funDefs arities = \case
     ni <- addUtf8 (mangle nm)
     di <- addUtf8 (objMethodDesc (length args))
     code <- emitExpr ctx body
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = code <> [0xB0], mCodeAttrCount = 0, mCodeAttrs = []}
+    (smtCount, smtBytes) <- caseSMT ctx body
+    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = code <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
   CValDef nm rhs -> do
     let ctx =
           ECtx
             { cParams = Map.empty,
+              cLocals = Map.empty,
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
@@ -361,7 +386,8 @@ mkDecl valDefs funDefs arities = \case
     ni <- addUtf8 (mangle nm)
     di <- addUtf8 "()Ljava/lang/Object;"
     code <- emitExpr ctx rhs
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = code <> [0xB0], mCodeAttrCount = 0, mCodeAttrs = []}
+    (smtCount, smtBytes) <- caseSMT ctx rhs
+    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = code <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression codegen (bytecode bytes)
@@ -374,6 +400,8 @@ emitExpr ctx = \case
     idx <- addStr s
     pure (bcLdc idx)
   CVar n
+    | Just slot <- Map.lookup n ctx.cLocals ->
+        pure (bcAload slot)
     | Just slot <- Map.lookup n ctx.cParams ->
         pure (bcAload slot)
     | n `Set.member` ctx.cValDefs -> do
@@ -381,14 +409,77 @@ emitExpr ctx = \case
         pure (bcInvokeStatic ref)
     | n `Set.member` ctx.cFunDefs -> do
         let arity = fromMaybe 0 (Map.lookup n ctx.cArities)
-        -- ldc MethodHandle (REF_invokeStatic = 6)
         hi <- addMHandle 6 "AwsumMain" (mangle n) (objMethodDesc arity)
         pure (bcLdc hi)
     | otherwise ->
-        -- Fallback: treat as zero-arg call
         pure [0x01] -- aconst_null
   CPrim _ ->
-    pure [0x01] -- aconst_null (should never happen standalone)
+    pure [0x01] -- aconst_null
+  CCon tag fields -> do
+    -- Create Object[] container: [tag_as_Integer, field1, field2, ...]
+    let nSlots = 1 + length fields
+    intRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+    objCls <- addClass "java/lang/Object"
+    let allocCode = bcIconst nSlots <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray
+        storeTag =
+          [0x59] -- dup
+            <> bcIconst 0
+            <> bcIconst tag
+            <> bcInvokeStatic intRef
+            <> [0x53] -- aastore
+    fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+      fldCode <- emitExpr ctx fld
+      pure ([0x59] <> bcIconst i <> fldCode <> [0x53]) -- dup, iconst i, <field>, aastore
+    pure (allocCode <> storeTag <> concat fieldCodes)
+  CCase scrut alts -> do
+    intCls <- addClass "java/lang/Integer"
+    intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+    arrCls <- addClass "[Ljava/lang/Object;"
+    scrutCode <- emitExpr ctx scrut
+    let sorted = sortWith (\(t, _, _) -> t) alts
+        -- Local slots: arrSlot stores the Object[], tagSlot stores the int tag
+        arrSlot = ctx.cNextLocal
+        tagSlot = arrSlot + 1
+        bindSlotStart = tagSlot + 1
+        loadArr = bcAload arrSlot
+    -- Emit arm bodies with bound variables
+    armCodes <- forM sorted $ \(_, vars, body) -> do
+      let bindings = zip vars [bindSlotStart ..]
+          ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings}
+          bindCode =
+            concatMap
+              ( \((_, slot), i) ->
+                  loadArr <> bcIconst (i :: Int) <> [0x32] <> bcAstore slot
+              )
+              (zip bindings [1 :: Int ..])
+      bodyCode <- emitExpr ctx' body
+      pure (bindCode <> bodyCode)
+    let tags = [t | (t, _, _) <- sorted]
+        loadTag = bcIload tagSlot
+        buildChain [] = [0x01] -- aconst_null fallback
+        buildChain [(_, armCode)] = armCode
+        buildChain ((tag', armCode) : rest) =
+          let restCode = buildChain rest
+              bodyLen = length armCode
+              gotoLen :: Int
+              gotoLen = 3
+              skipOffset = 3 + bodyLen + gotoLen
+              restLen = length restCode
+              gotoOffset = restLen + gotoLen
+              cmpCode = loadTag <> bcIconst tag' <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
+              gotoCode = [0xA7, fromIntegral (gotoOffset `div` 256), fromIntegral (gotoOffset `mod` 256)]
+           in cmpCode <> armCode <> gotoCode <> restCode
+        chainCode = buildChain (zip tags armCodes)
+        extractAndStore =
+          bcCheckCast arrCls -- cast to Object[] for verifier
+            <> bcAstore arrSlot
+            <> loadArr
+            <> bcIconst 0
+            <> [0x32] -- aaload
+            <> bcCheckCast intCls
+            <> bcInvokeVirtual intValRef
+            <> bcIstore tagSlot
+    pure (scrutCode <> extractAndStore <> chainCode)
   CCall f xs ->
     case f of
       CPrim PrimConcat | [a, b] <- xs -> do
@@ -414,6 +505,107 @@ emitExpr ctx = \case
         let invokeDesc = objMethodDesc (length xs)
         ref <- addMRef "java/lang/invoke/MethodHandle" "invoke" invokeDesc
         pure (fCode <> bcCheckCast mhCls <> concat argCodes <> bcInvokeVirtual ref)
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- StackMapTable for CCase branches
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Compute StackMapTable attribute for methods with top-level CCase.
+-- Must mirror the bytecode layout from emitExpr CCase exactly:
+--   preamble: scrutCode + astore(arrSlot) + aload(arrSlot) + iconst_0 + aaload
+--             + checkcast + invokevirtual + istore(tagSlot)
+--   chain:    [iload(tagSlot) + iconst(tag) + if_icmpne + armCode + goto]* + lastArmCode
+caseSMT :: ECtx -> CExpr -> AsmM (Word16, [Word8])
+caseSMT ctx (CCase scrut alts) = do
+  let sorted = sortWith (\(t, _, _) -> t) alts
+      nAlts = length sorted
+  if nAlts <= 1
+    then pure (0, [])
+    else do
+      smtNameIdx <- addUtf8 "StackMapTable"
+      objClsIdx <- addClass "java/lang/Object"
+      arrClsIdx <- addClass "[Ljava/lang/Object;"
+      scrutCode <- emitExpr ctx scrut
+      let arrSlot = ctx.cNextLocal
+          tagSlot = arrSlot + 1
+          bindSlotStart = tagSlot + 1
+          loadArr = bcAload arrSlot
+      -- Compute arm codes INCLUDING bind code (must match emitExpr CCase)
+      armCodes <- forM sorted $ \(_, vars, body) -> do
+        let bindings = zip vars [bindSlotStart ..]
+            ctx' = ctx {cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings}
+            bindCode =
+              concatMap
+                ( \((_, slot), i) ->
+                    loadArr <> bcIconst (i :: Int) <> [0x32] <> bcAstore slot
+                )
+                (zip bindings [1 :: Int ..])
+        bodyCode <- emitExpr ctx' body
+        pure (bindCode <> bodyCode)
+      let tags = [t | (t, _, _) <- sorted]
+          -- Preamble: scrutCode + checkcast(arrCls) + astore + aload + iconst_0 + aaload + checkcast(intCls) + invokevirtual + istore
+          astoreLen = length (bcAstore arrSlot)
+          aloadLen = length (bcAload arrSlot)
+          istoreLen = length (bcIstore tagSlot)
+          loadLen = length (bcIload tagSlot)
+          preambleLen = length scrutCode + 3 + astoreLen + aloadLen + 1 + 1 + 3 + 3 + istoreLen
+          armLens = map length armCodes
+          iconLens = map (length . bcIconst) tags
+          computeTargets pos [] = ([], pos)
+          computeTargets pos ((il, al) : rest) =
+            let target = pos + loadLen + il + 3 + al + 3
+                (ts, final) = computeTargets target rest
+             in (target : ts, final)
+          initInfo = zip iconLens (take (nAlts - 1) armLens)
+          (ifTargets, lastArmStart) = computeTargets preambleLen initInfo
+          lastArmLen = case drop (nAlts - 1) armLens of
+            (len : _) -> len
+            _ -> 0
+          joinPoint = lastArmStart + lastArmLen
+          targets = ifTargets ++ [joinPoint]
+      pure (1, buildSMTAttr smtNameIdx arrClsIdx objClsIdx targets)
+caseSMT _ _ = pure (0, [])
+
+-- | Build StackMapTable attribute bytes for CCase branch targets.
+-- Locals at branch targets: [Object^N, Object[](arr), int(tag)] where N = method params.
+-- First frame uses append_frame (adding Object[] + int locals), middle frames use same_frame,
+-- last frame (join point) uses same_locals_1_stack_item_frame with Object on stack.
+buildSMTAttr :: Word16 -> Word16 -> Word16 -> [Int] -> [Word8]
+buildSMTAttr smtNameIdx arrClsIdx objClsIdx targets =
+  let nEntries = length targets
+      frameBytes = buildFrames (-1) targets
+      attrLen = 2 + length frameBytes
+   in [hi8 smtNameIdx, lo8 smtNameIdx]
+        <> encodeU4 attrLen
+        <> [fromIntegral (nEntries `div` 256), fromIntegral (nEntries `mod` 256)]
+        <> frameBytes
+  where
+    buildFrames :: Int -> [Int] -> [Word8]
+    buildFrames _ [] = []
+    buildFrames prev (t : rest) =
+      let delta = t - prev - 1
+          frame
+            | prev == -1 =
+                -- append_frame tag 253: adds 2 locals (Object[] for arr, int for tag)
+                [253, fromIntegral (delta `div` 256), fromIntegral (delta `mod` 256), 7, hi8 arrClsIdx, lo8 arrClsIdx, 1]
+            | null rest =
+                -- same_locals_1_stack_item_frame: Object on stack (join point)
+                if delta <= 63
+                  then [fromIntegral (64 + delta), 7, hi8 objClsIdx, lo8 objClsIdx]
+                  else [247, fromIntegral (delta `div` 256), fromIntegral (delta `mod` 256), 7, hi8 objClsIdx, lo8 objClsIdx]
+            | otherwise =
+                -- same_frame: empty stack, same locals (if_icmpne target)
+                if delta <= 63
+                  then [fromIntegral delta]
+                  else [251, fromIntegral (delta `div` 256), fromIntegral (delta `mod` 256)]
+       in frame <> buildFrames t rest
+    encodeU4 :: Int -> [Word8]
+    encodeU4 n =
+      [ fromIntegral (n `div` 16777216),
+        fromIntegral ((n `div` 65536) `mod` 256),
+        fromIntegral ((n `div` 256) `mod` 256),
+        fromIntegral (n `mod` 256)
+      ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling & descriptors

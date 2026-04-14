@@ -4,10 +4,13 @@
 
 Program             = { Import }, { TopItem , Terminator }, [ Terminator ] ;
 
-Import              = "import" , ModulePath ;
+Import              = { TopComment , Terminator } , "import" , ModulePath , [ TrailingLineComment ] ;
 ModulePath          = UIdent , { "." , UIdent } ;
 
-TopItem             = TopComment | Sig | FunDef ;
+TopItem             = TopComment | TypeDecl | Sig | FunDef ;
+
+TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , ConDef } ] ;
+ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = LIdent , ":" , Type , [ TrailingLineComment ] ;
 FunDef              = LIdent , { LIdent } , "=" , Expr , [ TrailingLineComment ] ;
@@ -19,13 +22,22 @@ TrailingLineComment = "--" , LineText ;
 
 (* Types: right-associative arrow *)
 Type                = TypeAtom , { "->" , Type } ;
-TypeAtom            = UIdent | "(" , Type , ")" ;
+TypeAtom            = UIdent , { TypeAtom } | LIdent | "(" , Type , ")" ;
 
 (* Expressions: ++ < application < atoms (both left-associative) *)
 Expr                = Concat ;
 Concat              = App , { "++" , App } ;
 App                 = Atom , { Atom } ;
-Atom                = QName | "(" , Expr , ")" | String ;
+Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String ;
+(* Case: arms at reference indent (set by first arm).
+   Comments accepted at any column > 1 — lenient so misaligned comments
+   don't break compilation; the formatter normalizes.
+   A blank line terminates the case block. *)
+CaseExpr            = "case" , Expr , "of" , NEWLINE , { CaseItem } ;
+CaseItem            = ( LineComment | BlockComment ) , Terminator
+                    | Pattern , "->" , Expr , [ TrailingLineComment ] , Terminator ;
+Pattern             = UIdent , { PatternAtom } | LIdent ;
+PatternAtom         = LIdent | UIdent | "(" , Pattern , ")" ;
 
 QName               = { UIdent , "." } , LIdent ;
 

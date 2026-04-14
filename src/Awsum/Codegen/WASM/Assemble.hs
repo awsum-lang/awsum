@@ -193,6 +193,8 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CPrim _ -> []
+  CCon _ fields -> concatMap stringsInExpr fields
+  CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
 
 collectIndirectArities :: CoreProgram -> Set Text -> Set Int
@@ -745,13 +747,45 @@ codeGetArg info =
 -- User declaration code
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | Maximum CCon nesting depth (number of $__con_N locals needed).
+exprMaxConDepth :: CExpr -> Int
+exprMaxConDepth = \case
+  CCon _ fields -> 1 + foldl' max 0 (map exprMaxConDepth fields)
+  CCase s alts -> max (exprMaxConDepth s) (foldl' max 0 [exprMaxConDepth b | (_, _, b) <- alts])
+  CCall f xs -> foldl' max (exprMaxConDepth f) (map exprMaxConDepth xs)
+  _ -> 0
+
+exprHasCCase :: CExpr -> Bool
+exprHasCCase = \case
+  CCase {} -> True
+  CCall f xs -> exprHasCCase f || any exprHasCCase xs
+  _ -> False
+
+exprMaxBoundVars :: CExpr -> Int
+exprMaxBoundVars = \case
+  CCase _ alts -> foldl' max 0 [max (length vs) (exprMaxBoundVars b) | (_, vs, b) <- alts]
+  CCall f xs -> foldl' max 0 (exprMaxBoundVars f : map exprMaxBoundVars xs)
+  _ -> 0
+
 codeUserDecl :: WasmInfo -> Map FuncType Word32 -> CDecl -> [Word8]
 codeUserDecl info typeMap = \case
   CFunDef _nm args body ->
-    let paramMap = Map.fromList (zip args [0 :: Word32 ..])
+    let nParams = fromIntegral (length args) :: Word32
+        paramMap = Map.fromList (zip args [0 :: Word32 ..])
+        conDepthNeeded = exprMaxConDepth body
+        needsScrut = exprHasCCase body
+        conBaseSlot = nParams
+        nextAfterCon = conBaseSlot + fromIntegral conDepthNeeded
+        scrutSlot = nextAfterCon
+        nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
+        boundBase = nextAfterScrut
+        maxBV = exprMaxBoundVars body
+        totalSlots = boundBase + fromIntegral maxBV
+        nExtraLocals = fromIntegral (totalSlots - nParams) :: Int
         ctx =
           ExprCtx
             { ecParams = paramMap,
+              ecLocals = Map.empty,
               ecValDefs = info.wiValDefs,
               ecFunDefs = info.wiFunDefs,
               ecArities = info.wiArities,
@@ -759,13 +793,28 @@ codeUserDecl info typeMap = \case
               ecTableMap = info.wiTableMap,
               ecFuncIdx = info.wiFuncIdx,
               ecTypeMap = typeMap,
-              ecIndirectArities = info.wiIndirectArities
+              ecIndirectArities = info.wiIndirectArities,
+              ecConBaseSlot = conBaseSlot,
+              ecConDepth = 0,
+              ecScrutSlot = scrutSlot,
+              ecBoundBase = boundBase
             }
-     in encodeBody (encodeLocals 0) (emitExpr ctx body)
+     in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx body)
   CValDef _nm rhs ->
-    let ctx =
+    let conDepthNeeded = exprMaxConDepth rhs
+        needsScrut = exprHasCCase rhs
+        conBaseSlot = 0 :: Word32
+        nextAfterCon = conBaseSlot + fromIntegral conDepthNeeded
+        scrutSlot = nextAfterCon
+        nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
+        boundBase = nextAfterScrut
+        maxBV = exprMaxBoundVars rhs
+        totalSlots = boundBase + fromIntegral maxBV
+        nExtraLocals = fromIntegral totalSlots :: Int
+        ctx =
           ExprCtx
             { ecParams = Map.empty,
+              ecLocals = Map.empty,
               ecValDefs = info.wiValDefs,
               ecFunDefs = info.wiFunDefs,
               ecArities = info.wiArities,
@@ -773,9 +822,13 @@ codeUserDecl info typeMap = \case
               ecTableMap = info.wiTableMap,
               ecFuncIdx = info.wiFuncIdx,
               ecTypeMap = typeMap,
-              ecIndirectArities = info.wiIndirectArities
+              ecIndirectArities = info.wiIndirectArities,
+              ecConBaseSlot = conBaseSlot,
+              ecConDepth = 0,
+              ecScrutSlot = scrutSlot,
+              ecBoundBase = boundBase
             }
-     in encodeBody (encodeLocals 0) (emitExpr ctx rhs)
+     in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx rhs)
 
 -- _start: calls v_main(__get_arg()), drops result
 codeStart :: WasmInfo -> [Word8]
@@ -797,6 +850,7 @@ codeStart info =
 
 data ExprCtx = ExprCtx
   { ecParams :: Map Text Word32,
+    ecLocals :: Map Text Word32, -- case-bound variable → local slot
     ecValDefs :: Set Text,
     ecFunDefs :: Set Text,
     ecArities :: Map Text Int,
@@ -804,7 +858,11 @@ data ExprCtx = ExprCtx
     ecTableMap :: Map Text Int,
     ecFuncIdx :: Map Text Word32,
     ecTypeMap :: Map FuncType Word32,
-    ecIndirectArities :: Set Int
+    ecIndirectArities :: Set Int,
+    ecConBaseSlot :: Word32, -- first local slot for $__con_N
+    ecConDepth :: Int, -- current CCon nesting depth
+    ecScrutSlot :: Word32, -- local slot for $__scrut
+    ecBoundBase :: Word32 -- first local slot for case-bound variables
   }
 
 emitExpr :: ExprCtx -> CExpr -> [Word8]
@@ -813,6 +871,8 @@ emitExpr ctx = \case
     let offset = fromMaybe (error $ "string not in pool: " <> show s) (Map.lookup s ctx.ecStringPool)
      in [op_i32_const] <> encodeSLEB128 (fromIntegral offset)
   CVar n
+    | Just slot <- Map.lookup n ctx.ecLocals ->
+        [op_local_get] <> encodeULEB128 slot
     | Just slot <- Map.lookup n ctx.ecParams ->
         [op_local_get] <> encodeULEB128 slot
     | n `Set.member` ctx.ecValDefs ->
@@ -825,6 +885,42 @@ emitExpr ctx = \case
         [op_i32_const] <> encodeSLEB128 0
   CPrim _ ->
     [op_i32_const] <> encodeSLEB128 0
+  CCon tag fields ->
+    let nSlots = 1 + length fields
+        conSlot = ctx.ecConBaseSlot + fromIntegral ctx.ecConDepth
+        nestedCtx = ctx {ecConDepth = ctx.ecConDepth + 1}
+        -- allocate (nSlots * 4) bytes, store pointer to conSlot
+        allocCode =
+          [op_i32_const]
+            <> encodeSLEB128 (fromIntegral (nSlots * 4))
+            <> [op_call]
+            <> encodeULEB128 idxAlloc
+            <> [op_local_set]
+            <> encodeULEB128 conSlot
+        -- store tag at offset 0
+        tagCode =
+          [op_local_get]
+            <> encodeULEB128 conSlot
+            <> [op_i32_const]
+            <> encodeSLEB128 (fromIntegral tag)
+            <> [op_i32_store]
+            <> encodeULEB128 2
+            <> encodeULEB128 0
+        -- store each field at offset (i+1)*4
+        storeField (fld, i) =
+          [op_local_get]
+            <> encodeULEB128 conSlot
+            <> emitExpr nestedCtx fld
+            <> [op_i32_store]
+            <> encodeULEB128 2
+            <> encodeULEB128 (fromIntegral ((i + 1) * 4 :: Int))
+        fieldCode = concatMap storeField (zip fields [0 :: Int ..])
+        -- return pointer
+        retCode = [op_local_get] <> encodeULEB128 conSlot
+     in allocCode <> tagCode <> fieldCode <> retCode
+  CCase scrut alts ->
+    let sorted = sortWith (\(t, _, _) -> t) alts
+     in emitCaseChain ctx scrut sorted
   CCall f xs ->
     case f of
       CPrim PrimConcat
@@ -852,6 +948,72 @@ emitExpr ctx = \case
               <> [op_call_indirect]
               <> encodeULEB128 typeIdx
               <> encodeULEB128 0 -- table index 0
+
+-- | Emit a case expression as nested if/else in binary WASM.
+-- Stores scrutinee pointer to $__scrut, loads tag, then chains if/else arms.
+emitCaseChain :: ExprCtx -> CExpr -> [(Int, [Text], CExpr)] -> [Word8]
+emitCaseChain _ctx _scrut [] = [op_i32_const] <> encodeSLEB128 0 -- unreachable
+emitCaseChain ctx scrut alts =
+  let scrutSlot = ctx.ecScrutSlot
+      -- evaluate scrutinee and store to scrut local
+      storeCode =
+        emitExpr ctx scrut
+          <> [op_local_set]
+          <> encodeULEB128 scrutSlot
+   in storeCode <> emitArmChain ctx alts
+
+-- | Emit the if/else chain for case arms (scrutinee already in $__scrut).
+emitArmChain :: ExprCtx -> [(Int, [Text], CExpr)] -> [Word8]
+emitArmChain _ctx [] = [op_i32_const] <> encodeSLEB128 0
+emitArmChain ctx [(_, vars, body)] =
+  -- Last arm: bind vars and emit body, no tag comparison needed
+  let (bindCode, ctx') = bindArmVars ctx vars
+   in bindCode <> emitExpr ctx' body
+emitArmChain ctx ((tag, vars, body) : rest) =
+  let scrutSlot = ctx.ecScrutSlot
+      -- load tag from scrutinee container (i32 at offset 0)
+      loadTag =
+        [op_local_get]
+          <> encodeULEB128 scrutSlot
+          <> [op_i32_load]
+          <> encodeULEB128 2
+          <> encodeULEB128 0
+      cmpCode =
+        [op_i32_const]
+          <> encodeSLEB128 (fromIntegral tag)
+          <> [0x46] -- i32.eq
+      (bindCode, ctx') = bindArmVars ctx vars
+   in loadTag
+        <> cmpCode
+        <> [op_if, blocktype_i32]
+        <> bindCode
+        <> emitExpr ctx' body
+        <> [op_else]
+        <> emitArmChain ctx rest
+        <> [op_end]
+
+-- | Bind case arm variables: load fields from scrutinee container into locals.
+bindArmVars :: ExprCtx -> [Text] -> ([Word8], ExprCtx)
+bindArmVars ctx vars =
+  let base = ctx.ecBoundBase
+      scrutSlot = ctx.ecScrutSlot
+      bindOne v i =
+        let slot = base + fromIntegral i
+            offset = fromIntegral ((i + 1) * 4 :: Int)
+            bc =
+              [op_local_get]
+                <> encodeULEB128 scrutSlot
+                <> [op_i32_load]
+                <> encodeULEB128 2
+                <> encodeULEB128 offset
+                <> [op_local_set]
+                <> encodeULEB128 slot
+         in (bc, (v, slot))
+      results = zipWith bindOne vars [0 :: Int ..]
+      code = concatMap fst results
+      newLocals = foldl' (\m (v, slot) -> Map.insert v slot m) ctx.ecLocals (map snd results)
+      ctx' = ctx {ecLocals = newLocals}
+   in (code, ctx')
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Data section
