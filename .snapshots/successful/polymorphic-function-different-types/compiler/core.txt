@@ -1,0 +1,53 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "unwrap" [ "box" ]
+            ( CCase
+                ( CVar "box" )
+                [
+                    ( 0
+                    , [ "value" ]
+                    , CVar "value"
+                    )
+                ]
+            )
+        , CFunDef "showResult" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "a" ]
+                    , CVar "a"
+                    )
+                ,
+                    ( 1
+                    , [ "e" ]
+                    , CVar "e"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall
+                            ( CVar "unwrap" )
+                            [ CCon 0
+                                [ CString "from box" ]
+                            ]
+                        , CString " "
+                        ]
+                    , CCall
+                        ( CVar "showResult" )
+                        [ CCall
+                            ( CVar "unwrap" )
+                            [ CCon 0
+                                [ CCon 0
+                                    [ CString "nested" ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

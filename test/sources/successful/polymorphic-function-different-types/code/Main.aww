@@ -1,0 +1,20 @@
+{- Tests: one polymorphic function (unwrap) applied to two different
+   type instantiations (Box String and Box (Result String String))
+   within the same program. -}
+import IO.Stdout
+
+type Box a = Box a
+
+type Result a e = Ok a | Err e
+
+unwrap : Box a -> a
+unwrap box = case box of
+  Box value -> value
+
+showResult : Result String String -> String
+showResult r = case r of
+  Ok a -> a
+  Err e -> e
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Box "from box") ++ " " ++ showResult (unwrap (Box (Ok "nested"))))

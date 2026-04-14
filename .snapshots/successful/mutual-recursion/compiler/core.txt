@@ -1,0 +1,82 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "handleA" [ "step" ]
+            ( CCase
+                ( CVar "step" )
+                [
+                    ( 0
+                    , []
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "A"
+                        , CCall
+                            ( CVar "handleB" )
+                            [ CCon 1 [] ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CCall
+                        ( CVar "handleB" )
+                        [ CVar "step" ]
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CCall
+                        ( CVar "handleB" )
+                        [ CVar "step" ]
+                    )
+                ,
+                    ( 3
+                    , []
+                    , CString ""
+                    )
+                ]
+            )
+        , CFunDef "handleB" [ "step" ]
+            ( CCase
+                ( CVar "step" )
+                [
+                    ( 0
+                    , []
+                    , CCall
+                        ( CVar "handleA" )
+                        [ CVar "step" ]
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "B"
+                        , CCall
+                            ( CVar "handleA" )
+                            [ CCon 2 [] ]
+                        ]
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "C"
+                        , CCall
+                            ( CVar "handleA" )
+                            [ CCon 3 [] ]
+                        ]
+                    )
+                ,
+                    ( 3
+                    , []
+                    , CString ""
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "handleA" )
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

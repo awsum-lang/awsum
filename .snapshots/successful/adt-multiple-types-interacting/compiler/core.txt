@@ -1,0 +1,74 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "colorName" [ "c" ]
+            ( CCase
+                ( CVar "c" )
+                [
+                    ( 0
+                    , []
+                    , CString "red"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "green"
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CString "blue"
+                    )
+                ]
+            )
+        , CFunDef "showBoxedColor" [ "bc" ]
+            ( CCase
+                ( CVar "bc" )
+                [
+                    ( 0
+                    , [ "c" ]
+                    , CCall
+                        ( CVar "colorName" )
+                        [ CVar "c" ]
+                    )
+                ]
+            )
+        , CFunDef "showResult" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "box" ]
+                    , CCall
+                        ( CVar "showBoxedColor" )
+                        [ CVar "box" ]
+                    )
+                ,
+                    ( 1
+                    , [ "e" ]
+                    , CVar "e"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall
+                            ( CVar "showBoxedColor" )
+                            [ CCon 0
+                                [ CCon 0 [] ]
+                            ]
+                        , CString " "
+                        ]
+                    , CCall
+                        ( CVar "showResult" )
+                        [ CCon 0
+                            [ CCon 0
+                                [ CCon 1 [] ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

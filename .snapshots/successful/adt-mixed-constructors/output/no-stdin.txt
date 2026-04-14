@@ -1,0 +1,1 @@
+word:hello , num:42 <eof>

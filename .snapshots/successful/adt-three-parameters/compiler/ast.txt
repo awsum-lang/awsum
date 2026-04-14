@@ -1,0 +1,314 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Tests: ADT with 3 type parameters and a constructor with 3 fields. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl
+        ( SrcSpan
+            { spanStartLine = 4
+            , spanStartCol = 1
+            , spanEndLine = 4
+            , spanEndCol = 33
+            }
+        ) "Triple"
+        [ "a"
+        , "b"
+        , "c"
+        ]
+        [ ConDef "Triple"
+            [ TyVar "a"
+            , TyVar "b"
+            , TyVar "c"
+            ]
+        ] Nothing :|
+        [ Sig
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 51
+                }
+            ) "showTriple"
+            ( TyArrow
+                ( TyApp
+                    ( TyApp
+                        ( TyApp
+                            ( TyCon "Triple" )
+                            ( TyCon "String" )
+                        )
+                        ( TyCon "String" )
+                    )
+                    ( TyCon "String" )
+                )
+                ( TyCon "String" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 44
+                }
+            ) "showTriple" [ "t" ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 16
+                    , spanEndLine = 8
+                    , spanEndCol = 44
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 21
+                        , spanEndLine = 7
+                        , spanEndCol = 23
+                        }
+                    )
+                    ( QName [] "t" )
+                )
+                ( CaseAlt []
+                    ( PCon "Triple"
+                        [ PVar "a"
+                        , PVar "b"
+                        , PVar "c"
+                        ]
+                    )
+                    ( EInfix
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 19
+                            , spanEndLine = 8
+                            , spanEndCol = 44
+                            }
+                        ) OpConcat
+                        ( EInfix
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 19
+                                , spanEndLine = 8
+                                , spanEndCol = 40
+                                }
+                            ) OpConcat
+                            ( EInfix
+                                ( SrcSpan
+                                    { spanStartLine = 8
+                                    , spanStartCol = 19
+                                    , spanEndLine = 8
+                                    , spanEndCol = 33
+                                    }
+                                ) OpConcat
+                                ( EInfix
+                                    ( SrcSpan
+                                        { spanStartLine = 8
+                                        , spanStartCol = 19
+                                        , spanEndLine = 8
+                                        , spanEndCol = 28
+                                        }
+                                    ) OpConcat
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 8
+                                            , spanStartCol = 19
+                                            , spanEndLine = 8
+                                            , spanEndCol = 21
+                                            }
+                                        )
+                                        ( QName [] "a" )
+                                    )
+                                    ( ELit
+                                        ( SrcSpan
+                                            { spanStartLine = 8
+                                            , spanStartCol = 24
+                                            , spanEndLine = 8
+                                            , spanEndCol = 28
+                                            }
+                                        )
+                                        ( LString " " )
+                                    )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 8
+                                        , spanStartCol = 31
+                                        , spanEndLine = 8
+                                        , spanEndCol = 33
+                                        }
+                                    )
+                                    ( QName [] "b" )
+                                )
+                            )
+                            ( ELit
+                                ( SrcSpan
+                                    { spanStartLine = 8
+                                    , spanStartCol = 36
+                                    , spanEndLine = 8
+                                    , spanEndCol = 40
+                                    }
+                                )
+                                ( LString " " )
+                            )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 43
+                                , spanEndLine = 8
+                                , spanEndCol = 44
+                                }
+                            )
+                            ( QName [] "c" )
+                        )
+                    ) Nothing :| []
+                ) []
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 24
+                }
+            ) "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 71
+                }
+            ) "main" [ "input" ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 14
+                    , spanEndLine = 11
+                    , spanEndCol = 71
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 14
+                        , spanEndLine = 11
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 30
+                        , spanEndLine = 11
+                        , spanEndCol = 71
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 31
+                            , spanEndLine = 11
+                            , spanEndCol = 70
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 31
+                                , spanEndLine = 11
+                                , spanEndCol = 42
+                                }
+                            )
+                            ( QName [] "showTriple" )
+                        )
+                        ( EParens
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 42
+                                , spanEndLine = 11
+                                , spanEndCol = 70
+                                }
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 43
+                                    , spanEndLine = 11
+                                    , spanEndCol = 69
+                                    }
+                                )
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 11
+                                        , spanStartCol = 43
+                                        , spanEndLine = 11
+                                        , spanEndCol = 62
+                                        }
+                                    )
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 11
+                                            , spanStartCol = 43
+                                            , spanEndLine = 11
+                                            , spanEndCol = 56
+                                            }
+                                        )
+                                        ( ECon
+                                            ( SrcSpan
+                                                { spanStartLine = 11
+                                                , spanStartCol = 43
+                                                , spanEndLine = 11
+                                                , spanEndCol = 50
+                                                }
+                                            ) "Triple"
+                                        )
+                                        ( ELit
+                                            ( SrcSpan
+                                                { spanStartLine = 11
+                                                , spanStartCol = 50
+                                                , spanEndLine = 11
+                                                , spanEndCol = 56
+                                                }
+                                            )
+                                            ( LString "one" )
+                                        )
+                                    )
+                                    ( ELit
+                                        ( SrcSpan
+                                            { spanStartLine = 11
+                                            , spanStartCol = 56
+                                            , spanEndLine = 11
+                                            , spanEndCol = 62
+                                            }
+                                        )
+                                        ( LString "two" )
+                                    )
+                                )
+                                ( ELit
+                                    ( SrcSpan
+                                        { spanStartLine = 11
+                                        , spanStartCol = 62
+                                        , spanEndLine = 11
+                                        , spanEndCol = 69
+                                        }
+                                    )
+                                    ( LString "three" )
+                                )
+                            )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

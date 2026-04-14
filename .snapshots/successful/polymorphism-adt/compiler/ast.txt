@@ -1,0 +1,183 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Tests: polymorphic function (identity) applied to a parametric ADT
+               value (Box "one"), then pattern matched. Verifies that polymorphic
+               functions correctly pass through ADT values in all backends. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl
+        ( SrcSpan
+            { spanStartLine = 6
+            , spanStartCol = 1
+            , spanEndLine = 6
+            , spanEndCol = 19
+            }
+        ) "Box" [ "a" ]
+        [ ConDef "Box"
+            [ TyVar "a" ]
+        ] Nothing :|
+        [ Sig
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 18
+                }
+            ) "identity"
+            ( TyArrow
+                ( TyVar "a" )
+                ( TyVar "a" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 15
+                }
+            ) "identity" [ "x" ]
+            ( EVar
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 14
+                    , spanEndLine = 9
+                    , spanEndCol = 15
+                    }
+                )
+                ( QName [] "x" )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 24
+                }
+            ) "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 14
+                }
+            ) "main" [ "input" ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 14
+                    , spanEndLine = 13
+                    , spanEndCol = 14
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 14
+                        , spanEndLine = 12
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 30
+                        , spanEndLine = 13
+                        , spanEndCol = 14
+                        }
+                    )
+                    ( ECase
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 31
+                            , spanEndLine = 13
+                            , spanEndCol = 13
+                            }
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 36
+                                , spanEndLine = 12
+                                , spanEndCol = 57
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 36
+                                    , spanEndLine = 12
+                                    , spanEndCol = 45
+                                    }
+                                )
+                                ( QName [] "identity" )
+                            )
+                            ( EParens
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 45
+                                    , spanEndLine = 12
+                                    , spanEndCol = 57
+                                    }
+                                )
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 12
+                                        , spanStartCol = 46
+                                        , spanEndLine = 12
+                                        , spanEndCol = 55
+                                        }
+                                    )
+                                    ( ECon
+                                        ( SrcSpan
+                                            { spanStartLine = 12
+                                            , spanStartCol = 46
+                                            , spanEndLine = 12
+                                            , spanEndCol = 50
+                                            }
+                                        ) "Box"
+                                    )
+                                    ( ELit
+                                        ( SrcSpan
+                                            { spanStartLine = 12
+                                            , spanStartCol = 50
+                                            , spanEndLine = 12
+                                            , spanEndCol = 55
+                                            }
+                                        )
+                                        ( LString "one" )
+                                    )
+                                )
+                            )
+                        )
+                        ( CaseAlt []
+                            ( PCon "Box"
+                                [ PVar "v" ]
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 13
+                                    , spanStartCol = 12
+                                    , spanEndLine = 13
+                                    , spanEndCol = 13
+                                    }
+                                )
+                                ( QName [] "v" )
+                            ) Nothing :| []
+                        ) []
+                    )
+                )
+            ) Nothing
+        ]
+    }
