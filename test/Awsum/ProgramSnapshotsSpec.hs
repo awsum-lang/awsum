@@ -41,6 +41,10 @@ spec = describe "Program snapshots" $ do
   testProgram "adt-empty-type.aww" ["adt-empty-type.input1.txt"]
   testProgram "adt-empty-type-nested.aww" ["adt-empty-type-nested.input1.txt"]
   testProgram "improperly-formatted-source.aww" ["improperly-formatted-source.input1.txt"]
+  testProgram "recursive-function-call.aww" ["recursive-function-call.input1.txt"]
+  testProgram "adt-result.aww" ["adt-result.input1.txt"]
+  testProgram "adt-result-nested-string.aww" ["adt-result-nested-string.input1.txt"]
+  testProgram "adt-result-nested-string-2.aww" ["adt-result-nested-string-2.input1.txt"]
 
 sourcesDir :: Text
 sourcesDir = "test/sources/successful/"

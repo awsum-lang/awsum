@@ -1,0 +1,12 @@
+import IO.Stdout
+
+type Step = Step1 | Step2 | Step3
+
+advanceStep : Step -> String
+advanceStep x = case x of
+  Step1 -> advanceStep Step2
+  Step2 -> advanceStep Step3
+  Step3 -> "Done!"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (advanceStep Step1)

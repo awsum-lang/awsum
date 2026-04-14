@@ -1,0 +1,11 @@
+import IO.Stdout
+
+type Result a e = Ok a | Err e
+
+unwrap : Result a a -> a
+unwrap r = case r of
+  Ok value -> value
+  Err value -> value
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Ok "1") ++ "," ++ unwrap (Err "2"))
