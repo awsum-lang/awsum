@@ -614,6 +614,8 @@ emitExpr ctx = \case
             <> cilLdelemRef'
             <> cilUnboxAny (tokTR trInt32)
         -- Build if/else chain on the int tag value
+        i32le :: Int -> [Word8]
+        i32le n = w32le (fromIntegral n :: Word32)
         buildChain :: [(Int, [Word8])] -> [Word8]
         buildChain [] = cilLdnull
         buildChain [(_, armCode)] = [0x26] <> armCode -- pop tag int, emit body
@@ -621,16 +623,16 @@ emitExpr ctx = \case
           let restCode = buildChain rest
               popLen :: Int
               popLen = 1
-              brSLen :: Int
-              brSLen = 2
-              skipLen = popLen + length armCode + brSLen
+              brLen :: Int
+              brLen = 5 -- br (1 opcode + 4 offset)
+              skipLen = popLen + length armCode + brLen
               joinLen = length restCode
            in [0x25] -- dup
                 <> cilLdcI4 tag'
-                <> [0x33, fromIntegral skipLen] -- bne.un.s
+                <> [0x40] <> i32le skipLen -- bne.un
                 <> [0x26] -- pop
                 <> armCode
-                <> [0x2B, fromIntegral joinLen] -- br.s
+                <> [0x38] <> i32le joinLen -- br
                 <> restCode
         chainCode = buildChain (zip tags armCodes)
     pure (scrutCode <> extractAndStore <> chainCode)

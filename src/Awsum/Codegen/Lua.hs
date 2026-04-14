@@ -104,7 +104,11 @@ emitExpr = \case
     case f of
       CPrim PrimConcat ->
         case xs of
-          [a, b] -> "(" <> emitExpr a <> " .. " <> emitExpr b <> ")"
+          [a, b] ->
+            let parts = flattenConcat a ++ flattenConcat b
+             in if length parts > 2
+                  then "table.concat({" <> T.intercalate ", " (map emitExpr parts) <> "})"
+                  else "(" <> emitExpr a <> " .. " <> emitExpr b <> ")"
           _ -> error "__concat: arity mismatch"
       CPrim PrimPrint ->
         case xs of
@@ -125,6 +129,12 @@ emitExpr = \case
             <> case rest of
               [] -> " end"
               _ -> " else" <> emitAlts rest
+
+-- | Flatten nested 'PrimConcat' calls into a flat list of operands.
+--   This avoids deep Lua C-stack recursion for long '++' chains (e.g. 300 terms).
+flattenConcat :: CExpr -> [CExpr]
+flattenConcat (CCall (CPrim PrimConcat) [a, b]) = flattenConcat a ++ flattenConcat b
+flattenConcat e = [e]
 
 -- | Encode a Haskell 'Text' as a Lua string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0
