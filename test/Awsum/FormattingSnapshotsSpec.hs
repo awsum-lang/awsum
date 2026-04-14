@@ -4,22 +4,30 @@ import Awsum.Format (formatSource)
 import Common.File
 import Matchers
 import Relude
+import System.Directory (doesDirectoryExist, listDirectory)
+import System.FilePath ((</>))
 import Test.Hspec
 
 spec :: Spec
 spec = describe "Formatting snapshots" $ do
-  testFormatting "improperly-formatted-source.aww"
+  testNames <- runIO discoverTests
+  traverse_ testFormatting testNames
 
-sourcesDir :: Text
-sourcesDir = "test/sources/formatting/"
+sourcesDir :: FilePath
+sourcesDir = "test/sources/formatting"
 
-testFormatting :: Text -> Spec
-testFormatting sourceFile = do
+discoverTests :: IO [FilePath]
+discoverTests = do
+  entries <- listDirectory sourcesDir
+  sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
+
+testFormatting :: FilePath -> Spec
+testFormatting testName = do
   let prepare :: IO Text = do
-        src <- readFileTextUtf8 $ toString $ sourcesDir <> sourceFile
+        src <- readFileTextUtf8 $ sourcesDir </> testName </> "code" </> "Main.aww"
         case formatSource src of
           Left err -> error $ "format failed" <> show err
           Right x -> pure x
-  beforeAll prepare $ describe (toString sourceFile) $ do
+  beforeAll prepare $ describe testName $ do
     it "Formatted source should match snapshot" $ \formatted -> do
-      formatted `shouldMatchTextSnapshot` ("formatting/" <> sourceFile <> "/formatted." <> sourceFile)
+      formatted `shouldMatchTextSnapshot` ("formatting/" <> toText testName <> "/formatted.aww")

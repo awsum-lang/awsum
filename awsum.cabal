@@ -104,6 +104,7 @@ test-suite awsum-test
       QuickCheck
     , awsum
     , base >=4.7 && <5
+    , directory
     , filepath
     , hspec
     , hspec-golden

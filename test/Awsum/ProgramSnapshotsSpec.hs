@@ -18,6 +18,7 @@ import Control.Concurrent.MVar (modifyMVar)
 import Control.Exception (IOException, try)
 import Matchers
 import Relude
+import System.Directory (doesDirectoryExist, listDirectory)
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
@@ -26,31 +27,16 @@ import Test.Hspec
 
 spec :: Spec
 spec = describe "Program snapshots" $ do
-  testProgram "hello.aww" ["hello.input1.txt", "hello.input2.txt", "hello.input3.txt"]
-  testProgram "polymorphism.aww" ["polymorphism.input1.txt"]
-  testProgram "comments.aww" []
-  testProgram "adt-no-parameters.aww" ["adt-no-parameters.input1.txt"]
-  testProgram "adt-no-parameters-single-constructor-no-data.aww" ["adt-no-parameters-single-constructor-no-data.input1.txt"]
-  testProgram "adt-no-parameters-single-constructor-with-data.aww" ["adt-no-parameters-single-constructor-with-data.input1.txt"]
-  testProgram "adt-single-parameter-non-recursive.aww" ["adt-single-parameter-non-recursive.input1.txt"]
-  testProgram "adt-single-parameter-single-constructor-no-data.aww" ["adt-single-parameter-single-constructor-no-data.input1.txt"]
-  testProgram "adt-single-parameter-single-constructor-with-data.aww" ["adt-single-parameter-single-constructor-with-data.input1.txt"]
-  testProgram "adt-single-parameter-single-constructor-with-data-nested.aww" ["adt-single-parameter-single-constructor-with-data-nested.input1.txt"]
-  testProgram "adt-single-parameter-single-constructor-with-data-nested-case.aww" ["adt-single-parameter-single-constructor-with-data-nested-case.input1.txt"]
-  testProgram "adt-empty-type.aww" ["adt-empty-type.input1.txt"]
-  testProgram "adt-empty-type-nested.aww" ["adt-empty-type-nested.input1.txt"]
-  testProgram "recursive-function-call.aww" ["recursive-function-call.input1.txt"]
-  testProgram "adt-result.aww" ["adt-result.input1.txt"]
-  testProgram "adt-result-nested-string.aww" ["adt-result-nested-string.input1.txt"]
-  testProgram "adt-result-nested-string-2.aww" ["adt-result-nested-string-2.input1.txt"]
-  testProgram "adt-result-nested-poly.aww" ["adt-result-nested-poly.input1.txt"]
-  testProgram "adt-result-nested-poly-2.aww" ["adt-result-nested-poly-2.input1.txt"]
-  testProgram "adt-result-nested-deep-poly.aww" ["adt-result-nested-deep-poly.input1.txt"]
-  testProgram "adt-result-nested-deep-poly-2.aww" ["adt-result-nested-deep-poly-2.input1.txt"]
-  testProgram "adt-list-minimal.aww" ["adt-list-minimal.input1.txt"]
+  testNames <- runIO discoverTests
+  traverse_ testProgram testNames
 
-sourcesDir :: Text
-sourcesDir = "test/sources/successful/"
+sourcesDir :: FilePath
+sourcesDir = "test/sources/successful"
+
+discoverTests :: IO [FilePath]
+discoverTests = do
+  entries <- listDirectory sourcesDir
+  sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
 
 data CompileResult = CompileResult
   { ast :: Program,
@@ -66,9 +52,9 @@ data CompileResult = CompileResult
     luaCompiledCode :: Text
   }
 
-compileAll :: Text -> IO CompileResult
-compileAll sourceFile = do
-  src <- readFileTextUtf8 $ toString $ sourcesDir <> sourceFile
+compileAll :: FilePath -> IO CompileResult
+compileAll testName = do
+  src <- readFileTextUtf8 $ sourcesDir </> testName </> "code" </> "Main.aww"
   ast <- case parseProgram src of
     Left e -> error $ "parse failed" <> e
     Right x -> pure x
@@ -90,71 +76,59 @@ compileAll sourceFile = do
         luaCompiledCode = codegenLua core
       }
 
-testProgram :: Text -> [Text] -> Spec
-testProgram sourceFile inputFiles = do
+testProgram :: FilePath -> Spec
+testProgram testName = do
+  stdinFiles <- runIO discoverStdinFiles
   compileOnce <- runIO $ do
     ref <- newMVar Nothing
     pure $ modifyMVar ref $ \case
       Just r -> pure (Just r, r)
       Nothing -> do
-        r <- compileAll sourceFile
+        r <- compileAll testName
         pure (Just r, r)
-  let snap = "successful/" <> sourceFile
-  beforeAll compileOnce $ describe (toString sourceFile) $ do
+  let snap :: Text
+      snap = "successful/" <> toText testName
+  beforeAll compileOnce $ describe testName $ do
     it "AST should match snapshot" $ \res -> do
-      res.ast `shouldMatchShowSnapshot` (snap <> "/ast.txt")
+      res.ast `shouldMatchShowSnapshot` (snap <> "/compiler/ast.txt")
     it "Core should match snapshot" $ \res -> do
-      res.core `shouldMatchShowSnapshot` (snap <> "/core.txt")
+      res.core `shouldMatchShowSnapshot` (snap <> "/compiler/core.txt")
     it "LLVM code should match snapshot" $ \res -> do
-      res.llvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.ll")
+      res.llvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.ll")
     it "JVM code should match snapshot" $ \res -> do
-      res.jvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.j")
+      res.jvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.j")
     it "CLR code should match snapshot" $ \res -> do
-      res.clrCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.il")
+      res.clrCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.il")
     it "WASM code should match snapshot" $ \res -> do
-      res.wasmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.wat")
+      res.wasmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.wat")
     it "JS code should match snapshot" $ \res -> do
-      res.jsCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.js")
+      res.jsCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.js")
     it "Lua code should match snapshot" $ \res -> do
-      res.luaCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiled.lua")
+      res.luaCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.lua")
 
-  traverse_ (testProgramAgainstInput sourceFile compileOnce) inputFiles
+  case stdinFiles of
+    [] -> testProgramNoInput testName compileOnce
+    _ -> traverse_ (testProgramWithInput testName compileOnce) stdinFiles
+  where
+    discoverStdinFiles :: IO [FilePath]
+    discoverStdinFiles = do
+      let stdinDir :: FilePath
+          stdinDir = sourcesDir </> testName </> "stdin"
+      exists <- doesDirectoryExist stdinDir
+      if exists
+        then sort <$> listDirectory stdinDir
+        else pure []
 
-testProgramAgainstInput :: Text -> IO CompileResult -> Text -> Spec
-testProgramAgainstInput sourceFile compileOnce inputFile = do
+testProgramNoInput :: FilePath -> IO CompileResult -> Spec
+testProgramNoInput testName compileOnce = do
   let prepare :: IO (Text, Text, Text, Text, Text, Text) = do
-        input <- readFileTextUtf8 $ toString $ sourcesDir <> inputFile
-
         res <- compileOnce
-
-        llvmRes <- runLLVM res.llvmCompiledCode input
-        llvmOutput <- case llvmRes of
-          Left e -> error $ "LLVM failed" <> e
-          Right x -> pure x
-        jvmRes <- runJVM res.jvmClassBytes input
-        jvmOutput <- case jvmRes of
-          Left e -> error $ "JVM failed" <> e
-          Right x -> pure x
-        clrRes <- runCLR res.clrBinary input
-        clrOutput <- case clrRes of
-          Left e -> error $ "CLR failed" <> e
-          Right x -> pure x
-        wasmRes <- runWASM res.wasmBinary input
-        wasmOutput <- case wasmRes of
-          Left e -> error $ "WASM failed" <> e
-          Right x -> pure x
-        jsRes <- runJs res.jsCompiledCode input
-        jsOutput <- case jsRes of
-          Left e -> error $ "JS failed" <> e
-          Right x -> pure x
-        luaRes <- runLua res.luaCompiledCode input
-        luaOutput <- case luaRes of
-          Left e -> error $ "Lua failed" <> e
-          Right x -> pure x
-        pure (llvmOutput, jvmOutput, clrOutput, wasmOutput, jsOutput, luaOutput)
-  beforeAll prepare $ describe (toString inputFile) $ do
+        runAllBackends res ""
+  let snap :: Text
+      snap = "successful/" <> toText testName <> "/output/no-stdin.txt"
+  beforeAll prepare $ describe "no-stdin" $ do
     it "LLVM stdout should match snapshot" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
-      llvmOutput `shouldMatchTextSnapshot` ("successful/" <> sourceFile <> "/output." <> inputFile)
+      llvmOutput `shouldMatchTextSnapshot` snap
     it "LLVM stdout and JVM stdout should be equivalent" $ \(llvmOutput, jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
       llvmOutput `shouldBe` jvmOutput
     it "LLVM stdout and CLR stdout should be equivalent" $ \(llvmOutput, _jvmOutput, clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
@@ -165,6 +139,56 @@ testProgramAgainstInput sourceFile compileOnce inputFile = do
       llvmOutput `shouldBe` jsOutput
     it "LLVM stdout and Lua stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, luaOutput) -> do
       llvmOutput `shouldBe` luaOutput
+
+testProgramWithInput :: FilePath -> IO CompileResult -> FilePath -> Spec
+testProgramWithInput testName compileOnce inputFile = do
+  let prepare :: IO (Text, Text, Text, Text, Text, Text) = do
+        input <- readFileTextUtf8 $ sourcesDir </> testName </> "stdin" </> inputFile
+        res <- compileOnce
+        runAllBackends res input
+  let snap :: Text
+      snap = "successful/" <> toText testName <> "/output/" <> toText inputFile
+  beforeAll prepare $ describe inputFile $ do
+    it "LLVM stdout should match snapshot" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldMatchTextSnapshot` snap
+    it "LLVM stdout and JVM stdout should be equivalent" $ \(llvmOutput, jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` jvmOutput
+    it "LLVM stdout and CLR stdout should be equivalent" $ \(llvmOutput, _jvmOutput, clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` clrOutput
+    it "LLVM stdout and WASM stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, wasmOutput, _jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` wasmOutput
+    it "LLVM stdout and JS stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, jsOutput, _luaOutput) -> do
+      llvmOutput `shouldBe` jsOutput
+    it "LLVM stdout and Lua stdout should be equivalent" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, luaOutput) -> do
+      llvmOutput `shouldBe` luaOutput
+
+runAllBackends :: CompileResult -> Text -> IO (Text, Text, Text, Text, Text, Text)
+runAllBackends res input = do
+  llvmRes <- runLLVM res.llvmCompiledCode input
+  llvmOutput <- case llvmRes of
+    Left e -> error $ "LLVM failed" <> e
+    Right x -> pure x
+  jvmRes <- runJVM res.jvmClassBytes input
+  jvmOutput <- case jvmRes of
+    Left e -> error $ "JVM failed" <> e
+    Right x -> pure x
+  clrRes <- runCLR res.clrBinary input
+  clrOutput <- case clrRes of
+    Left e -> error $ "CLR failed" <> e
+    Right x -> pure x
+  wasmRes <- runWASM res.wasmBinary input
+  wasmOutput <- case wasmRes of
+    Left e -> error $ "WASM failed" <> e
+    Right x -> pure x
+  jsRes <- runJs res.jsCompiledCode input
+  jsOutput <- case jsRes of
+    Left e -> error $ "JS failed" <> e
+    Right x -> pure x
+  luaRes <- runLua res.luaCompiledCode input
+  luaOutput <- case luaRes of
+    Left e -> error $ "Lua failed" <> e
+    Right x -> pure x
+  pure (llvmOutput, jvmOutput, clrOutput, wasmOutput, jsOutput, luaOutput)
 
 runLLVM :: Text -> Text -> IO (Either Text Text)
 runLLVM code input = withSystemTempDirectory "awsum" $ \dir -> do
