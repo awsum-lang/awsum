@@ -400,10 +400,12 @@ typeOfExpr conEnv tcm env = \case
     let allCons = fromMaybe [] (M.lookup tyName tcm)
     -- Compute substitution from type parameters to concrete types.
     -- E.g. for Lookup String: match (Lookup a) against (Lookup String) → {a → String}
+    -- Freshen generic type variables to avoid name collisions with scrutinee type variables.
     let scrutSubst = case anyConInfo tyName conEnv of
           Just ci ->
             let genericRetTy = conReturnType tyName (ciTypeParams ci)
-             in fromMaybe M.empty (match genericRetTy scrutTy)
+                freshGenericRetTy = freshenType "$scrut" genericRetTy
+             in fromMaybe M.empty (match freshGenericRetTy scrutTy)
           Nothing -> M.empty
     -- Type-check each arm; collect arm types and covered patterns.
     -- We track full patterns (not just constructor names) to handle nested patterns correctly.
@@ -430,13 +432,17 @@ typeOfExpr conEnv tcm env = \case
       -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
       let currentPattern = (cName, pats)
       when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
+      -- Compute field types with proper freshening and substitution.
+      -- First freshen the constructor's field types with the same suffix used for scrutSubst,
+      -- then apply the matched substitution.
+      let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
+          fieldTys = map (applySubst scrutSubst) freshFieldTys
       -- Reject patterns on uninhabited constructors (unreachable).
-      case uninhabitedFieldType conEnv tcm scrutSubst cName of
+      case find (not . isTypeInhabited conEnv tcm) fieldTys of
         Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
         Nothing -> pass
       -- Bind pattern variables from constructor fields.
-      let fieldTys = map (applySubst scrutSubst) (ciFieldTypes ci)
-          bindings = patternBindings conEnv pats fieldTys
+      let bindings = patternBindings conEnv pats fieldTys
           envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
       bodyTy <- typeOfExpr conEnv tcm envWithBindings body
       pure (tys <> [bodyTy], patterns <> [currentPattern])
@@ -455,8 +461,11 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
         Nothing -> []
         Just ci ->
           let genericRetTy = conReturnType (ciTypeName ci) (ciTypeParams ci)
-              innerSubst = fromMaybe M.empty (match genericRetTy ty)
-              fieldTys = map (applySubst innerSubst) (ciFieldTypes ci)
+              -- Freshen generic type variables to avoid collisions with scrutinee type variables.
+              freshGenericRetTy = freshenType "$inner" genericRetTy
+              freshFieldTys = map (freshenType "$inner") (ciFieldTypes ci)
+              innerSubst = fromMaybe M.empty (match freshGenericRetTy ty)
+              fieldTys = map (applySubst innerSubst) freshFieldTys
            in patternBindings conEnv innerPats fieldTys
 
 -- | Extract the type constructor name from a type (peeling off TyApp).
@@ -478,17 +487,10 @@ isConInhabited conEnv tcm subst cName =
   case M.lookup cName conEnv of
     Nothing -> True
     Just ci ->
-      let fieldTys = map (applySubst subst) (ciFieldTypes ci)
+      -- Freshen field types with the same suffix used in scrutSubst, then apply substitution.
+      let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
+          fieldTys = map (applySubst subst) freshFieldTys
        in all (isTypeInhabited conEnv tcm) fieldTys
-
--- | If a constructor has an uninhabited field type, return that type.
-uninhabitedFieldType :: ConEnv -> TypeConsMap -> Subst -> Name -> Maybe Type'
-uninhabitedFieldType conEnv tcm subst cName =
-  case M.lookup cName conEnv of
-    Nothing -> Nothing
-    Just ci ->
-      let fieldTys = map (applySubst subst) (ciFieldTypes ci)
-       in find (not . isTypeInhabited conEnv tcm) fieldTys
 
 -- | A type is inhabited unless it resolves to a user-defined type whose
 --   constructors all require an uninhabited field (recursively).
@@ -502,10 +504,12 @@ isTypeInhabited conEnv tcm ty =
       Just [] -> False -- 0 constructors
       Just cons ->
         -- Compute substitution for this concrete type (e.g. Box Never → {a → Never})
+        -- Freshen generic type variables to avoid collisions with concrete type variables.
         let subst = case anyConInfo n conEnv of
               Just ci ->
                 let genericRetTy = conReturnType n (ciTypeParams ci)
-                 in fromMaybe M.empty (match genericRetTy ty)
+                    freshGenericRetTy = freshenType "$scrut" genericRetTy
+                 in fromMaybe M.empty (match freshGenericRetTy ty)
               Nothing -> M.empty
          in any (isConInhabited conEnv tcm subst) cons
     Nothing -> True
