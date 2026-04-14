@@ -14,6 +14,7 @@ import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Syntax
 import Common.File
+import Control.Concurrent.Async (concurrently)
 import Control.Concurrent.MVar (modifyMVar)
 import Control.Exception (IOException, try)
 import Matchers
@@ -88,7 +89,7 @@ testProgram testName = do
         pure (Just r, r)
   let snap :: Text
       snap = "successful/" <> toText testName
-  beforeAll compileOnce $ describe testName $ do
+  beforeAll compileOnce $ describe testName $ parallel $ do
     it "AST should match snapshot" $ \res -> do
       res.ast `shouldMatchShowSnapshot` (snap <> "/compiler/ast.txt")
     it "Core should match snapshot" $ \res -> do
@@ -126,7 +127,7 @@ testProgramNoInput testName compileOnce = do
         runAllBackends res ""
   let snap :: Text
       snap = "successful/" <> toText testName <> "/output/no-stdin.txt"
-  beforeAll prepare $ describe "no-stdin" $ do
+  beforeAll prepare $ describe "no-stdin" $ parallel $ do
     it "LLVM stdout should match snapshot" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
       llvmOutput `shouldMatchTextSnapshot` snap
     it "LLVM stdout and JVM stdout should be equivalent" $ \(llvmOutput, jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
@@ -148,7 +149,7 @@ testProgramWithInput testName compileOnce inputFile = do
         runAllBackends res input
   let snap :: Text
       snap = "successful/" <> toText testName <> "/output/" <> toText inputFile
-  beforeAll prepare $ describe inputFile $ do
+  beforeAll prepare $ describe inputFile $ parallel $ do
     it "LLVM stdout should match snapshot" $ \(llvmOutput, _jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
       llvmOutput `shouldMatchTextSnapshot` snap
     it "LLVM stdout and JVM stdout should be equivalent" $ \(llvmOutput, jvmOutput, _clrOutput, _wasmOutput, _jsOutput, _luaOutput) -> do
@@ -164,30 +165,23 @@ testProgramWithInput testName compileOnce inputFile = do
 
 runAllBackends :: CompileResult -> Text -> IO (Text, Text, Text, Text, Text, Text)
 runAllBackends res input = do
-  llvmRes <- runLLVM res.llvmCompiledCode input
-  llvmOutput <- case llvmRes of
-    Left e -> error $ "LLVM failed" <> e
-    Right x -> pure x
-  jvmRes <- runJVM res.jvmClassBytes input
-  jvmOutput <- case jvmRes of
-    Left e -> error $ "JVM failed" <> e
-    Right x -> pure x
-  clrRes <- runCLR res.clrBinary input
-  clrOutput <- case clrRes of
-    Left e -> error $ "CLR failed" <> e
-    Right x -> pure x
-  wasmRes <- runWASM res.wasmBinary input
-  wasmOutput <- case wasmRes of
-    Left e -> error $ "WASM failed" <> e
-    Right x -> pure x
-  jsRes <- runJs res.jsCompiledCode input
-  jsOutput <- case jsRes of
-    Left e -> error $ "JS failed" <> e
-    Right x -> pure x
-  luaRes <- runLua res.luaCompiledCode input
-  luaOutput <- case luaRes of
-    Left e -> error $ "Lua failed" <> e
-    Right x -> pure x
+  let unwrap name = either (\e -> error $ name <> " failed" <> e) pure
+  ((llvmOutput, jvmOutput), ((clrOutput, wasmOutput), (jsOutput, luaOutput))) <-
+    concurrently
+      ( concurrently
+          (runLLVM res.llvmCompiledCode input >>= unwrap "LLVM")
+          (runJVM res.jvmClassBytes input >>= unwrap "JVM")
+      )
+      ( concurrently
+          ( concurrently
+              (runCLR res.clrBinary input >>= unwrap "CLR")
+              (runWASM res.wasmBinary input >>= unwrap "WASM")
+          )
+          ( concurrently
+              (runJs res.jsCompiledCode input >>= unwrap "JS")
+              (runLua res.luaCompiledCode input >>= unwrap "Lua")
+          )
+      )
   pure (llvmOutput, jvmOutput, clrOutput, wasmOutput, jsOutput, luaOutput)
 
 runLLVM :: Text -> Text -> IO (Either Text Text)
