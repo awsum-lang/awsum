@@ -13,7 +13,7 @@ function v_showResult(v_r)
 end
 
 function main(v_input)
-  return __print((((v_showBoxedColor)({0, {0}}) .. " ") .. (v_showResult)({0, {0, {1}}})))
+  return __print(table.concat({(v_showBoxedColor)({0, {0}}), " ", (v_showResult)({0, {0, {1}}})}))
 end
 
 local ok, dbg = pcall(require, 'debug')

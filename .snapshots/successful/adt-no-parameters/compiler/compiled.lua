@@ -5,7 +5,7 @@ function v_show(v_c)
 end
 
 function main(v_input)
-  return __print((((((v_show)({0}) .. ", ") .. (v_show)({1})) .. ", ") .. (v_show)({2})))
+  return __print(table.concat({(v_show)({0}), ", ", (v_show)({1}), ", ", (v_show)({2})}))
 end
 
 local ok, dbg = pcall(require, 'debug')

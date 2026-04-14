@@ -7,7 +7,7 @@ end
 v_greeting = "Hello"
 
 function v_addGreeting(v_name)
-  return (((v_greeting .. ", ") .. v_name) .. "!")
+  return table.concat({v_greeting, ", ", v_name, "!"})
 end
 
 local ok, dbg = pcall(require, 'debug')

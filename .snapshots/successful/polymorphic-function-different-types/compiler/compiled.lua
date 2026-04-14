@@ -9,7 +9,7 @@ function v_showResult(v_r)
 end
 
 function main(v_input)
-  return __print((((v_unwrap)({0, "from box"}) .. " ") .. (v_showResult)((v_unwrap)({0, {0, "nested"}}))))
+  return __print(table.concat({(v_unwrap)({0, "from box"}), " ", (v_showResult)((v_unwrap)({0, {0, "nested"}}))}))
 end
 
 local ok, dbg = pcall(require, 'debug')

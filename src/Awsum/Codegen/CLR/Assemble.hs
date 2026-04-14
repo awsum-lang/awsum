@@ -629,10 +629,12 @@ emitExpr ctx = \case
               joinLen = length restCode
            in [0x25] -- dup
                 <> cilLdcI4 tag'
-                <> [0x40] <> i32le skipLen -- bne.un
+                <> [0x40]
+                <> i32le skipLen -- bne.un
                 <> [0x26] -- pop
                 <> armCode
-                <> [0x38] <> i32le joinLen -- br
+                <> [0x38]
+                <> i32le joinLen -- br
                 <> restCode
         chainCode = buildChain (zip tags armCodes)
     pure (scrutCode <> extractAndStore <> chainCode)

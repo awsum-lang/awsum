@@ -5,7 +5,7 @@ function v_showToken(v_token)
 end
 
 function main(v_input)
-  return __print((((((((v_showToken)({0, "hello"}) .. " ") .. (v_showToken)({2})) .. " ") .. (v_showToken)({1, "42"})) .. " ") .. (v_showToken)({3})))
+  return __print(table.concat({(v_showToken)({0, "hello"}), " ", (v_showToken)({2}), " ", (v_showToken)({1, "42"}), " ", (v_showToken)({3})}))
 end
 
 local ok, dbg = pcall(require, 'debug')
