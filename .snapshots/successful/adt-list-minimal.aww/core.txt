@@ -1,0 +1,49 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "show" [ "xs" ]
+            ( CCase
+                ( CVar "xs" )
+                [
+                    ( 0
+                    ,
+                        [ "h"
+                        , "t"
+                        ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CCall ( CPrim PrimConcat )
+                            [ CVar "h"
+                            , CString ","
+                            ]
+                        , CCall
+                            ( CVar "show" )
+                            [ CVar "t" ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString ""
+                    )
+                ]
+            )
+        , CValDef "exampleList"
+            ( CCon 0
+                [ CString "a"
+                , CCon 0
+                    [ CString "b"
+                    , CCon 0
+                        [ CString "c"
+                        , CCon 1 []
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "show" )
+                    [ CVar "exampleList" ]
+                ]
+            )
+        ]
+    }

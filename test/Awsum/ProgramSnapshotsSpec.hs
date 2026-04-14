@@ -49,6 +49,7 @@ spec = describe "Program snapshots" $ do
   testProgram "adt-result-nested-poly-2.aww" ["adt-result-nested-poly-2.input1.txt"]
   testProgram "adt-result-nested-deep-poly.aww" ["adt-result-nested-deep-poly.input1.txt"]
   testProgram "adt-result-nested-deep-poly-2.aww" ["adt-result-nested-deep-poly-2.input1.txt"]
+  testProgram "adt-list-minimal.aww" ["adt-list-minimal.input1.txt"]
 
 sourcesDir :: Text
 sourcesDir = "test/sources/successful/"

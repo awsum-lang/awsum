@@ -415,7 +415,7 @@ typeOfExpr conEnv tcm env = \case
     -- For nested patterns, we just check that all top-level constructors are covered.
     let topLevelCons = [cName | (cName, _) <- coveredPatterns]
         missing = filter (`notElem` topLevelCons) allCons
-        inhabitedMissing = filter (isConInhabited conEnv tcm scrutSubst) missing
+        inhabitedMissing = filter (isConInhabited conEnv tcm S.empty scrutSubst) missing
     unless (null inhabitedMissing) $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
     -- All arms must agree on the result type.
     case armTypes of
@@ -482,37 +482,46 @@ anyConInfo tyName conEnv =
 -- | A constructor is inhabited if all its field types (after substitution) are inhabited.
 --   A type is uninhabited if it has no constructors (e.g. @type Never@),
 --   or all its constructors require an uninhabited field (e.g. @Box Never@).
-isConInhabited :: ConEnv -> TypeConsMap -> Subst -> Name -> Bool
-isConInhabited conEnv tcm subst cName =
+isConInhabited :: ConEnv -> TypeConsMap -> S.Set Type' -> Subst -> Name -> Bool
+isConInhabited conEnv tcm visited subst cName =
   case M.lookup cName conEnv of
     Nothing -> True
     Just ci ->
       -- Freshen field types with the same suffix used in scrutSubst, then apply substitution.
       let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
           fieldTys = map (applySubst subst) freshFieldTys
-       in all (isTypeInhabited conEnv tcm) fieldTys
+       in all (isTypeInhabited' conEnv tcm visited) fieldTys
 
 -- | A type is inhabited unless it resolves to a user-defined type whose
 --   constructors all require an uninhabited field (recursively).
 --   @type Never@ → uninhabited (0 constructors).
 --   @Box Never@  → uninhabited (Box requires Never which is uninhabited).
+--   Recursive types (e.g. @List a = Cons a (List a) | Nil@) are assumed inhabited
+--   via coinductive interpretation: if we encounter the exact same concrete type
+--   already being checked, we return True and let base-case constructors confirm it.
 isTypeInhabited :: ConEnv -> TypeConsMap -> Type' -> Bool
-isTypeInhabited conEnv tcm ty =
-  case extractTyCon ty of
-    Just n -> case M.lookup n tcm of
-      Nothing -> True -- built-in, inhabited
-      Just [] -> False -- 0 constructors
-      Just cons ->
-        -- Compute substitution for this concrete type (e.g. Box Never → {a → Never})
-        -- Freshen generic type variables to avoid collisions with concrete type variables.
-        let subst = case anyConInfo n conEnv of
-              Just ci ->
-                let genericRetTy = conReturnType n (ciTypeParams ci)
-                    freshGenericRetTy = freshenType "$scrut" genericRetTy
-                 in fromMaybe M.empty (match freshGenericRetTy ty)
-              Nothing -> M.empty
-         in any (isConInhabited conEnv tcm subst) cons
-    Nothing -> True
+isTypeInhabited conEnv tcm = isTypeInhabited' conEnv tcm S.empty
+
+isTypeInhabited' :: ConEnv -> TypeConsMap -> S.Set Type' -> Type' -> Bool
+isTypeInhabited' conEnv tcm visited ty
+  | ty `S.member` visited = True -- recursive type, assume inhabited
+  | otherwise =
+      case extractTyCon ty of
+        Just n -> case M.lookup n tcm of
+          Nothing -> True -- built-in, inhabited
+          Just [] -> False -- 0 constructors
+          Just cons ->
+            -- Compute substitution for this concrete type (e.g. Box Never → {a → Never})
+            -- Freshen generic type variables to avoid collisions with concrete type variables.
+            let visited' = S.insert ty visited
+                subst = case anyConInfo n conEnv of
+                  Just ci ->
+                    let genericRetTy = conReturnType n (ciTypeParams ci)
+                        freshGenericRetTy = freshenType "$scrut" genericRetTy
+                     in fromMaybe M.empty (match freshGenericRetTy ty)
+                  Nothing -> M.empty
+             in any (isConInhabited conEnv tcm visited' subst) cons
+        Nothing -> True
 
 -- | Check if a pattern is already covered by any pattern in the list.
 --   Compares full pattern structure (constructor name + nested patterns).
