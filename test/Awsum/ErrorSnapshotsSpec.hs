@@ -7,31 +7,27 @@ import Common.File
 import Data.Text qualified as T
 import Matchers
 import Relude
+import System.Directory (doesDirectoryExist, listDirectory)
+import System.FilePath ((</>))
 import Test.Hspec
 
 spec :: Spec
 spec = describe "Error snapshots" $ do
-  testError "not-imported.aww"
-  testError "main-wrong-type.aww"
-  testError "arity-mismatch.aww"
-  testError "unknown-variable.aww"
-  testError "not-a-function.aww"
-  testError "type-mismatch-concat.aww"
-  testError "duplicate-signature.aww"
-  testError "duplicate-definition.aww"
-  testError "unknown-type-constructor.aww"
-  testError "unreachable-case-duplicate.aww"
-  testError "unreachable-case-uninhabited.aww"
-  testError "unreachable-case-uninhabited-nested.aww"
-  testError "missing-signature.aww"
+  testNames <- runIO discoverTests
+  traverse_ testError testNames
 
-sourcesDir :: Text
-sourcesDir = "test/sources/errors/"
+sourcesDir :: FilePath
+sourcesDir = "test/sources/errors"
 
-testError :: Text -> Spec
-testError sourceFile = do
+discoverTests :: IO [FilePath]
+discoverTests = do
+  entries <- listDirectory sourcesDir
+  sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
+
+testError :: FilePath -> Spec
+testError testName = do
   let prepare :: IO Text = do
-        src <- readFileTextUtf8 $ toString $ sourcesDir <> sourceFile
+        src <- readFileTextUtf8 $ sourcesDir </> testName </> "code" </> "Main.aww"
         pure $ case parseProgramDiagnostic src of
           Left parseErrs ->
             diagnosticsToJson [(sp, msg) | (sp, msg) <- parseErrs]
@@ -41,9 +37,9 @@ testError sourceFile = do
                 let sp = fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan typeErr)
                  in diagnosticsToJson [(sp, prettyPrintTypeError typeErr)]
               Right () -> "[]"
-  beforeAll prepare $ describe (toString sourceFile) $ do
+  beforeAll prepare $ describe testName $ do
     it "diagnostics should match snapshot" $ \json -> do
-      json `shouldMatchTextSnapshot` ("errors/" <> sourceFile <> "/diagnostics.json")
+      json `shouldMatchTextSnapshot` ("errors/" <> toText testName <> "/diagnostics.json")
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- JSON diagnostics (mirrored from awsum/Main.hs, no aeson dependency)
