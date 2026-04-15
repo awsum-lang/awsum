@@ -81,12 +81,17 @@ op_i32_store8 = 0x3A
 op_i32_const :: Word8
 op_i32_const = 0x41
 
-op_i32_eqz, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_ge_u :: Word8
+op_memory_size, op_memory_grow :: Word8
+op_memory_size = 0x3F
+op_memory_grow = 0x40
+
+op_i32_eqz, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
 op_i32_eqz = 0x45
 op_i32_add = 0x6A
 op_i32_mul = 0x6C
 op_i32_and = 0x71
 op_i32_lt_u = 0x49
+op_i32_gt_u = 0x4B
 op_i32_ge_u = 0x4F
 
 -- WASM type encoding
@@ -509,6 +514,20 @@ codeAlloc =
         [op_i32_add],
         [op_global_set],
         encodeULEB128 0,
+        -- if heap > memory.size * 65536 then memory.grow(1)
+        [op_global_get],
+        encodeULEB128 0, -- heap
+        [op_memory_size, 0x00],
+        [op_i32_const],
+        encodeSLEB128 65536,
+        [op_i32_mul],
+        [op_i32_gt_u],
+        [op_if, blocktype_void],
+        [op_i32_const],
+        encodeSLEB128 1, -- 1 page
+        [op_memory_grow, 0x00], -- grows memory, pushes old size or -1
+        [op_drop], -- discard result
+        [op_end], -- end if
         -- return ptr
         [op_local_get],
         encodeULEB128 1

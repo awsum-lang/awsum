@@ -1,0 +1,32 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "search" [ "key" ]
+            ( CCon 0
+                [ CCall ( CPrim PrimConcat )
+                    [ CString "found:"
+                    , CVar "key"
+                    ]
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCase
+                    ( CCall
+                        ( CVar "search" )
+                        [ CString "hello" ]
+                    )
+                    [
+                        ( 0
+                        , [ "v" ]
+                        , CVar "v"
+                        )
+                    ,
+                        ( 1
+                        , []
+                        , CString "nothing"
+                        )
+                    ]
+                ]
+            )
+        ]
+    }

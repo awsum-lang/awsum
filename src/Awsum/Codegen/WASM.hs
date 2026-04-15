@@ -253,6 +253,8 @@ rtAlloc =
       "    (local $ptr i32)",
       "    (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))",
       "    (global.set $heap (i32.add (local.get $ptr) (local.get $size)))",
+      "    (if (i32.gt_u (global.get $heap) (i32.mul (memory.size) (i32.const 65536)))",
+      "      (then (drop (memory.grow (i32.const 1)))))",
       "    (local.get $ptr))"
     ]
 

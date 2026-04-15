@@ -100,6 +100,7 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - awsum
+      - async # for concurrent backend execution
       - directory # for test discovery
       - filepath # for codegen tests
       - hspec # for unit tests

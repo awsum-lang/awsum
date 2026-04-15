@@ -1,0 +1,23 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "identity" [ "x" ]
+            ( CVar "x" )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCase
+                    ( CCall
+                        ( CVar "identity" )
+                        [ CCon 0
+                            [ CString "one" ]
+                        ]
+                    )
+                    [
+                        ( 0
+                        , [ "v" ]
+                        , CVar "v"
+                        )
+                    ]
+                ]
+            )
+        ]
+    }

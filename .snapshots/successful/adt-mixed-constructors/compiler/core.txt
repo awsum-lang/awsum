@@ -1,0 +1,70 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showToken" [ "token" ]
+            ( CCase
+                ( CVar "token" )
+                [
+                    ( 0
+                    , [ "w" ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "word:"
+                        , CVar "w"
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "num:"
+                        , CVar "n"
+                        ]
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CString ","
+                    )
+                ,
+                    ( 3
+                    , []
+                    , CString "<eof>"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall ( CPrim PrimConcat )
+                            [ CCall ( CPrim PrimConcat )
+                                [ CCall ( CPrim PrimConcat )
+                                    [ CCall ( CPrim PrimConcat )
+                                        [ CCall
+                                            ( CVar "showToken" )
+                                            [ CCon 0
+                                                [ CString "hello" ]
+                                            ]
+                                        , CString " "
+                                        ]
+                                    , CCall
+                                        ( CVar "showToken" )
+                                        [ CCon 2 [] ]
+                                    ]
+                                , CString " "
+                                ]
+                            , CCall
+                                ( CVar "showToken" )
+                                [ CCon 1
+                                    [ CString "42" ]
+                                ]
+                            ]
+                        , CString " "
+                        ]
+                    , CCall
+                        ( CVar "showToken" )
+                        [ CCon 3 [] ]
+                    ]
+                ]
+            )
+        ]
+    }

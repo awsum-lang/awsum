@@ -5,7 +5,7 @@ function v_unwrap(v_r)
 end
 
 function main(v_input)
-  return __print((((((((v_unwrap)({0, {0, "1"}}) .. ",") .. (v_unwrap)({0, {1, "2"}})) .. ",") .. (v_unwrap)({1, {0, "3"}})) .. ",") .. (v_unwrap)({1, {1, "4"}})))
+  return __print(table.concat({(v_unwrap)({0, {0, "1"}}), ",", (v_unwrap)({0, {1, "2"}}), ",", (v_unwrap)({1, {0, "3"}}), ",", (v_unwrap)({1, {1, "4"}})}))
 end
 
 local ok, dbg = pcall(require, 'debug')

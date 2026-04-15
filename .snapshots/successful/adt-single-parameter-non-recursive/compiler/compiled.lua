@@ -5,7 +5,7 @@ function v_unwrap(v_x)
 end
 
 function main(v_input)
-  return __print((((v_unwrap)({0, "hello"}) .. ", ") .. (v_unwrap)({1})))
+  return __print(table.concat({(v_unwrap)({0, "hello"}), ", ", (v_unwrap)({1})}))
 end
 
 local ok, dbg = pcall(require, 'debug')

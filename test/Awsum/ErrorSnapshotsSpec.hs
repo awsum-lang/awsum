@@ -37,7 +37,7 @@ testError testName = do
                 let sp = fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan typeErr)
                  in diagnosticsToJson [(sp, prettyPrintTypeError typeErr)]
               Right () -> "[]"
-  beforeAll prepare $ describe testName $ do
+  beforeAll prepare $ describe testName $ parallel $ do
     it "diagnostics should match snapshot" $ \json -> do
       json `shouldMatchTextSnapshot` ("errors/" <> toText testName <> "/diagnostics.json")
 
