@@ -83,7 +83,9 @@ renderDecl = \case
 renderComment :: Comment -> Text
 renderComment = \case
   LineComment t -> "--" <> t
-  BlockComment t -> "{-" <> t <> "-}"
+  BlockComment t ->
+    let trimmed = T.strip t
+     in if T.null trimmed then "{- -}" else "{- " <> trimmed <> " -}"
 
 -- ── Types ───────────────────────────────────────────────────────────────────
 
