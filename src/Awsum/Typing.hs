@@ -417,14 +417,17 @@ typeOfExpr conEnv tcm env = \case
         missing = filter (`notElem` topLevelCons) allCons
         inhabitedMissing = filter (isConInhabited conEnv tcm S.empty scrutSubst) missing
     unless (null inhabitedMissing) $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
-    -- All arms must agree on the result type.
+    -- All arms must agree on the result type (via unification, not equality).
     case armTypes of
       [] -> Left (NonExhaustiveCase sp tyName allCons)
-      (firstTy : restTys) -> do
-        forM_ restTys $ \ty ->
-          unless (ty == firstTy)
-            $ Left (CaseBranchTypeMismatch firstTy ty scrut)
-        Right firstTy
+      (firstTy : restTys) ->
+        foldM
+          ( \acc ty -> case match acc ty of
+              Just s -> Right (applySubst s acc)
+              Nothing -> Left (CaseBranchTypeMismatch acc ty scrut)
+          )
+          firstTy
+          restTys
   where
     checkArm caseSp envLocal scrutSubst (tys, patterns) (CaseAlt _ (PCon cName pats) body _) = do
       -- Verify the constructor belongs to the scrutinee type.
