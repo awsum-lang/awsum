@@ -25,6 +25,7 @@ import Awsum.Typing (TypeError (..), typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
+import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
@@ -66,7 +67,89 @@ elaborateLowerProgram prog = do
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let conInfo = buildConInfo (toList (decls prog))
   mds <- traverse (lowerDecl conInfo) (toList (decls prog))
-  pure $ CoreProgram (catMaybes mds <> genConWrappers conInfo)
+  let core = CoreProgram (catMaybes mds <> genConWrappers conInfo)
+  -- 3) Saturate under-applied direct calls via lambda-lifting.
+  saturateProgram core
+
+-- | Saturate under-applied direct calls by lambda-lifting.
+--
+-- For each 'CCall (CVar f) args' where 'f' is a known top-level function whose arity
+-- exceeds the number of supplied arguments, we generate a helper top-level
+-- 'CFunDef' that takes the missing arguments and calls the original with the full
+-- list. The call site is replaced with a bare reference to the helper, which every
+-- backend already renders as a first-class function value.
+--
+-- This handles partial application whose bound arguments only reference other
+-- top-level names (no local captures). If a bound argument references a local
+-- parameter we fail with 'TELowering' — closure support would require a runtime
+-- PAP representation in each backend and is out of scope here.
+saturateProgram :: CoreProgram -> Either TypeError CoreProgram
+saturateProgram (CoreProgram ds) = do
+  let arityMap = M.fromList [(n, length as) | CFunDef n as _ <- ds]
+  (ds', extras) <- runStateT (traverse (saturateDecl arityMap) ds) []
+  pure (CoreProgram (ds' <> reverse extras))
+
+type SatM = StateT [CDecl] (Either TypeError)
+
+saturateDecl :: M.Map Name Int -> CDecl -> SatM CDecl
+saturateDecl am = \case
+  CFunDef n args body ->
+    CFunDef n args <$> saturateExpr am (fromList args) body
+  CValDef n rhs ->
+    CValDef n <$> saturateExpr am mempty rhs
+
+saturateExpr :: M.Map Name Int -> Set Name -> CExpr -> SatM CExpr
+saturateExpr am locals = go
+  where
+    go = \case
+      e@(CPrim _) -> pure e
+      e@(CString _) -> pure e
+      e@(CVar _) -> pure e
+      CCon tag fs -> CCon tag <$> traverse go fs
+      CCase s alts -> CCase <$> go s <*> traverse goAlt alts
+      CCall callee args -> do
+        callee' <- go callee
+        args' <- traverse go args
+        case callee' of
+          CVar f
+            | Just ar <- M.lookup f am,
+              length args' < ar ->
+                liftPap f args' ar
+          _ -> pure (CCall callee' args')
+    goAlt (tag, vars, body) = do
+      body' <- saturateExpr am (locals <> fromList vars) body
+      pure (tag, vars, body')
+
+    liftPap f args ar = do
+      let missing = ar - length args
+          etas = ["$eta" <> show i | i <- [0 .. missing - 1]]
+          freeInArgs = foldMap freeVars args `Set.intersection` locals
+      if not (Set.null freeInArgs)
+        then
+          lift
+            $ Left
+            $ TELowering
+            $ "partial application with local captures is not supported: captured "
+            <> T.intercalate ", " (toList freeInArgs)
+        else do
+          extras <- get
+          let idx = length extras
+              papName = "$pap$" <> show idx
+              papBody = CCall (CVar f) (args <> map CVar etas)
+              papDecl = CFunDef papName etas papBody
+          put (papDecl : extras)
+          pure (CVar papName)
+
+freeVars :: CExpr -> Set Name
+freeVars = \case
+  CPrim _ -> mempty
+  CString _ -> mempty
+  CVar n -> one n
+  CCon _ fs -> foldMap freeVars fs
+  CCase s alts ->
+    freeVars s
+      <> foldMap (\(_, vs, b) -> freeVars b `Set.difference` fromList vs) alts
+  CCall f xs -> freeVars f <> foldMap freeVars xs
 
 -- | Lower a top-level declaration.
 --   • Type signatures and type declarations are erased (they already influenced checking).
