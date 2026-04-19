@@ -74,6 +74,11 @@ data TypeError
     CaseBranchTypeMismatch Type' Type' Expr
   | -- | Scrutinee of case is not a sum type.
     CaseOnNonSumType SrcSpan Type'
+  | -- | Integer literal does not fit in the declared numeric type.
+    --   Fields: span, literal value, type name (e.g. "Int32" or "UInt8").
+    IntLiteralOutOfRange SrcSpan Integer Name
+  | -- | Integer literal used in a context that does not determine its type.
+    AmbiguousIntLiteral SrcSpan
   deriving stock (Show, Eq)
 
 -- | Extract the source span from a TypeError, if available.
@@ -99,6 +104,8 @@ typeErrorSpan = \case
   UnreachableCaseUninhabited sp _ _ -> Just sp
   CaseBranchTypeMismatch _ _ e -> Just (exprSpan e)
   CaseOnNonSumType sp _ -> Just sp
+  IntLiteralOutOfRange sp _ _ -> Just sp
+  AmbiguousIntLiteral sp -> Just sp
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -122,6 +129,9 @@ prettyPrintTypeError = \case
   UnreachableCaseUninhabited _ conName ty -> "Unreachable case: " <> conName <> " can never match because " <> showType ty <> " has no constructors"
   CaseBranchTypeMismatch expected actual _ -> "Case branch type mismatch: expected " <> showType expected <> ", got " <> showType actual
   CaseOnNonSumType _ ty -> "Case on non-sum type: " <> showType ty
+  IntLiteralOutOfRange _ n tyName ->
+    "Integer literal " <> show n <> " out of range for " <> tyName <> " (valid range: " <> rangeText tyName <> ")"
+  AmbiguousIntLiteral _ -> "Ambiguous integer literal: cannot infer type from context. Use an explicit type annotation."
   where
     showType :: Type' -> Text
     showType = \case
@@ -133,6 +143,19 @@ prettyPrintTypeError = \case
     showTypeAtom t@TyApp {} = "(" <> showType t <> ")"
     showTypeAtom t@TyArrow {} = "(" <> showType t <> ")"
     showTypeAtom t = showType t
+
+    rangeText :: Name -> Text
+    rangeText n = case intTypeRange n of
+      Just (lo, hi) -> show lo <> ".." <> show hi
+      Nothing -> "?"
+
+-- | Inclusive (min, max) range for a numeric built-in type.
+--   Returns 'Nothing' for types that are not known integer types.
+intTypeRange :: Name -> Maybe (Integer, Integer)
+intTypeRange = \case
+  "Int32" -> Just (-2147483648, 2147483647)
+  "UInt8" -> Just (0, 255)
+  _ -> Nothing
 
 -- | Typing environment: maps fully-qualified names to types.
 --   We use 'QName' to keep the door open for qualified built-ins.
@@ -184,6 +207,8 @@ wellFormedTypeWith sp userTypes = \case
   TyVar _ -> Right ()
   TyCon "String" -> Right ()
   TyCon "IOUnit" -> Right ()
+  TyCon "Int32" -> Right ()
+  TyCon "UInt8" -> Right ()
   TyCon n
     | S.member n userTypes -> Right ()
     | otherwise -> Left (UnknownTypeCon sp n)
@@ -327,9 +352,7 @@ typecheckProgram Program {imports, decls} = do
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         env = M.unions [envBuiltins, conValEnv, envParams, envTop]
 
-    bodyTy <- typeOfExpr conEnv typeConsMap env body
-    unless (bodyTy == retTy)
-      $ Left (TypeMismatch retTy bodyTy body)
+    checkExpr conEnv typeConsMap env retTy body
 
   -- Enforce presence and exact type of 'main'.
   case M.lookup "main" sigEnv of
@@ -350,11 +373,33 @@ typecheckProgram Program {imports, decls} = do
         then Left (DuplicateDefinition sp n)
         else Right (S.insert n s)
 
+-- | Check that an expression has the given expected type.
+--
+-- Used at the /boundary/ where the expected type is known — currently the
+-- body of a top-level definition checked against its declared return type.
+-- This is where 'LInt' literals get their type: they have no synthesis form
+-- (no defaulting), so they must appear in a context that fixes the type.
+checkExpr :: ConEnv -> TypeConsMap -> Env -> Type' -> Expr -> Either TypeError ()
+checkExpr conEnv tcm env expected = \case
+  ELit sp (LInt n) ->
+    case expected of
+      TyCon tyName
+        | Just (lo, hi) <- intTypeRange tyName ->
+            if n >= lo && n <= hi
+              then Right ()
+              else Left (IntLiteralOutOfRange sp n tyName)
+      _ -> Left (TypeMismatch expected (TyCon "<integer literal>") (ELit sp (LInt n)))
+  EParens _sp e -> checkExpr conEnv tcm env expected e
+  e -> do
+    actual <- typeOfExpr conEnv tcm env e
+    unless (actual == expected) $ Left (TypeMismatch expected actual e)
+
 -- | Infer/check the type of an expression under the given environment.
 --   This function /checks/ consistency; it does not invent polymorphism.
 typeOfExpr :: ConEnv -> TypeConsMap -> Env -> Expr -> Either TypeError Type'
 typeOfExpr conEnv tcm env = \case
   ELit _sp (LString _) -> Right (TyCon "String")
+  ELit sp (LInt _) -> Left (AmbiguousIntLiteral sp)
   EVar sp q ->
     case M.lookup q env of
       Just t -> Right t

@@ -28,7 +28,7 @@ TypeAtom            = UIdent , { TypeAtom } | LIdent | "(" , Type , ")" ;
 Expr                = Concat ;
 Concat              = App , { "++" , App } ;
 App                 = Atom , { Atom } ;
-Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String ;
+Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String | Int ;
 (* Case: arms at reference indent (set by first arm).
    Comments accepted at any column > 1 — lenient so misaligned comments
    don't break compilation; the formatter normalizes.
@@ -52,6 +52,11 @@ identTail           = lower | upper | digit | "_" | "'" ;
 String              = '"' , { stringChar } , '"' ;
 stringChar          = escape | ( any - ['"' | '\\'] ) ;
 escape              = "\\" , ( "n" | "t" | "r" | "\"" | "\\" | "0" ) ;
+
+(* Integer literal: optional leading '-' adjacent to digits.
+   Range validation is performed at typecheck time against the declared type
+   (e.g. Int32 or UInt8); there is no defaulting. *)
+Int                 = [ "-" ] , digit , { digit } ;
 
 LineText            = { any - ['\n'] } ;
 BlockText           = { any } ;

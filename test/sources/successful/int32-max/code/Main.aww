@@ -1,0 +1,8 @@
+-- Test: Int32 upper bound literal (2^31 - 1) is accepted
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print input
+
+maxInt32 : Int32
+maxInt32 = 2147483647

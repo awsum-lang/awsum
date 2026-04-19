@@ -1,0 +1,8 @@
+-- Error: UInt8 literal 1 below lower bound (-1)
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print input
+
+underMin : UInt8
+underMin = -1

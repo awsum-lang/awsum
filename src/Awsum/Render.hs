@@ -135,6 +135,7 @@ renderExprPrec ctx indent e =
       let (prec, s) = case e of
             EVar _sp' q -> (3, renderQName q)
             ELit _sp' (LString t) -> (3, "\"" <> escape t <> "\"")
+            ELit _sp' (LInt n) -> (3, show n)
             ECon _sp' n -> (3, n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.

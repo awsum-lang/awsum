@@ -141,6 +141,13 @@ genStr = do
 genComment :: Gen (Maybe Text)
 genComment = frequency [(3, pure Nothing), (1, Just <$> genStr)]
 
+genInt :: Gen Integer
+genInt =
+  frequency
+    [ (3, choose (-2147483648, 2147483647)), -- Int32 range
+      (2, choose (0, 255)) -- UInt8 range
+    ]
+
 instance Arbitrary Expr where
   arbitrary = sized go
     where
@@ -148,18 +155,21 @@ instance Arbitrary Expr where
         oneof
           [ EVar noSpan <$> arbitrary,
             EParens noSpan . EVar noSpan <$> arbitrary, -- parentheses around atom for round-trip tests
-            ELit noSpan . LString <$> genStr
+            ELit noSpan . LString <$> genStr,
+            ELit noSpan . LInt <$> genInt
           ]
       go n =
         frequency
           [ (4, EVar noSpan <$> arbitrary),
             (2, EParens noSpan <$> go (n - 1)),
             (2, ELit noSpan . LString <$> genStr),
+            (2, ELit noSpan . LInt <$> genInt),
             (5, EApp noSpan <$> go (n `div` 2) <*> go (n `div` 2)),
             (5, EInfix noSpan OpConcat <$> go (n `div` 2) <*> go (n `div` 2))
           ]
   shrink = \case
     ELit _sp (LString t) -> [ELit noSpan (LString t') | t' <- shrinkIdent t]
+    ELit _sp (LInt n) -> [ELit noSpan (LInt n') | n' <- shrink n]
     EVar _sp q -> EVar noSpan <$> shrink q
     EParens _sp e -> e : [EParens noSpan e' | e' <- shrink e]
     ECon _sp n -> ECon noSpan <$> shrinkIdent n

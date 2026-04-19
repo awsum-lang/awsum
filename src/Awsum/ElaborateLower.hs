@@ -66,7 +66,8 @@ elaborateLowerProgram prog = do
   typecheckProgram prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let conInfo = buildConInfo (toList (decls prog))
-  mds <- traverse (lowerDecl conInfo) (toList (decls prog))
+      sigMap = M.fromList [(n, t) | Sig _sp n t _ <- toList (decls prog)]
+  mds <- traverse (lowerDecl sigMap conInfo) (toList (decls prog))
   let core = CoreProgram (catMaybes mds <> genConWrappers conInfo)
   -- 3) Saturate under-applied direct calls via lambda-lifting.
   saturateProgram core
@@ -153,17 +154,35 @@ freeVars = \case
 
 -- | Lower a top-level declaration.
 --   • Type signatures and type declarations are erased (they already influenced checking).
+--   • Declarations whose signature mentions a numeric type (Int32, UInt8) are
+--     currently erased too: the typechecker has validated them, but the Core IR
+--     and backends don't yet represent integer values.  This is acceptable for
+--     the MVP where integers carry no runtime behaviour (no arithmetic, no
+--     conversion, no printing).
 --   • Zero-arg defs become constants ('CValDef'), others become first-order functions.
-lowerDecl :: ConInfoEnv -> Decl -> Either TypeError (Maybe CDecl)
-lowerDecl conInfo = \case
+lowerDecl :: M.Map Name Type' -> ConInfoEnv -> Decl -> Either TypeError (Maybe CDecl)
+lowerDecl sigMap conInfo = \case
   Sig {} -> Right Nothing
   CommentDecl _ -> Right Nothing
   TypeDecl {} -> Right Nothing
-  FunDef _sp n args body _ -> do
-    body' <- lowerExpr conInfo body
-    pure $ Just $ case args of
-      [] -> CValDef n body' -- zero-arg def ⇒ constant
-      _ -> CFunDef n args body'
+  FunDef _sp n args body _
+    | maybe False typeMentionsNumeric (M.lookup n sigMap) -> Right Nothing
+    | otherwise -> do
+        body' <- lowerExpr conInfo body
+        pure $ Just $ case args of
+          [] -> CValDef n body' -- zero-arg def ⇒ constant
+          _ -> CFunDef n args body'
+
+-- | True when a surface type mentions a numeric built-in anywhere.
+--   Used to erase numeric-typed declarations during lowering.
+typeMentionsNumeric :: Type' -> Bool
+typeMentionsNumeric = \case
+  TyVar _ -> False
+  TyCon "Int32" -> True
+  TyCon "UInt8" -> True
+  TyCon _ -> False
+  TyApp f x -> typeMentionsNumeric f || typeMentionsNumeric x
+  TyArrow a b -> typeMentionsNumeric a || typeMentionsNumeric b
 
 -- | Lower a surface expression to Core.
 --     • drop explicit parentheses,
@@ -178,6 +197,14 @@ lowerExpr conInfo = \case
   EParens _sp e -> lowerExpr conInfo e
   EVar _sp qn -> lowerVar qn
   ELit _sp (LString t) -> Right (CString t)
+  ELit _sp (LInt _) ->
+    -- Integer literals are accepted by the typechecker (with range validation)
+    -- but produce no runtime representation yet — numeric-typed declarations
+    -- are dropped by lowerDecl before reaching here.  Reaching this branch
+    -- means the literal appeared inside a non-numeric expression, which the
+    -- surface language currently has no way to combine (no arithmetic, no
+    -- case-on-int, etc.).
+    Left (TELowering "integer literal outside a numeric-typed declaration")
   EInfix _sp OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr conInfo l, lowerExpr conInfo r]
   ECon _sp name -> case M.lookup name conInfo of
     Just (tag, 0) -> Right (CCon tag [])

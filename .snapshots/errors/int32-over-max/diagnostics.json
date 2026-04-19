@@ -1,0 +1,1 @@
+[{"startLine":8,"startCol":11,"endLine":8,"endCol":21,"message":"Integer literal 2147483648 out of range for Int32 (valid range: -2147483648..2147483647)"}]

@@ -1,0 +1,8 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CVar "input" ]
+            )
+        ]
+    }
