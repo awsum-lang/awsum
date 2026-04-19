@@ -32,5 +32,9 @@ CoreProgram
                     ]
                 ]
             )
+        , CFunDef "$con$Found" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
         ]
     }

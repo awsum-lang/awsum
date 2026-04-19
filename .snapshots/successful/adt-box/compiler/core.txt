@@ -19,5 +19,9 @@ CoreProgram
                     ]
                 ]
             )
+        , CFunDef "$con$Box" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
         ]
     }

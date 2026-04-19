@@ -93,6 +93,31 @@
     ret
   }
 
+
+  .method public hidebysig static object v__con_Triple(object, object, object) cil managed
+  {
+    ldc.i4.4
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldarg.0
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldarg.1
+    stelem.ref
+    dup
+    ldc.i4.3
+    ldarg.2
+    stelem.ref
+    ret
+  }
+
   .method public hidebysig static void Main(string[]) cil managed
   {
     .entrypoint

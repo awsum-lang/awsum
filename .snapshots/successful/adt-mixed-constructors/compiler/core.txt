@@ -66,5 +66,13 @@ CoreProgram
                     ]
                 ]
             )
+        , CFunDef "$con$Number" [ "$x0" ]
+            ( CCon 1
+                [ CVar "$x0" ]
+            )
+        , CFunDef "$con$Word" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
         ]
     }

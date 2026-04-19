@@ -8,6 +8,10 @@ function main(v_input)
   return __print((v_unwrap)({0, "hello"}))
 end
 
+function v__con_Wrap(v__x0)
+  return {0, v__x0}
+end
+
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

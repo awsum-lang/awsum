@@ -8,6 +8,10 @@ function main(v_input)
   return __print(table.concat({(v_unwrap)({0, "hello"}), ", ", (v_unwrap)({1})}))
 end
 
+function v__con_Found(v__x0)
+  return {0, v__x0}
+end
+
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

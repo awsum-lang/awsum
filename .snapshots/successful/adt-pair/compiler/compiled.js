@@ -9,6 +9,10 @@ function main(v_input){
   return __print((v_showPair)([0, "hello", "world"]));
 }
 
+function v__con_Pair(v__x0, v__x1){
+  return [0, v__x0, v__x1];
+}
+
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

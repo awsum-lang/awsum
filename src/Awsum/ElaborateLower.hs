@@ -10,6 +10,8 @@
 --   • We erase explicit type signatures ('Sig') — they are checked, then dropped.
 --   • Qualified names are resolved here to primitives (e.g. @IO.Stdout.print@).
 --   • Application is flattened to a single 'CCall' with all arguments (left-assoc).
+--   • Non-nullary constructors used as values (not at head of application)
+--     are eta-expanded into synthetic wrapper functions.
 --
 -- Invariants (assumed by codegen/tests):
 --   • After lowering, zero-arg defs do NOT become functions; they are 'CValDef'.
@@ -26,18 +28,34 @@ import Data.Map.Strict qualified as M
 import Data.Text qualified as T
 import Relude
 
--- | Constructor tag environment: maps constructor name → integer tag.
-type ConTagEnv = M.Map Name Int
+-- | Constructor info: maps constructor name → (tag, arity).
+type ConInfoEnv = M.Map Name (Int, Int)
 
--- | Build constructor tag environment from @type@ declarations.
---   Each constructor gets a 0-based index within its type definition.
-buildConTagEnv :: [Decl] -> ConTagEnv
-buildConTagEnv ds =
+-- | Build constructor info from @type@ declarations.
+--   Each constructor gets a 0-based tag and its arity (number of fields).
+buildConInfo :: [Decl] -> ConInfoEnv
+buildConInfo ds =
   M.fromList
-    [ (cName, idx)
+    [ (cName, (idx, length cFields))
     | TypeDecl _sp _ _ cs _ <- ds,
-      (ConDef cName _, idx) <- zip cs [0 ..]
+      (ConDef cName cFields, idx) <- zip cs [0 ..]
     ]
+
+-- | Synthetic name for a constructor wrapper function.
+--   Uses @$con$@ prefix which cannot collide with user-defined names.
+conWrapperName :: Name -> Name
+conWrapperName name = "$con$" <> name
+
+-- | Generate wrapper 'CFunDef's for every non-nullary constructor.
+--   E.g. @type Box a = Box a@ produces:
+--     @CFunDef "$con$Box" ["$x0"] (CCon 0 [CVar "$x0"])@
+genConWrappers :: ConInfoEnv -> [CDecl]
+genConWrappers conInfo =
+  [ CFunDef (conWrapperName name) params (CCon tag (map CVar params))
+  | (name, (tag, arity)) <- M.toList conInfo,
+    arity > 0,
+    let params = ["$x" <> show i | i <- [0 .. arity - 1]]
+  ]
 
 -- | Check the surface program (types) and lower it to Core IR.
 --   On success we return a Core program that codegens can consume directly.
@@ -46,20 +64,20 @@ elaborateLowerProgram prog = do
   -- 1) Elaboration step (MVP): just typecheck; no evidence/dictionaries yet.
   typecheckProgram prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
-  let tags = buildConTagEnv (toList (decls prog))
-  mds <- traverse (lowerDecl tags) (toList (decls prog))
-  pure $ CoreProgram (catMaybes mds)
+  let conInfo = buildConInfo (toList (decls prog))
+  mds <- traverse (lowerDecl conInfo) (toList (decls prog))
+  pure $ CoreProgram (catMaybes mds <> genConWrappers conInfo)
 
 -- | Lower a top-level declaration.
 --   • Type signatures and type declarations are erased (they already influenced checking).
 --   • Zero-arg defs become constants ('CValDef'), others become first-order functions.
-lowerDecl :: ConTagEnv -> Decl -> Either TypeError (Maybe CDecl)
-lowerDecl tags = \case
+lowerDecl :: ConInfoEnv -> Decl -> Either TypeError (Maybe CDecl)
+lowerDecl conInfo = \case
   Sig {} -> Right Nothing
   CommentDecl _ -> Right Nothing
   TypeDecl {} -> Right Nothing
   FunDef _sp n args body _ -> do
-    body' <- lowerExpr tags body
+    body' <- lowerExpr conInfo body
     pure $ Just $ case args of
       [] -> CValDef n body' -- zero-arg def ⇒ constant
       _ -> CFunDef n args body'
@@ -70,42 +88,44 @@ lowerDecl tags = \case
 --     • map @e1 ++ e2@ to a primitive call,
 --     • flatten left-associated application into a single 'CCall',
 --     • map constructors to integer tags,
+--     • non-nullary constructors used as values become wrapper references,
 --     • map @case@ to tag-based dispatch.
-lowerExpr :: ConTagEnv -> Expr -> Either TypeError CExpr
-lowerExpr tags = \case
-  EParens _sp e -> lowerExpr tags e
+lowerExpr :: ConInfoEnv -> Expr -> Either TypeError CExpr
+lowerExpr conInfo = \case
+  EParens _sp e -> lowerExpr conInfo e
   EVar _sp qn -> lowerVar qn
   ELit _sp (LString t) -> Right (CString t)
-  EInfix _sp OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr tags l, lowerExpr tags r]
-  ECon _sp name -> case M.lookup name tags of
-    Just tag -> Right (CCon tag [])
+  EInfix _sp OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr conInfo l, lowerExpr conInfo r]
+  ECon _sp name -> case M.lookup name conInfo of
+    Just (tag, 0) -> Right (CCon tag [])
+    Just (_tag, _arity) -> Right (CVar (conWrapperName name))
     Nothing -> Left (TELowering ("unknown constructor: " <> name))
   ECase _sp scrut alts _ -> do
-    scrut' <- lowerExpr tags scrut
-    alts' <- traverse (lowerAlt tags) (toList alts)
+    scrut' <- lowerExpr conInfo scrut
+    alts' <- traverse (lowerAlt conInfo) (toList alts)
     -- Group alts by tag and merge nested patterns
     merged <- mergeAlts alts'
     Right (CCase scrut' merged)
   EApp _sp f x -> do
     let (f0, xs) = collectApps f [x]
     case f0 of
-      ECon _sp' name -> case M.lookup name tags of
-        Just tag -> do
-          xs' <- traverse (lowerExpr tags) xs
+      ECon _sp' name -> case M.lookup name conInfo of
+        Just (tag, _arity) -> do
+          xs' <- traverse (lowerExpr conInfo) xs
           Right (CCon tag xs')
         Nothing -> Left (TELowering ("unknown constructor: " <> name))
       _ -> do
-        f0' <- lowerExpr tags f0
-        xs' <- traverse (lowerExpr tags) xs
+        f0' <- lowerExpr conInfo f0
+        xs' <- traverse (lowerExpr conInfo) xs
         Right (CCall f0' xs')
 
 -- | Lower a single case alternative: look up the constructor tag,
 --   desugar nested patterns into nested CCase, and lower the body.
-lowerAlt :: ConTagEnv -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
-lowerAlt tags (CaseAlt _ (PCon cName pats) body _) = do
-  tag <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName tags)
-  body' <- lowerExpr tags body
-  let (topVars, wrappedBody) = desugarPats tags "__" 0 pats body'
+lowerAlt :: ConInfoEnv -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
+lowerAlt conInfo (CaseAlt _ (PCon cName pats) body _) = do
+  (tag, _arity) <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName conInfo)
+  body' <- lowerExpr conInfo body
+  let (topVars, wrappedBody) = desugarPats conInfo "__" 0 pats body'
   Right (tag, topVars, wrappedBody)
 lowerAlt _ CaseAlt {} =
   Left (TELowering "only constructor patterns are supported in case")
@@ -148,10 +168,10 @@ mergeAlts alts =
 -- | Desugar a list of sub-patterns into flat variable bindings,
 --   wrapping the body in nested CCase for any nested constructor patterns.
 --   Uses path-based naming (e.g. @__p0@, @__p0_p0@) for fresh variables.
-desugarPats :: ConTagEnv -> Text -> Int -> [Pattern] -> CExpr -> ([Name], CExpr)
+desugarPats :: ConInfoEnv -> Text -> Int -> [Pattern] -> CExpr -> ([Name], CExpr)
 desugarPats _ _ _ [] body = ([], body)
-desugarPats tags prefix idx (p : ps) body =
-  let (restVars, restBody) = desugarPats tags prefix (idx + 1) ps body
+desugarPats conInfo prefix idx (p : ps) body =
+  let (restVars, restBody) = desugarPats conInfo prefix (idx + 1) ps body
    in case p of
         PVar n -> (n : restVars, restBody)
         PWild ->
@@ -159,9 +179,9 @@ desugarPats tags prefix idx (p : ps) body =
            in (fresh : restVars, restBody)
         PCon innerCon innerPats ->
           let fresh = prefix <> "p" <> show idx
-              innerTag = fromMaybe 0 (M.lookup innerCon tags)
+              innerTag = maybe 0 fst (M.lookup innerCon conInfo)
               innerPrefix = fresh <> "_"
-              (innerVars, innerBody) = desugarPats tags innerPrefix 0 innerPats restBody
+              (innerVars, innerBody) = desugarPats conInfo innerPrefix 0 innerPats restBody
            in (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
 
 -- | Collect a chain of applications into (head, args) in left-to-right order.

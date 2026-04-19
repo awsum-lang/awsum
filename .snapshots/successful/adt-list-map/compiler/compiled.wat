@@ -14,8 +14,8 @@
   (data (i32.const 69) "a\00")
   (data (i32.const 71) "b\00")
   (data (i32.const 73) "c\00")
-  (table 4 funcref)
-  (elem (i32.const 0) $v_map $v_show $v_shout $v_main)
+  (table 5 funcref)
+  (elem (i32.const 0) $v_map $v_show $v_shout $v_main $v__con_Cons)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -98,6 +98,10 @@
     (local $__con_2 i32)
     (local $__con_3 i32)
     (call $__print (call $v_show (call $v_map (i32.const 2) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 69)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (i32.const 71)) (i32.store offset=8 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_2) (i32.const 73)) (i32.store offset=8 (local.get $__con_2) (block (result i32) (i32.store (local.tee $__con_3 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_3))) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))))))
+
+  (func $v__con_Cons (export "v__con_Cons") (param $v__x0 i32) (param $v__x1 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x1)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

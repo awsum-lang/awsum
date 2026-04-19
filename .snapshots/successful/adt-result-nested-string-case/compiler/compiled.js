@@ -9,6 +9,14 @@ function main(v_input){
   return __print((((((((v_unwrap)([0, [0, "1"]]) + ",") + (v_unwrap)([0, [1, "2"]])) + ",") + (v_unwrap)([1, [0, "3"]])) + ",") + (v_unwrap)([1, [1, "4"]])));
 }
 
+function v__con_Err(v__x0){
+  return [1, v__x0];
+}
+
+function v__con_Ok(v__x0){
+  return [0, v__x0];
+}
+
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

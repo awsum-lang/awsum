@@ -9,6 +9,10 @@ function main(v_input){
   return __print((v_unwrap)([0, "hello"]));
 }
 
+function v__con_Box(v__x0){
+  return [0, v__x0];
+}
+
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

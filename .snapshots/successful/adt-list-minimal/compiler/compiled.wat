@@ -13,8 +13,8 @@
   (data (i32.const 67) "a\00")
   (data (i32.const 69) "b\00")
   (data (i32.const 71) "c\00")
-  (table 2 funcref)
-  (elem (i32.const 0) $v_show $v_main)
+  (table 3 funcref)
+  (elem (i32.const 0) $v_show $v_main $v__con_Cons)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -92,6 +92,10 @@
 
   (func $v_main (export "v_main") (param $v_input i32) (result i32)
     (call $__print (call $v_show (call $v_exampleList))))
+
+  (func $v__con_Cons (export "v__con_Cons") (param $v__x0 i32) (param $v__x1 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x1)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

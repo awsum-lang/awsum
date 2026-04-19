@@ -14,8 +14,8 @@
   (data (i32.const 70) ")\00")
   (data (i32.const 72) "hello\00")
   (data (i32.const 78) "world\00")
-  (table 2 funcref)
-  (elem (i32.const 0) $v_showPair $v_main)
+  (table 3 funcref)
+  (elem (i32.const 0) $v_showPair $v_main $v__con_Pair)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -87,6 +87,10 @@
   (func $v_main (export "v_main") (param $v_input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $v_showPair (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 72)) (i32.store offset=8 (local.get $__con_0) (i32.const 78)) (local.get $__con_0)))))
+
+  (func $v__con_Pair (export "v__con_Pair") (param $v__x0 i32) (param $v__x1 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x1)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

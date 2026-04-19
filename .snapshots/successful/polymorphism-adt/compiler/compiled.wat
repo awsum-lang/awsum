@@ -10,8 +10,8 @@
   (global $heap (mut i32) (i32.const 69))
   (data (i32.const 64) "\00")
   (data (i32.const 65) "one\00")
-  (table 2 funcref)
-  (elem (i32.const 0) $v_identity $v_main)
+  (table 3 funcref)
+  (elem (i32.const 0) $v_identity $v_main $v__con_Box)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -83,6 +83,10 @@
     (local $__con_0 i32)
     (local $__scrut i32)
     (call $__print (block (result i32) (local.set $__scrut (call $v_identity (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 65)) (local.get $__con_0)))) (i32.load offset=4 (local.get $__scrut)))))
+
+  (func $v__con_Box (export "v__con_Box") (param $v__x0 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

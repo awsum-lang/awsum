@@ -19,5 +19,9 @@ CoreProgram
                     ]
                 ]
             )
+        , CFunDef "$con$Wrap" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
         ]
     }

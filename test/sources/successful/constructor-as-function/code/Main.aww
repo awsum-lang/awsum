@@ -1,0 +1,14 @@
+-- Test: constructors passed as first-class function arguments to HOFs
+import IO.Stdout
+
+type Box a = Box a
+
+wrap : (String -> Box String) -> String -> Box String
+wrap f x = f x
+
+unwrap : Box String -> String
+unwrap b = case b of
+  Box value -> value
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (wrap Box "wrapped"))

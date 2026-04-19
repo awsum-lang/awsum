@@ -57,6 +57,16 @@ define ptr @v_main(ptr %v_input) {
   ret ptr %t6
 }
 
+define ptr @v__con_Wrap(ptr %v__x0) {
+  %t0 = call ptr @malloc(i64 16)
+  %t1 = inttoptr i64 0 to ptr
+  %t2 = getelementptr ptr, ptr %t0, i32 0
+  store ptr %t1, ptr %t2
+  %t3 = getelementptr ptr, ptr %t0, i32 1
+  store ptr %v__x0, ptr %t3
+  ret ptr %t0
+}
+
 define i32 @main(i32 %argc, ptr %argv) {
   %has_arg = icmp sgt i32 %argc, 1
   br i1 %has_arg, label %with_arg, label %no_arg

@@ -91,6 +91,30 @@ L_join:
   areturn
 .end method
 
+
+.method public static v__con_Triple(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_4
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_0
+  aastore
+  dup
+  iconst_2
+  aload_1
+  aastore
+  dup
+  iconst_3
+  aload_2
+  aastore
+  areturn
+.end method
+
 .method public static main([Ljava/lang/String;)V
   aload_0
   arraylength
