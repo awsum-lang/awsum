@@ -1,3 +1,4 @@
+-- Test: basic string concatenation, helper functions, and IO.Stdout.print
 import IO.Stdout
 
 main : String -> IOUnit

@@ -1,3 +1,4 @@
+-- Error: pattern on uninhabited constructor (Err Never is unreachable)
 import IO.Stdout
 
 type Never

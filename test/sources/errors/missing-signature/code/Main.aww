@@ -1,3 +1,4 @@
+-- Error: function definition without type signature
 foo x = x
 
 main : String -> IOUnit

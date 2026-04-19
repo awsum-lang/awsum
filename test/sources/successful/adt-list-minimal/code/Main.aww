@@ -1,3 +1,4 @@
+-- Test: recursive ADT (List) with recursive function and recursive data construction
 import IO.Stdout
 
 type List a = Cons a (List a) | Nil

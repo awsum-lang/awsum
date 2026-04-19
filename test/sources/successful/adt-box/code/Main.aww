@@ -1,3 +1,4 @@
+-- Test: parametric single-constructor type (Box a) with pattern matching
 import IO.Stdout
 
 type Box a = Box a

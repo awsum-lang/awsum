@@ -1,3 +1,4 @@
+-- Test: nested Box with inline nested pattern matching (Box (Box (Box value)))
 import IO.Stdout
 
 type Box a = Box a

@@ -1,3 +1,4 @@
+-- Test: nested polymorphic Result with inline flat pattern matching (4 branches)
 import IO.Stdout
 
 type Result a e = Ok a | Err e

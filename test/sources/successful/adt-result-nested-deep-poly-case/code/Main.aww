@@ -1,3 +1,4 @@
+-- Test: triple-nested polymorphic Result with sequential case expressions (8 branches)
 import IO.Stdout
 
 type Result a e = Ok a | Err e

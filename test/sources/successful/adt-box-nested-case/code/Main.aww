@@ -1,3 +1,4 @@
+-- Test: nested Box with sequential case expressions instead of inline patterns
 import IO.Stdout
 
 type Box a = Box a

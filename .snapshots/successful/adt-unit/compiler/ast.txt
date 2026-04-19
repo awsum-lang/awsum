@@ -1,22 +1,23 @@
 Program
     { imports =
-        [ ImportDecl []
+        [ ImportDecl
+            [ LineComment " Test: single nullary constructor (Unit type) with pattern matching" ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl
         ( SrcSpan
-            { spanStartLine = 3
+            { spanStartLine = 4
             , spanStartCol = 1
-            , spanEndLine = 3
+            , spanEndLine = 4
             , spanEndCol = 17
             }
         ) "Unit" []
         [ ConDef "Unit" [] ] Nothing :|
         [ Sig
             ( SrcSpan
-                { spanStartLine = 5
+                { spanStartLine = 6
                 , spanStartCol = 1
-                , spanEndLine = 5
+                , spanEndLine = 6
                 , spanEndCol = 22
                 }
             ) "show"
@@ -26,25 +27,25 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 7
                 , spanStartCol = 1
-                , spanEndLine = 7
+                , spanEndLine = 8
                 , spanEndCol = 17
                 }
             ) "show" [ "u" ]
             ( ECase
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 10
-                    , spanEndLine = 7
+                    , spanEndLine = 8
                     , spanEndCol = 17
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 15
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 17
                         }
                     )
@@ -54,9 +55,9 @@ Program
                     ( PCon "Unit" [] )
                     ( ELit
                         ( SrcSpan
-                            { spanStartLine = 7
+                            { spanStartLine = 8
                             , spanStartCol = 11
-                            , spanEndLine = 7
+                            , spanEndLine = 8
                             , spanEndCol = 17
                             }
                         )
@@ -66,9 +67,9 @@ Program
             ) Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 9
+                { spanStartLine = 10
                 , spanStartCol = 1
-                , spanEndLine = 9
+                , spanEndLine = 10
                 , spanEndCol = 24
                 }
             ) "main"
@@ -78,25 +79,25 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 10
+                { spanStartLine = 11
                 , spanStartCol = 1
-                , spanEndLine = 10
+                , spanEndLine = 11
                 , spanEndCol = 41
                 }
             ) "main" [ "input" ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 10
+                    { spanStartLine = 11
                     , spanStartCol = 14
-                    , spanEndLine = 10
+                    , spanEndLine = 11
                     , spanEndCol = 41
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 10
+                        { spanStartLine = 11
                         , spanStartCol = 14
-                        , spanEndLine = 10
+                        , spanEndLine = 11
                         , spanEndCol = 30
                         }
                     )
@@ -108,25 +109,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 10
+                        { spanStartLine = 11
                         , spanStartCol = 30
-                        , spanEndLine = 10
+                        , spanEndLine = 11
                         , spanEndCol = 41
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 10
+                            { spanStartLine = 11
                             , spanStartCol = 31
-                            , spanEndLine = 10
+                            , spanEndLine = 11
                             , spanEndCol = 40
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 10
+                                { spanStartLine = 11
                                 , spanStartCol = 31
-                                , spanEndLine = 10
+                                , spanEndLine = 11
                                 , spanEndCol = 36
                                 }
                             )
@@ -134,9 +135,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 10
+                                { spanStartLine = 11
                                 , spanStartCol = 36
-                                , spanEndLine = 10
+                                , spanEndLine = 11
                                 , spanEndCol = 40
                                 }
                             ) "Unit"

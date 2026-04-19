@@ -1,3 +1,4 @@
+-- Test: phantom type parameter (unused in constructor) compiles and runs correctly
 import IO.Stdout
 
 type Phantom a = Phantom

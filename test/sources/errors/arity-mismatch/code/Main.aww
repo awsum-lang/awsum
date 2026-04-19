@@ -1,3 +1,4 @@
+-- Error: function defined without required argument (arity mismatch with signature)
 import IO.Stdout
 
 foo : String -> IOUnit

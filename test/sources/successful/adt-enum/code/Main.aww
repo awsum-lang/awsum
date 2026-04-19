@@ -1,3 +1,4 @@
+-- Test: simple enum (three nullary constructors) with exhaustive pattern matching
 import IO.Stdout
 
 type Color = Red | Green | Blue

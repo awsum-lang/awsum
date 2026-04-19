@@ -1,6 +1,7 @@
 Program
     { imports =
-        [ ImportDecl []
+        [ ImportDecl
+            [ LineComment " Test: block and line comments preserved through parsing and formatting" ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = CommentDecl
@@ -13,9 +14,9 @@ Program
             ( LineComment " Line comment 3" )
         , Sig
             ( SrcSpan
-                { spanStartLine = 11
+                { spanStartLine = 12
                 , spanStartCol = 1
-                , spanEndLine = 11
+                , spanEndLine = 12
                 , spanEndCol = 45
                 }
             ) "main"
@@ -28,25 +29,25 @@ Program
             ( LineComment " Line comment 4" )
         , FunDef
             ( SrcSpan
-                { spanStartLine = 15
+                { spanStartLine = 16
                 , spanStartCol = 1
-                , spanEndLine = 15
+                , spanEndLine = 16
                 , spanEndCol = 57
                 }
             ) "main" [ "input" ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 15
+                    { spanStartLine = 16
                     , spanStartCol = 14
-                    , spanEndLine = 15
+                    , spanEndLine = 16
                     , spanEndCol = 36
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 15
+                        { spanStartLine = 16
                         , spanStartCol = 14
-                        , spanEndLine = 15
+                        , spanEndLine = 16
                         , spanEndCol = 30
                         }
                     )
@@ -58,9 +59,9 @@ Program
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 15
+                        { spanStartLine = 16
                         , spanStartCol = 30
-                        , spanEndLine = 15
+                        , spanEndLine = 16
                         , spanEndCol = 36
                         }
                     )

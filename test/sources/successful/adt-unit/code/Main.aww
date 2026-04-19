@@ -1,3 +1,4 @@
+-- Test: single nullary constructor (Unit type) with pattern matching
 import IO.Stdout
 
 type Unit = Unit

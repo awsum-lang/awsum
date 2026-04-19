@@ -1,2 +1,3 @@
+-- Error: applying a String value as if it were a function
 main : String -> IOUnit
 main input = input input
