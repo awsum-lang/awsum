@@ -17,6 +17,7 @@ import Awsum.Core (CoreProgram)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgram, parseProgramDiagnostic)
+import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
 import Awsum.Typing (prettyPrintTypeError, typeErrorSpan, typecheckProgram)
 import Common.File
@@ -52,6 +53,8 @@ data Command
     CmdAsm FilePath Target
   | -- | file, inPlace
     CmdFormat FilePath Bool
+  | -- | file, useJson
+    CmdSymbols FilePath Bool
   deriving stock (Show)
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -150,6 +153,7 @@ pCommand =
           <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath)
           <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optTarget)
           <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
+          <> subcmd "symbols" "Print top-level symbols (outline)" (CmdSymbols <$> argFilePath <*> optJson)
       )
 
 -- | Top-level Options.Applicative info.
@@ -250,6 +254,12 @@ runCommand = \case
         if inPlace
           then writeFileText filePath formatted
           else putTextLn formatted
+  CmdSymbols filePath useJson -> do
+    prog <- parseFileOrDie filePath
+    let syms = symbolsOfProgram prog
+    if useJson
+      then putTextLn (symbolsToJson syms)
+      else pPrint syms
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

@@ -12,6 +12,7 @@ import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
+import Awsum.Symbols (symbolsToJson, symbolsOfProgram)
 import Awsum.Syntax
 import Common.File
 import Control.Concurrent.Async (concurrently)
@@ -42,6 +43,7 @@ discoverTests = do
 data CompileResult = CompileResult
   { ast :: Program,
     core :: CoreProgram,
+    symbolsJson :: Text,
     llvmCompiledCode :: Text,
     jvmCompiledCode :: Text,
     jvmClassBytes :: ByteString,
@@ -66,6 +68,7 @@ compileAll testName = do
     CompileResult
       { ast = ast,
         core = core,
+        symbolsJson = symbolsToJson (symbolsOfProgram ast),
         llvmCompiledCode = codegenLLVM core,
         jvmCompiledCode = codegenJVM core,
         jvmClassBytes = assembleJVM core,
@@ -94,6 +97,8 @@ testProgram testName = do
       res.ast `shouldMatchShowSnapshot` (snap <> "/compiler/ast.txt")
     it "Core should match snapshot" $ \res -> do
       res.core `shouldMatchShowSnapshot` (snap <> "/compiler/core.txt")
+    it "Symbols JSON should match snapshot" $ \res -> do
+      res.symbolsJson `shouldMatchTextSnapshot` (snap <> "/compiler/symbols.json")
     it "LLVM code should match snapshot" $ \res -> do
       res.llvmCompiledCode `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.ll")
     it "JVM code should match snapshot" $ \res -> do
