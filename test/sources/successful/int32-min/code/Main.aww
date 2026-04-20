@@ -4,5 +4,5 @@ import IO.Stdout
 main : String -> IOUnit
 main input = IO.Stdout.print input
 
-minInt32 : Int32
-minInt32 = -2147483648
+_minInt32 : Int32
+_minInt32 = -2147483648

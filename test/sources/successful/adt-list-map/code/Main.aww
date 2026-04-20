@@ -17,4 +17,4 @@ shout : String -> String
 shout s = s ++ "!"
 
 main : String -> IOUnit
-main input = IO.Stdout.print (show (map shout (Cons "a" (Cons "b" (Cons "c" Nil)))))
+main _input = IO.Stdout.print (show (map shout (Cons "a" (Cons "b" (Cons "c" Nil)))))

@@ -26,13 +26,18 @@ module Awsum.Typing
     TypeError (..),
     prettyPrintTypeError,
     typeErrorSpan,
+    Warning (..),
+    warningSpan,
+    warningMessage,
   )
 where
 
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
+import Data.Graph qualified as G
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
+import Data.Text qualified as T
 import Relude
 
 -- | User-facing typing errors.
@@ -83,6 +88,39 @@ data TypeError
     --   name as an already-visible binding (outer param, top-level function,
     --   constructor, imported name, or a sibling binder in the same pattern).
     Shadowing SrcSpan Name
+  | -- | An expression refers to a binding whose name starts with @_@.
+    --   The convention: @_@ and @_foo@ name bindings that are intentionally
+    --   unused — binding them is allowed (including top-level definitions
+    --   that exist for their side-effect in a future module system), but
+    --   referencing them makes the opt-out meaningless.
+    ReferencingIgnored SrcSpan Name
+  | -- | A constructor field references a type parameter whose name starts
+    --   with @_@. Same principle as 'ReferencingIgnored' but at the type
+    --   level: @type Phantom _tag = Phantom _tag@ is a contradiction.
+    ReferencingIgnoredTypeVar SrcSpan Name
+  | -- | A type parameter uses the bare underscore @_@ rather than a name
+    --   like @_a@. Type parameters must be nameable (users need to talk
+    --   about them in signatures and other constructor fields), so the
+    --   wildcard form is rejected — always pick a name.
+    UnnamedTypeParameter SrcSpan
+  | -- | Two type parameters of the same type declaration share a name.
+    DuplicateTypeParameter SrcSpan Name
+  | -- | A type declaration uses bare @_@ as its type name. Type names
+    --   must be addressable (any future signature mentioning the type
+    --   needs a name to write down), so the wildcard form is rejected
+    --   even when the type is intentionally unused — pick @_X@ instead.
+    UnnamedType SrcSpan
+  | -- | A constructor uses bare @_@ as its name. Same reasoning as
+    --   'UnnamedType': constructors are referenced from expressions and
+    --   patterns, so they must be nameable. Use @_C@ for an
+    --   intentionally unused constructor.
+    UnnamedConstructor SrcSpan
+  | -- | A pattern matches on an @_C@-named constructor. Same convention
+    --   as 'ReferencingIgnored', but specialised for case patterns: we
+    --   carry the pattern's own span (where the user wrote @_C@) /and/
+    --   the span of the constructor's name in its 'TypeDecl', so the
+    --   quick-fix can rename both sites in one edit.
+    ReferencingIgnoredConstructor SrcSpan SrcSpan Name
   deriving stock (Show, Eq)
 
 -- | Extract the source span from a TypeError, if available.
@@ -111,6 +149,13 @@ typeErrorSpan = \case
   IntLiteralOutOfRange sp _ _ -> Just sp
   AmbiguousIntLiteral sp -> Just sp
   Shadowing sp _ -> Just sp
+  ReferencingIgnored sp _ -> Just sp
+  ReferencingIgnoredTypeVar sp _ -> Just sp
+  UnnamedTypeParameter sp -> Just sp
+  DuplicateTypeParameter sp _ -> Just sp
+  UnnamedType sp -> Just sp
+  UnnamedConstructor sp -> Just sp
+  ReferencingIgnoredConstructor sp _ _ -> Just sp
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -138,13 +183,27 @@ prettyPrintTypeError = \case
     "Integer literal " <> show n <> " out of range for " <> tyName <> " (valid range: " <> rangeText tyName <> ")"
   AmbiguousIntLiteral _ -> "Ambiguous integer literal: cannot infer type from context. Use an explicit type annotation."
   Shadowing _ n -> "Shadowing is not allowed: '" <> n <> "' is already bound in an enclosing scope"
+  ReferencingIgnored _ n ->
+    "Cannot reference '" <> n <> "': identifiers starting with '_' are marked as intentionally unused"
+  ReferencingIgnoredTypeVar _ n ->
+    "Cannot reference type parameter '" <> n <> "': identifiers starting with '_' are marked as intentionally unused"
+  UnnamedTypeParameter _ ->
+    "Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused"
+  DuplicateTypeParameter _ n ->
+    "Duplicate type parameter: '" <> n <> "' is already declared in this type"
+  UnnamedType _ ->
+    "Type name must not be bare '_'; use '_X' (or similar) to mark a type as intentionally unused"
+  UnnamedConstructor _ ->
+    "Constructor name must not be bare '_'; use '_C' (or similar) to mark a constructor as intentionally unused"
+  ReferencingIgnoredConstructor _ _ n ->
+    "Cannot match constructor '" <> n <> "': identifiers starting with '_' are marked as intentionally unused"
   where
     showType :: Type' -> Text
     showType = \case
-      TyVar n -> n
-      TyCon n -> n
-      TyApp f x -> showType f <> " " <> showTypeAtom x
-      TyArrow a b -> showType a <> " -> " <> showType b
+      TyVar _ n -> n
+      TyCon _ n -> n
+      TyApp _ f x -> showType f <> " " <> showTypeAtom x
+      TyArrow _ a b -> showType a <> " -> " <> showType b
     showTypeAtom :: Type' -> Text
     showTypeAtom t@TyApp {} = "(" <> showType t <> ")"
     showTypeAtom t@TyArrow {} = "(" <> showType t <> ")"
@@ -167,12 +226,15 @@ intTypeRange = \case
 --   We use 'QName' to keep the door open for qualified built-ins.
 type Env = M.Map QName Type'
 
--- | Constructor info: type name, type parameters, field types, sibling constructors.
+-- | Constructor info: type name, type parameters, field types, sibling
+--   constructors, and the source span of the constructor's name in its
+--   'TypeDecl' (used by quick-fixes that rename the declaration).
 data ConInfo = ConInfo
   { ciTypeName :: Name,
     ciTypeParams :: [Name],
     ciFieldTypes :: [Type'],
-    ciSiblings :: [Name]
+    ciSiblings :: [Name],
+    ciDeclSpan :: SrcSpan
   }
   deriving stock (Show, Eq)
 
@@ -195,7 +257,7 @@ builtinEnvFromImports imps =
           then
             M.singleton
               (QName ["IO", "Stdout"] "print")
-              (TyArrow (TyCon "String") (TyCon "IOUnit"))
+              (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit"))
           else mempty
    in ioPrint
 
@@ -204,31 +266,34 @@ builtinEnvFromImports imps =
 splitArrow :: Type' -> ([Type'], Type')
 splitArrow = go []
   where
-    go acc (TyArrow a b) = go (acc <> [a]) b
+    go acc (TyArrow _ a b) = go (acc <> [a]) b
     go acc t = (acc, t)
 
 -- | Validate that a written type only mentions known constructors.
-wellFormedTypeWith :: SrcSpan -> S.Set Name -> Type' -> Either TypeError ()
-wellFormedTypeWith sp userTypes = \case
-  TyVar _ -> Right ()
-  TyCon "String" -> Right ()
-  TyCon "IOUnit" -> Right ()
-  TyCon "Int32" -> Right ()
-  TyCon "UInt8" -> Right ()
-  TyCon n
+--   The 'Type'' value carries per-node spans, so errors point at the
+--   offending identifier (e.g. @_A@) rather than the whole signature.
+wellFormedTypeWith :: S.Set Name -> Type' -> Either TypeError ()
+wellFormedTypeWith userTypes = \case
+  TyVar _ _ -> Right ()
+  TyCon sp n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnored sp n)
+  TyCon _ "String" -> Right ()
+  TyCon _ "IOUnit" -> Right ()
+  TyCon _ "Int32" -> Right ()
+  TyCon _ "UInt8" -> Right ()
+  TyCon sp n
     | S.member n userTypes -> Right ()
     | otherwise -> Left (UnknownTypeCon sp n)
-  TyApp f x -> wellFormedTypeWith sp userTypes f >> wellFormedTypeWith sp userTypes x
-  TyArrow a b -> wellFormedTypeWith sp userTypes a >> wellFormedTypeWith sp userTypes b
+  TyApp _ f x -> wellFormedTypeWith userTypes f >> wellFormedTypeWith userTypes x
+  TyArrow _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
 
 type Subst = M.Map Name Type'
 
 applySubst :: Subst -> Type' -> Type'
 applySubst s = \case
-  TyVar v -> fromMaybe (TyVar v) (M.lookup v s)
-  TyCon c -> TyCon c
-  TyApp f x -> TyApp (applySubst s f) (applySubst s x)
-  TyArrow a b -> TyArrow (applySubst s a) (applySubst s b)
+  TyVar sp v -> fromMaybe (TyVar sp v) (M.lookup v s)
+  TyCon sp c -> TyCon sp c
+  TyApp sp f x -> TyApp sp (applySubst s f) (applySubst s x)
+  TyArrow sp a b -> TyArrow sp (applySubst s a) (applySubst s b)
 
 compose :: Subst -> Subst -> Subst
 compose s2 s1 = (applySubst s2 <$> s1) `M.union` s2
@@ -236,16 +301,16 @@ compose s2 s1 = (applySubst s2 <$> s1) `M.union` s2
 match :: Type' -> Type' -> Maybe Subst
 match = go
   where
-    go (TyVar v) t = Just (M.singleton v t)
-    go t (TyVar v) = Just (M.singleton v t)
-    go (TyCon c1) (TyCon c2)
+    go (TyVar _ v) t = Just (M.singleton v t)
+    go t (TyVar _ v) = Just (M.singleton v t)
+    go (TyCon _ c1) (TyCon _ c2)
       | c1 == c2 = Just M.empty
       | otherwise = Nothing
-    go (TyApp f1 x1) (TyApp f2 x2) = do
+    go (TyApp _ f1 x1) (TyApp _ f2 x2) = do
       s1 <- go f1 f2
       s2 <- go (applySubst s1 x1) (applySubst s1 x2)
       pure (compose s2 s1)
-    go (TyArrow a1 b1) (TyArrow a2 b2) = do
+    go (TyArrow _ a1 b1) (TyArrow _ a2 b2) = do
       s1 <- go a1 a2
       s2 <- go (applySubst s1 b1) (applySubst s1 b2)
       pure (compose s2 s1)
@@ -257,25 +322,26 @@ freshenType :: Text -> Type' -> Type'
 freshenType suffix ty = applySubst subst ty
   where
     vars = collectTypeVars ty
-    subst = M.fromList [(v, TyVar (v <> suffix)) | v <- toList vars]
+    subst = M.fromList [(v, TyVar noSpan (v <> suffix)) | v <- toList vars]
 
 -- | Collect all type variables in a type.
 collectTypeVars :: Type' -> S.Set Name
-collectTypeVars (TyVar n) = S.singleton n
-collectTypeVars (TyCon _) = S.empty
-collectTypeVars (TyApp f x) = collectTypeVars f <> collectTypeVars x
-collectTypeVars (TyArrow a b) = collectTypeVars a <> collectTypeVars b
+collectTypeVars (TyVar _ n) = S.singleton n
+collectTypeVars (TyCon _ _) = S.empty
+collectTypeVars (TyApp _ f x) = collectTypeVars f <> collectTypeVars x
+collectTypeVars (TyArrow _ a b) = collectTypeVars a <> collectTypeVars b
 
 -- | Build the return type of a constructor given the type name and type parameters.
 --   @conReturnType "Color" []@    → @TyCon "Color"@
 --   @conReturnType "Lookup" ["a"]@ → @TyApp (TyCon "Lookup") (TyVar "a")@
 conReturnType :: Name -> [Name] -> Type'
-conReturnType tName [] = TyCon tName
-conReturnType tName tvs = foldl' TyApp (TyCon tName) (map TyVar tvs)
+conReturnType tName [] = TyCon noSpan tName
+conReturnType tName tvs =
+  foldl' (TyApp noSpan) (TyCon noSpan tName) (map (TyVar noSpan) tvs)
 
 -- | Build the full type of a constructor: @fieldType1 -> ... -> returnType@.
 conType :: Name -> [Name] -> [Type'] -> Type'
-conType tName tvs = foldr TyArrow (conReturnType tName tvs)
+conType tName tvs = foldr (TyArrow noSpan) (conReturnType tName tvs)
 
 -- | Type-constructor map: type name → list of constructor names (including empty types).
 type TypeConsMap = M.Map Name [Name]
@@ -284,7 +350,23 @@ type TypeConsMap = M.Map Name [Name]
 --   Returns (set of type names, constructor env, constructor value env, type-constructor map).
 buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env, TypeConsMap)
 buildConEnv decls = do
-  let typeDefs = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ <- decls]
+  let typeDecls = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ <- decls]
+  -- Validate each declaration before building anything else:
+  --   • bare '_' as type or constructor name — rejected;
+  --   • bare '_' or duplicate type-parameter names — rejected;
+  --   • '_foo' type-variable references inside constructor fields — rejected.
+  forM_ typeDecls $ \(sp, n, tvs, cs) -> do
+    -- The TypeDecl span starts at the @type@ keyword; the name sits
+    -- @length "type "@ chars later (formatter guarantees this shape).
+    let nameStartCol = spanStartCol sp + T.length "type "
+        nameSp = SrcSpan (spanStartLine sp) nameStartCol (spanStartLine sp) (nameStartCol + T.length n)
+    when (n == "_") $ Left (UnnamedType nameSp)
+    forM_ cs $ \(ConDef cSp cName _) ->
+      when (cName == "_") $ Left (UnnamedConstructor cSp)
+    validateTypeParams sp tvs cs
+  -- 'tvs' here is already reduced to bare names — the per-parameter spans
+  -- only matter for the unused-type-parameter warning (emitted separately).
+  let typeDefs = [(sp, n, map paramName tvs, cs) | (sp, n, tvs, cs) <- typeDecls]
   -- Check for duplicate type names.
   foldM_ checkDupType S.empty typeDefs
   -- Build the constructor environment.
@@ -294,12 +376,12 @@ buildConEnv decls = do
         M.fromList
           [ (qLocal cName, conType tName tvs flds)
           | (_sp, tName, tvs, cs) <- typeDefs,
-            ConDef cName flds <- cs
+            ConDef _ cName flds <- cs
           ]
       typeNames = S.fromList [n | (_sp, n, _tvs, _cs) <- typeDefs]
       typeConsMap =
         M.fromList
-          [ (tName, [cName | ConDef cName _ <- cs])
+          [ (tName, [cName | ConDef _ cName _ <- cs])
           | (_sp, tName, _tvs, cs) <- typeDefs
           ]
   pure (typeNames, conEnv, conValEnv, typeConsMap)
@@ -309,20 +391,90 @@ buildConEnv decls = do
         then Left (DuplicateTypeDef sp n)
         else Right (S.insert n seen)
 
-    insertCons m (sp, tName, tvs, cs) = do
-      let conNames = [cName | ConDef cName _ <- cs]
-      foldM (insertOne sp tName tvs conNames cs) m conNames
+    insertCons m (sp, tName, tvs, cs) =
+      foldM (insertOne sp tName tvs cs) m cs
 
-    insertOne sp tName tvs allCons cs m cName =
+    insertOne sp tName tvs allCons m (ConDef cSp cName _) =
       if M.member cName m
         then Left (DuplicateConstructor sp cName)
         else
-          let flds = [fs | ConDef cn fs <- cs, cn == cName]
-           in Right (M.insert cName (ConInfo tName tvs (concat flds) allCons) m)
+          let flds = [fs | ConDef _ cn fs <- allCons, cn == cName]
+              siblings = [n | ConDef _ n _ <- allCons]
+           in Right (M.insert cName (ConInfo tName tvs (concat flds) siblings cSp) m)
+
+-- | Validate a single type declaration's parameter list and constructor
+--   field types. Enforces three invariants:
+--
+--     1. Every parameter has a name; bare @_@ is rejected ('UnnamedTypeParameter').
+--     2. No two parameters share a name ('DuplicateTypeParameter').
+--     3. No constructor field mentions an ignored type variable (a
+--        'TyVar' whose name starts with @_@) — if the user marks a type
+--        parameter as intentionally unused, they must not then turn
+--        around and use it ('ReferencingIgnoredTypeVar').
+validateTypeParams :: SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
+validateTypeParams _declSp params cons = do
+  -- 1) Reject bare '_' as a type parameter name.
+  forM_ params $ \(Param sp n) ->
+    when (n == "_") $ Left (UnnamedTypeParameter sp)
+  -- 2) Reject duplicate parameter names.
+  foldM_ checkDup S.empty params
+  -- 3) Reject references to ignored type variables inside constructor fields.
+  --    The 'TyVar' carries its own source span, so the error points at
+  --    the exact identifier rather than the whole type declaration.
+  forM_ cons $ \(ConDef _ _ flds) ->
+    forM_ flds checkNoIgnoredTyVar
+  where
+    checkDup seen (Param sp n) =
+      if S.member n seen
+        then Left (DuplicateTypeParameter sp n)
+        else Right (S.insert n seen)
+
+    checkNoIgnoredTyVar = \case
+      TyVar sp n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnoredTypeVar sp n)
+      TyVar _ _ -> Right ()
+      TyCon _ _ -> Right ()
+      TyApp _ f x -> checkNoIgnoredTyVar f >> checkNoIgnoredTyVar x
+      TyArrow _ a b -> checkNoIgnoredTyVar a >> checkNoIgnoredTyVar b
+
+-- | A non-fatal observation about a program. Surfaced to editors as
+--   yellow squigglies and to CI via @--strict@.
+data Warning
+  = -- | A function parameter was bound but never referenced in the body.
+    --   Span covers just the parameter identifier so quick-fixes can
+    --   replace it precisely.
+    UnusedParameter SrcSpan Name
+  | -- | A top-level definition is not reachable from @main@ (no transitive
+    --   reference). Fields: span of the name in its @FunDef@ (used for
+    --   caret placement), optional span of the matching 'Sig' name (the
+    --   quick-fix renames both so the file stays type-correct), the name.
+    UnusedTopLevel SrcSpan (Maybe SrcSpan) Name
+  | -- | A type parameter is declared but never used in any constructor
+    --   field of its type — likely a phantom parameter that was not
+    --   marked with @_@. Span covers just the parameter identifier so
+    --   the rename quick-fix targets it precisely.
+    UnusedTypeParameter SrcSpan Name
+  deriving stock (Show, Eq)
+
+-- | Source span of a warning. This is the span the editor highlights —
+--   for 'UnusedTopLevel' that's the @FunDef@ name, not the signature,
+--   since the definition is the declaration most users think of.
+warningSpan :: Warning -> SrcSpan
+warningSpan = \case
+  UnusedParameter sp _ -> sp
+  UnusedTopLevel sp _ _ -> sp
+  UnusedTypeParameter sp _ -> sp
+
+-- | Human-readable message for a warning.
+warningMessage :: Warning -> Text
+warningMessage = \case
+  UnusedParameter _ n -> "Unused parameter: '" <> n <> "'"
+  UnusedTopLevel _ _ n -> "Unused top-level definition: '" <> n <> "'"
+  UnusedTypeParameter _ n -> "Unused type parameter: '" <> n <> "'"
 
 -- | Check a whole program against explicit signatures.
---   Returns 'Right ()' on success; otherwise a descriptive 'TypeError'.
-typecheckProgram :: Program -> Either TypeError ()
+--   On success, returns the list of warnings discovered while checking.
+--   On the first error, short-circuits with a descriptive 'TypeError'.
+typecheckProgram :: Program -> Either TypeError [Warning]
 typecheckProgram Program {imports, decls} = do
   -- 1) Build constructor environment from type declarations.
   (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList decls)
@@ -338,14 +490,14 @@ typecheckProgram Program {imports, decls} = do
   -- Build the signature environment; reject duplicates early.
   sigEnv <- foldM insertSig M.empty sigsList
 
-  -- Validate every written type (no unknown TyCons).
-  mapM_ (\(sp, _, t) -> wellFormedTypeWith sp userTypeNames t) sigsList
+  -- Validate every written type (no unknown TyCons, no ignored refs).
+  mapM_ (\(_sp, _, t) -> wellFormedTypeWith userTypeNames t) sigsList
 
   -- Ensure unique definition names (shadowing is not allowed at top level).
   foldM_ insertDefName S.empty defsList
 
-  -- Check each definition body against its declared type.
-  forM_ defsList $ \(sp, n, args, body) -> do
+  -- Check each definition body against its declared type, accumulating warnings.
+  defWarnings <- forM defsList $ \(sp, n, args, body) -> do
     ty <- maybeToRight (MissingSignature sp n) (M.lookup n sigEnv)
     let (argTys, retTy) = splitArrow ty
     when (length argTys /= length args)
@@ -359,28 +511,82 @@ typecheckProgram Program {imports, decls} = do
     -- prevents them from being referenced because expression names cannot
     -- start with @_@.
     let envBuiltins = builtinEnvFromImports imports
-        namedArgs = [(x, t) | (x, t) <- zip args argTys, x /= "_"]
-        envParams = M.fromList [(qLocal x, t) | (x, t) <- namedArgs]
+        namedArgs = [(p, t) | (p, t) <- zip args argTys, paramName p /= "_"]
+        envParams = M.fromList [(qLocal (paramName p), t) | (p, t) <- namedArgs]
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         envOuter = M.unions [envBuiltins, conValEnv, envTop]
         env = M.union envParams envOuter
 
     -- Reject shadowing: params must be unique and must not collide with
     -- any already-visible name (constructor, import, top-level signature).
-    -- Parameter names don't carry individual spans in the surface AST, so we
-    -- fall back to the span of the whole definition.
-    checkNoShadow envOuter [(sp, x) | (x, _) <- namedArgs]
+    checkNoShadow envOuter [(paramSpan p, paramName p) | (p, _) <- namedArgs]
 
     checkExpr conEnv typeConsMap env retTy body
+
+    -- Unused-parameter warnings: report any user-named parameter (not @_@,
+    -- not @_foo@) that the body does not reference. Underscore-prefixed
+    -- names are an explicit opt-out and never warned on.
+    let referenced = freeNames body
+    pure
+      [ UnusedParameter (paramSpan p) (paramName p)
+      | p <- args,
+        let nm = paramName p,
+        not ("_" `T.isPrefixOf` nm),
+        not (S.member nm referenced)
+      ]
 
   -- Enforce presence and exact type of 'main'.
   case M.lookup "main" sigEnv of
     Nothing -> Left MainMissing
     Just ty ->
-      let want = TyArrow (TyCon "String") (TyCon "IOUnit")
+      let want = TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")
        in unless (ty == want) (Left (MainWrongType ty))
 
-  Right ()
+  -- Unused top-level warnings: any definition not transitively reachable
+  -- from 'main' is dead code (the whole-program compilation model tree-
+  -- shakes it anyway). But we report only the *root causes*: if @f1@ is
+  -- used solely from @f2@ and @f2@ is unreachable, only @f2@ is warned
+  -- on — fixing @f2@ will reveal @f1@'s status on the next compile.
+  --
+  -- Mutual-recursion cycles are a single "root" — we emit a warning on
+  -- every member of a source SCC in the unused subgraph, since deleting
+  -- any one of them doesn't break the cycle.
+  let callGraph = M.fromList [(n, freeNames body) | (_sp, n, _args, body) <- defsList]
+      reachableFromMain = reachable "main" callGraph
+      unusedSet =
+        S.fromList
+          [ n
+          | (_sp, n, _args, _body) <- defsList,
+            n /= "main",
+            not ("_" `T.isPrefixOf` n),
+            not (S.member n reachableFromMain)
+          ]
+      sourceSccMembers = sourceSccs callGraph unusedSet
+      defSpanByName = M.fromList [(n, sp) | (sp, n, _args, _body) <- defsList]
+      sigSpanByName = M.fromList [(n, nameSubSpan sp n) | (sp, n, _t) <- sigsList]
+      topLevelWarnings =
+        [ UnusedTopLevel (nameSubSpan sp n) (M.lookup n sigSpanByName) n
+        | n <- S.toList sourceSccMembers,
+          Just sp <- [M.lookup n defSpanByName]
+        ]
+
+  -- Unused type-parameter warnings: any type parameter declared on a
+  -- 'TypeDecl' that never appears in any of its constructor fields.
+  -- Underscore-prefixed params are the explicit opt-out and are skipped.
+  let typeDeclParams =
+        [ (params, cs)
+        | TypeDecl _ _ params cs _ <- toList decls
+        ]
+      typeParamWarnings =
+        [ UnusedTypeParameter sp n
+        | (params, cs) <- typeDeclParams,
+          let fieldVars = S.unions [collectTypeVars t | ConDef _ _ flds <- cs, t <- flds],
+          Param sp n <- params,
+          not ("_" `T.isPrefixOf` n),
+          not (S.member n fieldVars)
+        ]
+
+  Right (concat defWarnings <> topLevelWarnings <> typeParamWarnings)
   where
     insertSig m (sp, n, t) =
       if M.member n m
@@ -402,7 +608,7 @@ checkNoShadow = foldM_ addOne
     addOne acc (sp, n) =
       if M.member (qLocal n) acc
         then Left (Shadowing sp n)
-        else Right (M.insert (qLocal n) (TyCon "<binder>") acc)
+        else Right (M.insert (qLocal n) (TyCon noSpan "<binder>") acc)
 
 -- | Check that an expression has the given expected type.
 --
@@ -414,12 +620,12 @@ checkExpr :: ConEnv -> TypeConsMap -> Env -> Type' -> Expr -> Either TypeError (
 checkExpr conEnv tcm env expected = \case
   ELit sp (LInt n) ->
     case expected of
-      TyCon tyName
+      TyCon _ tyName
         | Just (lo, hi) <- intTypeRange tyName ->
             if n >= lo && n <= hi
               then Right ()
               else Left (IntLiteralOutOfRange sp n tyName)
-      _ -> Left (TypeMismatch expected (TyCon "<integer literal>") (ELit sp (LInt n)))
+      _ -> Left (TypeMismatch expected (TyCon noSpan "<integer literal>") (ELit sp (LInt n)))
   EParens _sp e -> checkExpr conEnv tcm env expected e
   e -> do
     actual <- typeOfExpr conEnv tcm env e
@@ -429,29 +635,36 @@ checkExpr conEnv tcm env expected = \case
 --   This function /checks/ consistency; it does not invent polymorphism.
 typeOfExpr :: ConEnv -> TypeConsMap -> Env -> Expr -> Either TypeError Type'
 typeOfExpr conEnv tcm env = \case
-  ELit _sp (LString _) -> Right (TyCon "String")
+  ELit sp (LString _) -> Right (TyCon sp "String")
   ELit sp (LInt _) -> Left (AmbiguousIntLiteral sp)
   EVar sp q ->
-    case M.lookup q env of
-      Just t -> Right t
-      Nothing ->
-        case q of
-          QName (_ : _) _ -> Left (NotImported sp q) -- looks qualified but missing import
-          _ -> Left (UnknownVar sp q)
+    case q of
+      -- Bindings whose name starts with '_' are intentionally unused and
+      -- must not be referenced — regardless of whether they happen to be
+      -- in scope (they can be, e.g. an unused-but-kept top-level definition).
+      QName [] n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnored sp n)
+      _ -> case M.lookup q env of
+        Just t -> Right t
+        Nothing ->
+          case q of
+            QName (_ : _) _ -> Left (NotImported sp q) -- looks qualified but missing import
+            _ -> Left (UnknownVar sp q)
   EParens _sp e ->
     typeOfExpr conEnv tcm env e
-  ECon sp name ->
-    case M.lookup (qLocal name) env of
-      Just t ->
-        -- Freshen type variables using source position as unique suffix
-        -- to ensure each constructor usage gets a fresh polymorphic instance.
-        let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
-         in Right (freshenType suffix t)
-      Nothing -> Left (UnknownConstructor sp name)
+  ECon sp name
+    | "_" `T.isPrefixOf` name -> Left (ReferencingIgnored sp name)
+    | otherwise ->
+        case M.lookup (qLocal name) env of
+          Just t ->
+            -- Freshen type variables using source position as unique suffix
+            -- to ensure each constructor usage gets a fresh polymorphic instance.
+            let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
+             in Right (freshenType suffix t)
+          Nothing -> Left (UnknownConstructor sp name)
   EApp _sp f x -> do
     tf <- typeOfExpr conEnv tcm env f
     case tf of
-      TyArrow a b -> do
+      TyArrow _ a b -> do
         tx <- typeOfExpr conEnv tcm env x
         case match a tx of
           Just s -> Right (applySubst s b)
@@ -461,12 +674,12 @@ typeOfExpr conEnv tcm env = \case
   EInfix sp OpConcat l r -> do
     tl <- typeOfExpr conEnv tcm env l
     tr <- typeOfExpr conEnv tcm env r
-    if tl == TyCon "String" && tr == TyCon "String"
-      then Right (TyCon "String")
+    if tl == TyCon noSpan "String" && tr == TyCon noSpan "String"
+      then Right (TyCon noSpan "String")
       else
         -- pick the first offender for a more helpful message
-        let blame = if tl /= TyCon "String" then tl else tr
-         in Left (TypeMismatch (TyCon "String") blame (EInfix sp OpConcat l r))
+        let blame = if tl /= TyCon noSpan "String" then tl else tr
+         in Left (TypeMismatch (TyCon noSpan "String") blame (EInfix sp OpConcat l r))
   ECase sp scrut alts _ -> do
     scrutTy <- typeOfExpr conEnv tcm env scrut
     -- Scrutinee must be a user-defined sum type.
@@ -505,7 +718,9 @@ typeOfExpr conEnv tcm env = \case
           firstTy
           restTys
   where
-    checkArm caseSp envLocal scrutSubst (tys, patterns) (CaseAlt _ (PCon cName pats) body _) = do
+    checkArm caseSp envLocal scrutSubst (tys, patterns) (CaseAlt _ (PCon patSp cName pats) body _) = do
+      -- Reject @_X@ constructor references at any depth in the pattern.
+      mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats)
       -- Verify the constructor belongs to the scrutinee type.
       ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
       -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
@@ -533,6 +748,19 @@ typeOfExpr conEnv tcm env = \case
     checkArm _ _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
 
+-- | Reject any @_X@-named constructor anywhere in a pattern. The error
+--   carries both the pattern's own span and the span of the constructor
+--   in its 'TypeDecl' so a quick-fix can rename both sites at once.
+rejectIgnoredConstructor :: ConEnv -> Pattern -> Either TypeError ()
+rejectIgnoredConstructor conEnv = \case
+  PCon patSp cName inner
+    | "_" `T.isPrefixOf` cName ->
+        let declSp = maybe patSp ciDeclSpan (M.lookup cName conEnv)
+         in Left (ReferencingIgnoredConstructor patSp declSp cName)
+    | otherwise -> mapM_ (rejectIgnoredConstructor conEnv) inner
+  PVar _ _ -> Right ()
+  PWild -> Right ()
+
 -- | Collect all variable binders from a list of (possibly nested) patterns,
 --   in left-to-right order, paired with the span of each binder.
 collectPatternVars :: [Pattern] -> [(SrcSpan, Name)]
@@ -540,7 +768,7 @@ collectPatternVars = concatMap go
   where
     go (PVar sp n) = [(sp, n)]
     go PWild = []
-    go (PCon _ inner) = concatMap go inner
+    go (PCon _ _ inner) = concatMap go inner
 
 -- | Extract variable bindings from patterns and their corresponding types.
 --   Recurses into nested constructor patterns to bind deeply nested variables.
@@ -549,7 +777,7 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
   where
     go (PVar _ n, t) = [(n, t)]
     go (PWild, _) = []
-    go (PCon cName innerPats, ty) =
+    go (PCon _ cName innerPats, ty) =
       case M.lookup cName conEnv of
         Nothing -> []
         Just ci ->
@@ -563,8 +791,8 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
 
 -- | Extract the type constructor name from a type (peeling off TyApp).
 extractTyCon :: Type' -> Maybe Name
-extractTyCon (TyCon n) = Just n
-extractTyCon (TyApp f _) = extractTyCon f
+extractTyCon (TyCon _ n) = Just n
+extractTyCon (TyApp _ f _) = extractTyCon f
 extractTyCon _ = Nothing
 
 -- | Get 'ConInfo' for any constructor of the given type.
@@ -632,6 +860,72 @@ patternMatches _conEnv (cName, pats) = any (\(coveredName, coveredPats) -> cName
     patternEqual PWild PWild = True
     patternEqual PWild (PVar _ _) = True -- wildcard matches variable
     patternEqual (PVar _ _) PWild = True -- variable matches wildcard
-    patternEqual (PCon c1 ps1) (PCon c2 ps2) =
+    patternEqual (PCon _ c1 ps1) (PCon _ c2 ps2) =
       c1 == c2 && patternsEqual ps1 ps2
     patternEqual _ _ = False
+
+-- | Collect every unqualified variable name referenced in an expression.
+--   Used by the unused-parameter check; the language forbids shadowing,
+--   so a simple set of all referenced names is sufficient — we never need
+--   to subtract pattern bindings to disambiguate a parameter reference.
+freeNames :: Expr -> S.Set Name
+freeNames = go
+  where
+    go = \case
+      EVar _ (QName [] n) -> S.singleton n
+      EVar _ _ -> S.empty
+      EApp _ f x -> go f <> go x
+      EInfix _ _ l r -> go l <> go r
+      EParens _ e -> go e
+      ELit _ _ -> S.empty
+      ECon _ _ -> S.empty
+      ECase _ scrut alts _ ->
+        go scrut <> foldMap (\(CaseAlt _ _ body _) -> go body) (toList alts)
+
+-- | Transitive set of names reachable from @root@ through the reference
+--   graph. Used to decide which top-level definitions are unused: anything
+--   not reachable from @main@ is dead code.
+reachable :: Name -> M.Map Name (S.Set Name) -> S.Set Name
+reachable root graph = go (S.singleton root) [root]
+  where
+    go visited [] = visited
+    go visited (n : rest) =
+      let neighbors = fromMaybe S.empty (M.lookup n graph)
+          fresh = S.filter (`S.notMember` visited) neighbors
+       in go (visited <> fresh) (rest <> S.toList fresh)
+
+-- | Given the full program call graph and a set of unused names, return
+--   the members of /source/ strongly-connected components in the unused
+--   subgraph — the defs a human would consider "root causes" of dead code.
+--
+-- A source SCC has no incoming edges from outside the SCC (but within
+-- @unused@). Singletons with no unused-predecessors are sources. Members
+-- of a mutual-recursion cycle whose only external callers are all
+-- reachable-from-main are all reported together, since removing any one
+-- does not break the dead-code status of the others.
+sourceSccs :: M.Map Name (S.Set Name) -> S.Set Name -> S.Set Name
+sourceSccs callGraph unusedSet =
+  let callsWithinUnused n =
+        S.toList (S.intersection unusedSet (fromMaybe S.empty (M.lookup n callGraph)))
+      nodes = [(n, n, callsWithinUnused n) | n <- S.toList unusedSet]
+      sccs = G.stronglyConnComp nodes
+      -- A SCC is a source iff no member is referenced by another unused
+      -- node outside the SCC. Within-SCC references are fine (that's
+      -- exactly what makes it a cycle).
+      isSource members =
+        let mset = S.fromList members
+            external = S.difference unusedSet mset
+         in not $ any (\m -> any (`S.member` mset) (M.lookup m callGraph `orEmpty`)) (S.toList external)
+   in S.fromList [n | scc <- sccs, let ns = G.flattenSCC scc, isSource ns, n <- ns]
+  where
+    orEmpty = fromMaybe S.empty
+
+-- | Span of the identifier @n@ within a @Sig@ / @FunDef@ span. The parser
+--   writes these spans so that @spanStartLine@, @spanStartCol@ point at
+--   the first character of the name, so the name's span is just the first
+--   @length n@ characters of that line.  Mirrored from 'Awsum.Symbols'.
+nameSubSpan :: SrcSpan -> Name -> SrcSpan
+nameSubSpan sp n =
+  let l = spanStartLine sp
+      c = spanStartCol sp
+   in SrcSpan l c l (c + T.length n)

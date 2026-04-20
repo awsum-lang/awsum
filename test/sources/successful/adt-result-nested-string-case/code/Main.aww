@@ -13,4 +13,4 @@ unwrap r = case r of
     Err value -> value
 
 main : String -> IOUnit
-main input = IO.Stdout.print (unwrap (Ok (Ok "1")) ++ "," ++ unwrap (Ok (Err "2")) ++ "," ++ unwrap (Err (Ok "3")) ++ "," ++ unwrap (Err (Err "4")))
+main _input = IO.Stdout.print (unwrap (Ok (Ok "1")) ++ "," ++ unwrap (Ok (Err "2")) ++ "," ++ unwrap (Err (Ok "3")) ++ "," ++ unwrap (Err (Err "4")))

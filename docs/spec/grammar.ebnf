@@ -44,9 +44,16 @@ QName               = { UIdent , "." } , LIdent ;
 (* Lexical sketch (exact rules implemented by the lexer):
    - String escapes: \n \t \r \" \\ \0
    - Block comment nesting is handled lexically
-*)
-LIdent              = lower , { identTail } ;
-UIdent              = upper , { identTail } ;
+
+   Identifiers accept an optional leading underscore. A bare "_" is also
+   accepted (both for LIdent and UIdent) because the typechecker — not
+   the parser — is responsible for rejecting it in positions where a
+   wildcard isn't allowed (type names, constructor names, top-level defs,
+   type parameters). Letting the parser accept it gives friendlier error
+   messages than Megaparsec's "unexpected character". *)
+LIdent              = ( lower | "_" ) , { identTail } ;
+UIdent              = upper , { identTail }
+                    | "_" , [ upper , { identTail } ] ;
 identTail           = lower | upper | digit | "_" | "'" ;
 
 String              = '"' , { stringChar } , '"' ;
@@ -67,3 +74,26 @@ lower               = 'a'…'z' ;
 upper               = 'A'…'Z' ;
 digit               = '0'…'9' ;
 any                 = U+0000…U+10FFFF ;
+
+(* Semantic rules layered on top of the grammar
+   (enforced by the typechecker, not the parser) *)
+
+(* 1. The "_" prefix marks a binding as intentionally unused.
+      Referencing any identifier whose name begins with "_" is a
+      compile error (whether it's a value, type parameter, type
+      constructor, or data constructor).
+      Binding such a name is allowed; the compiler never warns on it.
+
+   2. A bare "_" is a wildcard: allowed as a function parameter or a
+      pattern (PWild). It introduces no binding, so multiple "_" in
+      the same scope don't collide. It is rejected in positions where
+      the language requires a referenceable name: top-level definition
+      names, type names, constructor names, and type parameter names.
+
+   3. Unused bindings that are NOT "_"-prefixed produce warnings with
+      a rename-to-"_name" quick-fix. Run `awsum check --strict` to
+      escalate warnings to errors (CI-friendly).
+
+   4. No shadowing, ever. A fresh binder must not reuse any name
+      already visible in its scope. Applies to every binding form
+      (function params, pattern vars, top-level defs, type params). *)

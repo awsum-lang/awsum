@@ -90,7 +90,7 @@
   (func $v_compose (export "v_compose") (param $v_f i32) (param $v_g i32) (param $v_x i32) (result i32)
     (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_g)) (local.get $v_f)))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (call $__print (call $v_apply (i32.const 6) (i32.const 65))))
 
   (func $v__con_Box (export "v__con_Box") (param $v__x0 i32) (result i32)

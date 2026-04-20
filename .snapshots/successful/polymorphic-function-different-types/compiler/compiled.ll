@@ -70,7 +70,7 @@ case.join.4:
   ret ptr %t13
 }
 
-define ptr @v_main(ptr %v_input) {
+define ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

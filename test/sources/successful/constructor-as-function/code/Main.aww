@@ -11,4 +11,4 @@ unwrap b = case b of
   Box value -> value
 
 main : String -> IOUnit
-main input = IO.Stdout.print (unwrap (wrap Box "wrapped"))
+main _input = IO.Stdout.print (unwrap (wrap Box "wrapped"))

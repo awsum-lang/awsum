@@ -4,7 +4,7 @@ function v_identity(v_x)
   return v_x
 end
 
-function main(v_input)
+function main(v__input)
   return __print((function(s) if s[1] == 0 then local v_v = s[2]; return v_v end end)((v_identity)({0, "one"})))
 end
 

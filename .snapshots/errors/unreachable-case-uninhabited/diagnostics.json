@@ -1,1 +1,1 @@
-[{"startLine":9,"startCol":12,"endLine":11,"endCol":18,"message":"Unreachable case: Err can never match because Never has no constructors"}]
+[{"severity":"error","startLine":9,"startCol":12,"endLine":11,"endCol":18,"message":"Unreachable case: Err can never match because Never has no constructors","fixes":[]}]

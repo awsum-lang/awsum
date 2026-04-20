@@ -13,10 +13,38 @@ Program
             , spanEndCol = 41
             }
         ) "Step" []
-        [ ConDef "StepA" []
-        , ConDef "StepB" []
-        , ConDef "StepC" []
-        , ConDef "Done" []
+        [ ConDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 13
+                , spanEndLine = 5
+                , spanEndCol = 18
+                }
+            ) "StepA" []
+        , ConDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 21
+                , spanEndLine = 5
+                , spanEndCol = 26
+                }
+            ) "StepB" []
+        , ConDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 29
+                , spanEndLine = 5
+                , spanEndCol = 34
+                }
+            ) "StepC" []
+        , ConDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 37
+                , spanEndLine = 5
+                , spanEndCol = 41
+                }
+            ) "Done" []
         ] Nothing :|
         [ Sig
             ( SrcSpan
@@ -27,8 +55,31 @@ Program
                 }
             ) "handleA"
             ( TyArrow
-                ( TyCon "Step" )
-                ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 11
+                    , spanEndLine = 7
+                    , spanEndCol = 25
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 11
+                        , spanEndLine = 7
+                        , spanEndCol = 15
+                        }
+                    ) "Step"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 19
+                        , spanEndLine = 7
+                        , spanEndCol = 25
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -37,7 +88,16 @@ Program
                 , spanEndLine = 12
                 , spanEndCol = 13
                 }
-            ) "handleA" [ "step" ]
+            ) "handleA"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 9
+                    , spanEndLine = 8
+                    , spanEndCol = 13
+                    }
+                ) "step"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 8
@@ -57,7 +117,15 @@ Program
                     ( QName [] "step" )
                 )
                 ( CaseAlt []
-                    ( PCon "StepA" [] )
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 3
+                            , spanEndLine = 9
+                            , spanEndCol = 8
+                            }
+                        ) "StepA" []
+                    )
                     ( EInfix
                         ( SrcSpan
                             { spanStartLine = 9
@@ -106,7 +174,15 @@ Program
                         )
                     ) Nothing :|
                     [ CaseAlt []
-                        ( PCon "StepB" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 3
+                                , spanEndLine = 10
+                                , spanEndCol = 8
+                                }
+                            ) "StepB" []
+                        )
                         ( EApp
                             ( SrcSpan
                                 { spanStartLine = 10
@@ -137,7 +213,15 @@ Program
                             )
                         ) Nothing
                     , CaseAlt []
-                        ( PCon "StepC" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 3
+                                , spanEndLine = 11
+                                , spanEndCol = 8
+                                }
+                            ) "StepC" []
+                        )
                         ( EApp
                             ( SrcSpan
                                 { spanStartLine = 11
@@ -168,7 +252,15 @@ Program
                             )
                         ) Nothing
                     , CaseAlt []
-                        ( PCon "Done" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 3
+                                , spanEndLine = 12
+                                , spanEndCol = 7
+                                }
+                            ) "Done" []
+                        )
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 12
@@ -191,8 +283,31 @@ Program
                 }
             ) "handleB"
             ( TyArrow
-                ( TyCon "Step" )
-                ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 11
+                    , spanEndLine = 14
+                    , spanEndCol = 25
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 11
+                        , spanEndLine = 14
+                        , spanEndCol = 15
+                        }
+                    ) "Step"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 19
+                        , spanEndLine = 14
+                        , spanEndCol = 25
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -201,7 +316,16 @@ Program
                 , spanEndLine = 19
                 , spanEndCol = 13
                 }
-            ) "handleB" [ "step" ]
+            ) "handleB"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 9
+                    , spanEndLine = 15
+                    , spanEndCol = 13
+                    }
+                ) "step"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 15
@@ -221,7 +345,15 @@ Program
                     ( QName [] "step" )
                 )
                 ( CaseAlt []
-                    ( PCon "StepB" [] )
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 3
+                            , spanEndLine = 16
+                            , spanEndCol = 8
+                            }
+                        ) "StepB" []
+                    )
                     ( EInfix
                         ( SrcSpan
                             { spanStartLine = 16
@@ -270,7 +402,15 @@ Program
                         )
                     ) Nothing :|
                     [ CaseAlt []
-                        ( PCon "StepA" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 17
+                                , spanStartCol = 3
+                                , spanEndLine = 17
+                                , spanEndCol = 8
+                                }
+                            ) "StepA" []
+                        )
                         ( EApp
                             ( SrcSpan
                                 { spanStartLine = 17
@@ -301,7 +441,15 @@ Program
                             )
                         ) Nothing
                     , CaseAlt []
-                        ( PCon "StepC" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 18
+                                , spanStartCol = 3
+                                , spanEndLine = 18
+                                , spanEndCol = 8
+                                }
+                            ) "StepC" []
+                        )
                         ( EInfix
                             ( SrcSpan
                                 { spanStartLine = 18
@@ -350,7 +498,15 @@ Program
                             )
                         ) Nothing
                     , CaseAlt []
-                        ( PCon "Done" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 19
+                                , spanStartCol = 3
+                                , spanEndLine = 19
+                                , spanEndCol = 7
+                                }
+                            ) "Done" []
+                        )
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 19
@@ -373,31 +529,63 @@ Program
                 }
             ) "main"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "IOUnit" )
+                ( SrcSpan
+                    { spanStartLine = 21
+                    , spanStartCol = 8
+                    , spanEndLine = 21
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 21
+                        , spanStartCol = 8
+                        , spanEndLine = 21
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 21
+                        , spanStartCol = 18
+                        , spanEndLine = 21
+                        , spanEndCol = 24
+                        }
+                    ) "IOUnit"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 22
                 , spanStartCol = 1
                 , spanEndLine = 22
-                , spanEndCol = 45
+                , spanEndCol = 46
                 }
-            ) "main" [ "input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 22
+                    , spanStartCol = 6
+                    , spanEndLine = 22
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 22
-                    , spanStartCol = 14
+                    , spanStartCol = 15
                     , spanEndLine = 22
-                    , spanEndCol = 45
+                    , spanEndCol = 46
                     }
                 )
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 22
-                        , spanStartCol = 14
+                        , spanStartCol = 15
                         , spanEndLine = 22
-                        , spanEndCol = 30
+                        , spanEndCol = 31
                         }
                     )
                     ( QName
@@ -409,25 +597,25 @@ Program
                 ( EParens
                     ( SrcSpan
                         { spanStartLine = 22
-                        , spanStartCol = 30
+                        , spanStartCol = 31
                         , spanEndLine = 22
-                        , spanEndCol = 45
+                        , spanEndCol = 46
                         }
                     )
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 22
-                            , spanStartCol = 31
+                            , spanStartCol = 32
                             , spanEndLine = 22
-                            , spanEndCol = 44
+                            , spanEndCol = 45
                             }
                         )
                         ( EVar
                             ( SrcSpan
                                 { spanStartLine = 22
-                                , spanStartCol = 31
+                                , spanStartCol = 32
                                 , spanEndLine = 22
-                                , spanEndCol = 39
+                                , spanEndCol = 40
                                 }
                             )
                             ( QName [] "handleA" )
@@ -435,9 +623,9 @@ Program
                         ( ECon
                             ( SrcSpan
                                 { spanStartLine = 22
-                                , spanStartCol = 39
+                                , spanStartCol = 40
                                 , spanEndLine = 22
-                                , spanEndCol = 44
+                                , spanEndCol = 45
                                 }
                             ) "StepA"
                         )

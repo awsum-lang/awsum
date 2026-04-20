@@ -5,7 +5,7 @@ function v_show(v_c){
   return ((s) => { switch(s[0]) { case 0: { return "Red"; } case 1: { return "Green"; } case 2: { return "Blue"; } } })(v_c);
 }
 
-function main(v_input){
+function main(v__input){
   return __print((((((v_show)([0]) + ", ") + (v_show)([1])) + ", ") + (v_show)([2])));
 }
 

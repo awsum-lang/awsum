@@ -80,7 +80,7 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (i32.load offset=4 (local.get $__scrut))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 65)) (local.get $__con_0)))))
 

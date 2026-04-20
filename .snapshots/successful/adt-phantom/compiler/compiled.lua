@@ -4,7 +4,7 @@ function v_show(v_p)
   return (function(s) if s[1] == 0 then return "Phantom" end end)(v_p)
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_show)({0}))
 end
 

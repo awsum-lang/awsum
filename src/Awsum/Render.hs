@@ -64,20 +64,20 @@ renderDecl = \case
   FunDef _sp name args e mc ->
     ( case args of
         [] -> name <> " = " <> renderExpr e
-        _ -> name <> " " <> T.intercalate " " args <> " = " <> renderExpr e
+        _ -> name <> " " <> T.intercalate " " (map paramName args) <> " = " <> renderExpr e
     )
       <> renderTrailingComment mc
   TypeDecl _sp name tvars cons mc ->
     "type "
       <> name
-      <> (if null tvars then "" else " " <> T.intercalate " " tvars)
+      <> (if null tvars then "" else " " <> T.intercalate " " (map paramName tvars))
       <> (if null cons then "" else " = " <> T.intercalate " | " (map renderConDef cons))
       <> renderTrailingComment mc
   CommentDecl c ->
     renderComment c
   where
-    renderConDef (ConDef n []) = n
-    renderConDef (ConDef n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
+    renderConDef (ConDef _ n []) = n
+    renderConDef (ConDef _ n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 renderComment :: Comment -> Text
@@ -98,12 +98,12 @@ renderType = renderTypePrec 0
 --   We parenthesize when the inner precedence is strictly lower than the context.
 renderTypePrec :: Int -> Type' -> Text
 renderTypePrec ctx = \case
-  TyVar n -> n
-  TyCon n -> n
-  TyApp f x ->
+  TyVar _ n -> n
+  TyCon _ n -> n
+  TyApp _ f x ->
     let s = renderTypePrec 2 f <> " " <> renderTypePrec 3 x
      in if 2 < ctx then parens s else s
-  TyArrow t1 t2 ->
+  TyArrow _ t1 t2 ->
     let l = renderTypePrec 2 t1
         r = renderTypePrec 1 t2
         s = l <> " -> " <> r
@@ -179,14 +179,14 @@ renderCaseAlts indent alts trailingComments =
 
 renderPattern :: Pattern -> Text
 renderPattern = \case
-  PCon n [] -> n
-  PCon n ps -> n <> " " <> T.intercalate " " (map renderPatternAtom ps)
+  PCon _ n [] -> n
+  PCon _ n ps -> n <> " " <> T.intercalate " " (map renderPatternAtom ps)
   PVar _ n -> n
   PWild -> "_"
 
 -- | Render an atomic pattern, parenthesizing nested constructor applications.
 renderPatternAtom :: Pattern -> Text
-renderPatternAtom p@(PCon _ (_ : _)) = "(" <> renderPattern p <> ")"
+renderPatternAtom p@(PCon _ _ (_ : _)) = "(" <> renderPattern p <> ")"
 renderPatternAtom p = renderPattern p
 
 -- | Utility: surround text with parentheses.

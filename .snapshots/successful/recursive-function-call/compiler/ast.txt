@@ -12,9 +12,30 @@ Program
             , spanEndCol = 34
             }
         ) "Step" []
-        [ ConDef "Step1" []
-        , ConDef "Step2" []
-        , ConDef "Step3" []
+        [ ConDef
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 13
+                , spanEndLine = 4
+                , spanEndCol = 18
+                }
+            ) "Step1" []
+        , ConDef
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 21
+                , spanEndLine = 4
+                , spanEndCol = 26
+                }
+            ) "Step2" []
+        , ConDef
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 29
+                , spanEndLine = 4
+                , spanEndCol = 34
+                }
+            ) "Step3" []
         ] Nothing :|
         [ Sig
             ( SrcSpan
@@ -25,8 +46,31 @@ Program
                 }
             ) "advanceStep"
             ( TyArrow
-                ( TyCon "Step" )
-                ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 15
+                    , spanEndLine = 6
+                    , spanEndCol = 29
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 15
+                        , spanEndLine = 6
+                        , spanEndCol = 19
+                        }
+                    ) "Step"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 23
+                        , spanEndLine = 6
+                        , spanEndCol = 29
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -35,7 +79,16 @@ Program
                 , spanEndLine = 10
                 , spanEndCol = 19
                 }
-            ) "advanceStep" [ "x" ]
+            ) "advanceStep"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 13
+                    , spanEndLine = 7
+                    , spanEndCol = 14
+                    }
+                ) "x"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 7
@@ -55,7 +108,15 @@ Program
                     ( QName [] "x" )
                 )
                 ( CaseAlt []
-                    ( PCon "Step1" [] )
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 3
+                            , spanEndLine = 8
+                            , spanEndCol = 8
+                            }
+                        ) "Step1" []
+                    )
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 8
@@ -85,7 +146,15 @@ Program
                         )
                     ) Nothing :|
                     [ CaseAlt []
-                        ( PCon "Step2" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 3
+                                , spanEndLine = 9
+                                , spanEndCol = 8
+                                }
+                            ) "Step2" []
+                        )
                         ( EApp
                             ( SrcSpan
                                 { spanStartLine = 9
@@ -115,7 +184,15 @@ Program
                             )
                         ) Nothing
                     , CaseAlt []
-                        ( PCon "Step3" [] )
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 3
+                                , spanEndLine = 10
+                                , spanEndCol = 8
+                                }
+                            ) "Step3" []
+                        )
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 10
@@ -138,31 +215,63 @@ Program
                 }
             ) "main"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "IOUnit" )
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 8
+                    , spanEndLine = 12
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 8
+                        , spanEndLine = 12
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 18
+                        , spanEndLine = 12
+                        , spanEndCol = 24
+                        }
+                    ) "IOUnit"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 13
                 , spanStartCol = 1
                 , spanEndLine = 13
-                , spanEndCol = 49
+                , spanEndCol = 50
                 }
-            ) "main" [ "input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 6
+                    , spanEndLine = 13
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 13
-                    , spanStartCol = 14
+                    , spanStartCol = 15
                     , spanEndLine = 13
-                    , spanEndCol = 49
+                    , spanEndCol = 50
                     }
                 )
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 13
-                        , spanStartCol = 14
+                        , spanStartCol = 15
                         , spanEndLine = 13
-                        , spanEndCol = 30
+                        , spanEndCol = 31
                         }
                     )
                     ( QName
@@ -174,25 +283,25 @@ Program
                 ( EParens
                     ( SrcSpan
                         { spanStartLine = 13
-                        , spanStartCol = 30
+                        , spanStartCol = 31
                         , spanEndLine = 13
-                        , spanEndCol = 49
+                        , spanEndCol = 50
                         }
                     )
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 13
-                            , spanStartCol = 31
+                            , spanStartCol = 32
                             , spanEndLine = 13
-                            , spanEndCol = 48
+                            , spanEndCol = 49
                             }
                         )
                         ( EVar
                             ( SrcSpan
                                 { spanStartLine = 13
-                                , spanStartCol = 31
+                                , spanStartCol = 32
                                 , spanEndLine = 13
-                                , spanEndCol = 43
+                                , spanEndCol = 44
                                 }
                             )
                             ( QName [] "advanceStep" )
@@ -200,9 +309,9 @@ Program
                         ( ECon
                             ( SrcSpan
                                 { spanStartLine = 13
-                                , spanStartCol = 43
+                                , spanStartCol = 44
                                 , spanEndLine = 13
-                                , spanEndCol = 48
+                                , spanEndCol = 49
                                 }
                             ) "Step1"
                         )

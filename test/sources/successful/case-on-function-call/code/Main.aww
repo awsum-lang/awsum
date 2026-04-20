@@ -8,6 +8,6 @@ search : String -> Lookup String
 search key = Found ("found:" ++ key)
 
 main : String -> IOUnit
-main input = IO.Stdout.print (case search "hello" of
+main _input = IO.Stdout.print (case search "hello" of
   Found v -> v
   NotFound -> "nothing")

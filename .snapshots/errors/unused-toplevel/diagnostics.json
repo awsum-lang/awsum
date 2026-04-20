@@ -1,0 +1,1 @@
+[{"severity":"warning","startLine":10,"startCol":1,"endLine":10,"endCol":7,"message":"Unused top-level definition: 'orphan'","fixes":[{"title":"Rename 'orphan' to '_orphan'","edits":[{"startLine":9,"startCol":1,"endLine":9,"endCol":7,"newText":"_orphan"},{"startLine":10,"startCol":1,"endLine":10,"endCol":7,"newText":"_orphan"}]}]}]

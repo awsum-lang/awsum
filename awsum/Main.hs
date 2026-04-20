@@ -14,12 +14,13 @@ import Awsum.Codegen.Lua (codegenLua)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
+import Awsum.Diagnostic
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
-import Awsum.Typing (TypeError, prettyPrintTypeError, typeErrorSpan, typecheckProgram)
+import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, typecheckProgram)
 import Common.File
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
@@ -42,8 +43,8 @@ awsumVersion = toText (showVersion Meta.version)
 -- | Top-level CLI command.
 data Command
   = CmdVersion
-  | -- | file, useJson
-    CmdCheck FilePath Bool
+  | -- | file, useJson, strict
+    CmdCheck FilePath Bool Bool
   | -- | file, target, out
     CmdBuild FilePath Target (Maybe FilePath)
   | -- | file, target, inArg, useStdin
@@ -128,6 +129,14 @@ optInPlace =
 optJson :: OA.Parser Bool
 optJson = OA.switch (OA.long "json" <> OA.help "Output diagnostics as JSON")
 
+-- | Flag: treat warnings as errors (fail with non-zero exit).
+optStrict :: OA.Parser Bool
+optStrict =
+  OA.switch
+    ( OA.long "strict"
+        <> OA.help "Treat warnings as errors (non-zero exit if any warning)"
+    )
+
 -- | Subcommand builder.
 subcmd :: String -> String -> OA.Parser a -> OA.Mod OA.CommandFields a
 subcmd name desc p = OA.command name (OA.info p (OA.progDesc desc))
@@ -147,7 +156,7 @@ pCommand =
   -- Allow the global --version flag alongside subcommands.
   pVersionFlag
     <|> OA.hsubparser
-      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optJson)
+      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optJson <*> optStrict)
           <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optTarget <*> optOutputPath)
           <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optTarget <*> optInputText <*> optUseStdin)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
@@ -180,27 +189,10 @@ main = do
 runCommand :: Command -> IO ()
 runCommand = \case
   CmdVersion -> putTextLn awsumVersion
-  CmdCheck filePath useJson
-    | useJson -> do
-        src <- readFileTextUtf8 filePath
-        case parseProgramDiagnostic src of
-          Left parseErrs -> do
-            putTextLn (diagnosticsToJson [(sp, msg) | (sp, msg) <- parseErrs])
-            exitFailure
-          Right prog ->
-            case typecheckProgram prog of
-              Left typeErr -> do
-                let sp = fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan typeErr)
-                putTextLn (diagnosticsToJson [(sp, prettyPrintTypeError typeErr)])
-                exitFailure
-              Right () -> putTextLn "[]"
-    | otherwise -> do
-        prog <- parseFileOrDie filePath
-        case typecheckProgram prog of
-          Left err -> dieWithTypeError filePath err
-          Right () -> putTextLn "OK"
+  CmdCheck filePath useJson strict -> runCheck filePath useJson strict
   CmdBuild filePath target mOut -> do
     core <- compileToCoreOrDie filePath
+    -- (warnings are emitted to stderr by compileToCoreOrDie)
     case target of
       TargetJVM -> do
         let bytes = assembleJVM core
@@ -239,7 +231,9 @@ runCommand = \case
     prog <- parseFileOrDie filePath
     case elaborateLowerProgram prog of
       Left err -> die $ toString (prettyPrintTypeError err)
-      Right ir -> pPrint ir
+      Right (warns, ir) -> do
+        emitWarningsToStderr filePath warns
+        pPrint ir
   CmdAsm filePath target -> do
     core <- compileToCoreOrDie filePath
     case target of
@@ -349,34 +343,89 @@ runtimeConfigJson =
   \}\n"
 
 -- | Parse → typecheck → lower to Core, or terminate with an error.
+--   Warnings are printed to stderr but do not block compilation. Use
+--   @awsum check --strict@ for a CI-friendly fail-on-warning flow.
 compileToCoreOrDie :: FilePath -> IO CoreProgram
 compileToCoreOrDie filePath = do
   prog <- parseFileOrDie filePath
   case elaborateLowerProgram prog of
     Left err -> dieWithTypeError filePath err
-    Right core -> pure core
+    Right (warns, core) -> do
+      emitWarningsToStderr filePath warns
+      pure core
+
+-- | Render warnings on stderr in human-readable form so build/run/asm
+--   commands surface them without breaking their stdout contract.
+emitWarningsToStderr :: FilePath -> [Warning] -> IO ()
+emitWarningsToStderr _ [] = pass
+emitWarningsToStderr filePath warns = do
+  source <- readFileTextUtf8 filePath
+  useColor <- colorEnabled
+  let diags = map warningToDiagnostic warns
+  TIO.hPutStrLn stderr (formatDiagnostics useColor filePath source diags)
 
 -- | Read a file as UTF-8 and parse a 'Program' or terminate with an error.
 parseFileOrDie :: FilePath -> IO Program
 parseFileOrDie filePath = do
   text <- readFileTextUtf8 filePath
   case parseProgramDiagnostic text of
-    Left diags -> dieWithDiagnostics filePath diags
+    Left parseErrs -> dieWithDiagnostics filePath (map parseErrorToDiagnostic parseErrs)
     Right p -> pure p
 
--- | Report a 'TypeError' with the offending source line shown, Scala-style:
---   a @-- Error: path:line:col@ header that VS Code's terminal link provider
---   picks up as a clickable link, then the source line with a caret indicator
---   and the error message.
+-- ════════════════════════════════════════════════════════════════════════════
+-- check command
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | The full @awsum check@ flow: parse, typecheck, render diagnostics in
+--   the requested format, and choose an exit code.
+--
+-- Exit-code rules:
+--   • Errors (parse failure, type error)    → exit 1.
+--   • Warnings without @--strict@          → exit 0.
+--   • Warnings with @--strict@             → exit 1.
+--   • Clean program                        → exit 0 (and a friendly @"OK"@
+--                                              line in the non-JSON path).
+runCheck :: FilePath -> Bool -> Bool -> IO ()
+runCheck filePath useJson strict = do
+  src <- readFileTextUtf8 filePath
+  let result = case parseProgramDiagnostic src of
+        Left parseErrs -> Left (map parseErrorToDiagnostic parseErrs)
+        Right prog ->
+          case typecheckProgram prog of
+            Left typeErr -> Left [typeErrorToDiagnostic typeErr]
+            Right warns -> Right (map warningToDiagnostic warns)
+  let diagnostics = either id id result
+      hasError = isLeft result
+      hasWarn = not (null diagnostics) && not hasError
+      shouldFail = hasError || (strict && hasWarn)
+  if useJson
+    then do
+      putTextLn (diagnosticsToJson diagnostics)
+      when shouldFail exitFailure
+    else do
+      useColor <- colorEnabled
+      case diagnostics of
+        [] -> putTextLn "OK"
+        _ -> do
+          let rendered = formatDiagnostics useColor filePath src diagnostics
+          if hasError
+            then die (toString rendered)
+            else do
+              TIO.hPutStrLn stderr rendered
+              when shouldFail exitFailure
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Terminal rendering
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Report a 'TypeError' with the offending source line shown.
 dieWithTypeError :: FilePath -> TypeError -> IO a
 dieWithTypeError filePath err =
-  dieWithDiagnostics filePath [(fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan err), prettyPrintTypeError err)]
+  dieWithDiagnostics filePath [typeErrorToDiagnostic err]
 
 -- | Render and print diagnostics, then exit with a non-zero status.
 --   Re-reads the source file so the offending line can be shown verbatim.
---   Emits ANSI colour when stderr is a terminal and @NO_COLOR@ is unset
---   (the @NO_COLOR@ convention: <https://no-color.org>).
-dieWithDiagnostics :: FilePath -> [(SrcSpan, Text)] -> IO a
+dieWithDiagnostics :: FilePath -> [Diagnostic] -> IO a
 dieWithDiagnostics filePath diags = do
   source <- readFileTextUtf8 filePath
   useColor <- colorEnabled
@@ -391,7 +440,11 @@ colorEnabled = do
     Just _ -> pure False
     Nothing -> hIsTerminalDevice stderr
 
--- | Format diagnostics in Scala-style:
+-- | Format diagnostics in Scala-style. Errors use bold red; warnings use
+--   bold yellow. Each diagnostic header line (e.g. @-- Error: file:line:col@)
+--   is recognized by VS Code's terminal link provider as clickable.
+--
+-- Example error:
 --
 -- @
 -- -- Error: path/to/file.aww:8:11
@@ -399,22 +452,32 @@ colorEnabled = do
 --   |          ^^^
 --   |          Integer literal 256 out of range for UInt8 (valid range: 0..255)
 -- @
---
--- Multiple diagnostics are separated by a blank line.  When @useColor@ is
--- true, the header line and the caret markers are rendered in bold red.
-formatDiagnostics :: Bool -> FilePath -> Text -> [(SrcSpan, Text)] -> Text
+formatDiagnostics :: Bool -> FilePath -> Text -> [Diagnostic] -> Text
 formatDiagnostics useColor filePath source = T.intercalate "\n\n" . map formatOne
   where
     sourceLines = lines source
 
-    boldRed :: Text -> Text
-    boldRed t = if useColor then "\ESC[1;31m" <> t <> "\ESC[0m" else t
+    boldColor :: Severity -> Text -> Text
+    boldColor sev t
+      | not useColor = t
+      | otherwise = case sev of
+          SevError -> "\ESC[1;31m" <> t <> "\ESC[0m"
+          SevWarning -> "\ESC[1;33m" <> t <> "\ESC[0m"
 
-    red :: Text -> Text
-    red t = if useColor then "\ESC[31m" <> t <> "\ESC[0m" else t
+    color :: Severity -> Text -> Text
+    color sev t
+      | not useColor = t
+      | otherwise = case sev of
+          SevError -> "\ESC[31m" <> t <> "\ESC[0m"
+          SevWarning -> "\ESC[33m" <> t <> "\ESC[0m"
 
-    formatOne :: (SrcSpan, Text) -> Text
-    formatOne (SrcSpan sl sc el ec, msg) =
+    severityLabel :: Severity -> Text
+    severityLabel = \case
+      SevError -> "Error"
+      SevWarning -> "Warning"
+
+    formatOne :: Diagnostic -> Text
+    formatOne (Diagnostic sev (SrcSpan sl sc el ec) msg _fixes) =
       let lineText = case drop (sl - 1) sourceLines of
             (l : _) -> l
             [] -> ""
@@ -427,7 +490,7 @@ formatDiagnostics useColor filePath source = T.intercalate "\n\n" . map formatOn
             | sl == el = 1
             | otherwise = max 1 (T.length lineText - sc + 1)
           carets = T.replicate caretLen "^"
-          header = boldRed ("-- Error: " <> toText filePath <> ":" <> show sl <> ":" <> show sc)
+          header = boldColor sev ("-- " <> severityLabel sev <> ": " <> toText filePath <> ":" <> show sl <> ":" <> show sc)
           msgIndent = emptyGutter <> caretIndent
           -- Some diagnostics (notably Megaparsec parse errors) include newlines;
           -- indent every continuation line so the gutter stays aligned.
@@ -436,41 +499,6 @@ formatDiagnostics useColor filePath source = T.intercalate "\n\n" . map formatOn
             "\n"
             [ header,
               gutter <> lineText,
-              emptyGutter <> caretIndent <> red carets,
+              emptyGutter <> caretIndent <> color sev carets,
               msgIndent <> indentedMsg
             ]
-
--- ════════════════════════════════════════════════════════════════════════════
--- JSON diagnostics (hand-written, no aeson dependency)
--- ════════════════════════════════════════════════════════════════════════════
-
--- | Render diagnostics as a JSON array.
-diagnosticsToJson :: [(SrcSpan, Text)] -> Text
-diagnosticsToJson errs = "[" <> T.intercalate "," (map diagToJson errs) <> "]"
-
-diagToJson :: (SrcSpan, Text) -> Text
-diagToJson (SrcSpan sl sc el ec, msg) =
-  "{\"startLine\":"
-    <> show sl
-    <> ",\"startCol\":"
-    <> show sc
-    <> ",\"endLine\":"
-    <> show el
-    <> ",\"endCol\":"
-    <> show ec
-    <> ",\"message\":"
-    <> jsonString msg
-    <> "}"
-
--- | Escape a text value for JSON string embedding.
-jsonString :: Text -> Text
-jsonString t = "\"" <> T.concatMap escapeJsonChar t <> "\""
-
-escapeJsonChar :: Char -> Text
-escapeJsonChar = \case
-  '"' -> "\\\""
-  '\\' -> "\\\\"
-  '\n' -> "\\n"
-  '\r' -> "\\r"
-  '\t' -> "\\t"
-  c -> one c

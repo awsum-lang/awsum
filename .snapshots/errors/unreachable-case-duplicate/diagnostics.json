@@ -1,1 +1,1 @@
-[{"startLine":7,"startCol":10,"endLine":11,"endCol":17,"message":"Unreachable case: Green is already covered"}]
+[{"severity":"error","startLine":7,"startCol":10,"endLine":11,"endCol":17,"message":"Unreachable case: Green is already covered","fixes":[]}]

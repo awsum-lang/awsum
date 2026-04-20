@@ -27,6 +27,7 @@ library
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
       Awsum.Core
+      Awsum.Diagnostic
       Awsum.ElaborateLower
       Awsum.Format
       Awsum.Normalize
@@ -51,6 +52,7 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , containers
     , megaparsec
     , relude
     , text

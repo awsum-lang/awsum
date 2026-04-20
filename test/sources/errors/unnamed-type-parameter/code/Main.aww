@@ -1,0 +1,10 @@
+-- Error: bare '_' is not a valid type-parameter name. Type parameters
+-- must be nameable (users need to refer to them in signatures and in
+-- constructor fields), so even intentionally-unused ones must be named
+-- explicitly: '_a', '_b', etc.
+import IO.Stdout
+
+type Phantom _ _ = Phantom
+
+main : String -> IOUnit
+main input = IO.Stdout.print input

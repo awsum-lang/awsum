@@ -1505,7 +1505,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "input" ]
+        , CFunDef "main" [ "_input" ]
             ( CCall ( CPrim PrimPrint )
                 [ CCall ( CPrim PrimConcat )
                     [ CCall ( CPrim PrimConcat )

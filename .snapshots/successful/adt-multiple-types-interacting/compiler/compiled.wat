@@ -91,7 +91,7 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (call $v_showBoxedColor (i32.load offset=4 (local.get $__scrut)))) (else (i32.load offset=4 (local.get $__scrut))))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)

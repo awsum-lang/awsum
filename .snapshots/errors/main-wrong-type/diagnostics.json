@@ -1,1 +1,1 @@
-[{"startLine":1,"startCol":1,"endLine":1,"endCol":1,"message":"Wrong type for 'main': expected String -> IOUnit, got String -> String"}]
+[{"severity":"error","startLine":1,"startCol":1,"endLine":1,"endCol":1,"message":"Wrong type for 'main': expected String -> IOUnit, got String -> String","fixes":[]}]

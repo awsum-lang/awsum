@@ -1,0 +1,13 @@
+-- Warning: 'orphan' is defined but never reachable from main.
+-- The quick-fix renames /both/ the signature and the definition to '_orphan'
+-- so the file stays type-correct after the rename.
+import IO.Stdout
+
+greeting : String -> String
+greeting s = "hi " ++ s
+
+orphan : String -> String
+orphan s = s
+
+main : String -> IOUnit
+main input = IO.Stdout.print (greeting input)

@@ -82,7 +82,7 @@
     (local $__con_0 i32)
     (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (call $__concat (i32.const 65) (local.get $v_key))) (local.get $__con_0)))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__scrut i32)
     (call $__print (block (result i32) (local.set $__scrut (call $v_search (i32.const 72))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.const 78))))))
 

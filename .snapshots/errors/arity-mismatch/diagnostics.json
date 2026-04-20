@@ -1,1 +1,1 @@
-[{"startLine":5,"startCol":1,"endLine":5,"endCol":22,"message":"Arity mismatch for foo: expected 1 arguments, got 0"}]
+[{"severity":"error","startLine":5,"startCol":1,"endLine":5,"endCol":22,"message":"Arity mismatch for foo: expected 1 arguments, got 0","fixes":[]}]

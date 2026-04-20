@@ -21,7 +21,7 @@ After completing a plan, run `just fix` to verify everything passes (format, lin
 ```bash
 awsum build FILE [-t llvm|jvm|clr|wasm|js|lua] [-o OUT]   # Compile to file/stdout (binary for jvm/clr/wasm)
 awsum run FILE [-t llvm|jvm|clr|wasm|js|lua] [--input X]  # Compile and execute
-awsum check FILE [--json]                      # Typecheck only (--json for structured diagnostics)
+awsum check FILE [--json] [--strict]            # Typecheck only (--json: structured diagnostics; --strict: warnings fail)
 awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
 awsum core FILE                               # Print Core IR
@@ -51,7 +51,8 @@ src/Awsum/
 ├── Format.hs         # Formatter entry point
 ├── Render.hs         # Pretty printer
 ├── Normalize.hs      # Normalization pass
-└── Symbols.hs        # Top-level symbol extraction (outline, IDE integration)
+├── Symbols.hs        # Top-level symbol extraction (outline, IDE integration)
+└── Diagnostic.hs     # Editor-facing diagnostic shape (severity, fixes) + JSON encoder
 
 awsum/Main.hs         # CLI entry point
 test/sources/
@@ -75,6 +76,8 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 - Types: `String`, `IOUnit`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
 - No defaulting, ever: the compiler never picks a type for the user — not for integer literals, not for a monadic context, not for anything else added later. Ambiguous = compile error, fix with an explicit annotation.
 - No shadowing, ever: a fresh binder must not reuse any name already visible in its scope at any level (function params, pattern binders, and every future binding form we add). Shadowing is a compile error, not a warning.
+- Underscore convention: a leading `_` marks a binding as intentionally unused. Applies to values (`_foo`), top-level defs (`_foo`), type params (`_a`), type names (`_A`) and constructors (`_C`). Referencing any `_`-prefixed name anywhere is a compile error. Bare `_` is a wildcard in pattern / function-param position (no binding); forbidden as a nameable declaration (top-level, type, constructor, type-param).
+- Unused bindings: produce warnings with rename-to-`_name` quick-fixes, not errors. `awsum check --strict` escalates warnings to a non-zero exit code for CI. Current warnings: `UnusedParameter`, `UnusedTopLevel`, `UnusedTypeParameter`.
 - Integer literals: compile-time range validation against the declared type (follows directly from no-defaulting).
 - Expressions: string literals, integer literals, `++` concatenation, function application, constructors (first-class — passable to HOFs), `case`/`of` pattern matching with field bindings
 - Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection

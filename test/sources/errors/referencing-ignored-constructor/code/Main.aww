@@ -1,0 +1,14 @@
+-- Error: '_B' is marked as an intentionally-unused constructor, but the
+-- pattern matches on it. Drop the arm (or rename '_B' to 'B' if the
+-- constructor is meant to be observed).
+import IO.Stdout
+
+type A = _B | C
+
+show : A -> String
+show x = case x of
+  _B -> "b"
+  C -> "c"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (show C)

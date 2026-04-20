@@ -79,10 +79,10 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (call $__print (call $v_identity (call $v_compose (i32.const 4) (i32.const 3) (call $v_const (i32.const 65) (i32.const 67))))))
 
-  (func $v_const (export "v_const") (param $v_x i32) (param $v_y i32) (result i32)
+  (func $v_const (export "v_const") (param $v_x i32) (param $v__y i32) (result i32)
     (local.get $v_x))
 
   (func $v_identity (export "v_identity") (param $v_x i32) (result i32)

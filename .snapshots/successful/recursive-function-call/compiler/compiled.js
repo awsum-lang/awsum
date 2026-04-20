@@ -5,7 +5,7 @@ function v_advanceStep(v_x){
   return ((s) => { switch(s[0]) { case 0: { return (v_advanceStep)([1]); } case 1: { return (v_advanceStep)([2]); } case 2: { return "Done!"; } } })(v_x);
 }
 
-function main(v_input){
+function main(v__input){
   return __print((v_advanceStep)([0]));
 }
 

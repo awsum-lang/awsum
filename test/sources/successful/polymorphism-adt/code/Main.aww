@@ -9,5 +9,5 @@ identity : a -> a
 identity x = x
 
 main : String -> IOUnit
-main input = IO.Stdout.print (case identity (Box "one") of
+main _input = IO.Stdout.print (case identity (Box "one") of
   Box v -> v)

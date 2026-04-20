@@ -19,4 +19,4 @@ handleB step = case step of
   Done -> ""
 
 main : String -> IOUnit
-main input = IO.Stdout.print (handleA StepA)
+main _input = IO.Stdout.print (handleA StepA)

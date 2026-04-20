@@ -10,4 +10,4 @@ show c = case c of
   Blue -> "Blue"
 
 main : String -> IOUnit
-main input = IO.Stdout.print (show Red ++ ", " ++ show Green ++ ", " ++ show Blue)
+main _input = IO.Stdout.print (show Red ++ ", " ++ show Green ++ ", " ++ show Blue)

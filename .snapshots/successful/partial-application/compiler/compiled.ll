@@ -65,7 +65,7 @@ define ptr @v_compose(ptr %v_f, ptr %v_g, ptr %v_x) {
   ret ptr %t1
 }
 
-define ptr @v_main(ptr %v_input) {
+define ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [6 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = call ptr @v_apply(ptr @v__pap_0, ptr %t0)
   %t2 = call ptr @__print(ptr %t1)

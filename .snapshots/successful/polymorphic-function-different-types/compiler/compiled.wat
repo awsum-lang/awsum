@@ -86,7 +86,7 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.load offset=4 (local.get $__scrut))))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (call $__print (call $__concat (call $__concat (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 65)) (local.get $__con_0))) (i32.const 74)) (call $v_showResult (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (i32.const 76)) (local.get $__con_1))) (local.get $__con_0)))))))

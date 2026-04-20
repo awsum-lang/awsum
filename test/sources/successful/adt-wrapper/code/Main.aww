@@ -8,4 +8,4 @@ unwrap w = case w of
   Wrap value -> value
 
 main : String -> IOUnit
-main input = IO.Stdout.print (unwrap (Wrap "hello"))
+main _input = IO.Stdout.print (unwrap (Wrap "hello"))

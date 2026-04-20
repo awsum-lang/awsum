@@ -4,7 +4,7 @@ function v_search(v_key)
   return {0, ("found:" .. v_key)}
 end
 
-function main(v_input)
+function main(v__input)
   return __print((function(s) if s[1] == 0 then local v_v = s[2]; return v_v elseif s[1] == 1 then return "nothing" end end)((v_search)("hello")))
 end
 

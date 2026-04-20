@@ -8,7 +8,7 @@ function v_handleB(v_step)
   return (function(s) if s[1] == 0 then return (v_handleA)(v_step) elseif s[1] == 1 then return ("B" .. (v_handleA)({2})) elseif s[1] == 2 then return ("C" .. (v_handleA)({3})) elseif s[1] == 3 then return "" end end)(v_step)
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_handleA)({0}))
 end
 

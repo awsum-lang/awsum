@@ -16,7 +16,7 @@ function v_compose(v_f, v_g, v_x)
   return (v_f)((v_g)(v_x))
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_apply)(v__pap_0, "chain"))
 end
 

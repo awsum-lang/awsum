@@ -9,7 +9,7 @@ function v_showResult(v_r){
   return ((s) => { switch(s[0]) { case 0: { const v_a = s[1]; return v_a; } case 1: { const v_e = s[1]; return v_e; } } })(v_r);
 }
 
-function main(v_input){
+function main(v__input){
   return __print((((v_unwrap)([0, "from box"]) + " ") + (v_showResult)((v_unwrap)([0, [0, "nested"]]))));
 }
 

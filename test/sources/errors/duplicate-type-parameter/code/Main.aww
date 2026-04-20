@@ -1,0 +1,8 @@
+-- Error: two type parameters share the name '_tag'. Give each one a
+-- distinct name ('_a _b' etc.) so they can be addressed unambiguously.
+import IO.Stdout
+
+type Phantom _tag _tag = Phantom
+
+main : String -> IOUnit
+main input = IO.Stdout.print input

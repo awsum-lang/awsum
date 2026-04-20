@@ -8,7 +8,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "main" [ "input" ]
+        , CFunDef "main" [ "_input" ]
             ( CCall ( CPrim PrimPrint )
                 [ CCase
                     ( CCall
