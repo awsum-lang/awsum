@@ -1,13 +1,14 @@
 Program
     { imports =
-        [ ImportDecl []
+        [ ImportDecl
+            [ LineComment " Test: self-recursive function with enum-driven termination" ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl
         ( SrcSpan
-            { spanStartLine = 3
+            { spanStartLine = 4
             , spanStartCol = 1
-            , spanEndLine = 3
+            , spanEndLine = 4
             , spanEndCol = 34
             }
         ) "Step" []
@@ -17,9 +18,9 @@ Program
         ] Nothing :|
         [ Sig
             ( SrcSpan
-                { spanStartLine = 5
+                { spanStartLine = 6
                 , spanStartCol = 1
-                , spanEndLine = 5
+                , spanEndLine = 6
                 , spanEndCol = 29
                 }
             ) "advanceStep"
@@ -29,25 +30,25 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 7
                 , spanStartCol = 1
-                , spanEndLine = 9
+                , spanEndLine = 10
                 , spanEndCol = 19
                 }
             ) "advanceStep" [ "x" ]
             ( ECase
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 17
-                    , spanEndLine = 9
+                    , spanEndLine = 10
                     , spanEndCol = 19
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 22
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 24
                         }
                     )
@@ -57,17 +58,17 @@ Program
                     ( PCon "Step1" [] )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 7
+                            { spanStartLine = 8
                             , spanStartCol = 12
-                            , spanEndLine = 7
+                            , spanEndLine = 8
                             , spanEndCol = 29
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 12
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 24
                                 }
                             )
@@ -75,9 +76,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 24
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 29
                                 }
                             ) "Step2"
@@ -87,17 +88,17 @@ Program
                         ( PCon "Step2" [] )
                         ( EApp
                             ( SrcSpan
-                                { spanStartLine = 8
+                                { spanStartLine = 9
                                 , spanStartCol = 12
-                                , spanEndLine = 8
+                                , spanEndLine = 9
                                 , spanEndCol = 29
                                 }
                             )
                             ( EVar
                                 ( SrcSpan
-                                    { spanStartLine = 8
+                                    { spanStartLine = 9
                                     , spanStartCol = 12
-                                    , spanEndLine = 8
+                                    , spanEndLine = 9
                                     , spanEndCol = 24
                                     }
                                 )
@@ -105,9 +106,9 @@ Program
                             )
                             ( ECon
                                 ( SrcSpan
-                                    { spanStartLine = 8
+                                    { spanStartLine = 9
                                     , spanStartCol = 24
-                                    , spanEndLine = 8
+                                    , spanEndLine = 9
                                     , spanEndCol = 29
                                     }
                                 ) "Step3"
@@ -117,9 +118,9 @@ Program
                         ( PCon "Step3" [] )
                         ( ELit
                             ( SrcSpan
-                                { spanStartLine = 9
+                                { spanStartLine = 10
                                 , spanStartCol = 12
-                                , spanEndLine = 9
+                                , spanEndLine = 10
                                 , spanEndCol = 19
                                 }
                             )
@@ -130,9 +131,9 @@ Program
             ) Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 11
+                { spanStartLine = 12
                 , spanStartCol = 1
-                , spanEndLine = 11
+                , spanEndLine = 12
                 , spanEndCol = 24
                 }
             ) "main"
@@ -142,25 +143,25 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 12
+                { spanStartLine = 13
                 , spanStartCol = 1
-                , spanEndLine = 12
+                , spanEndLine = 13
                 , spanEndCol = 49
                 }
             ) "main" [ "input" ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 12
+                    { spanStartLine = 13
                     , spanStartCol = 14
-                    , spanEndLine = 12
+                    , spanEndLine = 13
                     , spanEndCol = 49
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 12
+                        { spanStartLine = 13
                         , spanStartCol = 14
-                        , spanEndLine = 12
+                        , spanEndLine = 13
                         , spanEndCol = 30
                         }
                     )
@@ -172,25 +173,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 12
+                        { spanStartLine = 13
                         , spanStartCol = 30
-                        , spanEndLine = 12
+                        , spanEndLine = 13
                         , spanEndCol = 49
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 12
+                            { spanStartLine = 13
                             , spanStartCol = 31
-                            , spanEndLine = 12
+                            , spanEndLine = 13
                             , spanEndCol = 48
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 12
+                                { spanStartLine = 13
                                 , spanStartCol = 31
-                                , spanEndLine = 12
+                                , spanEndLine = 13
                                 , spanEndCol = 43
                                 }
                             )
@@ -198,9 +199,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 12
+                                { spanStartLine = 13
                                 , spanStartCol = 43
-                                , spanEndLine = 12
+                                , spanEndLine = 13
                                 , spanEndCol = 48
                                 }
                             ) "Step1"

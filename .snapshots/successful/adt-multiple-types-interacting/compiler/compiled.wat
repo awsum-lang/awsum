@@ -13,8 +13,8 @@
   (data (i32.const 69) "green\00")
   (data (i32.const 75) "blue\00")
   (data (i32.const 80) " \00")
-  (table 4 funcref)
-  (elem (i32.const 0) $v_colorName $v_showBoxedColor $v_showResult $v_main)
+  (table 7 funcref)
+  (elem (i32.const 0) $v_colorName $v_showBoxedColor $v_showResult $v_main $v__con_Box $v__con_Err $v__con_Ok)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -96,6 +96,18 @@
     (local $__con_1 i32)
     (local $__con_2 i32)
     (call $__print (call $__concat (call $__concat (call $v_showBoxedColor (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_1))) (local.get $__con_0))) (i32.const 80)) (call $v_showResult (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))))))
+
+  (func $v__con_Box (export "v__con_Box") (param $v__x0 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
+
+  (func $v__con_Err (export "v__con_Err") (param $v__x0 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
+
+  (func $v__con_Ok (export "v__con_Ok") (param $v__x0 i32) (result i32)
+    (local $__con_0 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

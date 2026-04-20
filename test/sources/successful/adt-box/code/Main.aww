@@ -1,0 +1,11 @@
+-- Test: parametric single-constructor type (Box a) with pattern matching
+import IO.Stdout
+
+type Box a = Box a
+
+unwrap : Box String -> String
+unwrap b = case b of
+  Box value -> value
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Box "hello"))

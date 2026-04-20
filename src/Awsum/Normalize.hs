@@ -54,6 +54,7 @@ normalizeExpr :: Expr -> Expr
 normalizeExpr = \case
   EVar sp q -> EVar sp q
   ELit sp (LString s) -> ELit sp (LString s)
+  ELit sp (LInt n) -> ELit sp (LInt n)
   EApp sp f x -> EApp sp (normalizeExpr f) (normalizeExpr x)
   EInfix sp OpConcat l r -> EInfix sp OpConcat (normalizeExpr l) (normalizeExpr r)
   EParens _sp e -> normalizeExpr e

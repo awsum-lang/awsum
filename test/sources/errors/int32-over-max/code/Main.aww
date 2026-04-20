@@ -1,0 +1,8 @@
+-- Error: Int32 literal 1 above upper bound (2^31)
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print input
+
+overMax : Int32
+overMax = 2147483648

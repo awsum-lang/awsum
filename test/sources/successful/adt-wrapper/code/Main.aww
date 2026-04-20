@@ -1,0 +1,11 @@
+-- Test: non-parametric single-constructor wrapper with a concrete field type
+import IO.Stdout
+
+type Wrapper = Wrap String
+
+unwrap : Wrapper -> String
+unwrap w = case w of
+  Wrap value -> value
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Wrap "hello"))

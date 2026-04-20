@@ -1,0 +1,210 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "unwrap" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "inner1" ]
+                    , CCase
+                        ( CVar "inner1" )
+                        [
+                            ( 0
+                            , [ "inner2" ]
+                            , CCase
+                                ( CVar "inner2" )
+                                [
+                                    ( 0
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ]
+                            )
+                        ,
+                            ( 1
+                            , [ "inner2" ]
+                            , CCase
+                                ( CVar "inner2" )
+                                [
+                                    ( 0
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "inner1" ]
+                    , CCase
+                        ( CVar "inner1" )
+                        [
+                            ( 0
+                            , [ "inner2" ]
+                            , CCase
+                                ( CVar "inner2" )
+                                [
+                                    ( 0
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ]
+                            )
+                        ,
+                            ( 1
+                            , [ "inner2" ]
+                            , CCase
+                                ( CVar "inner2" )
+                                [
+                                    ( 0
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "value" ]
+                                    , CVar "value"
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall ( CPrim PrimConcat )
+                            [ CCall ( CPrim PrimConcat )
+                                [ CCall ( CPrim PrimConcat )
+                                    [ CCall ( CPrim PrimConcat )
+                                        [ CCall ( CPrim PrimConcat )
+                                            [ CCall ( CPrim PrimConcat )
+                                                [ CCall ( CPrim PrimConcat )
+                                                    [ CCall ( CPrim PrimConcat )
+                                                        [ CCall ( CPrim PrimConcat )
+                                                            [ CCall ( CPrim PrimConcat )
+                                                                [ CCall ( CPrim PrimConcat )
+                                                                    [ CCall ( CPrim PrimConcat )
+                                                                        [ CCall
+                                                                            ( CVar "unwrap" )
+                                                                            [ CCon 0
+                                                                                [ CCon 0
+                                                                                    [ CCon 0
+                                                                                        [ CString "1" ]
+                                                                                    ]
+                                                                                ]
+                                                                            ]
+                                                                        , CString ","
+                                                                        ]
+                                                                    , CCall
+                                                                        ( CVar "unwrap" )
+                                                                        [ CCon 0
+                                                                            [ CCon 0
+                                                                                [ CCon 1
+                                                                                    [ CString "2" ]
+                                                                                ]
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                , CString ","
+                                                                ]
+                                                            , CCall
+                                                                ( CVar "unwrap" )
+                                                                [ CCon 0
+                                                                    [ CCon 1
+                                                                        [ CCon 0
+                                                                            [ CString "3" ]
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        , CString ","
+                                                        ]
+                                                    , CCall
+                                                        ( CVar "unwrap" )
+                                                        [ CCon 0
+                                                            [ CCon 1
+                                                                [ CCon 1
+                                                                    [ CString "4" ]
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                , CString ","
+                                                ]
+                                            , CCall
+                                                ( CVar "unwrap" )
+                                                [ CCon 1
+                                                    [ CCon 0
+                                                        [ CCon 0
+                                                            [ CString "5" ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            ]
+                                        , CString ","
+                                        ]
+                                    , CCall
+                                        ( CVar "unwrap" )
+                                        [ CCon 1
+                                            [ CCon 0
+                                                [ CCon 1
+                                                    [ CString "6" ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                , CString ","
+                                ]
+                            , CCall
+                                ( CVar "unwrap" )
+                                [ CCon 1
+                                    [ CCon 1
+                                        [ CCon 0
+                                            [ CString "7" ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        , CString ","
+                        ]
+                    , CCall
+                        ( CVar "unwrap" )
+                        [ CCon 1
+                            [ CCon 1
+                                [ CCon 1
+                                    [ CString "8" ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$con$Err" [ "$x0" ]
+            ( CCon 1
+                [ CVar "$x0" ]
+            )
+        , CFunDef "$con$Ok" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
+        ]
+    }

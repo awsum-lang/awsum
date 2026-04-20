@@ -167,6 +167,54 @@ L_join:
   areturn
 .end method
 
+
+.method public static v__con_Box(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_0
+  aastore
+  areturn
+.end method
+
+
+.method public static v__con_Err(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_0
+  aastore
+  areturn
+.end method
+
+
+.method public static v__con_Ok(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_0
+  aastore
+  areturn
+.end method
+
 .method public static main([Ljava/lang/String;)V
   aload_0
   arraylength

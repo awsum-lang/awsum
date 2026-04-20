@@ -1,0 +1,11 @@
+-- Test: single nullary constructor (Unit type) with pattern matching
+import IO.Stdout
+
+type Unit = Unit
+
+show : Unit -> String
+show u = case u of
+  Unit -> "Unit"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (show Unit)

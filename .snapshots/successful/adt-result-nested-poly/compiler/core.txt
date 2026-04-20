@@ -86,5 +86,13 @@ CoreProgram
                     ]
                 ]
             )
+        , CFunDef "$con$Err" [ "$x0" ]
+            ( CCon 1
+                [ CVar "$x0" ]
+            )
+        , CFunDef "$con$Ok" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
         ]
     }

@@ -1,13 +1,14 @@
 Program
     { imports =
-        [ ImportDecl []
+        [ ImportDecl
+            [ LineComment " Test: basic string concatenation, helper functions, and IO.Stdout.print" ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 3
+            { spanStartLine = 4
             , spanStartCol = 1
-            , spanEndLine = 3
+            , spanEndLine = 4
             , spanEndCol = 24
             }
         ) "main"
@@ -17,25 +18,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 4
+                { spanStartLine = 5
                 , spanStartCol = 1
-                , spanEndLine = 4
+                , spanEndLine = 5
                 , spanEndCol = 49
                 }
             ) "main" [ "input" ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 4
+                    { spanStartLine = 5
                     , spanStartCol = 14
-                    , spanEndLine = 4
+                    , spanEndLine = 5
                     , spanEndCol = 49
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 4
+                        { spanStartLine = 5
                         , spanStartCol = 14
-                        , spanEndLine = 4
+                        , spanEndLine = 5
                         , spanEndCol = 30
                         }
                     )
@@ -47,25 +48,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 4
+                        { spanStartLine = 5
                         , spanStartCol = 30
-                        , spanEndLine = 4
+                        , spanEndLine = 5
                         , spanEndCol = 49
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 4
+                            { spanStartLine = 5
                             , spanStartCol = 31
-                            , spanEndLine = 4
+                            , spanEndLine = 5
                             , spanEndCol = 48
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 4
+                                { spanStartLine = 5
                                 , spanStartCol = 31
-                                , spanEndLine = 4
+                                , spanEndLine = 5
                                 , spanEndCol = 43
                                 }
                             )
@@ -73,9 +74,9 @@ Program
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 4
+                                { spanStartLine = 5
                                 , spanStartCol = 43
-                                , spanEndLine = 4
+                                , spanEndLine = 5
                                 , spanEndCol = 48
                                 }
                             )
@@ -88,26 +89,26 @@ Program
             ( BlockComment " Block comment " )
         , Sig
             ( SrcSpan
-                { spanStartLine = 8
+                { spanStartLine = 9
                 , spanStartCol = 1
-                , spanEndLine = 8
+                , spanEndLine = 9
                 , spanEndCol = 18
                 }
             ) "greeting"
             ( TyCon "String" ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 9
+                { spanStartLine = 10
                 , spanStartCol = 1
-                , spanEndLine = 9
+                , spanEndLine = 10
                 , spanEndCol = 35
                 }
             ) "greeting" []
             ( ELit
                 ( SrcSpan
-                    { spanStartLine = 9
+                    { spanStartLine = 10
                     , spanStartCol = 12
-                    , spanEndLine = 9
+                    , spanEndLine = 10
                     , spanEndCol = 20
                     }
                 )
@@ -116,9 +117,9 @@ Program
             ( Just " Line comment" )
         , Sig
             ( SrcSpan
-                { spanStartLine = 11
+                { spanStartLine = 12
                 , spanStartCol = 1
-                , spanEndLine = 11
+                , spanEndLine = 12
                 , spanEndCol = 31
                 }
             ) "addGreeting"
@@ -128,41 +129,41 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 12
+                { spanStartLine = 13
                 , spanStartCol = 1
-                , spanEndLine = 12
+                , spanEndLine = 13
                 , spanEndCol = 51
                 }
             ) "addGreeting" [ "name" ]
             ( EInfix
                 ( SrcSpan
-                    { spanStartLine = 12
+                    { spanStartLine = 13
                     , spanStartCol = 20
-                    , spanEndLine = 12
+                    , spanEndLine = 13
                     , spanEndCol = 51
                     }
                 ) OpConcat
                 ( EInfix
                     ( SrcSpan
-                        { spanStartLine = 12
+                        { spanStartLine = 13
                         , spanStartCol = 20
-                        , spanEndLine = 12
+                        , spanEndLine = 13
                         , spanEndCol = 45
                         }
                     ) OpConcat
                     ( EInfix
                         ( SrcSpan
-                            { spanStartLine = 12
+                            { spanStartLine = 13
                             , spanStartCol = 20
-                            , spanEndLine = 12
+                            , spanEndLine = 13
                             , spanEndCol = 37
                             }
                         ) OpConcat
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 12
+                                { spanStartLine = 13
                                 , spanStartCol = 20
-                                , spanEndLine = 12
+                                , spanEndLine = 13
                                 , spanEndCol = 29
                                 }
                             )
@@ -170,9 +171,9 @@ Program
                         )
                         ( ELit
                             ( SrcSpan
-                                { spanStartLine = 12
+                                { spanStartLine = 13
                                 , spanStartCol = 32
-                                , spanEndLine = 12
+                                , spanEndLine = 13
                                 , spanEndCol = 37
                                 }
                             )
@@ -181,9 +182,9 @@ Program
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 12
+                            { spanStartLine = 13
                             , spanStartCol = 40
-                            , spanEndLine = 12
+                            , spanEndLine = 13
                             , spanEndCol = 45
                             }
                         )
@@ -192,9 +193,9 @@ Program
                 )
                 ( ELit
                     ( SrcSpan
-                        { spanStartLine = 12
+                        { spanStartLine = 13
                         , spanStartCol = 48
-                        , spanEndLine = 12
+                        , spanEndLine = 13
                         , spanEndCol = 51
                         }
                     )

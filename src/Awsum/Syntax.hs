@@ -133,8 +133,11 @@ data Op'
   deriving stock (Show, Eq)
 
 -- | Literals in the surface language.
---   At the moment we only support double-quoted string literals.
-data Literal = LString Text
+--   Integer literals are untyped at the syntax level — the type is determined by
+--   context during typechecking (no defaulting; see docs/integers.md).
+data Literal
+  = LString Text
+  | LInt Integer
   deriving stock (Show, Eq)
 
 -- | Surface expressions.

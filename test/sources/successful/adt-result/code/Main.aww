@@ -1,3 +1,4 @@
+-- Test: Result type where both branches unify to same type variable (Result a a -> a)
 import IO.Stdout
 
 type Result a e = Ok a | Err e

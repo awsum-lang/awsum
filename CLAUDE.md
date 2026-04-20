@@ -26,6 +26,7 @@ awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
 awsum core FILE                               # Print Core IR
 awsum asm FILE [-t jvm|clr|wasm]              # Print target assembly text
+awsum symbols FILE [--json]                   # List top-level declarations (outline)
 ```
 
 ## Project Structure
@@ -49,7 +50,8 @@ src/Awsum/
 ├── Codegen/Lua.hs    # Lua backend
 ├── Format.hs         # Formatter entry point
 ├── Render.hs         # Pretty printer
-└── Normalize.hs      # Normalization pass
+├── Normalize.hs      # Normalization pass
+└── Symbols.hs        # Top-level symbol extraction (outline, IDE integration)
 
 awsum/Main.hs         # CLI entry point
 test/sources/
@@ -70,8 +72,9 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 
 ## Language Features
 
-- Types: `String`, `IOUnit`, polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
-- Expressions: string literals, `++` concatenation, function application, constructors, `case`/`of` pattern matching with field bindings
+- Types: `String`, `IOUnit`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
+- Integer literals: compile-time range validation against declared type; no defaulting (ambiguous literals are compile errors).
+- Expressions: string literals, integer literals, `++` concatenation, function application, constructors (first-class — passable to HOFs), `case`/`of` pattern matching with field bindings
 - Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection
 - Comments: `--` line, `{- -}` block (preserved through formatting)
 - Built-in: `IO.Stdout.print : String -> IOUnit`

@@ -1,2 +1,3 @@
+-- Error: main returns String instead of required IOUnit
 main : String -> String
 main input = input

@@ -32,6 +32,7 @@ library
       Awsum.Normalize
       Awsum.Parser
       Awsum.Render
+      Awsum.Symbols
       Awsum.Syntax
       Awsum.Typing
       Common.File

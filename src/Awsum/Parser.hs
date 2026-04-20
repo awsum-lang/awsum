@@ -403,9 +403,15 @@ pParensNoLineComments = do
   pure (EParens (toSrcSpan start end) e)
 
 pLitNoLineComments :: Parser Expr
-pLitNoLineComments = do
-  (sp, s) <- withSpan pStringLitNoLineComments
-  pure (ELit sp (LString s))
+pLitNoLineComments =
+  pStringLit <|> pIntLit
+  where
+    pStringLit = do
+      (sp, s) <- withSpan pStringLitNoLineComments
+      pure (ELit sp (LString s))
+    pIntLit = do
+      (sp, n) <- withSpan pIntLitNoLineComments
+      pure (ELit sp (LInt n))
 
 -- Literals ──────────────────────────────────────────────────────────────────
 
@@ -416,6 +422,19 @@ pStringLitNoLineComments = lexemeNoLine $ do
   _ <- C.char '"'
   chars <- P.manyTill stringChar (C.char '"')
   pure (toText chars)
+
+-- | Integer literal: optional '-' followed by one or more decimal digits.
+--   The '-' must be adjacent to the digits (no whitespace), so future binary
+--   operators will not collide with negative literals.
+--   Range validation happens at the type-check stage against the declared type.
+pIntLitNoLineComments :: Parser Integer
+pIntLitNoLineComments = lexemeNoLine $ try $ do
+  sign <- P.option 1 (C.char '-' $> (-1))
+  digits <- P.takeWhile1P (Just "digit") Char.isDigit
+  pure (sign * readDecimal digits)
+  where
+    readDecimal :: Text -> Integer
+    readDecimal = T.foldl' (\acc c -> acc * 10 + toInteger (Char.digitToInt c)) 0
 
 -- Shared helpers for string literal parsing
 stringChar :: Parser Char

@@ -1,0 +1,8 @@
+-- Error: UInt8 literal 1 above upper bound (256)
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print input
+
+overMax : UInt8
+overMax = 256

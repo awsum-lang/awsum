@@ -1,0 +1,149 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ LineComment " Test: single nullary constructor (Unit type) with pattern matching" ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl
+        ( SrcSpan
+            { spanStartLine = 4
+            , spanStartCol = 1
+            , spanEndLine = 4
+            , spanEndCol = 17
+            }
+        ) "Unit" []
+        [ ConDef "Unit" [] ] Nothing :|
+        [ Sig
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 22
+                }
+            ) "show"
+            ( TyArrow
+                ( TyCon "Unit" )
+                ( TyCon "String" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 17
+                }
+            ) "show" [ "u" ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 10
+                    , spanEndLine = 8
+                    , spanEndCol = 17
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 15
+                        , spanEndLine = 7
+                        , spanEndCol = 17
+                        }
+                    )
+                    ( QName [] "u" )
+                )
+                ( CaseAlt []
+                    ( PCon "Unit" [] )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 11
+                            , spanEndLine = 8
+                            , spanEndCol = 17
+                            }
+                        )
+                        ( LString "Unit" )
+                    ) Nothing :| []
+                ) []
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 24
+                }
+            ) "main"
+            ( TyArrow
+                ( TyCon "String" )
+                ( TyCon "IOUnit" )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 41
+                }
+            ) "main" [ "input" ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 14
+                    , spanEndLine = 11
+                    , spanEndCol = 41
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 14
+                        , spanEndLine = 11
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 30
+                        , spanEndLine = 11
+                        , spanEndCol = 41
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 31
+                            , spanEndLine = 11
+                            , spanEndCol = 40
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 31
+                                , spanEndLine = 11
+                                , spanEndCol = 36
+                                }
+                            )
+                            ( QName [] "show" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 36
+                                , spanEndLine = 11
+                                , spanEndCol = 40
+                                }
+                            ) "Unit"
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

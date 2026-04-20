@@ -1,0 +1,40 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "unwrap" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "value" ]
+                    , CVar "value"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "not found"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall
+                            ( CVar "unwrap" )
+                            [ CCon 0
+                                [ CString "hello" ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "unwrap" )
+                        [ CCon 1 [] ]
+                    ]
+                ]
+            )
+        , CFunDef "$con$Found" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
+        ]
+    }

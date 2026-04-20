@@ -1,6 +1,9 @@
 -- top file comment
 {- block comment
 before imports -}
+{- no space -}
+{- extra spaces -}
+{- newline -}
 import IO.Stdout -- import trailing comment
 
 {- block
@@ -27,6 +30,16 @@ show c = case c of
   Green -> "Green" -- inline 2
   Blue -> "Blue"
   -- trailing case comment
+
+-- showAll : Color -> String
+
+-- showAll c = case c of
+
+--   Red -> "Red"
+
+--   Green -> "Green"
+
+--   Blue -> "Blue"
 
 -- before main sig
 

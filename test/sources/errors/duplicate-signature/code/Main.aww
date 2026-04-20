@@ -1,3 +1,4 @@
+-- Error: same type signature declared twice
 foo : String -> IOUnit
 foo : String -> IOUnit
 

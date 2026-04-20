@@ -45,5 +45,14 @@ CoreProgram
                     [ CVar "exampleList" ]
                 ]
             )
+        , CFunDef "$con$Cons"
+            [ "$x0"
+            , "$x1"
+            ]
+            ( CCon 0
+                [ CVar "$x0"
+                , CVar "$x1"
+                ]
+            )
         ]
     }

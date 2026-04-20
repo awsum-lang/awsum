@@ -1,0 +1,53 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showTriple" [ "t" ]
+            ( CCase
+                ( CVar "t" )
+                [
+                    ( 0
+                    ,
+                        [ "a"
+                        , "b"
+                        , "c"
+                        ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CCall ( CPrim PrimConcat )
+                            [ CCall ( CPrim PrimConcat )
+                                [ CCall ( CPrim PrimConcat )
+                                    [ CVar "a"
+                                    , CString " "
+                                    ]
+                                , CVar "b"
+                                ]
+                            , CString " "
+                            ]
+                        , CVar "c"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall
+                    ( CVar "showTriple" )
+                    [ CCon 0
+                        [ CString "one"
+                        , CString "two"
+                        , CString "three"
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$con$Triple"
+            [ "$x0"
+            , "$x1"
+            , "$x2"
+            ]
+            ( CCon 0
+                [ CVar "$x0"
+                , CVar "$x1"
+                , CVar "$x2"
+                ]
+            )
+        ]
+    }

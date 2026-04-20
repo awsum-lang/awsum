@@ -1,3 +1,4 @@
+-- Error: ++ applied to a function value instead of String
 import IO.Stdout
 
 main : String -> IOUnit

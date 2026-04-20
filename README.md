@@ -25,8 +25,15 @@ See [Target Implementation Details](docs/targets.md) for how each backend works 
 
 ### VSCode
 
-- Install the `Awsum` extension to enable syntax highlighting, code formatting, and inline error diagnostics
-- Enable format on save
+Install the `Awsum` extension to enable:
+
+- Syntax highlighting (including integer literals)
+- Formatting (on save or on demand)
+- Inline error diagnostics (on open / save / edit)
+- Outline view, breadcrumbs, and in-file symbol navigation (`Ctrl+Shift+O` / `@`)
+- Workspace-wide symbol search (`Ctrl+T`)
+
+Recommended settings:
 
 ```json
 {
@@ -100,6 +107,7 @@ brew install lua
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
 - `awsum asm FILE [-t jvm|clr|wasm]` — print target assembly text: Jasmin-like for JVM, CIL for CLR, WAT for WASM (for debugging).
+- `awsum symbols FILE [--json]` — list top-level declarations. With `--json`, outputs an LSP-style `DocumentSymbol` array (kind, name, range, selectionRange, children) consumed by the VSCode extension to drive the Outline view.
 - `awsum --version` — show version
 
 Examples:

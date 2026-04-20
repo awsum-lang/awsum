@@ -1,3 +1,4 @@
+-- Error: undefined type constructor X in signature
 import IO.Stdout
 
 main : X -> IOUnit

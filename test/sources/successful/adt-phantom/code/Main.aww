@@ -1,0 +1,11 @@
+-- Test: phantom type parameter (unused in constructor) compiles and runs correctly
+import IO.Stdout
+
+type Phantom a = Phantom
+
+show : Phantom String -> String
+show p = case p of
+  Phantom -> "Phantom"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (show Phantom)

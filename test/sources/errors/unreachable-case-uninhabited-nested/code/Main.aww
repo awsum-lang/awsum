@@ -1,3 +1,4 @@
+-- Error: pattern on nested uninhabited constructor (Err (Box Never) is unreachable)
 import IO.Stdout
 
 type Never

@@ -1,0 +1,2 @@
+foo  :  String  ->  String
+foo   x  =  x  ++  x
