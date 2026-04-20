@@ -52,8 +52,8 @@ Recommended settings:
 
 ## Examples
 
-- [hello.aww](test/sources/hello.aww)
-- [polymorphism.aww](test/sources/polymorphism.aww)
+- [hello.aww](test/sources/successful/hello/code/Main.aww)
+- [polymorphism.aww](test/sources/successful/polymorphism/code/Main.aww)
 
 ## Installation
 
@@ -113,36 +113,36 @@ brew install lua
 Examples:
 
 ```sh
-awsum build test/sources/hello.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
-awsum build test/sources/hello.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
-awsum build test/sources/hello.aww -t clr  -o AwsumMain.dll   && dotnet AwsumMain.dll "world"
-awsum build test/sources/hello.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
-awsum build test/sources/hello.aww -t js   -o out.js  && node out.js "world"
-awsum build test/sources/hello.aww -t lua  -o out.lua && lua out.lua "world"
+awsum build test/sources/successful/hello/code/Main.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
+awsum build test/sources/successful/hello/code/Main.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
+awsum build test/sources/successful/hello/code/Main.aww -t clr  -o AwsumMain.dll   && dotnet AwsumMain.dll "world"
+awsum build test/sources/successful/hello/code/Main.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
+awsum build test/sources/successful/hello/code/Main.aww -t js   -o out.js  && node out.js "world"
+awsum build test/sources/successful/hello/code/Main.aww -t lua  -o out.lua && lua out.lua "world"
 
-awsum asm test/sources/hello.aww -t jvm   # Jasmin-like text (for inspection)
-awsum asm test/sources/hello.aww -t clr   # CIL text (for inspection)
-awsum asm test/sources/hello.aww -t wasm  # WAT text (for inspection)
+awsum asm test/sources/successful/hello/code/Main.aww -t jvm   # Jasmin-like text (for inspection)
+awsum asm test/sources/successful/hello/code/Main.aww -t clr   # CIL text (for inspection)
+awsum asm test/sources/successful/hello/code/Main.aww -t wasm  # WAT text (for inspection)
 
-awsum run test/sources/hello.aww -t llvm --input "world"
-awsum run test/sources/hello.aww -t jvm  --input "world"
-awsum run test/sources/hello.aww -t clr  --input "world"
-awsum run test/sources/hello.aww -t wasm --input "world"
-awsum run test/sources/hello.aww -t js   --input "world"
-awsum run test/sources/hello.aww -t lua  --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t llvm --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t jvm  --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t clr  --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t wasm --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t js   --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t lua  --input "world"
 
-echo "world" | awsum run test/sources/hello.aww -t llvm --stdin
-echo "world" | awsum run test/sources/hello.aww -t jvm  --stdin
-echo "world" | awsum run test/sources/hello.aww -t clr  --stdin
-echo "world" | awsum run test/sources/hello.aww -t wasm --stdin
-echo "world" | awsum run test/sources/hello.aww -t js   --stdin
-echo "world" | awsum run test/sources/hello.aww -t lua  --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t llvm --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t jvm  --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t clr  --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t wasm --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t js   --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t lua  --stdin
 
-awsum check  test/sources/hello.aww
-awsum check  test/sources/hello.aww --json
-awsum format test/sources/hello.aww -i
-awsum ast    test/sources/hello.aww
-awsum core   test/sources/hello.aww
+awsum check  test/sources/successful/hello/code/Main.aww
+awsum check  test/sources/successful/hello/code/Main.aww --json
+awsum format test/sources/successful/hello/code/Main.aww -i
+awsum ast    test/sources/successful/hello/code/Main.aww
+awsum core   test/sources/successful/hello/code/Main.aww
 awsum --version
 ```
 
