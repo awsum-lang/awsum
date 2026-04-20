@@ -169,9 +169,23 @@ lowerDecl sigMap conInfo = \case
     | maybe False typeMentionsNumeric (M.lookup n sigMap) -> Right Nothing
     | otherwise -> do
         body' <- lowerExpr conInfo body
-        pure $ Just $ case args of
+        -- Wildcard parameters @_@ never appear in the body (the typechecker
+        -- and parser ensure they cannot be referenced), but two @_@ params
+        -- in the same function would create colliding local names in the
+        -- generated code. Rename each @_@ to a unique fresh name.
+        let args' = freshenWildcardArgs args
+        pure $ Just $ case args' of
           [] -> CValDef n body' -- zero-arg def ⇒ constant
-          _ -> CFunDef n args body'
+          _ -> CFunDef n args' body'
+
+-- | Replace each @"_"@ in the argument list with a unique fresh name
+--   (@$wild0@, @$wild1@, …) so emitted local names never collide.
+freshenWildcardArgs :: [Name] -> [Name]
+freshenWildcardArgs = go (0 :: Int)
+  where
+    go _ [] = []
+    go i ("_" : xs) = ("$wild" <> show i) : go (i + 1) xs
+    go i (x : xs) = x : go i xs
 
 -- | True when a surface type mentions a numeric built-in anywhere.
 --   Used to erase numeric-typed declarations during lowering.

@@ -353,8 +353,14 @@ typecheckProgram Program {imports, decls} = do
 
     -- Build an environment visible inside the body:
     --   built-ins from imports ⊔ constructors ⊔ parameters ⊔ all top-level signatures.
+    -- Bare-underscore parameters @_@ are wildcards: no binding is introduced
+    -- so multiple @_@ params do not collide with each other or with anything.
+    -- Underscore-prefixed names like @_foo@ are bound normally; the parser
+    -- prevents them from being referenced because expression names cannot
+    -- start with @_@.
     let envBuiltins = builtinEnvFromImports imports
-        envParams = M.fromList [(qLocal x, t) | (x, t) <- zip args argTys]
+        namedArgs = [(x, t) | (x, t) <- zip args argTys, x /= "_"]
+        envParams = M.fromList [(qLocal x, t) | (x, t) <- namedArgs]
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         envOuter = M.unions [envBuiltins, conValEnv, envTop]
         env = M.union envParams envOuter
@@ -363,7 +369,7 @@ typecheckProgram Program {imports, decls} = do
     -- any already-visible name (constructor, import, top-level signature).
     -- Parameter names don't carry individual spans in the surface AST, so we
     -- fall back to the span of the whole definition.
-    checkNoShadow envOuter [(sp, a) | a <- args]
+    checkNoShadow envOuter [(sp, x) | (x, _) <- namedArgs]
 
     checkExpr conEnv typeConsMap env retTy body
 

@@ -1,0 +1,12 @@
+-- Error: a name with a leading underscore is intentionally unused; the parser
+-- does not allow it to appear in expression position, so '_v' here fails.
+import IO.Stdout
+
+type Box a = Box a
+
+unwrap : Box String -> String
+unwrap b = case b of
+  Box _v -> _v
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Box "hi"))

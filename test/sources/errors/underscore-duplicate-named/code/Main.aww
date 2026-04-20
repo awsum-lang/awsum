@@ -1,0 +1,12 @@
+-- Error: '_x' is a /named/ ignore, so the second '_x' shadows the first.
+-- (Multiple bare '_' wildcards would be allowed, since '_' introduces no binding.)
+import IO.Stdout
+
+type Pair a b = Pair a b
+
+showPair : Pair String String -> String
+showPair p = case p of
+  Pair _x _x -> "paired"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (showPair (Pair "l" "r"))

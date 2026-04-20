@@ -1,0 +1,91 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "greeting" [ "$wild0" ]
+            ( CString "hi" )
+        , CFunDef "unwrapBox" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CString "unwrapped"
+                    )
+                ]
+            )
+        , CFunDef "unwrapBoxNamed" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , [ "_v" ]
+                    , CString "unwrapped-named"
+                    )
+                ]
+            )
+        , CFunDef "showPair" [ "p" ]
+            ( CCase
+                ( CVar "p" )
+                [
+                    ( 0
+                    ,
+                        [ "__w0"
+                        , "__w1"
+                        ]
+                    , CString "paired"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall ( CPrim PrimConcat )
+                            [ CCall ( CPrim PrimConcat )
+                                [ CCall ( CPrim PrimConcat )
+                                    [ CCall ( CPrim PrimConcat )
+                                        [ CCall
+                                            ( CVar "greeting" )
+                                            [ CString "x" ]
+                                        , CString " "
+                                        ]
+                                    , CCall
+                                        ( CVar "unwrapBox" )
+                                        [ CCon 0
+                                            [ CString "a" ]
+                                        ]
+                                    ]
+                                , CString " "
+                                ]
+                            , CCall
+                                ( CVar "unwrapBoxNamed" )
+                                [ CCon 0
+                                    [ CString "b" ]
+                                ]
+                            ]
+                        , CString " "
+                        ]
+                    , CCall
+                        ( CVar "showPair" )
+                        [ CCon 0
+                            [ CString "l"
+                            , CString "r"
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$con$Box" [ "$x0" ]
+            ( CCon 0
+                [ CVar "$x0" ]
+            )
+        , CFunDef "$con$Pair"
+            [ "$x0"
+            , "$x1"
+            ]
+            ( CCon 0
+                [ CVar "$x0"
+                , CVar "$x1"
+                ]
+            )
+        ]
+    }
