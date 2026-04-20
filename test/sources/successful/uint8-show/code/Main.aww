@@ -1,0 +1,21 @@
+-- Test: showUInt8 across the full range — min (0), a small value, a value
+-- above the signed-byte range (128..255), and max (255) — rendered as a
+-- comma-separated list. The upper band is where JVM's signed 'byte' and
+-- raw-i32 backends diverge, so the cross-backend invariant is worth
+-- exercising explicitly.
+import IO.Stdout
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (showUInt8 minUInt8 ++ ", " ++ showUInt8 small ++ ", " ++ showUInt8 aboveSignedByte ++ ", " ++ showUInt8 maxUInt8)
+
+minUInt8 : UInt8
+minUInt8 = 0
+
+small : UInt8
+small = 42
+
+aboveSignedByte : UInt8
+aboveSignedByte = 200
+
+maxUInt8 : UInt8
+maxUInt8 = 255

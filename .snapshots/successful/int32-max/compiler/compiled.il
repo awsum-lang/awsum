@@ -32,8 +32,17 @@
 
   .method public hidebysig static object v_main(object) cil managed
   {
-    ldarg.0
+    call object AwsumMain::v_maxInt32()
+    callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__print(object)
+    ret
+  }
+
+
+  .method public hidebysig static object v_maxInt32() cil managed
+  {
+    ldc.i4 2147483647
+    box [System.Runtime]System.Int32
     ret
   }
 

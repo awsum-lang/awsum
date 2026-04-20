@@ -85,13 +85,22 @@ emitDecl = \case
 --   • 'CPrim' is never a standalone value — only appears as the callee of 'CCall'.
 --   • 'PrimConcat' → '(a .. b)'.
 --   • 'PrimPrint'  → '__print(x)'.
+--   • 'PrimShowInt _' → 'tostring(x)'. Works identically on Lua 5.1 and 5.3+.
+--     On 5.1 every number is an IEEE-754 double, but Int32 (max ~2e9) and
+--     UInt8 (max 255) fit well below 2^53, so the double representation is
+--     exact. 'tostring' uses '%.14g' which formats these values in normal
+--     (non-scientific) notation. When we add Int64 (> 2^53) we'll lose
+--     precision on 5.1 — either restrict to 5.3+ or emit integer operations
+--     via 'math.floor'/'math.fmod' to stay uniform.
 --   • Generic calls: '(callee)(args...)' with a safe parenthesized callee.
 emitExpr :: CExpr -> Text
 emitExpr = \case
   CString s -> luaString s
   CVar n -> mangle n
+  CIntLit n _ -> show n
   CPrim PrimConcat -> "--<prim concat>"
   CPrim PrimPrint -> "--<prim print>"
+  CPrim (PrimShowInt _) -> "--<prim showInt>"
   CCon tag fields ->
     "{" <> T.intercalate ", " (show tag : map emitExpr fields) <> "}"
   CCase scrut alts ->
@@ -114,6 +123,10 @@ emitExpr = \case
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
+      CPrim (PrimShowInt _) ->
+        case xs of
+          [x] -> "tostring(" <> emitExpr x <> ")"
+          _ -> error "__showInt: arity mismatch"
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
   where

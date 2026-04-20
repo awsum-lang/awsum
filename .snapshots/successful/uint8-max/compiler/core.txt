@@ -1,8 +1,27 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "input" ]
+        [ CFunDef "main" [ "_input" ]
             ( CCall ( CPrim PrimPrint )
-                [ CVar "input" ]
+                [ CCall
+                    ( CPrim
+                        ( PrimShowInt
+                            ( IntType
+                                { intSigned = False
+                                , intWidth = 8
+                                }
+                            )
+                        )
+                    )
+                    [ CVar "maxUInt8" ]
+                ]
+            )
+        , CValDef "maxUInt8"
+            ( CIntLit 255
+                ( IntType
+                    { intSigned = False
+                    , intWidth = 8
+                    }
+                )
             )
         ]
     }

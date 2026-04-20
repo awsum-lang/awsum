@@ -113,6 +113,7 @@ stringsInExpr :: CExpr -> [Text]
 stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
+  CIntLit _ _ -> []
   CPrim _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
@@ -230,7 +231,7 @@ typeDecls arities
 
 runtimeHelpers :: Int -> Text
 runtimeHelpers emptyOff =
-  T.intercalate "\n\n" [rtStrlen, rtAlloc, rtMemcpy, rtConcat, rtPrint, rtGetArg emptyOff]
+  T.intercalate "\n\n" [rtStrlen, rtAlloc, rtMemcpy, rtConcat, rtPrint, rtBoxI32, rtShowI32, rtGetArg emptyOff]
 
 rtStrlen :: Text
 rtStrlen =
@@ -297,6 +298,68 @@ rtPrint =
       "    (i32.store (i32.const 4) (local.get $len))",
       "    (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))",
       "    (i32.const 0))"
+    ]
+
+-- | Box a 32-bit value as a heap cell; the returned pointer is the uniform
+--   representation of both Int32 and UInt8 at runtime (UInt8 values 0..255
+--   fit trivially in 32 bits, which avoids a second boxing variant).
+rtBoxI32 :: Text
+rtBoxI32 =
+  unlines
+    [ "  (func $__box_i32 (param $v i32) (result i32)",
+      "    (local $p i32)",
+      "    (local.set $p (call $__alloc (i32.const 4)))",
+      "    (i32.store (local.get $p) (local.get $v))",
+      "    (local.get $p))"
+    ]
+
+-- | Render a boxed integer as a decimal null-terminated string.
+--
+--   The input pointer holds a 32-bit value; we treat it as signed (@i32.lt_s@)
+--   for the minus-sign check. UInt8 values 0..255 are always positive in the
+--   signed interpretation, so the same routine renders them correctly.
+--
+--   Algorithm: write digits into a 16-byte scratch buffer starting at the
+--   second-to-last byte and moving left. 11 digits (@-2147483648@) + null
+--   terminator is the worst case, which comfortably fits.
+--
+--   Negation of @INT_MIN@ is a no-op in two's complement, but since we use
+--   @i32.div_u@ / @i32.rem_u@ on the magnitude, the unsigned reading of
+--   @0x80000000@ is @2147483648@ — the correct magnitude.
+rtShowI32 :: Text
+rtShowI32 =
+  unlines
+    [ "  (func $__show_i32 (param $p i32) (result i32)",
+      "    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32)",
+      "    (local.set $v (i32.load (local.get $p)))",
+      "    (local.set $buf (call $__alloc (i32.const 16)))",
+      "    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))",
+      "    (local.set $pos (i32.const 14))",
+      "    (if (i32.lt_s (local.get $v) (i32.const 0))",
+      "      (then",
+      "        (local.set $neg (i32.const 1))",
+      "        (local.set $mag (i32.sub (i32.const 0) (local.get $v))))",
+      "      (else",
+      "        (local.set $neg (i32.const 0))",
+      "        (local.set $mag (local.get $v))))",
+      "    (if (i32.eqz (local.get $mag))",
+      "      (then",
+      "        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 48))",
+      "        (local.set $pos (i32.sub (local.get $pos) (i32.const 1))))",
+      "      (else",
+      "        (block $done",
+      "          (loop $loop",
+      "            (br_if $done (i32.eqz (local.get $mag)))",
+      "            (local.set $digit (i32.rem_u (local.get $mag) (i32.const 10)))",
+      "            (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.add (local.get $digit) (i32.const 48)))",
+      "            (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))",
+      "            (local.set $mag (i32.div_u (local.get $mag) (i32.const 10)))",
+      "            (br $loop)))))",
+      "    (if (local.get $neg)",
+      "      (then",
+      "        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 45))",
+      "        (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))))",
+      "    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))"
     ]
 
 rtGetArg :: Int -> Text
@@ -378,6 +441,9 @@ emitExpr ctx = \case
         "(i32.const 0)"
   CPrim _ ->
     "(i32.const 0)"
+  CIntLit n _ ->
+    let n32 = fromInteger n :: Int32
+     in "(call $__box_i32 (i32.const " <> show n32 <> "))"
   CCon tag fields ->
     let conLocal = "$__con_" <> show ctx.wConDepth
         nestedCtx = ctx {wConDepth = ctx.wConDepth + 1}
@@ -398,6 +464,9 @@ emitExpr ctx = \case
       CPrim PrimPrint
         | [x] <- xs ->
             "(call $__print " <> emitExpr ctx x <> ")"
+      CPrim (PrimShowInt _)
+        | [x] <- xs ->
+            "(call $__show_i32 " <> emitExpr ctx x <> ")"
       CVar n
         | n `Set.member` ctx.wFunDefs ->
             "(call $" <> mangle n <> " " <> T.intercalate " " (map (emitExpr ctx) xs) <> ")"

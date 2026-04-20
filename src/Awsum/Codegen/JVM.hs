@@ -165,6 +165,13 @@ emitExprText ctx paramMap = \case
         "  aconst_null"
   CPrim _ ->
     "  aconst_null"
+  CIntLit n _ ->
+    -- Same representation as the binary assembler: push int and box via Integer.valueOf.
+    T.intercalate
+      "\n"
+      [ emitIconstBig (fromInteger n :: Int32),
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;"
+      ]
   CCon tag fields ->
     let nSlots = 1 + length fields
         storeTag =
@@ -236,6 +243,14 @@ emitExprText ctx paramMap = \case
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;"
               ]
+      CPrim (PrimShowInt _)
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  checkcast java/lang/Integer",
+                "  invokevirtual java/lang/Integer/toString()Ljava/lang/String;"
+              ]
       CVar n
         | n `Set.member` ctx.cFunDefs ->
             let argTexts = map (emitExprText ctx paramMap) xs
@@ -257,6 +272,16 @@ emitIconst n
   | n >= 0 && n <= 5 = "  iconst_" <> show n
   | n >= -128 && n <= 127 = "  bipush " <> show n
   | otherwise = "  sipush " <> show n
+
+-- | Textual form of 'bcLoadInt32' from the binary assembler: any Int32 value
+--   using the compact instruction that fits. Values outside the sipush range
+--   become 'ldc' on a CPInteger — we render that as @ldc N@ and trust the
+--   reader (snapshot) to know the pool has the entry (the binary path adds
+--   it explicitly).
+emitIconstBig :: Int32 -> Text
+emitIconstBig n
+  | n >= -32768 && n <= 32767 = emitIconst (fromIntegral n)
+  | otherwise = "  ldc " <> show n
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

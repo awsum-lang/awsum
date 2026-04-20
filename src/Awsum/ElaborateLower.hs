@@ -29,6 +29,21 @@ import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
+-- | Static info carried through lowering so it can fill in the type of every
+--   'LInt' literal (integer literals are untyped in the surface AST; the
+--   typechecker validates them against context but doesn't annotate the tree).
+--
+--   • 'leTypeOf' resolves qualified/unqualified names to their declared type —
+--     user signatures, built-in functions ('IO.Stdout.print', 'Int32.show', …)
+--     and nullary-constructor names. We use it at 'EApp' sites to recover the
+--     argument type and propagate it to the argument expression.
+--   • 'leConInfo' is the same constructor tag/arity map used by the rest of
+--     lowering; carried alongside so we can pass a single record around.
+data LowerEnv = LowerEnv
+  { leTypeOf :: QName -> Maybe Type',
+    leConInfo :: ConInfoEnv
+  }
+
 -- | Constructor info: maps constructor name → (tag, arity).
 type ConInfoEnv = M.Map Name (Int, Int)
 
@@ -66,13 +81,34 @@ elaborateLowerProgram prog = do
   -- 1) Elaboration step (MVP): just typecheck; no evidence/dictionaries yet.
   warnings <- typecheckProgram prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
-  let conInfo = buildConInfo (toList (decls prog))
-      sigMap = M.fromList [(n, t) | Sig _sp n t _ <- toList (decls prog)]
-  mds <- traverse (lowerDecl sigMap conInfo) (toList (decls prog))
+  let ds = toList (decls prog)
+      conInfo = buildConInfo ds
+      sigMap = M.fromList [(n, t) | Sig _sp n t _ <- ds]
+      env = mkLowerEnv prog conInfo sigMap
+  mds <- traverse (lowerDecl env sigMap) ds
   let core = CoreProgram (catMaybes mds <> genConWrappers conInfo)
   -- 3) Saturate under-applied direct calls via lambda-lifting.
   core' <- saturateProgram core
   pure (warnings, core')
+
+-- | Build the name→type lookup used by 'lowerExpr' to propagate expected
+--   types down to integer literals. Combines user signatures, built-in
+--   qualified names, and (as a future hook) constructor types.
+mkLowerEnv :: Program -> ConInfoEnv -> M.Map Name Type' -> LowerEnv
+mkLowerEnv _prog conInfo sigMap =
+  let stringTy = TyCon noSpan "String"
+      int32Ty = TyCon noSpan "Int32"
+      uint8Ty = TyCon noSpan "UInt8"
+      ioUnitTy = TyCon noSpan "IOUnit"
+      builtins =
+        M.fromList
+          [ (QName ["IO", "Stdout"] "print", TyArrow noSpan stringTy ioUnitTy),
+            (QName [] "showInt32", TyArrow noSpan int32Ty stringTy),
+            (QName [] "showUInt8", TyArrow noSpan uint8Ty stringTy)
+          ]
+      userSigs = M.fromList [(QName [] n, t) | (n, t) <- M.toList sigMap]
+      lookupName q = M.lookup q (userSigs <> builtins)
+   in LowerEnv {leTypeOf = lookupName, leConInfo = conInfo}
 
 -- | Saturate under-applied direct calls by lambda-lifting.
 --
@@ -107,6 +143,7 @@ saturateExpr am locals = go
     go = \case
       e@(CPrim _) -> pure e
       e@(CString _) -> pure e
+      e@(CIntLit _ _) -> pure e
       e@(CVar _) -> pure e
       CCon tag fs -> CCon tag <$> traverse go fs
       CCase s alts -> CCase <$> go s <*> traverse goAlt alts
@@ -147,6 +184,7 @@ freeVars :: CExpr -> Set Name
 freeVars = \case
   CPrim _ -> mempty
   CString _ -> mempty
+  CIntLit _ _ -> mempty
   CVar n -> one n
   CCon _ fs -> foldMap freeVars fs
   CCase s alts ->
@@ -156,29 +194,50 @@ freeVars = \case
 
 -- | Lower a top-level declaration.
 --   • Type signatures and type declarations are erased (they already influenced checking).
---   • Declarations whose signature mentions a numeric type (Int32, UInt8) are
---     currently erased too: the typechecker has validated them, but the Core IR
---     and backends don't yet represent integer values.  This is acceptable for
---     the MVP where integers carry no runtime behaviour (no arithmetic, no
---     conversion, no printing).
 --   • Zero-arg defs become constants ('CValDef'), others become first-order functions.
-lowerDecl :: M.Map Name Type' -> ConInfoEnv -> Decl -> Either TypeError (Maybe CDecl)
-lowerDecl sigMap conInfo = \case
+--   • The signature, when present, gives the expected result type — used by
+--     'lowerExpr' to resolve the type of any 'LInt' literal appearing in the
+--     body (surface integer literals are untyped).
+lowerDecl :: LowerEnv -> M.Map Name Type' -> Decl -> Either TypeError (Maybe CDecl)
+lowerDecl env sigMap = \case
   Sig {} -> Right Nothing
   CommentDecl _ -> Right Nothing
   TypeDecl {} -> Right Nothing
-  FunDef _sp n args body _
-    | maybe False typeMentionsNumeric (M.lookup n sigMap) -> Right Nothing
-    | otherwise -> do
-        body' <- lowerExpr conInfo body
-        -- Wildcard parameters @_@ never appear in the body (the typechecker
-        -- and parser ensure they cannot be referenced), but two @_@ params
-        -- in the same function would create colliding local names in the
-        -- generated code. Rename each @_@ to a unique fresh name.
-        let args' = freshenWildcardArgs (map paramName args)
-        pure $ Just $ case args' of
-          [] -> CValDef n body' -- zero-arg def ⇒ constant
-          _ -> CFunDef n args' body'
+  FunDef _sp n args body _ -> do
+    let (argTys, resultTy) = case M.lookup n sigMap of
+          Just t -> splitArrowN (length args) t
+          Nothing -> ([], Nothing)
+        -- Extend env with the function's parameters so 'lowerExpr' can
+        -- resolve their types at use sites (currently only matters if a
+        -- parameter's type is propagated into a literal, but keeps the
+        -- lookup uniform).
+        paramEntries =
+          [ (QName [] (paramName p), ty)
+          | (p, Just ty) <- zip args (map Just argTys <> repeat Nothing)
+          ]
+        env' = extendLowerEnv env paramEntries
+    body' <- lowerExpr env' resultTy body
+    let args' = freshenWildcardArgs (map paramName args)
+    pure $ Just $ case args' of
+      [] -> CValDef n body' -- zero-arg def ⇒ constant
+      _ -> CFunDef n args' body'
+
+-- | Split an arrow type into @(first n arg types, result type)@.
+--   Example: @splitArrowN 2 (A -> B -> C -> D)  ==>  ([A,B], Just (C -> D))@.
+--   If the type does not have enough arrows, returns @(partial args, Nothing)@.
+splitArrowN :: Int -> Type' -> ([Type'], Maybe Type')
+splitArrowN = go []
+  where
+    go acc 0 t = (reverse acc, Just t)
+    go acc k (TyArrow _ a b) = go (a : acc) (k - 1) b
+    go acc _ _ = (reverse acc, Nothing)
+
+-- | Add extra name→type entries to a 'LowerEnv' (e.g. function parameters).
+extendLowerEnv :: LowerEnv -> [(QName, Type')] -> LowerEnv
+extendLowerEnv env entries =
+  let extra = M.fromList entries
+      look q = M.lookup q extra <|> leTypeOf env q
+   in env {leTypeOf = look}
 
 -- | Replace each @"_"@ in the argument list with a unique fresh name
 --   (@$wild0@, @$wild1@, …) so emitted local names never collide.
@@ -189,71 +248,81 @@ freshenWildcardArgs = go (0 :: Int)
     go i ("_" : xs) = ("$wild" <> show i) : go (i + 1) xs
     go i (x : xs) = x : go i xs
 
--- | True when a surface type mentions a numeric built-in anywhere.
---   Used to erase numeric-typed declarations during lowering.
-typeMentionsNumeric :: Type' -> Bool
-typeMentionsNumeric = \case
-  TyVar _ _ -> False
-  TyCon _ "Int32" -> True
-  TyCon _ "UInt8" -> True
-  TyCon _ _ -> False
-  TyApp _ f x -> typeMentionsNumeric f || typeMentionsNumeric x
-  TyArrow _ a b -> typeMentionsNumeric a || typeMentionsNumeric b
-
 -- | Lower a surface expression to Core.
 --     • drop explicit parentheses,
 --     • translate string literals verbatim,
+--     • resolve integer literals to typed 'CIntLit' using the expected type
+--       ('Maybe Type'') propagated from an enclosing signature or function arg,
 --     • map @e1 ++ e2@ to a primitive call,
---     • flatten left-associated application into a single 'CCall',
+--     • flatten left-associated application into a single 'CCall', propagating
+--       argument types down so nested literals are resolved,
 --     • map constructors to integer tags,
 --     • non-nullary constructors used as values become wrapper references,
 --     • map @case@ to tag-based dispatch.
-lowerExpr :: ConInfoEnv -> Expr -> Either TypeError CExpr
-lowerExpr conInfo = \case
-  EParens _sp e -> lowerExpr conInfo e
+--
+-- The 'Maybe Type'' argument is the expected type of the expression, if known
+-- from context (e.g. the signature's return type, or the argument slot of a
+-- call). It is only consulted for 'LInt' literals — every other expression
+-- ignores it.
+lowerExpr :: LowerEnv -> Maybe Type' -> Expr -> Either TypeError CExpr
+lowerExpr env expected = \case
+  EParens _sp e -> lowerExpr env expected e
   EVar _sp qn -> lowerVar qn
   ELit _sp (LString t) -> Right (CString t)
-  ELit _sp (LInt _) ->
-    -- Integer literals are accepted by the typechecker (with range validation)
-    -- but produce no runtime representation yet — numeric-typed declarations
-    -- are dropped by lowerDecl before reaching here.  Reaching this branch
-    -- means the literal appeared inside a non-numeric expression, which the
-    -- surface language currently has no way to combine (no arithmetic, no
-    -- case-on-int, etc.).
-    Left (TELowering "integer literal outside a numeric-typed declaration")
-  EInfix _sp OpConcat l r -> CCall (CPrim PrimConcat) <$> sequenceA [lowerExpr conInfo l, lowerExpr conInfo r]
-  ECon _sp name -> case M.lookup name conInfo of
+  ELit sp (LInt n) -> case expected of
+    Just (TyCon _ "Int32") -> Right (CIntLit n TInt32)
+    Just (TyCon _ "UInt8") -> Right (CIntLit n TUInt8)
+    -- The typechecker runs first and raises 'AmbiguousIntLiteral' /
+    -- 'IntLiteralOutOfRange' / 'TypeMismatch' for every offending literal,
+    -- so reaching here means lowering failed to thread the expected type.
+    -- Surface that as a lowering bug rather than silently discarding the value.
+    _ -> Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
+  EInfix _sp OpConcat l r ->
+    let strExpected = Just (TyCon noSpan "String")
+     in CCall (CPrim PrimConcat)
+          <$> sequenceA [lowerExpr env strExpected l, lowerExpr env strExpected r]
+  ECon _sp name -> case M.lookup name (leConInfo env) of
     Just (tag, 0) -> Right (CCon tag [])
     Just (_tag, _arity) -> Right (CVar (conWrapperName name))
     Nothing -> Left (TELowering ("unknown constructor: " <> name))
   ECase _sp scrut alts _ -> do
-    scrut' <- lowerExpr conInfo scrut
-    alts' <- traverse (lowerAlt conInfo) (toList alts)
-    -- Group alts by tag and merge nested patterns
+    scrut' <- lowerExpr env Nothing scrut
+    alts' <- traverse (lowerAlt env expected) (toList alts)
     merged <- mergeAlts alts'
     Right (CCase scrut' merged)
   EApp _sp f x -> do
     let (f0, xs) = collectApps f [x]
     case f0 of
-      ECon _sp' name -> case M.lookup name conInfo of
+      ECon _sp' name -> case M.lookup name (leConInfo env) of
         Just (tag, _arity) -> do
-          xs' <- traverse (lowerExpr conInfo) xs
+          xs' <- traverse (lowerExpr env Nothing) xs
           Right (CCon tag xs')
         Nothing -> Left (TELowering ("unknown constructor: " <> name))
       _ -> do
-        f0' <- lowerExpr conInfo f0
-        xs' <- traverse (lowerExpr conInfo) xs
+        -- Recover argument types from the head's declared type so integer
+        -- literals in argument position get their IntType.
+        let argTys = case f0 of
+              EVar _ qn -> case leTypeOf env qn of
+                Just t -> fst (splitArrowN (length xs) t)
+                Nothing -> []
+              _ -> []
+            argExpected = map Just argTys <> repeat Nothing
+        f0' <- lowerExpr env Nothing f0
+        xs' <- zipWithM (lowerExpr env) argExpected xs
         Right (CCall f0' xs')
 
 -- | Lower a single case alternative: look up the constructor tag,
 --   desugar nested patterns into nested CCase, and lower the body.
-lowerAlt :: ConInfoEnv -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
-lowerAlt conInfo (CaseAlt _ (PCon _ cName pats) body _) = do
-  (tag, _arity) <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName conInfo)
-  body' <- lowerExpr conInfo body
-  let (topVars, wrappedBody) = desugarPats conInfo "__" 0 pats body'
+--   The 'Maybe Type'' is the expected type of the whole case expression
+--   and is propagated to each arm body so integer literals inside arms get
+--   their 'IntType'.
+lowerAlt :: LowerEnv -> Maybe Type' -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
+lowerAlt env expected (CaseAlt _ (PCon _ cName pats) body _) = do
+  (tag, _arity) <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
+  body' <- lowerExpr env expected body
+  let (topVars, wrappedBody) = desugarPats (leConInfo env) "__" 0 pats body'
   Right (tag, topVars, wrappedBody)
-lowerAlt _ CaseAlt {} =
+lowerAlt _ _ CaseAlt {} =
   Left (TELowering "only constructor patterns are supported in case")
 
 -- | Merge case alternatives that have the same outer tag.
@@ -324,12 +393,16 @@ collectApps f acc = case f of
 --
 --   Supported:
 --     • @IO.Stdout.print@  → 'PrimPrint'
---     • Unqualified names  → Core variables.
+--     • @showInt32@        → 'PrimShowInt TInt32'
+--     • @showUInt8@        → 'PrimShowInt TUInt8'
+--     • Other unqualified names → Core variables.
 --
 --   Everything else: fail fast with a helpful message.
 lowerVar :: QName -> Either TypeError CExpr
 lowerVar (QName mods n) =
   case mods of
+    [] | n == "showInt32" -> Right (CPrim (PrimShowInt TInt32))
+    [] | n == "showUInt8" -> Right (CPrim (PrimShowInt TUInt8))
     [] -> Right (CVar n)
     ["IO", "Stdout"] | n == "print" -> Right (CPrim PrimPrint)
     _ ->

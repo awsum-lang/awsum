@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: UInt8 lower bound literal (0) is accepted" ]
+            [ LineComment " Test: UInt8 lower bound (0) survives the round trip through UInt8.show." ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
@@ -44,7 +44,7 @@ Program
                 { spanStartLine = 5
                 , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 35
+                , spanEndCol = 52
                 }
             ) "main"
             [ Param
@@ -52,24 +52,24 @@ Program
                     { spanStartLine = 5
                     , spanStartCol = 6
                     , spanEndLine = 5
-                    , spanEndCol = 11
+                    , spanEndCol = 12
                     }
-                ) "input"
+                ) "_input"
             ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 14
+                    , spanStartCol = 15
                     , spanEndLine = 5
-                    , spanEndCol = 35
+                    , spanEndCol = 52
                     }
                 )
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 5
-                        , spanStartCol = 14
+                        , spanStartCol = 15
                         , spanEndLine = 5
-                        , spanEndCol = 30
+                        , spanEndCol = 31
                         }
                     )
                     ( QName
@@ -78,15 +78,43 @@ Program
                         ] "print"
                     )
                 )
-                ( EVar
+                ( EParens
                     ( SrcSpan
                         { spanStartLine = 5
-                        , spanStartCol = 30
+                        , spanStartCol = 31
                         , spanEndLine = 5
-                        , spanEndCol = 35
+                        , spanEndCol = 52
                         }
                     )
-                    ( QName [] "input" )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 32
+                            , spanEndLine = 5
+                            , spanEndCol = 51
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 32
+                                , spanEndLine = 5
+                                , spanEndCol = 43
+                                }
+                            )
+                            ( QName [ "UInt8" ] "show" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 43
+                                , spanEndLine = 5
+                                , spanEndCol = 51
+                                }
+                            )
+                            ( QName [] "minUInt8" )
+                        )
+                    )
                 )
             ) Nothing
         , Sig
@@ -94,15 +122,15 @@ Program
                 { spanStartLine = 7
                 , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 18
+                , spanEndCol = 17
                 }
-            ) "_minUInt8"
+            ) "minUInt8"
             ( TyCon
                 ( SrcSpan
                     { spanStartLine = 7
-                    , spanStartCol = 13
+                    , spanStartCol = 12
                     , spanEndLine = 7
-                    , spanEndCol = 18
+                    , spanEndCol = 17
                     }
                 ) "UInt8"
             ) Nothing
@@ -111,15 +139,15 @@ Program
                 { spanStartLine = 8
                 , spanStartCol = 1
                 , spanEndLine = 8
-                , spanEndCol = 14
+                , spanEndCol = 13
                 }
-            ) "_minUInt8" []
+            ) "minUInt8" []
             ( ELit
                 ( SrcSpan
                     { spanStartLine = 8
-                    , spanStartCol = 13
+                    , spanStartCol = 12
                     , spanEndLine = 8
-                    , spanEndCol = 14
+                    , spanEndCol = 13
                     }
                 )
                 ( LInt 0 )

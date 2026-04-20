@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: Int32 upper bound literal (2^31 - 1) is accepted" ]
+            [ LineComment " Test: Int32 upper bound (2^31 - 1) survives the round trip through Int32.show." ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
@@ -44,7 +44,7 @@ Program
                 { spanStartLine = 5
                 , spanStartCol = 1
                 , spanEndLine = 5
-                , spanEndCol = 35
+                , spanEndCol = 52
                 }
             ) "main"
             [ Param
@@ -52,24 +52,24 @@ Program
                     { spanStartLine = 5
                     , spanStartCol = 6
                     , spanEndLine = 5
-                    , spanEndCol = 11
+                    , spanEndCol = 12
                     }
-                ) "input"
+                ) "_input"
             ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 5
-                    , spanStartCol = 14
+                    , spanStartCol = 15
                     , spanEndLine = 5
-                    , spanEndCol = 35
+                    , spanEndCol = 52
                     }
                 )
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 5
-                        , spanStartCol = 14
+                        , spanStartCol = 15
                         , spanEndLine = 5
-                        , spanEndCol = 30
+                        , spanEndCol = 31
                         }
                     )
                     ( QName
@@ -78,15 +78,43 @@ Program
                         ] "print"
                     )
                 )
-                ( EVar
+                ( EParens
                     ( SrcSpan
                         { spanStartLine = 5
-                        , spanStartCol = 30
+                        , spanStartCol = 31
                         , spanEndLine = 5
-                        , spanEndCol = 35
+                        , spanEndCol = 52
                         }
                     )
-                    ( QName [] "input" )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 32
+                            , spanEndLine = 5
+                            , spanEndCol = 51
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 32
+                                , spanEndLine = 5
+                                , spanEndCol = 43
+                                }
+                            )
+                            ( QName [ "Int32" ] "show" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 43
+                                , spanEndLine = 5
+                                , spanEndCol = 51
+                                }
+                            )
+                            ( QName [] "maxInt32" )
+                        )
+                    )
                 )
             ) Nothing
         , Sig
@@ -94,15 +122,15 @@ Program
                 { spanStartLine = 7
                 , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 18
+                , spanEndCol = 17
                 }
-            ) "_maxInt32"
+            ) "maxInt32"
             ( TyCon
                 ( SrcSpan
                     { spanStartLine = 7
-                    , spanStartCol = 13
+                    , spanStartCol = 12
                     , spanEndLine = 7
-                    , spanEndCol = 18
+                    , spanEndCol = 17
                     }
                 ) "Int32"
             ) Nothing
@@ -111,15 +139,15 @@ Program
                 { spanStartLine = 8
                 , spanStartCol = 1
                 , spanEndLine = 8
-                , spanEndCol = 23
+                , spanEndCol = 22
                 }
-            ) "_maxInt32" []
+            ) "maxInt32" []
             ( ELit
                 ( SrcSpan
                     { spanStartLine = 8
-                    , spanStartCol = 13
+                    , spanStartCol = 12
                     , spanEndLine = 8
-                    , spanEndCol = 23
+                    , spanEndCol = 22
                     }
                 )
                 ( LInt 2147483647 )
