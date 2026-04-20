@@ -405,7 +405,7 @@ colorEnabled = do
 formatDiagnostics :: Bool -> FilePath -> Text -> [(SrcSpan, Text)] -> Text
 formatDiagnostics useColor filePath source = T.intercalate "\n\n" . map formatOne
   where
-    sourceLines = T.lines source
+    sourceLines = lines source
 
     boldRed :: Text -> Text
     boldRed t = if useColor then "\ESC[1;31m" <> t <> "\ESC[0m" else t
@@ -431,7 +431,7 @@ formatDiagnostics useColor filePath source = T.intercalate "\n\n" . map formatOn
           msgIndent = emptyGutter <> caretIndent
           -- Some diagnostics (notably Megaparsec parse errors) include newlines;
           -- indent every continuation line so the gutter stays aligned.
-          indentedMsg = T.intercalate ("\n" <> msgIndent) (T.lines msg)
+          indentedMsg = T.intercalate ("\n" <> msgIndent) (lines msg)
        in T.intercalate
             "\n"
             [ header,
