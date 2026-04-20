@@ -66,8 +66,22 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Pair"
-                        [ PVar "first"
-                        , PVar "second"
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 8
+                                , spanEndLine = 8
+                                , spanEndCol = 13
+                                }
+                            ) "first"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 14
+                                , spanEndLine = 8
+                                , spanEndCol = 20
+                                }
+                            ) "second"
                         ]
                     )
                     ( EInfix

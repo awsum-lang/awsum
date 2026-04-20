@@ -1,0 +1,11 @@
+-- Error: the 'x' in `Box x` shadows the outer function parameter 'x'.
+import IO.Stdout
+
+type Box a = Box a
+
+unwrap : Box String -> String
+unwrap x = case x of
+  Box x -> x
+
+main : String -> IOUnit
+main input = IO.Stdout.print (unwrap (Box "hello"))

@@ -175,8 +175,8 @@ data CaseAlt = CaseAlt [Comment] Pattern Expr (Maybe Text)
 data Pattern
   = -- | Constructor pattern, e.g. @Just x@. Fields are empty for nullary constructors.
     PCon Name [Pattern]
-  | -- | Variable binding (future).
-    PVar Name
+  | -- | Variable binding (future). Span covers just the identifier.
+    PVar SrcSpan Name
   | -- | Wildcard @_@ (future).
     PWild
   deriving stock (Show, Eq)

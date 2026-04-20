@@ -76,7 +76,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Box"
-                        [ PVar "value" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 7
+                                , spanEndLine = 12
+                                , spanEndCol = 12
+                                }
+                            ) "value"
+                        ]
                     )
                     ( EVar
                         ( SrcSpan
@@ -136,7 +144,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Ok"
-                        [ PVar "a" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 16
+                                , spanStartCol = 6
+                                , spanEndLine = 16
+                                , spanEndCol = 7
+                                }
+                            ) "a"
+                        ]
                     )
                     ( EVar
                         ( SrcSpan
@@ -150,7 +166,15 @@ Program
                     ) Nothing :|
                     [ CaseAlt []
                         ( PCon "Err"
-                            [ PVar "e" ]
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 17
+                                    , spanStartCol = 7
+                                    , spanEndLine = 17
+                                    , spanEndCol = 8
+                                    }
+                                ) "e"
+                            ]
                         )
                         ( EVar
                             ( SrcSpan

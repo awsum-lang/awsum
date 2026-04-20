@@ -63,8 +63,22 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Cons"
-                        [ PVar "h"
-                        , PVar "t"
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 8
+                                , spanEndLine = 8
+                                , spanEndCol = 9
+                                }
+                            ) "h"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 10
+                                , spanEndLine = 8
+                                , spanEndCol = 11
+                                }
+                            ) "t"
                         ]
                     )
                     ( EInfix

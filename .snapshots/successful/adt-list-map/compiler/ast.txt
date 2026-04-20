@@ -75,8 +75,22 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Cons"
-                        [ PVar "head"
-                        , PVar "tail"
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 8
+                                , spanEndLine = 8
+                                , spanEndCol = 12
+                                }
+                            ) "head"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 13
+                                , spanEndLine = 8
+                                , spanEndCol = 17
+                                }
+                            ) "tail"
                         ]
                     )
                     ( EApp
@@ -258,8 +272,22 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Cons"
-                        [ PVar "h"
-                        , PVar "t"
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 8
+                                , spanEndLine = 13
+                                , spanEndCol = 9
+                                }
+                            ) "h"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 10
+                                , spanEndLine = 13
+                                , spanEndCol = 11
+                                }
+                            ) "t"
                         ]
                     )
                     ( EInfix

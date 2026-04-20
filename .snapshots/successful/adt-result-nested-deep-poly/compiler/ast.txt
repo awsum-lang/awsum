@@ -104,7 +104,15 @@ Program
                     ( PCon "Ok"
                         [ PCon "Ok"
                             [ PCon "Ok"
-                                [ PVar "value" ]
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 8
+                                        , spanStartCol = 14
+                                        , spanEndLine = 8
+                                        , spanEndCol = 19
+                                        }
+                                    ) "value"
+                                ]
                             ]
                         ]
                     )
@@ -122,7 +130,15 @@ Program
                         ( PCon "Ok"
                             [ PCon "Ok"
                                 [ PCon "Err"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 9
+                                            , spanStartCol = 15
+                                            , spanEndLine = 9
+                                            , spanEndCol = 20
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )
@@ -140,7 +156,15 @@ Program
                         ( PCon "Ok"
                             [ PCon "Err"
                                 [ PCon "Ok"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 15
+                                            , spanEndLine = 10
+                                            , spanEndCol = 20
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )
@@ -158,7 +182,15 @@ Program
                         ( PCon "Ok"
                             [ PCon "Err"
                                 [ PCon "Err"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 11
+                                            , spanStartCol = 16
+                                            , spanEndLine = 11
+                                            , spanEndCol = 21
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )
@@ -176,7 +208,15 @@ Program
                         ( PCon "Err"
                             [ PCon "Ok"
                                 [ PCon "Ok"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 12
+                                            , spanStartCol = 15
+                                            , spanEndLine = 12
+                                            , spanEndCol = 20
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )
@@ -194,7 +234,15 @@ Program
                         ( PCon "Err"
                             [ PCon "Ok"
                                 [ PCon "Err"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 13
+                                            , spanStartCol = 16
+                                            , spanEndLine = 13
+                                            , spanEndCol = 21
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )
@@ -212,7 +260,15 @@ Program
                         ( PCon "Err"
                             [ PCon "Err"
                                 [ PCon "Ok"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 14
+                                            , spanStartCol = 16
+                                            , spanEndLine = 14
+                                            , spanEndCol = 21
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )
@@ -230,7 +286,15 @@ Program
                         ( PCon "Err"
                             [ PCon "Err"
                                 [ PCon "Err"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 15
+                                            , spanStartCol = 17
+                                            , spanEndLine = 15
+                                            , spanEndCol = 22
+                                            }
+                                        ) "value"
+                                    ]
                                 ]
                             ]
                         )

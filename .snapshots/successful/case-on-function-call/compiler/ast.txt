@@ -185,7 +185,15 @@ Program
                         )
                         ( CaseAlt []
                             ( PCon "Found"
-                                [ PVar "v" ]
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 12
+                                        , spanStartCol = 9
+                                        , spanEndLine = 12
+                                        , spanEndCol = 10
+                                        }
+                                    ) "v"
+                                ]
                             )
                             ( EVar
                                 ( SrcSpan

@@ -283,7 +283,7 @@ desugarPats _ _ _ [] body = ([], body)
 desugarPats conInfo prefix idx (p : ps) body =
   let (restVars, restBody) = desugarPats conInfo prefix (idx + 1) ps body
    in case p of
-        PVar n -> (n : restVars, restBody)
+        PVar _ n -> (n : restVars, restBody)
         PWild ->
           let fresh = prefix <> "w" <> show idx
            in (fresh : restVars, restBody)

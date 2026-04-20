@@ -12,7 +12,7 @@ import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
-import Awsum.Symbols (symbolsToJson, symbolsOfProgram)
+import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
 import Common.File
 import Control.Concurrent.Async (concurrently)

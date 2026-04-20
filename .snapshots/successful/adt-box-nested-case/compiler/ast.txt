@@ -64,7 +64,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Box"
-                        [ PVar "b2" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 7
+                                , spanEndLine = 8
+                                , spanEndCol = 9
+                                }
+                            ) "b2"
+                        ]
                     )
                     ( ECase
                         ( SrcSpan
@@ -86,7 +94,15 @@ Program
                         )
                         ( CaseAlt []
                             ( PCon "Box"
-                                [ PVar "b3" ]
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 9
+                                        , spanStartCol = 9
+                                        , spanEndLine = 9
+                                        , spanEndCol = 11
+                                        }
+                                    ) "b3"
+                                ]
                             )
                             ( ECase
                                 ( SrcSpan
@@ -108,7 +124,15 @@ Program
                                 )
                                 ( CaseAlt []
                                     ( PCon "Box"
-                                        [ PVar "value" ]
+                                        [ PVar
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 11
+                                                , spanEndLine = 10
+                                                , spanEndCol = 16
+                                                }
+                                            ) "value"
+                                        ]
                                     )
                                     ( EVar
                                         ( SrcSpan

@@ -74,7 +74,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Ok"
-                        [ PVar "value" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 6
+                                , spanEndLine = 10
+                                , spanEndCol = 11
+                                }
+                            ) "value"
+                        ]
                     )
                     ( EVar
                         ( SrcSpan

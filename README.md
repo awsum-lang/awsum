@@ -151,7 +151,9 @@ awsum --version
 1. **Equivalence is a guarantee, not a test.** If the same pure function compiles for two targets, the results are identical. The compiler and the test suite enforce this as an invariant.
 2. **Effects are platform-aware.** The compiler tracks which effects each target supports. A program using `Terminal` won't compile for a browser target; a program using `Window` won't compile for CLI. No runtime "not supported" errors.
 3. **Errors are values.** Arithmetic doesn't silently break. Division by zero, overflow, precision loss — all represented in the type system via `Either`. The programmer decides how to handle them.
-4. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
+4. **No defaulting, ever.** The compiler never picks a type on the user's behalf — not for integer literals, not for a monadic context, not anywhere else. If the program is ambiguous, it doesn't compile; the fix is an explicit annotation, not a hidden convention.
+5. **No shadowing, ever.** A fresh binder must not reuse any name already visible in its scope, at any level — function parameters, pattern binders, future `let`s, whatever we add later. If two things should be the same, they share a name; if they shouldn't, they don't.
+6. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
 
 ### Priority order
 

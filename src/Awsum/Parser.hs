@@ -556,11 +556,27 @@ groupCaseItems = go []
 pPatternNoLineComments :: Parser Pattern
 pPatternNoLineComments =
   (PCon <$> uidentNoLine <*> P.many pPatternAtomNoLineComments)
-    <|> (PVar <$> lidentNoLine)
+    <|> pPVar
 
 -- | Atomic pattern: a variable, a constructor (no args), or a parenthesized pattern.
 pPatternAtomNoLineComments :: Parser Pattern
 pPatternAtomNoLineComments =
-  (PVar <$> lidentNoLine)
+  pPVar
     <|> ((`PCon` []) <$> uidentNoLine)
     <|> P.between (symNoLine "(") (symNoLine ")") pPatternNoLineComments
+
+-- | Parse a variable-binding pattern, capturing the span of the identifier
+--   /before/ trailing whitespace is consumed, so the span covers only the
+--   ident itself (no trailing space) — gives tight caret placement in errors.
+pPVar :: Parser Pattern
+pPVar = do
+  start <- P.getSourcePos
+  name <- try $ do
+    x <- C.lowerChar
+    xs <- P.takeWhileP (Just "ident tail") isIdentTail
+    let w = T.cons x xs
+    guard (w `notElem` reserved)
+    pure w
+  end <- P.getSourcePos
+  scNoLineComments
+  pure (PVar (toSrcSpan start end) name)
