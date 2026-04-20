@@ -163,7 +163,15 @@ Program
                         )
                         ( CaseAlt []
                             ( PCon "Box"
-                                [ PVar "v" ]
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 13
+                                        , spanStartCol = 7
+                                        , spanEndLine = 13
+                                        , spanEndCol = 8
+                                        }
+                                    ) "v"
+                                ]
                             )
                             ( EVar
                                 ( SrcSpan

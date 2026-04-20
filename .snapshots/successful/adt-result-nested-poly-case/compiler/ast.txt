@@ -78,7 +78,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Ok"
-                        [ PVar "r2" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 6
+                                , spanEndLine = 8
+                                , spanEndCol = 8
+                                }
+                            ) "r2"
+                        ]
                     )
                     ( ECase
                         ( SrcSpan
@@ -100,7 +108,15 @@ Program
                         )
                         ( CaseAlt []
                             ( PCon "Ok"
-                                [ PVar "value" ]
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 9
+                                        , spanStartCol = 8
+                                        , spanEndLine = 9
+                                        , spanEndCol = 13
+                                        }
+                                    ) "value"
+                                ]
                             )
                             ( EVar
                                 ( SrcSpan
@@ -114,7 +130,15 @@ Program
                             ) Nothing :|
                             [ CaseAlt []
                                 ( PCon "Err"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 9
+                                            , spanEndLine = 10
+                                            , spanEndCol = 14
+                                            }
+                                        ) "value"
+                                    ]
                                 )
                                 ( EVar
                                     ( SrcSpan
@@ -131,7 +155,15 @@ Program
                     ) Nothing :|
                     [ CaseAlt []
                         ( PCon "Err"
-                            [ PVar "r2" ]
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 7
+                                    , spanEndLine = 11
+                                    , spanEndCol = 9
+                                    }
+                                ) "r2"
+                            ]
                         )
                         ( ECase
                             ( SrcSpan
@@ -153,7 +185,15 @@ Program
                             )
                             ( CaseAlt []
                                 ( PCon "Ok"
-                                    [ PVar "value" ]
+                                    [ PVar
+                                        ( SrcSpan
+                                            { spanStartLine = 12
+                                            , spanStartCol = 8
+                                            , spanEndLine = 12
+                                            , spanEndCol = 13
+                                            }
+                                        ) "value"
+                                    ]
                                 )
                                 ( EVar
                                     ( SrcSpan
@@ -167,7 +207,15 @@ Program
                                 ) Nothing :|
                                 [ CaseAlt []
                                     ( PCon "Err"
-                                        [ PVar "value" ]
+                                        [ PVar
+                                            ( SrcSpan
+                                                { spanStartLine = 13
+                                                , spanStartCol = 9
+                                                , spanEndLine = 13
+                                                , spanEndCol = 14
+                                                }
+                                            ) "value"
+                                        ]
                                     )
                                     ( EVar
                                         ( SrcSpan

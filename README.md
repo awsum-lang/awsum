@@ -52,8 +52,8 @@ Recommended settings:
 
 ## Examples
 
-- [hello.aww](test/sources/hello.aww)
-- [polymorphism.aww](test/sources/polymorphism.aww)
+- [hello.aww](test/sources/successful/hello/code/Main.aww)
+- [polymorphism.aww](test/sources/successful/polymorphism/code/Main.aww)
 
 ## Installation
 
@@ -113,36 +113,36 @@ brew install lua
 Examples:
 
 ```sh
-awsum build test/sources/hello.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
-awsum build test/sources/hello.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
-awsum build test/sources/hello.aww -t clr  -o AwsumMain.dll   && dotnet AwsumMain.dll "world"
-awsum build test/sources/hello.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
-awsum build test/sources/hello.aww -t js   -o out.js  && node out.js "world"
-awsum build test/sources/hello.aww -t lua  -o out.lua && lua out.lua "world"
+awsum build test/sources/successful/hello/code/Main.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
+awsum build test/sources/successful/hello/code/Main.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
+awsum build test/sources/successful/hello/code/Main.aww -t clr  -o AwsumMain.dll   && dotnet AwsumMain.dll "world"
+awsum build test/sources/successful/hello/code/Main.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
+awsum build test/sources/successful/hello/code/Main.aww -t js   -o out.js  && node out.js "world"
+awsum build test/sources/successful/hello/code/Main.aww -t lua  -o out.lua && lua out.lua "world"
 
-awsum asm test/sources/hello.aww -t jvm   # Jasmin-like text (for inspection)
-awsum asm test/sources/hello.aww -t clr   # CIL text (for inspection)
-awsum asm test/sources/hello.aww -t wasm  # WAT text (for inspection)
+awsum asm test/sources/successful/hello/code/Main.aww -t jvm   # Jasmin-like text (for inspection)
+awsum asm test/sources/successful/hello/code/Main.aww -t clr   # CIL text (for inspection)
+awsum asm test/sources/successful/hello/code/Main.aww -t wasm  # WAT text (for inspection)
 
-awsum run test/sources/hello.aww -t llvm --input "world"
-awsum run test/sources/hello.aww -t jvm  --input "world"
-awsum run test/sources/hello.aww -t clr  --input "world"
-awsum run test/sources/hello.aww -t wasm --input "world"
-awsum run test/sources/hello.aww -t js   --input "world"
-awsum run test/sources/hello.aww -t lua  --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t llvm --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t jvm  --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t clr  --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t wasm --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t js   --input "world"
+awsum run test/sources/successful/hello/code/Main.aww -t lua  --input "world"
 
-echo "world" | awsum run test/sources/hello.aww -t llvm --stdin
-echo "world" | awsum run test/sources/hello.aww -t jvm  --stdin
-echo "world" | awsum run test/sources/hello.aww -t clr  --stdin
-echo "world" | awsum run test/sources/hello.aww -t wasm --stdin
-echo "world" | awsum run test/sources/hello.aww -t js   --stdin
-echo "world" | awsum run test/sources/hello.aww -t lua  --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t llvm --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t jvm  --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t clr  --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t wasm --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t js   --stdin
+echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t lua  --stdin
 
-awsum check  test/sources/hello.aww
-awsum check  test/sources/hello.aww --json
-awsum format test/sources/hello.aww -i
-awsum ast    test/sources/hello.aww
-awsum core   test/sources/hello.aww
+awsum check  test/sources/successful/hello/code/Main.aww
+awsum check  test/sources/successful/hello/code/Main.aww --json
+awsum format test/sources/successful/hello/code/Main.aww -i
+awsum ast    test/sources/successful/hello/code/Main.aww
+awsum core   test/sources/successful/hello/code/Main.aww
 awsum --version
 ```
 
@@ -151,7 +151,9 @@ awsum --version
 1. **Equivalence is a guarantee, not a test.** If the same pure function compiles for two targets, the results are identical. The compiler and the test suite enforce this as an invariant.
 2. **Effects are platform-aware.** The compiler tracks which effects each target supports. A program using `Terminal` won't compile for a browser target; a program using `Window` won't compile for CLI. No runtime "not supported" errors.
 3. **Errors are values.** Arithmetic doesn't silently break. Division by zero, overflow, precision loss — all represented in the type system via `Either`. The programmer decides how to handle them.
-4. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
+4. **No defaulting, ever.** The compiler never picks a type on the user's behalf — not for integer literals, not for a monadic context, not anywhere else. If the program is ambiguous, it doesn't compile; the fix is an explicit annotation, not a hidden convention.
+5. **No shadowing, ever.** A fresh binder must not reuse any name already visible in its scope, at any level — function parameters, pattern binders, future `let`s, whatever we add later. If two things should be the same, they share a name; if they shouldn't, they don't.
+6. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
 
 ### Priority order
 

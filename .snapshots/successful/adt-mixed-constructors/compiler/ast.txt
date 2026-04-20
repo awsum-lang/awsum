@@ -60,7 +60,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Word"
-                        [ PVar "w" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 8
+                                , spanEndLine = 9
+                                , spanEndCol = 9
+                                }
+                            ) "w"
+                        ]
                     )
                     ( EInfix
                         ( SrcSpan
@@ -93,7 +101,15 @@ Program
                     ) Nothing :|
                     [ CaseAlt []
                         ( PCon "Number"
-                            [ PVar "n" ]
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 10
+                                    , spanEndLine = 10
+                                    , spanEndCol = 11
+                                    }
+                                ) "n"
+                            ]
                         )
                         ( EInfix
                             ( SrcSpan

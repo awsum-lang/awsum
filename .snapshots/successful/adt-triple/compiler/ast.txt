@@ -71,9 +71,30 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Triple"
-                        [ PVar "a"
-                        , PVar "b"
-                        , PVar "c"
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 10
+                                , spanEndLine = 8
+                                , spanEndCol = 11
+                                }
+                            ) "a"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 12
+                                , spanEndLine = 8
+                                , spanEndCol = 13
+                                }
+                            ) "b"
+                        , PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 14
+                                , spanEndLine = 8
+                                , spanEndCol = 15
+                                }
+                            ) "c"
                         ]
                     )
                     ( EInfix

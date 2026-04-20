@@ -79,6 +79,10 @@ data TypeError
     IntLiteralOutOfRange SrcSpan Integer Name
   | -- | Integer literal used in a context that does not determine its type.
     AmbiguousIntLiteral SrcSpan
+  | -- | A local binding (function parameter or pattern variable) has the same
+    --   name as an already-visible binding (outer param, top-level function,
+    --   constructor, imported name, or a sibling binder in the same pattern).
+    Shadowing SrcSpan Name
   deriving stock (Show, Eq)
 
 -- | Extract the source span from a TypeError, if available.
@@ -106,6 +110,7 @@ typeErrorSpan = \case
   CaseOnNonSumType sp _ -> Just sp
   IntLiteralOutOfRange sp _ _ -> Just sp
   AmbiguousIntLiteral sp -> Just sp
+  Shadowing sp _ -> Just sp
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -132,6 +137,7 @@ prettyPrintTypeError = \case
   IntLiteralOutOfRange _ n tyName ->
     "Integer literal " <> show n <> " out of range for " <> tyName <> " (valid range: " <> rangeText tyName <> ")"
   AmbiguousIntLiteral _ -> "Ambiguous integer literal: cannot infer type from context. Use an explicit type annotation."
+  Shadowing _ n -> "Shadowing is not allowed: '" <> n <> "' is already bound in an enclosing scope"
   where
     showType :: Type' -> Text
     showType = \case
@@ -347,10 +353,23 @@ typecheckProgram Program {imports, decls} = do
 
     -- Build an environment visible inside the body:
     --   built-ins from imports ⊔ constructors ⊔ parameters ⊔ all top-level signatures.
+    -- Bare-underscore parameters @_@ are wildcards: no binding is introduced
+    -- so multiple @_@ params do not collide with each other or with anything.
+    -- Underscore-prefixed names like @_foo@ are bound normally; the parser
+    -- prevents them from being referenced because expression names cannot
+    -- start with @_@.
     let envBuiltins = builtinEnvFromImports imports
-        envParams = M.fromList [(qLocal x, t) | (x, t) <- zip args argTys]
+        namedArgs = [(x, t) | (x, t) <- zip args argTys, x /= "_"]
+        envParams = M.fromList [(qLocal x, t) | (x, t) <- namedArgs]
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
-        env = M.unions [envBuiltins, conValEnv, envParams, envTop]
+        envOuter = M.unions [envBuiltins, conValEnv, envTop]
+        env = M.union envParams envOuter
+
+    -- Reject shadowing: params must be unique and must not collide with
+    -- any already-visible name (constructor, import, top-level signature).
+    -- Parameter names don't carry individual spans in the surface AST, so we
+    -- fall back to the span of the whole definition.
+    checkNoShadow envOuter [(sp, x) | (x, _) <- namedArgs]
 
     checkExpr conEnv typeConsMap env retTy body
 
@@ -372,6 +391,18 @@ typecheckProgram Program {imports, decls} = do
       if S.member n s
         then Left (DuplicateDefinition sp n)
         else Right (S.insert n s)
+
+-- | Reject a fresh list of binders if any of them are already in scope or
+--   duplicate each other. Used for function parameters and for the variables
+--   introduced by a single case-arm pattern. Each binder carries its own span
+--   so the error points exactly at the shadowing identifier.
+checkNoShadow :: Env -> [(SrcSpan, Name)] -> Either TypeError ()
+checkNoShadow = foldM_ addOne
+  where
+    addOne acc (sp, n) =
+      if M.member (qLocal n) acc
+        then Left (Shadowing sp n)
+        else Right (M.insert (qLocal n) (TyCon "<binder>") acc)
 
 -- | Check that an expression has the given expected type.
 --
@@ -480,6 +511,11 @@ typeOfExpr conEnv tcm env = \case
       -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
       let currentPattern = (cName, pats)
       when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
+      -- Reject shadowing: pattern variables (including those in nested patterns)
+      -- must not duplicate each other and must not collide with anything
+      -- already visible in the arm. Each binder carries its own span so the
+      -- error arrow lands on the offending identifier, not on a usage site.
+      checkNoShadow envLocal (collectPatternVars pats)
       -- Compute field types with proper freshening and substitution.
       -- First freshen the constructor's field types with the same suffix used for scrutSubst,
       -- then apply the matched substitution.
@@ -497,12 +533,21 @@ typeOfExpr conEnv tcm env = \case
     checkArm _ _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
 
+-- | Collect all variable binders from a list of (possibly nested) patterns,
+--   in left-to-right order, paired with the span of each binder.
+collectPatternVars :: [Pattern] -> [(SrcSpan, Name)]
+collectPatternVars = concatMap go
+  where
+    go (PVar sp n) = [(sp, n)]
+    go PWild = []
+    go (PCon _ inner) = concatMap go inner
+
 -- | Extract variable bindings from patterns and their corresponding types.
 --   Recurses into nested constructor patterns to bind deeply nested variables.
 patternBindings :: ConEnv -> [Pattern] -> [Type'] -> [(Name, Type')]
 patternBindings conEnv pats tys = concatMap go (zip pats tys)
   where
-    go (PVar n, t) = [(n, t)]
+    go (PVar _ n, t) = [(n, t)]
     go (PWild, _) = []
     go (PCon cName innerPats, ty) =
       case M.lookup cName conEnv of
@@ -583,10 +628,10 @@ patternMatches _conEnv (cName, pats) = any (\(coveredName, coveredPats) -> cName
       | otherwise = and (zipWith patternEqual ps1 ps2)
 
     patternEqual :: Pattern -> Pattern -> Bool
-    patternEqual (PVar _) (PVar _) = True -- all variables match
+    patternEqual (PVar _ _) (PVar _ _) = True -- all variables match
     patternEqual PWild PWild = True
-    patternEqual PWild (PVar _) = True -- wildcard matches variable
-    patternEqual (PVar _) PWild = True -- variable matches wildcard
+    patternEqual PWild (PVar _ _) = True -- wildcard matches variable
+    patternEqual (PVar _ _) PWild = True -- variable matches wildcard
     patternEqual (PCon c1 ps1) (PCon c2 ps2) =
       c1 == c2 && patternsEqual ps1 ps2
     patternEqual _ _ = False

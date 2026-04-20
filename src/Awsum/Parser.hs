@@ -98,6 +98,12 @@ identChar = C.alphaNumChar <|> C.char '_' <|> C.char '\''
 isIdentTail :: Char -> Bool
 isIdentTail c = Char.isAlphaNum c || c == '_' || c == '\''
 
+-- | First character allowed in a /binder/ (function parameter or pattern
+--   variable): a regular lowercase letter OR an underscore. The underscore
+--   forms (@_@ alone or @_foo@) signal an intentionally unused binding.
+isBinderStart :: Char -> Bool
+isBinderStart c = Char.isLower c || c == '_'
+
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
 reserved = ["import", "type", "case", "of"]
@@ -144,6 +150,16 @@ uidentNoLine = (lexemeNoLine . try) $ do
   x <- C.upperChar
   xs <- P.takeWhileP (Just "ident tail") isIdentTail
   pure (T.cons x xs)
+
+-- | Parse a binder (function parameter / pattern variable head) under 'sc'.
+--   Accepts @_@, @_foo@, or @foo@. Reserved words are rejected.
+binder :: Parser Name
+binder = (lexeme . try) $ do
+  x <- P.satisfy isBinderStart
+  xs <- P.takeWhileP (Just "ident tail") isIdentTail
+  let w = T.cons x xs
+  guard (w `notElem` reserved)
+  pure w
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Entry point
@@ -305,7 +321,7 @@ pFunDefWithEnd :: Parser Decl
 pFunDefWithEnd = do
   start <- P.getSourcePos
   name <- lident
-  args <- P.many lident
+  args <- P.many binder
   _ <- sym "="
   e <- pExprNoLineComments
   case e of
@@ -556,11 +572,28 @@ groupCaseItems = go []
 pPatternNoLineComments :: Parser Pattern
 pPatternNoLineComments =
   (PCon <$> uidentNoLine <*> P.many pPatternAtomNoLineComments)
-    <|> (PVar <$> lidentNoLine)
+    <|> pPVar
 
 -- | Atomic pattern: a variable, a constructor (no args), or a parenthesized pattern.
 pPatternAtomNoLineComments :: Parser Pattern
 pPatternAtomNoLineComments =
-  (PVar <$> lidentNoLine)
+  pPVar
     <|> ((`PCon` []) <$> uidentNoLine)
     <|> P.between (symNoLine "(") (symNoLine ")") pPatternNoLineComments
+
+-- | Parse a variable-binding pattern, capturing the span of the identifier
+--   /before/ trailing whitespace is consumed, so the span covers only the
+--   ident itself (no trailing space) — gives tight caret placement in errors.
+--   The bare underscore @_@ is desugared to 'PWild' (no binding).
+pPVar :: Parser Pattern
+pPVar = do
+  start <- P.getSourcePos
+  name <- try $ do
+    x <- P.satisfy isBinderStart
+    xs <- P.takeWhileP (Just "ident tail") isIdentTail
+    let w = T.cons x xs
+    guard (w `notElem` reserved)
+    pure w
+  end <- P.getSourcePos
+  scNoLineComments
+  pure $ if name == "_" then PWild else PVar (toSrcSpan start end) name

@@ -181,7 +181,7 @@ renderPattern :: Pattern -> Text
 renderPattern = \case
   PCon n [] -> n
   PCon n ps -> n <> " " <> T.intercalate " " (map renderPatternAtom ps)
-  PVar n -> n
+  PVar _ n -> n
   PWild -> "_"
 
 -- | Render an atomic pattern, parenthesizing nested constructor applications.

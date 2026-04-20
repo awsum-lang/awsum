@@ -55,7 +55,15 @@ Program
                 )
                 ( CaseAlt []
                     ( PCon "Wrap"
-                        [ PVar "value" ]
+                        [ PVar
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 8
+                                , spanEndLine = 8
+                                , spanEndCol = 13
+                                }
+                            ) "value"
+                        ]
                     )
                     ( EVar
                         ( SrcSpan

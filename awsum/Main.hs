@@ -16,10 +16,10 @@ import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
-import Awsum.Parser (parseProgram, parseProgramDiagnostic)
+import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
-import Awsum.Typing (prettyPrintTypeError, typeErrorSpan, typecheckProgram)
+import Awsum.Typing (TypeError, prettyPrintTypeError, typeErrorSpan, typecheckProgram)
 import Common.File
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
@@ -30,6 +30,7 @@ import Paths_awsum qualified as Meta
 import Relude
 import System.Exit (ExitCode (..))
 import System.FilePath (dropExtension, (</>))
+import System.IO (hIsTerminalDevice)
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process (readProcessWithExitCode)
 import Text.Pretty.Simple (pPrint)
@@ -196,7 +197,7 @@ runCommand = \case
     | otherwise -> do
         prog <- parseFileOrDie filePath
         case typecheckProgram prog of
-          Left err -> die $ toString (prettyPrintTypeError err)
+          Left err -> dieWithTypeError filePath err
           Right () -> putTextLn "OK"
   CmdBuild filePath target mOut -> do
     core <- compileToCoreOrDie filePath
@@ -352,16 +353,92 @@ compileToCoreOrDie :: FilePath -> IO CoreProgram
 compileToCoreOrDie filePath = do
   prog <- parseFileOrDie filePath
   case elaborateLowerProgram prog of
-    Left err -> die $ toString (prettyPrintTypeError err)
+    Left err -> dieWithTypeError filePath err
     Right core -> pure core
 
 -- | Read a file as UTF-8 and parse a 'Program' or terminate with an error.
 parseFileOrDie :: FilePath -> IO Program
 parseFileOrDie filePath = do
   text <- readFileTextUtf8 filePath
-  case parseProgram text of
-    Left err -> die $ toString err
+  case parseProgramDiagnostic text of
+    Left diags -> dieWithDiagnostics filePath diags
     Right p -> pure p
+
+-- | Report a 'TypeError' with the offending source line shown, Scala-style:
+--   a @-- Error: path:line:col@ header that VS Code's terminal link provider
+--   picks up as a clickable link, then the source line with a caret indicator
+--   and the error message.
+dieWithTypeError :: FilePath -> TypeError -> IO a
+dieWithTypeError filePath err =
+  dieWithDiagnostics filePath [(fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan err), prettyPrintTypeError err)]
+
+-- | Render and print diagnostics, then exit with a non-zero status.
+--   Re-reads the source file so the offending line can be shown verbatim.
+--   Emits ANSI colour when stderr is a terminal and @NO_COLOR@ is unset
+--   (the @NO_COLOR@ convention: <https://no-color.org>).
+dieWithDiagnostics :: FilePath -> [(SrcSpan, Text)] -> IO a
+dieWithDiagnostics filePath diags = do
+  source <- readFileTextUtf8 filePath
+  useColor <- colorEnabled
+  die $ toString $ formatDiagnostics useColor filePath source diags
+
+-- | Should terminal colour be emitted?  Respects @NO_COLOR@ and only
+--   colours output when stderr is an interactive terminal.
+colorEnabled :: IO Bool
+colorEnabled = do
+  noColor <- lookupEnv "NO_COLOR"
+  case noColor of
+    Just _ -> pure False
+    Nothing -> hIsTerminalDevice stderr
+
+-- | Format diagnostics in Scala-style:
+--
+-- @
+-- -- Error: path/to/file.aww:8:11
+-- 8 |overMax = 256
+--   |          ^^^
+--   |          Integer literal 256 out of range for UInt8 (valid range: 0..255)
+-- @
+--
+-- Multiple diagnostics are separated by a blank line.  When @useColor@ is
+-- true, the header line and the caret markers are rendered in bold red.
+formatDiagnostics :: Bool -> FilePath -> Text -> [(SrcSpan, Text)] -> Text
+formatDiagnostics useColor filePath source = T.intercalate "\n\n" . map formatOne
+  where
+    sourceLines = lines source
+
+    boldRed :: Text -> Text
+    boldRed t = if useColor then "\ESC[1;31m" <> t <> "\ESC[0m" else t
+
+    red :: Text -> Text
+    red t = if useColor then "\ESC[31m" <> t <> "\ESC[0m" else t
+
+    formatOne :: (SrcSpan, Text) -> Text
+    formatOne (SrcSpan sl sc el ec, msg) =
+      let lineText = case drop (sl - 1) sourceLines of
+            (l : _) -> l
+            [] -> ""
+          lineNumStr = show (sl :: Int)
+          gutter = lineNumStr <> " |"
+          emptyGutter = T.replicate (T.length lineNumStr) " " <> " |"
+          caretIndent = T.replicate (max 0 (sc - 1)) " "
+          caretLen
+            | sl == el && ec > sc = ec - sc
+            | sl == el = 1
+            | otherwise = max 1 (T.length lineText - sc + 1)
+          carets = T.replicate caretLen "^"
+          header = boldRed ("-- Error: " <> toText filePath <> ":" <> show sl <> ":" <> show sc)
+          msgIndent = emptyGutter <> caretIndent
+          -- Some diagnostics (notably Megaparsec parse errors) include newlines;
+          -- indent every continuation line so the gutter stays aligned.
+          indentedMsg = T.intercalate ("\n" <> msgIndent) (lines msg)
+       in T.intercalate
+            "\n"
+            [ header,
+              gutter <> lineText,
+              emptyGutter <> caretIndent <> red carets,
+              msgIndent <> indentedMsg
+            ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- JSON diagnostics (hand-written, no aeson dependency)
