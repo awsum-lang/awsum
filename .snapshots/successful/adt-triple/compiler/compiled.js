@@ -5,7 +5,7 @@ function v_showTriple(v_t){
   return ((s) => { switch(s[0]) { case 0: { const v_a = s[1]; const v_b = s[2]; const v_c = s[3]; return ((((v_a + " ") + v_b) + " ") + v_c); } } })(v_t);
 }
 
-function main(v_input){
+function main(v__input){
   return __print((v_showTriple)([0, "one", "two", "three"]));
 }
 

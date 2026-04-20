@@ -4,7 +4,7 @@ function v_show(v_u)
   return (function(s) if s[1] == 0 then return "Unit" end end)(v_u)
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_show)({0}))
 end
 

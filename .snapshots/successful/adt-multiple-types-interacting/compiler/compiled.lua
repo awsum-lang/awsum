@@ -12,7 +12,7 @@ function v_showResult(v_r)
   return (function(s) if s[1] == 0 then local v_box = s[2]; return (v_showBoxedColor)(v_box) elseif s[1] == 1 then local v_e = s[2]; return v_e end end)(v_r)
 end
 
-function main(v_input)
+function main(v__input)
   return __print(table.concat({(v_showBoxedColor)({0, {0}}), " ", (v_showResult)({0, {0, {1}}})}))
 end
 

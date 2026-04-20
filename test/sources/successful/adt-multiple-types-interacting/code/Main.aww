@@ -24,4 +24,4 @@ showResult r = case r of
   Err e -> e
 
 main : String -> IOUnit
-main input = IO.Stdout.print (showBoxedColor (Box Red) ++ " " ++ showResult (Ok (Box Green)))
+main _input = IO.Stdout.print (showBoxedColor (Box Red) ++ " " ++ showResult (Ok (Box Green)))

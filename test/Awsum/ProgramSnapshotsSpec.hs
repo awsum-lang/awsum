@@ -63,7 +63,7 @@ compileAll testName = do
     Right x -> pure x
   core <- case elaborateLowerProgram ast of
     Left err -> error $ "elaborate failed" <> show err
-    Right x -> pure x
+    Right (_warns, x) -> pure x
   pure
     CompileResult
       { ast = ast,

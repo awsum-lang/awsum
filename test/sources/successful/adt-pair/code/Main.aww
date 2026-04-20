@@ -8,4 +8,4 @@ showPair pair = case pair of
   Pair first second -> "(" ++ first ++ ", " ++ second ++ ")"
 
 main : String -> IOUnit
-main input = IO.Stdout.print (showPair (Pair "hello" "world"))
+main _input = IO.Stdout.print (showPair (Pair "hello" "world"))

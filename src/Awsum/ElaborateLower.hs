@@ -21,7 +21,7 @@ module Awsum.ElaborateLower (elaborateLowerProgram) where
 
 import Awsum.Core
 import Awsum.Syntax
-import Awsum.Typing (TypeError (..), typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -39,7 +39,7 @@ buildConInfo ds =
   M.fromList
     [ (cName, (idx, length cFields))
     | TypeDecl _sp _ _ cs _ <- ds,
-      (ConDef cName cFields, idx) <- zip cs [0 ..]
+      (ConDef _ cName cFields, idx) <- zip cs [0 ..]
     ]
 
 -- | Synthetic name for a constructor wrapper function.
@@ -59,18 +59,20 @@ genConWrappers conInfo =
   ]
 
 -- | Check the surface program (types) and lower it to Core IR.
---   On success we return a Core program that codegens can consume directly.
-elaborateLowerProgram :: Program -> Either TypeError CoreProgram
+--   On success we return @(warnings, core)@: the Core program for codegen
+--   plus any non-fatal warnings the typechecker collected.
+elaborateLowerProgram :: Program -> Either TypeError ([Warning], CoreProgram)
 elaborateLowerProgram prog = do
   -- 1) Elaboration step (MVP): just typecheck; no evidence/dictionaries yet.
-  typecheckProgram prog
+  warnings <- typecheckProgram prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let conInfo = buildConInfo (toList (decls prog))
       sigMap = M.fromList [(n, t) | Sig _sp n t _ <- toList (decls prog)]
   mds <- traverse (lowerDecl sigMap conInfo) (toList (decls prog))
   let core = CoreProgram (catMaybes mds <> genConWrappers conInfo)
   -- 3) Saturate under-applied direct calls via lambda-lifting.
-  saturateProgram core
+  core' <- saturateProgram core
+  pure (warnings, core')
 
 -- | Saturate under-applied direct calls by lambda-lifting.
 --
@@ -173,7 +175,7 @@ lowerDecl sigMap conInfo = \case
         -- and parser ensure they cannot be referenced), but two @_@ params
         -- in the same function would create colliding local names in the
         -- generated code. Rename each @_@ to a unique fresh name.
-        let args' = freshenWildcardArgs args
+        let args' = freshenWildcardArgs (map paramName args)
         pure $ Just $ case args' of
           [] -> CValDef n body' -- zero-arg def ⇒ constant
           _ -> CFunDef n args' body'
@@ -191,12 +193,12 @@ freshenWildcardArgs = go (0 :: Int)
 --   Used to erase numeric-typed declarations during lowering.
 typeMentionsNumeric :: Type' -> Bool
 typeMentionsNumeric = \case
-  TyVar _ -> False
-  TyCon "Int32" -> True
-  TyCon "UInt8" -> True
-  TyCon _ -> False
-  TyApp f x -> typeMentionsNumeric f || typeMentionsNumeric x
-  TyArrow a b -> typeMentionsNumeric a || typeMentionsNumeric b
+  TyVar _ _ -> False
+  TyCon _ "Int32" -> True
+  TyCon _ "UInt8" -> True
+  TyCon _ _ -> False
+  TyApp _ f x -> typeMentionsNumeric f || typeMentionsNumeric x
+  TyArrow _ a b -> typeMentionsNumeric a || typeMentionsNumeric b
 
 -- | Lower a surface expression to Core.
 --     • drop explicit parentheses,
@@ -246,7 +248,7 @@ lowerExpr conInfo = \case
 -- | Lower a single case alternative: look up the constructor tag,
 --   desugar nested patterns into nested CCase, and lower the body.
 lowerAlt :: ConInfoEnv -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
-lowerAlt conInfo (CaseAlt _ (PCon cName pats) body _) = do
+lowerAlt conInfo (CaseAlt _ (PCon _ cName pats) body _) = do
   (tag, _arity) <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName conInfo)
   body' <- lowerExpr conInfo body
   let (topVars, wrappedBody) = desugarPats conInfo "__" 0 pats body'
@@ -301,7 +303,7 @@ desugarPats conInfo prefix idx (p : ps) body =
         PWild ->
           let fresh = prefix <> "w" <> show idx
            in (fresh : restVars, restBody)
-        PCon innerCon innerPats ->
+        PCon _ innerCon innerPats ->
           let fresh = prefix <> "p" <> show idx
               innerTag = maybe 0 fst (M.lookup innerCon conInfo)
               innerPrefix = fresh <> "_"

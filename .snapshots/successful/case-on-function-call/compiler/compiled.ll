@@ -40,7 +40,7 @@ define ptr @v_search(ptr %v_key) {
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v_input) {
+define ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [6 x i8], ptr @.str.1, i64 0, i64 0
   %t1 = call ptr @v_search(ptr %t0)
   %t2 = getelementptr ptr, ptr %t1, i32 0

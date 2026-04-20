@@ -19,4 +19,4 @@ compose : (b -> c) -> (a -> b) -> a -> c
 compose f g x = f (g x)
 
 main : String -> IOUnit
-main input = IO.Stdout.print (apply (compose unwrap wrap) "chain")
+main _input = IO.Stdout.print (apply (compose unwrap wrap) "chain")

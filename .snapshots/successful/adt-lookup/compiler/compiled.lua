@@ -4,7 +4,7 @@ function v_unwrap(v_x)
   return (function(s) if s[1] == 0 then local v_value = s[2]; return v_value elseif s[1] == 1 then return "not found" end end)(v_x)
 end
 
-function main(v_input)
+function main(v__input)
   return __print(table.concat({(v_unwrap)({0, "hello"}), ", ", (v_unwrap)({1})}))
 end
 

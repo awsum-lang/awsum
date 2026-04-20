@@ -67,7 +67,7 @@ symbolsOfProgram Program {decls} =
    in snd $ foldl' (emit funDefByName) (S.empty, []) ds
   where
     emit ::
-      M.Map Name (SrcSpan, [Name]) ->
+      M.Map Name (SrcSpan, [Param]) ->
       (S.Set Name, [Symbol]) ->
       Decl ->
       (S.Set Name, [Symbol])
@@ -86,7 +86,7 @@ symbolsOfProgram Program {decls} =
         (processed, acc <> [Symbol SkType n sp (typeNameSpanAt sp n) []])
       CommentDecl _ -> (processed, acc)
 
-    mkBindingSymbol :: [Name] -> Name -> SrcSpan -> SrcSpan -> Symbol
+    mkBindingSymbol :: [Param] -> Name -> SrcSpan -> SrcSpan -> Symbol
     mkBindingSymbol args n range selRange =
       let kind = case args of [] -> SkConstant; _ -> SkFunction
        in Symbol kind n range selRange []

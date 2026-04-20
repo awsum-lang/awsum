@@ -21,6 +21,10 @@ module Awsum.Syntax
     CaseAlt (..),
     Pattern (..),
     Comment (..),
+    Param (..),
+    paramName,
+    paramSpan,
+    typeSpan,
   )
 where
 
@@ -38,6 +42,12 @@ data SrcSpan = SrcSpan
 -- | SrcSpan equality is always True so that AST equality ignores positions.
 --   This lets all existing tests continue working without changing expected values.
 instance Eq SrcSpan where _ == _ = True
+
+-- | SrcSpan ordering also ignores positions (mirrors 'Eq') so derived
+--   'Ord' on AST nodes with embedded spans compares only the semantic
+--   parts. Needed because 'Type'' derives 'Ord' and is used as a key
+--   elsewhere.
+instance Ord SrcSpan where compare _ _ = EQ
 
 -- | Placeholder span for hand-constructed ASTs (tests, Arbitrary instances).
 noSpan :: SrcSpan
@@ -87,6 +97,20 @@ data Comment
   | BlockComment Text -- text between "{-" and "-}"
   deriving stock (Show, Eq)
 
+-- | A bound function parameter, with the source span of the identifier.
+--   Spans let downstream tooling (warnings, quick-fixes) point at exactly
+--   the offending parameter rather than the whole definition.
+data Param = Param SrcSpan Name
+  deriving stock (Show, Eq)
+
+-- | Extract the textual name of a parameter.
+paramName :: Param -> Name
+paramName (Param _ n) = n
+
+-- | Extract the source span of a parameter (the identifier itself).
+paramSpan :: Param -> SrcSpan
+paramSpan (Param sp _) = sp
+
 -- | Top-level declaration.
 data Decl
   = -- | Type signature: @main : τ -- comment@
@@ -94,29 +118,44 @@ data Decl
   | -- | Function/value definition: @f x y = e  -- comment@.
     --   The argument list may be empty in the /surface/.
     --   Lowering will treat zero-arg defs as /constants/.
-    FunDef SrcSpan Name [Name] Expr (Maybe Text)
+    FunDef SrcSpan Name [Param] Expr (Maybe Text)
   | -- | Sum type declaration: @type Bool = True | False@.
     --   Empty constructor list means uninhabited type (e.g. @type Never@).
-    TypeDecl SrcSpan Name [Name] [ConDef] (Maybe Text)
+    --   Type parameters carry their own span (as 'Param') so the
+    --   unused-type-parameter warning can target precisely the identifier.
+    TypeDecl SrcSpan Name [Param] [ConDef] (Maybe Text)
   | CommentDecl Comment
   deriving stock (Show, Eq)
 
 -- | Constructor definition inside a 'TypeDecl'.
+--   The 'SrcSpan' covers just the constructor's name in the source so
+--   quick-fixes (e.g. rename '_C' to 'C') can target it precisely.
 --   Field types are stored for future use (e.g. @Just a@); empty for nullary constructors.
-data ConDef = ConDef Name [Type']
+data ConDef = ConDef SrcSpan Name [Type']
   deriving stock (Show, Eq)
 
--- | Surface types.
+-- | Surface types. Each constructor carries a 'SrcSpan' covering the
+--   portion of source that introduced it, so diagnostics can point at a
+--   single type identifier (e.g. a @_A@ reference) instead of the whole
+--   signature line. Spans are ignored by derived 'Eq' / 'Ord'.
 data Type'
-  = -- | type variable, e.g. 'a'
-    TyVar Name
+  = -- | Type variable, e.g. 'a'.
+    TyVar SrcSpan Name
   | -- | Type constructor, e.g. @\"String\"@, @\"IOUnit\"@.
-    TyCon Name
+    TyCon SrcSpan Name
   | -- | Type application, e.g. @Lookup String@.
-    TyApp Type' Type'
+    TyApp SrcSpan Type' Type'
   | -- | Arrow type @a -> b@ (right-associative by convention).
-    TyArrow Type' Type'
+    TyArrow SrcSpan Type' Type'
   deriving stock (Show, Eq, Ord)
+
+-- | Extract the source span of a type.
+typeSpan :: Type' -> SrcSpan
+typeSpan = \case
+  TyVar sp _ -> sp
+  TyCon sp _ -> sp
+  TyApp sp _ _ -> sp
+  TyArrow sp _ _ -> sp
 
 -- | Qualified value name: module path (possibly empty) + base name.
 --   Examples:
@@ -173,8 +212,11 @@ data CaseAlt = CaseAlt [Comment] Pattern Expr (Maybe Text)
 -- | Patterns for @case@ alternatives.
 --   Currently only constructor patterns; variable and wildcard are for future use.
 data Pattern
-  = -- | Constructor pattern, e.g. @Just x@. Fields are empty for nullary constructors.
-    PCon Name [Pattern]
+  = -- | Constructor pattern, e.g. @Just x@. The 'SrcSpan' covers the
+    --   constructor's name in the source so quick-fixes targeting the
+    --   pattern (e.g. rename '_C' to 'C') can edit precisely.
+    --   Fields are empty for nullary constructors.
+    PCon SrcSpan Name [Pattern]
   | -- | Variable binding (future). Span covers just the identifier.
     PVar SrcSpan Name
   | -- | Wildcard @_@ (future).

@@ -17,4 +17,4 @@ showResult r = case r of
   Err e -> e
 
 main : String -> IOUnit
-main input = IO.Stdout.print (unwrap (Box "from box") ++ " " ++ showResult (unwrap (Box (Ok "nested"))))
+main _input = IO.Stdout.print (unwrap (Box "from box") ++ " " ++ showResult (unwrap (Box (Ok "nested"))))

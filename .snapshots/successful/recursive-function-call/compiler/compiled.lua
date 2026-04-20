@@ -4,7 +4,7 @@ function v_advanceStep(v_x)
   return (function(s) if s[1] == 0 then return (v_advanceStep)({1}) elseif s[1] == 1 then return (v_advanceStep)({2}) elseif s[1] == 2 then return "Done!" end end)(v_x)
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_advanceStep)({0}))
 end
 

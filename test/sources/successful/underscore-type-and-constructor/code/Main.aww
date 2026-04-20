@@ -1,0 +1,19 @@
+{- Tests: '_' prefix on type names and constructor names compile and run.
+   • '_A' is an intentionally-unused type — its constructors exist but
+     nothing references the type itself.
+   • Type 'B' here has only regular constructors so it can be cased on
+     normally; if any constructor were '_'-prefixed, exhaustiveness
+     would force users to either rename it or stop pattern-matching. -}
+import IO.Stdout
+
+type _A = X | Y
+
+type B = One | Two
+
+show : B -> String
+show x = case x of
+  One -> "one"
+  Two -> "two"
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (show One)

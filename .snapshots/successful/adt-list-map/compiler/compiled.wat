@@ -92,7 +92,7 @@
   (func $v_shout (export "v_shout") (param $v_s i32) (result i32)
     (call $__concat (local.get $v_s) (i32.const 67)))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)

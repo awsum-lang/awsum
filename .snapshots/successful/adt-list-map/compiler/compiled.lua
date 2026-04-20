@@ -12,7 +12,7 @@ function v_shout(v_s)
   return (v_s .. "!")
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_show)((v_map)(v_shout, {0, "a", {0, "b", {0, "c", {1}}}})))
 end
 

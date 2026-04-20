@@ -1,10 +1,10 @@
 local function __print(s) io.write(tostring(s)); return nil end
 
-function main(v_input)
+function main(v__input)
   return __print((v_identity)((v_compose)(v_appendY, v_appendX, (v_const)("a", "b"))))
 end
 
-function v_const(v_x, v_y)
+function v_const(v_x, v__y)
   return v_x
 end
 

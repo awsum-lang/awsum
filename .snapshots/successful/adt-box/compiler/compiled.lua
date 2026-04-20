@@ -4,7 +4,7 @@ function v_unwrap(v_b)
   return (function(s) if s[1] == 0 then local v_value = s[2]; return v_value end end)(v_b)
 end
 
-function main(v_input)
+function main(v__input)
   return __print((v_unwrap)({0, "hello"}))
 end
 

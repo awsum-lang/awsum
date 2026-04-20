@@ -2,10 +2,10 @@
 import IO.Stdout
 
 main : String -> IOUnit
-main input = IO.Stdout.print (identity (compose appendY appendX (const "a" "b")))
+main _input = IO.Stdout.print (identity (compose appendY appendX (const "a" "b")))
 
 const : a -> b -> a
-const x y = x
+const x _y = x
 
 identity : a -> a
 identity x = x

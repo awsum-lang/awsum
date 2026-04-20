@@ -72,6 +72,7 @@ library:
   source-dirs: src
   dependencies:
     - bytestring # for JVM bytecode assembler
+    - containers # for Data.Graph SCC analysis (unused-top-level warning)
     - megaparsec # for parser
     - text # for Data.Text.Encoding (JVM assembler)
 

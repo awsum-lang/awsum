@@ -1,1 +1,1 @@
-[{"startLine":5,"startCol":14,"endLine":5,"endCol":38,"message":"Type mismatch: expected String, got String -> IOUnit"}]
+[{"severity":"error","startLine":5,"startCol":14,"endLine":5,"endCol":38,"message":"Type mismatch: expected String, got String -> IOUnit","fixes":[]}]

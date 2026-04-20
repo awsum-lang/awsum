@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":7,"startCol":14,"endLine":7,"endCol":15,"message":"Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused","fixes":[]}]

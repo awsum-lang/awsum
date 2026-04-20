@@ -29,7 +29,8 @@ Install the `Awsum` extension to enable:
 
 - Syntax highlighting (including integer literals)
 - Formatting (on save or on demand)
-- Inline error diagnostics (on open / save / edit)
+- Inline error diagnostics (red squigglies) and warnings (yellow squigglies, theme-aware)
+- Quick fixes (lightbulb) for unused bindings and matching ignored constructors
 - Outline view, breadcrumbs, and in-file symbol navigation (`Ctrl+Shift+O` / `@`)
 - Workspace-wide symbol search (`Ctrl+T`)
 
@@ -102,7 +103,7 @@ brew install lua
 
 - `awsum build FILE [-t llvm] [-o OUT]` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
 - `awsum run FILE [-t llvm] [--input TEXT | --stdin]` — compile to a temp file and execute with the system runtime, passing input to main.
-- `awsum check FILE [--json]` — parse and typecheck; prints `OK` or a descriptive error. With `--json`, outputs a JSON array of diagnostics with source positions: `[{"startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"..."}]`.
+- `awsum check FILE [--json] [--strict]` — parse and typecheck; prints `OK`, warnings (yellow), or an error. With `--json`, outputs an array of diagnostics: `[{"severity":"error"|"warning","startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"...","fixes":[{"title":"…","edits":[{"startLine":…,"newText":"…"}]}]}]`. With `--strict`, any warning causes a non-zero exit code (CI-friendly).
 - `awsum format FILE [-i|--in-place]` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
@@ -153,7 +154,8 @@ awsum --version
 3. **Errors are values.** Arithmetic doesn't silently break. Division by zero, overflow, precision loss — all represented in the type system via `Either`. The programmer decides how to handle them.
 4. **No defaulting, ever.** The compiler never picks a type on the user's behalf — not for integer literals, not for a monadic context, not anywhere else. If the program is ambiguous, it doesn't compile; the fix is an explicit annotation, not a hidden convention.
 5. **No shadowing, ever.** A fresh binder must not reuse any name already visible in its scope, at any level — function parameters, pattern binders, future `let`s, whatever we add later. If two things should be the same, they share a name; if they shouldn't, they don't.
-6. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
+6. **`_` is explicit, not implicit.** A leading underscore marks a binding as intentionally unused, at every level — values (`_x`), top-level defs (`_foo`), type parameters (`_tag`), type names (`_A`), constructors (`_C`). Referencing a `_`-prefixed name is a compile error, so the opt-out is honest. Unused bindings that are NOT `_`-prefixed produce warnings with rename quick-fixes.
+7. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
 
 ### Priority order
 

@@ -71,7 +71,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "input" ]
+        , CFunDef "main" [ "_input" ]
             ( CCall ( CPrim PrimPrint )
                 [ CCall
                     ( CVar "handleA" )

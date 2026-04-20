@@ -8,7 +8,7 @@ function v_showResult(v_r)
   return (function(s) if s[1] == 0 then local v_a = s[2]; return v_a elseif s[1] == 1 then local v_e = s[2]; return v_e end end)(v_r)
 end
 
-function main(v_input)
+function main(v__input)
   return __print(table.concat({(v_unwrap)({0, "from box"}), " ", (v_showResult)((v_unwrap)({0, {0, "nested"}}))}))
 end
 

@@ -15,9 +15,33 @@ Program
             , spanEndLine = 8
             , spanEndCol = 19
             }
-        ) "Box" [ "a" ]
-        [ ConDef "Box"
-            [ TyVar "a" ]
+        ) "Box"
+        [ Param
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 10
+                , spanEndLine = 8
+                , spanEndCol = 11
+                }
+            ) "a"
+        ]
+        [ ConDef
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 14
+                , spanEndLine = 8
+                , spanEndCol = 17
+                }
+            ) "Box"
+            [ TyVar
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 18
+                    , spanEndLine = 8
+                    , spanEndCol = 19
+                    }
+                ) "a"
+            ]
         ] Nothing :|
         [ TypeDecl
             ( SrcSpan
@@ -27,12 +51,47 @@ Program
                 , spanEndCol = 25
                 }
             ) "Pair"
-            [ "a"
-            , "b"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 11
+                    , spanEndLine = 10
+                    , spanEndCol = 12
+                    }
+                ) "a"
+            , Param
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 13
+                    , spanEndLine = 10
+                    , spanEndCol = 14
+                    }
+                ) "b"
             ]
-            [ ConDef "Pair"
-                [ TyVar "a"
-                , TyVar "b"
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 17
+                    , spanEndLine = 10
+                    , spanEndCol = 21
+                    }
+                ) "Pair"
+                [ TyVar
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 22
+                        , spanEndLine = 10
+                        , spanEndCol = 23
+                        }
+                    ) "a"
+                , TyVar
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 24
+                        , spanEndLine = 10
+                        , spanEndCol = 25
+                        }
+                    ) "b"
                 ]
             ] Nothing
         , Sig
@@ -44,8 +103,31 @@ Program
                 }
             ) "greeting"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 12
+                    , spanEndLine = 12
+                    , spanEndCol = 28
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 12
+                        , spanEndLine = 12
+                        , spanEndCol = 18
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 22
+                        , spanEndLine = 12
+                        , spanEndCol = 28
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -54,7 +136,16 @@ Program
                 , spanEndLine = 13
                 , spanEndCol = 18
                 }
-            ) "greeting" [ "_" ]
+            ) "greeting"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 10
+                    , spanEndLine = 13
+                    , spanEndCol = 11
+                    }
+                ) "_"
+            ]
             ( ELit
                 ( SrcSpan
                     { spanStartLine = 13
@@ -74,11 +165,49 @@ Program
                 }
             ) "unwrapBox"
             ( TyArrow
-                ( TyApp
-                    ( TyCon "Box" )
-                    ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 13
+                    , spanEndLine = 15
+                    , spanEndCol = 33
+                    }
                 )
-                ( TyCon "String" )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 13
+                        , spanEndLine = 15
+                        , spanEndCol = 23
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 13
+                            , spanEndLine = 15
+                            , spanEndCol = 16
+                            }
+                        ) "Box"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 17
+                            , spanEndLine = 15
+                            , spanEndCol = 23
+                            }
+                        ) "String"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 27
+                        , spanEndLine = 15
+                        , spanEndCol = 33
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -87,7 +216,16 @@ Program
                 , spanEndLine = 17
                 , spanEndCol = 23
                 }
-            ) "unwrapBox" [ "b" ]
+            ) "unwrapBox"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 16
+                    , spanStartCol = 11
+                    , spanEndLine = 16
+                    , spanEndCol = 12
+                    }
+                ) "b"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 16
@@ -107,7 +245,15 @@ Program
                     ( QName [] "b" )
                 )
                 ( CaseAlt []
-                    ( PCon "Box" [ PWild ] )
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 17
+                            , spanStartCol = 3
+                            , spanEndLine = 17
+                            , spanEndCol = 6
+                            }
+                        ) "Box" [ PWild ]
+                    )
                     ( ELit
                         ( SrcSpan
                             { spanStartLine = 17
@@ -129,11 +275,49 @@ Program
                 }
             ) "unwrapBoxNamed"
             ( TyArrow
-                ( TyApp
-                    ( TyCon "Box" )
-                    ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 19
+                    , spanStartCol = 18
+                    , spanEndLine = 19
+                    , spanEndCol = 38
+                    }
                 )
-                ( TyCon "String" )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 18
+                        , spanEndLine = 19
+                        , spanEndCol = 28
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 19
+                            , spanStartCol = 18
+                            , spanEndLine = 19
+                            , spanEndCol = 21
+                            }
+                        ) "Box"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 19
+                            , spanStartCol = 22
+                            , spanEndLine = 19
+                            , spanEndCol = 28
+                            }
+                        ) "String"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 32
+                        , spanEndLine = 19
+                        , spanEndCol = 38
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -142,7 +326,16 @@ Program
                 , spanEndLine = 21
                 , spanEndCol = 30
                 }
-            ) "unwrapBoxNamed" [ "b" ]
+            ) "unwrapBoxNamed"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 20
+                    , spanStartCol = 16
+                    , spanEndLine = 20
+                    , spanEndCol = 17
+                    }
+                ) "b"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 20
@@ -162,7 +355,14 @@ Program
                     ( QName [] "b" )
                 )
                 ( CaseAlt []
-                    ( PCon "Box"
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 21
+                            , spanStartCol = 3
+                            , spanEndLine = 21
+                            , spanEndCol = 6
+                            }
+                        ) "Box"
                         [ PVar
                             ( SrcSpan
                                 { spanStartLine = 21
@@ -194,14 +394,67 @@ Program
                 }
             ) "showPair"
             ( TyArrow
-                ( TyApp
-                    ( TyApp
-                        ( TyCon "Pair" )
-                        ( TyCon "String" )
-                    )
-                    ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 23
+                    , spanStartCol = 12
+                    , spanEndLine = 23
+                    , spanEndCol = 40
+                    }
                 )
-                ( TyCon "String" )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 23
+                        , spanStartCol = 12
+                        , spanEndLine = 23
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 12
+                            , spanEndLine = 23
+                            , spanEndCol = 23
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 23
+                                , spanStartCol = 12
+                                , spanEndLine = 23
+                                , spanEndCol = 16
+                                }
+                            ) "Pair"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 23
+                                , spanStartCol = 17
+                                , spanEndLine = 23
+                                , spanEndCol = 23
+                                }
+                            ) "String"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 24
+                            , spanEndLine = 23
+                            , spanEndCol = 30
+                            }
+                        ) "String"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 23
+                        , spanStartCol = 34
+                        , spanEndLine = 23
+                        , spanEndCol = 40
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -210,7 +463,16 @@ Program
                 , spanEndLine = 25
                 , spanEndCol = 23
                 }
-            ) "showPair" [ "p" ]
+            ) "showPair"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 24
+                    , spanStartCol = 10
+                    , spanEndLine = 24
+                    , spanEndCol = 11
+                    }
+                ) "p"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 24
@@ -230,7 +492,14 @@ Program
                     ( QName [] "p" )
                 )
                 ( CaseAlt []
-                    ( PCon "Pair"
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 25
+                            , spanStartCol = 3
+                            , spanEndLine = 25
+                            , spanEndCol = 7
+                            }
+                        ) "Pair"
                         [ PWild
                         , PWild
                         ]
@@ -256,8 +525,31 @@ Program
                 }
             ) "main"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "IOUnit" )
+                ( SrcSpan
+                    { spanStartLine = 27
+                    , spanStartCol = 8
+                    , spanEndLine = 27
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 27
+                        , spanStartCol = 8
+                        , spanEndLine = 27
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 27
+                        , spanStartCol = 18
+                        , spanEndLine = 27
+                        , spanEndCol = 24
+                        }
+                    ) "IOUnit"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -266,7 +558,16 @@ Program
                 , spanEndLine = 28
                 , spanEndCol = 144
                 }
-            ) "main" [ "_input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 28
+                    , spanStartCol = 6
+                    , spanEndLine = 28
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 28

@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":6,"startCol":6,"endLine":6,"endCol":7,"message":"Type name must not be bare '_'; use '_X' (or similar) to mark a type as intentionally unused","fixes":[]}]

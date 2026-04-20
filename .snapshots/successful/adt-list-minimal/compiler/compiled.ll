@@ -94,7 +94,7 @@ define ptr @v_exampleList() {
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v_input) {
+define ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_exampleList()
   %t1 = call ptr @v_show(ptr %t0)
   %t2 = call ptr @__print(ptr %t1)

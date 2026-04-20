@@ -9,4 +9,4 @@ unwrap x = case x of
   NotFound -> "not found"
 
 main : String -> IOUnit
-main input = IO.Stdout.print (unwrap (Found "hello") ++ ", " ++ unwrap NotFound)
+main _input = IO.Stdout.print (unwrap (Found "hello") ++ ", " ++ unwrap NotFound)

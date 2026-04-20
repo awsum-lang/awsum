@@ -4,5 +4,5 @@ import IO.Stdout
 main : String -> IOUnit
 main input = IO.Stdout.print input
 
-maxInt32 : Int32
-maxInt32 = 2147483647
+_maxInt32 : Int32
+_maxInt32 = 2147483647

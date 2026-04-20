@@ -12,7 +12,15 @@ Program
             , spanEndCol = 17
             }
         ) "Unit" []
-        [ ConDef "Unit" [] ] Nothing :|
+        [ ConDef
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 13
+                , spanEndLine = 4
+                , spanEndCol = 17
+                }
+            ) "Unit" []
+        ] Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6
@@ -22,8 +30,31 @@ Program
                 }
             ) "show"
             ( TyArrow
-                ( TyCon "Unit" )
-                ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 8
+                    , spanEndLine = 6
+                    , spanEndCol = 22
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 8
+                        , spanEndLine = 6
+                        , spanEndCol = 12
+                        }
+                    ) "Unit"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 16
+                        , spanEndLine = 6
+                        , spanEndCol = 22
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -32,7 +63,16 @@ Program
                 , spanEndLine = 8
                 , spanEndCol = 17
                 }
-            ) "show" [ "u" ]
+            ) "show"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 6
+                    , spanEndLine = 7
+                    , spanEndCol = 7
+                    }
+                ) "u"
+            ]
             ( ECase
                 ( SrcSpan
                     { spanStartLine = 7
@@ -52,7 +92,15 @@ Program
                     ( QName [] "u" )
                 )
                 ( CaseAlt []
-                    ( PCon "Unit" [] )
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 3
+                            , spanEndLine = 8
+                            , spanEndCol = 7
+                            }
+                        ) "Unit" []
+                    )
                     ( ELit
                         ( SrcSpan
                             { spanStartLine = 8
@@ -74,31 +122,63 @@ Program
                 }
             ) "main"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "IOUnit" )
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 8
+                    , spanEndLine = 10
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 8
+                        , spanEndLine = 10
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 18
+                        , spanEndLine = 10
+                        , spanEndCol = 24
+                        }
+                    ) "IOUnit"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 11
                 , spanStartCol = 1
                 , spanEndLine = 11
-                , spanEndCol = 41
+                , spanEndCol = 42
                 }
-            ) "main" [ "input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 6
+                    , spanEndLine = 11
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 11
-                    , spanStartCol = 14
+                    , spanStartCol = 15
                     , spanEndLine = 11
-                    , spanEndCol = 41
+                    , spanEndCol = 42
                     }
                 )
                 ( EVar
                     ( SrcSpan
                         { spanStartLine = 11
-                        , spanStartCol = 14
+                        , spanStartCol = 15
                         , spanEndLine = 11
-                        , spanEndCol = 30
+                        , spanEndCol = 31
                         }
                     )
                     ( QName
@@ -110,25 +190,25 @@ Program
                 ( EParens
                     ( SrcSpan
                         { spanStartLine = 11
-                        , spanStartCol = 30
+                        , spanStartCol = 31
                         , spanEndLine = 11
-                        , spanEndCol = 41
+                        , spanEndCol = 42
                         }
                     )
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 11
-                            , spanStartCol = 31
+                            , spanStartCol = 32
                             , spanEndLine = 11
-                            , spanEndCol = 40
+                            , spanEndCol = 41
                             }
                         )
                         ( EVar
                             ( SrcSpan
                                 { spanStartLine = 11
-                                , spanStartCol = 31
+                                , spanStartCol = 32
                                 , spanEndLine = 11
-                                , spanEndCol = 36
+                                , spanEndCol = 37
                                 }
                             )
                             ( QName [] "show" )
@@ -136,9 +216,9 @@ Program
                         ( ECon
                             ( SrcSpan
                                 { spanStartLine = 11
-                                , spanStartCol = 36
+                                , spanStartCol = 37
                                 , spanEndLine = 11
-                                , spanEndCol = 40
+                                , spanEndCol = 41
                                 }
                             ) "Unit"
                         )

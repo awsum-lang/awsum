@@ -9,7 +9,7 @@ function v_handleB(v_step){
   return ((s) => { switch(s[0]) { case 0: { return (v_handleA)(v_step); } case 1: { return ("B" + (v_handleA)([2])); } case 2: { return ("C" + (v_handleA)([3])); } case 3: { return ""; } } })(v_step);
 }
 
-function main(v_input){
+function main(v__input){
   return __print((v_handleA)([0]));
 }
 

@@ -85,17 +85,17 @@ instance Arbitrary Type' where
     where
       go 0 =
         frequency
-          [ (3, TyVar <$> genTyVarName),
-            (3, TyCon <$> genKnownTyCon),
-            (2, TyCon <$> genUIdent)
+          [ (3, TyVar noSpan <$> genTyVarName),
+            (3, TyCon noSpan <$> genKnownTyCon),
+            (2, TyCon noSpan <$> genUIdent)
           ]
       go n =
         frequency
-          [ (4, TyVar <$> genTyVarName),
-            (3, TyCon <$> genKnownTyCon),
-            (2, TyCon <$> genUIdent),
-            (3, TyApp <$> go (n `div` 2) <*> go (n `div` 2)),
-            (6, TyArrow <$> go (n `div` 2) <*> go (n `div` 2))
+          [ (4, TyVar noSpan <$> genTyVarName),
+            (3, TyCon noSpan <$> genKnownTyCon),
+            (2, TyCon noSpan <$> genUIdent),
+            (3, TyApp noSpan <$> go (n `div` 2) <*> go (n `div` 2)),
+            (6, TyArrow noSpan <$> go (n `div` 2) <*> go (n `div` 2))
           ]
 
       -- small, readable type variable names; still valid 'lident'
@@ -110,16 +110,16 @@ instance Arbitrary Type' where
       genKnownTyCon = elements ["String", "IOUnit"]
 
   shrink = \case
-    TyVar v -> TyVar <$> shrinkIdent v
-    TyCon n -> TyCon <$> shrinkIdent n
-    TyApp f x ->
+    TyVar _ v -> TyVar noSpan <$> shrinkIdent v
+    TyCon _ n -> TyCon noSpan <$> shrinkIdent n
+    TyApp _ f x ->
       [f, x]
-        <> [TyApp f' x | f' <- shrink f]
-        <> [TyApp f x' | x' <- shrink x]
-    TyArrow a b ->
+        <> [TyApp noSpan f' x | f' <- shrink f]
+        <> [TyApp noSpan f x' | x' <- shrink x]
+    TyArrow _ a b ->
       [a, b]
-        <> [TyArrow a' b | a' <- shrink a]
-        <> [TyArrow a b' | b' <- shrink b]
+        <> [TyArrow noSpan a' b | a' <- shrink a]
+        <> [TyArrow noSpan a b' | b' <- shrink b]
 
 instance Arbitrary QName where
   arbitrary = do
@@ -186,8 +186,10 @@ instance Arbitrary Decl where
   arbitrary =
     oneof
       [ Sig noSpan <$> genLIdent <*> arbitrary <*> genComment,
-        FunDef noSpan <$> genLIdent <*> listOf genLIdent <*> arbitrary <*> genComment
+        FunDef noSpan <$> genLIdent <*> listOf genParam <*> arbitrary <*> genComment
       ]
+    where
+      genParam = Param noSpan <$> genLIdent
   shrink = \case
     Sig _sp n t mc ->
       [Sig noSpan n' t mc | n' <- shrinkIdent n] <> [Sig noSpan n t' mc | t' <- shrink t]

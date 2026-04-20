@@ -5,7 +5,7 @@ function v_show(v_p){
   return ((s) => { switch(s[0]) { case 0: { return "Phantom"; } } })(v_p);
 }
 
-function main(v_input){
+function main(v__input){
   return __print((v_show)([0]));
 }
 

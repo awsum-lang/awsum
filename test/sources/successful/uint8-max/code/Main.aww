@@ -4,5 +4,5 @@ import IO.Stdout
 main : String -> IOUnit
 main input = IO.Stdout.print input
 
-maxUInt8 : UInt8
-maxUInt8 = 255
+_maxUInt8 : UInt8
+_maxUInt8 = 255

@@ -12,4 +12,4 @@ showToken token = case token of
   EOF -> "<eof>"
 
 main : String -> IOUnit
-main input = IO.Stdout.print (showToken (Word "hello") ++ " " ++ showToken Comma ++ " " ++ showToken (Number "42") ++ " " ++ showToken EOF)
+main _input = IO.Stdout.print (showToken (Word "hello") ++ " " ++ showToken Comma ++ " " ++ showToken (Number "42") ++ " " ++ showToken EOF)

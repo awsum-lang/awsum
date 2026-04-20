@@ -49,7 +49,7 @@ case.join.4:
   ret ptr %t9
 }
 
-define ptr @v_main(ptr %v_input) {
+define ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [8 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = call ptr @v_wrap(ptr @v__con_Box, ptr %t0)
   %t2 = call ptr @v_unwrap(ptr %t1)

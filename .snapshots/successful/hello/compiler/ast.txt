@@ -13,8 +13,31 @@ Program
             }
         ) "main"
         ( TyArrow
-            ( TyCon "String" )
-            ( TyCon "IOUnit" )
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 8
+                , spanEndLine = 4
+                , spanEndCol = 24
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 8
+                    , spanEndLine = 4
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 18
+                    , spanEndLine = 4
+                    , spanEndCol = 24
+                    }
+                ) "IOUnit"
+            )
         ) Nothing :|
         [ FunDef
             ( SrcSpan
@@ -23,7 +46,16 @@ Program
                 , spanEndLine = 5
                 , spanEndCol = 49
                 }
-            ) "main" [ "input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 6
+                    , spanEndLine = 5
+                    , spanEndCol = 11
+                    }
+                ) "input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 5
@@ -95,7 +127,15 @@ Program
                 , spanEndCol = 18
                 }
             ) "greeting"
-            ( TyCon "String" ) Nothing
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 12
+                    , spanEndLine = 9
+                    , spanEndCol = 18
+                    }
+                ) "String"
+            ) Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 10
@@ -124,8 +164,31 @@ Program
                 }
             ) "addGreeting"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "String" )
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 15
+                    , spanEndLine = 12
+                    , spanEndCol = 31
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 15
+                        , spanEndLine = 12
+                        , spanEndCol = 21
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 25
+                        , spanEndLine = 12
+                        , spanEndCol = 31
+                        }
+                    ) "String"
+                )
             ) Nothing
         , FunDef
             ( SrcSpan
@@ -134,7 +197,16 @@ Program
                 , spanEndLine = 13
                 , spanEndCol = 51
                 }
-            ) "addGreeting" [ "name" ]
+            ) "addGreeting"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 13
+                    , spanEndLine = 13
+                    , spanEndCol = 17
+                    }
+                ) "name"
+            ]
             ( EInfix
                 ( SrcSpan
                     { spanStartLine = 13

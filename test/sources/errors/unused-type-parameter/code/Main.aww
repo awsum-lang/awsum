@@ -1,0 +1,13 @@
+-- Warning: 'tag' is declared but never used in any constructor field.
+-- The quick-fix renames it to '_tag' to mark it as an intentionally phantom
+-- parameter. (Using '_tag' up-front suppresses the warning.)
+import IO.Stdout
+
+type Phantom tag = Phantom
+
+show : Phantom String -> String
+show p = case p of
+  Phantom -> "ok"
+
+main : String -> IOUnit
+main input = IO.Stdout.print (show Phantom)

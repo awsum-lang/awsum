@@ -8,4 +8,4 @@ showTriple t = case t of
   Triple a b c -> a ++ " " ++ b ++ " " ++ c
 
 main : String -> IOUnit
-main input = IO.Stdout.print (showTriple (Triple "one" "two" "three"))
+main _input = IO.Stdout.print (showTriple (Triple "one" "two" "three"))

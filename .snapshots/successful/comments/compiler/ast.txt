@@ -21,8 +21,31 @@ Program
                 }
             ) "main"
             ( TyArrow
-                ( TyCon "String" )
-                ( TyCon "IOUnit" )
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 8
+                    , spanEndLine = 12
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 8
+                        , spanEndLine = 12
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 18
+                        , spanEndLine = 12
+                        , spanEndCol = 24
+                        }
+                    ) "IOUnit"
+                )
             )
             ( Just " Signature comment" )
         , CommentDecl
@@ -34,7 +57,16 @@ Program
                 , spanEndLine = 16
                 , spanEndCol = 57
                 }
-            ) "main" [ "input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 16
+                    , spanStartCol = 6
+                    , spanEndLine = 16
+                    , spanEndCol = 11
+                    }
+                ) "input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 16

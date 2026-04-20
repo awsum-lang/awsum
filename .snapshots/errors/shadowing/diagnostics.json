@@ -1,1 +1,1 @@
-[{"startLine":8,"startCol":7,"endLine":8,"endCol":8,"message":"Shadowing is not allowed: 'x' is already bound in an enclosing scope"}]
+[{"severity":"error","startLine":8,"startCol":7,"endLine":8,"endCol":8,"message":"Shadowing is not allowed: 'x' is already bound in an enclosing scope","fixes":[]}]

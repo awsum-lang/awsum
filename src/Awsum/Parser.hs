@@ -120,46 +120,95 @@ rwordS = rword . toText
 rwordNoLine :: Text -> Parser ()
 rwordNoLine w = (lexemeNoLine . try) (P.chunk w *> P.notFollowedBy identChar)
 
--- | Lower-case identifier (value/function name). Rejects reserved words.
+-- | Lower-case-or-underscore identifier (value/function name, parameter,
+--   pattern variable, type variable). Rejects reserved words.
+--   Names starting with @_@ are syntactically valid but semantically
+--   "intentionally unused" — referencing them is rejected by the typechecker
+--   with a dedicated error, and they are excluded from the unused-binding
+--   warnings.
 lident :: Parser Name
 lident = (lexeme . try) $ do
-  x <- C.lowerChar
+  x <- P.satisfy isBinderStart
   xs <- P.takeWhileP (Just "ident tail") isIdentTail
   let w = T.cons x xs
   guard (w `notElem` reserved)
   pure w
 
 -- | Upper-case identifier (module/type constructor name).
+--   Accepts:
+--     • @Foo@ — the normal shape;
+--     • @_Foo@ — explicitly marked as intentionally unused;
+--     • @_@ — bare underscore, parsed so the typechecker can reject it
+--       with a friendlier message than Megaparsec's default.
+--   Does NOT accept @_foo@ (underscore + lowercase): that's a value-style
+--   name and would be ambiguous as a type/constructor.
 uident :: Parser Name
-uident = (lexeme . try) $ do
-  x <- C.upperChar
-  xs <- P.takeWhileP (Just "ident tail") isIdentTail
-  pure (T.cons x xs)
+uident = (lexeme . try) uidentBody
+
+-- | Inner shape of 'uident', without the lexeme/whitespace handling.
+uidentBody :: Parser Name
+uidentBody = do
+  underscore <- P.option "" (T.singleton <$> C.char '_')
+  if T.null underscore
+    then do
+      x <- C.upperChar
+      xs <- P.takeWhileP (Just "ident tail") isIdentTail
+      pure (T.cons x xs)
+    else
+      P.choice
+        [ -- "_X..." — the typical "intentionally unused" shape.
+          do
+            x <- C.upperChar
+            xs <- P.takeWhileP (Just "ident tail") isIdentTail
+            pure (underscore <> T.cons x xs),
+          -- Bare "_" — only when the next char isn't part of a name,
+          -- so "_foo" doesn't sneak in as "_" + leftover.
+          P.notFollowedBy (P.satisfy isIdentTail) $> underscore
+        ]
 
 -- No-line-comment variants (used where we must not eat '--').
 lidentNoLine :: Parser Name
 lidentNoLine = (lexemeNoLine . try) $ do
-  x <- C.lowerChar
+  x <- P.satisfy isBinderStart
   xs <- P.takeWhileP (Just "ident tail") isIdentTail
   let w = T.cons x xs
   guard (w `notElem` reserved)
   pure w
 
 uidentNoLine :: Parser Name
-uidentNoLine = (lexemeNoLine . try) $ do
-  x <- C.upperChar
-  xs <- P.takeWhileP (Just "ident tail") isIdentTail
-  pure (T.cons x xs)
+uidentNoLine = (lexemeNoLine . try) uidentBody
 
--- | Parse a binder (function parameter / pattern variable head) under 'sc'.
---   Accepts @_@, @_foo@, or @foo@. Reserved words are rejected.
-binder :: Parser Name
-binder = (lexeme . try) $ do
+-- | Parse the textual form of a binder (function parameter / pattern
+--   variable head). Accepts @_@, @_foo@, or @foo@; reserved words are
+--   rejected. Does NOT consume trailing whitespace.
+binderName :: Parser Name
+binderName = try $ do
   x <- P.satisfy isBinderStart
   xs <- P.takeWhileP (Just "ident tail") isIdentTail
   let w = T.cons x xs
   guard (w `notElem` reserved)
   pure w
+
+-- | Parse a function-parameter binder together with its source span (covers
+--   only the identifier itself, not trailing whitespace), so quick-fixes
+--   that target a single parameter have the right edit range.
+paramBinder :: Parser Param
+paramBinder = do
+  start <- P.getSourcePos
+  name <- binderName
+  end <- P.getSourcePos
+  sc
+  pure (Param (toSrcSpan start end) name)
+
+-- | Variant of 'paramBinder' for contexts (type declarations) that must
+--   not swallow trailing @--@ line comments.
+paramBinderNoLine :: Parser Param
+paramBinderNoLine = do
+  start <- P.getSourcePos
+  name <- binderName
+  end <- P.getSourcePos
+  scNoLineComments
+  pure (Param (toSrcSpan start end) name)
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Entry point
@@ -301,7 +350,7 @@ pTypeDeclWithEnd = do
   start <- P.getSourcePos
   rwordS "type"
   name <- uident
-  tvars <- P.many lidentNoLine
+  tvars <- P.many paramBinderNoLine
   cons <- P.option [] $ do
     _ <- sym "="
     firstCon <- pConDefNoLine
@@ -312,16 +361,24 @@ pTypeDeclWithEnd = do
   endLineOrEOF
   pure (TypeDecl (toSrcSpan start end) name tvars cons tcom)
 
--- | Constructor definition: @Found a@ or @NotFound@.
+-- | Constructor definition: @Found a@ or @NotFound@. The constructor's
+--   name span (captured before trailing whitespace) is preserved so
+--   rename quick-fixes can target it precisely.
 pConDefNoLine :: Parser ConDef
-pConDefNoLine = ConDef <$> uidentNoLine <*> P.many pTypeAtomNoLineComments
+pConDefNoLine = do
+  start <- P.getSourcePos
+  name <- try uidentBody
+  end <- P.getSourcePos
+  scNoLineComments
+  flds <- P.many pTypeAtomNoLineComments
+  pure (ConDef (toSrcSpan start end) name flds)
 
 -- | Definition line: keep inline trailing '-- …' if present.
 pFunDefWithEnd :: Parser Decl
 pFunDefWithEnd = do
   start <- P.getSourcePos
   name <- lident
-  args <- P.many binder
+  args <- P.many paramBinder
   _ <- sym "="
   e <- pExprNoLineComments
   case e of
@@ -353,7 +410,13 @@ endLineOrEOF = void C.eol <|> P.eof
 pTypeNoLineComments :: Parser Type'
 pTypeNoLineComments = do
   t1 <- pTypeAppNoLineComments
-  (TyArrow t1 <$> (symNoLine "->" *> pTypeNoLineComments)) <|> pure t1
+  P.option
+    t1
+    ( do
+        _ <- symNoLine "->"
+        t2 <- pTypeNoLineComments
+        pure (TyArrow (spanBetween (typeSpan t1) (typeSpan t2)) t1 t2)
+    )
 
 -- | Type application: @Lookup String@, left-associative.
 --   Grammar: TypeApp = TypeAtom , { TypeAtom } ;
@@ -361,14 +424,53 @@ pTypeAppNoLineComments :: Parser Type'
 pTypeAppNoLineComments = do
   t <- pTypeAtomNoLineComments
   ts <- P.many pTypeAtomNoLineComments
-  pure (foldl' TyApp t ts)
+  pure (foldl' appWithSpan t ts)
+  where
+    appWithSpan f x = TyApp (spanBetween (typeSpan f) (typeSpan x)) f x
 
 -- | A single type atom: constructor, variable, or parenthesized type.
+--   The span captured here covers just the identifier (or the whole
+--   parenthesised expression), so a diagnostic targeting e.g. @_A@ in
+--   @foo : _A -> String@ highlights only @_A@.
 pTypeAtomNoLineComments :: Parser Type'
 pTypeAtomNoLineComments =
-  (TyCon <$> uidentNoLine)
-    <|> (TyVar <$> lidentNoLine)
-    <|> P.between (symNoLine "(") (symNoLine ")") pTypeNoLineComments
+  pTyConAtom
+    <|> pTyVarAtom
+    <|> pTyParens
+  where
+    pTyConAtom = do
+      start <- P.getSourcePos
+      n <- try uidentBody
+      end <- P.getSourcePos
+      scNoLineComments
+      pure (TyCon (toSrcSpan start end) n)
+    pTyVarAtom = do
+      start <- P.getSourcePos
+      n <- try $ do
+        x <- P.satisfy isBinderStart
+        xs <- P.takeWhileP (Just "ident tail") isIdentTail
+        let w = T.cons x xs
+        guard (w `notElem` reserved)
+        pure w
+      end <- P.getSourcePos
+      scNoLineComments
+      pure (TyVar (toSrcSpan start end) n)
+    pTyParens = do
+      start <- P.getSourcePos
+      _ <- symNoLine "("
+      inner <- pTypeNoLineComments
+      _ <- symNoLine ")"
+      end <- P.getSourcePos
+      -- Span covers the parentheses so the whole parenthesised type is
+      -- addressable, not just its inner atom.
+      pure (reSpan (toSrcSpan start end) inner)
+    -- Replace the top-level span of a type. Used after parsing parens to
+    -- grow the inner span out to the enclosing '(' ')'.
+    reSpan sp = \case
+      TyVar _ n -> TyVar sp n
+      TyCon _ n -> TyCon sp n
+      TyApp _ f x -> TyApp sp f x
+      TyArrow _ a b -> TyArrow sp a b
 
 -- Expressions ───────────────────────────────────────────────────────────────
 
@@ -568,18 +670,37 @@ groupCaseItems = go []
        in (alt : alts, trailing)
 
 -- | Pattern: constructor with optional sub-patterns, or variable binding.
---   @Found value@ parses as @PCon "Found" [PVar "value"]@.
+--   @Found value@ parses as @PCon span "Found" [PVar "value"]@.
+--   The constructor name's span is captured before trailing whitespace
+--   so quick-fixes (rename '_C' to 'C') target only the identifier.
 pPatternNoLineComments :: Parser Pattern
 pPatternNoLineComments =
-  (PCon <$> uidentNoLine <*> P.many pPatternAtomNoLineComments)
+  pConPattern
     <|> pPVar
 
--- | Atomic pattern: a variable, a constructor (no args), or a parenthesized pattern.
+-- | Constructor pattern with possible sub-patterns.
+pConPattern :: Parser Pattern
+pConPattern = do
+  (sp, name) <- pConHead
+  pats <- P.many pPatternAtomNoLineComments
+  pure (PCon sp name pats)
+
+-- | Atomic pattern: a variable, a nullary constructor, or a parenthesized pattern.
 pPatternAtomNoLineComments :: Parser Pattern
 pPatternAtomNoLineComments =
   pPVar
-    <|> ((`PCon` []) <$> uidentNoLine)
+    <|> ((\(sp, n) -> PCon sp n []) <$> pConHead)
     <|> P.between (symNoLine "(") (symNoLine ")") pPatternNoLineComments
+
+-- | Parse a constructor name and its source span (covers only the name,
+--   not trailing whitespace).
+pConHead :: Parser (SrcSpan, Name)
+pConHead = do
+  start <- P.getSourcePos
+  name <- try uidentBody
+  end <- P.getSourcePos
+  scNoLineComments
+  pure (toSrcSpan start end, name)
 
 -- | Parse a variable-binding pattern, capturing the span of the identifier
 --   /before/ trailing whitespace is consumed, so the span covers only the
@@ -588,12 +709,7 @@ pPatternAtomNoLineComments =
 pPVar :: Parser Pattern
 pPVar = do
   start <- P.getSourcePos
-  name <- try $ do
-    x <- P.satisfy isBinderStart
-    xs <- P.takeWhileP (Just "ident tail") isIdentTail
-    let w = T.cons x xs
-    guard (w `notElem` reserved)
-    pure w
+  name <- binderName
   end <- P.getSourcePos
   scNoLineComments
   pure $ if name == "_" then PWild else PVar (toSrcSpan start end) name

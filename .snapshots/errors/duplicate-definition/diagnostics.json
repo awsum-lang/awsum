@@ -1,1 +1,1 @@
-[{"startLine":3,"startCol":1,"endLine":3,"endCol":10,"message":"Duplicate definition for: foo"}]
+[{"severity":"error","startLine":3,"startCol":1,"endLine":3,"endCol":10,"message":"Duplicate definition for: foo","fixes":[]}]

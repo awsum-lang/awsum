@@ -1,1 +1,1 @@
-[{"startLine":9,"startCol":13,"endLine":9,"endCol":13,"message":"unexpected \"_v<newline><newline>\"\nexpecting \"case\", '\"', '(', '-', digit, lowercase letter, or uppercase letter"}]
+[{"severity":"error","startLine":9,"startCol":13,"endLine":9,"endCol":15,"message":"Cannot reference '_v': identifiers starting with '_' are marked as intentionally unused","fixes":[]}]

@@ -8,4 +8,4 @@ show u = case u of
   Unit -> "Unit"
 
 main : String -> IOUnit
-main input = IO.Stdout.print (show Unit)
+main _input = IO.Stdout.print (show Unit)

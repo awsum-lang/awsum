@@ -40,11 +40,11 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
-                           ["input"]
+                           [Param noSpan "input"]
                            ( EApp
                                noSpan
                                (EVar noSpan (QName ["IO", "Stdout"] "print"))
@@ -67,11 +67,11 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
-                           ["input"]
+                           [Param noSpan "input"]
                            ( EApp
                                noSpan
                                (EVar noSpan (QName ["IO", "Stdout"] "print"))
@@ -103,11 +103,11 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
-                           ["input"]
+                           [Param noSpan "input"]
                            ( EApp
                                noSpan
                                (EVar noSpan (QName ["IO", "Stdout"] "print"))
@@ -130,11 +130,11 @@ parserSpec = do
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow (TyCon "String") (TyCon "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
-                           ["input"]
+                           [Param noSpan "input"]
                            ( EApp
                                noSpan
                                (EVar noSpan (QName ["IO", "Stdout"] "print"))
@@ -175,7 +175,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Right ()
+        Right p -> typecheckProgram p `shouldBe` Right []
 
     it "typechecks: print (input ++ input)" $ do
       let src =
@@ -187,7 +187,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Right ()
+        Right p -> typecheckProgram p `shouldBe` Right []
 
 elaborateSpec :: Spec
 elaborateSpec = do
@@ -204,7 +204,8 @@ elaborateSpec = do
       Right p ->
         elaborateLowerProgram p
           `shouldBe` Right
-            ( CoreProgram
+            ( [],
+              CoreProgram
                 [ CFunDef
                     "main"
                     ["input"]

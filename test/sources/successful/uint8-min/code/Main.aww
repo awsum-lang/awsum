@@ -4,5 +4,5 @@ import IO.Stdout
 main : String -> IOUnit
 main input = IO.Stdout.print input
 
-minUInt8 : UInt8
-minUInt8 = 0
+_minUInt8 : UInt8
+_minUInt8 = 0

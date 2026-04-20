@@ -29,7 +29,7 @@ define ptr @__print(ptr %s) {
   ret ptr null
 }
 
-define ptr @v_main(ptr %v_input) {
+define ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [2 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = getelementptr [2 x i8], ptr @.str.1, i64 0, i64 0
   %t2 = call ptr @v_const(ptr %t0, ptr %t1)
@@ -39,7 +39,7 @@ define ptr @v_main(ptr %v_input) {
   ret ptr %t5
 }
 
-define ptr @v_const(ptr %v_x, ptr %v_y) {
+define ptr @v_const(ptr %v_x, ptr %v__y) {
   ret ptr %v_x
 }
 

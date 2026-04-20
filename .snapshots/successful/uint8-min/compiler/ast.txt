@@ -13,8 +13,31 @@ Program
             }
         ) "main"
         ( TyArrow
-            ( TyCon "String" )
-            ( TyCon "IOUnit" )
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 8
+                , spanEndLine = 4
+                , spanEndCol = 24
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 8
+                    , spanEndLine = 4
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 18
+                    , spanEndLine = 4
+                    , spanEndCol = 24
+                    }
+                ) "IOUnit"
+            )
         ) Nothing :|
         [ FunDef
             ( SrcSpan
@@ -23,7 +46,16 @@ Program
                 , spanEndLine = 5
                 , spanEndCol = 35
                 }
-            ) "main" [ "input" ]
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 6
+                    , spanEndLine = 5
+                    , spanEndCol = 11
+                    }
+                ) "input"
+            ]
             ( EApp
                 ( SrcSpan
                     { spanStartLine = 5
@@ -62,24 +94,32 @@ Program
                 { spanStartLine = 7
                 , spanStartCol = 1
                 , spanEndLine = 7
-                , spanEndCol = 17
+                , spanEndCol = 18
                 }
-            ) "minUInt8"
-            ( TyCon "UInt8" ) Nothing
+            ) "_minUInt8"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 13
+                    , spanEndLine = 7
+                    , spanEndCol = 18
+                    }
+                ) "UInt8"
+            ) Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 8
                 , spanStartCol = 1
                 , spanEndLine = 8
-                , spanEndCol = 13
+                , spanEndCol = 14
                 }
-            ) "minUInt8" []
+            ) "_minUInt8" []
             ( ELit
                 ( SrcSpan
                     { spanStartLine = 8
-                    , spanStartCol = 12
+                    , spanStartCol = 13
                     , spanEndLine = 8
-                    , spanEndCol = 13
+                    , spanEndCol = 14
                     }
                 )
                 ( LInt 0 )
