@@ -82,7 +82,7 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 - Expressions: string literals, integer literals, `++` concatenation, function application, constructors (first-class — passable to HOFs), `case`/`of` pattern matching with field bindings
 - Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection
 - Comments: `--` line, `{- -}` block (preserved through formatting)
-- Built-in: `IO.Stdout.print : String -> IOUnit`
+- Built-ins: `IO.Stdout.print : String -> IOUnit` (requires `import IO.Stdout`), `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String` (prelude-visible, no import; when polymorphic `show` arrives in these specialised helpers are retired).
 
 ## Testing
 

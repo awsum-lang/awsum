@@ -440,7 +440,7 @@ colorEnabled = do
     Just _ -> pure False
     Nothing -> hIsTerminalDevice stderr
 
--- | Format diagnostics in Scala-style. Errors use bold red; warnings use
+-- | Format diagnostics. Errors use bold red; warnings use
 --   bold yellow. Each diagnostic header line (e.g. @-- Error: file:line:col@)
 --   is recognized by VS Code's terminal link provider as clickable.
 --

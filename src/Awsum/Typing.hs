@@ -246,8 +246,16 @@ qLocal :: Name -> QName
 qLocal = QName []
 
 -- | Populate built-ins based on the set of imports present in the file.
---   Currently only provides:
---     IO.Stdout.print : String -> IOUnit
+--   Currently provides:
+--     IO.Stdout.print : String -> IOUnit   (import IO.Stdout)
+--     showInt32       : Int32 -> String    (prelude-visible, no import needed)
+--     showUInt8       : UInt8 -> String    (prelude-visible, no import needed)
+--
+--   The numeric show functions are unqualified top-level names because the
+--   types themselves are prelude (no @import Int32@ to be had). A qualified
+--   form @Int32.show@ would suggest a module that does not exist; once real
+--   polymorphic @show@ (type classes) arrives these two specialised
+--   helpers go away in favour of it.
 builtinEnvFromImports :: [ImportDecl] -> Env
 builtinEnvFromImports imps =
   let modLists = [toList ns | ImportDecl _ ns _ <- imps]
@@ -259,7 +267,16 @@ builtinEnvFromImports imps =
               (QName ["IO", "Stdout"] "print")
               (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit"))
           else mempty
-   in ioPrint
+      stringTy = TyCon noSpan "String"
+      showInt32 =
+        M.singleton
+          (QName [] "showInt32")
+          (TyArrow noSpan (TyCon noSpan "Int32") stringTy)
+      showUInt8 =
+        M.singleton
+          (QName [] "showUInt8")
+          (TyArrow noSpan (TyCon noSpan "UInt8") stringTy)
+   in ioPrint <> showInt32 <> showUInt8
 
 -- | Flatten a right-associative arrow type into @(argument types, result type)@.
 --   Example: @a -> b -> c@  ⇒  @([a, b], c)@.
@@ -665,10 +682,18 @@ typeOfExpr conEnv tcm env = \case
     tf <- typeOfExpr conEnv tcm env f
     case tf of
       TyArrow _ a b -> do
-        tx <- typeOfExpr conEnv tcm env x
-        case match a tx of
-          Just s -> Right (applySubst s b)
-          Nothing -> Left (TypeMismatch a tx x)
+        -- If the argument is a bare integer literal we don't have a synthesis
+        -- form for it (no defaulting) — the expected type from the callee's
+        -- signature is the only way to give it a type. Delegate to 'checkExpr'
+        -- in that case so range validation happens against the concrete 'a'.
+        case x of
+          ELit _ (LInt _) -> checkExpr conEnv tcm env a x $> b
+          EParens _ (ELit _ (LInt _)) -> checkExpr conEnv tcm env a x $> b
+          _ -> do
+            tx <- typeOfExpr conEnv tcm env x
+            case match a tx of
+              Just s -> Right (applySubst s b)
+              Nothing -> Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
   -- String concatenation is only defined for (String, String) → String.
   EInfix sp OpConcat l r -> do

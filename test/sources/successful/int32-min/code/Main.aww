@@ -1,8 +1,0 @@
--- Test: Int32 lower bound literal (-2^31) is accepted
-import IO.Stdout
-
-main : String -> IOUnit
-main input = IO.Stdout.print input
-
-_minInt32 : Int32
-_minInt32 = -2147483648

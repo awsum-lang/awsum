@@ -32,8 +32,17 @@
 
   .method public hidebysig static object v_main(object) cil managed
   {
-    ldarg.0
+    call object AwsumMain::v_minUInt8()
+    callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__print(object)
+    ret
+  }
+
+
+  .method public hidebysig static object v_minUInt8() cil managed
+  {
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     ret
   }
 

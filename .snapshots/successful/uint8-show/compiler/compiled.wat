@@ -7,8 +7,9 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 65))
+  (global $heap (mut i32) (i32.const 68))
   (data (i32.const 64) "\00")
+  (data (i32.const 65) ", \00")
   (table 1 funcref)
   (elem (i32.const 0) $v_main)
 
@@ -64,6 +65,46 @@
     (i32.const 0))
 
 
+  (func $__box_i32 (param $v i32) (result i32)
+    (local $p i32)
+    (local.set $p (call $__alloc (i32.const 4)))
+    (i32.store (local.get $p) (local.get $v))
+    (local.get $p))
+
+
+  (func $__show_i32 (param $p i32) (result i32)
+    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32)
+    (local.set $v (i32.load (local.get $p)))
+    (local.set $buf (call $__alloc (i32.const 16)))
+    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))
+    (local.set $pos (i32.const 14))
+    (if (i32.lt_s (local.get $v) (i32.const 0))
+      (then
+        (local.set $neg (i32.const 1))
+        (local.set $mag (i32.sub (i32.const 0) (local.get $v))))
+      (else
+        (local.set $neg (i32.const 0))
+        (local.set $mag (local.get $v))))
+    (if (i32.eqz (local.get $mag))
+      (then
+        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 48))
+        (local.set $pos (i32.sub (local.get $pos) (i32.const 1))))
+      (else
+        (block $done
+          (loop $loop
+            (br_if $done (i32.eqz (local.get $mag)))
+            (local.set $digit (i32.rem_u (local.get $mag) (i32.const 10)))
+            (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.add (local.get $digit) (i32.const 48)))
+            (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))
+            (local.set $mag (i32.div_u (local.get $mag) (i32.const 10)))
+            (br $loop)))))
+    (if (local.get $neg)
+      (then
+        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 45))
+        (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))))
+    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))
+
+
   (func $__get_arg (result i32)
     (local $argv_buf i32) (local $ptrs i32)
     (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
@@ -75,8 +116,20 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
-    (call $__print (local.get $v_input)))
+  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__show_i32 (call $v_minUInt8)) (i32.const 65)) (call $__show_i32 (call $v_small))) (i32.const 65)) (call $__show_i32 (call $v_aboveSignedByte))) (i32.const 65)) (call $__show_i32 (call $v_maxUInt8)))))
+
+  (func $v_minUInt8 (export "v_minUInt8") (result i32)
+    (call $__box_i32 (i32.const 0)))
+
+  (func $v_small (export "v_small") (result i32)
+    (call $__box_i32 (i32.const 42)))
+
+  (func $v_aboveSignedByte (export "v_aboveSignedByte") (result i32)
+    (call $__box_i32 (i32.const 200)))
+
+  (func $v_maxUInt8 (export "v_maxUInt8") (result i32)
+    (call $__box_i32 (i32.const 255)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

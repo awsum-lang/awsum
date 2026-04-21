@@ -186,6 +186,13 @@ emitExprText ctx varMap = \case
               <> ">::.ctor(object, native int)"
     | otherwise ->
         "    ldnull"
+  CIntLit n _ ->
+    -- Same shape as the binary assembler: push Int32 and box to System.Object.
+    T.intercalate
+      "\n"
+      [ "    ldc.i4 " <> show (fromInteger n :: Int32),
+        "    box [System.Runtime]System.Int32"
+      ]
   CPrim _ ->
     "    ldnull"
   CCon tag fields ->
@@ -251,6 +258,13 @@ emitExprText ctx varMap = \case
               "\n"
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__print(object)"
+              ]
+      CPrim (PrimShowInt _)
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    callvirt instance string [System.Runtime]System.Object::ToString()"
               ]
       CVar n
         | n `Set.member` ctx.cFunDefs ->

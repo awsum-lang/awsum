@@ -1,8 +1,0 @@
--- Test: UInt8 upper bound literal (2^8 - 1) is accepted
-import IO.Stdout
-
-main : String -> IOUnit
-main input = IO.Stdout.print input
-
-_maxUInt8 : UInt8
-_maxUInt8 = 255

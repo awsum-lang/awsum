@@ -1,8 +1,10 @@
 local function __print(s) io.write(tostring(s)); return nil end
 
-function main(v_input)
-  return __print(v_input)
+function main(v__input)
+  return __print(tostring(v_maxInt32))
 end
+
+v_maxInt32 = 2147483647
 
 local ok, dbg = pcall(require, 'debug')
 local should_run = false

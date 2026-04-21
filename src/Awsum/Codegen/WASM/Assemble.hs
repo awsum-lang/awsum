@@ -94,6 +94,12 @@ op_i32_lt_u = 0x49
 op_i32_gt_u = 0x4B
 op_i32_ge_u = 0x4F
 
+op_i32_sub, op_i32_div_u, op_i32_rem_u, op_i32_lt_s :: Word8
+op_i32_sub = 0x6B
+op_i32_div_u = 0x6E
+op_i32_rem_u = 0x70
+op_i32_lt_s = 0x48
+
 -- WASM type encoding
 valtype_i32 :: Word8
 valtype_i32 = 0x7F
@@ -126,18 +132,21 @@ data WasmInfo = WasmInfo
 importCount :: Word32
 importCount = 3
 
--- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print, __get_arg
+-- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
+-- __box_i32, __show_i32, __get_arg
 runtimeCount :: Word32
-runtimeCount = 6
+runtimeCount = 8
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
 idxConcat = importCount + 3
 idxPrint = importCount + 4
-idxGetArg = importCount + 5
+idxBoxI32 = importCount + 5
+idxShowI32 = importCount + 6
+idxGetArg = importCount + 7
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -197,6 +206,7 @@ stringsInExpr :: CExpr -> [Text]
 stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
+  CIntLit _ _ -> []
   CPrim _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
@@ -317,6 +327,8 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 3 False) typeMap, -- __memcpy
           lookupType (FuncType 2 True) typeMap, -- __concat
           lookupType (FuncType 1 True) typeMap, -- __print
+          lookupType (FuncType 1 True) typeMap, -- __box_i32
+          lookupType (FuncType 1 True) typeMap, -- __show_i32
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
           -- User declarations
@@ -418,6 +430,8 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeMemcpy,
           codeConcat info,
           codePrint info,
+          codeBoxI32 info,
+          codeShowI32 info,
           codeGetArg info
         ]
           -- User declarations
@@ -700,6 +714,206 @@ codePrint _info =
         encodeSLEB128 0
       ]
 
+-- __box_i32(v: i32) -> i32
+-- Allocate a 4-byte cell, store v, return pointer.
+-- local $p: i32 (slot 1)
+codeBoxI32 :: WasmInfo -> [Word8]
+codeBoxI32 _info =
+  encodeBody
+    (encodeLocals 1)
+    $ concat
+      [ -- p = __alloc(4)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 1,
+        -- i32.store(p, v)
+        [op_local_get],
+        encodeULEB128 1,
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_store, 0x02, 0x00], -- align=2 (4-byte), offset=0
+        -- return p
+        [op_local_get],
+        encodeULEB128 1
+      ]
+
+-- __show_i32(p: i32) -> i32
+-- Read value from box, render decimal representation in fresh 16-byte buffer
+-- (worst case: "-2147483648" = 11 chars + null). Returns a pointer to the
+-- first character. Same routine handles Int32 (signed) and UInt8 (always
+-- positive 0..255) — i32.lt_s is false for the UInt8 value space.
+--
+-- Locals: $v(1) $buf(2) $pos(3) $neg(4) $mag(5) $digit(6)
+-- (param p is slot 0)
+codeShowI32 :: WasmInfo -> [Word8]
+codeShowI32 _info =
+  encodeBody
+    (encodeLocals 6)
+    $ concat
+      [ -- v = i32.load(p)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 1,
+        -- buf = __alloc(16)
+        [op_i32_const],
+        encodeSLEB128 16,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        -- store null at buf+15
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 15,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store8, 0x00, 0x00],
+        -- pos = 14
+        [op_i32_const],
+        encodeSLEB128 14,
+        [op_local_set],
+        encodeULEB128 3,
+        -- if v < 0 (signed) then neg=1, mag=-v else neg=0, mag=v
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_lt_s],
+        [op_if, blocktype_void],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 5,
+        [op_else],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_end],
+        -- if mag == 0 then write '0' at buf+pos; pos -= 1
+        -- else loop while mag != 0: digit=mag%10; store '0'+digit at buf+pos; pos-=1; mag/=10
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_eqz],
+        [op_if, blocktype_void],
+        -- write '0' at buf+pos
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 48, -- '0'
+        [op_i32_store8, 0x00, 0x00],
+        -- pos -= 1
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 3,
+        [op_else],
+        -- block $done / loop $loop
+        [op_block, blocktype_void],
+        [op_loop, blocktype_void],
+        -- br_if $done (mag == 0)
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_eqz],
+        [op_br_if],
+        encodeULEB128 1,
+        -- digit = mag % 10
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 10,
+        [op_i32_rem_u],
+        [op_local_set],
+        encodeULEB128 6,
+        -- store '0' + digit at buf+pos
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_const],
+        encodeSLEB128 48,
+        [op_i32_add],
+        [op_i32_store8, 0x00, 0x00],
+        -- pos -= 1
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 3,
+        -- mag /= 10
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 10,
+        [op_i32_div_u],
+        [op_local_set],
+        encodeULEB128 5,
+        -- br $loop
+        [op_br],
+        encodeULEB128 0,
+        [op_end], -- end loop
+        [op_end], -- end block $done
+        [op_end], -- end else
+        -- if neg then store '-' at buf+pos; pos -= 1
+        [op_local_get],
+        encodeULEB128 4,
+        [op_if, blocktype_void],
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 45, -- '-'
+        [op_i32_store8, 0x00, 0x00],
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 3,
+        [op_end],
+        -- return buf + (pos + 1)
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_i32_add]
+      ]
+
 -- __get_arg() -> i32
 -- locals: $argv_buf(0), $ptrs(1)
 codeGetArg :: WasmInfo -> [Word8]
@@ -904,6 +1118,12 @@ emitExpr ctx = \case
         [op_i32_const] <> encodeSLEB128 0
   CPrim _ ->
     [op_i32_const] <> encodeSLEB128 0
+  CIntLit n _ ->
+    let n32 = fromInteger n :: Int32
+     in [op_i32_const]
+          <> encodeSLEB128 n32
+          <> [op_call]
+          <> encodeULEB128 idxBoxI32
   CCon tag fields ->
     let nSlots = 1 + length fields
         conSlot = ctx.ecConBaseSlot + fromIntegral ctx.ecConDepth
@@ -953,6 +1173,11 @@ emitExpr ctx = \case
             emitExpr ctx x
               <> [op_call]
               <> encodeULEB128 idxPrint
+      CPrim (PrimShowInt _)
+        | [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxShowI32
       CVar n
         | n `Set.member` ctx.ecFunDefs ->
             let fIdx = fromMaybe 0 (Map.lookup n ctx.ecFuncIdx)

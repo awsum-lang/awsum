@@ -569,6 +569,15 @@ emitExpr ctx = \case
     | otherwise ->
         pure cilLdnull
   CPrim _ -> pure cilLdnull
+  CIntLit n it -> do
+    -- Both Int32 and UInt8 are represented as boxed System.Int32 on the CLR,
+    -- matching the JVM treatment (boxed Integer). Avoids a separate boxing
+    -- path for unsigned widths while keeping the value space correct — the
+    -- typechecker has already validated 'n' against the declared range.
+    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+    let n32 = fromInteger n :: Int32
+        _ = it
+    pure (cilLdcI4 (fromIntegral n32) <> cilBox (tokTR trInt32))
   CCon tag fields -> do
     -- Create Object[] container: [tag_as_boxed_Int32, field1, field2, ...]
     let nSlots = 1 + length fields
@@ -646,6 +655,14 @@ emitExpr ctx = \case
     CPrim PrimPrint | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__print"))
+    CPrim (PrimShowInt _) | [x] <- xs -> do
+      -- Call 'object::ToString()' virtually: boxed Int32 dispatches to
+      -- System.Int32.ToString(), producing the culture-invariant decimal
+      -- representation (culture only affects floats, which we do not emit).
+      cx <- emitExpr ctx x
+      trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+      toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
+      pure (cx <> cilCallvirt (tokMR toStrRef))
     CVar n | n `Set.member` ctx.eFunDefs -> do
       argCodes <- traverse (emitExpr ctx) xs
       pure (concat argCodes <> cilCall (lkTok ctx (mangle n)))

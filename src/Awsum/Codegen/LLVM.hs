@@ -91,6 +91,7 @@ stringsInExpr :: CExpr -> [Text]
 stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
+  CIntLit _ _ -> []
   CPrim _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
@@ -148,8 +149,11 @@ header =
       "declare ptr @strcat(ptr, ptr)",
       "declare i64 @strlen(ptr)",
       "declare i32 @printf(ptr, ...)",
+      "declare i32 @snprintf(ptr, i64, ptr, ...)",
       "",
       "@.fmt = private unnamed_addr constant [3 x i8] c\"%s\\00\"",
+      "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
+      "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\"",
       "@.empty = private unnamed_addr constant [1 x i8] c\"\\00\""
     ]
 
@@ -174,6 +178,25 @@ runtime =
       "define ptr @__print(ptr %s) {",
       "  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)",
       "  ret ptr null",
+      "}",
+      "",
+      -- Integers are boxed: each CIntLit allocates a heap cell holding
+      -- the native i32/i8 value and the Awsum-level 'ptr' points at it.
+      -- Show reads the cell and snprintf's into a fresh 16-byte buffer
+      -- (enough for @-2147483648@ / @255@ plus a null terminator).
+      "define ptr @__showInt32(ptr %p) {",
+      "  %v = load i32, ptr %p",
+      "  %buf = call ptr @malloc(i64 16)",
+      "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)",
+      "  ret ptr %buf",
+      "}",
+      "",
+      "define ptr @__showUInt8(ptr %p) {",
+      "  %b = load i8, ptr %p",
+      "  %v = zext i8 %b to i32",
+      "  %buf = call ptr @malloc(i64 16)",
+      "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)",
+      "  ret ptr %buf",
       "}"
     ]
 
@@ -267,6 +290,28 @@ emitExpr ctx = \case
           )
     | otherwise ->
         pure ("", "@" <> mangle n)
+  CIntLit n it -> do
+    -- Box the literal: malloc a cell of the right width, store the value,
+    -- and return the pointer — integers share the uniform 'ptr' representation.
+    buf <- freshTemp
+    let (llvmTy, bytes, val) = case it of
+          TInt32 -> ("i32" :: Text, 4 :: Int, show n :: Text)
+          TUInt8 -> ("i8", 1, show n)
+    pure
+      ( "  "
+          <> buf
+          <> " = call ptr @malloc(i64 "
+          <> show bytes
+          <> ")\n"
+          <> "  store "
+          <> llvmTy
+          <> " "
+          <> val
+          <> ", ptr "
+          <> buf
+          <> "\n",
+        buf
+      )
   CPrim _ ->
     pure ("", "null")
   CCon tag fields -> do
@@ -411,6 +456,19 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "__print: arity mismatch"
+      CPrim (PrimShowInt it) ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            let fn = case it of
+                  TInt32 -> "@__showInt32" :: Text
+                  TUInt8 -> "@__showUInt8"
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "__showInt: arity mismatch"
       _ -> do
         (instrF, resF) <- emitExpr ctx f
         argsResults <- traverse (emitExpr ctx) xs

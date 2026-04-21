@@ -4,25 +4,28 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 ## Overview
 
-| | LLVM | JVM | CLR | WASM | JS | Lua |
-|---|---|---|---|---|---|---|
-| **Runtime** | Native binary (via Clang 15+) | Java 7+ | .NET 9+ (dotnet) | wasmtime (WASI) | Node.js 14+ | Lua 5.1+ |
-| **String type** | `ptr` to null-terminated C string | `java.lang.String` (boxed as `Object`) | `System.String` (boxed as `object`) | `i32` pointer to null-terminated bytes in linear memory | Native JS string | Native Lua string |
-| **Concat** | `strlen` + `malloc` + `strcpy` + `strcat` | `String.concat` | `System.String.Concat(object, object)` | `__concat`: strlen + bump alloc + memcpy | `+` | `..` |
-| **Print** | `printf("%s", s)` | `System.out.print(s)` | `System.Console.Write(object)` | WASI `fd_write` via iovec | `process.stdout.write(s)` | `io.write(s)` |
-| **Constants** | Zero-arg function, called on each use | Zero-arg static method, called on each use | Zero-arg static method, called on each use | Zero-arg function, called on each use | `const name = expr;` | `name = expr` (global) |
-| **Functions** | `define ptr @name(ptr ...) { ... }` | `static Object v_name(Object...) { ... }` | `static object v_name(object ...) { ... }` | `(func $v_name (param i32 ...) (result i32) ...)` | `function` declaration (hoisted) | `function ... end` |
-| **Higher-order** | Opaque `ptr` indirect call | `MethodHandle` (`ldc` + `invokevirtual invoke`) | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) | `funcref` table + `call_indirect` | First-class values | First-class values |
-| **Constructors** | `malloc`'d `ptr` array: `[tag, fields...]` | `Object[]`: `[Integer(tag), fields...]` | `object[]`: `[box(tag), fields...]` | Linear memory: `[i32 tag, i32 fields...]` | Array: `[tag, fields...]` | Table: `{tag, fields...}` |
-| **Pattern match** | `ptrtoint` tag → `icmp eq` → `br` | `aaload` tag → `intValue` → `ifeq` | `ldelem.ref` tag → `unbox.any` → `beq.s` | `i32.load` tag → `i32.eq` → `if`/`else` | `s[0] === N ? ...` | `s[1] == N and ...` |
-| **Memory** | Manual (`malloc`, no `free`) | GC | GC | Bump allocator (no free) | GC | GC |
-| **Name mangling** | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (`_start` is WASI entry) | `v_` prefix, `main` unchanged | `v_` prefix, `main` unchanged |
+|                   | LLVM                                              | JVM                                               | CLR                                                              | WASM                                                    | JS                                            | Lua                           |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------- | ----------------------------- |
+| **Runtime**       | Native binary (via Clang 15+)                     | Java 7+                                           | .NET 9+ (dotnet)                                                 | wasmtime (WASI)                                         | Node.js 14+                                   | Lua 5.1+                      |
+| **String type**   | `ptr` to null-terminated C string                 | `java.lang.String` (boxed as `Object`)            | `System.String` (boxed as `object`)                              | `i32` pointer to null-terminated bytes in linear memory | Native JS string                              | Native Lua string             |
+| **Concat**        | `strlen` + `malloc` + `strcpy` + `strcat`         | `String.concat`                                   | `System.String.Concat(object, object)`                           | `__concat`: strlen + bump alloc + memcpy                | `+`                                           | `..`                          |
+| **Print**         | `printf("%s", s)`                                 | `System.out.print(s)`                             | `System.Console.Write(object)`                                   | WASI `fd_write` via iovec                               | `process.stdout.write(s)`                     | `io.write(s)`                 |
+| **Constants**     | Zero-arg function, called on each use             | Zero-arg static method, called on each use        | Zero-arg static method, called on each use                       | Zero-arg function, called on each use                   | `const name = expr;`                          | `name = expr` (global)        |
+| **Functions**     | `define ptr @name(ptr ...) { ... }`               | `static Object v_name(Object...) { ... }`         | `static object v_name(object ...) { ... }`                       | `(func $v_name (param i32 ...) (result i32) ...)`       | `function` declaration (hoisted)              | `function ... end`            |
+| **Higher-order**  | Opaque `ptr` indirect call                        | `MethodHandle` (`ldc` + `invokevirtual invoke`)   | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) | `funcref` table + `call_indirect`                       | First-class values                            | First-class values            |
+| **Constructors**  | `malloc`'d `ptr` array: `[tag, fields...]`        | `Object[]`: `[Integer(tag), fields...]`           | `object[]`: `[box(tag), fields...]`                              | Linear memory: `[i32 tag, i32 fields...]`               | Array: `[tag, fields...]`                     | Table: `{tag, fields...}`     |
+| **Pattern match** | `ptrtoint` tag → `icmp eq` → `br`                 | `aaload` tag → `intValue` → `ifeq`                | `ldelem.ref` tag → `unbox.any` → `beq.s`                         | `i32.load` tag → `i32.eq` → `if`/`else`                 | `s[0] === N ? ...`                            | `s[1] == N and ...`           |
+| **Int32 / UInt8** | Heap cell: `ptr` to `i32` / `i8`                  | Boxed `java.lang.Integer`                         | Boxed `System.Int32`                                             | Heap cell: `i32` in linear memory                       | `(N\|0)` / `(N & 0xFF)` — unboxed JS `number` | Native `integer` (Lua 5.3+)   |
+| **show\***        | Runtime helpers using `snprintf`                  | `Integer.toString()`                              | `callvirt Object::ToString()`                                    | Hand-rolled itoa in linear memory                       | `String(x)`                                   | `tostring(x)`                 |
+| **Memory**        | Manual (`malloc`, no `free`)                      | GC                                                | GC                                                               | Bump allocator (no free)                                | GC                                            | GC                            |
+| **Name mangling** | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`)                | `v_` prefix for all (`_start` is WASI entry)            | `v_` prefix, `main` unchanged                 | `v_` prefix, `main` unchanged |
 
 ## String Concatenation
 
 All six backends guarantee identical results because the type checker ensures both operands are `String`.
 
 **LLVM** — runtime helper allocates a new buffer and copies both strings:
+
 ```llvm
 define ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
@@ -37,28 +40,33 @@ define ptr @__concat(ptr %a, ptr %b) {
 ```
 
 **JVM** — casts both operands to `String` and uses `String.concat`:
+
 ```
 invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 ```
 
 **CLR** — casts both operands to `object` and calls `System.String.Concat`:
+
 ```
 call object AwsumMain::__concat(object, object)
 // where __concat calls: string [System.Runtime]System.String::Concat(object, object)
 ```
 
 **WASM** — runtime helper computes lengths, bump-allocates a new buffer, copies both strings, and null-terminates:
+
 ```wasm
 (call $__concat (local.get $a) (local.get $b))
 ;; strlen(a) + strlen(b) → alloc(la+lb+1) → memcpy(buf,a,la) → memcpy(buf+la,b,lb) → store8 0
 ```
 
 **JS** — uses native `+`, which is string concatenation when both sides are strings:
+
 ```javascript
-("Hello" + ", " + name + "!")
+"Hello" + ", " + name + "!";
 ```
 
 **Lua** — uses native `..`, which is string concatenation:
+
 ```lua
 ("Hello" .. ", " .. name .. "!")
 ```
@@ -95,11 +103,85 @@ Zero-argument definitions like `greeting = "Hello"` are compiled differently per
 
 **Lua**: `v_greeting = "Hello"` — global assignment, evaluated once before `main` runs.
 
+## Integers
+
+Awsum currently has two integer types: `Int32` (signed 32-bit) and `UInt8` (unsigned 8-bit). Integer literals have no runtime default type — context fixes the type, and the type checker validates the literal against its range at compile time.
+
+Two builtins render integers as strings:
+
+- `showInt32 : Int32 -> String`
+- `showUInt8 : UInt8 -> String`
+
+These are unqualified top-level names (no `import` required), because the types themselves are prelude-visible and a faked `Int32.show` quote would imply a module that does not exist. When polymorphic `show` arrives (type classes), these two specialised helpers go away in favour of it.
+
+All six backends produce identical decimal output for the same value — this is verified by the cross-backend tests `int32-show` and `uint8-show`, which render the full range (min, negatives, zero, positives, max) as a comma-separated list.
+
+### Representation
+
+**LLVM**: Integers are boxed — each `CIntLit` allocates a heap cell (`i32` or `i8`) and the Awsum-level `ptr` points at it. Show helpers load the value and format it with `snprintf`:
+
+```llvm
+declare i32 @snprintf(ptr, i64, ptr, ...)
+@.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
+@.fmt_u8  = private unnamed_addr constant [3 x i8] c"%u\00"
+
+define ptr @__showInt32(ptr %p) {
+  %v   = load i32, ptr %p
+  %buf = call ptr @malloc(i64 16)
+  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
+  ret ptr %buf
+}
+```
+
+`__showUInt8` is the same with `load i8` + `zext i8 to i32` + `@.fmt_u8`. 16 bytes is enough for `-2147483648` (11 chars) plus null terminator.
+
+**JVM**: Both `Int32` and `UInt8` are boxed as `java.lang.Integer` (not `java.lang.Byte`, because `byte` is signed on the JVM — `Integer` preserves the 0..255 value space without masking headaches for later arithmetic). Literals are pushed with `iconst`/`bipush`/`sipush`, or loaded from a `CONSTANT_Integer` pool entry via `ldc` for values outside the short range:
+
+```
+; showInt32 42 → boxed Integer(42) → "42"
+bipush 42
+invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+checkcast java/lang/Integer
+invokevirtual java/lang/Integer.toString()Ljava/lang/String;
+```
+
+**CLR**: Both types are boxed as `System.Int32` (same rationale as JVM — avoiding `System.Byte`'s unsigned primitive path keeps the representation uniform). `ldc.i4` pushes the value, `box` turns it into an `object`, and show is a virtual call to `Object::ToString()` — boxed `Int32` dispatches to `System.Int32.ToString()`:
+
+```
+; showInt32 42 → boxed Int32 → "42"
+ldc.i4 42
+box [System.Runtime]System.Int32
+callvirt instance string [System.Runtime]System.Object::ToString()
+```
+
+**WASM**: Integers are boxed in linear memory — `__box_i32(v)` allocates 4 bytes via `__alloc`, stores `v`, and returns the pointer. Show is implemented by hand because WASM has no stdlib: `__show_i32` reads the value, writes digits into a 16-byte buffer from the end, and prepends `-` if the value is negative. The same routine handles `UInt8`: values 0..255 are always positive in the signed interpretation, so `i32.lt_s (x) 0` is false and no `-` is written.
+
+`i32.div_u` / `i32.rem_u` are used on the magnitude — this sidesteps the `INT_MIN` corner case where `0 - INT_MIN` is `INT_MIN` again in two's complement: the unsigned reading of `0x80000000` is `2147483648`, which is the correct magnitude.
+
+**JS**: Integers are unboxed JS `number`s, coerced to match the declared type's value space at the literal site:
+
+```javascript
+// Int32 N → (N|0)    forces signed 32-bit semantics
+// UInt8 N → (N & 0xFF)   masks to 0..255
+// showInt32 / showUInt8 → String(x)
+```
+
+`String(x)` produces the decimal form with no locale-specific separators. JS numbers hold `Int32` and `UInt8` ranges exactly, so no precision loss.
+
+**Lua**: Integers are native Lua integers (Lua 5.3+). `CIntLit` emits the literal directly (Lua accepts any integer literal), and `tostring(x)` produces the decimal form:
+
+```lua
+tostring(n)   -- works for both Int32 and UInt8; Lua integer is 64-bit signed
+```
+
+Signedness and width don't matter for show because Awsum has no integer arithmetic yet — when it arrives, the JVM / WASM paths will need masking on UInt8 operations (JVM `byte` is signed, WASM `i32` doesn't distinguish widths).
+
 ## Higher-Order Functions
 
 `compose g f x = g (f x)` — parameters `g` and `f` can be functions.
 
 **LLVM**: Functions are passed as opaque pointers (`ptr`). Indirect calls work because all user functions have the same shape — take `ptr` args, return `ptr`:
+
 ```llvm
 define ptr @v_compose(ptr %v_g, ptr %v_f, ptr %v_x) {
   %t0 = call ptr %v_f(ptr %v_x)
@@ -111,6 +193,7 @@ define ptr @v_compose(ptr %v_g, ptr %v_f, ptr %v_x) {
 This uses LLVM 15+ opaque pointers — no `bitcast` or typed function pointer annotations needed.
 
 **JVM**: Function values are `java.lang.invoke.MethodHandle` (available since Java 7, class version 51.0). When a function is used as a value (not called directly), it is loaded as a `CONSTANT_MethodHandle` from the constant pool via `ldc`. Indirect calls use `invokevirtual MethodHandle.invoke(...)`:
+
 ```
 ; compose g f x = g (f x)
 .method public static v_compose(Object, Object, Object) → Object
@@ -129,6 +212,7 @@ This uses LLVM 15+ opaque pointers — no `bitcast` or typed function pointer an
 Direct calls to known functions use `invokestatic` — no MethodHandle overhead.
 
 **CLR**: Function values are `System.Func<object,...,object>` delegates. When a function is used as a value, it is wrapped via `ldftn` + `newobj Func`. Indirect calls use `callvirt Invoke(...)`:
+
 ```
 ; compose g f x = g (f x)
 .method public hidebysig static object v_compose(object, object, object) cil managed
@@ -147,6 +231,7 @@ Direct calls to known functions use `invokestatic` — no MethodHandle overhead.
 Direct calls to known functions use `call object AwsumMain::v_fn(...)` — no delegate overhead.
 
 **WASM**: Function values are table indices (`i32`). All user `CFunDef`s are placed in a `funcref` table. When a function is used as a value, it becomes `(i32.const <table_index>)`. Indirect calls use `call_indirect` with a per-arity type signature:
+
 ```wasm
 ;; compose g f x = g (f x)
 (func $v_compose (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
@@ -156,8 +241,11 @@ Direct calls to known functions use `call object AwsumMain::v_fn(...)` — no de
 Direct calls to known functions use `call $v_fn` — no table indirection.
 
 **JS/Lua**: Functions are first-class values. Parameters that are functions are called with `(callee)(args...)`:
+
 ```javascript
-function v_compose(v_g, v_f, v_x){ return (v_g)((v_f)(v_x)); }
+function v_compose(v_g, v_f, v_x) {
+  return v_g(v_f(v_x));
+}
 ```
 
 ## Sum Types & Pattern Matching
@@ -167,6 +255,7 @@ function v_compose(v_g, v_f, v_x){ return (v_g)((v_f)(v_x)); }
 All six backends use the same container representation: an array/block where index 0 is the constructor tag (integer) and subsequent indices hold constructor fields. Nullary constructors (no fields) also allocate a container with just a tag — this keeps the representation uniform and simplifies pattern matching.
 
 **LLVM**: Container is a `malloc`'d array of `ptr`. Tag is stored as an `i64` cast to `ptr` at index 0. Fields are `ptr` values at indices 1, 2, ...:
+
 ```llvm
 ; Found "hello" → [tag=0, "hello"]
 %t0 = call ptr @malloc(i64 16)           ; 2 slots × 8 bytes
@@ -177,6 +266,7 @@ store ptr @.str.0, ptr %t2                 ; field: "hello"
 ```
 
 Pattern matching loads the tag and branches:
+
 ```llvm
 %tag = load ptr, ptr %scrut
 %tag_i = ptrtoint ptr %tag to i64
@@ -185,6 +275,7 @@ br i1 %is_0, label %arm_0, label %next_0
 ```
 
 **JVM**: Container is `Object[]`. Tag is a boxed `Integer` at index 0. Fields are `Object` at indices 1, 2, ...:
+
 ```
 ; Found "hello" → new Object[] { Integer(0), "hello" }
 iconst_2
@@ -194,6 +285,7 @@ dup; iconst_1; ldc "hello"; aastore                                  ; field
 ```
 
 Pattern matching casts to `Object[]`, extracts and unboxes the tag:
+
 ```
 checkcast [Ljava/lang/Object;   ; verify array type for aaload
 astore <arr>
@@ -204,6 +296,7 @@ iload <tag>; ifeq arm_0         ; if tag == 0, branch to arm_0
 Field binding in matched arm: `aload <arr>; iconst_N; aaload` (loads field N from container).
 
 **CLR**: Container is `object[]` via `newarr`. Tag is a boxed `Int32` at index 0. Fields are `object` at indices 1, 2, ...:
+
 ```
 ; Found "hello" → new object[] { box(0), "hello" }
 ldc.i4.2
@@ -213,6 +306,7 @@ dup; ldc.i4.1; ldstr "hello"; stelem.ref             ; field
 ```
 
 Pattern matching stores the container, extracts and unboxes the tag:
+
 ```
 stloc.0                                              ; store container
 ldloc.0; ldc.i4.0; ldelem.ref; unbox.any Int32       ; extract tag
@@ -222,6 +316,7 @@ ldc.i4.0; beq.s arm_0                                ; if tag == 0
 Field binding: `ldloc.0; ldc.i4.N; ldelem.ref` (loads field N). Methods with locals require a `StandAloneSig` metadata entry and a fat method header with `InitLocals`.
 
 **WASM**: Container is a linear memory block allocated via `$__alloc`. Tag is `i32` at byte offset 0. Fields are `i32` at byte offsets 4, 8, ...:
+
 ```wasm
 ;; Found "hello" → alloc 8 bytes, store tag=0 at +0, str ptr at +4
 (i32.store offset=0 (local.tee $con (call $__alloc (i32.const 8))) (i32.const 0))
@@ -229,6 +324,7 @@ Field binding: `ldloc.0; ldc.i4.N; ldelem.ref` (loads field N). Methods with loc
 ```
 
 Pattern matching loads the tag and uses an if/else chain:
+
 ```wasm
 (local.set $scrut (... scrutinee ...))
 (if (result i32) (i32.eq (i32.load offset=0 (local.get $scrut)) (i32.const 0))
@@ -237,13 +333,15 @@ Pattern matching loads the tag and uses an if/else chain:
 ```
 
 **JS**: Container is an array literal. Tag is a number at index 0:
+
 ```javascript
-const v_found = (a) => [0, a];     // Found a
-const v_notFound = [1];            // NotFound
+const v_found = (a) => [0, a]; // Found a
+const v_notFound = [1]; // NotFound
 // case: s[0] === 0 ? s[1] : "not found"
 ```
 
 **Lua**: Container is a table (1-indexed). Tag is at index 1:
+
 ```lua
 function v_found(a) return {0, a} end
 v_notFound = {1}
@@ -255,6 +353,7 @@ v_notFound = {1}
 Each target has a runner that reads a command-line argument and passes it to `main`.
 
 **LLVM** (C `main`):
+
 ```llvm
 define i32 @main(i32 %argc, ptr %argv) {
   %has_arg = icmp sgt i32 %argc, 1
@@ -273,6 +372,7 @@ call_main:
 ```
 
 **JVM** (`main(String[])`):
+
 ```
 .method public static main([Ljava/lang/String;)V
   aload_0
@@ -292,6 +392,7 @@ call_main:
 ```
 
 **CLR** (`.entrypoint` static `Main(string[])`):
+
 ```
 .method public hidebysig static void Main(string[]) cil managed
 {
@@ -315,6 +416,7 @@ call_main:
 ```
 
 **WASM** (WASI `_start`):
+
 ```wasm
 (func $__get_arg (result i32)  ;; returns argv[1] or ""
   (call $args_sizes_get ...)
@@ -325,14 +427,16 @@ call_main:
 ```
 
 **JS** (Node.js):
+
 ```javascript
-if (typeof require !== 'undefined' && require.main === module) {
+if (typeof require !== "undefined" && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === "function") main(arg);
 }
 ```
 
 **Lua** (best-effort main-chunk detection):
+
 ```lua
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
@@ -362,7 +466,7 @@ The difference: LLVM, JVM, CLR, and WASM mangle `main` to `v_main` because `main
 
 **SSA form**: LLVM IR requires Static Single Assignment — each variable is assigned exactly once. The codegen uses a counter to generate unique temporaries (`%t0`, `%t1`, `%t2`, ...), reset per function.
 
-**Memory management**: `__concat` allocates with `malloc` and never frees. For short-lived programs this is acceptable — the OS reclaims all memory on exit. A future GC or arena allocator would address this.
+**Memory management**: `__concat`, integer box cells, and `__showInt32` / `__showUInt8` buffers all allocate with `malloc` and never free. For short-lived programs this is acceptable — the OS reclaims all memory on exit. A future GC or arena allocator would address this.
 
 **Compilation**: The `awsum run -t llvm` command writes a `.ll` file, compiles it with `clang -O2`, and executes the resulting binary. We use `-O2` because runtime performance is prioritized over compilation speed (see [Design Principles](../README.md#priority-order)).
 
@@ -370,15 +474,15 @@ The difference: LLVM, JVM, CLR, and WASM mangle `main` to `v_main` because `main
 
 A natural question: why emit LLVM IR directly instead of generating C and compiling with a C compiler?
 
-C is a *specification* with multiple implementations (GCC, Clang, MSVC, TCC, ...). These implementations don't try to produce equivalent output — and the C standard doesn't ask them to. The language has three categories of behavior that differ across compilers and platforms:
+C is a _specification_ with multiple implementations (GCC, Clang, MSVC, TCC, ...). These implementations don't try to produce equivalent output — and the C standard doesn't ask them to. The language has three categories of behavior that differ across compilers and platforms:
 
 - **Undefined behavior** — the compiler may do anything (reorder, delete, or transform code). Example: signed integer overflow.
 - **Implementation-defined behavior** — each compiler chooses a behavior and documents it, but different compilers choose differently. Example: right-shifting a negative integer.
 - **Unspecified behavior** — the standard allows multiple outcomes and the compiler doesn't have to be consistent. Example: evaluation order of function arguments.
 
-This is fundamentally incompatible with Awsum's core invariant: *if the same pure function compiles for two targets, the results are identical.* If we targeted C, we'd be promising equivalence on top of a language that was designed to allow divergence.
+This is fundamentally incompatible with Awsum's core invariant: _if the same pure function compiles for two targets, the results are identical._ If we targeted C, we'd be promising equivalence on top of a language that was designed to allow divergence.
 
-LLVM IR, by contrast, is *one implementation* with deterministic semantics. There's exactly one LLVM, and its behavior for any given IR is defined. When we emit LLVM IR and compile with Clang, the path from our IR to a binary is a single, known pipeline — not a specification interpreted differently by competing vendors.
+LLVM IR, by contrast, is _one implementation_ with deterministic semantics. There's exactly one LLVM, and its behavior for any given IR is defined. When we emit LLVM IR and compile with Clang, the path from our IR to a binary is a single, known pipeline — not a specification interpreted differently by competing vendors.
 
 There's also a practical argument: if we generated C and then mandated "use Clang", we'd be going through LLVM anyway — just with an extra layer of C semantics in between that we'd have to carefully navigate around.
 
@@ -388,7 +492,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Binary assembler**: The `.class` file is generated directly in Haskell (`Awsum.Codegen.JVM.Assemble`), with no external tools — no Jasmin, no javac. Only `java` is needed to run. The assembler emits a single `AwsumMain.class` with ~25 JVM instructions.
 
-**Value representation**: All values are `java/lang/Object`. Strings are `java/lang/String` (a subtype of Object). Function references are `java/lang/invoke/MethodHandle`. IOUnit is `null`.
+**Value representation**: All values are `java/lang/Object`. Strings are `java/lang/String` (a subtype of Object). Function references are `java/lang/invoke/MethodHandle`. Integers (`Int32`, `UInt8`) are boxed `java/lang/Integer`. IOUnit is `null`.
 
 **MethodHandle for higher-order functions**: When a function is used as a value (passed as an argument), it is loaded via `ldc` with a `CONSTANT_MethodHandle` constant pool entry (kind `REF_invokeStatic = 6`). The callee uses `invokevirtual MethodHandle.invoke(...)` for the indirect call. Direct calls to known functions skip the MethodHandle and use `invokestatic` directly.
 
@@ -402,7 +506,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Metadata**: The PE file contains 9 CLR metadata tables (Module, TypeRef, TypeDef, MethodDef, Param, MemberRef, StandAloneSig, TypeSpec, Assembly, AssemblyRef) and 4 metadata heaps (#Strings, #US for user strings in UTF-16LE, #Blob for signatures, #GUID). The StandAloneSig table declares local variables for methods that use `stloc`/`ldloc` (e.g. pattern matching).
 
-**Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. IOUnit is `null`.
+**Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. Integers (`Int32`, `UInt8`) are boxed `System.Int32`. IOUnit is `null`.
 
 **Func delegates for higher-order functions**: When a function is used as a value (passed as an argument), it is wrapped in a `System.Func` delegate via `ldftn` + `newobj`. The arity determines the generic instantiation: a 1-arg function becomes `Func<object, object>`, a 2-arg function becomes `Func<object, object, object>`, etc. Indirect calls use `callvirt Invoke(...)` on the delegate. Direct calls to known functions use `call` directly — no delegate overhead.
 
@@ -412,7 +516,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
 
-**~25 CIL opcodes**: The assembler uses approximately 25 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`–`ldc.i4.8`/`ldc.i4.s`, `bge.s`, `br.s`, `beq.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`, `newarr`, `stelem.ref`, `box`, `unbox.any`, `stloc.0`–`stloc.3`, `ldloc.0`–`ldloc.3`.
+**~25 CIL opcodes**: The assembler uses approximately 25 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `ldc.i4` (full 32-bit form, used for integer literals outside the compact range), `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`–`ldc.i4.8`/`ldc.i4.s`, `bge.s`, `br.s`, `beq.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`, `newarr`, `stelem.ref`, `box`, `unbox.any`, `stloc.0`–`stloc.3`, `ldloc.0`–`ldloc.3`.
 
 ## WASM-Specific Details
 
@@ -420,12 +524,12 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **WASI imports**: Three WASI functions are imported from `wasi_snapshot_preview1`: `fd_write` (stdout), `args_sizes_get` and `args_get` (CLI arguments).
 
-**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. IOUnit is `0`.
+**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. Integers (`Int32`, `UInt8`) are pointers to 4-byte heap cells holding the value. IOUnit is `0`.
 
 **Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
 
-**Runtime helpers**: Six helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
+**Runtime helpers**: Eight helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__box_i32` (allocate 4 bytes, store value, return pointer), `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
 
 **Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
 
-**~30 opcodes**: The assembler uses approximately 30 WASM opcodes — enough for string manipulation, control flow, memory access, and indirect calls.
+**~35 opcodes**: The assembler uses approximately 35 WASM opcodes — enough for string manipulation, control flow, memory access, indirect calls, and integer arithmetic for `__show_i32` (`i32.sub`, `i32.div_u`, `i32.rem_u`, `i32.lt_s`).

@@ -1,8 +1,0 @@
--- Test: UInt8 lower bound literal (0) is accepted
-import IO.Stdout
-
-main : String -> IOUnit
-main input = IO.Stdout.print input
-
-_minUInt8 : UInt8
-_minUInt8 = 0

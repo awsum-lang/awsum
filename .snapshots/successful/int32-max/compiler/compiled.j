@@ -28,8 +28,17 @@
 .end method
 
 .method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
+  invokestatic AwsumMain/v_maxInt32()Ljava/lang/Object;
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method public static v_maxInt32()Ljava/lang/Object;
+  ldc 2147483647
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 

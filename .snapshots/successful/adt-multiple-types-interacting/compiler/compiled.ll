@@ -4,8 +4,11 @@ declare ptr @strcpy(ptr, ptr)
 declare ptr @strcat(ptr, ptr)
 declare i64 @strlen(ptr)
 declare i32 @printf(ptr, ...)
+declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.fmt = private unnamed_addr constant [3 x i8] c"%s\00"
+@.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
+@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant [1 x i8] c"\00"
 
 @.str.0 = private unnamed_addr constant [4 x i8] c"red\00"
@@ -27,6 +30,21 @@ define ptr @__concat(ptr %a, ptr %b) {
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
+}
+
+define ptr @__showInt32(ptr %p) {
+  %v = load i32, ptr %p
+  %buf = call ptr @malloc(i64 16)
+  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
+  ret ptr %buf
+}
+
+define ptr @__showUInt8(ptr %p) {
+  %b = load i8, ptr %p
+  %v = zext i8 %b to i32
+  %buf = call ptr @malloc(i64 16)
+  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)
+  ret ptr %buf
 }
 
 define ptr @v_colorName(ptr %v_c) {

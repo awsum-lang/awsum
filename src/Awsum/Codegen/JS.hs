@@ -30,7 +30,8 @@ codegenJS (CoreProgram decls) =
 -- | Minimal runtime:
 --   • '__print' writes without a newline (Awsum's 'IO.Stdout.print' is "print exactly").
 --   Note: we intentionally skip a '__concat' helper — '+' is fine because both operands
---   are statically strings under our typechecker.
+--   are statically strings under our typechecker. Integer stringification also
+--   doesn't need a helper; @String(x)@ is inlined at each show call site.
 header :: Text
 header =
   unlines
@@ -77,8 +78,14 @@ emitExpr :: CExpr -> Text
 emitExpr = \case
   CString s -> jsString s
   CVar n -> mangle n
+  -- Int32: coerce to signed 32-bit via '|0' so later operations match semantics.
+  -- UInt8: mask to 0..255 range so it behaves like the declared type, not a
+  -- free-floating JS Number.
+  CIntLit n TInt32 -> "(" <> show n <> "|0)"
+  CIntLit n TUInt8 -> "(" <> show n <> " & 0xFF)"
   CPrim PrimConcat -> "/*<prim concat>*/" -- invariant: not a standalone term
   CPrim PrimPrint -> "/*<prim print>*/" -- invariant: not a standalone term
+  CPrim (PrimShowInt _) -> "/*<prim showInt>*/" -- invariant: not a standalone term
   CCon tag fields ->
     "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
   CCase scrut alts ->
@@ -97,6 +104,10 @@ emitExpr = \case
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
+      CPrim (PrimShowInt _) ->
+        case xs of
+          [x] -> "String(" <> emitExpr x <> ")"
+          _ -> error "__showInt: arity mismatch"
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
   where

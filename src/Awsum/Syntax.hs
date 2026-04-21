@@ -173,7 +173,7 @@ data Op'
 
 -- | Literals in the surface language.
 --   Integer literals are untyped at the syntax level — the type is determined by
---   context during typechecking (no defaulting; see docs/integers.md).
+--   context during typechecking (no defaulting).
 data Literal
   = LString Text
   | LInt Integer

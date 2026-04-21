@@ -83,6 +83,9 @@ addEntry key entry = do
 addUtf8 :: Text -> AsmM Word16
 addUtf8 t = addEntry (KUtf8 t) (CPUtf8 (encodeUtf8 t))
 
+addInt :: Int32 -> AsmM Word16
+addInt n = addEntry (KInteger n) (CPInteger n)
+
 addClass :: Text -> AsmM Word16
 addClass name = do
   ni <- addUtf8 name
@@ -175,6 +178,16 @@ bcIconst n
   | n >= 0 && n <= 5 = [fromIntegral (0x03 + n)] -- iconst_0..iconst_5
   | n >= -128 && n <= 127 = [0x10, fromIntegral n] -- bipush
   | otherwise = [0x11, fromIntegral (n `div` 256), fromIntegral (n `mod` 256)] -- sipush
+
+-- | Push an arbitrary signed 32-bit integer on the stack.
+--   Uses iconst/bipush/sipush for values that fit in a short, otherwise
+--   loads a CPInteger from the constant pool via ldc.
+bcLoadInt32 :: Int32 -> AsmM [Word8]
+bcLoadInt32 n
+  | n >= -32768 && n <= 32767 = pure (bcIconst (fromIntegral n))
+  | otherwise = do
+      idx <- addInt n
+      pure (bcLdc idx)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Method type
@@ -432,6 +445,16 @@ emitExpr ctx = \case
         pure $ CodeWithMeta [0x01] [] -- aconst_null
   CPrim _ ->
     pure $ CodeWithMeta [0x01] [] -- aconst_null
+  CIntLit n it -> do
+    -- Both Int32 and UInt8 are represented as java.lang.Integer on the JVM.
+    -- UInt8 uses Integer (not java.lang.Byte) because Java byte is signed
+    -- 8-bit — storing an Integer lets the value space stay 0..255 without
+    -- surprises when we later add arithmetic.
+    let n32 = fromInteger n :: Int32
+    pushCode <- bcLoadInt32 n32
+    valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+    let _ = it -- reserved for future per-type boxing (e.g. Long for Int64)
+    pure $ CodeWithMeta (pushCode <> bcInvokeStatic valueOfRef) []
   CCon tag fields -> do
     -- Create Object[] container: [tag_as_Integer, field1, field2, ...]
     let nSlots = 1 + length fields
@@ -557,6 +580,18 @@ emitExpr ctx = \case
         pure
           $ CodeWithMeta
             (xMeta.cwCode <> bcInvokeStatic ref)
+            xMeta.cwBranchTargets
+      CPrim (PrimShowInt _) | [x] <- xs -> do
+        -- The value on the stack is a java.lang.Integer (how CIntLit emits
+        -- both Int32 and UInt8). Cast to Integer and call its toString() —
+        -- decimal representation with no padding or signs beyond '-', matching
+        -- snprintf("%d") on LLVM and tostring() on Lua.
+        xMeta <- emitExpr ctx x
+        intCls <- addClass "java/lang/Integer"
+        toStr <- addMRef "java/lang/Integer" "toString" "()Ljava/lang/String;"
+        pure
+          $ CodeWithMeta
+            (xMeta.cwCode <> bcCheckCast intCls <> bcInvokeVirtual toStr)
             xMeta.cwBranchTargets
       CVar n | n `Set.member` ctx.cFunDefs -> do
         -- Direct call to known function
