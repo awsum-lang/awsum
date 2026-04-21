@@ -13,36 +13,36 @@ CoreProgram
                                                 [ CCall ( CPrim PrimConcat )
                                                     [ CCall ( CPrim PrimConcat )
                                                         [ CCall
-                                                            ( CPrim ( PrimShowInt TInt32 ) )
+                                                            ( CBuiltIn "showInt32" )
                                                             [ CVar "minInt32" ]
                                                         , CString ", "
                                                         ]
                                                     , CCall
-                                                        ( CPrim ( PrimShowInt TInt32 ) )
+                                                        ( CBuiltIn "showInt32" )
                                                         [ CVar "negative" ]
                                                     ]
                                                 , CString ", "
                                                 ]
                                             , CCall
-                                                ( CPrim ( PrimShowInt TInt32 ) )
+                                                ( CBuiltIn "showInt32" )
                                                 [ CVar "zero" ]
                                             ]
                                         , CString ", "
                                         ]
                                     , CCall
-                                        ( CPrim ( PrimShowInt TInt32 ) )
+                                        ( CBuiltIn "showInt32" )
                                         [ CVar "positive" ]
                                     ]
                                 , CString ", "
                                 ]
                             , CCall
-                                ( CPrim ( PrimShowInt TInt32 ) )
+                                ( CBuiltIn "showInt32" )
                                 [ CVar "manyDigits" ]
                             ]
                         , CString ", "
                         ]
                     , CCall
-                        ( CPrim ( PrimShowInt TInt32 ) )
+                        ( CBuiltIn "showInt32" )
                         [ CVar "maxInt32" ]
                     ]
                 ]

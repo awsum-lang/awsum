@@ -13,9 +13,11 @@ build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
+    stdlib/Prelude.aww
 
 library
   exposed-modules:
+      Awsum.BuiltIn
       Awsum.Codegen
       Awsum.Codegen.CLR
       Awsum.Codegen.CLR.Assemble
@@ -32,6 +34,7 @@ library
       Awsum.Format
       Awsum.Normalize
       Awsum.Parser
+      Awsum.Prelude
       Awsum.Render
       Awsum.Symbols
       Awsum.Syntax
@@ -53,6 +56,7 @@ library
       base >=4.7 && <5
     , bytestring
     , containers
+    , file-embed
     , megaparsec
     , relude
     , text

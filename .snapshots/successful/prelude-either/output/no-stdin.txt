@@ -1,0 +1,1 @@
+left: bad, right: good

@@ -8,10 +8,6 @@ function main(v__input)
   return __print((v_showTriple)({0, "one", "two", "three"}))
 end
 
-function v__con_Triple(v__x0, v__x1, v__x2)
-  return {0, v__x0, v__x1, v__x2}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

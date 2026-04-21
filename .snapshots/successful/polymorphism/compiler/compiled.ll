@@ -27,25 +27,12 @@ define ptr @__concat(ptr %a, ptr %b) {
   ret ptr %buf
 }
 
+
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
-define ptr @__showInt32(ptr %p) {
-  %v = load i32, ptr %p
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
-  ret ptr %buf
-}
-
-define ptr @__showUInt8(ptr %p) {
-  %b = load i8, ptr %p
-  %v = zext i8 %b to i32
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)
-  ret ptr %buf
-}
 
 define ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [2 x i8], ptr @.str.0, i64 0, i64 0

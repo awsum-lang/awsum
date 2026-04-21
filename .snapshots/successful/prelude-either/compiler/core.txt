@@ -1,0 +1,44 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "unwrap" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "left: "
+                        , CVar "e"
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "right: "
+                        , CVar "v"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall
+                            ( CVar "unwrap" )
+                            [ CCon 0
+                                [ CString "bad" ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "unwrap" )
+                        [ CCon 1
+                            [ CString "good" ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

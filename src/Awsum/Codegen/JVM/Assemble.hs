@@ -207,7 +207,7 @@ data MInfo = MInfo
 -- ════════════════════════════════════════════════════════════════════════════
 
 doAssemble :: CoreProgram -> AsmM [MInfo]
-doAssemble (CoreProgram decls) = do
+doAssemble prog@(CoreProgram decls) = do
   -- Ensure required CP entries exist
   void $ addClass "AwsumMain"
   void $ addClass "java/lang/Object"
@@ -216,13 +216,18 @@ doAssemble (CoreProgram decls) = do
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
+      prims = usedPrims prog
+      builtIns = usedBuiltIns prog
 
   m0 <- mkInit
-  m1 <- mkConcat
-  m2 <- mkPrint
+  -- Runtime helpers are emitted only when referenced in Core, so hello-world
+  -- style programs that never call 'showInt32' or 'predInt32' don't pay for them.
+  m1s <- if Set.member PrimConcat prims then (: []) <$> mkConcat else pure []
+  m2s <- if Set.member PrimPrint prims then (: []) <$> mkPrint else pure []
+  m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1 : m2 : userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -286,6 +291,104 @@ mkPrint = do
             <> [0x01, 0xB0], -- aconst_null, areturn
         mCodeAttrCount = 0,
         mCodeAttrs = []
+      }
+
+-- | predInt32: Int32 -> Either UnderflowError Int32.
+--   Layout on the JVM: containers are 'Object[]' with a boxed Integer
+--   tag at [0] and fields at [1..], matching user CCon emission. Tags:
+--   Left=0 (first Either constructor), Right=1, UnderflowError=0.
+--   The method unboxes the Integer argument, compares against
+--   INT32_MIN via 'if_icmpne', and branches to build either
+--   'Left UnderflowError' or 'Right Integer.valueOf(v - 1)'.
+--   A StackMapTable entry at the ok-branch target is required because
+--   classfile v51+ demands one for any branch.
+mkPredInt32 :: AsmM MInfo
+mkPredInt32 = do
+  ni <- addUtf8 "__predInt32"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  minLoad <- bcLoadInt32 (-2147483648)
+  let preamble =
+        [0x2A] -- aload_0
+          <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
+          <> [0x3C] -- istore_1
+          <> [0x1B] -- iload_1
+          <> minLoad
+      ifAt = length preamble
+      overflow =
+        -- Build UnderflowError Object[1] = [Integer(0)]
+        [0x04] -- iconst_1 (array length)
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0 (idx)
+          <> [0x03] -- iconst_0 (tag value 0 for UnderflowError)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x4D] -- astore_2 (save UE)
+          -- Build Left Object[2] = [Integer(0), UE]
+          <> [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x03] -- iconst_0 (Left tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1 (idx)
+          <> [0x2C] -- aload_2
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      okAt = ifAt + 3 + length overflow
+      ok =
+        -- Build Right Object[2] = [Integer(1), Integer(v - 1)]
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x04] -- iconst_1 (Right tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1 (idx)
+          <> [0x1B] -- iload_1
+          <> [0x04] -- iconst_1
+          <> [0x64] -- isub
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      ifRel = okAt - ifAt
+      ifBytes = [0xA0, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)]
+      code = preamble <> ifBytes <> overflow <> ok
+      -- StackMapTable: one append_frame at ok-branch target.
+      -- locals change from [Object] (initial) to [Object, int] (after istore_1).
+      -- frame_type 252 = append_frame with 1 new local;
+      -- verification_type_info tag 1 = ITEM_Integer.
+      okAt16 = fromIntegral okAt :: Word16
+      smtEntries = [252, hi8 okAt16, lo8 okAt16, 0x01]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1] -- number_of_entries = 1
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
       }
 
 mkMain :: AsmM MInfo
@@ -445,6 +548,8 @@ emitExpr ctx = \case
         pure $ CodeWithMeta [0x01] [] -- aconst_null
   CPrim _ ->
     pure $ CodeWithMeta [0x01] [] -- aconst_null
+  CBuiltIn _ ->
+    pure $ CodeWithMeta [0x01] [] -- aconst_null; dispatched from CCall
   CIntLit n it -> do
     -- Both Int32 and UInt8 are represented as java.lang.Integer on the JVM.
     -- UInt8 uses Integer (not java.lang.Byte) because Java byte is signed
@@ -593,6 +698,25 @@ emitExpr ctx = \case
           $ CodeWithMeta
             (xMeta.cwCode <> bcCheckCast intCls <> bcInvokeVirtual toStr)
             xMeta.cwBranchTargets
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8",
+          [x] <- xs -> do
+            xMeta <- emitExpr ctx x
+            intCls <- addClass "java/lang/Integer"
+            toStr <- addMRef "java/lang/Integer" "toString" "()Ljava/lang/String;"
+            pure
+              $ CodeWithMeta
+                (xMeta.cwCode <> bcCheckCast intCls <> bcInvokeVirtual toStr)
+                xMeta.cwBranchTargets
+      CBuiltIn "predInt32" | [x] <- xs -> do
+        xMeta <- emitExpr ctx x
+        ref <- addMRef "AwsumMain" "__predInt32" "(Ljava/lang/Object;)Ljava/lang/Object;"
+        pure
+          $ CodeWithMeta
+            (xMeta.cwCode <> bcInvokeStatic ref)
+            xMeta.cwBranchTargets
+      CBuiltIn n ->
+        error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n | n `Set.member` ctx.cFunDefs -> do
         -- Direct call to known function
         argMetas <- traverse (emitExpr ctx) xs

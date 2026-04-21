@@ -31,6 +31,7 @@ default-extensions:
 extra-source-files:
   - README.md
   - CHANGELOG.md
+  - stdlib/Prelude.aww
 
 description: Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
 
@@ -73,6 +74,7 @@ library:
   dependencies:
     - bytestring # for JVM bytecode assembler
     - containers # for Data.Graph SCC analysis (unused-top-level warning)
+    - file-embed # for bundling stdlib/Prelude.aww into the compiler binary
     - megaparsec # for parser
     - text # for Data.Text.Encoding (JVM assembler)
 

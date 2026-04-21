@@ -36,8 +36,10 @@ src/Awsum/
 ├── Syntax.hs         # Surface AST
 ├── Parser.hs         # Megaparsec parser
 ├── Typing.hs         # Type checker
-├── ElaborateLower.hs # Surface → Core lowering
+├── ElaborateLower.hs # Surface → Core lowering (incl. unused-conWrapper tree-shake)
 ├── Core.hs           # Core IR
+├── Prelude.hs        # Bundles stdlib/Prelude.aww (file-embed); withPrelude; warning filter
+├── BuiltIn.hs        # Registered built-ins: surface name → surface type (see docs/prelude.md)
 ├── Codegen.hs        # Target enum (LLVM, JVM, CLR, WASM, JS, Lua)
 ├── Codegen/LLVM.hs   # LLVM IR backend
 ├── Codegen/JVM.hs    # JVM text codegen (Jasmin-like, for snapshots)
@@ -55,12 +57,14 @@ src/Awsum/
 └── Diagnostic.hs     # Editor-facing diagnostic shape (severity, fixes) + JSON encoder
 
 awsum/Main.hs         # CLI entry point
+stdlib/Prelude.aww    # Implicitly-imported prelude (embedded into the binary)
 test/sources/
 ├── successful/       # Programs that compile and run (cross-backend verification)
 └── errors/           # Programs that should fail (JSON diagnostics snapshots)
 .snapshots/
 ├── successful/       # Golden outputs for successful programs
 └── errors/           # Golden diagnostics for error programs
+docs/prelude.md       # Prelude + BuiltIn architecture (design doc)
 docs/targets.md       # Target implementation details
 docs/spec/grammar.ebnf # Formal grammar
 ```
@@ -68,12 +72,17 @@ docs/spec/grammar.ebnf # Formal grammar
 ## Compilation Pipeline
 
 ```
-Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core → Codegen → LLVM/JVM/CLR/WASM/JS/Lua
+Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLower → Core (tree-shaken) → Codegen → LLVM/JVM/CLR/WASM/JS/Lua
+                                    ↑                            ↑
+                         stdlib/Prelude.aww           Awsum.BuiltIn table (per-target impls)
+                         (embedded, implicit)
 ```
+
+`withPrelude` prepends the bundled prelude to the user's AST before typechecking. Prelude-visible functions whose body is `= BuiltIn.foo` are resolved against the `Awsum.BuiltIn` table. `ElaborateLower` also runs reachability-based tree-shake from `main`, so unused prelude entries and generated constructor wrappers never reach codegen. See [docs/prelude.md](docs/prelude.md).
 
 ## Language Features
 
-- Types: `String`, `IOUnit`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
+- Types: `String`, `IOUnit`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), `Either a b` and `UnderflowError` (prelude-visible), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
 - No defaulting, ever: the compiler never picks a type for the user — not for integer literals, not for a monadic context, not for anything else added later. Ambiguous = compile error, fix with an explicit annotation.
 - No shadowing, ever: a fresh binder must not reuse any name already visible in its scope at any level (function params, pattern binders, and every future binding form we add). Shadowing is a compile error, not a warning.
 - Underscore convention: a leading `_` marks a binding as intentionally unused. Applies to values (`_foo`), top-level defs (`_foo`), type params (`_a`), type names (`_A`) and constructors (`_C`). Referencing any `_`-prefixed name anywhere is a compile error. Bare `_` is a wildcard in pattern / function-param position (no binding); forbidden as a nameable declaration (top-level, type, constructor, type-param).
@@ -82,7 +91,8 @@ Source (.aww) → Parser → AST → TypeChecker → ElaborateLower → Core →
 - Expressions: string literals, integer literals, `++` concatenation, function application, constructors (first-class — passable to HOFs), `case`/`of` pattern matching with field bindings
 - Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection
 - Comments: `--` line, `{- -}` block (preserved through formatting)
-- Built-ins: `IO.Stdout.print : String -> IOUnit` (requires `import IO.Stdout`), `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String` (prelude-visible, no import; when polymorphic `show` arrives in these specialised helpers are retired).
+- Built-ins: `IO.Stdout.print : String -> IOUnit` (requires `import IO.Stdout`). Prelude-visible (no import) via the Prelude + BuiltIn mechanism: `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String`, `showUnderflowError : UnderflowError -> String`, `predInt32 : Int32 -> Either UnderflowError Int32` (honest arithmetic — `Left UnderflowError` on `minInt32`). Reserved `BuiltIn.foo` syntax forwards to the compiler's per-target implementation — see [docs/prelude.md](docs/prelude.md).
+- Tree-shake: `elaborateLowerProgram` runs reachability analysis from `main` over all top-level Core declarations (user decls, prelude helpers, generated constructor wrappers) and drops anything unreachable before codegen. Prelude can grow without cost to programs that don't use the new entries.
 
 ## Testing
 

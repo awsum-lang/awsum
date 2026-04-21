@@ -13,31 +13,45 @@
 module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.Core
+import Awsum.Syntax (Name)
 import Data.Char qualified as Char
+import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
 -- | Produce a complete JS file: header (runtime) + declarations + footer (runner).
 codegenJS :: CoreProgram -> Text
-codegenJS (CoreProgram decls) =
+codegenJS prog@(CoreProgram decls) =
   T.intercalate
     "\n"
-    [ header,
+    [ header (usedPrims prog) (usedBuiltIns prog),
       T.intercalate "\n\n" (map emitDecl decls),
       footer
     ]
 
--- | Minimal runtime:
+-- | Minimal runtime, tree-shaken: only helpers whose primitive / built-in
+--   is actually referenced from Core are emitted.
 --   • '__print' writes without a newline (Awsum's 'IO.Stdout.print' is "print exactly").
 --   Note: we intentionally skip a '__concat' helper — '+' is fine because both operands
 --   are statically strings under our typechecker. Integer stringification also
 --   doesn't need a helper; @String(x)@ is inlined at each show call site.
-header :: Text
-header =
-  unlines
-    [ "\"use strict\";",
-      "function __print(s){ process.stdout.write(String(s)); return undefined; }"
-    ]
+header :: Set Prim -> Set Name -> Text
+header prims builtIns =
+  let lns =
+        filter
+          (not . T.null)
+          [ "\"use strict\";",
+            if Set.member PrimPrint prims
+              then "function __print(s){ process.stdout.write(String(s)); return undefined; }"
+              else "",
+            -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
+            -- Left=0, Right=1, UnderflowError=0 — matches user-code tag assignment
+            -- for `type Either a b = Left a | Right b` and `type UnderflowError = UnderflowError`.
+            if Set.member "predInt32" builtIns
+              then "function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)]; }"
+              else ""
+          ]
+   in T.intercalate "\n" lns <> "\n"
 
 -- | Node-only convenience runner:
 --   when run as a script, call 'main' with a single command-line argument (or empty).
@@ -86,6 +100,7 @@ emitExpr = \case
   CPrim PrimConcat -> "/*<prim concat>*/" -- invariant: not a standalone term
   CPrim PrimPrint -> "/*<prim print>*/" -- invariant: not a standalone term
   CPrim (PrimShowInt _) -> "/*<prim showInt>*/" -- invariant: not a standalone term
+  CBuiltIn n -> "/*<builtin " <> n <> ">*/" -- invariant: not a standalone term
   CCon tag fields ->
     "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
   CCase scrut alts ->
@@ -108,6 +123,17 @@ emitExpr = \case
         case xs of
           [x] -> "String(" <> emitExpr x <> ")"
           _ -> error "__showInt: arity mismatch"
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8" ->
+            case xs of
+              [x] -> "String(" <> emitExpr x <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "predInt32" ->
+        case xs of
+          [x] -> "__predInt32(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.predInt32: arity mismatch"
+      CBuiltIn n ->
+        error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
   where

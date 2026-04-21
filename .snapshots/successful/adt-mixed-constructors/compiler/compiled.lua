@@ -8,14 +8,6 @@ function main(v__input)
   return __print(table.concat({(v_showToken)({0, "hello"}), " ", (v_showToken)({2}), " ", (v_showToken)({1, "42"}), " ", (v_showToken)({3})}))
 end
 
-function v__con_Number(v__x0)
-  return {1, v__x0}
-end
-
-function v__con_Word(v__x0)
-  return {0, v__x0}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

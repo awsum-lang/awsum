@@ -13,36 +13,11 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.str.0 = private unnamed_addr constant [6 x i8] c"hello\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
-  %la = call i64 @strlen(ptr %a)
-  %lb = call i64 @strlen(ptr %b)
-  %sum = add i64 %la, %lb
-  %total = add i64 %sum, 1
-  %buf = call ptr @malloc(i64 %total)
-  call ptr @strcpy(ptr %buf, ptr %a)
-  call ptr @strcat(ptr %buf, ptr %b)
-  ret ptr %buf
-}
-
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
-define ptr @__showInt32(ptr %p) {
-  %v = load i32, ptr %p
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
-  ret ptr %buf
-}
-
-define ptr @__showUInt8(ptr %p) {
-  %b = load i8, ptr %p
-  %v = zext i8 %b to i32
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)
-  ret ptr %buf
-}
 
 define ptr @v_unwrap(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
@@ -73,26 +48,6 @@ define ptr @v_main(ptr %v__input) {
   %t5 = call ptr @v_unwrap(ptr %t0)
   %t6 = call ptr @__print(ptr %t5)
   ret ptr %t6
-}
-
-define ptr @v__con_Err(ptr %v__x0) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 1 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %v__x0, ptr %t3
-  ret ptr %t0
-}
-
-define ptr @v__con_Ok(ptr %v__x0) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 0 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %v__x0, ptr %t3
-  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

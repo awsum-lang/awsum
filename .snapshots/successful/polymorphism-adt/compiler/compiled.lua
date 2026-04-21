@@ -8,10 +8,6 @@ function main(v__input)
   return __print((function(s) if s[1] == 0 then local v_v = s[2]; return v_v end end)((v_identity)({0, "one"})))
 end
 
-function v__con_Box(v__x0)
-  return {0, v__x0}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

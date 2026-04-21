@@ -1,0 +1,8 @@
+-- Error: BuiltIn.nonexistent is not provided by the compiler.
+import IO.Stdout
+
+main : String -> IOUnit
+main input = IO.Stdout.print input
+
+bogus : String
+bogus = BuiltIn.nonexistent

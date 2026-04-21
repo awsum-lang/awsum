@@ -20,14 +20,6 @@ function main(v__input)
   return __print(table.concat({(v_greeting)("x"), " ", (v_unwrapBox)({0, "a"}), " ", (v_unwrapBoxNamed)({0, "b"}), " ", (v_showPair)({0, "l", "r"})}))
 end
 
-function v__con_Box(v__x0)
-  return {0, v__x0}
-end
-
-function v__con_Pair(v__x0, v__x1)
-  return {0, v__x0, v__x1}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

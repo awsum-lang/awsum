@@ -12,36 +12,11 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.empty = private unnamed_addr constant [1 x i8] c"\00"
 
 
-define ptr @__concat(ptr %a, ptr %b) {
-  %la = call i64 @strlen(ptr %a)
-  %lb = call i64 @strlen(ptr %b)
-  %sum = add i64 %la, %lb
-  %total = add i64 %sum, 1
-  %buf = call ptr @malloc(i64 %total)
-  call ptr @strcpy(ptr %buf, ptr %a)
-  call ptr @strcat(ptr %buf, ptr %b)
-  ret ptr %buf
-}
-
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
-define ptr @__showInt32(ptr %p) {
-  %v = load i32, ptr %p
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
-  ret ptr %buf
-}
-
-define ptr @__showUInt8(ptr %p) {
-  %b = load i8, ptr %p
-  %v = zext i8 %b to i32
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)
-  ret ptr %buf
-}
 
 define ptr @v_main(ptr %v_input) {
   %t0 = call ptr @__print(ptr %v_input)

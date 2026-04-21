@@ -43,10 +43,6 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$con$Box" [ "$x0" ]
-            ( CCon 0
-                [ CVar "$x0" ]
-            )
         , CFunDef "$pap$0" [ "$eta0" ]
             ( CCall
                 ( CVar "compose" )

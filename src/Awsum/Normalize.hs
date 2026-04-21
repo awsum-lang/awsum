@@ -59,6 +59,7 @@ normalizeExpr = \case
   EInfix sp OpConcat l r -> EInfix sp OpConcat (normalizeExpr l) (normalizeExpr r)
   EParens _sp e -> normalizeExpr e
   ECon sp n -> ECon sp n
+  EBuiltIn sp n -> EBuiltIn sp n
   ECase sp scrut alts cs -> ECase sp (normalizeExpr scrut) (fmap normalizeAlt alts) cs
   where
     normalizeAlt (CaseAlt lc pat body mc) = CaseAlt lc pat (normalizeExpr body) mc

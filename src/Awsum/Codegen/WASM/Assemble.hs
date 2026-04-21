@@ -85,8 +85,9 @@ op_memory_size, op_memory_grow :: Word8
 op_memory_size = 0x3F
 op_memory_grow = 0x40
 
-op_i32_eqz, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
+op_i32_eqz, op_i32_eq, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
 op_i32_eqz = 0x45
+op_i32_eq = 0x46
 op_i32_add = 0x6A
 op_i32_mul = 0x6C
 op_i32_and = 0x71
@@ -133,12 +134,12 @@ importCount :: Word32
 importCount = 3
 
 -- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
--- __box_i32, __show_i32, __get_arg
+-- __box_i32, __show_i32, __predInt32, __get_arg
 runtimeCount :: Word32
-runtimeCount = 8
+runtimeCount = 9
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -146,7 +147,8 @@ idxConcat = importCount + 3
 idxPrint = importCount + 4
 idxBoxI32 = importCount + 5
 idxShowI32 = importCount + 6
-idxGetArg = importCount + 7
+idxPredI32 = importCount + 7
+idxGetArg = importCount + 8
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -208,6 +210,7 @@ stringsInExpr = \case
   CVar _ -> []
   CIntLit _ _ -> []
   CPrim _ -> []
+  CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
@@ -329,6 +332,7 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __print
           lookupType (FuncType 1 True) typeMap, -- __box_i32
           lookupType (FuncType 1 True) typeMap, -- __show_i32
+          lookupType (FuncType 1 True) typeMap, -- __predInt32
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
           -- User declarations
@@ -432,6 +436,7 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codePrint info,
           codeBoxI32 info,
           codeShowI32 info,
+          codePredI32 info,
           codeGetArg info
         ]
           -- User declarations
@@ -712,6 +717,102 @@ codePrint _info =
         -- return 0
         [op_i32_const],
         encodeSLEB128 0
+      ]
+
+-- __predInt32(p: i32) -> i32
+-- predInt32: Int32 -> Either UnderflowError Int32.
+--   Container layout matches user CCon emission on WASM: i32 tag at
+--   offset 0, i32 fields at offsets 4, 8, ... Tags: Left=0, Right=1,
+--   UnderflowError=0. Returns `Left UnderflowError` on INT32_MIN,
+--   `Right (v - 1)` otherwise.
+-- Locals: $v(1) $ue(2) $box(3) $cell(4)
+codePredI32 :: WasmInfo -> [Word8]
+codePredI32 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- v = i32.load(p)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 1,
+        -- if (v == INT32_MIN) result i32
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 (-2147483648),
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        -- then: Left UnderflowError
+        -- ue = __alloc(4); store tag 0
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 0; store[offset=4] ue
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_else],
+        -- else: Right (v - 1)
+        -- box = __alloc(4); store (v - 1)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_sub],
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 1; store[offset=4] box
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_end]
       ]
 
 -- __box_i32(v: i32) -> i32
@@ -1118,6 +1219,8 @@ emitExpr ctx = \case
         [op_i32_const] <> encodeSLEB128 0
   CPrim _ ->
     [op_i32_const] <> encodeSLEB128 0
+  CBuiltIn _ ->
+    [op_i32_const] <> encodeSLEB128 0 -- invariant: not a standalone term; dispatched from CCall
   CIntLit n _ ->
     let n32 = fromInteger n :: Int32
      in [op_i32_const]
@@ -1178,6 +1281,19 @@ emitExpr ctx = \case
             emitExpr ctx x
               <> [op_call]
               <> encodeULEB128 idxShowI32
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8",
+          [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxShowI32
+      CBuiltIn "predInt32"
+        | [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxPredI32
+      CBuiltIn n ->
+        error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
         | n `Set.member` ctx.ecFunDefs ->
             let fIdx = fromMaybe 0 (Map.lookup n ctx.ecFuncIdx)

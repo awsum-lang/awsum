@@ -19,27 +19,39 @@
 module Awsum.Codegen.Lua (codegenLua) where
 
 import Awsum.Core
+import Awsum.Syntax (Name)
 import Data.Char qualified as Char
+import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
 -- | Produce a complete Lua chunk: header (runtime) + declarations + footer (runner).
 codegenLua :: CoreProgram -> Text
-codegenLua (CoreProgram decls) =
+codegenLua prog@(CoreProgram decls) =
   T.intercalate
     "\n"
-    [ header,
+    [ header (usedPrims prog) (usedBuiltIns prog),
       T.intercalate "\n\n" (map emitDecl decls),
       footer
     ]
 
--- | Minimal runtime:
---   • '__print' writes without a newline (Awsum's IO.Stdout.print is "print exactly").
-header :: Text
-header =
-  unlines
-    [ "local function __print(s) io.write(tostring(s)); return nil end"
-    ]
+-- | Minimal runtime, tree-shaken — only helpers whose primitive /
+--   built-in is referenced are emitted.
+header :: Set Prim -> Set Name -> Text
+header prims builtIns =
+  let lns =
+        filter
+          (not . T.null)
+          [ if Set.member PrimPrint prims
+              then "local function __print(s) io.write(tostring(s)); return nil end"
+              else "",
+            -- predInt32: Lua tables are 1-indexed, so tag sits at [1] and field
+            -- at [2]. Left/UnderflowError tags both 0; Right tag 1.
+            if Set.member "predInt32" builtIns
+              then "local function __predInt32(x) if x == -2147483648 then return {0, {0}} else return {1, x - 1} end end"
+              else ""
+          ]
+   in T.intercalate "\n" lns <> "\n"
 
 -- | Best-effort "run if this is the main chunk":
 --   • If 'debug' is available, check current chunk's 'what' == 'main'.
@@ -101,6 +113,7 @@ emitExpr = \case
   CPrim PrimConcat -> "--<prim concat>"
   CPrim PrimPrint -> "--<prim print>"
   CPrim (PrimShowInt _) -> "--<prim showInt>"
+  CBuiltIn n -> "--<builtin " <> n <> ">" -- invariant: not a standalone term
   CCon tag fields ->
     "{" <> T.intercalate ", " (show tag : map emitExpr fields) <> "}"
   CCase scrut alts ->
@@ -127,6 +140,17 @@ emitExpr = \case
         case xs of
           [x] -> "tostring(" <> emitExpr x <> ")"
           _ -> error "__showInt: arity mismatch"
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8" ->
+            case xs of
+              [x] -> "tostring(" <> emitExpr x <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "predInt32" ->
+        case xs of
+          [x] -> "__predInt32(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.predInt32: arity mismatch"
+      CBuiltIn n ->
+        error ("Lua codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
   where

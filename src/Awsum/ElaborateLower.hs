@@ -19,9 +19,10 @@
 --   • Unsupported qualified names fail fast with a clear error.
 module Awsum.ElaborateLower (elaborateLowerProgram) where
 
+import Awsum.BuiltIn (lookupBuiltIn)
 import Awsum.Core
 import Awsum.Syntax
-import Awsum.Typing (TypeError (..), Warning, typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -86,10 +87,46 @@ elaborateLowerProgram prog = do
       sigMap = M.fromList [(n, t) | Sig _sp n t _ <- ds]
       env = mkLowerEnv prog conInfo sigMap
   mds <- traverse (lowerDecl env sigMap) ds
-  let core = CoreProgram (catMaybes mds <> genConWrappers conInfo)
-  -- 3) Saturate under-applied direct calls via lambda-lifting.
+  -- 3) Tree-shake: drop Core declarations unreachable from 'main'.
+  --    Covers both user functions that no one calls and prelude
+  --    helpers the user program does not touch (e.g.
+  --    @showUnderflowError@ in a program that never uses @predInt32@).
+  --    Constructor wrappers are generated after this reachability is
+  --    known so they're only materialised for constructors still
+  --    present in the surviving code.
+  let userDecls = catMaybes mds
+      allWrappers = genConWrappers conInfo
+      allDecls = userDecls <> allWrappers
+      callGraph = M.fromList [(declName' d, declFreeVars d) | d <- allDecls]
+      reachableFromMain = reachableCore "main" callGraph
+      live = filter (\d -> Set.member (declName' d) reachableFromMain) allDecls
+      core = CoreProgram live
+  -- 4) Saturate under-applied direct calls via lambda-lifting.
   core' <- saturateProgram core
   pure (warnings, core')
+
+-- | Reachability over the Core call graph starting from @root@.
+reachableCore :: Name -> M.Map Name (Set Name) -> Set Name
+reachableCore root graph = go (Set.singleton root) [root]
+  where
+    go visited [] = visited
+    go visited (n : rest) =
+      let neighbours = fromMaybe Set.empty (M.lookup n graph)
+          fresh = Set.filter (`Set.notMember` visited) neighbours
+       in go (visited <> fresh) (rest <> Set.toList fresh)
+
+-- | Top-level name of a Core declaration.
+declName' :: CDecl -> Name
+declName' = \case
+  CFunDef n _ _ -> n
+  CValDef n _ -> n
+
+-- | Free variables referenced in a top-level Core declaration. Used by
+--   'elaborateLowerProgram' to drop unused constructor wrappers.
+declFreeVars :: CDecl -> Set Name
+declFreeVars = \case
+  CFunDef _ _ body -> freeVars body
+  CValDef _ body -> freeVars body
 
 -- | Build the name→type lookup used by 'lowerExpr' to propagate expected
 --   types down to integer literals. Combines user signatures, built-in
@@ -97,15 +134,10 @@ elaborateLowerProgram prog = do
 mkLowerEnv :: Program -> ConInfoEnv -> M.Map Name Type' -> LowerEnv
 mkLowerEnv _prog conInfo sigMap =
   let stringTy = TyCon noSpan "String"
-      int32Ty = TyCon noSpan "Int32"
-      uint8Ty = TyCon noSpan "UInt8"
       ioUnitTy = TyCon noSpan "IOUnit"
       builtins =
         M.fromList
-          [ (QName ["IO", "Stdout"] "print", TyArrow noSpan stringTy ioUnitTy),
-            (QName [] "showInt32", TyArrow noSpan int32Ty stringTy),
-            (QName [] "showUInt8", TyArrow noSpan uint8Ty stringTy)
-          ]
+          [(QName ["IO", "Stdout"] "print", TyArrow noSpan stringTy ioUnitTy)]
       userSigs = M.fromList [(QName [] n, t) | (n, t) <- M.toList sigMap]
       lookupName q = M.lookup q (userSigs <> builtins)
    in LowerEnv {leTypeOf = lookupName, leConInfo = conInfo}
@@ -145,6 +177,7 @@ saturateExpr am locals = go
       e@(CString _) -> pure e
       e@(CIntLit _ _) -> pure e
       e@(CVar _) -> pure e
+      e@(CBuiltIn _) -> pure e
       CCon tag fs -> CCon tag <$> traverse go fs
       CCase s alts -> CCase <$> go s <*> traverse goAlt alts
       CCall callee args -> do
@@ -186,6 +219,7 @@ freeVars = \case
   CString _ -> mempty
   CIntLit _ _ -> mempty
   CVar n -> one n
+  CBuiltIn _ -> mempty
   CCon _ fs -> foldMap freeVars fs
   CCase s alts ->
     freeVars s
@@ -203,6 +237,11 @@ lowerDecl env sigMap = \case
   Sig {} -> Right Nothing
   CommentDecl _ -> Right Nothing
   TypeDecl {} -> Right Nothing
+  -- Alias declaration @foo = BuiltIn.bar@: no Core def is emitted.
+  -- User references to @foo@ are routed to 'CBuiltIn' at 'lowerVar',
+  -- so there is no function body to carry — the builtin itself is the
+  -- implementation, and every backend knows how to emit it in place.
+  FunDef _sp _n [] body _ | isBareBuiltIn body -> Right Nothing
   FunDef _sp n args body _ -> do
     let (argTys, resultTy) = case M.lookup n sigMap of
           Just t -> splitArrowN (length args) t
@@ -285,6 +324,7 @@ lowerExpr env expected = \case
     Just (tag, 0) -> Right (CCon tag [])
     Just (_tag, _arity) -> Right (CVar (conWrapperName name))
     Nothing -> Left (TELowering ("unknown constructor: " <> name))
+  EBuiltIn _sp name -> Right (CBuiltIn name)
   ECase _sp scrut alts _ -> do
     scrut' <- lowerExpr env Nothing scrut
     alts' <- traverse (lowerAlt env expected) (toList alts)
@@ -387,22 +427,22 @@ collectApps f acc = case f of
   EApp _sp f' x' -> collectApps f' (x' : acc)
   _ -> (f, acc)
 
--- | Lower a (possibly qualified) variable to either a Core variable
---   or a primitive.  This is the single place that knows about
---   the surface names of built-ins for the MVP.
+-- | Lower a (possibly qualified) variable to either a Core variable,
+--   a primitive, or a direct 'CBuiltIn' reference.  This is the single
+--   place that knows about the surface names of built-ins for the MVP.
 --
 --   Supported:
 --     • @IO.Stdout.print@  → 'PrimPrint'
---     • @showInt32@        → 'PrimShowInt TInt32'
---     • @showUInt8@        → 'PrimShowInt TUInt8'
+--     • An unqualified name registered in 'Awsum.BuiltIn.builtIns'
+--       → 'CBuiltIn' (users reach it through the prelude's alias, e.g.
+--       @showInt32 = BuiltIn.showInt32@).
 --     • Other unqualified names → Core variables.
 --
 --   Everything else: fail fast with a helpful message.
 lowerVar :: QName -> Either TypeError CExpr
 lowerVar (QName mods n) =
   case mods of
-    [] | n == "showInt32" -> Right (CPrim (PrimShowInt TInt32))
-    [] | n == "showUInt8" -> Right (CPrim (PrimShowInt TUInt8))
+    [] | Just _ <- lookupBuiltIn n -> Right (CBuiltIn n)
     [] -> Right (CVar n)
     ["IO", "Stdout"] | n == "print" -> Right (CPrim PrimPrint)
     _ ->
