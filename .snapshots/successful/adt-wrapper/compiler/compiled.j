@@ -10,15 +10,6 @@
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  checkcast java/lang/String
-  aload_1
-  checkcast java/lang/String
-  invokevirtual java/lang/String/concat(Ljava/lang/String;)Ljava/lang/String;
-  areturn
-.end method
-
 .method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
@@ -64,22 +55,6 @@ L_join:
   aastore
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method public static v__con_Wrap(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_0
-  aastore
   areturn
 .end method
 

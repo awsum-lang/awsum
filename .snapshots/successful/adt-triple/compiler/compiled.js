@@ -9,10 +9,6 @@ function main(v__input){
   return __print((v_showTriple)([0, "one", "two", "three"]));
 }
 
-function v__con_Triple(v__x0, v__x1, v__x2){
-  return [0, v__x0, v__x1, v__x2];
-}
-
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

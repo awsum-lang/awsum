@@ -14,14 +14,6 @@
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
-  {
-    ldarg.0
-    ldarg.1
-    call string [System.Runtime]System.String::Concat(object, object)
-    ret
-  }
-
   .method public hidebysig static object __print(object) cil managed
   {
     ldarg.0

@@ -7,10 +7,11 @@ import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
+import Awsum.Prelude (preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.ProgramSnapshotsSpec qualified
 import Awsum.Render (renderProgram)
 import Awsum.Syntax
-import Awsum.Typing (typecheckProgram)
+import Awsum.Typing (TypeError (..), requireMain, typecheckProgram)
 import Relude
 import Test.Hspec
 import Test.QuickCheck
@@ -20,10 +21,53 @@ main = hspec $ do
   parserSpec
   parserPropSpec
   typecheckerSpec
+  preludeSpec
   elaborateSpec
   Awsum.ProgramSnapshotsSpec.spec
   Awsum.FormattingSnapshotsSpec.spec
   Awsum.ErrorSnapshotsSpec.spec
+
+preludeSpec :: Spec
+preludeSpec = describe "Awsum.Prelude" $ do
+  it "bundled prelude parses and typechecks"
+    $ case verifyPrelude of
+      Right _warns -> pass
+      Left err -> expectationFailure (show err)
+
+  it "withPrelude keeps a user program typecheckable and main-eligible" $ do
+    let src =
+          unlines
+            [ "import IO.Stdout",
+              "",
+              "main : String -> IOUnit",
+              "main input = IO.Stdout.print input"
+            ]
+    case parseProgram src of
+      Left e -> expectationFailure (toString e)
+      Right userProg -> do
+        let combined = withPrelude userProg
+        -- 'stripPreludeWarnings' drops the expected \"showInt32 is unused\"
+        -- warning that arises because this user program never calls into
+        -- the prelude — same filter as the CLI / snapshot specs apply.
+        fmap stripPreludeWarnings (typecheckProgram combined) `shouldBe` Right []
+        requireMain combined `shouldBe` Right ()
+
+  it "withPrelude prepends prelude decls ahead of user decls" $ do
+    let src =
+          unlines
+            [ "import IO.Stdout",
+              "",
+              "main : String -> IOUnit",
+              "main input = IO.Stdout.print input"
+            ]
+    case parseProgram src of
+      Left e -> expectationFailure (toString e)
+      Right userProg -> do
+        let combined = withPrelude userProg
+            pLen = length (decls preludeProgram)
+            uLen = length (decls userProg)
+            cLen = length (decls combined)
+        cLen `shouldBe` pLen + uLen
 
 parserSpec :: Spec
 parserSpec = do
@@ -188,6 +232,51 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p -> typecheckProgram p `shouldBe` Right []
+
+    it "typechecks a module with no 'main' (library mode)" $ do
+      let src =
+            unlines
+              [ "greeting : String -> String",
+                "greeting s = \"hi \" ++ s"
+              ]
+      case parseProgram src of
+        Left e -> expectationFailure (toString e)
+        Right p -> typecheckProgram p `shouldBe` Right []
+
+  describe "Typing.requireMain" $ do
+    it "rejects a module without 'main'" $ do
+      let src =
+            unlines
+              [ "greeting : String -> String",
+                "greeting s = \"hi \" ++ s"
+              ]
+      case parseProgram src of
+        Left e -> expectationFailure (toString e)
+        Right p -> requireMain p `shouldBe` Left MainMissing
+
+    it "rejects a module with 'main' of the wrong type" $ do
+      let src =
+            unlines
+              [ "main : String -> String",
+                "main input = input"
+              ]
+      case parseProgram src of
+        Left e -> expectationFailure (toString e)
+        Right p -> case requireMain p of
+          Left (MainWrongType _) -> pass
+          other -> expectationFailure ("expected MainWrongType, got: " <> show other)
+
+    it "accepts a module with 'main : String -> IOUnit'" $ do
+      let src =
+            unlines
+              [ "import IO.Stdout",
+                "",
+                "main : String -> IOUnit",
+                "main input = IO.Stdout.print input"
+              ]
+      case parseProgram src of
+        Left e -> expectationFailure (toString e)
+        Right p -> requireMain p `shouldBe` Right ()
 
 elaborateSpec :: Spec
 elaborateSpec = do

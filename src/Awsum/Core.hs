@@ -17,10 +17,14 @@ module Awsum.Core
     CExpr (..),
     CDecl (..),
     CoreProgram (..),
+    usedPrims,
+    usedBuiltIns,
+    usesIntLit,
   )
 where
 
 import Awsum.Syntax (Name)
+import Data.Set qualified as Set
 import Relude
 
 -- | Built-in primitives known to the backends.
@@ -34,7 +38,7 @@ data Prim
     --   The 'IntType' is carried on the primitive so each backend dispatches
     --   on a concrete variant (never on a (signed, width) pair with fallbacks).
     PrimShowInt IntType
-  deriving stock (Show, Eq)
+  deriving stock (Show, Eq, Ord)
 
 -- | Concrete built-in integer type. One constructor per shipped type so
 --   every pattern match is exhaustive — adding a future variant (Int64,
@@ -82,6 +86,11 @@ data CExpr
     CCon Int [CExpr]
   | -- | Case expression: scrutinee + alternatives @[(tag, bound-var names, body)]@.
     CCase CExpr [(Int, [Name], CExpr)]
+  | -- | Reference to a compiler-provided built-in, resolved from 'EBuiltIn'.
+    --   The 'Name' is looked up in 'Awsum.BuiltIn' by both the typechecker
+    --   (before lowering — for the type) and every backend (at codegen —
+    --   for the per-target implementation).
+    CBuiltIn Name
   deriving stock (Show, Eq)
 
 -- | Top-level Core declarations.
@@ -96,3 +105,57 @@ data CDecl
 -- Backends may choose any emission order if they respect language scoping rules.
 newtype CoreProgram = CoreProgram {cdecls :: [CDecl]}
   deriving stock (Show, Eq)
+
+-- | Every 'Prim' referenced in the program. Backends use this to skip
+--   runtime helpers that no user code reaches (e.g. @__print@ when the
+--   program never imports 'IO.Stdout').
+usedPrims :: CoreProgram -> Set Prim
+usedPrims (CoreProgram ds) = foldMap declPrims ds
+  where
+    declPrims (CFunDef _ _ body) = exprPrims body
+    declPrims (CValDef _ body) = exprPrims body
+    exprPrims = \case
+      CPrim p -> Set.singleton p
+      CBuiltIn _ -> mempty
+      CVar _ -> mempty
+      CString _ -> mempty
+      CIntLit _ _ -> mempty
+      CCall f xs -> exprPrims f <> foldMap exprPrims xs
+      CCon _ fs -> foldMap exprPrims fs
+      CCase s alts -> exprPrims s <> foldMap (\(_, _, b) -> exprPrims b) alts
+
+-- | Every 'CBuiltIn' name referenced in the program. Backends gate
+--   runtime helpers (@__predInt32@, future @__addInt32@, ...) on this so
+--   programs that don't touch a given primitive don't pay for it.
+usedBuiltIns :: CoreProgram -> Set Name
+usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
+  where
+    declBuiltIns (CFunDef _ _ body) = exprBuiltIns body
+    declBuiltIns (CValDef _ body) = exprBuiltIns body
+    exprBuiltIns = \case
+      CBuiltIn n -> Set.singleton n
+      CPrim _ -> mempty
+      CVar _ -> mempty
+      CString _ -> mempty
+      CIntLit _ _ -> mempty
+      CCall f xs -> exprBuiltIns f <> foldMap exprBuiltIns xs
+      CCon _ fs -> foldMap exprBuiltIns fs
+      CCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
+
+-- | Does the program contain any integer literal? Backends that rely on
+--   boxing helpers (e.g. WASM's @__box_i32@) can drop them when the
+--   answer is 'False'.
+usesIntLit :: CoreProgram -> Bool
+usesIntLit (CoreProgram ds) = any declHasInt ds
+  where
+    declHasInt (CFunDef _ _ body) = exprHasInt body
+    declHasInt (CValDef _ body) = exprHasInt body
+    exprHasInt = \case
+      CIntLit _ _ -> True
+      CPrim _ -> False
+      CBuiltIn _ -> False
+      CVar _ -> False
+      CString _ -> False
+      CCall f xs -> exprHasInt f || any exprHasInt xs
+      CCon _ fs -> any exprHasInt fs
+      CCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts

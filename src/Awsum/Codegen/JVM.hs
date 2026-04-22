@@ -18,11 +18,14 @@ import Relude
 
 -- | Produce a textual JVM bytecode assembly from a Core program.
 codegenJVM :: CoreProgram -> Text
-codegenJVM (CoreProgram decls) =
+codegenJVM prog@(CoreProgram decls) =
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
       ctx = Ctx {cValDefs = valNames, cFunDefs = funNames, cArities = arities}
+      prims = usedPrims prog
+      builtIns = usedBuiltIns prog
+      gate cond m = if cond then m else ""
    in T.intercalate "\n"
         $ filter
           (not . T.null)
@@ -30,9 +33,11 @@ codegenJVM (CoreProgram decls) =
             "",
             initMethod,
             "",
-            concatMethod,
+            gate (Set.member PrimConcat prims) concatMethod,
             "",
-            printMethod,
+            gate (Set.member PrimPrint prims) printMethod,
+            "",
+            gate (Set.member "predInt32" builtIns) predInt32Method,
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
@@ -95,6 +100,62 @@ printMethod =
       "  aload_0",
       "  invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V",
       "  aconst_null",
+      "  areturn",
+      ".end method"
+    ]
+
+-- predInt32: Int32 -> Either UnderflowError Int32.
+--   `Left UnderflowError` on INT32_MIN (tags Left=0, UnderflowError=0);
+--   `Right (x - 1)` otherwise (Right=1). Containers are Object[] with
+--   boxed Integer tags at [0], matching user CCon emission on the JVM.
+predInt32Method :: Text
+predInt32Method =
+  unlines
+    [ ".method public static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  ldc -2147483648",
+      "  if_icmpne L_pred_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_pred_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  iconst_1",
+      "  isub",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
       "  areturn",
       ".end method"
     ]
@@ -165,6 +226,8 @@ emitExprText ctx paramMap = \case
         "  aconst_null"
   CPrim _ ->
     "  aconst_null"
+  CBuiltIn _ ->
+    "  aconst_null" -- invariant: not a standalone term; dispatched from CCall
   CIntLit n _ ->
     -- Same representation as the binary assembler: push int and box via Integer.valueOf.
     T.intercalate
@@ -251,6 +314,24 @@ emitExprText ctx paramMap = \case
                 "  checkcast java/lang/Integer",
                 "  invokevirtual java/lang/Integer/toString()Ljava/lang/String;"
               ]
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8",
+          [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  checkcast java/lang/Integer",
+                "  invokevirtual java/lang/Integer/toString()Ljava/lang/String;"
+              ]
+      CBuiltIn "predInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__predInt32(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn n ->
+        error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
         | n `Set.member` ctx.cFunDefs ->
             let argTexts = map (emitExprText ctx paramMap) xs

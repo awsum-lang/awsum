@@ -165,6 +165,11 @@ When making trade-offs, the compiler follows this priority:
 2. **Runtime performance** — generated programs should be fast
 3. **Compilation speed** — the compiler itself can be slower if it produces better output
 
+## Design documents
+
+- [Prelude and built-in functions](docs/prelude.md) — how types and functions written in Awsum coexist with per-target compiler implementations.
+- [Target implementation details](docs/targets.md) — how each backend maps the same program to its native shape.
+
 ## Roadmap
 
 See [Roadmap](docs/roadmap.md) for planned features and design notes.

@@ -1,0 +1,35 @@
+{- Awsum standard prelude.
+
+   Prelude-visible types and functions that become available to every
+   module without an explicit import. See docs/prelude.md for the
+   architectural design.
+
+   The file is shipped inside the compiler binary (embedded at build time)
+   and must parse and typecheck as a regular module. It intentionally has
+   no `main`: the presence of `main` is an entry-point concern, not a
+   module-level one. -}
+
+{- Two-constructor sum: a `Left` carrying an error / failure value, or a
+   `Right` carrying a success value. This is how honest-arithmetic and
+   other effectful-but-total primitives report whether they succeeded,
+   without runtime exceptions or sentinel values. -}
+
+type Either a b = Left a | Right b
+
+{- Reported by integer primitives when a result would leave the declared
+   type's range (e.g. `predInt32 minInt32`). Single-constructor sum so
+   there is nothing to pattern-match on beyond the fact that it happened. -}
+
+type UnderflowError = UnderflowError
+
+showUnderflowError : UnderflowError -> String
+showUnderflowError _ = "UnderflowError"
+
+showInt32 : Int32 -> String
+showInt32 = BuiltIn.showInt32
+
+showUInt8 : UInt8 -> String
+showUInt8 = BuiltIn.showUInt8
+
+predInt32 : Int32 -> Either UnderflowError Int32
+predInt32 = BuiltIn.predInt32

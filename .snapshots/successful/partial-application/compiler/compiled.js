@@ -21,10 +21,6 @@ function main(v__input){
   return __print((v_apply)(v__pap_0, "chain"));
 }
 
-function v__con_Box(v__x0){
-  return [0, v__x0];
-}
-
 function v__pap_0(v__eta0){
   return (v_compose)(v_unwrap, v_wrap, v__eta0);
 }

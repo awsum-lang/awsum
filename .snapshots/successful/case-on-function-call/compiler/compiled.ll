@@ -26,25 +26,12 @@ define ptr @__concat(ptr %a, ptr %b) {
   ret ptr %buf
 }
 
+
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
-define ptr @__showInt32(ptr %p) {
-  %v = load i32, ptr %p
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
-  ret ptr %buf
-}
-
-define ptr @__showUInt8(ptr %p) {
-  %b = load i8, ptr %p
-  %v = zext i8 %b to i32
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)
-  ret ptr %buf
-}
 
 define ptr @v_search(ptr %v_key) {
   %t0 = call ptr @malloc(i64 16)
@@ -82,16 +69,6 @@ case.join.6:
   %t14 = phi ptr [%t10, %case.end.0.8], [%t13, %case.end.1.12]
   %t15 = call ptr @__print(ptr %t14)
   ret ptr %t15
-}
-
-define ptr @v__con_Found(ptr %v__x0) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 0 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %v__x0, ptr %t3
-  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

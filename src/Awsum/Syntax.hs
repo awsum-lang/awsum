@@ -67,6 +67,7 @@ exprSpan = \case
   ELit sp _ -> sp
   ECon sp _ -> sp
   ECase sp _ _ _ -> sp
+  EBuiltIn sp _ -> sp
 
 -- | Lexical identifier (kept as 'Text' for simplicity).
 --   The parser is responsible for validating case/style rules.
@@ -198,6 +199,13 @@ data Expr
     --   The trailing @[Comment]@ holds comments after the last arm — useful for
     --   temporarily commenting-out the last alternative while editing.
     ECase SrcSpan Expr (NonEmpty CaseAlt) [Comment]
+  | -- | Reference to a compiler-provided built-in: @BuiltIn.foo@.
+    --   'BuiltIn' is a reserved namespace, not a user module — the parser
+    --   recognises this form directly and the typechecker resolves the
+    --   name against the compiler's built-in table. Used in @stdlib/Prelude.aww@
+    --   to forward surface functions (e.g. @showInt32 = BuiltIn.showInt32@)
+    --   to their per-target implementations.
+    EBuiltIn SrcSpan Name
   deriving stock (Show, Eq)
 
 -- | A single alternative in a @case@ expression.

@@ -137,6 +137,7 @@ renderExprPrec ctx indent e =
             ELit _sp' (LString t) -> (3, "\"" <> escape t <> "\"")
             ELit _sp' (LInt n) -> (3, show n)
             ECon _sp' n -> (3, n)
+            EBuiltIn _sp' n -> (3, "BuiltIn." <> n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
             -- so nested apps on the right get parenthesized.
             EApp _sp' f x ->

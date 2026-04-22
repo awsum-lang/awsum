@@ -12,18 +12,6 @@ function main(v__input)
   return __print(table.concat({(v_unwrap)({0, "from box"}), " ", (v_showResult)((v_unwrap)({0, {0, "nested"}}))}))
 end
 
-function v__con_Box(v__x0)
-  return {0, v__x0}
-end
-
-function v__con_Err(v__x0)
-  return {1, v__x0}
-end
-
-function v__con_Ok(v__x0)
-  return {0, v__x0}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

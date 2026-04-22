@@ -27,25 +27,12 @@ define ptr @__concat(ptr %a, ptr %b) {
   ret ptr %buf
 }
 
+
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
-define ptr @__showInt32(ptr %p) {
-  %v = load i32, ptr %p
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
-  ret ptr %buf
-}
-
-define ptr @__showUInt8(ptr %p) {
-  %b = load i8, ptr %p
-  %v = zext i8 %b to i32
-  %buf = call ptr @malloc(i64 16)
-  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)
-  ret ptr %buf
-}
 
 define ptr @v_showTriple(ptr %v_t) {
   %t0 = getelementptr ptr, ptr %v_t, i32 0
@@ -92,20 +79,6 @@ define ptr @v_main(ptr %v__input) {
   %t9 = call ptr @v_showTriple(ptr %t0)
   %t10 = call ptr @__print(ptr %t9)
   ret ptr %t10
-}
-
-define ptr @v__con_Triple(ptr %v__x0, ptr %v__x1, ptr %v__x2) {
-  %t0 = call ptr @malloc(i64 32)
-  %t1 = inttoptr i64 0 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %v__x0, ptr %t3
-  %t4 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %v__x1, ptr %t4
-  %t5 = getelementptr ptr, ptr %t0, i32 3
-  store ptr %v__x2, ptr %t5
-  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

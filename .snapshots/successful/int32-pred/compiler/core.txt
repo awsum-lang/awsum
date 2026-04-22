@@ -1,0 +1,58 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showUnderflowError" [ "$wild0" ]
+            ( CString "UnderflowError" )
+        , CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "underflow: "
+                        , CCall
+                            ( CVar "showUnderflowError" )
+                            [ CVar "e" ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall ( CPrim PrimConcat )
+                        [ CString "ok: "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CValDef "ordinary"
+            ( CIntLit 42 TInt32 )
+        , CFunDef "main" [ "_input" ]
+            ( CCall ( CPrim PrimPrint )
+                [ CCall ( CPrim PrimConcat )
+                    [ CCall ( CPrim PrimConcat )
+                        [ CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "ordinary" ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "predInt32" )
+                            [ CVar "minInt32" ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

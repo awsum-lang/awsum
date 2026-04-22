@@ -8,10 +8,6 @@ function main(v__input)
   return __print((v_showPair)({0, "hello", "world"}))
 end
 
-function v__con_Pair(v__x0, v__x1)
-  return {0, v__x0, v__x1}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

@@ -14,14 +14,6 @@
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
-  {
-    ldarg.0
-    ldarg.1
-    call string [System.Runtime]System.String::Concat(object, object)
-    ret
-  }
-
   .method public hidebysig static object __print(object) cil managed
   {
     ldarg.0
@@ -66,23 +58,6 @@
     br.s IL_join
   IL_join:
     call object AwsumMain::__print(object)
-    ret
-  }
-
-
-  .method public hidebysig static object v__con_Box(object) cil managed
-  {
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.0
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
-    ldarg.0
-    stelem.ref
     ret
   }
 

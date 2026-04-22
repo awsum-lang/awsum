@@ -219,6 +219,16 @@ addParams n = do
   put st {pPM = st.pPM <> newPs, pPMn = st.pPMn + fromIntegral n}
   pure startRow
 
+-- | Add a StandAloneSig row from an arbitrary LocalVarSig blob and
+--   return its metadata token (table 0x11 << 24 | row).
+addLocalSigBytes :: [Word8] -> AsmM Word32
+addLocalSigBytes blob = do
+  bi <- addBlob blob
+  st <- get
+  let row = st.pSASn + 1
+  put st {pSAS = st.pSAS <> [w16 bi], pSASn = row}
+  pure (0x11000000 .|. row)
+
 -- | Add a StandAloneSig row for a LocalVarSig.
 -- nLocals = number of locals: local 0 is object[], rest are object.
 -- Returns the metadata token (table 0x11 << 24 | row).
@@ -228,11 +238,7 @@ addLocalSig nLocals = do
       -- local 0: object[] (SZARRAY + OBJECT), rest: object
       localTypes = [0x1D, 0x1C] <> replicate (nLocals - 1) 0x1C
       blob = 0x07 : fromIntegral nLocals : localTypes
-  bi <- addBlob blob
-  st <- get
-  let row = st.pSASn + 1
-  put st {pSAS = st.pSAS <> [w16 bi], pSASn = row}
-  pure (0x11000000 .|. row)
+  addLocalSigBytes blob
 
 -- | Count the number of local variable slots needed for a CExpr.
 -- Returns 0 if no CCase is present; otherwise 1 (arrSlot) + max bound vars.
@@ -334,9 +340,13 @@ cilLdcI4_0 = [0x16]
 cilLdcI4_1 = [0x17]
 cilLdelemRef = [0x9A]
 
-cilBgeS, cilBrS :: Word8 -> [Word8]
+cilBgeS, cilBrS, cilBneUnS :: Word8 -> [Word8]
 cilBgeS off = [0x2F, off]
 cilBrS off = [0x2B, off]
+cilBneUnS off = [0x33, off] -- bne.un.s: 1-byte signed offset
+
+cilSub :: [Word8]
+cilSub = [0x59]
 
 cilBox, cilUnboxAny :: Word32 -> [Word8]
 cilBox tok = 0x8C : w32le tok
@@ -440,11 +450,21 @@ doAssemble (CoreProgram decls) = do
   void $ addMemberRef (mrpTR 3) "Concat" [0x00, 0x02, etString, etObject, etObject]
   void $ addMemberRef (mrpTR 2) "Write" [0x00, 0x01, etVoid, etObject]
 
-  -- Pre-compute method name → MethodDef token map
-  let declName' (CFunDef n _ _) = n
+  -- Pre-compute method name → MethodDef token map. Runtime helpers are
+  -- included only when referenced in Core so hello-style programs don't
+  -- carry @__predInt32@ or (eventually) other unused primitives. Token
+  -- numbers stay contiguous — '.ctor' is always row 1, then whichever
+  -- helpers are kept, then user decls, then Main.
+  let prog = CoreProgram decls
+      prims = usedPrims prog
+      builtIns = usedBuiltIns prog
+      declName' (CFunDef n _ _) = n
       declName' (CValDef n _) = n
       userNames = [mangle (declName' d) | d <- decls]
-      allNames = [".ctor", "__concat", "__print"] <> userNames <> ["Main"]
+      helperNames =
+        [".ctor"]
+          <> [n | (n, keep) <- [("__concat", Set.member PrimConcat prims), ("__print", Set.member PrimPrint prims), ("__predInt32", Set.member "predInt32" builtIns)], keep]
+      allNames = helperNames <> userNames <> ["Main"]
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
 
   let valNames = Set.fromList [n | CValDef n _ <- decls]
@@ -453,11 +473,12 @@ doAssemble (CoreProgram decls) = do
       ctx = ECtx {eParams = Map.empty, eLocals = Map.empty, eValDefs = valNames, eFunDefs = funNames, eArities = arities, eToks = tokMap}
 
   m0 <- mkInit
-  m1 <- mkConcat
-  m2 <- mkPrint
+  m1s <- if Set.member PrimConcat prims then (: []) <$> mkConcat else pure []
+  m2s <- if Set.member PrimPrint prims then (: []) <$> mkPrint else pure []
+  m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1 : m2 : userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -486,6 +507,73 @@ mkPrint = do
   ps <- addParams 1
   let code = cilLdarg 0 <> cilCall (tokMR 3) <> cilLdnull <> cilRet -- MemberRef 3 = Console.Write
   pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
+
+-- | predInt32: Int32 -> Either UnderflowError Int32.
+--   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predInt32Method'.
+--   Locals: V_0 int32 (unboxed argument), V_1 object (UnderflowError
+--   instance held across the Left-array build).
+mkPredInt32 :: AsmM MInfo
+mkPredInt32 = do
+  ni <- w16 <$> addStr "__predInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- LocalVarSig: 0x07, count=2, ELEMENT_TYPE_I4 (0x08), ELEMENT_TYPE_OBJECT (0x1C)
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      overflow =
+        -- UnderflowError instance: object[1] with boxed Int32(0) at [0]
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          -- Left: object[2] = [boxed Int32(0) tag, UE]
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      okBranch =
+        -- Right: object[2] = [boxed Int32(1) tag, boxed Int32(v - 1)]
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdcI4 1
+          <> cilSub
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length overflow) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 (-2147483648)
+          <> cilBneUnS branchOffset
+          <> overflow
+          <> okBranch
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
 
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
@@ -569,6 +657,7 @@ emitExpr ctx = \case
     | otherwise ->
         pure cilLdnull
   CPrim _ -> pure cilLdnull
+  CBuiltIn _ -> pure cilLdnull -- invariant: not a standalone term; dispatched from CCall
   CIntLit n it -> do
     -- Both Int32 and UInt8 are represented as boxed System.Int32 on the CLR,
     -- matching the JVM treatment (boxed Integer). Avoids a separate boxing
@@ -663,6 +752,18 @@ emitExpr ctx = \case
       trObj <- addTypeRef (resScopeAR 1) "Object" "System"
       toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
       pure (cx <> cilCallvirt (tokMR toStrRef))
+    CBuiltIn name
+      | name == "showInt32" || name == "showUInt8",
+        [x] <- xs -> do
+          cx <- emitExpr ctx x
+          trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+          toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
+          pure (cx <> cilCallvirt (tokMR toStrRef))
+    CBuiltIn "predInt32" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__predInt32"))
+    CBuiltIn n ->
+      error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
     CVar n | n `Set.member` ctx.eFunDefs -> do
       argCodes <- traverse (emitExpr ctx) xs
       pure (concat argCodes <> cilCall (lkTok ctx (mangle n)))

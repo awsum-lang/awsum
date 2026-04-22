@@ -38,16 +38,5 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$con$Triple"
-            [ "$x0"
-            , "$x1"
-            , "$x2"
-            ]
-            ( CCon 0
-                [ CVar "$x0"
-                , CVar "$x1"
-                , CVar "$x2"
-                ]
-            )
         ]
     }

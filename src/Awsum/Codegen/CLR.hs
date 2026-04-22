@@ -18,11 +18,14 @@ import Relude
 
 -- | Produce a textual CIL assembly from a Core program.
 codegenCLR :: CoreProgram -> Text
-codegenCLR (CoreProgram decls) =
+codegenCLR prog@(CoreProgram decls) =
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
       ctx = Ctx {cValDefs = valNames, cFunDefs = funNames, cArities = arities}
+      prims = usedPrims prog
+      builtIns = usedBuiltIns prog
+      gate cond m = if cond then m else ""
    in T.intercalate "\n"
         $ filter
           (not . T.null)
@@ -32,9 +35,11 @@ codegenCLR (CoreProgram decls) =
             "",
             initMethod,
             "",
-            concatMethod,
+            gate (Set.member PrimConcat prims) concatMethod,
             "",
-            printMethod,
+            gate (Set.member PrimPrint prims) printMethod,
+            "",
+            gate (Set.member "predInt32" builtIns) predInt32Method,
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
@@ -106,6 +111,62 @@ printMethod =
       "    ldarg.0",
       "    call void [System.Console]System.Console::Write(object)",
       "    ldnull",
+      "    ret",
+      "  }"
+    ]
+
+-- predInt32: Int32 -> Either UnderflowError Int32.
+--   Containers are object[] (newarr) with boxed Int32 tag at [0] and
+--   fields at [1..], matching user CCon emission on the CLR. Tags:
+--   Left=0, Right=1, UnderflowError=0.
+predInt32Method :: Text
+predInt32Method =
+  unlines
+    [ "  .method public hidebysig static object __predInt32(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4 -2147483648",
+      "    bne.un.s IL_pred_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_pred_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldc.i4.1",
+      "    sub",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
       "    ret",
       "  }"
     ]
@@ -195,6 +256,8 @@ emitExprText ctx varMap = \case
       ]
   CPrim _ ->
     "    ldnull"
+  CBuiltIn _ ->
+    "    ldnull" -- invariant: not a standalone term; dispatched from CCall
   CCon tag fields ->
     let nSlots = 1 + length fields
         storeTag =
@@ -266,6 +329,23 @@ emitExprText ctx varMap = \case
               [ emitExprText ctx varMap x,
                 "    callvirt instance string [System.Runtime]System.Object::ToString()"
               ]
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8",
+          [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    callvirt instance string [System.Runtime]System.Object::ToString()"
+              ]
+      CBuiltIn "predInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__predInt32(object)"
+              ]
+      CBuiltIn n ->
+        error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
         | n `Set.member` ctx.cFunDefs ->
             let argTexts = map (emitExprText ctx varMap) xs

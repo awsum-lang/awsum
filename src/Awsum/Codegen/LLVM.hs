@@ -16,6 +16,7 @@
 module Awsum.Codegen.LLVM (codegenLLVM) where
 
 import Awsum.Core
+import Awsum.Syntax (Name)
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -33,11 +34,13 @@ codegenLLVM prog@(CoreProgram decls) =
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
       ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty}
       userCode = evalState (T.intercalate "\n\n" <$> traverse (emitDecl ctx) decls) 0
+      prims = usedPrims prog
+      builtIns = usedBuiltIns prog
    in T.intercalate
         "\n"
         [ header,
           emitStringConstants pool,
-          runtime,
+          runtime prims builtIns,
           userCode,
           footer
         ]
@@ -93,6 +96,7 @@ stringsInExpr = \case
   CVar _ -> []
   CIntLit _ _ -> []
   CPrim _ -> []
+  CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
@@ -161,44 +165,100 @@ header =
 -- Runtime helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
-runtime :: Text
-runtime =
-  unlines
-    [ "define ptr @__concat(ptr %a, ptr %b) {",
-      "  %la = call i64 @strlen(ptr %a)",
-      "  %lb = call i64 @strlen(ptr %b)",
-      "  %sum = add i64 %la, %lb",
-      "  %total = add i64 %sum, 1",
-      "  %buf = call ptr @malloc(i64 %total)",
-      "  call ptr @strcpy(ptr %buf, ptr %a)",
-      "  call ptr @strcat(ptr %buf, ptr %b)",
-      "  ret ptr %buf",
-      "}",
-      "",
-      "define ptr @__print(ptr %s) {",
-      "  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)",
-      "  ret ptr null",
-      "}",
-      "",
-      -- Integers are boxed: each CIntLit allocates a heap cell holding
-      -- the native i32/i8 value and the Awsum-level 'ptr' points at it.
-      -- Show reads the cell and snprintf's into a fresh 16-byte buffer
-      -- (enough for @-2147483648@ / @255@ plus a null terminator).
-      "define ptr @__showInt32(ptr %p) {",
-      "  %v = load i32, ptr %p",
-      "  %buf = call ptr @malloc(i64 16)",
-      "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)",
-      "  ret ptr %buf",
-      "}",
-      "",
-      "define ptr @__showUInt8(ptr %p) {",
-      "  %b = load i8, ptr %p",
-      "  %v = zext i8 %b to i32",
-      "  %buf = call ptr @malloc(i64 16)",
-      "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)",
-      "  ret ptr %buf",
-      "}"
-    ]
+-- | LLVM runtime helpers, tree-shaken: each @define@ is emitted only if
+--   the corresponding 'Prim' or 'BuiltIn' is actually referenced in the
+--   program's Core.
+runtime :: Set Prim -> Set Name -> Text
+runtime prims builtIns =
+  T.intercalate "\n\n" (filter (not . T.null) parts) <> "\n"
+  where
+    parts =
+      [ if Set.member PrimConcat prims then rtConcat else "",
+        if Set.member PrimPrint prims then rtPrint else "",
+        if any (`Set.member` prims) [PrimShowInt TInt32, PrimShowInt TUInt8] || Set.member "showInt32" builtIns
+          then rtShowInt32
+          else "",
+        if any (`Set.member` prims) [PrimShowInt TInt32, PrimShowInt TUInt8] || Set.member "showUInt8" builtIns
+          then rtShowUInt8
+          else "",
+        if Set.member "predInt32" builtIns then rtPredInt32 else ""
+      ]
+    rtConcat =
+      unlines
+        [ "define ptr @__concat(ptr %a, ptr %b) {",
+          "  %la = call i64 @strlen(ptr %a)",
+          "  %lb = call i64 @strlen(ptr %b)",
+          "  %sum = add i64 %la, %lb",
+          "  %total = add i64 %sum, 1",
+          "  %buf = call ptr @malloc(i64 %total)",
+          "  call ptr @strcpy(ptr %buf, ptr %a)",
+          "  call ptr @strcat(ptr %buf, ptr %b)",
+          "  ret ptr %buf",
+          "}"
+        ]
+    rtPrint =
+      unlines
+        [ "define ptr @__print(ptr %s) {",
+          "  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)",
+          "  ret ptr null",
+          "}"
+        ]
+    -- Integers are boxed: each CIntLit allocates a heap cell holding
+    -- the native i32/i8 value and the Awsum-level 'ptr' points at it.
+    -- Show reads the cell and snprintf's into a fresh 16-byte buffer
+    -- (enough for @-2147483648@ / @255@ plus a null terminator).
+    rtShowInt32 =
+      unlines
+        [ "define ptr @__showInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %buf = call ptr @malloc(i64 16)",
+          "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)",
+          "  ret ptr %buf",
+          "}"
+        ]
+    rtShowUInt8 =
+      unlines
+        [ "define ptr @__showUInt8(ptr %p) {",
+          "  %b = load i8, ptr %p",
+          "  %v = zext i8 %b to i32",
+          "  %buf = call ptr @malloc(i64 16)",
+          "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  ret ptr %buf",
+          "}"
+        ]
+    -- predInt32 : Int32 -> Either UnderflowError Int32
+    --   On INT32_MIN, returns Left UnderflowError (tags: Left=0,
+    --   UnderflowError=0). Otherwise returns Right (x - 1) (Right=1).
+    --   Containers follow the uniform layout [tag_as_ptr, field, ...],
+    --   same as user CCon emission.
+    rtPredInt32 =
+      unlines
+        [ "define ptr @__predInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %is_min = icmp eq i32 %v, -2147483648",
+          "  br i1 %is_min, label %overflow, label %ok",
+          "overflow:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = sub i32 %v, 1",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Footer: C main entry point
@@ -314,6 +374,8 @@ emitExpr ctx = \case
       )
   CPrim _ ->
     pure ("", "null")
+  CBuiltIn _ ->
+    pure ("", "null") -- invariant: not a standalone term; dispatched from CCall
   CCon tag fields -> do
     -- Allocate container: [tag_as_ptr, field1, field2, ...]
     let nSlots = 1 + length fields
@@ -469,6 +531,33 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "__showInt: arity mismatch"
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8" ->
+            case xs of
+              [x] -> do
+                (instrX, resX) <- emitExpr ctx x
+                tmp <- freshTemp
+                let fn :: Text
+                    fn = case name of
+                      "showUInt8" -> "@__showUInt8"
+                      _ -> "@__showInt32"
+                pure
+                  ( instrX <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resX <> ")\n",
+                    tmp
+                  )
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "predInt32" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__predInt32(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.predInt32: arity mismatch"
+      CBuiltIn n ->
+        error ("LLVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ -> do
         (instrF, resF) <- emitExpr ctx f
         argsResults <- traverse (emitExpr ctx) xs

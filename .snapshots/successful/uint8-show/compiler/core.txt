@@ -9,24 +9,24 @@ CoreProgram
                                 [ CCall ( CPrim PrimConcat )
                                     [ CCall ( CPrim PrimConcat )
                                         [ CCall
-                                            ( CPrim ( PrimShowInt TUInt8 ) )
+                                            ( CBuiltIn "showUInt8" )
                                             [ CVar "minUInt8" ]
                                         , CString ", "
                                         ]
                                     , CCall
-                                        ( CPrim ( PrimShowInt TUInt8 ) )
+                                        ( CBuiltIn "showUInt8" )
                                         [ CVar "small" ]
                                     ]
                                 , CString ", "
                                 ]
                             , CCall
-                                ( CPrim ( PrimShowInt TUInt8 ) )
+                                ( CBuiltIn "showUInt8" )
                                 [ CVar "aboveSignedByte" ]
                             ]
                         , CString ", "
                         ]
                     , CCall
-                        ( CPrim ( PrimShowInt TUInt8 ) )
+                        ( CBuiltIn "showUInt8" )
                         [ CVar "maxUInt8" ]
                     ]
                 ]

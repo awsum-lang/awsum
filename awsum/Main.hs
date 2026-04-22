@@ -18,9 +18,10 @@ import Awsum.Diagnostic
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgramDiagnostic)
+import Awsum.Prelude (stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
-import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, typecheckProgram)
+import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, requireMain, typecheckProgram)
 import Common.File
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
@@ -228,11 +229,13 @@ runCommand = \case
     prog <- parseFileOrDie filePath
     pPrint prog
   CmdCore filePath -> do
-    prog <- parseFileOrDie filePath
+    verifyPreludeOrDie
+    userProg <- parseFileOrDie filePath
+    let prog = withPrelude userProg
     case elaborateLowerProgram prog of
       Left err -> die $ toString (prettyPrintTypeError err)
       Right (warns, ir) -> do
-        emitWarningsToStderr filePath warns
+        emitWarningsToStderr filePath (stripPreludeWarnings warns)
         pPrint ir
   CmdAsm filePath target -> do
     core <- compileToCoreOrDie filePath
@@ -345,14 +348,36 @@ runtimeConfigJson =
 -- | Parse → typecheck → lower to Core, or terminate with an error.
 --   Warnings are printed to stderr but do not block compilation. Use
 --   @awsum check --strict@ for a CI-friendly fail-on-warning flow.
+--
+--   Unlike plain 'typecheckProgram', this path is for commands that produce
+--   an executable (@build@, @run@, @asm@) and therefore enforces the
+--   entry-point contract via 'requireMain'.
 compileToCoreOrDie :: FilePath -> IO CoreProgram
 compileToCoreOrDie filePath = do
-  prog <- parseFileOrDie filePath
+  verifyPreludeOrDie
+  userProg <- parseFileOrDie filePath
+  let prog = withPrelude userProg
+  case requireMain prog of
+    Left err -> dieWithTypeError filePath err
+    Right () -> pass
   case elaborateLowerProgram prog of
     Left err -> dieWithTypeError filePath err
     Right (warns, core) -> do
-      emitWarningsToStderr filePath warns
+      emitWarningsToStderr filePath (stripPreludeWarnings warns)
       pure core
+
+-- | Typecheck the bundled prelude before processing any user file. A
+--   failure here is a compiler bug — the prelude ships with the binary —
+--   so we die with an @Internal compiler error@ prefix rather than a
+--   normal user-facing diagnostic.
+verifyPreludeOrDie :: IO ()
+verifyPreludeOrDie = case verifyPrelude of
+  Right _warns -> pass
+  Left err ->
+    die
+      . toString
+      $ "Internal compiler error: stdlib/Prelude.aww failed to typecheck:\n"
+      <> prettyPrintTypeError err
 
 -- | Render warnings on stderr in human-readable form so build/run/asm
 --   commands surface them without breaking their stdout contract.
@@ -387,13 +412,14 @@ parseFileOrDie filePath = do
 --                                              line in the non-JSON path).
 runCheck :: FilePath -> Bool -> Bool -> IO ()
 runCheck filePath useJson strict = do
+  verifyPreludeOrDie
   src <- readFileTextUtf8 filePath
   let result = case parseProgramDiagnostic src of
         Left parseErrs -> Left (map parseErrorToDiagnostic parseErrs)
-        Right prog ->
-          case typecheckProgram prog of
+        Right userProg ->
+          case typecheckProgram (withPrelude userProg) of
             Left typeErr -> Left [typeErrorToDiagnostic typeErr]
-            Right warns -> Right (map warningToDiagnostic warns)
+            Right warns -> Right (map warningToDiagnostic (stripPreludeWarnings warns))
   let diagnostics = either id id result
       hasError = isLeft result
       hasWarn = not (null diagnostics) && not hasError

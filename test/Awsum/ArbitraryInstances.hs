@@ -156,7 +156,8 @@ instance Arbitrary Expr where
           [ EVar noSpan <$> arbitrary,
             EParens noSpan . EVar noSpan <$> arbitrary, -- parentheses around atom for round-trip tests
             ELit noSpan . LString <$> genStr,
-            ELit noSpan . LInt <$> genInt
+            ELit noSpan . LInt <$> genInt,
+            EBuiltIn noSpan <$> genLIdent
           ]
       go n =
         frequency
@@ -164,6 +165,7 @@ instance Arbitrary Expr where
             (2, EParens noSpan <$> go (n - 1)),
             (2, ELit noSpan . LString <$> genStr),
             (2, ELit noSpan . LInt <$> genInt),
+            (1, EBuiltIn noSpan <$> genLIdent),
             (5, EApp noSpan <$> go (n `div` 2) <*> go (n `div` 2)),
             (5, EInfix noSpan OpConcat <$> go (n `div` 2) <*> go (n `div` 2))
           ]
@@ -181,6 +183,7 @@ instance Arbitrary Expr where
     ECase _sp scrut alts cs ->
       [scrut]
         <> [ECase noSpan s' alts cs | s' <- shrink scrut]
+    EBuiltIn _sp n -> EBuiltIn noSpan <$> shrinkIdent n
 
 instance Arbitrary Decl where
   arbitrary =

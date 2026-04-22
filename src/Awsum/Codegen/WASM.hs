@@ -13,6 +13,7 @@
 module Awsum.Codegen.WASM (codegenWASM) where
 
 import Awsum.Core
+import Awsum.Syntax (Name)
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -55,7 +56,7 @@ codegenWASM prog@(CoreProgram decls) =
           table (length funDefs),
           elemSection funDefs,
           typeDecls indirectArities,
-          runtimeHelpers emptyOff,
+          runtimeHelpers emptyOff (usedPrims prog) (usedBuiltIns prog) (usesIntLit prog),
           T.intercalate "\n\n" (map (emitDecl ctx) decls),
           "",
           startFunc,
@@ -115,6 +116,7 @@ stringsInExpr = \case
   CVar _ -> []
   CIntLit _ _ -> []
   CPrim _ -> []
+  CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
@@ -229,9 +231,29 @@ typeDecls arities
 -- Runtime helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
-runtimeHelpers :: Int -> Text
-runtimeHelpers emptyOff =
-  T.intercalate "\n\n" [rtStrlen, rtAlloc, rtMemcpy, rtConcat, rtPrint, rtBoxI32, rtShowI32, rtGetArg emptyOff]
+-- | Emit only the runtime helpers referenced in Core. @__alloc@ /
+--   @__strlen@ / @__memcpy@ / @__get_arg@ are always needed (the last
+--   feeds argv into main; the rest are small infrastructure), the
+--   higher-level helpers (@__concat@, @__print@, @__box_i32@,
+--   @__show_i32@, @__predInt32@) are gated on usage.
+runtimeHelpers :: Int -> Set Prim -> Set Name -> Bool -> Text
+runtimeHelpers emptyOff prims builtIns hasIntLit =
+  let lns =
+        filter
+          (not . T.null)
+          [ rtStrlen,
+            rtAlloc,
+            rtMemcpy,
+            if Set.member PrimConcat prims then rtConcat else "",
+            if Set.member PrimPrint prims then rtPrint else "",
+            if hasIntLit then rtBoxI32 else "",
+            if any (`Set.member` prims) [PrimShowInt TInt32, PrimShowInt TUInt8] || any (`Set.member` builtIns) ["showInt32", "showUInt8"]
+              then rtShowI32
+              else "",
+            if Set.member "predInt32" builtIns then rtPredI32 else "",
+            rtGetArg emptyOff
+          ]
+   in T.intercalate "\n\n" lns
 
 rtStrlen :: Text
 rtStrlen =
@@ -362,6 +384,34 @@ rtShowI32 =
       "    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))"
     ]
 
+-- | predInt32: Int32 -> Either UnderflowError Int32.
+--   Containers follow the uniform WASM layout [i32 tag at offset 0,
+--   i32 fields at offsets 4, 8, ...]. Tags: Left=0, Right=1,
+--   UnderflowError=0. Returns `Left UnderflowError` on INT32_MIN,
+--   `Right (v - 1)` otherwise.
+rtPredI32 :: Text
+rtPredI32 =
+  unlines
+    [ "  (func $__predInt32 (param $p i32) (result i32)",
+      "    (local $v i32) (local $ue i32) (local $box i32) (local $cell i32)",
+      "    (local.set $v (i32.load (local.get $p)))",
+      "    (if (result i32) (i32.eq (local.get $v) (i32.const -2147483648))",
+      "      (then",
+      "        (local.set $ue (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.sub (local.get $v) (i32.const 1)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
 rtGetArg :: Int -> Text
 rtGetArg emptyOff =
   unlines
@@ -441,6 +491,8 @@ emitExpr ctx = \case
         "(i32.const 0)"
   CPrim _ ->
     "(i32.const 0)"
+  CBuiltIn _ ->
+    "(i32.const 0)" -- invariant: not a standalone term; dispatched from CCall
   CIntLit n _ ->
     let n32 = fromInteger n :: Int32
      in "(call $__box_i32 (i32.const " <> show n32 <> "))"
@@ -467,6 +519,15 @@ emitExpr ctx = \case
       CPrim (PrimShowInt _)
         | [x] <- xs ->
             "(call $__show_i32 " <> emitExpr ctx x <> ")"
+      CBuiltIn name
+        | name == "showInt32" || name == "showUInt8",
+          [x] <- xs ->
+            "(call $__show_i32 " <> emitExpr ctx x <> ")"
+      CBuiltIn "predInt32"
+        | [x] <- xs ->
+            "(call $__predInt32 " <> emitExpr ctx x <> ")"
+      CBuiltIn n ->
+        error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
         | n `Set.member` ctx.wFunDefs ->
             "(call $" <> mangle n <> " " <> T.intercalate " " (map (emitExpr ctx) xs) <> ")"

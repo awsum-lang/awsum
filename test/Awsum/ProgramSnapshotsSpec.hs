@@ -12,6 +12,7 @@ import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
+import Awsum.Prelude (withPrelude)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
 import Common.File
@@ -61,7 +62,7 @@ compileAll testName = do
   ast <- case parseProgram src of
     Left e -> error $ "parse failed" <> e
     Right x -> pure x
-  core <- case elaborateLowerProgram ast of
+  core <- case elaborateLowerProgram (withPrelude ast) of
     Left err -> error $ "elaborate failed" <> show err
     Right (_warns, x) -> pure x
   pure

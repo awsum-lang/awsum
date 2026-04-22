@@ -16,10 +16,6 @@ function main(v__input)
   return __print((v_show)((v_map)(v_shout, {0, "a", {0, "b", {0, "c", {1}}}})))
 end
 
-function v__con_Cons(v__x0, v__x1)
-  return {0, v__x0, v__x1}
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

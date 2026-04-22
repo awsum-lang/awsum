@@ -36,14 +36,5 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$con$Pair"
-            [ "$x0"
-            , "$x1"
-            ]
-            ( CCon 0
-                [ CVar "$x0"
-                , CVar "$x1"
-                ]
-            )
         ]
     }

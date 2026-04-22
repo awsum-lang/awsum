@@ -1,0 +1,12 @@
+-- Test: `Either a b` is available without an explicit import because it
+-- lives in the bundled prelude. Both constructors are used; the
+-- case-of unwraps them to a uniform String so the result can be printed.
+import IO.Stdout
+
+unwrap : Either String String -> String
+unwrap r = case r of
+  Left e -> "left: " ++ e
+  Right v -> "right: " ++ v
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (unwrap (Left "bad") ++ ", " ++ unwrap (Right "good"))

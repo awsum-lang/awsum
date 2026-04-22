@@ -576,15 +576,19 @@ escape =
 -- | Parse a qualified name expression:
 --     IO.Stdout.print  →  QName ["IO","Stdout"] "print"
 --     input           →  QName [] "input"
+--     BuiltIn.foo     →  EBuiltIn _ "foo"  (reserved compiler namespace;
+--                         not a regular module — see 'Awsum.Syntax.EBuiltIn').
 pQualifiedNameExprNoLineComments :: Parser Expr
 pQualifiedNameExprNoLineComments = do
-  (sp, q) <- withSpan $ do
+  (sp, (mods, name)) <- withSpan $ do
     let qualified = do
-          mods <- P.some (try (uidentNoLine <* symNoLine ".")) -- IO.
-          QName mods <$> lidentNoLine -- print
-        unqual = QName [] <$> lidentNoLine
+          ms <- P.some (try (uidentNoLine <* symNoLine ".")) -- IO.
+          (ms,) <$> lidentNoLine -- print
+        unqual = ([],) <$> lidentNoLine
     try qualified <|> unqual
-  pure (EVar sp q)
+  case mods of
+    ["BuiltIn"] -> pure (EBuiltIn sp name)
+    _ -> pure (EVar sp (QName mods name))
 
 -- Case expressions ─────────────────────────────────────────────────────────
 

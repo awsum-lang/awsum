@@ -10,15 +10,6 @@
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  checkcast java/lang/String
-  aload_1
-  checkcast java/lang/String
-  invokevirtual java/lang/String/concat(Ljava/lang/String;)Ljava/lang/String;
-  areturn
-.end method
-
 .method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0

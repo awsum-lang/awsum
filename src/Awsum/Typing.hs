@@ -7,7 +7,9 @@
 --   • No let-generalization, no unification variables, no inference beyond what is
 --     written in signatures: every top-level definition must have an explicit 'Sig'.
 --   • Built-ins are injected from imports: currently only @IO.Stdout.print : String -> IOUnit@.
---   • We enforce @main : String -> IOUnit@.
+--   • Presence and type of @main@ are /not/ checked here — this is a module-level
+--     pass that accepts library-style modules (no @main@). The entry-point
+--     check lives in 'requireMain' and is called only by @build@/@run@.
 --
 -- Algorithm (per program):
 --   1) Extract type declarations, build constructor environment.
@@ -19,9 +21,9 @@
 --        a) check arity matches the arrow shape of its signature,
 --        b) build a typing environment = {built-ins} ∪ {constructors} ∪ {params} ∪ {all sigs},
 --        c) compute 'typeOfExpr' for the body and compare to the result type.
---   7) Verify presence and exact type of 'main'.
 module Awsum.Typing
   ( typecheckProgram,
+    requireMain,
     typeOfExpr,
     TypeError (..),
     prettyPrintTypeError,
@@ -29,9 +31,11 @@ module Awsum.Typing
     Warning (..),
     warningSpan,
     warningMessage,
+    isBareBuiltIn,
   )
 where
 
+import Awsum.BuiltIn (lookupBuiltIn)
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
 import Data.Graph qualified as G
@@ -121,6 +125,17 @@ data TypeError
     --   the span of the constructor's name in its 'TypeDecl', so the
     --   quick-fix can rename both sites in one edit.
     ReferencingIgnoredConstructor SrcSpan SrcSpan Name
+  | -- | A @BuiltIn.foo@ reference whose name is not in the compiler's
+    --   built-in table ('Awsum.BuiltIn.builtIns'). The span is on the
+    --   reference itself so editors can underline just @BuiltIn.foo@.
+    UnknownBuiltIn SrcSpan Name
+  | -- | An alias-form declaration @foo = BuiltIn.bar@ whose signature
+    --   disagrees with the type registered for @bar@ in the compiler's
+    --   built-in table. Fields: signature span, builtin-reference span,
+    --   builtin name, declared type, registered type. Two spans so
+    --   quick-fixes / diagnostics can point at both the signature (the
+    --   thing the user typed) and the reference (what it aliases).
+    BuiltInTypeMismatch SrcSpan SrcSpan Name Type' Type'
   deriving stock (Show, Eq)
 
 -- | Extract the source span from a TypeError, if available.
@@ -156,6 +171,8 @@ typeErrorSpan = \case
   UnnamedType sp -> Just sp
   UnnamedConstructor sp -> Just sp
   ReferencingIgnoredConstructor sp _ _ -> Just sp
+  UnknownBuiltIn sp _ -> Just sp
+  BuiltInTypeMismatch sp _ _ _ _ -> Just sp
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -197,6 +214,14 @@ prettyPrintTypeError = \case
     "Constructor name must not be bare '_'; use '_C' (or similar) to mark a constructor as intentionally unused"
   ReferencingIgnoredConstructor _ _ n ->
     "Cannot match constructor '" <> n <> "': identifiers starting with '_' are marked as intentionally unused"
+  UnknownBuiltIn _ n -> "Unknown builtin: 'BuiltIn." <> n <> "' is not provided by the compiler"
+  BuiltInTypeMismatch _ _ n declared registered ->
+    "Type mismatch for 'BuiltIn."
+      <> n
+      <> "': signature says "
+      <> showType declared
+      <> ", but the compiler registers it as "
+      <> showType registered
   where
     showType :: Type' -> Text
     showType = \case
@@ -246,16 +271,10 @@ qLocal :: Name -> QName
 qLocal = QName []
 
 -- | Populate built-ins based on the set of imports present in the file.
---   Currently provides:
---     IO.Stdout.print : String -> IOUnit   (import IO.Stdout)
---     showInt32       : Int32 -> String    (prelude-visible, no import needed)
---     showUInt8       : UInt8 -> String    (prelude-visible, no import needed)
---
---   The numeric show functions are unqualified top-level names because the
---   types themselves are prelude (no @import Int32@ to be had). A qualified
---   form @Int32.show@ would suggest a module that does not exist; once real
---   polymorphic @show@ (type classes) arrives these two specialised
---   helpers go away in favour of it.
+--   Currently provides only @IO.Stdout.print : String -> IOUnit@ (enabled
+--   by @import IO.Stdout@). The numeric show functions — @showInt32@ and
+--   @showUInt8@ — live in 'stdlib/Prelude.aww' and reach their per-target
+--   implementations through 'Awsum.BuiltIn'.
 builtinEnvFromImports :: [ImportDecl] -> Env
 builtinEnvFromImports imps =
   let modLists = [toList ns | ImportDecl _ ns _ <- imps]
@@ -267,16 +286,7 @@ builtinEnvFromImports imps =
               (QName ["IO", "Stdout"] "print")
               (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit"))
           else mempty
-      stringTy = TyCon noSpan "String"
-      showInt32 =
-        M.singleton
-          (QName [] "showInt32")
-          (TyArrow noSpan (TyCon noSpan "Int32") stringTy)
-      showUInt8 =
-        M.singleton
-          (QName [] "showUInt8")
-          (TyArrow noSpan (TyCon noSpan "UInt8") stringTy)
-   in ioPrint <> showInt32 <> showUInt8
+   in ioPrint
 
 -- | Flatten a right-associative arrow type into @(argument types, result type)@.
 --   Example: @a -> b -> c@  ⇒  @([a, b], c)@.
@@ -405,8 +415,15 @@ buildConEnv decls = do
   where
     checkDupType seen (sp, n, _tvs, _) =
       if S.member n seen
-        then Left (DuplicateTypeDef sp n)
+        then Left (DuplicateTypeDef (typeNameSubSpan sp n) n)
         else Right (S.insert n seen)
+
+    -- The TypeDecl span starts at the @type@ keyword; the name sits
+    -- @length "type "@ columns later. Narrowing to just the name span
+    -- lets diagnostics underline `Either`, not the whole declaration.
+    typeNameSubSpan sp n =
+      let nameStartCol = spanStartCol sp + T.length "type "
+       in SrcSpan (spanStartLine sp) nameStartCol (spanStartLine sp) (nameStartCol + T.length n)
 
     insertCons m (sp, tName, tvs, cs) =
       foldM (insertOne sp tName tvs cs) m cs
@@ -513,12 +530,38 @@ typecheckProgram Program {imports, decls} = do
   -- Ensure unique definition names (shadowing is not allowed at top level).
   foldM_ insertDefName S.empty defsList
 
+  -- Precompute signature spans by name so alias-form mismatch errors
+  -- can point at the signature exactly (as opposed to the whole FunDef).
+  let sigSpanByName = M.fromList [(n, nameSubSpan sp n) | (sp, n, _t) <- sigsList]
+
   -- Check each definition body against its declared type, accumulating warnings.
   defWarnings <- forM defsList $ \(sp, n, args, body) -> do
     ty <- maybeToRight (MissingSignature sp n) (M.lookup n sigEnv)
     let (argTys, retTy) = splitArrow ty
-    when (length argTys /= length args)
+        -- The alias form @foo = BuiltIn.bar@ binds zero params even when
+        -- the signature has arrow shape: the RHS itself carries the whole
+        -- function type, and we typecheck it against the full signature.
+        -- This is the only place the zero-param shape is allowed for a
+        -- non-trivial signature — every other zero-param def still needs
+        -- its arity on the left of @=@.
+        isBuiltInAlias = null args && isBareBuiltIn body
+    unless isBuiltInAlias
+      $ when (length argTys /= length args)
       $ Left (ArityMismatch sp n (length argTys) (length args))
+
+    -- For alias-form decls, check the builtin's registered type against
+    -- the declared signature up-front. If they disagree, surface a
+    -- dedicated 'BuiltInTypeMismatch' (with both spans) rather than the
+    -- generic 'TypeMismatch' 'checkExpr' would produce below — the
+    -- compiler-dev reader needs to know this is a sig-vs-table
+    -- disagreement, not an ordinary user type error.
+    when isBuiltInAlias $ case bareBuiltInRef body of
+      Just (bodySp, bn)
+        | Just bty <- lookupBuiltIn bn,
+          bty /= ty ->
+            let sigSp = fromMaybe sp (M.lookup n sigSpanByName)
+             in Left (BuiltInTypeMismatch sigSp bodySp bn ty bty)
+      _ -> pass
 
     -- Build an environment visible inside the body:
     --   built-ins from imports ⊔ constructors ⊔ parameters ⊔ all top-level signatures.
@@ -533,12 +576,13 @@ typecheckProgram Program {imports, decls} = do
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         envOuter = M.unions [envBuiltins, conValEnv, envTop]
         env = M.union envParams envOuter
+        expectedBodyTy = if isBuiltInAlias then ty else retTy
 
     -- Reject shadowing: params must be unique and must not collide with
     -- any already-visible name (constructor, import, top-level signature).
     checkNoShadow envOuter [(paramSpan p, paramName p) | (p, _) <- namedArgs]
 
-    checkExpr conEnv typeConsMap env retTy body
+    checkExpr conEnv typeConsMap env expectedBodyTy body
 
     -- Unused-parameter warnings: report any user-named parameter (not @_@,
     -- not @_foo@) that the body does not reference. Underscore-prefixed
@@ -552,13 +596,6 @@ typecheckProgram Program {imports, decls} = do
         not (S.member nm referenced)
       ]
 
-  -- Enforce presence and exact type of 'main'.
-  case M.lookup "main" sigEnv of
-    Nothing -> Left MainMissing
-    Just ty ->
-      let want = TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")
-       in unless (ty == want) (Left (MainWrongType ty))
-
   -- Unused top-level warnings: any definition not transitively reachable
   -- from 'main' is dead code (the whole-program compilation model tree-
   -- shakes it anyway). But we report only the *root causes*: if @f1@ is
@@ -568,24 +605,29 @@ typecheckProgram Program {imports, decls} = do
   -- Mutual-recursion cycles are a single "root" — we emit a warning on
   -- every member of a source SCC in the unused subgraph, since deleting
   -- any one of them doesn't break the cycle.
+  --
+  -- If the module has no 'main', we skip this analysis: every top-level
+  -- is a potential entry point for a library consumer and we can't tell
+  -- from this file alone which are live.
   let callGraph = M.fromList [(n, freeNames body) | (_sp, n, _args, body) <- defsList]
-      reachableFromMain = reachable "main" callGraph
-      unusedSet =
-        S.fromList
-          [ n
-          | (_sp, n, _args, _body) <- defsList,
-            n /= "main",
-            not ("_" `T.isPrefixOf` n),
-            not (S.member n reachableFromMain)
-          ]
-      sourceSccMembers = sourceSccs callGraph unusedSet
-      defSpanByName = M.fromList [(n, sp) | (sp, n, _args, _body) <- defsList]
-      sigSpanByName = M.fromList [(n, nameSubSpan sp n) | (sp, n, _t) <- sigsList]
-      topLevelWarnings =
-        [ UnusedTopLevel (nameSubSpan sp n) (M.lookup n sigSpanByName) n
-        | n <- S.toList sourceSccMembers,
-          Just sp <- [M.lookup n defSpanByName]
-        ]
+      topLevelWarnings = case M.lookup "main" sigEnv of
+        Nothing -> []
+        Just _ ->
+          let reachableFromMain = reachable "main" callGraph
+              unusedSet =
+                S.fromList
+                  [ n
+                  | (_sp, n, _args, _body) <- defsList,
+                    n /= "main",
+                    not ("_" `T.isPrefixOf` n),
+                    not (S.member n reachableFromMain)
+                  ]
+              sourceSccMembers = sourceSccs callGraph unusedSet
+              defSpanByName = M.fromList [(n, sp) | (sp, n, _args, _body) <- defsList]
+           in [ UnusedTopLevel (nameSubSpan sp n) (M.lookup n sigSpanByName) n
+              | n <- S.toList sourceSccMembers,
+                Just sp <- [M.lookup n defSpanByName]
+              ]
 
   -- Unused type-parameter warnings: any type parameter declared on a
   -- 'TypeDecl' that never appears in any of its constructor fields.
@@ -614,6 +656,34 @@ typecheckProgram Program {imports, decls} = do
       if S.member n s
         then Left (DuplicateDefinition sp n)
         else Right (S.insert n s)
+
+-- | Is the expression a bare @BuiltIn.foo@ reference (modulo parens)?
+--   Used to recognise the alias form @foo = BuiltIn.bar@ at top level.
+isBareBuiltIn :: Expr -> Bool
+isBareBuiltIn = \case
+  EBuiltIn _ _ -> True
+  EParens _ e -> isBareBuiltIn e
+  _ -> False
+
+-- | Extract the span and name of a bare @BuiltIn.foo@ reference, peeling
+--   any surrounding parentheses. Returns 'Nothing' for anything else.
+bareBuiltInRef :: Expr -> Maybe (SrcSpan, Name)
+bareBuiltInRef = \case
+  EBuiltIn sp n -> Just (sp, n)
+  EParens _ e -> bareBuiltInRef e
+  _ -> Nothing
+
+-- | Entry-point check: verify the program declares @main : String -> IOUnit@.
+--   Called only from @build@/@run@ — modules without @main@ (libraries,
+--   @Prelude.aww@) pass 'typecheckProgram' but fail here when an executable
+--   is requested.
+requireMain :: Program -> Either TypeError ()
+requireMain Program {decls} =
+  case listToMaybe [t | Sig _ "main" t _ <- toList decls] of
+    Nothing -> Left MainMissing
+    Just ty ->
+      let want = TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")
+       in unless (ty == want) (Left (MainWrongType ty))
 
 -- | Reject a fresh list of binders if any of them are already in scope or
 --   duplicate each other. Used for function parameters and for the variables
@@ -678,6 +748,10 @@ typeOfExpr conEnv tcm env = \case
             let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
              in Right (freshenType suffix t)
           Nothing -> Left (UnknownConstructor sp name)
+  EBuiltIn sp name ->
+    case lookupBuiltIn name of
+      Just t -> Right t
+      Nothing -> Left (UnknownBuiltIn sp name)
   EApp _sp f x -> do
     tf <- typeOfExpr conEnv tcm env f
     case tf of
@@ -904,6 +978,7 @@ freeNames = go
       EParens _ e -> go e
       ELit _ _ -> S.empty
       ECon _ _ -> S.empty
+      EBuiltIn _ _ -> S.empty
       ECase _ scrut alts _ ->
         go scrut <> foldMap (\(CaseAlt _ _ body _) -> go body) (toList alts)
 

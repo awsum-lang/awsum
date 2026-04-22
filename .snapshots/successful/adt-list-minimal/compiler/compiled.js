@@ -11,10 +11,6 @@ function main(v__input){
   return __print((v_show)(v_exampleList));
 }
 
-function v__con_Cons(v__x0, v__x1){
-  return [0, v__x0, v__x1];
-}
-
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

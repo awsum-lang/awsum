@@ -13,8 +13,8 @@
   (data (i32.const 69) "green\00")
   (data (i32.const 75) "blue\00")
   (data (i32.const 80) " \00")
-  (table 7 funcref)
-  (elem (i32.const 0) $v_colorName $v_showBoxedColor $v_showResult $v_main $v__con_Box $v__con_Err $v__con_Ok)
+  (table 4 funcref)
+  (elem (i32.const 0) $v_colorName $v_showBoxedColor $v_showResult $v_main)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -68,46 +68,6 @@
     (i32.const 0))
 
 
-  (func $__box_i32 (param $v i32) (result i32)
-    (local $p i32)
-    (local.set $p (call $__alloc (i32.const 4)))
-    (i32.store (local.get $p) (local.get $v))
-    (local.get $p))
-
-
-  (func $__show_i32 (param $p i32) (result i32)
-    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32)
-    (local.set $v (i32.load (local.get $p)))
-    (local.set $buf (call $__alloc (i32.const 16)))
-    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))
-    (local.set $pos (i32.const 14))
-    (if (i32.lt_s (local.get $v) (i32.const 0))
-      (then
-        (local.set $neg (i32.const 1))
-        (local.set $mag (i32.sub (i32.const 0) (local.get $v))))
-      (else
-        (local.set $neg (i32.const 0))
-        (local.set $mag (local.get $v))))
-    (if (i32.eqz (local.get $mag))
-      (then
-        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 48))
-        (local.set $pos (i32.sub (local.get $pos) (i32.const 1))))
-      (else
-        (block $done
-          (loop $loop
-            (br_if $done (i32.eqz (local.get $mag)))
-            (local.set $digit (i32.rem_u (local.get $mag) (i32.const 10)))
-            (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.add (local.get $digit) (i32.const 48)))
-            (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))
-            (local.set $mag (i32.div_u (local.get $mag) (i32.const 10)))
-            (br $loop)))))
-    (if (local.get $neg)
-      (then
-        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 45))
-        (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))))
-    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))
-
-
   (func $__get_arg (result i32)
     (local $argv_buf i32) (local $ptrs i32)
     (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
@@ -136,18 +96,6 @@
     (local $__con_1 i32)
     (local $__con_2 i32)
     (call $__print (call $__concat (call $__concat (call $v_showBoxedColor (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_1))) (local.get $__con_0))) (i32.const 80)) (call $v_showResult (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))))))
-
-  (func $v__con_Box (export "v__con_Box") (param $v__x0 i32) (result i32)
-    (local $__con_0 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
-
-  (func $v__con_Err (export "v__con_Err") (param $v__x0 i32) (result i32)
-    (local $__con_0 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
-
-  (func $v__con_Ok (export "v__con_Ok") (param $v__x0 i32) (result i32)
-    (local $__con_0 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

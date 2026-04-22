@@ -19,8 +19,8 @@
   (data (i32.const 107) "b\00")
   (data (i32.const 109) "l\00")
   (data (i32.const 111) "r\00")
-  (table 7 funcref)
-  (elem (i32.const 0) $v_greeting $v_unwrapBox $v_unwrapBoxNamed $v_showPair $v_main $v__con_Box $v__con_Pair)
+  (table 5 funcref)
+  (elem (i32.const 0) $v_greeting $v_unwrapBox $v_unwrapBoxNamed $v_showPair $v_main)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -74,46 +74,6 @@
     (i32.const 0))
 
 
-  (func $__box_i32 (param $v i32) (result i32)
-    (local $p i32)
-    (local.set $p (call $__alloc (i32.const 4)))
-    (i32.store (local.get $p) (local.get $v))
-    (local.get $p))
-
-
-  (func $__show_i32 (param $p i32) (result i32)
-    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32)
-    (local.set $v (i32.load (local.get $p)))
-    (local.set $buf (call $__alloc (i32.const 16)))
-    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))
-    (local.set $pos (i32.const 14))
-    (if (i32.lt_s (local.get $v) (i32.const 0))
-      (then
-        (local.set $neg (i32.const 1))
-        (local.set $mag (i32.sub (i32.const 0) (local.get $v))))
-      (else
-        (local.set $neg (i32.const 0))
-        (local.set $mag (local.get $v))))
-    (if (i32.eqz (local.get $mag))
-      (then
-        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 48))
-        (local.set $pos (i32.sub (local.get $pos) (i32.const 1))))
-      (else
-        (block $done
-          (loop $loop
-            (br_if $done (i32.eqz (local.get $mag)))
-            (local.set $digit (i32.rem_u (local.get $mag) (i32.const 10)))
-            (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.add (local.get $digit) (i32.const 48)))
-            (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))
-            (local.set $mag (i32.div_u (local.get $mag) (i32.const 10)))
-            (br $loop)))))
-    (if (local.get $neg)
-      (then
-        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 45))
-        (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))))
-    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))
-
-
   (func $__get_arg (result i32)
     (local $argv_buf i32) (local $ptrs i32)
     (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
@@ -143,14 +103,6 @@
   (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_greeting (i32.const 101)) (i32.const 103)) (call $v_unwrapBox (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 105)) (local.get $__con_0)))) (i32.const 103)) (call $v_unwrapBoxNamed (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 107)) (local.get $__con_0)))) (i32.const 103)) (call $v_showPair (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 109)) (i32.store offset=8 (local.get $__con_0) (i32.const 111)) (local.get $__con_0))))))
-
-  (func $v__con_Box (export "v__con_Box") (param $v__x0 i32) (result i32)
-    (local $__con_0 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
-
-  (func $v__con_Pair (export "v__con_Pair") (param $v__x0 i32) (param $v__x1 i32) (result i32)
-    (local $__con_0 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x1)) (local.get $__con_0)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))
