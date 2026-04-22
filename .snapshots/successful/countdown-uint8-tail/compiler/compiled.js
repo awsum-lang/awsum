@@ -1,4 +1,5 @@
 "use strict";
+(function () {
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }
 
@@ -32,3 +33,5 @@ if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);
 }
+
+})();

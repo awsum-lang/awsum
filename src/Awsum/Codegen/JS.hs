@@ -2,31 +2,63 @@
 --
 -- Design goals:
 --   • Emit small, readable JS that is easy to snapshot-test.
---   • Keep a tiny “runtime” in 'header' only for what we actually need.
+--   • Keep a tiny "runtime" in 'header' only for what we actually need.
 --   • Preserve Core invariants: primitives only appear in callee position.
 --
 -- Semantics & assumptions:
 --   • Strings: we rely on JS '+' to concatenate (both operands are statically 'String').
 --   • Zero-arg surface defs are lowered to Core 'CValDef' and become JS 'const' values.
 --     Functions remain 'function' declarations (hoisted), so call order is safe.
---   • The footer includes a tiny Node runner: `node out.js <input>`.
+--   • Wrapping strategy is selected by 'ProgramType':
+--
+--       - 'ProgramCli' → wrap the whole chunk in an IIFE
+--         (@(function () { ... })()@). Inside a function scope, top-level
+--         @function@ declarations do /not/ become @window.x@ and top-level
+--         @const@/@let@ are lexical — so nothing leaks to the global object
+--         even when the file is loaded as a classic @<script>@ in a browser,
+--         or via Node's CommonJS wrapper. The Node runner in the footer
+--         still sees @require@/@module@ via closure over the wrapper's
+--         parameters.
+--
+--     No @M@-table is needed here (unlike the Lua backend, where
+--     @MAXVARS = 200@ forced one): JS has no comparable per-function
+--     binding ceiling, and function hoisting inside the IIFE already makes
+--     declaration order irrelevant.
+--
+--     Other program types (browser module, CommonJS module, ESM) will
+--     pick different wrappers — e.g. attach to a namespace object, emit
+--     explicit @export@s, or assign to @module.exports@ — without
+--     changing the name-emission rules below.
 module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.Core
+import Awsum.Program (ProgramType (..))
 import Awsum.Syntax (Name)
 import Data.Char qualified as Char
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
--- | Produce a complete JS file: header (runtime) + declarations + footer (runner).
-codegenJS :: CoreProgram -> Text
-codegenJS prog@(CoreProgram decls) =
+-- | Produce a complete JS file. The wrapping strategy is selected by the
+--   program type; the inner name-emission rules are shared.
+codegenJS :: ProgramType -> CoreProgram -> Text
+codegenJS = \case
+  ProgramCli -> emitCliScript
+
+-- | CLI script: IIFE-wrapped, with a Node runner inside. Nothing leaks
+--   to the global object — neither function declarations (hoisted onto
+--   @window@ only at /script/ top level, not inside an IIFE) nor
+--   @const@/@let@ (lexically script-scoped).
+emitCliScript :: CoreProgram -> Text
+emitCliScript prog@(CoreProgram decls) =
   T.intercalate
     "\n"
-    [ header (usedBuiltIns prog),
+    [ "\"use strict\";",
+      "(function () {",
+      header (usedBuiltIns prog),
       T.intercalate "\n\n" (map emitDecl decls),
-      footer
+      cliFooter,
+      "})();"
     ]
 
 -- | Minimal runtime, tree-shaken: only helpers whose primitive / built-in
@@ -40,8 +72,7 @@ header builtIns =
   let lns =
         filter
           (not . T.null)
-          [ "\"use strict\";",
-            if Set.member "IO.Stdout.print" builtIns
+          [ if Set.member "IO.Stdout.print" builtIns
               then "function __print(s){ process.stdout.write(String(s)); return undefined; }"
               else "",
             -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
@@ -69,10 +100,12 @@ header builtIns =
           ]
    in T.intercalate "\n" lns <> "\n"
 
--- | Node-only convenience runner:
---   when run as a script, call 'main' with a single command-line argument (or empty).
-footer :: Text
-footer =
+-- | Node-only convenience runner for CLI scripts:
+--   when run as a script (not @require@-d), call @main@ with a single
+--   command-line argument (or empty string). Works inside the IIFE
+--   because @require@/@module@ are closed over from Node's module wrapper.
+cliFooter :: Text
+cliFooter =
   unlines
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",

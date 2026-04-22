@@ -237,7 +237,7 @@ runCommand = \case
           Nothing -> BS.hPut stdout bytes
           Just out -> writeFileBS out bytes
       _ -> do
-        let code = codegenText target core
+        let code = codegenText progType target core
         case mOut of
           Nothing -> putTextLn code
           Just out -> writeFileText out code
@@ -247,7 +247,7 @@ runCommand = \case
         then T.stripEnd <$> TIO.getContents
         else pure (fromMaybe "" mInput)
     core <- compileToCoreOrDie progType filePath
-    runOnTarget target core input
+    runOnTarget progType target core input
   CmdAST filePath -> do
     prog <- parseFileOrDie filePath
     pPrint prog
@@ -286,19 +286,21 @@ runCommand = \case
 -- Helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Select the text codegen for a target.
-codegenText :: Target -> CoreProgram -> Text
-codegenText = \case
+-- | Select the text codegen for a target. Some targets (@JS@) are
+--   parameterized by 'ProgramType' because their wrapping strategy
+--   depends on it.
+codegenText :: ProgramType -> Target -> CoreProgram -> Text
+codegenText progType = \case
   TargetLLVM -> codegenLLVM
   TargetJVM -> codegenJVM
   TargetCLR -> codegenCLR
   TargetWASM -> codegenWASM
-  TargetJS -> codegenJS
+  TargetJS -> codegenJS progType
   TargetLua -> codegenLua
 
 -- | Compile Core to target and run using the appropriate system runtime.
-runOnTarget :: Target -> CoreProgram -> Text -> IO ()
-runOnTarget target core input = case target of
+runOnTarget :: ProgramType -> Target -> CoreProgram -> Text -> IO ()
+runOnTarget progType target core input = case target of
   TargetLLVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
@@ -339,7 +341,7 @@ runOnTarget target core input = case target of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
   TargetJS ->
-    runText "node" ".js" (codegenJS core) input
+    runText "node" ".js" (codegenJS progType core) input
   TargetLua ->
     runText "lua" ".lua" (codegenLua core) input
 

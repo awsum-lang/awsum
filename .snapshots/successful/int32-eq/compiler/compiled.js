@@ -1,4 +1,5 @@
 "use strict";
+(function () {
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 function __eqInt32(a, b){ return a === b ? [0] : [1]; }
 
@@ -16,3 +17,5 @@ if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);
 }
+
+})();

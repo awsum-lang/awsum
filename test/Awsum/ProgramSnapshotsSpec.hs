@@ -78,7 +78,7 @@ compileAll testName = do
         clrBinary = assembleCLR core,
         wasmCompiledCode = codegenWASM core,
         wasmBinary = assembleWASM core,
-        jsCompiledCode = codegenJS core,
+        jsCompiledCode = codegenJS ProgramCli core,
         luaCompiledCode = codegenLua core
       }
 
