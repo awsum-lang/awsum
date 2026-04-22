@@ -1,0 +1,69 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "render" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CString "T"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "F"
+                    )
+                ]
+            )
+        , CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "eqInt32" )
+                                    [ CIntLit 42 TInt32
+                                    , CIntLit 42 TInt32
+                                    ]
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "eqInt32" )
+                                    [ CIntLit 42 TInt32
+                                    , CIntLit 7 TInt32
+                                    ]
+                                ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqInt32" )
+                                [ CVar "minInt32"
+                                , CVar "minInt32"
+                                ]
+                            ]
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "eqInt32" )
+                            [ CIntLit 0 TInt32
+                            , CIntLit 1 TInt32
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

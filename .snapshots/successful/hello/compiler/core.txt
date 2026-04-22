@@ -1,7 +1,8 @@
 CoreProgram
     { cdecls =
         [ CFunDef "main" [ "input" ]
-            ( CCall ( CPrim PrimPrint )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "addGreeting" )
                     [ CVar "input" ]
@@ -10,9 +11,12 @@ CoreProgram
         , CValDef "greeting"
             ( CString "Hello" )
         , CFunDef "addGreeting" [ "name" ]
-            ( CCall ( CPrim PrimConcat )
-                [ CCall ( CPrim PrimConcat )
-                    [ CCall ( CPrim PrimConcat )
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
                         [ CVar "greeting"
                         , CString ", "
                         ]

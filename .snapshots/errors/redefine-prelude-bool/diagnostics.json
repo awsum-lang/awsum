@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":7,"startCol":6,"endLine":7,"endCol":10,"message":"Duplicate type definition: Bool","fixes":[]}]

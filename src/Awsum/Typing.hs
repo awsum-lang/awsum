@@ -6,7 +6,10 @@
 --   • The only function type constructor is right-associative arrow @->@.
 --   • No let-generalization, no unification variables, no inference beyond what is
 --     written in signatures: every top-level definition must have an explicit 'Sig'.
---   • Built-ins are injected from imports: currently only @IO.Stdout.print : String -> IOUnit@.
+--   • Platform-gated names are injected from the program type's platform
+--     table ('Awsum.Program.platformTable'), filtered by the imports present
+--     in the file (e.g. @IO.Stdout.print@ requires both @--program-type cli@
+--     and @import IO.Stdout@).
 --   • Presence and type of @main@ are /not/ checked here — this is a module-level
 --     pass that accepts library-style modules (no @main@). The entry-point
 --     check lives in 'requireMain' and is called only by @build@/@run@.
@@ -36,6 +39,7 @@ module Awsum.Typing
 where
 
 import Awsum.BuiltIn (lookupBuiltIn)
+import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
 import Data.Graph qualified as G
@@ -270,23 +274,23 @@ type ConEnv = M.Map Name ConInfo
 qLocal :: Name -> QName
 qLocal = QName []
 
--- | Populate built-ins based on the set of imports present in the file.
---   Currently provides only @IO.Stdout.print : String -> IOUnit@ (enabled
---   by @import IO.Stdout@). The numeric show functions — @showInt32@ and
---   @showUInt8@ — live in 'stdlib/Prelude.aww' and reach their per-target
---   implementations through 'Awsum.BuiltIn'.
-builtinEnvFromImports :: [ImportDecl] -> Env
-builtinEnvFromImports imps =
+-- | Populate platform-gated built-ins visible in this file.
+--
+--   Two gates combine: the /program-type/ gate picks which platform
+--   table we consult ('Awsum.Program.platformTable'); the /import/
+--   gate filters that table down to entries whose module path is
+--   actually imported by the user code. Both must pass for a name to
+--   end up in the returned environment.
+--
+--   Prelude-visible functions (@showInt32@, @concatString@, …) are
+--   /not/ handled here — they live in 'stdlib/Prelude.aww' and reach
+--   their per-target implementations through 'Awsum.BuiltIn'.
+builtinEnvFromImports :: ProgramType -> [ImportDecl] -> Env
+builtinEnvFromImports progType imps =
   let modLists = [toList ns | ImportDecl _ ns _ <- imps]
       hasImport xs = elem xs modLists
-      ioPrint =
-        if hasImport ["IO", "Stdout"]
-          then
-            M.singleton
-              (QName ["IO", "Stdout"] "print")
-              (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit"))
-          else mempty
-   in ioPrint
+      visible (QName mods _) = hasImport mods
+   in M.filterWithKey (\k _ -> visible k) (platformTable progType)
 
 -- | Flatten a right-associative arrow type into @(argument types, result type)@.
 --   Example: @a -> b -> c@  ⇒  @([a, b], c)@.
@@ -508,8 +512,8 @@ warningMessage = \case
 -- | Check a whole program against explicit signatures.
 --   On success, returns the list of warnings discovered while checking.
 --   On the first error, short-circuits with a descriptive 'TypeError'.
-typecheckProgram :: Program -> Either TypeError [Warning]
-typecheckProgram Program {imports, decls} = do
+typecheckProgram :: ProgramType -> Program -> Either TypeError [Warning]
+typecheckProgram progType Program {imports, decls} = do
   -- 1) Build constructor environment from type declarations.
   (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList decls)
 
@@ -570,7 +574,7 @@ typecheckProgram Program {imports, decls} = do
     -- Underscore-prefixed names like @_foo@ are bound normally; the parser
     -- prevents them from being referenced because expression names cannot
     -- start with @_@.
-    let envBuiltins = builtinEnvFromImports imports
+    let envBuiltins = builtinEnvFromImports progType imports
         namedArgs = [(p, t) | (p, t) <- zip args argTys, paramName p /= "_"]
         envParams = M.fromList [(qLocal (paramName p), t) | (p, t) <- namedArgs]
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]

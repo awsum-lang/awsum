@@ -1,0 +1,59 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "countDown"
+            [ "n"
+            , "acc"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 0
+                        , []
+                        , CVar "acc"
+                        )
+                    ,
+                        ( 1
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 0
+                                , [ "__w0" ]
+                                , CVar "acc"
+                                )
+                            ,
+                                ( 1
+                                , [ "m" ]
+                                , CContinue
+                                    [ CVar "m"
+                                    , CVar "acc"
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "start"
+            ( CIntLit 100000 TInt32 )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "countDown" )
+                    [ CVar "start"
+                    , CString "done"
+                    ]
+                ]
+            )
+        ]
+    }

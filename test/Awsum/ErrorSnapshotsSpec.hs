@@ -3,6 +3,7 @@ module Awsum.ErrorSnapshotsSpec (spec) where
 import Awsum.Diagnostic
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, withPrelude)
+import Awsum.Program (ProgramType (..))
 import Awsum.Typing (requireMain, typecheckProgram)
 import Common.File
 import Matchers
@@ -35,7 +36,7 @@ testError testName = do
           Left parseErrs -> map parseErrorToDiagnostic parseErrs
           Right userProg ->
             let prog = withPrelude userProg
-             in case typecheckProgram prog of
+             in case typecheckProgram ProgramCli prog of
                   Left typeErr -> [typeErrorToDiagnostic typeErr]
                   Right warns ->
                     case requireMain prog of

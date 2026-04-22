@@ -1,0 +1,17 @@
+-- Test: tail-recursive self-recursion on UInt8 counting down from 255 to
+-- 0. The accumulator carries the rendered prefix, and the recursive
+-- `countDown m acc'` call is the very last thing each branch does —
+-- nothing wraps its result. Paired with `countdown-uint8` (non-tail
+-- counterpart), this pins down the cross-backend stdout invariant for
+-- both recursion shapes. The TCO pass rewrites this body into a 'CLoop'
+-- before codegen, so every backend emits it as a jump rather than a
+-- recursive call; see `countdown-int32-stress` for the depth proof.
+import IO.Stdout
+
+countDown : UInt8 -> String -> String
+countDown n acc = case predUInt8 n of
+  Left _ -> acc ++ showUInt8 n
+  Right m -> countDown m (acc ++ showUInt8 n ++ ",")
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (countDown 255 "")

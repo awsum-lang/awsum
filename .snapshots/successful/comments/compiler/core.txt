@@ -1,7 +1,8 @@
 CoreProgram
     { cdecls =
         [ CFunDef "main" [ "input" ]
-            ( CCall ( CPrim PrimPrint )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
                 [ CVar "input" ]
             )
         ]

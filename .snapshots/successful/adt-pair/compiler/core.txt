@@ -9,10 +9,14 @@ CoreProgram
                         [ "first"
                         , "second"
                         ]
-                    , CCall ( CPrim PrimConcat )
-                        [ CCall ( CPrim PrimConcat )
-                            [ CCall ( CPrim PrimConcat )
-                                [ CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
                                     [ CString "("
                                     , CVar "first"
                                     ]
@@ -26,7 +30,8 @@ CoreProgram
                 ]
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall ( CPrim PrimPrint )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "showPair" )
                     [ CCon 0

@@ -24,13 +24,14 @@
 
   .method public hidebysig static object v_advanceStep(object) cil managed
   {
+  IL_tco_loop:
     ldarg.0
     dup
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1, IL_arm_2)
-  IL_arm_0:
+    switch (IL_tco_arm_0, IL_tco_arm_1, IL_tco_arm_2)
+  IL_tco_arm_0:
     pop
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -39,9 +40,9 @@
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
-    call object AwsumMain::v_advanceStep(object)
-    br.s IL_join
-  IL_arm_1:
+    starg.s 0
+    br IL_tco_loop
+  IL_tco_arm_1:
     pop
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -50,13 +51,11 @@
     ldc.i4.2
     box [System.Runtime]System.Int32
     stelem.ref
-    call object AwsumMain::v_advanceStep(object)
-    br.s IL_join
-  IL_arm_2:
+    starg.s 0
+    br IL_tco_loop
+  IL_tco_arm_2:
     pop
     ldstr "Done!"
-    br.s IL_join
-  IL_join:
     ret
   }
 

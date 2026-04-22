@@ -134,6 +134,21 @@ lident = (lexeme . try) $ do
   guard (w `notElem` reserved)
   pure w
 
+-- | Top-level declaration name: an 'lident' or a parenthesised operator like
+--   @(++)@. The operator form lets the prelude spell the infix symbol itself —
+--   e.g. @(++) = BuiltIn.concatString@ — so go-to-definition on @a ++ b@ lands
+--   on the same binding, instead of a differently-named helper.
+--   The internal 'Name' stored for @(++)@ is @"++"@.
+declName :: Parser Name
+declName = parenOp <|> lident
+  where
+    parenOp =
+      lexeme . try $ do
+        _ <- C.char '('
+        op <- P.chunk "++"
+        _ <- C.char ')'
+        pure op
+
 -- | Upper-case identifier (module/type constructor name).
 --   Accepts:
 --     • @Foo@ — the normal shape;
@@ -335,7 +350,7 @@ pBlockCommentText = do
 pSigWithEnd :: Parser Decl
 pSigWithEnd = do
   start <- P.getSourcePos
-  name <- lident
+  name <- declName
   _ <- sym ":"
   ty <- pTypeNoLineComments
   tcom <- pTrailingLineCommentMaybe
@@ -377,7 +392,7 @@ pConDefNoLine = do
 pFunDefWithEnd :: Parser Decl
 pFunDefWithEnd = do
   start <- P.getSourcePos
-  name <- lident
+  name <- declName
   args <- P.many paramBinder
   _ <- sym "="
   e <- pExprNoLineComments

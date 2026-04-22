@@ -2,7 +2,26 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_advanceStep(v_x){
-  return ((s) => { switch(s[0]) { case 0: { return (v_advanceStep)([1]); } case 1: { return (v_advanceStep)([2]); } case 2: { return "Done!"; } } })(v_x);
+  while (true) {
+    {
+      const __s = v_x;
+      switch (__s[0]) {
+        case 0: {
+          const __t0 = [1];
+          v_x = __t0;
+          continue;
+        }
+        case 1: {
+          const __t0 = [2];
+          v_x = __t0;
+          continue;
+        }
+        case 2: {
+          return "Done!";
+        }
+      }
+    }
+  }
 }
 
 function main(v__input){

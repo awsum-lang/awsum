@@ -241,12 +241,21 @@ addLocalSig nLocals = do
   addLocalSigBytes blob
 
 -- | Count the number of local variable slots needed for a CExpr.
--- Returns 0 if no CCase is present; otherwise 1 (arrSlot) + max bound vars.
+-- A 'CCase' consumes @1@ slot for its array plus room for its widest
+-- arm-binding set; nested cases inside an arm body need the SAME slot
+-- 0 and binding slots after the outer bindings, so the demand is
+-- additive: this level's @1 + maxBindings@ plus whatever the richest
+-- nested case inside the arms asks for.
 exprLocalsNeeded :: CExpr -> Int
 exprLocalsNeeded = \case
-  CCase _ alts -> 1 + foldl' max 0 [length vs | (_, vs, _) <- alts]
+  CCase _ alts ->
+    let thisLevel = 1 + foldl' max 0 [length vs | (_, vs, _) <- alts]
+        armMax = foldl' max 0 [exprLocalsNeeded b | (_, _, b) <- alts]
+     in thisLevel + armMax
   CCall f xs -> foldl' max 0 (exprLocalsNeeded f : map exprLocalsNeeded xs)
   CCon _ fields -> foldl' max 0 (map exprLocalsNeeded fields)
+  CLoop b -> exprLocalsNeeded b
+  CContinue xs -> foldl' max 0 (map exprLocalsNeeded xs)
   _ -> 0
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -344,6 +353,24 @@ cilBgeS, cilBrS, cilBneUnS :: Word8 -> [Word8]
 cilBgeS off = [0x2F, off]
 cilBrS off = [0x2B, off]
 cilBneUnS off = [0x33, off] -- bne.un.s: 1-byte signed offset
+
+-- | @br@ with a 4-byte signed offset — used by TCO to jump back to the
+-- method's @IL_tco_loop:@ position, which can be hundreds of bytes away
+-- inside a non-trivial body.
+cilBr :: Int32 -> [Word8]
+cilBr off = 0x38 : w32le (fromIntegral off :: Word32)
+
+-- | @bne.un@ with a 4-byte signed offset — same reason as 'cilBr'.
+cilBneUn :: Int32 -> [Word8]
+cilBneUn off = 0x40 : w32le (fromIntegral off :: Word32)
+
+-- | @starg.s <n>@ / long form — stores the top of stack into argument
+-- slot @n@. Used by 'CContinue' to rebind parameters in place before
+-- branching back to the loop head.
+cilStarg :: Int -> [Word8]
+cilStarg n
+  | n <= 255 = [0x10, fromIntegral n]
+  | otherwise = [0xFE, 0x0B] <> w16le (fromIntegral n)
 
 cilSub :: [Word8]
 cilSub = [0x59]
@@ -456,14 +483,23 @@ doAssemble (CoreProgram decls) = do
   -- numbers stay contiguous — '.ctor' is always row 1, then whichever
   -- helpers are kept, then user decls, then Main.
   let prog = CoreProgram decls
-      prims = usedPrims prog
       builtIns = usedBuiltIns prog
       declName' (CFunDef n _ _) = n
       declName' (CValDef n _) = n
       userNames = [mangle (declName' d) | d <- decls]
       helperNames =
         [".ctor"]
-          <> [n | (n, keep) <- [("__concat", Set.member PrimConcat prims), ("__print", Set.member PrimPrint prims), ("__predInt32", Set.member "predInt32" builtIns)], keep]
+          <> [ n
+             | (n, keep) <-
+                 [ ("__concat", Set.member "concatString" builtIns),
+                   ("__print", Set.member "IO.Stdout.print" builtIns),
+                   ("__predInt32", Set.member "predInt32" builtIns),
+                   ("__predUInt8", Set.member "predUInt8" builtIns),
+                   ("__eqInt32", Set.member "eqInt32" builtIns),
+                   ("__eqUInt8", Set.member "eqUInt8" builtIns)
+                 ],
+               keep
+             ]
       allNames = helperNames <> userNames <> ["Main"]
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
 
@@ -473,12 +509,15 @@ doAssemble (CoreProgram decls) = do
       ctx = ECtx {eParams = Map.empty, eLocals = Map.empty, eValDefs = valNames, eFunDefs = funNames, eArities = arities, eToks = tokMap}
 
   m0 <- mkInit
-  m1s <- if Set.member PrimConcat prims then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member PrimPrint prims then (: []) <$> mkPrint else pure []
+  m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
+  m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
+  m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
+  m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
+  m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m4s <> m5s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -575,6 +614,114 @@ mkPredInt32 = do
           <> okBranch
   pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
 
+-- | predUInt8: UInt8 -> Either UnderflowError UInt8.
+--   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predUInt8Method'.
+--   Same local layout as 'mkPredInt32' (V_0 int32, V_1 object); only the
+--   boundary constant changes — 'cilLdcI4 0' vs MIN_VALUE. Since
+--   'cilLdcI4 0' uses the 1-byte short form 'ldc.i4.0', the preamble is
+--   4 bytes shorter than predInt32, but 'branchOffset = length overflow'
+--   is unchanged because it measures the gap between the branch and the
+--   ok block, not the preamble.
+mkPredUInt8 :: AsmM MInfo
+mkPredUInt8 = do
+  ni <- w16 <$> addStr "__predUInt8"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      overflow =
+        -- UnderflowError instance: object[1] with boxed Int32(0) at [0]
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          -- Left: object[2] = [boxed Int32(0) tag, UE]
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      okBranch =
+        -- Right: object[2] = [boxed Int32(1) tag, boxed Int32(v - 1)]
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdcI4 1
+          <> cilSub
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length overflow) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 0
+          <> cilBneUnS branchOffset
+          <> overflow
+          <> okBranch
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
+-- | eqInt32 / eqUInt8: two integers of the same type → Bool.
+--   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.eqMethod'.
+--   Both Int32 and UInt8 are boxed as System.Int32 (how CIntLit emits
+--   them), so the two methods share a single builder parameterised by
+--   name. No locals — both args are unboxed directly onto the eval
+--   stack before 'bne.un.s', so mLocalSigTok = 0 (tiny header is fine).
+mkEq :: Text -> AsmM MInfo
+mkEq methodName = do
+  ni <- w16 <$> addStr methodName
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      boolBox tagVal =
+        -- One-slot object[] holding a boxed Int32 tag.
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 tagVal
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      equalBlock = boolBox 0 -- True tag = 0
+      notEqualBlock = boolBox 1 -- False tag = 1
+      branchOffset = fromIntegral (length equalBlock) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilLdarg 1
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilBneUnS branchOffset
+          <> equalBlock
+          <> notEqualBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -613,6 +760,20 @@ data ECtx = ECtx
 
 mkDecl :: ECtx -> CDecl -> AsmM MInfo
 mkDecl baseCtx = \case
+  -- TCO-wrapped body. The method's argument slots are already mutable,
+  -- so 'CContinue' evaluates new args onto the stack, pops them back
+  -- into slots via @starg@ (reverse order, stack is LIFO), and branches
+  -- to offset 0 (the method's first byte) via a 4-byte @br@. Tail value
+  -- arms emit their own @ret@; no trailing fallthrough @ret@ is added.
+  CFunDef nm args (CLoop body) -> do
+    let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..])}
+        nLocals = exprLocalsNeeded body
+    ni <- w16 <$> addStr (mangle nm)
+    si <- w16 <$> addBlob (sigStatic etObject (length args))
+    ps <- addParams (length args)
+    localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
+    code <- emitTailBin ctx args body
+    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
   CFunDef nm args body -> do
     let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..])}
         nLocals = exprLocalsNeeded body
@@ -656,7 +817,6 @@ emitExpr ctx = \case
         pure (cilLdnull <> cilLdftn tok <> cilNewobj ctorTok)
     | otherwise ->
         pure cilLdnull
-  CPrim _ -> pure cilLdnull
   CBuiltIn _ -> pure cilLdnull -- invariant: not a standalone term; dispatched from CCall
   CIntLit n it -> do
     -- Both Int32 and UInt8 are represented as boxed System.Int32 on the CLR,
@@ -737,24 +897,15 @@ emitExpr ctx = \case
         chainCode = buildChain (zip tags armCodes)
     pure (scrutCode <> extractAndStore <> chainCode)
   CCall f xs -> case f of
-    CPrim PrimConcat | [a, b] <- xs -> do
-      ca <- emitExpr ctx a
-      cb <- emitExpr ctx b
-      pure (ca <> cb <> cilCall (lkTok ctx "__concat"))
-    CPrim PrimPrint | [x] <- xs -> do
+    CBuiltIn "IO.Stdout.print" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__print"))
-    CPrim (PrimShowInt _) | [x] <- xs -> do
-      -- Call 'object::ToString()' virtually: boxed Int32 dispatches to
-      -- System.Int32.ToString(), producing the culture-invariant decimal
-      -- representation (culture only affects floats, which we do not emit).
-      cx <- emitExpr ctx x
-      trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-      toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
-      pure (cx <> cilCallvirt (tokMR toStrRef))
     CBuiltIn name
       | name == "showInt32" || name == "showUInt8",
         [x] <- xs -> do
+          -- Call 'object::ToString()' virtually: boxed Int32 dispatches to
+          -- System.Int32.ToString(), producing the culture-invariant decimal
+          -- representation (culture only affects floats, which we do not emit).
           cx <- emitExpr ctx x
           trObj <- addTypeRef (resScopeAR 1) "Object" "System"
           toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
@@ -762,6 +913,20 @@ emitExpr ctx = \case
     CBuiltIn "predInt32" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__predInt32"))
+    CBuiltIn "predUInt8" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__predUInt8"))
+    CBuiltIn name
+      | name == "eqInt32" || name == "eqUInt8",
+        [a, b] <- xs -> do
+          ca <- emitExpr ctx a
+          cb <- emitExpr ctx b
+          let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+          pure (ca <> cb <> cilCall (lkTok ctx fn))
+    CBuiltIn "concatString" | [a, b] <- xs -> do
+      ca <- emitExpr ctx a
+      cb <- emitExpr ctx b
+      pure (ca <> cb <> cilCall (lkTok ctx "__concat"))
     CBuiltIn n ->
       error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
     CVar n | n `Set.member` ctx.eFunDefs -> do
@@ -773,6 +938,121 @@ emitExpr ctx = \case
       (tsTok, _, invTok) <- funcTokens arity
       argCodes <- traverse (emitExpr ctx) xs
       pure (fCode <> cilCastclass tsTok <> concat argCodes <> cilCallvirt invTok)
+  CLoop _ -> error "CLR Assemble: CLoop reached emitExpr (non-tail position)"
+  CContinue _ -> error "CLR Assemble: CContinue reached emitExpr (non-tail position)"
+
+-- | Emit @body@ in tail position under @IL_tco_loop:@ (offset 0 of the
+-- method code). 'CContinue' evaluates new argument values, pops them
+-- into argument slots with @starg.s@ (reverse order — stack is LIFO),
+-- and emits a 4-byte @br@ back to offset 0; the offset is computed
+-- relative to the byte position of the @br@ itself, which we track by
+-- threading a running offset through the traversal. Tail value shapes
+-- end with their own @ret@; 'CCase' dispatches via a dup/bne chain
+-- where each arm self-terminates, so no join / fallthrough is needed.
+emitTailBin :: ECtx -> [Text] -> CExpr -> AsmM [Word8]
+emitTailBin ctx0 params = \expr -> fst <$> goTop ctx0 0 expr
+  where
+    arrSlot :: Int
+    arrSlot = 0
+
+    goTop :: ECtx -> Int -> CExpr -> AsmM ([Word8], Int)
+    goTop ctx offset = \case
+      CContinue newArgs -> emitContinue ctx offset newArgs
+      CCase scrut alts -> emitTailCase ctx offset scrut alts
+      other -> emitTailValue ctx offset other
+
+    emitContinue :: ECtx -> Int -> [CExpr] -> AsmM ([Word8], Int)
+    emitContinue ctx offset newArgs = do
+      argCodes <- traverse (emitExpr ctx) newArgs
+      let paramSlots :: [Int]
+          paramSlots =
+            [ fromMaybe (error $ "CLR Assemble: no arg slot for " <> show p) (Map.lookup p ctx.eParams)
+            | p <- params
+            ]
+          stargBytes :: [Word8]
+          stargBytes = concat [cilStarg s | s <- reverse paramSlots]
+          argBytes :: [Word8]
+          argBytes = concat argCodes
+          brStart :: Int
+          brStart = offset + length argBytes + length stargBytes
+          brLen :: Int
+          brLen = 5
+          delta :: Int32
+          delta = fromIntegral (0 - (brStart + brLen))
+          brBytes = cilBr delta
+      pure (argBytes <> stargBytes <> brBytes, brStart + brLen)
+
+    emitTailValue :: ECtx -> Int -> CExpr -> AsmM ([Word8], Int)
+    emitTailValue ctx offset expr = do
+      code <- emitExpr ctx expr
+      let bytes = code <> cilRet
+      pure (bytes, offset + length bytes)
+
+    emitTailCase :: ECtx -> Int -> CExpr -> [(Int, [Text], CExpr)] -> AsmM ([Word8], Int)
+    emitTailCase ctx offset scrut alts = do
+      trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+      scrutCode <- emitExpr ctx scrut
+      let sorted = sortWith (\(t, _, _) -> t) alts
+          bindSlotStart :: Int
+          bindSlotStart = 1
+          extractAndStore =
+            cilStloc arrSlot
+              <> cilLdloc arrSlot
+              <> cilLdcI4 0
+              <> cilLdelemRef'
+              <> cilUnboxAny (tokTR trInt32)
+          prefix = scrutCode <> extractAndStore
+          chainStartOffset = offset + length prefix
+      (chainBytes, endOffset) <- buildTailChain ctx chainStartOffset sorted bindSlotStart
+      pure (prefix <> chainBytes, endOffset)
+
+    buildTailChain :: ECtx -> Int -> [(Int, [Text], CExpr)] -> Int -> AsmM ([Word8], Int)
+    buildTailChain _ offset [] _ =
+      pure (cilLdnull <> cilRet, offset + length cilLdnull + length cilRet)
+    buildTailChain ctx offset [(_, vars, armBody)] bindStart = do
+      let bindings = zip vars [bindStart ..]
+          ctx' = ctx {eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings}
+          bindCode :: [Word8]
+          bindCode =
+            concatMap
+              ( \((_, slot), i) ->
+                  cilLdloc arrSlot <> cilLdcI4 (i :: Int) <> cilLdelemRef' <> cilStloc slot
+              )
+              (zip bindings [1 :: Int ..])
+          popTag :: [Word8]
+          popTag = cilPop
+          armPrefix = popTag <> bindCode
+          armStart = offset + length armPrefix
+      (armBytes, endOff) <- goTop ctx' armStart armBody
+      pure (armPrefix <> armBytes, endOff)
+    buildTailChain ctx offset ((tag, vars, armBody) : rest) bindStart = do
+      let dupCode :: [Word8]
+          dupCode = [0x25] -- dup
+          ldcCode :: [Word8]
+          ldcCode = cilLdcI4 tag
+          bneLen :: Int
+          bneLen = 5
+          bindings = zip vars [bindStart ..]
+          ctx' = ctx {eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings}
+          bindCode :: [Word8]
+          bindCode =
+            concatMap
+              ( \((_, slot), i) ->
+                  cilLdloc arrSlot <> cilLdcI4 (i :: Int) <> cilLdelemRef' <> cilStloc slot
+              )
+              (zip bindings [1 :: Int ..])
+          popTag :: [Word8]
+          popTag = cilPop
+          armPrefixLen = length dupCode + length ldcCode + bneLen
+          armStart = offset + armPrefixLen + length popTag + length bindCode
+      (armBytes, armEnd) <- goTop ctx' armStart armBody
+      let skipLen = length popTag + length bindCode + length armBytes
+      (restBytes, restEnd) <- buildTailChain ctx armEnd rest bindStart
+      let bne = cilBneUn (fromIntegral skipLen)
+      pure
+        ( dupCode <> ldcCode <> bne <> popTag <> bindCode <> armBytes <> restBytes,
+          restEnd
+        )
 
 lkTok :: ECtx -> Text -> Word32
 lkTok ctx n = fromMaybe (error $ "no token: " <> n) (Map.lookup n ctx.eToks)

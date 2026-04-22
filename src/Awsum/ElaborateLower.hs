@@ -3,25 +3,27 @@
 -- Why one pass?  For the MVP we do the minimal work:
 --   1) /Elaboration/ : rely on the type checker to validate the program
 --      (no dictionaries/implicit args yet).
---   2) /Lowering/    : erase surface sugar and map built-ins to Core primitives.
+--   2) /Lowering/    : erase surface sugar and map built-ins to Core nodes.
 --
 -- Notes:
 --   • We treat zero-argument top-level defs as /constants/ ('CValDef').
 --   • We erase explicit type signatures ('Sig') — they are checked, then dropped.
---   • Qualified names are resolved here to primitives (e.g. @IO.Stdout.print@).
+--   • Qualified names are resolved here to platform built-ins (e.g. @IO.Stdout.print@).
 --   • Application is flattened to a single 'CCall' with all arguments (left-assoc).
 --   • Non-nullary constructors used as values (not at head of application)
 --     are eta-expanded into synthetic wrapper functions.
 --
 -- Invariants (assumed by codegen/tests):
 --   • After lowering, zero-arg defs do NOT become functions; they are 'CValDef'.
---   • 'CPrim' only appears in callee position of 'CCall'.
+--   • 'CBuiltIn' only appears in callee position of 'CCall'.
 --   • Unsupported qualified names fail fast with a clear error.
 module Awsum.ElaborateLower (elaborateLowerProgram) where
 
 import Awsum.BuiltIn (lookupBuiltIn)
 import Awsum.Core
+import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
+import Awsum.Tco (tcoProgram)
 import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
@@ -41,7 +43,10 @@ import Relude
 --   • 'leConInfo' is the same constructor tag/arity map used by the rest of
 --     lowering; carried alongside so we can pass a single record around.
 data LowerEnv = LowerEnv
-  { leTypeOf :: QName -> Maybe Type',
+  { -- | Program type we are lowering for. Consulted by 'lowerVar' to
+    --   resolve qualified names against the right platform table.
+    leProgramType :: ProgramType,
+    leTypeOf :: QName -> Maybe Type',
     leConInfo :: ConInfoEnv
   }
 
@@ -77,15 +82,15 @@ genConWrappers conInfo =
 -- | Check the surface program (types) and lower it to Core IR.
 --   On success we return @(warnings, core)@: the Core program for codegen
 --   plus any non-fatal warnings the typechecker collected.
-elaborateLowerProgram :: Program -> Either TypeError ([Warning], CoreProgram)
-elaborateLowerProgram prog = do
+elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], CoreProgram)
+elaborateLowerProgram progType prog = do
   -- 1) Elaboration step (MVP): just typecheck; no evidence/dictionaries yet.
-  warnings <- typecheckProgram prog
+  warnings <- typecheckProgram progType prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let ds = toList (decls prog)
       conInfo = buildConInfo ds
       sigMap = M.fromList [(n, t) | Sig _sp n t _ <- ds]
-      env = mkLowerEnv prog conInfo sigMap
+      env = mkLowerEnv progType conInfo sigMap
   mds <- traverse (lowerDecl env sigMap) ds
   -- 3) Tree-shake: drop Core declarations unreachable from 'main'.
   --    Covers both user functions that no one calls and prelude
@@ -103,7 +108,11 @@ elaborateLowerProgram prog = do
       core = CoreProgram live
   -- 4) Saturate under-applied direct calls via lambda-lifting.
   core' <- saturateProgram core
-  pure (warnings, core')
+  -- 5) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
+  --    wrap affected function bodies in 'CLoop'. Backends compile the
+  --    wrapped form into a loop + jump rather than a recursive call,
+  --    guaranteeing stack safety for tail recursion across all targets.
+  pure (warnings, tcoProgram core')
 
 -- | Reachability over the Core call graph starting from @root@.
 reachableCore :: Name -> M.Map Name (Set Name) -> Set Name
@@ -129,18 +138,14 @@ declFreeVars = \case
   CValDef _ body -> freeVars body
 
 -- | Build the name→type lookup used by 'lowerExpr' to propagate expected
---   types down to integer literals. Combines user signatures, built-in
---   qualified names, and (as a future hook) constructor types.
-mkLowerEnv :: Program -> ConInfoEnv -> M.Map Name Type' -> LowerEnv
-mkLowerEnv _prog conInfo sigMap =
-  let stringTy = TyCon noSpan "String"
-      ioUnitTy = TyCon noSpan "IOUnit"
-      builtins =
-        M.fromList
-          [(QName ["IO", "Stdout"] "print", TyArrow noSpan stringTy ioUnitTy)]
-      userSigs = M.fromList [(QName [] n, t) | (n, t) <- M.toList sigMap]
-      lookupName q = M.lookup q (userSigs <> builtins)
-   in LowerEnv {leTypeOf = lookupName, leConInfo = conInfo}
+--   types down to integer literals. Combines user signatures, the current
+--   program type's platform-effect table, and (as a future hook)
+--   constructor types.
+mkLowerEnv :: ProgramType -> ConInfoEnv -> M.Map Name Type' -> LowerEnv
+mkLowerEnv progType conInfo sigMap =
+  let userSigs = M.fromList [(QName [] n, t) | (n, t) <- M.toList sigMap]
+      lookupName q = M.lookup q (userSigs <> platformTable progType)
+   in LowerEnv {leProgramType = progType, leTypeOf = lookupName, leConInfo = conInfo}
 
 -- | Saturate under-applied direct calls by lambda-lifting.
 --
@@ -173,7 +178,6 @@ saturateExpr :: M.Map Name Int -> Set Name -> CExpr -> SatM CExpr
 saturateExpr am locals = go
   where
     go = \case
-      e@(CPrim _) -> pure e
       e@(CString _) -> pure e
       e@(CIntLit _ _) -> pure e
       e@(CVar _) -> pure e
@@ -189,6 +193,11 @@ saturateExpr am locals = go
               length args' < ar ->
                 liftPap f args' ar
           _ -> pure (CCall callee' args')
+      -- Saturation runs before the TCO pass, so 'CLoop' / 'CContinue'
+      -- cannot appear here. Keep the cases so the exhaustiveness check
+      -- is honest; they are no-ops if the pipeline order ever changes.
+      CLoop b -> CLoop <$> go b
+      CContinue xs -> CContinue <$> traverse go xs
     goAlt (tag, vars, body) = do
       body' <- saturateExpr am (locals <> fromList vars) body
       pure (tag, vars, body')
@@ -215,7 +224,6 @@ saturateExpr am locals = go
 
 freeVars :: CExpr -> Set Name
 freeVars = \case
-  CPrim _ -> mempty
   CString _ -> mempty
   CIntLit _ _ -> mempty
   CVar n -> one n
@@ -225,6 +233,8 @@ freeVars = \case
     freeVars s
       <> foldMap (\(_, vs, b) -> freeVars b `Set.difference` fromList vs) alts
   CCall f xs -> freeVars f <> foldMap freeVars xs
+  CLoop b -> freeVars b
+  CContinue xs -> foldMap freeVars xs
 
 -- | Lower a top-level declaration.
 --   • Type signatures and type declarations are erased (they already influenced checking).
@@ -306,7 +316,7 @@ freshenWildcardArgs = go (0 :: Int)
 lowerExpr :: LowerEnv -> Maybe Type' -> Expr -> Either TypeError CExpr
 lowerExpr env expected = \case
   EParens _sp e -> lowerExpr env expected e
-  EVar _sp qn -> lowerVar qn
+  EVar _sp qn -> lowerVar env qn
   ELit _sp (LString t) -> Right (CString t)
   ELit sp (LInt n) -> case expected of
     Just (TyCon _ "Int32") -> Right (CIntLit n TInt32)
@@ -318,7 +328,7 @@ lowerExpr env expected = \case
     _ -> Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
     let strExpected = Just (TyCon noSpan "String")
-     in CCall (CPrim PrimConcat)
+     in CCall (CBuiltIn "concatString")
           <$> sequenceA [lowerExpr env strExpected l, lowerExpr env strExpected r]
   ECon _sp name -> case M.lookup name (leConInfo env) of
     Just (tag, 0) -> Right (CCon tag [])
@@ -427,24 +437,32 @@ collectApps f acc = case f of
   EApp _sp f' x' -> collectApps f' (x' : acc)
   _ -> (f, acc)
 
--- | Lower a (possibly qualified) variable to either a Core variable,
---   a primitive, or a direct 'CBuiltIn' reference.  This is the single
---   place that knows about the surface names of built-ins for the MVP.
+-- | Lower a (possibly qualified) variable to either a Core variable or
+--   a 'CBuiltIn' reference.
 --
 --   Supported:
---     • @IO.Stdout.print@  → 'PrimPrint'
 --     • An unqualified name registered in 'Awsum.BuiltIn.builtIns'
---       → 'CBuiltIn' (users reach it through the prelude's alias, e.g.
+--       → 'CBuiltIn' keyed by the unqualified name (the user reaches
+--       it through the prelude's @BuiltIn.foo@ alias, e.g.
 --       @showInt32 = BuiltIn.showInt32@).
+--     • A qualified name registered in the current program type's
+--       'platformTable' (e.g. @IO.Stdout.print@ for @--program-type cli@)
+--       → 'CBuiltIn' keyed by the /dotted/ qualified name, so backends
+--       can dispatch per effect without collision with prelude built-ins.
 --     • Other unqualified names → Core variables.
 --
---   Everything else: fail fast with a helpful message.
-lowerVar :: QName -> Either TypeError CExpr
-lowerVar (QName mods n) =
+--   Everything else: fail fast with a helpful message. By this point
+--   the typechecker has already rejected unknown qualified names via
+--   'builtinEnvFromImports', so reaching the error branch is a
+--   lowering bug rather than a user error.
+lowerVar :: LowerEnv -> QName -> Either TypeError CExpr
+lowerVar env q@(QName mods n) =
   case mods of
     [] | Just _ <- lookupBuiltIn n -> Right (CBuiltIn n)
     [] -> Right (CVar n)
-    ["IO", "Stdout"] | n == "print" -> Right (CPrim PrimPrint)
+    _
+      | M.member q (platformTable env.leProgramType) ->
+          Right (CBuiltIn (prettyQName mods n))
     _ ->
       Left
         $ TELowering

@@ -1,0 +1,16 @@
+-- Test: non-tail self-recursion on UInt8 counting down from 255 to 0.
+-- The recursive call `countDown m` sits inside `(++)`, so it is NOT in
+-- tail position — every frame keeps a pending concat. Cross-backend
+-- stdout equivalence here exercises 256 live frames on the system stack
+-- on every target, which is well below any per-target limit but gives
+-- a concrete regression baseline for the future heap-frames pass that
+-- will cover non-tail self-recursion.
+import IO.Stdout
+
+countDown : UInt8 -> String
+countDown n = case predUInt8 n of
+  Left _ -> showUInt8 n
+  Right m -> showUInt8 n ++ "," ++ countDown m
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (countDown 255)

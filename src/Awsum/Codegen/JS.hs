@@ -24,7 +24,7 @@ codegenJS :: CoreProgram -> Text
 codegenJS prog@(CoreProgram decls) =
   T.intercalate
     "\n"
-    [ header (usedPrims prog) (usedBuiltIns prog),
+    [ header (usedBuiltIns prog),
       T.intercalate "\n\n" (map emitDecl decls),
       footer
     ]
@@ -35,13 +35,13 @@ codegenJS prog@(CoreProgram decls) =
 --   Note: we intentionally skip a '__concat' helper — '+' is fine because both operands
 --   are statically strings under our typechecker. Integer stringification also
 --   doesn't need a helper; @String(x)@ is inlined at each show call site.
-header :: Set Prim -> Set Name -> Text
-header prims builtIns =
+header :: Set Name -> Text
+header builtIns =
   let lns =
         filter
           (not . T.null)
           [ "\"use strict\";",
-            if Set.member PrimPrint prims
+            if Set.member "IO.Stdout.print" builtIns
               then "function __print(s){ process.stdout.write(String(s)); return undefined; }"
               else "",
             -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
@@ -49,6 +49,22 @@ header prims builtIns =
             -- for `type Either a b = Left a | Right b` and `type UnderflowError = UnderflowError`.
             if Set.member "predInt32" builtIns
               then "function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)]; }"
+              else "",
+            -- predUInt8: returns Left UnderflowError on 0, else Right (x - 1).
+            -- When x >= 1, (x - 1) is in 0..254, so no explicit mask is
+            -- needed to stay in UInt8 range — but we keep '& 0xFF' for
+            -- parallel structure with other UInt8 arithmetic helpers.
+            if Set.member "predUInt8" builtIns
+              then "function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }"
+              else "",
+            -- eqInt32 / eqUInt8: True=0, False=1 for `type Bool = True | False`.
+            -- Both incoming values are already '|0' / '& 0xFF' coerced, so '===' on
+            -- the JS Numbers gives the same answer as native i32/u8 equality.
+            if Set.member "eqInt32" builtIns
+              then "function __eqInt32(a, b){ return a === b ? [0] : [1]; }"
+              else "",
+            if Set.member "eqUInt8" builtIns
+              then "function __eqUInt8(a, b){ return a === b ? [0] : [1]; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -66,10 +82,26 @@ footer =
     ]
 
 -- | Top-level declarations:
---   • 'CFunDef' → function declaration returning the rendered body.
---   • 'CValDef' → 'const name = <expr>;' (zero-arg defs are constants).
+--   • 'CFunDef' with 'CLoop' body (output of the TCO pass) → 'while (true)'
+--     loop whose body is emitted in statement form so 'CContinue' can
+--     rebind the function's parameters and 'continue' the loop instead of
+--     recursing. Rewriting a self-tail-call as a jump keeps the JS engine's
+--     call stack bounded, which matters on Node/V8 because ES2015 PTC was
+--     never shipped.
+--   • 'CFunDef' without 'CLoop' → plain @return <expr>;@.
+--   • 'CValDef' → 'const name = <expr>;'.
 emitDecl :: CDecl -> Text
 emitDecl = \case
+  CFunDef nm args (CLoop body) ->
+    "function "
+      <> mangle nm
+      <> "("
+      <> T.intercalate ", " (map mangle args)
+      <> "){\n"
+      <> "  while (true) {\n"
+      <> emitStmt args body
+      <> "  }\n"
+      <> "}"
   CFunDef nm args body ->
     "function "
       <> mangle nm
@@ -83,10 +115,66 @@ emitDecl = \case
   CValDef nm rhs ->
     "const " <> mangle nm <> " = " <> emitExpr rhs <> ";"
 
+-- | Emit an expression in /statement form/ for use inside a 'while (true)'
+-- loop introduced by 'CLoop':
+--   • 'CContinue' rebinds the function's parameters and jumps back to the
+--     loop head. Continue args are evaluated into temporaries first so a
+--     new value that reads old params (e.g. @acc + "."@) sees the old
+--     binding, not a half-updated one.
+--   • 'CCase' dispatches through @switch@ and recurses into statement form
+--     for each arm's body, because any arm might itself be a 'CContinue'.
+--   • Anything else is a final value — we return it.
+emitStmt :: [Name] -> CExpr -> Text
+emitStmt params = go
+  where
+    go :: CExpr -> Text
+    go = \case
+      CContinue newArgs ->
+        let temps = ["__t" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
+            declLines =
+              [ "    const " <> t <> " = " <> emitExpr a <> ";"
+              | (t, a) <- zip temps newArgs
+              ]
+            assignLines =
+              [ "    " <> mangle p <> " = " <> t <> ";"
+              | (p, t) <- zip params temps
+              ]
+         in unlines (declLines <> assignLines <> ["    continue;"])
+      CCase scrut alts ->
+        "    {\n      const __s = "
+          <> emitExpr scrut
+          <> ";\n      switch (__s[0]) {\n"
+          <> T.concat (map emitStmtAlt alts)
+          <> "      }\n    }\n"
+      e ->
+        "    return " <> emitExpr e <> ";\n"
+
+    emitStmtAlt :: (Int, [Name], CExpr) -> Text
+    emitStmtAlt (tag, vars, body) =
+      let bindings =
+            T.concat
+              [ "          const " <> mangle v <> " = __s[" <> show (i :: Int) <> "];\n"
+              | (v, i) <- zip vars [1 ..]
+              ]
+       in "        case "
+            <> show tag
+            <> ": {\n"
+            <> bindings
+            <> reindentStmt (emitStmt params body)
+            <> "        }\n"
+
+    -- 'emitStmt' produces lines indented for @while (true)@ depth (4 spaces).
+    -- Inside a @case@ we want them two levels deeper (10 spaces), so bump
+    -- each non-empty line by 6 spaces without touching blank ones.
+    reindentStmt :: Text -> Text
+    reindentStmt = unlines . map bump . lines
+      where
+        bump l = if T.null (T.strip l) then l else "      " <> l
+
 -- | Expressions:
---   • 'CPrim' is never a standalone value — it only appears in the callee of 'CCall'.
---   • 'PrimConcat' turns into '(a + b)'.
---   • 'PrimPrint' turns into '__print(x)'.
+--   • 'CBuiltIn' is never a standalone value — it only appears in the callee of 'CCall'.
+--   • 'IO.Stdout.print' turns into '__print(x)'.
+--   • 'BuiltIn.concatString' turns into '(a + b)'.
 --   • Generic calls: '(callee)(args...)' — we parenthesize the callee to be safe.
 emitExpr :: CExpr -> Text
 emitExpr = \case
@@ -97,9 +185,6 @@ emitExpr = \case
   -- free-floating JS Number.
   CIntLit n TInt32 -> "(" <> show n <> "|0)"
   CIntLit n TUInt8 -> "(" <> show n <> " & 0xFF)"
-  CPrim PrimConcat -> "/*<prim concat>*/" -- invariant: not a standalone term
-  CPrim PrimPrint -> "/*<prim print>*/" -- invariant: not a standalone term
-  CPrim (PrimShowInt _) -> "/*<prim showInt>*/" -- invariant: not a standalone term
   CBuiltIn n -> "/*<builtin " <> n <> ">*/" -- invariant: not a standalone term
   CCon tag fields ->
     "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
@@ -111,18 +196,10 @@ emitExpr = \case
       <> ")"
   CCall f xs ->
     case f of
-      CPrim PrimConcat ->
-        case xs of
-          [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
-          _ -> error "__concat: arity mismatch"
-      CPrim PrimPrint ->
+      CBuiltIn "IO.Stdout.print" ->
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
-      CPrim (PrimShowInt _) ->
-        case xs of
-          [x] -> "String(" <> emitExpr x <> ")"
-          _ -> error "__showInt: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" ->
             case xs of
@@ -132,10 +209,29 @@ emitExpr = \case
         case xs of
           [x] -> "__predInt32(" <> emitExpr x <> ")"
           _ -> error "BuiltIn.predInt32: arity mismatch"
+      CBuiltIn "predUInt8" ->
+        case xs of
+          [x] -> "__predUInt8(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.predUInt8: arity mismatch"
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8" ->
+            case xs of
+              [a, b] ->
+                let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+                 in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "concatString" ->
+        case xs of
+          [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
+          _ -> error "BuiltIn.concatString: arity mismatch"
       CBuiltIn n ->
         error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
+  -- 'untcoProgram' strips these before emission. Reaching them signals a
+  -- pipeline misorder (TCO ran but its inverse didn't), so crash loudly.
+  CLoop _ -> error "JS codegen: CLoop survived untcoProgram (pipeline bug)"
+  CContinue _ -> error "JS codegen: CContinue survived untcoProgram (pipeline bug)"
   where
     emitAlt (tag, vars, body) =
       let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]

@@ -134,12 +134,12 @@ importCount :: Word32
 importCount = 3
 
 -- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
--- __box_i32, __show_i32, __predInt32, __get_arg
+-- __box_i32, __show_i32, __predInt32, __predUInt8, __eq_i32, __get_arg
 runtimeCount :: Word32
-runtimeCount = 9
+runtimeCount = 11
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxEqI32, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -148,7 +148,9 @@ idxPrint = importCount + 4
 idxBoxI32 = importCount + 5
 idxShowI32 = importCount + 6
 idxPredI32 = importCount + 7
-idxGetArg = importCount + 8
+idxPredU8 = importCount + 8
+idxEqI32 = importCount + 9
+idxGetArg = importCount + 10
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -209,11 +211,12 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CIntLit _ _ -> []
-  CPrim _ -> []
   CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
+  CLoop b -> stringsInExpr b
+  CContinue xs -> concatMap stringsInExpr xs
 
 collectIndirectArities :: CoreProgram -> Set Text -> Set Int
 collectIndirectArities (CoreProgram decls) funNames =
@@ -333,6 +336,8 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __box_i32
           lookupType (FuncType 1 True) typeMap, -- __show_i32
           lookupType (FuncType 1 True) typeMap, -- __predInt32
+          lookupType (FuncType 1 True) typeMap, -- __predUInt8
+          lookupType (FuncType 2 True) typeMap, -- __eq_i32
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
           -- User declarations
@@ -437,6 +442,8 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeBoxI32 info,
           codeShowI32 info,
           codePredI32 info,
+          codePredU8 info,
+          codeEqI32 info,
           codeGetArg info
         ]
           -- User declarations
@@ -815,6 +822,146 @@ codePredI32 _info =
         [op_end]
       ]
 
+-- __predUInt8(p: i32) -> i32
+-- predUInt8: UInt8 -> Either UnderflowError UInt8.
+--   Mirrors 'codePredI32' but checks against 0 (via 'i32.eqz') instead
+--   of INT32_MIN, and subtracts without masking — (v - 1) is in 0..254
+--   when v >= 1, so it stays in UInt8 range naturally. Same locals
+--   layout: $v(1) $ue(2) $box(3) $cell(4).
+codePredU8 :: WasmInfo -> [Word8]
+codePredU8 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- v = i32.load(p)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 1,
+        -- if (i32.eqz v) result i32
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_eqz],
+        [op_if, blocktype_i32],
+        -- then: Left UnderflowError
+        -- ue = __alloc(4); store tag 0
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 0; store[offset=4] ue
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_else],
+        -- else: Right (v - 1)
+        -- box = __alloc(4); store (v - 1)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_sub],
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 1; store[offset=4] box
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_end]
+      ]
+
+-- __eq_i32(a: i32, b: i32) -> i32
+-- eqInt32 / eqUInt8: compare two boxed integers, return a Bool container.
+--   Int32 and UInt8 both flow as pointers to i32 cells (UInt8 values are
+--   stored masked to 0..255), so one helper handles both. True=0, False=1
+--   matches declaration order in `type Bool = True | False`.
+-- Locals: $cell(2) — single i32 local, in addition to the two params.
+codeEqI32 :: WasmInfo -> [Word8]
+codeEqI32 _info =
+  encodeBody
+    (encodeLocals 1)
+    $ concat
+      [ -- cell = __alloc(4)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        -- if (i32.load(a) == i32.load(b)) result i32
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        -- then: store tag 0 (True), return cell
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 2,
+        [op_else],
+        -- else: store tag 1 (False), return cell
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 2,
+        [op_end]
+      ]
+
 -- __box_i32(v: i32) -> i32
 -- Allocate a 4-byte cell, store v, return pointer.
 -- local $p: i32 (slot 1)
@@ -1087,22 +1234,69 @@ exprMaxConDepth = \case
   CCon _ fields -> 1 + foldl' max 0 (map exprMaxConDepth fields)
   CCase s alts -> max (exprMaxConDepth s) (foldl' max 0 [exprMaxConDepth b | (_, _, b) <- alts])
   CCall f xs -> foldl' max (exprMaxConDepth f) (map exprMaxConDepth xs)
+  CLoop b -> exprMaxConDepth b
+  CContinue xs -> foldl' max 0 (map exprMaxConDepth xs)
   _ -> 0
 
 exprHasCCase :: CExpr -> Bool
 exprHasCCase = \case
   CCase {} -> True
   CCall f xs -> exprHasCCase f || any exprHasCCase xs
+  CLoop b -> exprHasCCase b
+  CContinue xs -> any exprHasCCase xs
   _ -> False
 
 exprMaxBoundVars :: CExpr -> Int
 exprMaxBoundVars = \case
   CCase _ alts -> foldl' max 0 [max (length vs) (exprMaxBoundVars b) | (_, vs, b) <- alts]
   CCall f xs -> foldl' max 0 (exprMaxBoundVars f : map exprMaxBoundVars xs)
+  CLoop b -> exprMaxBoundVars b
+  CContinue xs -> foldl' max 0 (map exprMaxBoundVars xs)
   _ -> 0
 
 codeUserDecl :: WasmInfo -> Map FuncType Word32 -> CDecl -> [Word8]
 codeUserDecl info typeMap = \case
+  -- TCO-wrapped body. WASM params are already mutable locals, so we only
+  -- need 'nParams' extra slots to stage 'CContinue' arguments (so a new
+  -- value computed from the old parameter doesn't see a half-updated
+  -- slot). The whole body runs inside @(loop $tco_top (result i32))@,
+  -- and 'CContinue' becomes @br@ targeting this loop at the current depth.
+  CFunDef _nm args (CLoop body) ->
+    let nParams = fromIntegral (length args) :: Word32
+        paramMap = Map.fromList (zip args [0 :: Word32 ..])
+        conDepthNeeded = exprMaxConDepth body
+        needsScrut = exprHasCCase body
+        conBaseSlot = nParams
+        nextAfterCon = conBaseSlot + fromIntegral conDepthNeeded
+        scrutSlot = nextAfterCon
+        nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
+        boundBase = nextAfterScrut
+        maxBV = exprMaxBoundVars body
+        nextAfterBound = boundBase + fromIntegral maxBV
+        tcoTempBase = nextAfterBound
+        totalSlots = tcoTempBase + nParams
+        nExtraLocals = fromIntegral (totalSlots - nParams) :: Int
+        ctx =
+          ExprCtx
+            { ecParams = paramMap,
+              ecLocals = Map.empty,
+              ecValDefs = info.wiValDefs,
+              ecFunDefs = info.wiFunDefs,
+              ecArities = info.wiArities,
+              ecStringPool = info.wiStringPool,
+              ecTableMap = info.wiTableMap,
+              ecFuncIdx = info.wiFuncIdx,
+              ecTypeMap = typeMap,
+              ecIndirectArities = info.wiIndirectArities,
+              ecConBaseSlot = conBaseSlot,
+              ecConDepth = 0,
+              ecScrutSlot = scrutSlot,
+              ecBoundBase = boundBase
+            }
+        bodyBytes = emitTailBin tcoTempBase args 0 ctx body
+     in encodeBody
+          (encodeLocals nExtraLocals)
+          ([op_loop, blocktype_i32] <> bodyBytes <> [op_end])
   CFunDef _nm args body ->
     let nParams = fromIntegral (length args) :: Word32
         paramMap = Map.fromList (zip args [0 :: Word32 ..])
@@ -1217,8 +1411,6 @@ emitExpr ctx = \case
          in [op_i32_const] <> encodeSLEB128 (fromIntegral tblIdx)
     | otherwise ->
         [op_i32_const] <> encodeSLEB128 0
-  CPrim _ ->
-    [op_i32_const] <> encodeSLEB128 0
   CBuiltIn _ ->
     [op_i32_const] <> encodeSLEB128 0 -- invariant: not a standalone term; dispatched from CCall
   CIntLit n _ ->
@@ -1265,22 +1457,11 @@ emitExpr ctx = \case
      in emitCaseChain ctx scrut sorted
   CCall f xs ->
     case f of
-      CPrim PrimConcat
-        | [a, b] <- xs ->
-            emitExpr ctx a
-              <> emitExpr ctx b
-              <> [op_call]
-              <> encodeULEB128 idxConcat
-      CPrim PrimPrint
+      CBuiltIn "IO.Stdout.print"
         | [x] <- xs ->
             emitExpr ctx x
               <> [op_call]
               <> encodeULEB128 idxPrint
-      CPrim (PrimShowInt _)
-        | [x] <- xs ->
-            emitExpr ctx x
-              <> [op_call]
-              <> encodeULEB128 idxShowI32
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->
@@ -1292,6 +1473,24 @@ emitExpr ctx = \case
             emitExpr ctx x
               <> [op_call]
               <> encodeULEB128 idxPredI32
+      CBuiltIn "predUInt8"
+        | [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxPredU8
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8",
+          [a, b] <- xs ->
+            emitExpr ctx a
+              <> emitExpr ctx b
+              <> [op_call]
+              <> encodeULEB128 idxEqI32
+      CBuiltIn "concatString"
+        | [a, b] <- xs ->
+            emitExpr ctx a
+              <> emitExpr ctx b
+              <> [op_call]
+              <> encodeULEB128 idxConcat
       CBuiltIn n ->
         error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
@@ -1308,6 +1507,8 @@ emitExpr ctx = \case
               <> [op_call_indirect]
               <> encodeULEB128 typeIdx
               <> encodeULEB128 0 -- table index 0
+  CLoop _ -> error "WASM Assemble: CLoop survived untcoProgram (pipeline bug)"
+  CContinue _ -> error "WASM Assemble: CContinue survived untcoProgram (pipeline bug)"
 
 -- | Emit a case expression as nested if/else in binary WASM.
 -- Stores scrutinee pointer to $__scrut, loads tag, then chains if/else arms.
@@ -1374,6 +1575,79 @@ bindArmVars ctx vars =
       newLocals = foldl' (\m (v, slot) -> Map.insert v slot m) ctx.ecLocals (map snd results)
       ctx' = ctx {ecLocals = newLocals}
    in (code, ctx')
+
+-- | Emit @body@ in tail position under @(loop $tco_top (result i32) ...)@.
+--
+-- 'depth' counts how many nested @op_if@ / @op_block@ / @op_loop@ scopes
+-- sit between the current point and the @tco_top@ loop header. 'CContinue'
+-- emits @br depth@ to restart it; all other tail shapes produce an @i32@
+-- value that becomes the loop's (and the function's) result.
+--
+-- The @tcoTempBase@ slot is the first of @arity@ scratch locals used to
+-- stage 'CContinue' arguments, so a new value that reads a still-old
+-- parameter sees the old binding rather than a half-updated one.
+emitTailBin :: Word32 -> [Text] -> Word32 -> ExprCtx -> CExpr -> [Word8]
+emitTailBin tcoTempBase params depth ctx = \case
+  CContinue newArgs ->
+    let evals =
+          concat
+            [ emitExpr ctx a
+                <> [op_local_set]
+                <> encodeULEB128 (tcoTempBase + fromIntegral i)
+            | (i, a) <- zip [0 :: Int ..] newArgs
+            ]
+        paramSlots =
+          [ fromMaybe (error $ "WASM Assemble: no param slot for " <> show p) (Map.lookup p ctx.ecParams)
+          | p <- params
+          ]
+        copies =
+          concat
+            [ [op_local_get]
+                <> encodeULEB128 (tcoTempBase + fromIntegral i)
+                <> [op_local_set]
+                <> encodeULEB128 ps
+            | (i, ps) <- zip [0 :: Int ..] paramSlots
+            ]
+     in evals <> copies <> [op_br] <> encodeULEB128 depth
+  CCase scrut alts ->
+    let sorted = sortWith (\(t, _, _) -> t) alts
+        scrutCode =
+          emitExpr ctx scrut
+            <> [op_local_set]
+            <> encodeULEB128 ctx.ecScrutSlot
+     in scrutCode <> emitTailArmChain tcoTempBase params depth ctx sorted
+  other -> emitExpr ctx other
+
+-- | Tail version of 'emitArmChain': each arm is emitted in tail form so
+-- it either produces an @i32@ result or terminates with a @br@ back to
+-- the loop. Nesting into an @op_if@ increases 'depth' by one for both the
+-- then-body and the else-continuation.
+emitTailArmChain :: Word32 -> [Text] -> Word32 -> ExprCtx -> [(Int, [Text], CExpr)] -> [Word8]
+emitTailArmChain _ _ _ _ [] = [op_i32_const] <> encodeSLEB128 0
+emitTailArmChain tcoTempBase params depth ctx [(_, vars, body)] =
+  let (bindCode, ctx') = bindArmVars ctx vars
+   in bindCode <> emitTailBin tcoTempBase params depth ctx' body
+emitTailArmChain tcoTempBase params depth ctx ((tag, vars, body) : rest) =
+  let scrutSlot = ctx.ecScrutSlot
+      loadTag =
+        [op_local_get]
+          <> encodeULEB128 scrutSlot
+          <> [op_i32_load]
+          <> encodeULEB128 2
+          <> encodeULEB128 0
+      cmpCode =
+        [op_i32_const]
+          <> encodeSLEB128 (fromIntegral tag)
+          <> [0x46] -- i32.eq
+      (bindCode, ctx') = bindArmVars ctx vars
+   in loadTag
+        <> cmpCode
+        <> [op_if, blocktype_i32]
+        <> bindCode
+        <> emitTailBin tcoTempBase params (depth + 1) ctx' body
+        <> [op_else]
+        <> emitTailArmChain tcoTempBase params (depth + 1) ctx rest
+        <> [op_end]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Data section

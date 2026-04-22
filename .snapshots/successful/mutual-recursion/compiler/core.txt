@@ -6,7 +6,8 @@ CoreProgram
                 [
                     ( 0
                     , []
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "A"
                         , CCall
                             ( CVar "handleB" )
@@ -47,7 +48,8 @@ CoreProgram
                 ,
                     ( 1
                     , []
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "B"
                         , CCall
                             ( CVar "handleA" )
@@ -57,7 +59,8 @@ CoreProgram
                 ,
                     ( 2
                     , []
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "C"
                         , CCall
                             ( CVar "handleA" )
@@ -72,7 +75,8 @@ CoreProgram
                 ]
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall ( CPrim PrimPrint )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "handleA" )
                     [ CCon 0 [] ]

@@ -35,9 +35,12 @@ library
       Awsum.Normalize
       Awsum.Parser
       Awsum.Prelude
+      Awsum.Program
+      Awsum.Program.Cli
       Awsum.Render
       Awsum.Symbols
       Awsum.Syntax
+      Awsum.Tco
       Awsum.Typing
       Common.File
   other-modules:

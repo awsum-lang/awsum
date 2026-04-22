@@ -23,7 +23,6 @@ codegenJVM prog@(CoreProgram decls) =
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
       ctx = Ctx {cValDefs = valNames, cFunDefs = funNames, cArities = arities}
-      prims = usedPrims prog
       builtIns = usedBuiltIns prog
       gate cond m = if cond then m else ""
    in T.intercalate "\n"
@@ -33,11 +32,17 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             initMethod,
             "",
-            gate (Set.member PrimConcat prims) concatMethod,
+            gate (Set.member "concatString" builtIns) concatMethod,
             "",
-            gate (Set.member PrimPrint prims) printMethod,
+            gate (Set.member "IO.Stdout.print" builtIns) printMethod,
             "",
             gate (Set.member "predInt32" builtIns) predInt32Method,
+            "",
+            gate (Set.member "predUInt8" builtIns) predUInt8Method,
+            "",
+            gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "L_eq_i32"),
+            "",
+            gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "L_eq_u8"),
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
@@ -160,6 +165,101 @@ predInt32Method =
       ".end method"
     ]
 
+-- predUInt8: UInt8 -> Either UnderflowError UInt8.
+--   `Left UnderflowError` on 0; `Right (v - 1)` otherwise. UInt8 flows as
+--   a boxed Integer (same representation as Int32 on the JVM), so the
+--   method structure mirrors predInt32 — the only differences are the
+--   zero check (via 'ifne' against 0) and the absence of any mask on
+--   (v - 1), which is guaranteed to be in 0..254 when v >= 1.
+predUInt8Method :: Text
+predUInt8Method =
+  unlines
+    [ ".method public static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  ifne L_predu8_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_predu8_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  iconst_1",
+      "  isub",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- eqInt32 / eqUInt8: Int32 -> Int32 -> Bool and UInt8 -> UInt8 -> Bool.
+--   Both types are boxed as Integer on the JVM, so the two methods have
+--   identical bodies but distinct names (parallel to showInt32 vs
+--   showUInt8). Returns True=0 or False=1 as a one-slot Object[].
+--   A unique label suffix keeps both methods disassemblable in one class.
+eqMethod :: Text -> Text -> Text
+eqMethod name lbl =
+  unlines
+    [ ".method public static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 2",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  if_icmpne " <> lbl <> "_ne",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      lbl <> "_ne:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -187,6 +287,22 @@ mainMethod =
 
 emitDecl :: Ctx -> CDecl -> Text
 emitDecl ctx = \case
+  -- TCO-wrapped body. JVM method parameters already sit in local slots
+  -- 0..n-1 and are mutable via @astore@, so a 'CContinue' evaluates its
+  -- new values onto the operand stack, pops them back into the param
+  -- slots (reverse order — stack is LIFO), and @goto@s the method's
+  -- first instruction labelled @L_tco_loop@. Every real return path
+  -- ends with its own @areturn@; no fallthrough @areturn@ is emitted.
+  CFunDef nm args (CLoop body) ->
+    let paramCtx = Map.fromList (zip args [0 ..])
+        desc = objMethodDescText (length args)
+        bodyText = emitTailText ctx paramCtx args body
+     in unlines
+          [ ".method public static " <> mangle nm <> desc,
+            "L_tco_loop:",
+            bodyText,
+            ".end method"
+          ]
   CFunDef nm args body ->
     let paramCtx = Map.fromList (zip args [0 ..])
         desc = objMethodDescText (length args)
@@ -224,8 +340,6 @@ emitExprText ctx paramMap = \case
          in "  ldc [MethodHandle REF_invokeStatic AwsumMain." <> mangle n <> objMethodDescText arity <> "]"
     | otherwise ->
         "  aconst_null"
-  CPrim _ ->
-    "  aconst_null"
   CBuiltIn _ ->
     "  aconst_null" -- invariant: not a standalone term; dispatched from CCall
   CIntLit n _ ->
@@ -291,28 +405,12 @@ emitExprText ctx paramMap = \case
           <> [joinLabel <> ":"]
   CCall f xs ->
     case f of
-      CPrim PrimConcat
-        | [a, b] <- xs ->
-            T.intercalate
-              "\n"
-              [ emitExprText ctx paramMap a,
-                emitExprText ctx paramMap b,
-                "  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
-              ]
-      CPrim PrimPrint
+      CBuiltIn "IO.Stdout.print"
         | [x] <- xs ->
             T.intercalate
               "\n"
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;"
-              ]
-      CPrim (PrimShowInt _)
-        | [x] <- xs ->
-            T.intercalate
-              "\n"
-              [ emitExprText ctx paramMap x,
-                "  checkcast java/lang/Integer",
-                "  invokevirtual java/lang/Integer/toString()Ljava/lang/String;"
               ]
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
@@ -329,6 +427,31 @@ emitExprText ctx paramMap = \case
               "\n"
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__predInt32(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn "predUInt8"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__predUInt8(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8",
+          [a, b] <- xs ->
+            let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx paramMap a,
+                    emitExprText ctx paramMap b,
+                    "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+                  ]
+      CBuiltIn "concatString"
+        | [a, b] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap a,
+                emitExprText ctx paramMap b,
+                "  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
               ]
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
@@ -347,6 +470,66 @@ emitExprText ctx paramMap = \case
               $ [fText, "  checkcast java/lang/invoke/MethodHandle"]
               <> argTexts
               <> ["  invokevirtual java/lang/invoke/MethodHandle/invoke" <> desc]
+  CLoop _ -> error "JVM codegen: CLoop reached emitExprText (non-tail position)"
+  CContinue _ -> error "JVM codegen: CContinue reached emitExprText (non-tail position)"
+
+-- | Emit @body@ in tail position under @L_tco_loop:@. 'CContinue'
+-- evaluates new argument values onto the operand stack (so old reads of
+-- a parameter still see the old value), pops them into the parameter
+-- locals in reverse (LIFO stack), and @goto L_tco_loop@. Any other tail
+-- shape evaluates a value and ends with @areturn@. 'CCase' chains via
+-- @lookupswitch@ where each arm self-terminates — no @goto L_join@.
+emitTailText :: Ctx -> Map Text Int -> [Text] -> CExpr -> Text
+emitTailText ctx paramMap params = go paramMap
+  where
+    go :: Map Text Int -> CExpr -> Text
+    go pmap = \case
+      CContinue newArgs ->
+        let evals = T.intercalate "\n" [emitExprText ctx pmap a | a <- newArgs]
+            astores =
+              T.intercalate "\n"
+                [ "  astore" <> astoreSuffix (paramSlot p)
+                | p <- reverse params
+                ]
+         in evals <> "\n" <> astores <> "\n  goto L_tco_loop"
+      CCase scrut alts ->
+        let sorted = sortWith (\(t, _, _) -> t) alts
+            scrutText = emitExprText ctx pmap scrut
+            extractTag =
+              T.intercalate
+                "\n"
+                [ "  dup",
+                  emitIconst 0,
+                  "  aaload",
+                  "  checkcast java/lang/Integer",
+                  "  invokevirtual java/lang/Integer/intValue()I"
+                ]
+            armLabels = ["L_tco_arm_" <> show tag | (tag, _, _) <- sorted]
+            switchText =
+              "  lookupswitch"
+                <> T.concat ["\n    " <> show tag <> ": " <> lbl | ((tag, _, _), lbl) <- zip sorted armLabels]
+                <> "\n    default: "
+                <> fromMaybe "L_tco_default" (viaNonEmpty head armLabels)
+            nextSlot = foldl' max (-1) (Map.elems pmap) + 1
+            emitArm (_, vars, armBody) lbl =
+              let bindings = zip vars [nextSlot ..]
+                  storeCode =
+                    T.concat
+                      [ "  dup\n" <> emitIconst (i :: Int) <> "\n  aaload\n  astore" <> astoreSuffix slot <> "\n"
+                      | ((_, slot), i) <- zip bindings [1 :: Int ..]
+                      ]
+                  pmap' = foldl' (\m (v, slot) -> Map.insert v slot m) pmap bindings
+               in lbl <> ":\n" <> storeCode <> "  pop\n" <> go pmap' armBody
+            armTexts = [emitArm alt lbl | (alt, lbl) <- zip sorted armLabels]
+         in T.intercalate "\n"
+              $ [scrutText, extractTag, switchText]
+              <> armTexts
+      other ->
+        emitExprText ctx pmap other <> "\n  areturn"
+
+    paramSlot :: Text -> Int
+    paramSlot p =
+      fromMaybe (error $ "JVM codegen: no slot for param " <> show p) (Map.lookup p paramMap)
 
 emitIconst :: Int -> Text
 emitIconst n

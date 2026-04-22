@@ -1,7 +1,18 @@
 local function __print(s) io.write(tostring(s)); return nil end
 
 function v_advanceStep(v_x)
-  return (function(s) if s[1] == 0 then return (v_advanceStep)({1}) elseif s[1] == 1 then return (v_advanceStep)({2}) elseif s[1] == 2 then return "Done!" end end)(v_x)
+  while true do
+    local __s = v_x
+    if __s[1] == 0 then
+      local __t0 = {1}
+      v_x = __t0
+    elseif __s[1] == 1 then
+      local __t0 = {2}
+      v_x = __t0
+    elseif __s[1] == 2 then
+      return "Done!"
+    end
+  end
 end
 
 function main(v__input)

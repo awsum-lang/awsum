@@ -18,14 +18,18 @@ After completing a plan, run `just fix` to verify everything passes (format, lin
 
 ## CLI Commands
 
+Commands that go through the typechecker require `--program-type cli`
+(currently the only supported program type; see [docs/prelude.md](docs/prelude.md)).
+Purely syntactic commands (`ast`, `format`, `symbols`) don't take it.
+
 ```bash
-awsum build FILE [-t llvm|jvm|clr|wasm|js|lua] [-o OUT]   # Compile to file/stdout (binary for jvm/clr/wasm)
-awsum run FILE [-t llvm|jvm|clr|wasm|js|lua] [--input X]  # Compile and execute
-awsum check FILE [--json] [--strict]            # Typecheck only (--json: structured diagnostics; --strict: warnings fail)
+awsum build FILE --program-type cli [-t llvm|jvm|clr|wasm|js|lua] [-o OUT]   # Compile to file/stdout (binary for jvm/clr/wasm)
+awsum run FILE --program-type cli [-t llvm|jvm|clr|wasm|js|lua] [--input X]  # Compile and execute
+awsum check FILE --program-type cli [--json] [--strict]  # Typecheck only
+awsum core FILE --program-type cli            # Print Core IR
+awsum asm FILE --program-type cli [-t jvm|clr|wasm]  # Print target assembly text
 awsum format FILE [-i]                        # Format source
 awsum ast FILE                                # Print AST
-awsum core FILE                               # Print Core IR
-awsum asm FILE [-t jvm|clr|wasm]              # Print target assembly text
 awsum symbols FILE [--json]                   # List top-level declarations (outline)
 ```
 
@@ -39,7 +43,9 @@ src/Awsum/
 ├── ElaborateLower.hs # Surface → Core lowering (incl. unused-conWrapper tree-shake)
 ├── Core.hs           # Core IR
 ├── Prelude.hs        # Bundles stdlib/Prelude.aww (file-embed); withPrelude; warning filter
-├── BuiltIn.hs        # Registered built-ins: surface name → surface type (see docs/prelude.md)
+├── BuiltIn.hs        # Registered prelude built-ins: surface name → surface type (see docs/prelude.md)
+├── Program.hs        # ProgramType enum + platformTable dispatch (CLI/Browser/…)
+├── Program/Cli.hs    # CLI-program platform-effect table (IO.Stdout.print, …)
 ├── Codegen.hs        # Target enum (LLVM, JVM, CLR, WASM, JS, Lua)
 ├── Codegen/LLVM.hs   # LLVM IR backend
 ├── Codegen/JVM.hs    # JVM text codegen (Jasmin-like, for snapshots)
@@ -73,12 +79,18 @@ docs/spec/grammar.ebnf # Formal grammar
 
 ```
 Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLower → Core (tree-shaken) → Codegen → LLVM/JVM/CLR/WASM/JS/Lua
-                                    ↑                            ↑
-                         stdlib/Prelude.aww           Awsum.BuiltIn table (per-target impls)
-                         (embedded, implicit)
+                                    ↑                ↑               ↑
+                         stdlib/Prelude.aww   Awsum.Program   Awsum.BuiltIn table (per-target impls)
+                         (embedded, implicit)   .platformTable
+                                                (CLI/Browser/…)
 ```
 
-`withPrelude` prepends the bundled prelude to the user's AST before typechecking. Prelude-visible functions whose body is `= BuiltIn.foo` are resolved against the `Awsum.BuiltIn` table. `ElaborateLower` also runs reachability-based tree-shake from `main`, so unused prelude entries and generated constructor wrappers never reach codegen. See [docs/prelude.md](docs/prelude.md).
+`withPrelude` prepends the bundled prelude to the user's AST before typechecking. Two compiler-known name spaces feed typecheck and lowering:
+
+- **Prelude built-ins** (`Awsum.BuiltIn`): unqualified names reached through the `BuiltIn.foo` alias in `Prelude.aww` (`showInt32`, `concatString`, `predInt32`, …). Always in scope.
+- **Platform-gated effects** (`Awsum.Program.platformTable`): qualified names (`IO.Stdout.print`, …) whose availability is scoped by both the program type (`--program-type cli`, mandatory) and a matching `import IO.Stdout`.
+
+`ElaborateLower` also runs reachability-based tree-shake from `main`, so unused prelude entries and generated constructor wrappers never reach codegen. See [docs/prelude.md](docs/prelude.md).
 
 ## Language Features
 
@@ -91,7 +103,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLo
 - Expressions: string literals, integer literals, `++` concatenation, function application, constructors (first-class — passable to HOFs), `case`/`of` pattern matching with field bindings
 - Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection
 - Comments: `--` line, `{- -}` block (preserved through formatting)
-- Built-ins: `IO.Stdout.print : String -> IOUnit` (requires `import IO.Stdout`). Prelude-visible (no import) via the Prelude + BuiltIn mechanism: `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String`, `showUnderflowError : UnderflowError -> String`, `predInt32 : Int32 -> Either UnderflowError Int32` (honest arithmetic — `Left UnderflowError` on `minInt32`). Reserved `BuiltIn.foo` syntax forwards to the compiler's per-target implementation — see [docs/prelude.md](docs/prelude.md).
+- Built-ins: `IO.Stdout.print : String -> IOUnit` is a CLI-program platform effect — requires both `--program-type cli` at compile time and `import IO.Stdout` in the source (see `Awsum.Program.Cli`). Prelude-visible (no import) via the Prelude + BuiltIn mechanism: `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String`, `showUnderflowError : UnderflowError -> String`, `predInt32 : Int32 -> Either UnderflowError Int32` (honest arithmetic — `Left UnderflowError` on `minInt32`). Reserved `BuiltIn.foo` syntax forwards to the compiler's per-target implementation — see [docs/prelude.md](docs/prelude.md).
 - Tree-shake: `elaborateLowerProgram` runs reachability analysis from `main` over all top-level Core declarations (user decls, prelude helpers, generated constructor wrappers) and drops anything unreachable before codegen. Prelude can grow without cost to programs that don't use the new entries.
 
 ## Testing
