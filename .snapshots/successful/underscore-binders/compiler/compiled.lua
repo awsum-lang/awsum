@@ -1,23 +1,25 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_greeting(v__wild0)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_greeting(v__wild0)
   return "hi"
 end
 
-function v_unwrapBox(v_b)
+function M.v_unwrapBox(v_b)
   return (function(s) if s[1] == 0 then local v___w0 = s[2]; return "unwrapped" end end)(v_b)
 end
 
-function v_unwrapBoxNamed(v_b)
+function M.v_unwrapBoxNamed(v_b)
   return (function(s) if s[1] == 0 then local v__v = s[2]; return "unwrapped-named" end end)(v_b)
 end
 
-function v_showPair(v_p)
+function M.v_showPair(v_p)
   return (function(s) if s[1] == 0 then local v___w0 = s[2]; local v___w1 = s[3]; return "paired" end end)(v_p)
 end
 
-function main(v__input)
-  return __print(table.concat({(v_greeting)("x"), " ", (v_unwrapBox)({0, "a"}), " ", (v_unwrapBoxNamed)({0, "b"}), " ", (v_showPair)({0, "l", "r"})}))
+function M.main(v__input)
+  return M.__print(table.concat({(M.v_greeting)("x"), " ", (M.v_unwrapBox)({0, "a"}), " ", (M.v_unwrapBoxNamed)({0, "b"}), " ", (M.v_showPair)({0, "l", "r"})}))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -30,5 +32,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

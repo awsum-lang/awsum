@@ -53,6 +53,7 @@ data EmitCtx = EmitCtx
     valDefs :: Set Text,
     stringPool :: StringPool,
     locals :: Map Text Text, -- case-bound variable name → SSA temp
+
     -- | @Just@ while we are emitting a 'CFunDef' body wrapped in 'CLoop'.
     -- Carries the label / alloca-slot names the TCO pass's 'CContinue'
     -- and the implicit @ret@ need. 'Nothing' outside a loop, so emitting
@@ -387,7 +388,9 @@ emitDecl ctx = \case
       pure (mangle a, slot)
     let entryAllocs =
           T.concat
-            [ "  " <> slot <> " = alloca ptr\n"
+            [ "  "
+                <> slot
+                <> " = alloca ptr\n"
                 <> "  store ptr %"
                 <> mangledName
                 <> ", ptr "

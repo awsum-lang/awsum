@@ -487,7 +487,8 @@ emitTailText ctx paramMap params = go paramMap
       CContinue newArgs ->
         let evals = T.intercalate "\n" [emitExprText ctx pmap a | a <- newArgs]
             astores =
-              T.intercalate "\n"
+              T.intercalate
+                "\n"
                 [ "  astore" <> astoreSuffix (paramSlot p)
                 | p <- reverse params
                 ]

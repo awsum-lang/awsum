@@ -1,14 +1,16 @@
-local function __print(s) io.write(tostring(s)); return nil end
-local function __predInt32(x) if x == -2147483648 then return {0, {0}} else return {1, x - 1} end end
-local function __eqInt32(a, b) if a == b then return {0} else return {1} end end
+local M = {}
 
-function v_countDown(v_n, v_acc)
+function M.__print(s) io.write(tostring(s)); return nil end
+function M.__predInt32(x) if x == -2147483648 then return {0, {0}} else return {1, x - 1} end end
+function M.__eqInt32(a, b) if a == b then return {0} else return {1} end end
+
+function M.v_countDown(v_n, v_acc)
   while true do
-    local __s = __eqInt32(v_n, 0)
+    local __s = M.__eqInt32(v_n, 0)
     if __s[1] == 0 then
       return v_acc
     elseif __s[1] == 1 then
-      local __s = __predInt32(v_n)
+      local __s = M.__predInt32(v_n)
       if __s[1] == 0 then
         local v___w0 = __s[2]
         return v_acc
@@ -23,10 +25,10 @@ function v_countDown(v_n, v_acc)
   end
 end
 
-v_start = 100000
+M.v_start = 100000
 
-function main(v__input)
-  return __print((v_countDown)(v_start, "done"))
+function M.main(v__input)
+  return M.__print((M.v_countDown)(M.v_start, "done"))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -39,5 +41,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

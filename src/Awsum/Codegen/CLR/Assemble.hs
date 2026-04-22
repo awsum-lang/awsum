@@ -950,7 +950,7 @@ emitExpr ctx = \case
 -- end with their own @ret@; 'CCase' dispatches via a dup/bne chain
 -- where each arm self-terminates, so no join / fallthrough is needed.
 emitTailBin :: ECtx -> [Text] -> CExpr -> AsmM [Word8]
-emitTailBin ctx0 params = \expr -> fst <$> goTop ctx0 0 expr
+emitTailBin ctx0 params = fmap fst . goTop ctx0 0
   where
     arrSlot :: Int
     arrSlot = 0
@@ -978,7 +978,7 @@ emitTailBin ctx0 params = \expr -> fst <$> goTop ctx0 0 expr
           brLen :: Int
           brLen = 5
           delta :: Int32
-          delta = fromIntegral (0 - (brStart + brLen))
+          delta = fromIntegral (negate (brStart + brLen))
           brBytes = cilBr delta
       pure (argBytes <> stargBytes <> brBytes, brStart + brLen)
 

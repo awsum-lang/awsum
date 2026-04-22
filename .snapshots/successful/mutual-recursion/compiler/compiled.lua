@@ -1,15 +1,17 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_handleA(v_step)
-  return (function(s) if s[1] == 0 then return ("A" .. (v_handleB)({1})) elseif s[1] == 1 then return (v_handleB)(v_step) elseif s[1] == 2 then return (v_handleB)(v_step) elseif s[1] == 3 then return "" end end)(v_step)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_handleA(v_step)
+  return (function(s) if s[1] == 0 then return ("A" .. (M.v_handleB)({1})) elseif s[1] == 1 then return (M.v_handleB)(v_step) elseif s[1] == 2 then return (M.v_handleB)(v_step) elseif s[1] == 3 then return "" end end)(v_step)
 end
 
-function v_handleB(v_step)
-  return (function(s) if s[1] == 0 then return (v_handleA)(v_step) elseif s[1] == 1 then return ("B" .. (v_handleA)({2})) elseif s[1] == 2 then return ("C" .. (v_handleA)({3})) elseif s[1] == 3 then return "" end end)(v_step)
+function M.v_handleB(v_step)
+  return (function(s) if s[1] == 0 then return (M.v_handleA)(v_step) elseif s[1] == 1 then return ("B" .. (M.v_handleA)({2})) elseif s[1] == 2 then return ("C" .. (M.v_handleA)({3})) elseif s[1] == 3 then return "" end end)(v_step)
 end
 
-function main(v__input)
-  return __print((v_handleA)({0}))
+function M.main(v__input)
+  return M.__print((M.v_handleA)({0}))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -22,5 +24,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

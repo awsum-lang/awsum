@@ -1003,7 +1003,6 @@ emitTailBin ctx0 params = goTop ctx0
     emitTailValue ctx expr = do
       meta <- emitExpr ctx expr
       pure (CodeWithMeta (meta.cwCode <> [0xB0]) meta.cwBranchTargets) -- areturn
-
     emitTailCase :: ECtx -> Int -> CExpr -> [(Int, [Text], CExpr)] -> AsmM CodeWithMeta
     emitTailCase ctx offset scrut alts = do
       intCls <- addClass "java/lang/Integer"

@@ -1,11 +1,13 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_unwrap(v_x)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_unwrap(v_x)
   return (function(s) if s[1] == 0 then local v_value = s[2]; return v_value elseif s[1] == 1 then return "not found" end end)(v_x)
 end
 
-function main(v__input)
-  return __print(table.concat({(v_unwrap)({0, "hello"}), ", ", (v_unwrap)({1})}))
+function M.main(v__input)
+  return M.__print(table.concat({(M.v_unwrap)({0, "hello"}), ", ", (M.v_unwrap)({1})}))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -18,5 +20,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

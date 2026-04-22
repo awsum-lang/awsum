@@ -1,19 +1,21 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_map(v_f, v_list)
-  return (function(s) if s[1] == 0 then local v_head = s[2]; local v_tail = s[3]; return {0, (v_f)(v_head), (v_map)(v_f, v_tail)} elseif s[1] == 1 then return {1} end end)(v_list)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_map(v_f, v_list)
+  return (function(s) if s[1] == 0 then local v_head = s[2]; local v_tail = s[3]; return {0, (v_f)(v_head), (M.v_map)(v_f, v_tail)} elseif s[1] == 1 then return {1} end end)(v_list)
 end
 
-function v_show(v_xs)
-  return (function(s) if s[1] == 0 then local v_h = s[2]; local v_t = s[3]; return table.concat({v_h, ",", (v_show)(v_t)}) elseif s[1] == 1 then return "" end end)(v_xs)
+function M.v_show(v_xs)
+  return (function(s) if s[1] == 0 then local v_h = s[2]; local v_t = s[3]; return table.concat({v_h, ",", (M.v_show)(v_t)}) elseif s[1] == 1 then return "" end end)(v_xs)
 end
 
-function v_shout(v_s)
+function M.v_shout(v_s)
   return (v_s .. "!")
 end
 
-function main(v__input)
-  return __print((v_show)((v_map)(v_shout, {0, "a", {0, "b", {0, "c", {1}}}})))
+function M.main(v__input)
+  return M.__print((M.v_show)((M.v_map)(M.v_shout, {0, "a", {0, "b", {0, "c", {1}}}})))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -26,5 +28,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

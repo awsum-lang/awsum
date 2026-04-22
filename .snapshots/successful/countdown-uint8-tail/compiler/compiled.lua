@@ -1,9 +1,11 @@
-local function __print(s) io.write(tostring(s)); return nil end
-local function __predUInt8(x) if x == 0 then return {0, {0}} else return {1, x - 1} end end
+local M = {}
 
-function v_countDown(v_n, v_acc)
+function M.__print(s) io.write(tostring(s)); return nil end
+function M.__predUInt8(x) if x == 0 then return {0, {0}} else return {1, x - 1} end end
+
+function M.v_countDown(v_n, v_acc)
   while true do
-    local __s = __predUInt8(v_n)
+    local __s = M.__predUInt8(v_n)
     if __s[1] == 0 then
       local v___w0 = __s[2]
       return (v_acc .. tostring(v_n))
@@ -17,8 +19,8 @@ function v_countDown(v_n, v_acc)
   end
 end
 
-function main(v__input)
-  return __print((v_countDown)(255, ""))
+function M.main(v__input)
+  return M.__print((M.v_countDown)(255, ""))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -31,5 +33,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

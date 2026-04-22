@@ -511,7 +511,8 @@ emitTailText ctx varMap _params = go varMap
       CContinue newArgs ->
         let evals = T.intercalate "\n" [emitExprText ctx vmap a | a <- newArgs]
             stargs =
-              T.intercalate "\n"
+              T.intercalate
+                "\n"
                 [ "    starg.s " <> show i
                 | i <- reverse [0 .. length newArgs - 1]
                 ]

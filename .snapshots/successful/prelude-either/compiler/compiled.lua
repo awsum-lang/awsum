@@ -1,11 +1,13 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_unwrap(v_r)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_unwrap(v_r)
   return (function(s) if s[1] == 0 then local v_e = s[2]; return ("left: " .. v_e) elseif s[1] == 1 then local v_v = s[2]; return ("right: " .. v_v) end end)(v_r)
 end
 
-function main(v__input)
-  return __print(table.concat({(v_unwrap)({0, "bad"}), ", ", (v_unwrap)({1, "good"})}))
+function M.main(v__input)
+  return M.__print(table.concat({(M.v_unwrap)({0, "bad"}), ", ", (M.v_unwrap)({1, "good"})}))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -18,5 +20,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

@@ -1,16 +1,18 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function main(v__input)
-  return __print(table.concat({tostring(v_minUInt8), ", ", tostring(v_small), ", ", tostring(v_aboveSignedByte), ", ", tostring(v_maxUInt8)}))
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.main(v__input)
+  return M.__print(table.concat({tostring(M.v_minUInt8), ", ", tostring(M.v_small), ", ", tostring(M.v_aboveSignedByte), ", ", tostring(M.v_maxUInt8)}))
 end
 
-v_minUInt8 = 0
+M.v_minUInt8 = 0
 
-v_small = 42
+M.v_small = 42
 
-v_aboveSignedByte = 200
+M.v_aboveSignedByte = 200
 
-v_maxUInt8 = 255
+M.v_maxUInt8 = 255
 
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
@@ -22,5 +24,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end
