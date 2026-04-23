@@ -59,24 +59,22 @@ Each pass is Core-to-Core. None of them add new Core IR constructs. None of them
 1. Build the call graph from Core declarations: nodes are top-level names, edges are direct callees (`CCall (CVar n)` plus first-class `CVar n`), intersected with the set of top-level names so parameters and built-ins are not counted.
 2. Run Tarjan (`Data.Graph.stronglyConnComp` from `containers`) to get SCCs in topological order.
 3. For each **non-trivial** (cyclic, size > 1) SCC:
-   - Check the MVP precondition: every member must be a `CFunDef` (not a `CValDef`) and all members must share the same arity. If either fails, skip the SCC and leave its members alone.
+   - Check the precondition: every member must be a `CFunDef` (not a `CValDef`). If any member is a constant, skip the SCC and leave its members alone — mutually recursive values have no fixed point and are caught as a compile error by `Awsum.StackSafety` in the next step.
    - Sort members by name for a deterministic tag assignment (`0`, `1`, …).
-   - Emit one merged function `$scc$<name_0>_<name_1>_...` with signature `(fn :: Int, arg_0, arg_1, …)`. Its body is a `case` on the tag parameter, each arm carrying one member's original body with:
-     - original parameter names alpha-renamed to unified `$arg_0`, `$arg_1`, …;
-     - every call `f_j(x, y, …)` to a fellow SCC member rewritten to `$scc$…(CCon j [], x, y, …)`.
-   - Emit one wrapper per original name: `f_i(args) = $scc$…(CCon i [], args)`. The original public name stays callable from everywhere outside the SCC.
+   - Emit one merged function `$scc$<name_0>_<name_1>_...` whose single parameter `$args` is a sum-typed `CCon` — tag `i` carries member `i`'s arguments as fields. The body is `case $args of …`, each arm destructuring the `CCon` back into that member's original parameter names, with cross-calls `f_j(x, y, …)` rewritten to `$scc$…(CCon j [x, y, …])`.
+   - Emit one wrapper per original name: `f_i(p_0, p_1, …) = $scc$…(CCon i [p_0, p_1, …])`. The original public name stays callable from everywhere outside the SCC.
 
 **Why this is enough.** After merge, every cross-call has become a self-call on the merged function. Tail cross-calls are tail self-calls and fall through to TCO below. Non-tail cross-calls are non-tail self-calls and fall through to CPS.
 
-**Why this shape.** The tag `CCon i []` and its destructuring `case fn of 0 -> …; 1 -> …` reuse the uniform container layout every backend already has for ordinary ADTs. No new IR nodes, no runtime helpers.
+**Why this shape.** The tag `CCon i [args...]` and its destructuring `case $args of i (p_0, p_1, …) -> …` reuse the uniform container layout every backend already has for ordinary ADTs. No new IR nodes, no runtime helpers. Arm binders are the member's /original/ parameter names, so member bodies resolve variables naturally — no alpha-rename required.
 
 **Why this belongs at this position in the pipeline.** SCC must run before CPS. If CPS ran first, each member would be individually CPS'd into a `$cps$f`/`$apply$f` pair, and merging those pairs after the fact would be both semantically awkward and pointless noise in the snapshots. The current order (saturate → **SCC** → **CPS** → TCO) produces the minimal, predictable output.
 
 **Post-SCC tree-shake.** SCC rewrites every cross-call from `f_j(...)` to `$scc$...(CCon j [...])`, so the original member's public name (the wrapper) is no longer referenced by any sibling arm. Wrappers for members that were only ever called from /inside/ the SCC end up dead, and the `treeShakeFromMain` pass in `elaborateLowerProgram` prunes them immediately after merge. In the classic `handleA ⇄ handleB` test only `handleA` is reachable from `main`, so only its wrapper survives; `handleB`'s wrapper is dropped. Same for the three-member `stepA → stepB → stepC → stepA` cycle: only `stepA` survives if that is the sole public entry point.
 
-**Sum-typed args.** Each member's arguments are packed into a `CCon` with a member-specific tag (the field count matches that member's arity), and the merged function's parameter is a single value destructured by `case`. This means members can have different arities or different parameter types — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) is handled out of the box. See `mutual-different-arity-stress` for the cross-backend 100 000-iteration proof.
+**Sum-typed args.** Each member's arguments are packed into a `CCon` with a member-specific tag (the field count matches that member's arity), and the merged function's parameter is a single value destructured by `case`. This means members can have different arities — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) is handled out of the box. See [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) for the cross-backend 100 000-iteration proof.
 
-**Current limitation.** SCCs containing a `CValDef` are passed through unchanged. Mutually recursive top-level values have no fixed point — `a = b; b = a` has no evaluable value — so this is really a user-level error that the compiler currently swallows silently; a future pass will reject it with a diagnostic.
+**Current limitation.** SCCs containing a `CValDef` are passed through unchanged here and then caught as a compile error by [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) (see below). Mutually recursive top-level values have no fixed point — `a = b; b = a` has no evaluable value — so this is really a user-level error, and the verifier refuses to lower the program.
 
 ### 2. `Awsum.Cps` — non-tail self-recursion → tail-self via K chain
 
@@ -124,12 +122,12 @@ the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/co
 
 [Source](../src/Awsum/StackSafety.hs). Runs between CPS and TCO. Input invariant: after SCC and CPS, the Core program should contain no non-trivial call-graph cycle and no non-tail self-call in any `CFunDef`. This module checks exactly that and refuses to lower the program (via a `TypeError`) on any violation.
 
-Two classes of issues are caught:
+Two classes of issues are caught and classified by `Awsum.StackSafety.StackSafetyIssue`:
 
-- **`MutualCycleRemains [Name]`** — Tarjan still reports a size > 1 SCC in the post-CPS call graph. Today the only way to hit this is a mutually recursive `CValDef` cluster (which `Awsum.Scc` cannot merge because constants have no fixed point, and which represents a user-level ill-formed program anyway). Any other pattern would indicate an `Awsum.Scc` bug.
-- **`NonTailSelfCallRemains Name`** — a `CFunDef` still has a non-tail self-call after `Awsum.Cps` had its chance. Today this cannot fire on any test because `Awsum.Cps` handles every non-tail self-call shape. It exists as a guard rail against future regressions in the CPS pass.
+- **`MutuallyRecursiveValues [Name]`** — the verifier sees a size > 1 SCC whose members are /all/ `CValDef`s. This is a user error that the rest of the pipeline would have silently lowered to code that loops forever during initialisation. Reported as a hard error without any "compiler bug" hedging — `Mutually recursive top-level values cannot be evaluated: bar, foo. The values reference each other in a cycle with no base case, so there is no computable result.`
+- **`UnsupportedRecursionShape [Name]`** — any other remnant: a non-tail self-call that `Awsum.Cps` did not rewrite, or a call-graph cycle involving at least one `CFunDef` that `Awsum.Scc` did not know how to merge. Today no test triggers this path; it exists as a guard rail. Reported as `Awsum cannot guarantee stack safety for this program … If you believe this is a bug, please open an issue on GitHub with a minimal example.` — the program may well be correct, the compiler just lacks the transformation to lower it safely.
 
-The verifier produces hard `TypeError`s, not warnings — there is no escape hatch. If you see one of these messages, either the program is genuinely stack-unsafe (mutually recursive `CValDef`s) or the compiler has a bug. The canonical failing program looks like:
+The verifier produces hard `TypeError`s, not warnings — there is no escape hatch. The canonical failing program looks like:
 
 ```aww
 foo : String
@@ -139,7 +137,7 @@ bar : String
 bar = foo
 ```
 
-which the compiler rejects with `Mutually recursive top-level declarations cannot be made stack-safe: bar, foo`. See [`test/sources/errors/mutually-recursive-values`](../test/sources/errors/mutually-recursive-values/code/Main.aww).
+See [`test/sources/errors/mutually-recursive-values`](../test/sources/errors/mutually-recursive-values/code/Main.aww) for the snapshot.
 
 ### 4. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
 
