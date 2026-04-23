@@ -151,21 +151,22 @@ awsum --version
 
 ## Design Principles
 
-1. **Equivalence is a guarantee, not a test.** If the same pure function compiles for two targets, the results are identical. The compiler and the test suite enforce this as an invariant.
-2. **Effects are platform-aware.** The compiler tracks which effects each target supports. A program using `Terminal` won't compile for a browser target; a program using `Window` won't compile for CLI. No runtime "not supported" errors.
-3. **Errors are values.** Arithmetic doesn't silently break. Division by zero, overflow, precision loss — all represented in the type system via `Either`. The programmer decides how to handle them.
-4. **No defaulting, ever.** The compiler never picks a type on the user's behalf — not for integer literals, not for a monadic context, not anywhere else. If the program is ambiguous, it doesn't compile; the fix is an explicit annotation, not a hidden convention.
-5. **No shadowing, ever.** A fresh binder must not reuse any name already visible in its scope, at any level — function parameters, pattern binders, future `let`s, whatever we add later. If two things should be the same, they share a name; if they shouldn't, they don't.
-6. **`_` is explicit, not implicit.** A leading underscore marks a binding as intentionally unused, at every level — values (`_x`), top-level defs (`_foo`), type parameters (`_tag`), type names (`_A`), constructors (`_C`). Referencing a `_`-prefixed name is a compile error, so the opt-out is honest. Unused bindings that are NOT `_`-prefixed produce warnings with rename quick-fixes.
+1. **Identical results on every target.** The same program produces the same stdout whether compiled for LLVM, JVM, CLR, WASM, JS, or Lua — byte-for-byte, verified by the test suite on every commit. This is a compiler invariant, not a best-effort goal; the rest of the design hangs off it.
+
+2. **Stack safety belongs to the compiler, not the user.** Recursion — tail, non-tail, self, mutual — is normalised at Core level into a shape that runs in bounded stack on every backend, including JVM and JS where native cross-method tail calls do not exist. No manual CPS transforms, no `tailRecM`, no hand-unrolling. Write the recursion that expresses the algorithm; the compiler makes sure it doesn't fall over.
+
+3. **Effects are platform-aware.** The compiler tracks which effects each target supports. A program using `Terminal` won't compile for a browser target; a program using `Window` won't compile for CLI. "Not supported" is a compile error, never a runtime surprise.
+
+4. **Errors are values.** Arithmetic doesn't silently break. Division by zero, overflow, underflow, precision loss — all represented in the type system via `Either`. The programmer decides how to handle them; the compiler cannot "just return zero" or `NaN`.
+
+5. **No invisible decisions.** When something has to be chosen, the programmer chooses — not the compiler. No defaulting of integer literals to a type the compiler guessed (ambiguity is rejected with an explicit hint); no silent shadowing of an outer name by an inner one (shadowing is a compile error); no quiet reference to something the programmer marked as unused (`_`-prefixed bindings cannot be read). The rules are small; the shared root is that nothing meaningful is decided behind the reader's back.
+
+6. **Priority order when trade-offs appear:**
+   1. **Correctness** — no runtime exceptions, no platform-behaviour differences, no surprising overflow / underflow / string corruption.
+   2. **Runtime performance** — generated programs should be fast.
+   3. **Compilation speed** — the compiler itself can be slower if it produces better output.
+
 7. **The computer writes the compiler.** Implementation details would be chosen by hand, but choosing by hand got us JavaScript. So the computer chooses. It knows.
-
-### Priority order
-
-When making trade-offs, the compiler follows this priority:
-
-1. **Correctness** — no runtime exceptions, no platform behavior differences, no non-obvious behavior (overflow, underflow, string data corruption)
-2. **Runtime performance** — generated programs should be fast
-3. **Compilation speed** — the compiler itself can be slower if it produces better output
 
 ## Design documents
 
