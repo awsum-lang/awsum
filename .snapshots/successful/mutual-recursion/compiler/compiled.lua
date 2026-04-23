@@ -2,16 +2,106 @@ local M = {}
 
 function M.__print(s) io.write(tostring(s)); return nil end
 
+function M.main(v__input)
+  return M.__print((M.v_handleA)({0}))
+end
+
+function M.v__scc_handleA_handleB(v__fn, v__arg_0)
+  return (M.v__cps__scc_handleA_handleB)(v__fn, v__arg_0, {0})
+end
+
+function M.v__cps__scc_handleA_handleB(v__fn, v__arg_0, v__k)
+  while true do
+    local __s = v__fn
+    if __s[1] == 0 then
+      local __s = v__arg_0
+      if __s[1] == 0 then
+        local __t0 = {1}
+        local __t1 = {1}
+        local __t2 = {1, v__k}
+        v__fn = __t0
+        v__arg_0 = __t1
+        v__k = __t2
+      elseif __s[1] == 1 then
+        local __t0 = {1}
+        local __t1 = v__arg_0
+        local __t2 = v__k
+        v__fn = __t0
+        v__arg_0 = __t1
+        v__k = __t2
+      elseif __s[1] == 2 then
+        local __t0 = {1}
+        local __t1 = v__arg_0
+        local __t2 = v__k
+        v__fn = __t0
+        v__arg_0 = __t1
+        v__k = __t2
+      elseif __s[1] == 3 then
+        return (M.v__apply__scc_handleA_handleB)(v__k, "")
+      end
+    elseif __s[1] == 1 then
+      local __s = v__arg_0
+      if __s[1] == 0 then
+        local __t0 = {0}
+        local __t1 = v__arg_0
+        local __t2 = v__k
+        v__fn = __t0
+        v__arg_0 = __t1
+        v__k = __t2
+      elseif __s[1] == 1 then
+        local __t0 = {0}
+        local __t1 = {2}
+        local __t2 = {2, v__k}
+        v__fn = __t0
+        v__arg_0 = __t1
+        v__k = __t2
+      elseif __s[1] == 2 then
+        local __t0 = {0}
+        local __t1 = {3}
+        local __t2 = {3, v__k}
+        v__fn = __t0
+        v__arg_0 = __t1
+        v__k = __t2
+      elseif __s[1] == 3 then
+        return (M.v__apply__scc_handleA_handleB)(v__k, "")
+      end
+    end
+  end
+end
+
+function M.v__apply__scc_handleA_handleB(v__k, v__x)
+  while true do
+    local __s = v__k
+    if __s[1] == 0 then
+      return v__x
+    elseif __s[1] == 1 then
+      local v__pk_1 = __s[2]
+      local __t0 = v__pk_1
+      local __t1 = ("A" .. v__x)
+      v__k = __t0
+      v__x = __t1
+    elseif __s[1] == 2 then
+      local v__pk_2 = __s[2]
+      local __t0 = v__pk_2
+      local __t1 = ("B" .. v__x)
+      v__k = __t0
+      v__x = __t1
+    elseif __s[1] == 3 then
+      local v__pk_3 = __s[2]
+      local __t0 = v__pk_3
+      local __t1 = ("C" .. v__x)
+      v__k = __t0
+      v__x = __t1
+    end
+  end
+end
+
 function M.v_handleA(v_step)
-  return (function(s) if s[1] == 0 then return ("A" .. (M.v_handleB)({1})) elseif s[1] == 1 then return (M.v_handleB)(v_step) elseif s[1] == 2 then return (M.v_handleB)(v_step) elseif s[1] == 3 then return "" end end)(v_step)
+  return (M.v__scc_handleA_handleB)({0}, v_step)
 end
 
 function M.v_handleB(v_step)
-  return (function(s) if s[1] == 0 then return (M.v_handleA)(v_step) elseif s[1] == 1 then return ("B" .. (M.v_handleA)({2})) elseif s[1] == 2 then return ("C" .. (M.v_handleA)({3})) elseif s[1] == 3 then return "" end end)(v_step)
-end
-
-function M.main(v__input)
-  return M.__print((M.v_handleA)({0}))
+  return (M.v__scc_handleA_handleB)({1}, v_step)
 end
 
 local ok, dbg = pcall(require, 'debug')

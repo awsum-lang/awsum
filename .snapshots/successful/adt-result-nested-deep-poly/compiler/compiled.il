@@ -54,9 +54,9 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
+    ldloc.1
     dup
     ldc.i4.0
     ldelem.ref
@@ -66,17 +66,49 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.2
     pop
-    ldloc.0
+    ldloc.2
     br.s IL_join
   IL_arm_1:
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.2
     pop
-    ldloc.0
+    ldloc.2
+    br.s IL_join
+  IL_join:
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldloc.1
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldloc.2
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldloc.2
+    br.s IL_join
+  IL_join:
     br.s IL_join
   IL_join:
     br.s IL_join
@@ -96,29 +128,9 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
-    br.s IL_join
-  IL_arm_1:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldloc.0
-    br.s IL_join
-  IL_join:
-    br.s IL_join
-  IL_join:
-    br.s IL_join
-  IL_arm_1:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldloc.0
+    ldloc.1
     dup
     ldc.i4.0
     ldelem.ref
@@ -128,29 +140,17 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.2
     pop
-    ldloc.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldloc.0
+    ldloc.2
     br.s IL_join
   IL_arm_1:
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.2
     pop
-    ldloc.0
+    ldloc.2
     br.s IL_join
   IL_join:
     br.s IL_join
@@ -158,9 +158,9 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
+    ldloc.1
     dup
     ldc.i4.0
     ldelem.ref
@@ -170,17 +170,17 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.2
     pop
-    ldloc.0
+    ldloc.2
     br.s IL_join
   IL_arm_1:
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.2
     pop
-    ldloc.0
+    ldloc.2
     br.s IL_join
   IL_join:
     br.s IL_join

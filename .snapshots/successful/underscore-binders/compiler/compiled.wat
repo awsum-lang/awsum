@@ -37,8 +37,17 @@
     (local $ptr i32)
     (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))
     (global.set $heap (i32.add (local.get $ptr) (local.get $size)))
-    (if (i32.gt_u (global.get $heap) (i32.mul (memory.size) (i32.const 65536)))
-      (then (drop (memory.grow (i32.const 1)))))
+    ;; Grow until the heap fits. A single 'memory.grow 1' is not
+    ;; enough when a single allocation (or the cumulative demand
+    ;; of a CPS-defunc'd non-tail recursion) overshoots by more
+    ;; than one page.
+    (block $grow_done
+      (loop $grow_loop
+        (br_if $grow_done
+          (i32.le_u (global.get $heap)
+                    (i32.mul (memory.size) (i32.const 65536))))
+        (drop (memory.grow (i32.const 1)))
+        (br $grow_loop)))
     (local.get $ptr))
 
 
@@ -89,16 +98,20 @@
     (i32.const 65))
 
   (func $v_unwrapBox (export "v_unwrapBox") (param $v_b i32) (result i32)
+    (local $v___w0 i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (i32.const 68)))
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (i32.const 68)))
 
   (func $v_unwrapBoxNamed (export "v_unwrapBoxNamed") (param $v_b i32) (result i32)
+    (local $v__v i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (i32.const 78)))
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v__v (i32.load offset=4 (local.get $__scrut))) (i32.const 78)))
 
   (func $v_showPair (export "v_showPair") (param $v_p i32) (result i32)
+    (local $v___w0 i32)
+    (local $v___w1 i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_p)) (i32.const 94)))
+    (block (result i32) (local.set $__scrut (local.get $v_p)) (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (local.set $v___w1 (i32.load offset=8 (local.get $__scrut))) (i32.const 94)))
 
   (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)

@@ -54,17 +54,17 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
+    ldloc.1
     br.s IL_join
   IL_arm_1:
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
+    ldloc.1
     br.s IL_join
   IL_join:
     br.s IL_join
@@ -84,17 +84,17 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
+    ldloc.1
     br.s IL_join
   IL_arm_1:
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.0
+    stloc.1
     pop
-    ldloc.0
+    ldloc.1
     br.s IL_join
   IL_join:
     br.s IL_join

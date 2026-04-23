@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_show(v_u){
-  return ((s) => { switch(s[0]) { case 0: { return "Unit"; } } })(v_u);
+  return ((s) => { switch(s[0]) { case 0: { return "CustomUnit"; } } })(v_u);
 }
 
 function main(v__input){

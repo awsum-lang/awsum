@@ -30,7 +30,7 @@
     default: L_arm_0
 L_arm_0:
   pop
-  ldc "Unit"
+  ldc "CustomUnit"
   goto L_join
 L_join:
   areturn

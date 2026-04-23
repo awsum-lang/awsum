@@ -3,7 +3,7 @@ local M = {}
 function M.__print(s) io.write(tostring(s)); return nil end
 
 function M.v_show(v_u)
-  return (function(s) if s[1] == 0 then return "Unit" end end)(v_u)
+  return (function(s) if s[1] == 0 then return "CustomUnit" end end)(v_u)
 end
 
 function M.main(v__input)

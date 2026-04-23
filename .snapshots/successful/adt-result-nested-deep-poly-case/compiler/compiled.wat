@@ -36,8 +36,17 @@
     (local $ptr i32)
     (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))
     (global.set $heap (i32.add (local.get $ptr) (local.get $size)))
-    (if (i32.gt_u (global.get $heap) (i32.mul (memory.size) (i32.const 65536)))
-      (then (drop (memory.grow (i32.const 1)))))
+    ;; Grow until the heap fits. A single 'memory.grow 1' is not
+    ;; enough when a single allocation (or the cumulative demand
+    ;; of a CPS-defunc'd non-tail recursion) overshoots by more
+    ;; than one page.
+    (block $grow_done
+      (loop $grow_loop
+        (br_if $grow_done
+          (i32.le_u (global.get $heap)
+                    (i32.mul (memory.size) (i32.const 65536))))
+        (drop (memory.grow (i32.const 1)))
+        (br $grow_loop)))
     (local.get $ptr))
 
 
@@ -85,8 +94,11 @@
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
   (func $v_unwrap (export "v_unwrap") (param $v_r i32) (result i32)
+    (local $v_inner1 i32)
+    (local $v_inner2 i32)
+    (local $v_value i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (block (result i32) (local.set $__scrut (i32.load offset=4 (local.get $__scrut))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (block (result i32) (local.set $__scrut (i32.load offset=4 (local.get $__scrut))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.load offset=4 (local.get $__scrut)))))) (else (block (result i32) (local.set $__scrut (i32.load offset=4 (local.get $__scrut))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.load offset=4 (local.get $__scrut))))))))) (else (block (result i32) (local.set $__scrut (i32.load offset=4 (local.get $__scrut))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (block (result i32) (local.set $__scrut (i32.load offset=4 (local.get $__scrut))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.load offset=4 (local.get $__scrut)))))) (else (block (result i32) (local.set $__scrut (i32.load offset=4 (local.get $__scrut))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.load offset=4 (local.get $__scrut))) (else (i32.load offset=4 (local.get $__scrut))))))))))))
+    (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_inner1 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_inner1)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_inner2 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_inner2)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)) (else (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value))))) (else (local.set $v_inner2 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_inner2)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)) (else (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)))))))) (else (local.set $v_inner1 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_inner1)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_inner2 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_inner2)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)) (else (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value))))) (else (local.set $v_inner2 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_inner2)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)) (else (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)))))))))))
 
   (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)

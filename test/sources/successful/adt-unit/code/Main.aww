@@ -1,11 +1,11 @@
--- Test: single nullary constructor (Unit type) with pattern matching
+-- Test: single nullary constructor (CustomUnit type) with pattern matching
 import IO.Stdout
 
-type Unit = Unit
+type CustomUnit = CustomUnit
 
-show : Unit -> String
+show : CustomUnit -> String
 show u = case u of
-  Unit -> "Unit"
+  CustomUnit -> "CustomUnit"
 
 main : String -> IOUnit
-main _input = IO.Stdout.print (show Unit)
+main _input = IO.Stdout.print (show CustomUnit)

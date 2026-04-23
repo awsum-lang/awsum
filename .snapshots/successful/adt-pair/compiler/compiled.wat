@@ -32,8 +32,17 @@
     (local $ptr i32)
     (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))
     (global.set $heap (i32.add (local.get $ptr) (local.get $size)))
-    (if (i32.gt_u (global.get $heap) (i32.mul (memory.size) (i32.const 65536)))
-      (then (drop (memory.grow (i32.const 1)))))
+    ;; Grow until the heap fits. A single 'memory.grow 1' is not
+    ;; enough when a single allocation (or the cumulative demand
+    ;; of a CPS-defunc'd non-tail recursion) overshoots by more
+    ;; than one page.
+    (block $grow_done
+      (loop $grow_loop
+        (br_if $grow_done
+          (i32.le_u (global.get $heap)
+                    (i32.mul (memory.size) (i32.const 65536))))
+        (drop (memory.grow (i32.const 1)))
+        (br $grow_loop)))
     (local.get $ptr))
 
 
@@ -81,8 +90,10 @@
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
   (func $v_showPair (export "v_showPair") (param $v_pair i32) (result i32)
+    (local $v_first i32)
+    (local $v_second i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_pair)) (call $__concat (call $__concat (call $__concat (call $__concat (i32.const 65) (i32.load offset=4 (local.get $__scrut))) (i32.const 67)) (i32.load offset=8 (local.get $__scrut))) (i32.const 70))))
+    (block (result i32) (local.set $__scrut (local.get $v_pair)) (local.set $v_first (i32.load offset=4 (local.get $__scrut))) (local.set $v_second (i32.load offset=8 (local.get $__scrut))) (call $__concat (call $__concat (call $__concat (call $__concat (i32.const 65) (local.get $v_first)) (i32.const 67)) (local.get $v_second)) (i32.const 70))))
 
   (func $v_main (export "v_main") (param $v__input i32) (result i32)
     (local $__con_0 i32)

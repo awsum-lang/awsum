@@ -29,38 +29,103 @@
 
 .method public static v_show(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  invokestatic AwsumMain/v__cps_show(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method public static v__cps_show(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
+  aload_0
   dup
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
+    0: L_tco_arm_0
+    1: L_tco_arm_1
+    default: L_tco_arm_0
+L_tco_arm_0:
   dup
   iconst_1
   aaload
-  astore_1
+  astore_2
   dup
   iconst_2
   aaload
-  astore_2
+  astore_3
+  pop
+  aload_3
+  iconst_3
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  dup
+  iconst_2
+  aload_2
+  aastore
+  astore_1
+  astore_0
+  goto L_tco_loop
+L_tco_arm_1:
   pop
   aload_1
+  ldc ""
+  invokestatic AwsumMain/v__apply_show(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method public static v__apply_show(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    1: L_tco_arm_1
+    default: L_tco_arm_0
+L_tco_arm_0:
+  pop
+  aload_1
+  areturn
+L_tco_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  dup
+  iconst_2
+  aaload
+  astore_3
+  pop
+  aload_2
+  aload_3
   ldc ","
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_2
-  invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_1
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  goto L_join
-L_arm_1:
-  pop
-  ldc ""
-  goto L_join
-L_join:
-  areturn
+  astore_1
+  astore_0
+  goto L_tco_loop
 .end method
 
 

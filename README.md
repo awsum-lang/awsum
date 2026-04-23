@@ -10,6 +10,8 @@ A functional language where computation results are guaranteed equivalent across
 
 **Honest arithmetic.** All arithmetic operations return `Either` — no silent overflow, underflow, precision loss, `NaN`, `Infinity`, or `-0`. If a computation can fail, the type tells you. This is stricter than Elm (which inherits JS number semantics) and more explicit than Rust (where integer overflow is UB in release builds).
 
+**Stack-safe recursion by default.** Write the recursion that expresses the algorithm — self-recursive, mutual, non-tail, whatever — and the compiler turns it into a loop without a stack frame per call on any backend, including JVM and JS where native cross-method tail calls do not exist. See [docs/recursion.md](docs/recursion.md).
+
 ## Targets
 
 - **LLVM** — native binary via Clang (LLVM 15+)
@@ -168,6 +170,7 @@ When making trade-offs, the compiler follows this priority:
 ## Design documents
 
 - [Prelude and built-in functions](docs/prelude.md) — how types and functions written in Awsum coexist with per-target compiler implementations.
+- [Recursion](docs/recursion.md) — the three-pass pipeline (SCC merge, CPS defunctionalization, TCO) that turns any recursion shape into stack-safe code on every backend.
 - [Target implementation details](docs/targets.md) — how each backend maps the same program to its native shape.
 
 ## Roadmap

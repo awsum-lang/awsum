@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: single nullary constructor (Unit type) with pattern matching" ]
+            [ LineComment " Test: single nullary constructor (CustomUnit type) with pattern matching" ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl
@@ -9,24 +9,24 @@ Program
             { spanStartLine = 4
             , spanStartCol = 1
             , spanEndLine = 4
-            , spanEndCol = 17
+            , spanEndCol = 29
             }
-        ) "Unit" []
+        ) "CustomUnit" []
         [ ConDef
             ( SrcSpan
                 { spanStartLine = 4
-                , spanStartCol = 13
+                , spanStartCol = 19
                 , spanEndLine = 4
-                , spanEndCol = 17
+                , spanEndCol = 29
                 }
-            ) "Unit" []
+            ) "CustomUnit" []
         ] Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6
                 , spanStartCol = 1
                 , spanEndLine = 6
-                , spanEndCol = 22
+                , spanEndCol = 28
                 }
             ) "show"
             ( TyArrow
@@ -34,7 +34,7 @@ Program
                     { spanStartLine = 6
                     , spanStartCol = 8
                     , spanEndLine = 6
-                    , spanEndCol = 22
+                    , spanEndCol = 28
                     }
                 )
                 ( TyCon
@@ -42,16 +42,16 @@ Program
                         { spanStartLine = 6
                         , spanStartCol = 8
                         , spanEndLine = 6
-                        , spanEndCol = 12
+                        , spanEndCol = 18
                         }
-                    ) "Unit"
+                    ) "CustomUnit"
                 )
                 ( TyCon
                     ( SrcSpan
                         { spanStartLine = 6
-                        , spanStartCol = 16
+                        , spanStartCol = 22
                         , spanEndLine = 6
-                        , spanEndCol = 22
+                        , spanEndCol = 28
                         }
                     ) "String"
                 )
@@ -61,7 +61,7 @@ Program
                 { spanStartLine = 7
                 , spanStartCol = 1
                 , spanEndLine = 8
-                , spanEndCol = 17
+                , spanEndCol = 29
                 }
             ) "show"
             [ Param
@@ -78,7 +78,7 @@ Program
                     { spanStartLine = 7
                     , spanStartCol = 10
                     , spanEndLine = 8
-                    , spanEndCol = 17
+                    , spanEndCol = 29
                     }
                 )
                 ( EVar
@@ -97,19 +97,19 @@ Program
                             { spanStartLine = 8
                             , spanStartCol = 3
                             , spanEndLine = 8
-                            , spanEndCol = 7
+                            , spanEndCol = 13
                             }
-                        ) "Unit" []
+                        ) "CustomUnit" []
                     )
                     ( ELit
                         ( SrcSpan
                             { spanStartLine = 8
-                            , spanStartCol = 11
+                            , spanStartCol = 17
                             , spanEndLine = 8
-                            , spanEndCol = 17
+                            , spanEndCol = 29
                             }
                         )
-                        ( LString "Unit" )
+                        ( LString "CustomUnit" )
                     ) Nothing :| []
                 ) []
             ) Nothing
@@ -153,7 +153,7 @@ Program
                 { spanStartLine = 11
                 , spanStartCol = 1
                 , spanEndLine = 11
-                , spanEndCol = 42
+                , spanEndCol = 48
                 }
             ) "main"
             [ Param
@@ -170,7 +170,7 @@ Program
                     { spanStartLine = 11
                     , spanStartCol = 15
                     , spanEndLine = 11
-                    , spanEndCol = 42
+                    , spanEndCol = 48
                     }
                 )
                 ( EVar
@@ -192,7 +192,7 @@ Program
                         { spanStartLine = 11
                         , spanStartCol = 31
                         , spanEndLine = 11
-                        , spanEndCol = 42
+                        , spanEndCol = 48
                         }
                     )
                     ( EApp
@@ -200,7 +200,7 @@ Program
                             { spanStartLine = 11
                             , spanStartCol = 32
                             , spanEndLine = 11
-                            , spanEndCol = 41
+                            , spanEndCol = 47
                             }
                         )
                         ( EVar
@@ -218,9 +218,9 @@ Program
                                 { spanStartLine = 11
                                 , spanStartCol = 37
                                 , spanEndLine = 11
-                                , spanEndCol = 41
+                                , spanEndCol = 47
                                 }
-                            ) "Unit"
+                            ) "CustomUnit"
                         )
                     )
                 )

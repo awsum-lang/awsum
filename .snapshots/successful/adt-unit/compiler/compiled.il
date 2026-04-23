@@ -32,7 +32,7 @@
     switch (IL_arm_0)
   IL_arm_0:
     pop
-    ldstr "Unit"
+    ldstr "CustomUnit"
     br.s IL_join
   IL_join:
     ret

@@ -253,6 +253,8 @@ runtimeHelpers emptyOff builtIns hasIntLit =
               else "",
             if Set.member "predInt32" builtIns then rtPredI32 else "",
             if Set.member "predUInt8" builtIns then rtPredU8 else "",
+            if Set.member "succInt32" builtIns then rtSuccI32 else "",
+            if Set.member "succUInt8" builtIns then rtSuccU8 else "",
             if any (`Set.member` builtIns) ["eqInt32", "eqUInt8"] then rtEqI32 else "",
             rtGetArg emptyOff
           ]
@@ -279,8 +281,17 @@ rtAlloc =
       "    (local $ptr i32)",
       "    (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))",
       "    (global.set $heap (i32.add (local.get $ptr) (local.get $size)))",
-      "    (if (i32.gt_u (global.get $heap) (i32.mul (memory.size) (i32.const 65536)))",
-      "      (then (drop (memory.grow (i32.const 1)))))",
+      "    ;; Grow until the heap fits. A single 'memory.grow 1' is not",
+      "    ;; enough when a single allocation (or the cumulative demand",
+      "    ;; of a CPS-defunc'd non-tail recursion) overshoots by more",
+      "    ;; than one page.",
+      "    (block $grow_done",
+      "      (loop $grow_loop",
+      "        (br_if $grow_done",
+      "          (i32.le_u (global.get $heap)",
+      "                    (i32.mul (memory.size) (i32.const 65536))))",
+      "        (drop (memory.grow (i32.const 1)))",
+      "        (br $grow_loop)))",
       "    (local.get $ptr))"
     ]
 
@@ -443,6 +454,61 @@ rtPredU8 =
       "        (local.get $cell))))"
     ]
 
+-- | succInt32: Int32 -> Either OverflowError Int32.
+--   Mirror of 'rtPredI32' with the boundary at INT32_MAX and addition
+--   instead of subtraction. OverflowError is single-constructor, so its
+--   inner-box tag is 0 (same as UnderflowError), which matches the
+--   predecessor helpers' encoding exactly.
+rtSuccI32 :: Text
+rtSuccI32 =
+  unlines
+    [ "  (func $__succInt32 (param $p i32) (result i32)",
+      "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
+      "    (local.set $v (i32.load (local.get $p)))",
+      "    (if (result i32) (i32.eq (local.get $v) (i32.const 2147483647))",
+      "      (then",
+      "        (local.set $oe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.add (local.get $v) (i32.const 1)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | succUInt8: UInt8 -> Either OverflowError UInt8.
+--   Mirrors 'rtSuccI32' but checks against 255. Masking is unnecessary —
+--   (v + 1) is in 1..255 when v <= 254, so the result stays in UInt8 range
+--   naturally.
+rtSuccU8 :: Text
+rtSuccU8 =
+  unlines
+    [ "  (func $__succUInt8 (param $p i32) (result i32)",
+      "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
+      "    (local.set $v (i32.load (local.get $p)))",
+      "    (if (result i32) (i32.eq (local.get $v) (i32.const 255))",
+      "      (then",
+      "        (local.set $oe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.add (local.get $v) (i32.const 1)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
 -- | eqInt32 / eqUInt8: two boxed integers → Bool (one-slot container).
 --   Int32 and UInt8 both flow as pointers to an i32 cell; UInt8 values are
 --   stored masked to 0..255, so a plain i32.eq gives the same answer as
@@ -580,26 +646,17 @@ emitTailWat ctx0 params = go ctx0
 
     buildTailChain :: WasmCtx -> [(Int, [Text], CExpr)] -> Text
     buildTailChain _ [] = "(unreachable)"
-    buildTailChain ctx [(_, vars, body)] = go (bindVars ctx vars) body
+    buildTailChain ctx [(_, vars, body)] =
+      armEntry vars <> go (bindVars ctx vars) body
     buildTailChain ctx ((tag, vars, body) : rest) =
       "(if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const "
         <> show tag
         <> ")) (then "
+        <> armEntry vars
         <> go (bindVars ctx vars) body
         <> ") (else "
         <> buildTailChain ctx rest
         <> "))"
-
-    -- Mirror 'emitCaseExpr.bindVars': each case-bound variable becomes an
-    -- inline @i32.load offset=N (local.get $__scrut)@ expression, registered
-    -- in 'wLocalExprs' so 'emitExpr' rewrites @CVar v@ to that load on sight.
-    bindVars :: WasmCtx -> [Text] -> WasmCtx
-    bindVars ctx vars =
-      let entries =
-            [ (v, "(i32.load offset=" <> show (i * 4 :: Int) <> " (local.get $__scrut))")
-            | (v, i) <- zip vars [1 :: Int ..]
-            ]
-       in ctx {wLocalExprs = foldl' (\m (k, e) -> Map.insert k e m) ctx.wLocalExprs entries}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expressions
@@ -653,6 +710,12 @@ emitExpr ctx = \case
       CBuiltIn "predUInt8"
         | [x] <- xs ->
             "(call $__predUInt8 " <> emitExpr ctx x <> ")"
+      CBuiltIn "succInt32"
+        | [x] <- xs ->
+            "(call $__succInt32 " <> emitExpr ctx x <> ")"
+      CBuiltIn "succUInt8"
+        | [x] <- xs ->
+            "(call $__succUInt8 " <> emitExpr ctx x <> ")"
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8",
           [a, b] <- xs ->
@@ -679,35 +742,89 @@ emitExpr ctx = \case
 
 -- | Emit a case expression as nested @if\/else@ in WAT.
 --   Stores the scrutinee in @$__scrut@, extracts the tag from offset 0,
---   and binds field values via inline @i32.load offset=N@ expressions.
+--   materialises each bound variable into its own WASM local on arm
+--   entry (pre-declared by 'collectLocals'), and then runs the body.
+--   This keeps outer-arm bindings safe when the inner body overwrites
+--   @$__scrut@ with its own scrutinee.
 emitCaseExpr :: WasmCtx -> CExpr -> [(Int, [Text], CExpr)] -> Text
 emitCaseExpr ctx scrut alts =
   let sorted = sortWith (\(t, _, _) -> t) alts
       scrutCode = emitExpr ctx scrut
    in "(block (result i32) (local.set $__scrut " <> scrutCode <> ") " <> buildChain sorted <> ")"
   where
-    bindVars vars =
-      let entries = [(v, "(i32.load offset=" <> show (i * 4 :: Int) <> " (local.get $__scrut))") | (v, i) <- zip vars [1 :: Int ..]]
-       in ctx {wLocalExprs = foldl' (\m (k, e) -> Map.insert k e m) ctx.wLocalExprs entries}
     buildChain [] = "(unreachable)"
-    buildChain [(_, vars, body)] = emitExpr (bindVars vars) body
+    buildChain [(_, vars, body)] =
+      armEntry vars <> emitExpr (bindVars ctx vars) body
     buildChain ((tag, vars, body) : rest) =
       "(if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const "
         <> show tag
         <> ")) (then "
-        <> emitExpr (bindVars vars) body
+        <> armEntry vars
+        <> emitExpr (bindVars ctx vars) body
         <> ") (else "
         <> buildChain rest
         <> "))"
 
+-- | Emit @local.set@ for each arm-bound variable, pulling values out of
+-- the current @$__scrut@ into their pre-declared @$v_<name>@ slots
+-- before any nested 'CCase' gets a chance to overwrite @$__scrut@.
+armEntry :: [Text] -> Text
+armEntry vars =
+  T.concat
+    [ "(local.set $"
+        <> mangle v
+        <> " (i32.load offset="
+        <> show (i * 4 :: Int)
+        <> " (local.get $__scrut))) "
+    | (v, i) <- zip vars [1 :: Int ..]
+    ]
+
+-- | Register each arm-bound name in 'wLocalExprs' as a bare
+-- @(local.get $v_<name>)@. The slot was already written by 'armEntry',
+-- so every subsequent use of the binder reads its own local (not the
+-- shared @$__scrut@).
+bindVars :: WasmCtx -> [Text] -> WasmCtx
+bindVars ctx vars =
+  let entries =
+        [ (v, "(local.get $" <> mangle v <> ")")
+        | v <- vars
+        ]
+   in ctx {wLocalExprs = foldl' (\m (k, e) -> Map.insert k e m) ctx.wLocalExprs entries}
+
 -- | Determine which locals a function body needs and emit their declarations.
+-- Each 'CCase' arm's bindings are materialised into a per-binding named
+-- local on arm entry (see 'bindVars'); nested 'CCase's would clobber each
+-- other if bindings stayed as inline @i32.load@ expressions against a
+-- shared @$__scrut@. Pre-declaring @$v_<name>@ for every bound name means
+-- the inner case is free to overwrite @$__scrut@ without corrupting outer
+-- arm bindings.
 collectLocals :: CExpr -> Text
 collectLocals body =
   let depth = maxConDepth body
       conLocals = T.concat ["\n    (local $__con_" <> show i <> " i32)" | i <- [0 .. depth - 1]]
       ns = hasCCase body
+      bindLocals =
+        T.concat
+          [ "\n    (local $" <> mangle v <> " i32)"
+          | v <- Set.toAscList (caseBoundVars body)
+          ]
    in conLocals
+        <> bindLocals
         <> (if ns then "\n    (local $__scrut i32)" else "")
+
+-- | Every case-arm binding name reachable from @e@. Used by 'collectLocals'
+-- to pre-declare a WASM local per binding so arm-entry can materialise
+-- values into their own slots, immune to later 'CCase' scrutinee writes.
+caseBoundVars :: CExpr -> Set Text
+caseBoundVars = \case
+  CCase s alts ->
+    caseBoundVars s
+      <> foldMap (\(_, vs, b) -> Set.fromList vs <> caseBoundVars b) alts
+  CCall f xs -> caseBoundVars f <> foldMap caseBoundVars xs
+  CCon _ fs -> foldMap caseBoundVars fs
+  CLoop b -> caseBoundVars b
+  CContinue xs -> foldMap caseBoundVars xs
+  _ -> mempty
 
 -- | Compute the maximum CCon nesting depth in an expression.
 maxConDepth :: CExpr -> Int

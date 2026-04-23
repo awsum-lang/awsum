@@ -1,85 +1,187 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "handleA" [ "step" ]
-            ( CCase
-                ( CVar "step" )
-                [
-                    ( 0
-                    , []
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "A"
-                        , CCall
-                            ( CVar "handleB" )
-                            [ CCon 1 [] ]
-                        ]
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CCall
-                        ( CVar "handleB" )
-                        [ CVar "step" ]
-                    )
-                ,
-                    ( 2
-                    , []
-                    , CCall
-                        ( CVar "handleB" )
-                        [ CVar "step" ]
-                    )
-                ,
-                    ( 3
-                    , []
-                    , CString ""
-                    )
-                ]
-            )
-        , CFunDef "handleB" [ "step" ]
-            ( CCase
-                ( CVar "step" )
-                [
-                    ( 0
-                    , []
-                    , CCall
-                        ( CVar "handleA" )
-                        [ CVar "step" ]
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "B"
-                        , CCall
-                            ( CVar "handleA" )
-                            [ CCon 2 [] ]
-                        ]
-                    )
-                ,
-                    ( 2
-                    , []
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "C"
-                        , CCall
-                            ( CVar "handleA" )
-                            [ CCon 3 [] ]
-                        ]
-                    )
-                ,
-                    ( 3
-                    , []
-                    , CString ""
-                    )
-                ]
-            )
-        , CFunDef "main" [ "_input" ]
+        [ CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "handleA" )
                     [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$scc$handleA_handleB"
+            [ "$fn"
+            , "$arg_0"
+            ]
+            ( CCall
+                ( CVar "$cps$$scc$handleA_handleB" )
+                [ CVar "$fn"
+                , CVar "$arg_0"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$scc$handleA_handleB"
+            [ "$fn"
+            , "$arg_0"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$fn" )
+                    [
+                        ( 0
+                        , []
+                        , CCase
+                            ( CVar "$arg_0" )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CCon 1 []
+                                    , CCon 1 []
+                                    , CCon 1
+                                        [ CVar "$k" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CContinue
+                                    [ CCon 1 []
+                                    , CVar "$arg_0"
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CContinue
+                                    [ CCon 1 []
+                                    , CVar "$arg_0"
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 3
+                                , []
+                                , CCall
+                                    ( CVar "$apply$$scc$handleA_handleB" )
+                                    [ CVar "$k"
+                                    , CString ""
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , []
+                        , CCase
+                            ( CVar "$arg_0" )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CCon 0 []
+                                    , CVar "$arg_0"
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CContinue
+                                    [ CCon 0 []
+                                    , CCon 2 []
+                                    , CCon 2
+                                        [ CVar "$k" ]
+                                    ]
+                                )
+                            ,
+                                ( 2
+                                , []
+                                , CContinue
+                                    [ CCon 0 []
+                                    , CCon 3 []
+                                    , CCon 3
+                                        [ CVar "$k" ]
+                                    ]
+                                )
+                            ,
+                                ( 3
+                                , []
+                                , CCall
+                                    ( CVar "$apply$$scc$handleA_handleB" )
+                                    [ CVar "$k"
+                                    , CString ""
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$scc$handleA_handleB"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        , [ "$pk_1" ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "A"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        , [ "$pk_2" ]
+                        , CContinue
+                            [ CVar "$pk_2"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "B"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 3
+                        , [ "$pk_3" ]
+                        , CContinue
+                            [ CVar "$pk_3"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "C"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "handleA" [ "step" ]
+            ( CCall
+                ( CVar "$scc$handleA_handleB" )
+                [ CCon 0 []
+                , CVar "step"
+                ]
+            )
+        , CFunDef "handleB" [ "step" ]
+            ( CCall
+                ( CVar "$scc$handleA_handleB" )
+                [ CCon 1 []
+                , CVar "step"
                 ]
             )
         ]

@@ -458,6 +458,26 @@ All targets prefix user names with `v_` and replace non-alphanumeric characters 
 
 The difference: LLVM, JVM, CLR, and WASM mangle `main` to `v_main` because `main`/`_start`/`Main` is reserved as the entry point in those targets. JS and Lua keep `main` unchanged because their runners call `main(arg)` by name.
 
+## Recursion and tail calls
+
+Every recursion shape in Awsum is normalized at Core level into self-tail-calls, which the backends lower as a jump to the top of the enclosing method / function / loop. The normalization itself (SCC merge for mutual recursion, CPS + defunctionalization for non-tail recursion) is backend-agnostic and lives in [`Awsum.Scc`](../src/Awsum/Scc.hs) and [`Awsum.Cps`](../src/Awsum/Cps.hs); the last pass, [`Awsum.Tco`](../src/Awsum/Tco.hs), wraps the body in a `CLoop` and turns each surviving self-call into a `CContinue`. See [`docs/recursion.md`](recursion.md) for the full pipeline story.
+
+This section is about the last step — how each backend maps `CLoop` + `CContinue` to native code. The shape is the same everywhere: allocate the loop label once at the top of the method, evaluate each `CContinue`'s new arguments into temporaries so mid-update reads of the old parameters aren't corrupted, then overwrite the parameter slots and jump back.
+
+**LLVM** — `%tco.loop` block; parameters live in `alloca` slots, `CContinue` stores new values and `br`s to `%tco.loop`. A trailing `%tco.exit` block owns the single `ret` via another `alloca`. `mem2reg` at `-O2` erases every `alloca` into real SSA `phi` nodes, so the final binary is indistinguishable from one written with phi by hand.
+
+**JVM** — label `L_tco_loop:` at offset 0; `CContinue` evaluates new args onto the operand stack, `astore`s them into the argument slots in reverse (JVM stack is LIFO), then `goto 0`. JVM 7+ verifier requires a `StackMapTable` entry when offset 0 is a branch target — `buildFrames` emits the explicit initial frame (the implicit one describes the same state, but the verifier needs the explicit form once the offset is reachable by a jump).
+
+**CLR** — label `IL_tco_loop:` at offset 0; `CContinue` uses `starg.s` to rewrite argument slots in reverse, then `br` (4-byte offset — the 1-byte form is too short for stress tests). `exprLocalsNeeded` walks nested `CCase`s additively so a method with pattern matching has enough `stloc` slots; the JIT uses the `tail.` prefix opportunistically but we do not emit it — the Core-level loop rewrite is the guarantee.
+
+**WASM** — the whole function body sits inside `(loop $tco_top (result i32) …)`; `CContinue` writes new values into `$__k0`, `$__k1`, … temps (one per parameter), copies them into the parameter slots, then `br $tco_top`. Depth counting tracks how many nested `if`/`block` scopes sit between `CContinue` and the loop header so the `br` label depth is correct.
+
+**JavaScript** — `while (true) { … }` wrapper; `CContinue` computes new values into `__t0`, `__t1`, … `const`s, assigns them to the parameter `let`s, and `continue`s. The two-step is deliberate: computing new args can still reference the old parameter values, which the `const` temps preserve.
+
+**Lua** — `while true do … end` wrapper; `CContinue` rebinds the parameters and falls through to the start of the next iteration via the structured `if`/`elseif` cascade (Lua 5.1 has no `continue`, but the structure of the pattern-match emission gives a natural fall-through to the loop head without extra machinery).
+
+Mutual recursion and non-tail recursion never reach the backend — by the time the codegen runs, the Core IR has only self-recursion, and only in tail position. The test matrix in [`docs/recursion.md`](recursion.md#stack-safety-test-matrix) runs the stress programs on all six backends at depths up to 1 000 000 with byte-identical stdout.
+
 ## LLVM-Specific Details
 
 **Opaque pointers**: The LLVM backend requires LLVM 15+ (opaque pointer support). All values — strings, function pointers, unit — are represented as `ptr`.

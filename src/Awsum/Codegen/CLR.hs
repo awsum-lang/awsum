@@ -42,6 +42,10 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "predUInt8" builtIns) predUInt8Method,
             "",
+            gate (Set.member "succInt32" builtIns) succInt32Method,
+            "",
+            gate (Set.member "succUInt8" builtIns) succUInt8Method,
+            "",
             gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "IL_eq_i32"),
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "IL_eq_u8"),
@@ -234,6 +238,120 @@ predUInt8Method =
       "  }"
     ]
 
+-- succInt32: Int32 -> Either OverflowError Int32.
+--   Mirror of 'predInt32Method' with INT32_MAX as the boundary and 'add'
+--   for the non-overflow branch. OverflowError tag is 0 (single-
+--   constructor type), so the Left-branch encoding is identical to the
+--   UnderflowError case in predInt32.
+succInt32Method :: Text
+succInt32Method =
+  unlines
+    [ "  .method public hidebysig static object __succInt32(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4 2147483647",
+      "    bne.un.s IL_succ_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_succ_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldc.i4.1",
+      "    add",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- succUInt8: UInt8 -> Either OverflowError UInt8.
+--   Mirrors 'succInt32Method' except the boundary is 255. 'ldc.i4 255' is
+--   used (the short form 'ldc.i4.s' operand is signed byte and would push
+--   -1 instead of 255). No mask on (v + 1) — when v <= 254 the result
+--   is in 1..255.
+succUInt8Method :: Text
+succUInt8Method =
+  unlines
+    [ "  .method public hidebysig static object __succUInt8(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4 255",
+      "    bne.un.s IL_succu8_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_succu8_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldc.i4.1",
+      "    add",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
 -- eqInt32 / eqUInt8: two integers of the same type → Bool.
 --   On the CLR both Int32 and UInt8 values are boxed as Int32 (that's how
 --   CIntLit emits them), so the two methods share a single builder
@@ -343,6 +461,15 @@ emitDecl ctx = \case
 -- Expression emission (text)
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | Next free @ldloc@ slot beyond everything currently mapped in
+-- 'varMap'. Parameter entries render as @ldarg@ and don't occupy local
+-- slots; nested 'CCase's extend the map with 'ldloc' entries and this
+-- counter keeps them from reusing an outer arm's slot.
+nextLocSlot :: Map Text Text -> Int
+nextLocSlot = length . filter isLdloc . Map.elems
+  where
+    isLdloc t = "    ldloc" `T.isPrefixOf` t
+
 emitExprText :: Ctx -> Map Text Text -> CExpr -> Text
 emitExprText ctx varMap = \case
   CString s ->
@@ -406,8 +533,12 @@ emitExprText ctx varMap = \case
         joinLabel :: Text
         joinLabel = "IL_join"
         switchText = "    switch (" <> T.intercalate ", " armLabels <> ")"
+        -- Allocate fresh slots beyond every binding already live so
+        -- nested 'CCase's never clobber outer-arm bindings. Params
+        -- live in 'ldarg' slots and don't count against local slots.
+        baseSlot = nextLocSlot varMap
         emitArm (_, vars, body) lbl =
-          let bindings = zip vars [0 :: Int ..]
+          let bindings = zip vars [baseSlot ..]
               storeCode =
                 T.concat
                   [ "    dup\n" <> emitLdcI4 (i :: Int) <> "\n    ldelem.ref\n    stloc" <> ldlocSuffix slot <> "\n"
@@ -450,6 +581,20 @@ emitExprText ctx varMap = \case
               "\n"
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__predUInt8(object)"
+              ]
+      CBuiltIn "succInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__succInt32(object)"
+              ]
+      CBuiltIn "succUInt8"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__succUInt8(object)"
               ]
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8",
@@ -530,8 +675,9 @@ emitTailText ctx varMap _params = go varMap
                 ]
             armLabels = ["IL_tco_arm_" <> show tag | (tag, _, _) <- sorted]
             switchText = "    switch (" <> T.intercalate ", " armLabels <> ")"
+            baseSlot = nextLocSlot vmap
             emitArm (_, vars, body) lbl =
-              let bindings = zip vars [0 :: Int ..]
+              let bindings = zip vars [baseSlot ..]
                   storeCode =
                     T.concat
                       [ "    dup\n" <> emitLdcI4 (i :: Int) <> "\n    ldelem.ref\n    stloc" <> ldlocSuffix slot <> "\n"
