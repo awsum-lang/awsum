@@ -125,10 +125,6 @@ function v_handleA(v_step){
   return (v__scc_handleA_handleB)([0, v_step]);
 }
 
-function v_handleB(v_step){
-  return (v__scc_handleA_handleB)([1, v_step]);
-}
-
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

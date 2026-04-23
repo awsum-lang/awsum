@@ -64,10 +64,6 @@ function M.v_pingOne(v_n)
   return (M.v__scc_pingOne_pongTwo)({0, v_n})
 end
 
-function M.v_pongTwo(v_n, v__acc)
-  return (M.v__scc_pingOne_pongTwo)({1, v_n, v__acc})
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

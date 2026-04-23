@@ -147,17 +147,5 @@ CoreProgram
                     [ CVar "n" ]
                 ]
             )
-        , CFunDef "pongTwo"
-            [ "n"
-            , "_acc"
-            ]
-            ( CCall
-                ( CVar "$scc$pingOne_pongTwo" )
-                [ CCon 1
-                    [ CVar "n"
-                    , CVar "_acc"
-                    ]
-                ]
-            )
         ]
     }

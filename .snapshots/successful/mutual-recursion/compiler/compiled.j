@@ -344,23 +344,6 @@ L_tco_arm_3:
   areturn
 .end method
 
-
-.method public static v_handleB(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_0
-  aastore
-  invokestatic AwsumMain/v__scc_handleA_handleB(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
 .method public static main([Ljava/lang/String;)V
   aload_0
   arraylength

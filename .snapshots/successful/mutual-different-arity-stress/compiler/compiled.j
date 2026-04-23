@@ -375,27 +375,6 @@ L_tco_arm_1:
   areturn
 .end method
 
-
-.method public static v_pongTwo(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_3
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_0
-  aastore
-  dup
-  iconst_2
-  aload_1
-  aastore
-  invokestatic AwsumMain/v__scc_pingOne_pongTwo(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
 .method public static main([Ljava/lang/String;)V
   aload_0
   arraylength

@@ -72,6 +72,8 @@ Each pass is Core-to-Core. None of them add new Core IR constructs. None of them
 
 **Why this belongs at this position in the pipeline.** SCC must run before CPS. If CPS ran first, each member would be individually CPS'd into a `$cps$f`/`$apply$f` pair, and merging those pairs after the fact would be both semantically awkward and pointless noise in the snapshots. The current order (saturate → **SCC** → **CPS** → TCO) produces the minimal, predictable output.
 
+**Post-SCC tree-shake.** SCC rewrites every cross-call from `f_j(...)` to `$scc$...(CCon j [...])`, so the original member's public name (the wrapper) is no longer referenced by any sibling arm. Wrappers for members that were only ever called from /inside/ the SCC end up dead, and the `treeShakeFromMain` pass in `elaborateLowerProgram` prunes them immediately after merge. In the classic `handleA ⇄ handleB` test only `handleA` is reachable from `main`, so only its wrapper survives; `handleB`'s wrapper is dropped. Same for the three-member `stepA → stepB → stepC → stepA` cycle: only `stepA` survives if that is the sole public entry point.
+
 **Sum-typed args.** Each member's arguments are packed into a `CCon` with a member-specific tag (the field count matches that member's arity), and the merged function's parameter is a single value destructured by `case`. This means members can have different arities or different parameter types — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) is handled out of the box. See `mutual-different-arity-stress` for the cross-backend 100 000-iteration proof.
 
 **Current limitation.** SCCs containing a `CValDef` are passed through unchanged. Mutually recursive top-level values have no fixed point — `a = b; b = a` has no evaluable value — so this is really a user-level error that the compiler currently swallows silently; a future pass will reject it with a diagnostic.
@@ -175,6 +177,7 @@ This is what the earlier design document called "applying Reynolds' defunctional
 | [`even-odd-stress`](../test/sources/successful/even-odd-stress/code/Main.aww)                             | mutual, all tail                                  | 1 000 000 | SCC turns `evenInt` ⇄ `oddInt` into self-recursion, TCO folds that into a loop. Classic "mutual tail recursion must not blow up."                                    |
 | [`mutual-different-arity-smoke`](../test/sources/successful/mutual-different-arity-smoke/code/Main.aww)   | mutual, heterogeneous arity (1 arg ⇄ 2 args)      | small     | Shape regression anchor: SCC merges members of different arity via sum-typed args `CCon`.                                                                            |
 | [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) | mutual, heterogeneous arity, all tail             | 100 000   | `pingOne` (1 arg) ⇄ `pongTwo` (2 args) alternating — the sum-typed merge threads the right number of fields per iteration, TCO folds the fused function into a loop. |
+| [`mutual-three-way-stress`](../test/sources/successful/mutual-three-way-stress/code/Main.aww)             | mutual, three-way cycle, all tail                 | 1 000 000 | `stepA → stepB → stepC → stepA`: SCC handles cycles of arbitrary length; the merged function dispatches over three tags but each iteration stays on the same frame.  |
 | [`recursive-function-call`](../test/sources/successful/recursive-function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
 
 Every test in the table runs on all six backends with byte-identical stdout via `ProgramSnapshotsSpec`.
@@ -199,7 +202,6 @@ Non-tail self-recursion produces nested `case` expressions whose outer arm-bindi
 
 Still to do for a complete stack-safety story.
 
-- **SCC-level dispatch specialization.** If a merged function is only reachable through some of its wrappers, the unreachable tag branches could be tree-shaken. Not needed for current tests — the existing reachability tree-shake in `ElaborateLower` already removes whole unreachable members.
 - **Monadic recursion.** Desugaring `do` into `>>=` calls in elaboration makes monadic code flow through the same SCC + CPS passes. Works transparently for "ordinary" monads (`IO`, `State`, `Reader`, `Writer`, `Either`, `Maybe`) whose `>>=` does not itself encode deep control flow; exotic monads (continuations, free monads with deep nesting, search with backtracking) will need an explicit `tailRecM` method à la PureScript. The prerequisites (type classes, monads, `do`-desugaring) are unimplemented today.
 
 ## References

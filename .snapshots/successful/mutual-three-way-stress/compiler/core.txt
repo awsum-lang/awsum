@@ -4,21 +4,6 @@ CoreProgram
             ( CString "UnderflowError" )
         , CValDef "zero"
             ( CIntLit 0 TInt32 )
-        , CFunDef "showBool" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 0
-                    , []
-                    , CString "true"
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CString "false"
-                    )
-                ]
-            )
         , CFunDef "showResult" [ "r" ]
             ( CCase
                 ( CVar "r" )
@@ -35,13 +20,13 @@ CoreProgram
                     )
                 ,
                     ( 1
-                    , [ "b" ]
+                    , [ "v" ]
                     , CCall
                         ( CBuiltIn "concatString" )
                         [ CString "right: "
                         , CCall
-                            ( CVar "showBool" )
-                            [ CVar "b" ]
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
                         ]
                     )
                 ]
@@ -54,12 +39,12 @@ CoreProgram
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
-                        ( CVar "evenInt" )
+                        ( CVar "stepA" )
                         [ CVar "start" ]
                     ]
                 ]
             )
-        , CFunDef "$scc$evenInt_oddInt" [ "$args" ]
+        , CFunDef "$scc$stepA_stepB_stepC" [ "$args" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args" )
@@ -77,7 +62,7 @@ CoreProgram
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CCon 0 [] ]
+                                    [ CVar "zero" ]
                                 )
                             ,
                                 ( 1
@@ -119,7 +104,49 @@ CoreProgram
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CCon 1 [] ]
+                                    [ CVar "zero" ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "predInt32" )
+                                        [ CVar "n" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , [ "e" ]
+                                        , CCon 0
+                                            [ CVar "e" ]
+                                        )
+                                    ,
+                                        ( 1
+                                        , [ "m" ]
+                                        , CContinue
+                                            [ CCon 2
+                                                [ CVar "m" ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 2
+                        , [ "n" ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "eqInt32" )
+                                [ CVar "n"
+                                , CVar "zero"
+                                ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CCon 1
+                                    [ CVar "zero" ]
                                 )
                             ,
                                 ( 1
@@ -150,9 +177,9 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "evenInt" [ "n" ]
+        , CFunDef "stepA" [ "n" ]
             ( CCall
-                ( CVar "$scc$evenInt_oddInt" )
+                ( CVar "$scc$stepA_stepB_stepC" )
                 [ CCon 0
                     [ CVar "n" ]
                 ]

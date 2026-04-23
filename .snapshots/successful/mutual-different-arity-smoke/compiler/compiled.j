@@ -140,27 +140,6 @@ L_tco_arm_1:
 .end method
 
 
-.method public static v_parseBinary(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_3
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_0
-  aastore
-  dup
-  iconst_2
-  aload_1
-  aastore
-  invokestatic AwsumMain/v__scc_parseBinary_parseExpr(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
 .method public static v_parseExpr(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_2
   anewarray java/lang/Object

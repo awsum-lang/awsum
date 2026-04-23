@@ -119,7 +119,13 @@ elaborateLowerProgram progType prog = do
   --    After this step, mutual recursion has become self-recursion —
   --    tail cross-calls get TCO'd below, non-tail cross-calls feed into
   --    the CPS pass. See 'Awsum.Scc' and docs/recursion.md.
-  let sccMerged = sccMergeProgram core'
+  --
+  --    SCC rewrites every cross-call to go through the merged function
+  --    rather than through the member's original name, so wrappers for
+  --    members that were only called from inside the SCC become dead.
+  --    Re-run reachability from 'main' to prune them (and anything
+  --    else that fell out of scope through the rewrite).
+  let sccMerged = treeShakeFromMain (sccMergeProgram core')
   -- 6) CPS + defunctionalization for non-tail self-recursion. For each
   --    function with a non-tail self-call, emit a (wrapper, '$cps$f',
   --    '$apply$f') trio; the continuation chain now lives as an ADT on
@@ -174,6 +180,17 @@ reachableCore root graph = go (Set.singleton root) [root]
       let neighbours = fromMaybe Set.empty (M.lookup n graph)
           fresh = Set.filter (`Set.notMember` visited) neighbours
        in go (visited <> fresh) (rest <> Set.toList fresh)
+
+-- | Drop declarations that are no longer reachable from @main@. Used
+-- after passes that rewrite call sites to fresh targets (like SCC
+-- merge, which routes every cross-call through @$scc$...@ and can
+-- leave the original member's wrapper dead).
+treeShakeFromMain :: CoreProgram -> CoreProgram
+treeShakeFromMain (CoreProgram ds) =
+  let graph = M.fromList [(declName' d, declFreeVars d) | d <- ds]
+      reached = reachableCore "main" graph
+      live = [d | d <- ds, Set.member (declName' d) reached]
+   in CoreProgram live
 
 -- | Top-level name of a Core declaration.
 declName' :: CDecl -> Name

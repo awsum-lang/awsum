@@ -10,21 +10,17 @@ function v_showUnderflowError(v__wild0){
 
 const v_zero = (0|0);
 
-function v_showBool(v_b){
-  return ((s) => { switch(s[0]) { case 0: { return "true"; } case 1: { return "false"; } } })(v_b);
-}
-
 function v_showResult(v_r){
-  return ((s) => { switch(s[0]) { case 0: { const v_e = s[1]; return ("left: " + (v_showUnderflowError)(v_e)); } case 1: { const v_b = s[1]; return ("right: " + (v_showBool)(v_b)); } } })(v_r);
+  return ((s) => { switch(s[0]) { case 0: { const v_e = s[1]; return ("left: " + (v_showUnderflowError)(v_e)); } case 1: { const v_v = s[1]; return ("right: " + String(v_v)); } } })(v_r);
 }
 
 const v_start = (1000000|0);
 
 function main(v__input){
-  return __print((v_showResult)((v_evenInt)(v_start)));
+  return __print((v_showResult)((v_stepA)(v_start)));
 }
 
-function v__scc_evenInt_oddInt(v__args){
+function v__scc_stepA_stepB_stepC(v__args){
   while (true) {
     {
       const __s = v__args;
@@ -35,7 +31,7 @@ function v__scc_evenInt_oddInt(v__args){
             const __s = __eqInt32(v_n, v_zero);
             switch (__s[0]) {
               case 0: {
-                return [1, [0]];
+                return [1, v_zero];
               }
               case 1: {
                 {
@@ -63,7 +59,35 @@ function v__scc_evenInt_oddInt(v__args){
             const __s = __eqInt32(v_n, v_zero);
             switch (__s[0]) {
               case 0: {
-                return [1, [1]];
+                return [1, v_zero];
+              }
+              case 1: {
+                {
+                  const __s = __predInt32(v_n);
+                  switch (__s[0]) {
+                    case 0: {
+                      const v_e = __s[1];
+                      return [0, v_e];
+                    }
+                    case 1: {
+                      const v_m = __s[1];
+                      const __t0 = [2, v_m];
+                      v__args = __t0;
+                      continue;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        case 2: {
+          const v_n = __s[1];
+          {
+            const __s = __eqInt32(v_n, v_zero);
+            switch (__s[0]) {
+              case 0: {
+                return [1, v_zero];
               }
               case 1: {
                 {
@@ -90,8 +114,8 @@ function v__scc_evenInt_oddInt(v__args){
   }
 }
 
-function v_evenInt(v_n){
-  return (v__scc_evenInt_oddInt)([0, v_n]);
+function v_stepA(v_n){
+  return (v__scc_stepA_stepB_stepC)([0, v_n]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

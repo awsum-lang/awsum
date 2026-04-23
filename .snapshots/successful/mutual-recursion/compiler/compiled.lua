@@ -90,10 +90,6 @@ function M.v_handleA(v_step)
   return (M.v__scc_handleA_handleB)({0, v_step})
 end
 
-function M.v_handleB(v_step)
-  return (M.v__scc_handleA_handleB)({1, v_step})
-end
-
 local ok, dbg = pcall(require, 'debug')
 local should_run = false
 if ok and dbg and dbg.getinfo then

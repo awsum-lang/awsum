@@ -34,10 +34,6 @@ function M.v__scc_parseBinary_parseExpr(v__args)
   end
 end
 
-function M.v_parseBinary(v_tok, v__acc)
-  return (M.v__scc_parseBinary_parseExpr)({0, v_tok, v__acc})
-end
-
 function M.v_parseExpr(v_tok)
   return (M.v__scc_parseBinary_parseExpr)({1, v_tok})
 end

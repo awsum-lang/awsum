@@ -115,19 +115,6 @@ tco.exit.1:
   ret ptr %t44
 }
 
-define ptr @v_parseBinary(ptr %v_tok, ptr %v__acc) {
-  %t0 = call ptr @malloc(i64 24)
-  %t1 = inttoptr i64 0 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %v_tok, ptr %t3
-  %t4 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %v__acc, ptr %t4
-  %t5 = call ptr @v__scc_parseBinary_parseExpr(ptr %t0)
-  ret ptr %t5
-}
-
 define ptr @v_parseExpr(ptr %v_tok) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 1 to ptr

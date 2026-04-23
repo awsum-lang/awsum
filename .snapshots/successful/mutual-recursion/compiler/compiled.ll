@@ -253,17 +253,6 @@ define ptr @v_handleA(ptr %v_step) {
   ret ptr %t4
 }
 
-define ptr @v_handleB(ptr %v_step) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 1 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %v_step, ptr %t3
-  %t4 = call ptr @v__scc_handleA_handleB(ptr %t0)
-  ret ptr %t4
-}
-
 define i32 @main(i32 %argc, ptr %argv) {
   %has_arg = icmp sgt i32 %argc, 1
   br i1 %has_arg, label %with_arg, label %no_arg

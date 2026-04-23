@@ -14,8 +14,8 @@
   (data (i32.const 85) "false\00")
   (data (i32.const 91) "left: \00")
   (data (i32.const 98) "right: \00")
-  (table 7 funcref)
-  (elem (i32.const 0) $v_showUnderflowError $v_showBool $v_showResult $v_main $v__scc_evenInt_oddInt $v_evenInt $v_oddInt)
+  (table 6 funcref)
+  (elem (i32.const 0) $v_showUnderflowError $v_showBool $v_showResult $v_main $v__scc_evenInt_oddInt $v_evenInt)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -163,10 +163,6 @@
   (func $v_evenInt (export "v_evenInt") (param $v_n i32) (result i32)
     (local $__con_0 i32)
     (call $v__scc_evenInt_oddInt (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_n)) (local.get $__con_0))))
-
-  (func $v_oddInt (export "v_oddInt") (param $v_n i32) (result i32)
-    (local $__con_0 i32)
-    (call $v__scc_evenInt_oddInt (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_n)) (local.get $__con_0))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

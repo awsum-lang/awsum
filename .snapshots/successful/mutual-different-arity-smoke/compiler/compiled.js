@@ -51,10 +51,6 @@ function v__scc_parseBinary_parseExpr(v__args){
   }
 }
 
-function v_parseBinary(v_tok, v__acc){
-  return (v__scc_parseBinary_parseExpr)([0, v_tok, v__acc]);
-}
-
 function v_parseExpr(v_tok){
   return (v__scc_parseBinary_parseExpr)([1, v_tok]);
 }

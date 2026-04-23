@@ -91,10 +91,6 @@ function v_pingOne(v_n){
   return (v__scc_pingOne_pongTwo)([0, v_n]);
 }
 
-function v_pongTwo(v_n, v__acc){
-  return (v__scc_pingOne_pongTwo)([1, v_n, v__acc]);
-}
-
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);

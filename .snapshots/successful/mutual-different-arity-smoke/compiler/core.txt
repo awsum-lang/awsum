@@ -65,18 +65,6 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "parseBinary"
-            [ "tok"
-            , "_acc"
-            ]
-            ( CCall
-                ( CVar "$scc$parseBinary_parseExpr" )
-                [ CCon 0
-                    [ CVar "tok"
-                    , CVar "_acc"
-                    ]
-                ]
-            )
         , CFunDef "parseExpr" [ "tok" ]
             ( CCall
                 ( CVar "$scc$parseBinary_parseExpr" )

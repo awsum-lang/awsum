@@ -172,12 +172,5 @@ CoreProgram
                     [ CVar "step" ]
                 ]
             )
-        , CFunDef "handleB" [ "step" ]
-            ( CCall
-                ( CVar "$scc$handleA_handleB" )
-                [ CCon 1
-                    [ CVar "step" ]
-                ]
-            )
         ]
     }

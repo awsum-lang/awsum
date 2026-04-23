@@ -383,24 +383,6 @@
     ret
   }
 
-
-  .method public hidebysig static object v_oddInt(object) cil managed
-  {
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
-    ldarg.0
-    stelem.ref
-    call object AwsumMain::v__scc_evenInt_oddInt(object)
-    ret
-  }
-
   .method public hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
