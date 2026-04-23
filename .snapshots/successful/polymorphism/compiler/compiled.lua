@@ -1,26 +1,28 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function main(v__input)
-  return __print((v_identity)((v_compose)(v_appendY, v_appendX, (v_const)("a", "b"))))
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.main(v__input)
+  return M.__print((M.v_identity)((M.v_compose)(M.v_appendY, M.v_appendX, (M.v_const)("a", "b"))))
 end
 
-function v_const(v_x, v__y)
+function M.v_const(v_x, v__y)
   return v_x
 end
 
-function v_identity(v_x)
+function M.v_identity(v_x)
   return v_x
 end
 
-function v_appendX(v_s)
+function M.v_appendX(v_s)
   return (v_s .. "x")
 end
 
-function v_appendY(v_s)
+function M.v_appendY(v_s)
   return (v_s .. "y")
 end
 
-function v_compose(v_g, v_f, v_x)
+function M.v_compose(v_g, v_f, v_x)
   return (v_g)((v_f)(v_x))
 end
 
@@ -34,5 +36,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

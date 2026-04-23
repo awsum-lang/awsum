@@ -1,11 +1,13 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_showPair(v_pair)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_showPair(v_pair)
   return (function(s) if s[1] == 0 then local v_first = s[2]; local v_second = s[3]; return table.concat({"(", v_first, ", ", v_second, ")"}) end end)(v_pair)
 end
 
-function main(v__input)
-  return __print((v_showPair)({0, "hello", "world"}))
+function M.main(v__input)
+  return M.__print((M.v_showPair)({0, "hello", "world"}))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -18,5 +20,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

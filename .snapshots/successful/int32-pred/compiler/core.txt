@@ -8,7 +8,8 @@ CoreProgram
                 [
                     ( 0
                     , [ "e" ]
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "underflow: "
                         , CCall
                             ( CVar "showUnderflowError" )
@@ -18,7 +19,8 @@ CoreProgram
                 ,
                     ( 1
                     , [ "v" ]
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "ok: "
                         , CCall
                             ( CBuiltIn "showInt32" )
@@ -34,9 +36,12 @@ CoreProgram
         , CValDef "ordinary"
             ( CIntLit 42 TInt32 )
         , CFunDef "main" [ "_input" ]
-            ( CCall ( CPrim PrimPrint )
-                [ CCall ( CPrim PrimConcat )
-                    [ CCall ( CPrim PrimConcat )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "render" )
                             [ CCall

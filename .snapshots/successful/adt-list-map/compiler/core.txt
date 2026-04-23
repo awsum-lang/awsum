@@ -39,8 +39,10 @@ CoreProgram
                         [ "h"
                         , "t"
                         ]
-                    , CCall ( CPrim PrimConcat )
-                        [ CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
                             [ CVar "h"
                             , CString ","
                             ]
@@ -57,13 +59,15 @@ CoreProgram
                 ]
             )
         , CFunDef "shout" [ "s" ]
-            ( CCall ( CPrim PrimConcat )
+            ( CCall
+                ( CBuiltIn "concatString" )
                 [ CVar "s"
                 , CString "!"
                 ]
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall ( CPrim PrimPrint )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "show" )
                     [ CCall

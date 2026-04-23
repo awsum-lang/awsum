@@ -19,6 +19,7 @@ import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, verifyPrelude, withPrelude)
+import Awsum.Program (ProgramType, parseProgramType)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
 import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, requireMain, typecheckProgram)
@@ -42,18 +43,23 @@ awsumVersion :: Text
 awsumVersion = toText (showVersion Meta.version)
 
 -- | Top-level CLI command.
+--
+-- Commands that go through the typechecker take a 'ProgramType' (set
+-- by the mandatory @--program-type@ flag); @ast@, @format@ and
+-- @symbols@ are purely syntactic and skip it.
 data Command
   = CmdVersion
-  | -- | file, useJson, strict
-    CmdCheck FilePath Bool Bool
-  | -- | file, target, out
-    CmdBuild FilePath Target (Maybe FilePath)
-  | -- | file, target, inArg, useStdin
-    CmdRun FilePath Target (Maybe Text) Bool
+  | -- | file, programType, useJson, strict
+    CmdCheck FilePath ProgramType Bool Bool
+  | -- | file, programType, target, out
+    CmdBuild FilePath ProgramType Target (Maybe FilePath)
+  | -- | file, programType, target, inArg, useStdin
+    CmdRun FilePath ProgramType Target (Maybe Text) Bool
   | CmdAST FilePath
-  | CmdCore FilePath
-  | -- | file, target (JVM/WASM only)
-    CmdAsm FilePath Target
+  | -- | file, programType
+    CmdCore FilePath ProgramType
+  | -- | file, programType, target (JVM/WASM only)
+    CmdAsm FilePath ProgramType Target
   | -- | file, inPlace
     CmdFormat FilePath Bool
   | -- | file, useJson
@@ -67,6 +73,23 @@ data Command
 -- | Required positional: path to a source file.
 argFilePath :: OA.Parser FilePath
 argFilePath = OA.strArgument (OA.metavar "FILE")
+
+-- | Mandatory program-type selector. Decides which platform-effect
+--   table the typechecker and lowering see (see 'Awsum.Program'). We
+--   deliberately require the flag rather than defaulting to @cli@:
+--   once browser/module program types land, a silently-defaulted build
+--   would typecheck against the wrong effect set. When @awsum.json@
+--   lands, the workspace file will set this and the flag will become
+--   optional.
+optProgramType :: OA.Parser ProgramType
+optProgramType =
+  OA.option
+    (OA.eitherReader (first toString . parseProgramType . toText))
+    ( OA.long "program-type"
+        <> OA.metavar "PROGRAM_TYPE"
+        <> OA.help "Program type: cli"
+        <> OA.completeWith ["cli"]
+    )
 
 -- | Optional target backend selector.
 optTarget :: OA.Parser Target
@@ -157,12 +180,12 @@ pCommand =
   -- Allow the global --version flag alongside subcommands.
   pVersionFlag
     <|> OA.hsubparser
-      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optJson <*> optStrict)
-          <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optTarget <*> optOutputPath)
-          <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optTarget <*> optInputText <*> optUseStdin)
+      ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optProgramType <*> optJson <*> optStrict)
+          <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optProgramType <*> optTarget <*> optOutputPath)
+          <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optProgramType <*> optTarget <*> optInputText <*> optUseStdin)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
-          <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath)
-          <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optTarget)
+          <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath <*> optProgramType)
+          <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optProgramType <*> optTarget)
           <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
           <> subcmd "symbols" "Print top-level symbols (outline)" (CmdSymbols <$> argFilePath <*> optJson)
       )
@@ -190,9 +213,9 @@ main = do
 runCommand :: Command -> IO ()
 runCommand = \case
   CmdVersion -> putTextLn awsumVersion
-  CmdCheck filePath useJson strict -> runCheck filePath useJson strict
-  CmdBuild filePath target mOut -> do
-    core <- compileToCoreOrDie filePath
+  CmdCheck filePath progType useJson strict -> runCheck filePath progType useJson strict
+  CmdBuild filePath progType target mOut -> do
+    core <- compileToCoreOrDie progType filePath
     -- (warnings are emitted to stderr by compileToCoreOrDie)
     case target of
       TargetJVM -> do
@@ -214,31 +237,31 @@ runCommand = \case
           Nothing -> BS.hPut stdout bytes
           Just out -> writeFileBS out bytes
       _ -> do
-        let code = codegenText target core
+        let code = codegenText progType target core
         case mOut of
           Nothing -> putTextLn code
           Just out -> writeFileText out code
-  CmdRun filePath target mInput useStdin -> do
+  CmdRun filePath progType target mInput useStdin -> do
     input <-
       if useStdin
         then T.stripEnd <$> TIO.getContents
         else pure (fromMaybe "" mInput)
-    core <- compileToCoreOrDie filePath
-    runOnTarget target core input
+    core <- compileToCoreOrDie progType filePath
+    runOnTarget progType target core input
   CmdAST filePath -> do
     prog <- parseFileOrDie filePath
     pPrint prog
-  CmdCore filePath -> do
-    verifyPreludeOrDie
+  CmdCore filePath progType -> do
+    verifyPreludeOrDie progType
     userProg <- parseFileOrDie filePath
     let prog = withPrelude userProg
-    case elaborateLowerProgram prog of
+    case elaborateLowerProgram progType prog of
       Left err -> die $ toString (prettyPrintTypeError err)
       Right (warns, ir) -> do
         emitWarningsToStderr filePath (stripPreludeWarnings warns)
         pPrint ir
-  CmdAsm filePath target -> do
-    core <- compileToCoreOrDie filePath
+  CmdAsm filePath progType target -> do
+    core <- compileToCoreOrDie progType filePath
     case target of
       TargetJVM -> putTextLn (codegenJVM core)
       TargetCLR -> putTextLn (codegenCLR core)
@@ -263,19 +286,21 @@ runCommand = \case
 -- Helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Select the text codegen for a target.
-codegenText :: Target -> CoreProgram -> Text
-codegenText = \case
+-- | Select the text codegen for a target. Some targets (@JS@) are
+--   parameterized by 'ProgramType' because their wrapping strategy
+--   depends on it.
+codegenText :: ProgramType -> Target -> CoreProgram -> Text
+codegenText progType = \case
   TargetLLVM -> codegenLLVM
   TargetJVM -> codegenJVM
   TargetCLR -> codegenCLR
   TargetWASM -> codegenWASM
-  TargetJS -> codegenJS
+  TargetJS -> codegenJS progType
   TargetLua -> codegenLua
 
 -- | Compile Core to target and run using the appropriate system runtime.
-runOnTarget :: Target -> CoreProgram -> Text -> IO ()
-runOnTarget target core input = case target of
+runOnTarget :: ProgramType -> Target -> CoreProgram -> Text -> IO ()
+runOnTarget progType target core input = case target of
   TargetLLVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
@@ -316,7 +341,7 @@ runOnTarget target core input = case target of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
   TargetJS ->
-    runText "node" ".js" (codegenJS core) input
+    runText "node" ".js" (codegenJS progType core) input
   TargetLua ->
     runText "lua" ".lua" (codegenLua core) input
 
@@ -352,15 +377,15 @@ runtimeConfigJson =
 --   Unlike plain 'typecheckProgram', this path is for commands that produce
 --   an executable (@build@, @run@, @asm@) and therefore enforces the
 --   entry-point contract via 'requireMain'.
-compileToCoreOrDie :: FilePath -> IO CoreProgram
-compileToCoreOrDie filePath = do
-  verifyPreludeOrDie
+compileToCoreOrDie :: ProgramType -> FilePath -> IO CoreProgram
+compileToCoreOrDie progType filePath = do
+  verifyPreludeOrDie progType
   userProg <- parseFileOrDie filePath
   let prog = withPrelude userProg
   case requireMain prog of
     Left err -> dieWithTypeError filePath err
     Right () -> pass
-  case elaborateLowerProgram prog of
+  case elaborateLowerProgram progType prog of
     Left err -> dieWithTypeError filePath err
     Right (warns, core) -> do
       emitWarningsToStderr filePath (stripPreludeWarnings warns)
@@ -370,8 +395,8 @@ compileToCoreOrDie filePath = do
 --   failure here is a compiler bug — the prelude ships with the binary —
 --   so we die with an @Internal compiler error@ prefix rather than a
 --   normal user-facing diagnostic.
-verifyPreludeOrDie :: IO ()
-verifyPreludeOrDie = case verifyPrelude of
+verifyPreludeOrDie :: ProgramType -> IO ()
+verifyPreludeOrDie progType = case verifyPrelude progType of
   Right _warns -> pass
   Left err ->
     die
@@ -410,14 +435,14 @@ parseFileOrDie filePath = do
 --   • Warnings with @--strict@             → exit 1.
 --   • Clean program                        → exit 0 (and a friendly @"OK"@
 --                                              line in the non-JSON path).
-runCheck :: FilePath -> Bool -> Bool -> IO ()
-runCheck filePath useJson strict = do
-  verifyPreludeOrDie
+runCheck :: FilePath -> ProgramType -> Bool -> Bool -> IO ()
+runCheck filePath progType useJson strict = do
+  verifyPreludeOrDie progType
   src <- readFileTextUtf8 filePath
   let result = case parseProgramDiagnostic src of
         Left parseErrs -> Left (map parseErrorToDiagnostic parseErrs)
         Right userProg ->
-          case typecheckProgram (withPrelude userProg) of
+          case typecheckProgram progType (withPrelude userProg) of
             Left typeErr -> Left [typeErrorToDiagnostic typeErr]
             Right warns -> Right (map warningToDiagnostic (stripPreludeWarnings warns))
   let diagnostics = either id id result

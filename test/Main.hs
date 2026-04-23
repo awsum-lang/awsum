@@ -8,6 +8,7 @@ import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
+import Awsum.Program (ProgramType (..))
 import Awsum.ProgramSnapshotsSpec qualified
 import Awsum.Render (renderProgram)
 import Awsum.Syntax
@@ -30,7 +31,7 @@ main = hspec $ do
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do
   it "bundled prelude parses and typechecks"
-    $ case verifyPrelude of
+    $ case verifyPrelude ProgramCli of
       Right _warns -> pass
       Left err -> expectationFailure (show err)
 
@@ -49,7 +50,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
         -- 'stripPreludeWarnings' drops the expected \"showInt32 is unused\"
         -- warning that arises because this user program never calls into
         -- the prelude — same filter as the CLI / snapshot specs apply.
-        fmap stripPreludeWarnings (typecheckProgram combined) `shouldBe` Right []
+        fmap stripPreludeWarnings (typecheckProgram ProgramCli combined) `shouldBe` Right []
         requireMain combined `shouldBe` Right ()
 
   it "withPrelude prepends prelude decls ahead of user decls" $ do
@@ -219,7 +220,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Right []
+        Right p -> typecheckProgram ProgramCli p `shouldBe` Right []
 
     it "typechecks: print (input ++ input)" $ do
       let src =
@@ -231,7 +232,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Right []
+        Right p -> typecheckProgram ProgramCli p `shouldBe` Right []
 
     it "typechecks a module with no 'main' (library mode)" $ do
       let src =
@@ -241,7 +242,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram p `shouldBe` Right []
+        Right p -> typecheckProgram ProgramCli p `shouldBe` Right []
 
   describe "Typing.requireMain" $ do
     it "rejects a module without 'main'" $ do
@@ -291,7 +292,7 @@ elaborateSpec = do
     case parseProgram src of
       Left e -> expectationFailure (toString e)
       Right p ->
-        elaborateLowerProgram p
+        elaborateLowerProgram ProgramCli p
           `shouldBe` Right
             ( [],
               CoreProgram
@@ -299,9 +300,9 @@ elaborateSpec = do
                     "main"
                     ["input"]
                     ( CCall
-                        (CPrim PrimPrint)
+                        (CBuiltIn "IO.Stdout.print")
                         [ CCall
-                            (CPrim PrimConcat)
+                            (CBuiltIn "concatString")
                             [CVar "input", CVar "input"]
                         ]
                     )

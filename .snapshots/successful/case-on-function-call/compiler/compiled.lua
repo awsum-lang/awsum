@@ -1,11 +1,13 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_search(v_key)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_search(v_key)
   return {0, ("found:" .. v_key)}
 end
 
-function main(v__input)
-  return __print((function(s) if s[1] == 0 then local v_v = s[2]; return v_v elseif s[1] == 1 then return "nothing" end end)((v_search)("hello")))
+function M.main(v__input)
+  return M.__print((function(s) if s[1] == 0 then local v_v = s[2]; return v_v elseif s[1] == 1 then return "nothing" end end)((M.v_search)("hello")))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -18,5 +20,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

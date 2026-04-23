@@ -1,13 +1,15 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function main(v_input)
-  return __print((v_addGreeting)(v_input))
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.main(v_input)
+  return M.__print((M.v_addGreeting)(v_input))
 end
 
-v_greeting = "Hello"
+M.v_greeting = "Hello"
 
-function v_addGreeting(v_name)
-  return table.concat({v_greeting, ", ", v_name, "!"})
+function M.v_addGreeting(v_name)
+  return table.concat({M.v_greeting, ", ", v_name, "!"})
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -20,5 +22,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

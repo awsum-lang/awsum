@@ -20,38 +20,40 @@ define ptr @__print(ptr %s) {
 
 
 define ptr @v_advanceStep(ptr %v_x) {
-  %t0 = getelementptr ptr, ptr %v_x, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.11 i64 2, label %case.arm.2.17 ]
-case.arm.0.5:
-  %t7 = call ptr @malloc(i64 8)
-  %t8 = inttoptr i64 1 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = call ptr @v_advanceStep(ptr %t7)
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.11:
-  %t13 = call ptr @malloc(i64 8)
-  %t14 = inttoptr i64 2 to ptr
-  %t15 = getelementptr ptr, ptr %t13, i32 0
-  store ptr %t14, ptr %t15
-  %t16 = call ptr @v_advanceStep(ptr %t13)
-  br label %case.end.1.12
-case.end.1.12:
-  br label %case.join.4
-case.arm.2.17:
-  %t19 = getelementptr [6 x i8], ptr @.str.0, i64 0, i64 0
-  br label %case.end.2.18
-case.end.2.18:
-  br label %case.join.4
-case.default.3:
+entry:
+  %t3 = alloca ptr
+  store ptr %v_x, ptr %t3
+  %t2 = alloca ptr
+  br label %tco.loop.0
+tco.loop.0:
+  %t4 = load ptr, ptr %t3
+  %t5 = getelementptr ptr, ptr %t4, i32 0
+  %t6 = load ptr, ptr %t5
+  %t7 = ptrtoint ptr %t6 to i64
+  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 1, label %tco.case.arm.1.13 i64 2, label %tco.case.arm.2.17 ]
+tco.case.arm.0.9:
+  %t10 = call ptr @malloc(i64 8)
+  %t11 = inttoptr i64 1 to ptr
+  %t12 = getelementptr ptr, ptr %t10, i32 0
+  store ptr %t11, ptr %t12
+  store ptr %t10, ptr %t3
+  br label %tco.loop.0
+tco.case.arm.1.13:
+  %t14 = call ptr @malloc(i64 8)
+  %t15 = inttoptr i64 2 to ptr
+  %t16 = getelementptr ptr, ptr %t14, i32 0
+  store ptr %t15, ptr %t16
+  store ptr %t14, ptr %t3
+  br label %tco.loop.0
+tco.case.arm.2.17:
+  %t18 = getelementptr [6 x i8], ptr @.str.0, i64 0, i64 0
+  store ptr %t18, ptr %t2
+  br label %tco.exit.1
+tco.case.default.8:
   unreachable
-case.join.4:
-  %t20 = phi ptr [%t10, %case.end.0.6], [%t16, %case.end.1.12], [%t19, %case.end.2.18]
-  ret ptr %t20
+tco.exit.1:
+  %t19 = load ptr, ptr %t2
+  ret ptr %t19
 }
 
 define ptr @v_main(ptr %v__input) {

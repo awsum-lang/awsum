@@ -2,31 +2,63 @@
 --
 -- Design goals:
 --   • Emit small, readable JS that is easy to snapshot-test.
---   • Keep a tiny “runtime” in 'header' only for what we actually need.
+--   • Keep a tiny "runtime" in 'header' only for what we actually need.
 --   • Preserve Core invariants: primitives only appear in callee position.
 --
 -- Semantics & assumptions:
 --   • Strings: we rely on JS '+' to concatenate (both operands are statically 'String').
 --   • Zero-arg surface defs are lowered to Core 'CValDef' and become JS 'const' values.
 --     Functions remain 'function' declarations (hoisted), so call order is safe.
---   • The footer includes a tiny Node runner: `node out.js <input>`.
+--   • Wrapping strategy is selected by 'ProgramType':
+--
+--       - 'ProgramCli' → wrap the whole chunk in an IIFE
+--         (@(function () { ... })()@). Inside a function scope, top-level
+--         @function@ declarations do /not/ become @window.x@ and top-level
+--         @const@/@let@ are lexical — so nothing leaks to the global object
+--         even when the file is loaded as a classic @<script>@ in a browser,
+--         or via Node's CommonJS wrapper. The Node runner in the footer
+--         still sees @require@/@module@ via closure over the wrapper's
+--         parameters.
+--
+--     No @M@-table is needed here (unlike the Lua backend, where
+--     @MAXVARS = 200@ forced one): JS has no comparable per-function
+--     binding ceiling, and function hoisting inside the IIFE already makes
+--     declaration order irrelevant.
+--
+--     Other program types (browser module, CommonJS module, ESM) will
+--     pick different wrappers — e.g. attach to a namespace object, emit
+--     explicit @export@s, or assign to @module.exports@ — without
+--     changing the name-emission rules below.
 module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.Core
+import Awsum.Program (ProgramType (..))
 import Awsum.Syntax (Name)
 import Data.Char qualified as Char
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 
--- | Produce a complete JS file: header (runtime) + declarations + footer (runner).
-codegenJS :: CoreProgram -> Text
-codegenJS prog@(CoreProgram decls) =
+-- | Produce a complete JS file. The wrapping strategy is selected by the
+--   program type; the inner name-emission rules are shared.
+codegenJS :: ProgramType -> CoreProgram -> Text
+codegenJS = \case
+  ProgramCli -> emitCliScript
+
+-- | CLI script: IIFE-wrapped, with a Node runner inside. Nothing leaks
+--   to the global object — neither function declarations (hoisted onto
+--   @window@ only at /script/ top level, not inside an IIFE) nor
+--   @const@/@let@ (lexically script-scoped).
+emitCliScript :: CoreProgram -> Text
+emitCliScript prog@(CoreProgram decls) =
   T.intercalate
     "\n"
-    [ header (usedPrims prog) (usedBuiltIns prog),
+    [ "\"use strict\";",
+      "(function () {",
+      header (usedBuiltIns prog),
       T.intercalate "\n\n" (map emitDecl decls),
-      footer
+      cliFooter,
+      "})();"
     ]
 
 -- | Minimal runtime, tree-shaken: only helpers whose primitive / built-in
@@ -35,13 +67,12 @@ codegenJS prog@(CoreProgram decls) =
 --   Note: we intentionally skip a '__concat' helper — '+' is fine because both operands
 --   are statically strings under our typechecker. Integer stringification also
 --   doesn't need a helper; @String(x)@ is inlined at each show call site.
-header :: Set Prim -> Set Name -> Text
-header prims builtIns =
+header :: Set Name -> Text
+header builtIns =
   let lns =
         filter
           (not . T.null)
-          [ "\"use strict\";",
-            if Set.member PrimPrint prims
+          [ if Set.member "IO.Stdout.print" builtIns
               then "function __print(s){ process.stdout.write(String(s)); return undefined; }"
               else "",
             -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
@@ -49,14 +80,32 @@ header prims builtIns =
             -- for `type Either a b = Left a | Right b` and `type UnderflowError = UnderflowError`.
             if Set.member "predInt32" builtIns
               then "function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)]; }"
+              else "",
+            -- predUInt8: returns Left UnderflowError on 0, else Right (x - 1).
+            -- When x >= 1, (x - 1) is in 0..254, so no explicit mask is
+            -- needed to stay in UInt8 range — but we keep '& 0xFF' for
+            -- parallel structure with other UInt8 arithmetic helpers.
+            if Set.member "predUInt8" builtIns
+              then "function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }"
+              else "",
+            -- eqInt32 / eqUInt8: True=0, False=1 for `type Bool = True | False`.
+            -- Both incoming values are already '|0' / '& 0xFF' coerced, so '===' on
+            -- the JS Numbers gives the same answer as native i32/u8 equality.
+            if Set.member "eqInt32" builtIns
+              then "function __eqInt32(a, b){ return a === b ? [0] : [1]; }"
+              else "",
+            if Set.member "eqUInt8" builtIns
+              then "function __eqUInt8(a, b){ return a === b ? [0] : [1]; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
 
--- | Node-only convenience runner:
---   when run as a script, call 'main' with a single command-line argument (or empty).
-footer :: Text
-footer =
+-- | Node-only convenience runner for CLI scripts:
+--   when run as a script (not @require@-d), call @main@ with a single
+--   command-line argument (or empty string). Works inside the IIFE
+--   because @require@/@module@ are closed over from Node's module wrapper.
+cliFooter :: Text
+cliFooter =
   unlines
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",
@@ -66,10 +115,26 @@ footer =
     ]
 
 -- | Top-level declarations:
---   • 'CFunDef' → function declaration returning the rendered body.
---   • 'CValDef' → 'const name = <expr>;' (zero-arg defs are constants).
+--   • 'CFunDef' with 'CLoop' body (output of the TCO pass) → 'while (true)'
+--     loop whose body is emitted in statement form so 'CContinue' can
+--     rebind the function's parameters and 'continue' the loop instead of
+--     recursing. Rewriting a self-tail-call as a jump keeps the JS engine's
+--     call stack bounded, which matters on Node/V8 because ES2015 PTC was
+--     never shipped.
+--   • 'CFunDef' without 'CLoop' → plain @return <expr>;@.
+--   • 'CValDef' → 'const name = <expr>;'.
 emitDecl :: CDecl -> Text
 emitDecl = \case
+  CFunDef nm args (CLoop body) ->
+    "function "
+      <> mangle nm
+      <> "("
+      <> T.intercalate ", " (map mangle args)
+      <> "){\n"
+      <> "  while (true) {\n"
+      <> emitStmt args body
+      <> "  }\n"
+      <> "}"
   CFunDef nm args body ->
     "function "
       <> mangle nm
@@ -83,10 +148,66 @@ emitDecl = \case
   CValDef nm rhs ->
     "const " <> mangle nm <> " = " <> emitExpr rhs <> ";"
 
+-- | Emit an expression in /statement form/ for use inside a 'while (true)'
+-- loop introduced by 'CLoop':
+--   • 'CContinue' rebinds the function's parameters and jumps back to the
+--     loop head. Continue args are evaluated into temporaries first so a
+--     new value that reads old params (e.g. @acc + "."@) sees the old
+--     binding, not a half-updated one.
+--   • 'CCase' dispatches through @switch@ and recurses into statement form
+--     for each arm's body, because any arm might itself be a 'CContinue'.
+--   • Anything else is a final value — we return it.
+emitStmt :: [Name] -> CExpr -> Text
+emitStmt params = go
+  where
+    go :: CExpr -> Text
+    go = \case
+      CContinue newArgs ->
+        let temps = ["__t" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
+            declLines =
+              [ "    const " <> t <> " = " <> emitExpr a <> ";"
+              | (t, a) <- zip temps newArgs
+              ]
+            assignLines =
+              [ "    " <> mangle p <> " = " <> t <> ";"
+              | (p, t) <- zip params temps
+              ]
+         in unlines (declLines <> assignLines <> ["    continue;"])
+      CCase scrut alts ->
+        "    {\n      const __s = "
+          <> emitExpr scrut
+          <> ";\n      switch (__s[0]) {\n"
+          <> T.concat (map emitStmtAlt alts)
+          <> "      }\n    }\n"
+      e ->
+        "    return " <> emitExpr e <> ";\n"
+
+    emitStmtAlt :: (Int, [Name], CExpr) -> Text
+    emitStmtAlt (tag, vars, body) =
+      let bindings =
+            T.concat
+              [ "          const " <> mangle v <> " = __s[" <> show (i :: Int) <> "];\n"
+              | (v, i) <- zip vars [1 ..]
+              ]
+       in "        case "
+            <> show tag
+            <> ": {\n"
+            <> bindings
+            <> reindentStmt (emitStmt params body)
+            <> "        }\n"
+
+    -- 'emitStmt' produces lines indented for @while (true)@ depth (4 spaces).
+    -- Inside a @case@ we want them two levels deeper (10 spaces), so bump
+    -- each non-empty line by 6 spaces without touching blank ones.
+    reindentStmt :: Text -> Text
+    reindentStmt = unlines . map bump . lines
+      where
+        bump l = if T.null (T.strip l) then l else "      " <> l
+
 -- | Expressions:
---   • 'CPrim' is never a standalone value — it only appears in the callee of 'CCall'.
---   • 'PrimConcat' turns into '(a + b)'.
---   • 'PrimPrint' turns into '__print(x)'.
+--   • 'CBuiltIn' is never a standalone value — it only appears in the callee of 'CCall'.
+--   • 'IO.Stdout.print' turns into '__print(x)'.
+--   • 'BuiltIn.concatString' turns into '(a + b)'.
 --   • Generic calls: '(callee)(args...)' — we parenthesize the callee to be safe.
 emitExpr :: CExpr -> Text
 emitExpr = \case
@@ -97,9 +218,6 @@ emitExpr = \case
   -- free-floating JS Number.
   CIntLit n TInt32 -> "(" <> show n <> "|0)"
   CIntLit n TUInt8 -> "(" <> show n <> " & 0xFF)"
-  CPrim PrimConcat -> "/*<prim concat>*/" -- invariant: not a standalone term
-  CPrim PrimPrint -> "/*<prim print>*/" -- invariant: not a standalone term
-  CPrim (PrimShowInt _) -> "/*<prim showInt>*/" -- invariant: not a standalone term
   CBuiltIn n -> "/*<builtin " <> n <> ">*/" -- invariant: not a standalone term
   CCon tag fields ->
     "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
@@ -111,18 +229,10 @@ emitExpr = \case
       <> ")"
   CCall f xs ->
     case f of
-      CPrim PrimConcat ->
-        case xs of
-          [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
-          _ -> error "__concat: arity mismatch"
-      CPrim PrimPrint ->
+      CBuiltIn "IO.Stdout.print" ->
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
-      CPrim (PrimShowInt _) ->
-        case xs of
-          [x] -> "String(" <> emitExpr x <> ")"
-          _ -> error "__showInt: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" ->
             case xs of
@@ -132,10 +242,29 @@ emitExpr = \case
         case xs of
           [x] -> "__predInt32(" <> emitExpr x <> ")"
           _ -> error "BuiltIn.predInt32: arity mismatch"
+      CBuiltIn "predUInt8" ->
+        case xs of
+          [x] -> "__predUInt8(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.predUInt8: arity mismatch"
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8" ->
+            case xs of
+              [a, b] ->
+                let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+                 in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "concatString" ->
+        case xs of
+          [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
+          _ -> error "BuiltIn.concatString: arity mismatch"
       CBuiltIn n ->
         error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
+  -- 'untcoProgram' strips these before emission. Reaching them signals a
+  -- pipeline misorder (TCO ran but its inverse didn't), so crash loudly.
+  CLoop _ -> error "JS codegen: CLoop survived untcoProgram (pipeline bug)"
+  CContinue _ -> error "JS codegen: CContinue survived untcoProgram (pipeline bug)"
   where
     emitAlt (tag, vars, body) =
       let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]

@@ -23,7 +23,6 @@ codegenCLR prog@(CoreProgram decls) =
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
       ctx = Ctx {cValDefs = valNames, cFunDefs = funNames, cArities = arities}
-      prims = usedPrims prog
       builtIns = usedBuiltIns prog
       gate cond m = if cond then m else ""
    in T.intercalate "\n"
@@ -35,11 +34,17 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             initMethod,
             "",
-            gate (Set.member PrimConcat prims) concatMethod,
+            gate (Set.member "concatString" builtIns) concatMethod,
             "",
-            gate (Set.member PrimPrint prims) printMethod,
+            gate (Set.member "IO.Stdout.print" builtIns) printMethod,
             "",
             gate (Set.member "predInt32" builtIns) predInt32Method,
+            "",
+            gate (Set.member "predUInt8" builtIns) predUInt8Method,
+            "",
+            gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "IL_eq_i32"),
+            "",
+            gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "IL_eq_u8"),
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
@@ -171,6 +176,100 @@ predInt32Method =
       "  }"
     ]
 
+-- predUInt8: UInt8 -> Either UnderflowError UInt8.
+--   Mirrors 'predInt32Method' except the boundary check is against 0.
+--   UInt8 values are boxed as System.Int32 (how CIntLit emits them), so
+--   the unbox is the same. 'bne.un.s' against a pushed 0 (short form
+--   ldc.i4.0) jumps to the ok block when the value is non-zero;
+--   otherwise we fall through to the overflow block.
+predUInt8Method :: Text
+predUInt8Method =
+  unlines
+    [ "  .method public hidebysig static object __predUInt8(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4.0",
+      "    bne.un.s IL_predu8_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_predu8_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldc.i4.1",
+      "    sub",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- eqInt32 / eqUInt8: two integers of the same type → Bool.
+--   On the CLR both Int32 and UInt8 values are boxed as Int32 (that's how
+--   CIntLit emits them), so the two methods share a single builder
+--   parameterised by name and a label suffix. Returns a one-slot object[]
+--   with boxed tag 0 (True) on equal, 1 (False) otherwise.
+eqMethod :: Text -> Text -> Text
+eqMethod name lbl =
+  unlines
+    [ "  .method public hidebysig static object " <> name <> "(object, object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    bne.un.s " <> lbl <> "_ne",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  " <> lbl <> "_ne:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -201,6 +300,24 @@ mainMethod =
 
 emitDecl :: Ctx -> CDecl -> Text
 emitDecl ctx = \case
+  -- TCO-wrapped body. The method's argument slots are already mutable
+  -- (@starg@), so there is no separate alloca ceremony: a 'CContinue'
+  -- evaluates its new argument values, pops them into the argument
+  -- slots (reverse order, since the stack is LIFO), and jumps back to
+  -- the @IL_tco_loop@ label placed at the method's first instruction.
+  -- Every real return path evaluates its value and emits its own @ret@;
+  -- 'CContinue' paths end in @br IL_tco_loop@ instead.
+  CFunDef nm args (CLoop body) ->
+    let varMap = Map.fromList [(a, "    ldarg" <> ldargSuffix i) | (a, i) <- zip args [0 ..]]
+        desc = objMethodDesc (length args)
+        bodyText = emitTailText ctx varMap args body
+     in unlines
+          [ "  .method public hidebysig static object " <> mangle nm <> desc <> " cil managed",
+            "  {",
+            "  IL_tco_loop:",
+            bodyText,
+            "  }"
+          ]
   CFunDef nm args body ->
     let varMap = Map.fromList [(a, "    ldarg" <> ldargSuffix i) | (a, i) <- zip args [0 ..]]
         desc = objMethodDesc (length args)
@@ -254,8 +371,6 @@ emitExprText ctx varMap = \case
       [ "    ldc.i4 " <> show (fromInteger n :: Int32),
         "    box [System.Runtime]System.Int32"
       ]
-  CPrim _ ->
-    "    ldnull"
   CBuiltIn _ ->
     "    ldnull" -- invariant: not a standalone term; dispatched from CCall
   CCon tag fields ->
@@ -307,27 +422,12 @@ emitExprText ctx varMap = \case
           <> ["  " <> joinLabel <> ":"]
   CCall f xs ->
     case f of
-      CPrim PrimConcat
-        | [a, b] <- xs ->
-            T.intercalate
-              "\n"
-              [ emitExprText ctx varMap a,
-                emitExprText ctx varMap b,
-                "    call object AwsumMain::__concat(object, object)"
-              ]
-      CPrim PrimPrint
+      CBuiltIn "IO.Stdout.print"
         | [x] <- xs ->
             T.intercalate
               "\n"
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__print(object)"
-              ]
-      CPrim (PrimShowInt _)
-        | [x] <- xs ->
-            T.intercalate
-              "\n"
-              [ emitExprText ctx varMap x,
-                "    callvirt instance string [System.Runtime]System.Object::ToString()"
               ]
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
@@ -343,6 +443,31 @@ emitExprText ctx varMap = \case
               "\n"
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__predInt32(object)"
+              ]
+      CBuiltIn "predUInt8"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__predUInt8(object)"
+              ]
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8",
+          [a, b] <- xs ->
+            let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx varMap a,
+                    emitExprText ctx varMap b,
+                    "    call object AwsumMain::" <> fn <> "(object, object)"
+                  ]
+      CBuiltIn "concatString"
+        | [a, b] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap a,
+                emitExprText ctx varMap b,
+                "    call object AwsumMain::__concat(object, object)"
               ]
       CBuiltIn n ->
         error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
@@ -368,6 +493,58 @@ emitExprText ctx varMap = \case
               $ [fText, "    castclass " <> funcType]
               <> argTexts
               <> ["    callvirt instance object " <> funcType <> "::Invoke" <> invokeDesc]
+  CLoop _ -> error "CLR codegen: CLoop reached emitExprText (non-tail position)"
+  CContinue _ -> error "CLR codegen: CContinue reached emitExprText (non-tail position)"
+
+-- | Emit @body@ in tail position under @IL_tco_loop:@.
+-- 'CContinue' evaluates its new arguments (so old parameter reads see
+-- the pre-update values), pops them into argument slots in reverse —
+-- the CIL stack is LIFO, so the last-evaluated value is on top and
+-- needs to land in the last argument slot — then @br IL_tco_loop@.
+-- Any other tail shape computes a value and ends with its own @ret@.
+-- 'CCase' chains structurally so each arm terminates itself.
+emitTailText :: Ctx -> Map Text Text -> [Text] -> CExpr -> Text
+emitTailText ctx varMap _params = go varMap
+  where
+    go :: Map Text Text -> CExpr -> Text
+    go vmap = \case
+      CContinue newArgs ->
+        let evals = T.intercalate "\n" [emitExprText ctx vmap a | a <- newArgs]
+            stargs =
+              T.intercalate
+                "\n"
+                [ "    starg.s " <> show i
+                | i <- reverse [0 .. length newArgs - 1]
+                ]
+         in evals <> "\n" <> stargs <> "\n    br IL_tco_loop"
+      CCase scrut alts ->
+        let sorted = sortWith (\(t, _, _) -> t) alts
+            scrutText = emitExprText ctx vmap scrut
+            extractTag =
+              T.intercalate
+                "\n"
+                [ "    dup",
+                  emitLdcI4 0,
+                  "    ldelem.ref",
+                  "    unbox.any [System.Runtime]System.Int32"
+                ]
+            armLabels = ["IL_tco_arm_" <> show tag | (tag, _, _) <- sorted]
+            switchText = "    switch (" <> T.intercalate ", " armLabels <> ")"
+            emitArm (_, vars, body) lbl =
+              let bindings = zip vars [0 :: Int ..]
+                  storeCode =
+                    T.concat
+                      [ "    dup\n" <> emitLdcI4 (i :: Int) <> "\n    ldelem.ref\n    stloc" <> ldlocSuffix slot <> "\n"
+                      | ((_, slot), i) <- zip bindings [1 :: Int ..]
+                      ]
+                  vmap' = foldl' (\m (v, slot) -> Map.insert v ("    ldloc" <> ldlocSuffix slot) m) vmap bindings
+               in "  " <> lbl <> ":\n" <> storeCode <> "    pop\n" <> go vmap' body
+            armTexts = [emitArm alt lbl | (alt, lbl) <- zip sorted armLabels]
+         in T.intercalate "\n"
+              $ [scrutText, extractTag, switchText]
+              <> armTexts
+      other ->
+        emitExprText ctx vmap other <> "\n    ret"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

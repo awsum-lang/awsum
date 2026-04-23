@@ -1,0 +1,44 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "countDown" [ "n" ]
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "predUInt8" )
+                    [ CVar "n" ]
+                )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "showUInt8" )
+                        [ CVar "n" ]
+                    )
+                ,
+                    ( 1
+                    , [ "m" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "showUInt8" )
+                                [ CVar "n" ]
+                            , CString ","
+                            ]
+                        , CCall
+                            ( CVar "countDown" )
+                            [ CVar "m" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "countDown" )
+                    [ CIntLit 255 TUInt8 ]
+                ]
+            )
+        ]
+    }

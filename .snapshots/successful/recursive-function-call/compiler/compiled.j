@@ -19,6 +19,7 @@
 .end method
 
 .method public static v_advanceStep(Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
   aload_0
   dup
   iconst_0
@@ -26,11 +27,11 @@
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    2: L_arm_2
-    default: L_arm_0
-L_arm_0:
+    0: L_tco_arm_0
+    1: L_tco_arm_1
+    2: L_tco_arm_2
+    default: L_tco_arm_0
+L_tco_arm_0:
   pop
   iconst_1
   anewarray java/lang/Object
@@ -39,9 +40,9 @@ L_arm_0:
   iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v_advanceStep(Ljava/lang/Object;)Ljava/lang/Object;
-  goto L_join
-L_arm_1:
+  astore_0
+  goto L_tco_loop
+L_tco_arm_1:
   pop
   iconst_1
   anewarray java/lang/Object
@@ -50,13 +51,11 @@ L_arm_1:
   iconst_2
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v_advanceStep(Ljava/lang/Object;)Ljava/lang/Object;
-  goto L_join
-L_arm_2:
+  astore_0
+  goto L_tco_loop
+L_tco_arm_2:
   pop
   ldc "Done!"
-  goto L_join
-L_join:
   areturn
 .end method
 

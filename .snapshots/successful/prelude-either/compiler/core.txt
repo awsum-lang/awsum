@@ -6,7 +6,8 @@ CoreProgram
                 [
                     ( 0
                     , [ "e" ]
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "left: "
                         , CVar "e"
                         ]
@@ -14,7 +15,8 @@ CoreProgram
                 ,
                     ( 1
                     , [ "v" ]
-                    , CCall ( CPrim PrimConcat )
+                    , CCall
+                        ( CBuiltIn "concatString" )
                         [ CString "right: "
                         , CVar "v"
                         ]
@@ -22,9 +24,12 @@ CoreProgram
                 ]
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall ( CPrim PrimPrint )
-                [ CCall ( CPrim PrimConcat )
-                    [ CCall ( CPrim PrimConcat )
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
                             [ CCon 0

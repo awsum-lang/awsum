@@ -4,20 +4,24 @@
 --   • zero-arg surface defs are lowered to /constants/ ('CValDef').
 --
 -- Invariants (assumed by codegens and passes):
---   • 'CPrim' must only appear in the /function position/ of 'CCall' (never as a standalone term).
---   • Arity of 'CCall' arguments must match the primitive being called.
+--   • 'CBuiltIn' must only appear in the /function position/ of 'CCall' (never as a standalone term).
+--   • Arity of 'CCall' arguments must match the built-in being called.
 --   • 'CValDef' models a pure /constant/ (no effects by construction).
 --   • Names in 'CVar' refer either to top-level defs or function parameters.
+--   • 'CLoop' appears only at the top of a 'CFunDef' body, produced by the
+--     TCO pass. Inside the wrapped body, self-recursive tail calls have
+--     been replaced with 'CContinue'.
+--   • 'CContinue' appears only inside a 'CLoop' wrapping the same function.
+--     Its argument list has the same arity as the enclosing function's
+--     parameter list, positionally matched.
 module Awsum.Core
-  ( Prim (..),
-    IntType (..),
+  ( IntType (..),
     intSigned,
     intWidth,
     intTypeName,
     CExpr (..),
     CDecl (..),
     CoreProgram (..),
-    usedPrims,
     usedBuiltIns,
     usesIntLit,
   )
@@ -26,19 +30,6 @@ where
 import Awsum.Syntax (Name)
 import Data.Set qualified as Set
 import Relude
-
--- | Built-in primitives known to the backends.
--- Extend this enum when you add new operations (e.g. 'PrimLen', 'PrimTake', …).
-data Prim
-  = -- | String concatenation.
-    PrimConcat
-  | -- | Print to stdout (returns unit conceptually).
-    PrimPrint
-  | -- | Render an integer value of a given type as a String.
-    --   The 'IntType' is carried on the primitive so each backend dispatches
-    --   on a concrete variant (never on a (signed, width) pair with fallbacks).
-    PrimShowInt IntType
-  deriving stock (Show, Eq, Ord)
 
 -- | Concrete built-in integer type. One constructor per shipped type so
 --   every pattern match is exhaustive — adding a future variant (Int64,
@@ -70,9 +61,7 @@ intTypeName = \case
 
 -- | Core expressions.
 data CExpr
-  = -- | A primitive /as a callee/. By invariant, never a standalone value.
-    CPrim Prim
-  | -- | Local or top-level variable reference.
+  = -- | Local or top-level variable reference.
     CVar Name
   | -- | String literal (already unescaped).
     CString Text
@@ -80,17 +69,29 @@ data CExpr
     --   Value is stored as arbitrary-precision 'Integer'; the typechecker
     --   has already verified it fits in 'IntType''s range.
     CIntLit Integer IntType
-  | -- | Function/primitive application; left-associated by construction.
+  | -- | Function/built-in application; left-associated by construction.
     CCall CExpr [CExpr]
   | -- | Constructor: integer tag + fields (fields empty for nullary constructors).
     CCon Int [CExpr]
   | -- | Case expression: scrutinee + alternatives @[(tag, bound-var names, body)]@.
     CCase CExpr [(Int, [Name], CExpr)]
-  | -- | Reference to a compiler-provided built-in, resolved from 'EBuiltIn'.
-    --   The 'Name' is looked up in 'Awsum.BuiltIn' by both the typechecker
-    --   (before lowering — for the type) and every backend (at codegen —
-    --   for the per-target implementation).
+  | -- | Reference to a compiler-provided built-in. The 'Name' is either
+    --   an unqualified prelude built-in (e.g. @showInt32@) looked up in
+    --   'Awsum.BuiltIn', or a dotted qualified name (e.g.
+    --   @IO.Stdout.print@) looked up in the program type's platform
+    --   table ('Awsum.Program.platformTable'). Every backend dispatches
+    --   on this name to emit the per-target implementation.
     CBuiltIn Name
+  | -- | Function body wrapped by the TCO pass. Semantically the value of
+    --   the wrapped expression, operationally a jump label: when the body
+    --   evaluates to a 'CContinue', execution jumps back to the label with
+    --   the function's parameters re-bound to the continue arguments. Only
+    --   appears at the top of a 'CFunDef' body.
+    CLoop CExpr
+  | -- | Positional re-entry into the nearest enclosing 'CLoop' with fresh
+    --   parameter values. Produced by the TCO pass in place of a self-tail
+    --   call. Arity must match the enclosing function's parameter list.
+    CContinue [CExpr]
   deriving stock (Show, Eq)
 
 -- | Top-level Core declarations.
@@ -106,27 +107,9 @@ data CDecl
 newtype CoreProgram = CoreProgram {cdecls :: [CDecl]}
   deriving stock (Show, Eq)
 
--- | Every 'Prim' referenced in the program. Backends use this to skip
---   runtime helpers that no user code reaches (e.g. @__print@ when the
---   program never imports 'IO.Stdout').
-usedPrims :: CoreProgram -> Set Prim
-usedPrims (CoreProgram ds) = foldMap declPrims ds
-  where
-    declPrims (CFunDef _ _ body) = exprPrims body
-    declPrims (CValDef _ body) = exprPrims body
-    exprPrims = \case
-      CPrim p -> Set.singleton p
-      CBuiltIn _ -> mempty
-      CVar _ -> mempty
-      CString _ -> mempty
-      CIntLit _ _ -> mempty
-      CCall f xs -> exprPrims f <> foldMap exprPrims xs
-      CCon _ fs -> foldMap exprPrims fs
-      CCase s alts -> exprPrims s <> foldMap (\(_, _, b) -> exprPrims b) alts
-
 -- | Every 'CBuiltIn' name referenced in the program. Backends gate
---   runtime helpers (@__predInt32@, future @__addInt32@, ...) on this so
---   programs that don't touch a given primitive don't pay for it.
+--   runtime helpers (@__print@, @__predInt32@, future @__addInt32@, ...)
+--   on this so programs that don't touch a given built-in don't pay for it.
 usedBuiltIns :: CoreProgram -> Set Name
 usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
   where
@@ -134,13 +117,14 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
     declBuiltIns (CValDef _ body) = exprBuiltIns body
     exprBuiltIns = \case
       CBuiltIn n -> Set.singleton n
-      CPrim _ -> mempty
       CVar _ -> mempty
       CString _ -> mempty
       CIntLit _ _ -> mempty
       CCall f xs -> exprBuiltIns f <> foldMap exprBuiltIns xs
       CCon _ fs -> foldMap exprBuiltIns fs
       CCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
+      CLoop b -> exprBuiltIns b
+      CContinue xs -> foldMap exprBuiltIns xs
 
 -- | Does the program contain any integer literal? Backends that rely on
 --   boxing helpers (e.g. WASM's @__box_i32@) can drop them when the
@@ -152,10 +136,11 @@ usesIntLit (CoreProgram ds) = any declHasInt ds
     declHasInt (CValDef _ body) = exprHasInt body
     exprHasInt = \case
       CIntLit _ _ -> True
-      CPrim _ -> False
       CBuiltIn _ -> False
       CVar _ -> False
       CString _ -> False
       CCall f xs -> exprHasInt f || any exprHasInt xs
       CCon _ fs -> any exprHasInt fs
       CCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
+      CLoop b -> exprHasInt b
+      CContinue xs -> any exprHasInt xs

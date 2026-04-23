@@ -1,4 +1,5 @@
 "use strict";
+(function () {
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_wrap(v_f, v_x){
@@ -21,3 +22,5 @@ if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
   if (typeof main === 'function') main(arg);
 }
+
+})();

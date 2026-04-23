@@ -9,6 +9,11 @@
    no `main`: the presence of `main` is an entry-point concern, not a
    module-level one. -}
 
+{- Two-valued sum used by equality and other boolean-returning primitives.
+   Foundation for a future `if`/`then`/`else` sugar and logical operators. -}
+
+type Bool = True | False
+
 {- Two-constructor sum: a `Left` carrying an error / failure value, or a
    `Right` carrying a success value. This is how honest-arithmetic and
    other effectful-but-total primitives report whether they succeeded,
@@ -20,16 +25,28 @@ type Either a b = Left a | Right b
    type's range (e.g. `predInt32 minInt32`). Single-constructor sum so
    there is nothing to pattern-match on beyond the fact that it happened. -}
 
+(++) : String -> String -> String
+(++) = BuiltIn.concatString
+
 type UnderflowError = UnderflowError
 
 showUnderflowError : UnderflowError -> String
 showUnderflowError _ = "UnderflowError"
 
-showInt32 : Int32 -> String
-showInt32 = BuiltIn.showInt32
+eqUInt8 : UInt8 -> UInt8 -> Bool
+eqUInt8 = BuiltIn.eqUInt8
 
 showUInt8 : UInt8 -> String
 showUInt8 = BuiltIn.showUInt8
+
+predUInt8 : UInt8 -> Either UnderflowError UInt8
+predUInt8 = BuiltIn.predUInt8
+
+eqInt32 : Int32 -> Int32 -> Bool
+eqInt32 = BuiltIn.eqInt32
+
+showInt32 : Int32 -> String
+showInt32 = BuiltIn.showInt32
 
 predInt32 : Int32 -> Either UnderflowError Int32
 predInt32 = BuiltIn.predInt32

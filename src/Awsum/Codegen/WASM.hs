@@ -56,7 +56,7 @@ codegenWASM prog@(CoreProgram decls) =
           table (length funDefs),
           elemSection funDefs,
           typeDecls indirectArities,
-          runtimeHelpers emptyOff (usedPrims prog) (usedBuiltIns prog) (usesIntLit prog),
+          runtimeHelpers emptyOff (usedBuiltIns prog) (usesIntLit prog),
           T.intercalate "\n\n" (map (emitDecl ctx) decls),
           "",
           startFunc,
@@ -115,11 +115,12 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CIntLit _ _ -> []
-  CPrim _ -> []
   CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
+  CLoop b -> stringsInExpr b
+  CContinue xs -> concatMap stringsInExpr xs
 
 -- | Collect arities used in indirect calls (CCall where callee is a param, not a known fun/prim).
 collectIndirectArities :: CoreProgram -> Set Text -> Set Int
@@ -236,21 +237,23 @@ typeDecls arities
 --   feeds argv into main; the rest are small infrastructure), the
 --   higher-level helpers (@__concat@, @__print@, @__box_i32@,
 --   @__show_i32@, @__predInt32@) are gated on usage.
-runtimeHelpers :: Int -> Set Prim -> Set Name -> Bool -> Text
-runtimeHelpers emptyOff prims builtIns hasIntLit =
+runtimeHelpers :: Int -> Set Name -> Bool -> Text
+runtimeHelpers emptyOff builtIns hasIntLit =
   let lns =
         filter
           (not . T.null)
           [ rtStrlen,
             rtAlloc,
             rtMemcpy,
-            if Set.member PrimConcat prims then rtConcat else "",
-            if Set.member PrimPrint prims then rtPrint else "",
+            if Set.member "concatString" builtIns then rtConcat else "",
+            if Set.member "IO.Stdout.print" builtIns then rtPrint else "",
             if hasIntLit then rtBoxI32 else "",
-            if any (`Set.member` prims) [PrimShowInt TInt32, PrimShowInt TUInt8] || any (`Set.member` builtIns) ["showInt32", "showUInt8"]
+            if any (`Set.member` builtIns) ["showInt32", "showUInt8"]
               then rtShowI32
               else "",
             if Set.member "predInt32" builtIns then rtPredI32 else "",
+            if Set.member "predUInt8" builtIns then rtPredU8 else "",
+            if any (`Set.member` builtIns) ["eqInt32", "eqUInt8"] then rtEqI32 else "",
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -412,6 +415,54 @@ rtPredI32 =
       "        (local.get $cell))))"
     ]
 
+-- | predUInt8: UInt8 -> Either UnderflowError UInt8.
+--   Mirrors 'rtPredI32' but checks against 0 and subtracts without
+--   masking — (v - 1) is in 0..254 when v >= 1, so it stays in UInt8
+--   range naturally. Container layout and tag assignment match
+--   'rtPredI32' exactly.
+rtPredU8 :: Text
+rtPredU8 =
+  unlines
+    [ "  (func $__predUInt8 (param $p i32) (result i32)",
+      "    (local $v i32) (local $ue i32) (local $box i32) (local $cell i32)",
+      "    (local.set $v (i32.load (local.get $p)))",
+      "    (if (result i32) (i32.eqz (local.get $v))",
+      "      (then",
+      "        (local.set $ue (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.sub (local.get $v) (i32.const 1)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | eqInt32 / eqUInt8: two boxed integers → Bool (one-slot container).
+--   Int32 and UInt8 both flow as pointers to an i32 cell; UInt8 values are
+--   stored masked to 0..255, so a plain i32.eq gives the same answer as
+--   native u8 equality. True=0, False=1 matches declaration order in
+--   `type Bool = True | False`.
+rtEqI32 :: Text
+rtEqI32 =
+  unlines
+    [ "  (func $__eq_i32 (param $a i32) (param $b i32) (result i32)",
+      "    (local $cell i32)",
+      "    (local.set $cell (call $__alloc (i32.const 4)))",
+      "    (if (result i32) (i32.eq (i32.load (local.get $a)) (i32.load (local.get $b)))",
+      "      (then",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (local.get $cell))))"
+    ]
+
 rtGetArg :: Int -> Text
 rtGetArg emptyOff =
   unlines
@@ -440,6 +491,33 @@ startFunc =
 
 emitDecl :: WasmCtx -> CDecl -> Text
 emitDecl ctx = \case
+  -- TCO-wrapped body. WASM parameters double as mutable locals, so a
+  -- 'CContinue' can rebind them directly; we only need extra @$__k@
+  -- locals to stage new values so that cross-parameter reads see the
+  -- old bindings. The whole body runs inside @(loop $tco_top ...)@, and
+  -- @br $tco_top@ restarts it instead of recursing.
+  CFunDef nm args (CLoop body) ->
+    let paramSet = Set.fromList args
+        localCtx = ctx {wParams = paramSet, wLocalExprs = Map.empty}
+        wasmParams = T.intercalate " " (map (\a -> "(param $" <> mangle a <> " i32)") args)
+        locals = collectLocals body
+        tcoTemps =
+          T.concat
+            [ "\n    (local $__k" <> show (i :: Int) <> " i32)"
+            | i <- [0 .. length args - 1]
+            ]
+     in "  (func $"
+          <> mangle nm
+          <> " (export \""
+          <> mangle nm
+          <> "\") "
+          <> wasmParams
+          <> " (result i32)"
+          <> locals
+          <> tcoTemps
+          <> "\n    (loop $tco_top (result i32) "
+          <> emitTailWat localCtx args body
+          <> "))"
   CFunDef nm args body ->
     let paramSet = Set.fromList args
         localCtx = ctx {wParams = paramSet, wLocalExprs = Map.empty}
@@ -469,6 +547,60 @@ emitDecl ctx = \case
           <> emitExpr localCtx rhs
           <> ")"
 
+-- | Emit @body@ in tail position under a @(loop $tco_top ...)@.
+-- 'CContinue' rebinds the loop's parameters and jumps back to the loop
+-- head; any other tail shape produces an @i32@ value that becomes the
+-- function's result. 'CCase' chains structurally so each arm is itself
+-- emitted in tail form — either a value or a @br@ terminator.
+emitTailWat :: WasmCtx -> [Text] -> CExpr -> Text
+emitTailWat ctx0 params = go ctx0
+  where
+    go :: WasmCtx -> CExpr -> Text
+    go ctx = \case
+      CContinue newArgs ->
+        let temps = ["$__k" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
+            evals =
+              [ "(local.set " <> t <> " " <> emitExpr ctx a <> ")"
+              | (t, a) <- zip temps newArgs
+              ]
+            rebinds =
+              [ "(local.set $" <> mangle p <> " (local.get " <> t <> "))"
+              | (p, t) <- zip params temps
+              ]
+         in T.intercalate " " (evals <> rebinds <> ["(br $tco_top)"])
+      CCase scrut alts ->
+        let sorted = sortWith (\(t, _, _) -> t) alts
+            scrutCode = emitExpr ctx scrut
+         in "(block (result i32) (local.set $__scrut "
+              <> scrutCode
+              <> ") "
+              <> buildTailChain ctx sorted
+              <> ")"
+      other -> emitExpr ctx other
+
+    buildTailChain :: WasmCtx -> [(Int, [Text], CExpr)] -> Text
+    buildTailChain _ [] = "(unreachable)"
+    buildTailChain ctx [(_, vars, body)] = go (bindVars ctx vars) body
+    buildTailChain ctx ((tag, vars, body) : rest) =
+      "(if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const "
+        <> show tag
+        <> ")) (then "
+        <> go (bindVars ctx vars) body
+        <> ") (else "
+        <> buildTailChain ctx rest
+        <> "))"
+
+    -- Mirror 'emitCaseExpr.bindVars': each case-bound variable becomes an
+    -- inline @i32.load offset=N (local.get $__scrut)@ expression, registered
+    -- in 'wLocalExprs' so 'emitExpr' rewrites @CVar v@ to that load on sight.
+    bindVars :: WasmCtx -> [Text] -> WasmCtx
+    bindVars ctx vars =
+      let entries =
+            [ (v, "(i32.load offset=" <> show (i * 4 :: Int) <> " (local.get $__scrut))")
+            | (v, i) <- zip vars [1 :: Int ..]
+            ]
+       in ctx {wLocalExprs = foldl' (\m (k, e) -> Map.insert k e m) ctx.wLocalExprs entries}
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expressions
 -- ════════════════════════════════════════════════════════════════════════════
@@ -489,8 +621,6 @@ emitExpr ctx = \case
          in "(i32.const " <> show idx <> ")"
     | otherwise ->
         "(i32.const 0)"
-  CPrim _ ->
-    "(i32.const 0)"
   CBuiltIn _ ->
     "(i32.const 0)" -- invariant: not a standalone term; dispatched from CCall
   CIntLit n _ ->
@@ -510,15 +640,9 @@ emitExpr ctx = \case
     emitCaseExpr ctx scrut alts
   CCall f xs ->
     case f of
-      CPrim PrimConcat
-        | [a, b] <- xs ->
-            "(call $__concat " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
-      CPrim PrimPrint
+      CBuiltIn "IO.Stdout.print"
         | [x] <- xs ->
             "(call $__print " <> emitExpr ctx x <> ")"
-      CPrim (PrimShowInt _)
-        | [x] <- xs ->
-            "(call $__show_i32 " <> emitExpr ctx x <> ")"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->
@@ -526,6 +650,16 @@ emitExpr ctx = \case
       CBuiltIn "predInt32"
         | [x] <- xs ->
             "(call $__predInt32 " <> emitExpr ctx x <> ")"
+      CBuiltIn "predUInt8"
+        | [x] <- xs ->
+            "(call $__predUInt8 " <> emitExpr ctx x <> ")"
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8",
+          [a, b] <- xs ->
+            "(call $__eq_i32 " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn "concatString"
+        | [a, b] <- xs ->
+            "(call $__concat " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
       CBuiltIn n ->
         error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
@@ -540,6 +674,8 @@ emitExpr ctx = \case
               <> " "
               <> emitExpr ctx f
               <> ")"
+  CLoop _ -> error "WASM codegen: CLoop survived untcoProgram (pipeline bug)"
+  CContinue _ -> error "WASM codegen: CContinue survived untcoProgram (pipeline bug)"
 
 -- | Emit a case expression as nested @if\/else@ in WAT.
 --   Stores the scrutinee in @$__scrut@, extracts the tag from offset 0,

@@ -32,15 +32,14 @@ codegenLLVM :: CoreProgram -> Text
 codegenLLVM prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
-      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty}
+      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing}
       userCode = evalState (T.intercalate "\n\n" <$> traverse (emitDecl ctx) decls) 0
-      prims = usedPrims prog
       builtIns = usedBuiltIns prog
    in T.intercalate
         "\n"
         [ header,
           emitStringConstants pool,
-          runtime prims builtIns,
+          runtime builtIns,
           userCode,
           footer
         ]
@@ -53,7 +52,26 @@ data EmitCtx = EmitCtx
   { params :: Set Text,
     valDefs :: Set Text,
     stringPool :: StringPool,
-    locals :: Map Text Text -- case-bound variable name → SSA temp
+    locals :: Map Text Text, -- case-bound variable name → SSA temp
+
+    -- | @Just@ while we are emitting a 'CFunDef' body wrapped in 'CLoop'.
+    -- Carries the label / alloca-slot names the TCO pass's 'CContinue'
+    -- and the implicit @ret@ need. 'Nothing' outside a loop, so emitting
+    -- a 'CContinue' there is a pipeline bug, not a code path.
+    loopCtx :: Maybe LoopCtx
+  }
+
+-- | Scaffolding the 'CFunDef' prologue sets up so 'emitTail' can emit
+-- either a jump back to the loop head (for 'CContinue') or a jump to a
+-- single exit block that performs the one real @ret@.
+data LoopCtx = LoopCtx
+  { lcLoopLabel :: Text,
+    lcExitLabel :: Text,
+    lcRetSlot :: Text,
+    -- | Parameter → alloca slot SSA name, one per original parameter.
+    -- A 'CContinue' evaluates its arguments in order, then @store@s
+    -- each into the matching slot before branching to the loop head.
+    lcParamSlots :: [(Text, Text)]
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -95,11 +113,12 @@ stringsInExpr = \case
   CString s -> [s]
   CVar _ -> []
   CIntLit _ _ -> []
-  CPrim _ -> []
   CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
+  CLoop b -> stringsInExpr b
+  CContinue xs -> concatMap stringsInExpr xs
 
 emitStringConstants :: StringPool -> Text
 emitStringConstants pool
@@ -165,23 +184,22 @@ header =
 -- Runtime helpers
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | LLVM runtime helpers, tree-shaken: each @define@ is emitted only if
---   the corresponding 'Prim' or 'BuiltIn' is actually referenced in the
+-- | LLVM runtime helpers, tree-shaken: each @define@ is emitted only
+--   if the corresponding built-in is actually referenced in the
 --   program's Core.
-runtime :: Set Prim -> Set Name -> Text
-runtime prims builtIns =
+runtime :: Set Name -> Text
+runtime builtIns =
   T.intercalate "\n\n" (filter (not . T.null) parts) <> "\n"
   where
     parts =
-      [ if Set.member PrimConcat prims then rtConcat else "",
-        if Set.member PrimPrint prims then rtPrint else "",
-        if any (`Set.member` prims) [PrimShowInt TInt32, PrimShowInt TUInt8] || Set.member "showInt32" builtIns
-          then rtShowInt32
-          else "",
-        if any (`Set.member` prims) [PrimShowInt TInt32, PrimShowInt TUInt8] || Set.member "showUInt8" builtIns
-          then rtShowUInt8
-          else "",
-        if Set.member "predInt32" builtIns then rtPredInt32 else ""
+      [ if Set.member "concatString" builtIns then rtConcat else "",
+        if Set.member "IO.Stdout.print" builtIns then rtPrint else "",
+        if Set.member "showInt32" builtIns then rtShowInt32 else "",
+        if Set.member "showUInt8" builtIns then rtShowUInt8 else "",
+        if Set.member "predInt32" builtIns then rtPredInt32 else "",
+        if Set.member "predUInt8" builtIns then rtPredUInt8 else "",
+        if Set.member "eqInt32" builtIns then rtEqInt32 else "",
+        if Set.member "eqUInt8" builtIns then rtEqUInt8 else ""
       ]
     rtConcat =
       unlines
@@ -259,6 +277,67 @@ runtime prims builtIns =
           "  ret ptr %right",
           "}"
         ]
+    -- predUInt8 : UInt8 -> Either UnderflowError UInt8
+    --   `Left UnderflowError` on 0, `Right (v - 1)` otherwise. Value is
+    --   loaded as i8 (UInt8's storage width) and subtracted at i8 width;
+    --   underflow is impossible on this path since v >= 1.
+    rtPredUInt8 =
+      unlines
+        [ "define ptr @__predUInt8(ptr %p) {",
+          "  %v = load i8, ptr %p",
+          "  %is_zero = icmp eq i8 %v, 0",
+          "  br i1 %is_zero, label %overflow, label %ok",
+          "overflow:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = sub i8 %v, 1",
+          "  %box = call ptr @malloc(i64 1)",
+          "  store i8 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- eqInt32 / eqUInt8: unbox both pointers, compare the native value, and
+    -- return a one-slot Bool container ([tag]). True=0, False=1 matches
+    -- declaration order in `type Bool = True | False`.
+    rtEqInt32 =
+      unlines
+        [ "define ptr @__eqInt32(ptr %a, ptr %b) {",
+          "  %va = load i32, ptr %a",
+          "  %vb = load i32, ptr %b",
+          "  %eq = icmp eq i32 %va, %vb",
+          "  %tag = select i1 %eq, i64 0, i64 1",
+          "  %box = call ptr @malloc(i64 8)",
+          "  %tag_ptr = inttoptr i64 %tag to ptr",
+          "  store ptr %tag_ptr, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
+    rtEqUInt8 =
+      unlines
+        [ "define ptr @__eqUInt8(ptr %a, ptr %b) {",
+          "  %va = load i8, ptr %a",
+          "  %vb = load i8, ptr %b",
+          "  %eq = icmp eq i8 %va, %vb",
+          "  %tag = select i1 %eq, i64 0, i64 1",
+          "  %box = call ptr @malloc(i64 8)",
+          "  %tag_ptr = inttoptr i64 %tag to ptr",
+          "  store ptr %tag_ptr, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Footer: C main entry point
@@ -290,6 +369,91 @@ footer =
 
 emitDecl :: EmitCtx -> CDecl -> CodegenM Text
 emitDecl ctx = \case
+  -- TCO-wrapped body. The SSA function can't mutate parameters, so we
+  -- give each one an @alloca@ slot; the loop head loads the current
+  -- values into fresh SSA names, the body sees those, and a 'CContinue'
+  -- stores new values back before branching to the loop head. All real
+  -- return paths write into @ret.slot@ and branch to a single exit block
+  -- so the function still has exactly one @ret@ instruction.
+  CFunDef nm args (CLoop body) -> do
+    put 0
+    loopLbl <- freshLabel "tco.loop"
+    exitLbl <- freshLabel "tco.exit"
+    retSlot <- freshTemp
+    -- Allocate one slot per parameter and seed it with the incoming
+    -- argument value. The allocas live in the entry block so they are
+    -- visible across the loop back-edge.
+    paramSlotPairs <- forM args $ \a -> do
+      slot <- freshTemp
+      pure (mangle a, slot)
+    let entryAllocs =
+          T.concat
+            [ "  "
+                <> slot
+                <> " = alloca ptr\n"
+                <> "  store ptr %"
+                <> mangledName
+                <> ", ptr "
+                <> slot
+                <> "\n"
+            | (mangledName, slot) <- paramSlotPairs
+            ]
+        retAlloc = "  " <> retSlot <> " = alloca ptr\n"
+    -- At the loop head, pull each parameter back into an SSA value. These
+    -- are the names 'emitExpr' will resolve 'CVar' references to.
+    loadPairs <- forM (zip args paramSlotPairs) $ \(origName, (_, slot)) -> do
+      loaded <- freshTemp
+      pure
+        ( (origName, loaded),
+          "  " <> loaded <> " = load ptr, ptr " <> slot <> "\n"
+        )
+    let loopLocals = Map.fromList (map fst loadPairs)
+        loadCode = T.concat (map snd loadPairs)
+        lctx =
+          LoopCtx
+            { lcLoopLabel = loopLbl,
+              lcExitLabel = exitLbl,
+              lcRetSlot = retSlot,
+              lcParamSlots = paramSlotPairs
+            }
+        -- 'locals' shadows 'params' inside the loop body — the fresh
+        -- loaded SSA names are what the body should read, not the raw
+        -- function parameters (those are only used once, in @entry@).
+        localCtx =
+          ctx
+            { params = Set.empty,
+              locals = loopLocals,
+              loopCtx = Just lctx
+            }
+    bodyInstrs <- emitTail localCtx body
+    retLoaded <- freshTemp
+    let llvmArgs = T.intercalate ", " (map (\a -> "ptr %" <> mangle a) args)
+    pure
+      $ "define ptr @"
+      <> mangle nm
+      <> "("
+      <> llvmArgs
+      <> ") {\n"
+      <> "entry:\n"
+      <> entryAllocs
+      <> retAlloc
+      <> "  br label %"
+      <> loopLbl
+      <> "\n"
+      <> loopLbl
+      <> ":\n"
+      <> loadCode
+      <> bodyInstrs
+      <> exitLbl
+      <> ":\n"
+      <> "  "
+      <> retLoaded
+      <> " = load ptr, ptr "
+      <> retSlot
+      <> "\n"
+      <> "  ret ptr "
+      <> retLoaded
+      <> "\n}"
   CFunDef nm args body -> do
     put 0
     let paramSet = Set.fromList args
@@ -318,6 +482,114 @@ emitDecl ctx = \case
       <> "  ret ptr "
       <> result
       <> "\n}"
+
+-- | Emit @body@ in tail position under a 'CLoop'. Guarantees the current
+-- basic block is terminated (by @br@ to either the loop head or the exit
+-- block), so the caller does not append its own terminator.
+--
+-- 'CContinue' evaluates its arguments (reading the pre-update parameters),
+-- stores them into the loop's parameter slots, and jumps back to the loop
+-- head. Every other tail shape computes a value through 'emitExpr', stows
+-- it in the return slot, and jumps to the exit block — that way the
+-- function has exactly one @ret@ regardless of control flow.
+--
+-- 'CCase' is traversed structurally: each arm is emitted in tail form and
+-- self-terminating, so no @phi@ join is needed (the single @ret@ handles
+-- the merge).
+emitTail :: EmitCtx -> CExpr -> CodegenM Text
+emitTail ctx expr = case ctx.loopCtx of
+  Nothing -> error "LLVM codegen: emitTail called without LoopCtx (pipeline bug)"
+  Just lctx -> go lctx expr
+  where
+    go :: LoopCtx -> CExpr -> CodegenM Text
+    go lctx = \case
+      CContinue newArgs -> do
+        -- Evaluate all args before storing: a new value computed from the
+        -- old parameter must read the old value, never a half-updated slot.
+        argResults <- traverse (emitExpr ctx) newArgs
+        let (argInstrsList, argNames) = unzip argResults
+            stores =
+              T.concat
+                [ "  store ptr " <> r <> ", ptr " <> slot <> "\n"
+                | (r, (_, slot)) <- zip argNames lctx.lcParamSlots
+                ]
+        pure
+          $ T.concat argInstrsList
+          <> stores
+          <> "  br label %"
+          <> lctx.lcLoopLabel
+          <> "\n"
+      CCase scrut alts -> do
+        (instrS, resS) <- emitExpr ctx scrut
+        tagSlot <- freshTemp
+        tagLoaded <- freshTemp
+        tagTmp <- freshTemp
+        let tagInstr =
+              "  "
+                <> tagSlot
+                <> " = getelementptr ptr, ptr "
+                <> resS
+                <> ", i32 0\n"
+                <> "  "
+                <> tagLoaded
+                <> " = load ptr, ptr "
+                <> tagSlot
+                <> "\n"
+                <> "  "
+                <> tagTmp
+                <> " = ptrtoint ptr "
+                <> tagLoaded
+                <> " to i64\n"
+        defLabel <- freshLabel "tco.case.default"
+        -- Each arm lives in its own labelled block and self-terminates
+        -- (either to loop head or exit). No join / phi needed.
+        armBlocks <- forM alts $ \(tag, vars, body) -> do
+          lbl <- freshLabel ("tco.case.arm." <> show tag)
+          varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
+            slotT <- freshTemp
+            valT <- freshTemp
+            pure
+              ( "  "
+                  <> slotT
+                  <> " = getelementptr ptr, ptr "
+                  <> resS
+                  <> ", i32 "
+                  <> show idx
+                  <> "\n"
+                  <> "  "
+                  <> valT
+                  <> " = load ptr, ptr "
+                  <> slotT
+                  <> "\n",
+                (v, valT)
+              )
+          let varCode = T.concat (map fst varInstrs)
+              varBindings = map snd varInstrs
+              ctx' = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+          bodyInstrs <- emitTail ctx' body
+          pure (tag, lbl, varCode <> bodyInstrs)
+        let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _) <- armBlocks]
+            switchInstr = "  switch i64 " <> tagTmp <> ", label %" <> defLabel <> " [" <> switchCases <> " ]\n"
+            armsEmitted = T.concat [lbl <> ":\n" <> blk | (_, lbl, blk) <- armBlocks]
+            defBlock = defLabel <> ":\n  unreachable\n"
+        pure
+          $ instrS
+          <> tagInstr
+          <> switchInstr
+          <> armsEmitted
+          <> defBlock
+      other -> do
+        (instrs, result) <- emitExpr ctx other
+        pure
+          $ instrs
+          <> "  store ptr "
+          <> result
+          <> ", ptr "
+          <> lctx.lcRetSlot
+          <> "\n"
+          <> "  br label %"
+          <> lctx.lcExitLabel
+          <> "\n"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expressions
@@ -372,8 +644,6 @@ emitExpr ctx = \case
           <> "\n",
         buf
       )
-  CPrim _ ->
-    pure ("", "null")
   CBuiltIn _ ->
     pure ("", "null") -- invariant: not a standalone term; dispatched from CCall
   CCon tag fields -> do
@@ -497,18 +767,7 @@ emitExpr ctx = \case
       )
   CCall f xs ->
     case f of
-      CPrim PrimConcat ->
-        case xs of
-          [a, b] -> do
-            (instrA, resA) <- emitExpr ctx a
-            (instrB, resB) <- emitExpr ctx b
-            tmp <- freshTemp
-            pure
-              ( instrA <> instrB <> "  " <> tmp <> " = call ptr @__concat(ptr " <> resA <> ", ptr " <> resB <> ")\n",
-                tmp
-              )
-          _ -> error "__concat: arity mismatch"
-      CPrim PrimPrint ->
+      CBuiltIn "IO.Stdout.print" ->
         case xs of
           [x] -> do
             (instrX, resX) <- emitExpr ctx x
@@ -518,19 +777,6 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "__print: arity mismatch"
-      CPrim (PrimShowInt it) ->
-        case xs of
-          [x] -> do
-            (instrX, resX) <- emitExpr ctx x
-            tmp <- freshTemp
-            let fn = case it of
-                  TInt32 -> "@__showInt32" :: Text
-                  TUInt8 -> "@__showUInt8"
-            pure
-              ( instrX <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resX <> ")\n",
-                tmp
-              )
-          _ -> error "__showInt: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" ->
             case xs of
@@ -556,6 +802,43 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "BuiltIn.predInt32: arity mismatch"
+      CBuiltIn "predUInt8" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__predUInt8(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.predUInt8: arity mismatch"
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8" ->
+            case xs of
+              [a, b] -> do
+                (instrA, resA) <- emitExpr ctx a
+                (instrB, resB) <- emitExpr ctx b
+                tmp <- freshTemp
+                let fn :: Text
+                    fn = case name of
+                      "eqUInt8" -> "@__eqUInt8"
+                      _ -> "@__eqInt32"
+                pure
+                  ( instrA <> instrB <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ", ptr " <> resB <> ")\n",
+                    tmp
+                  )
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "concatString" ->
+        case xs of
+          [a, b] -> do
+            (instrA, resA) <- emitExpr ctx a
+            (instrB, resB) <- emitExpr ctx b
+            tmp <- freshTemp
+            pure
+              ( instrA <> instrB <> "  " <> tmp <> " = call ptr @__concat(ptr " <> resA <> ", ptr " <> resB <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.concatString: arity mismatch"
       CBuiltIn n ->
         error ("LLVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ -> do
@@ -568,6 +851,8 @@ emitExpr ctx = \case
           ( allInstrs <> "  " <> tmp <> " = call ptr " <> resF <> "(" <> argList <> ")\n",
             tmp
           )
+  CLoop _ -> error "LLVM codegen: CLoop survived untcoProgram (pipeline bug)"
+  CContinue _ -> error "LLVM codegen: CContinue survived untcoProgram (pipeline bug)"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling

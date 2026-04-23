@@ -22,6 +22,7 @@ module Awsum.Prelude
 where
 
 import Awsum.Parser (parseProgram)
+import Awsum.Program (ProgramType)
 import Awsum.Syntax (Decl (..), Name, Program (..))
 import Awsum.Typing (TypeError, Warning (..), typecheckProgram)
 import Data.FileEmbed (embedStringFile)
@@ -42,11 +43,14 @@ preludeProgram = case parseProgram preludeSource of
       $ "Internal compiler error: stdlib/Prelude.aww failed to parse: "
       <> err
 
--- | Typecheck the bundled prelude. Exposed so CLI commands that typecheck
---   user code can surface a clean diagnostic if the shipped prelude is
---   broken, rather than failing later with a confusing error.
-verifyPrelude :: Either TypeError [Warning]
-verifyPrelude = typecheckProgram preludeProgram
+-- | Typecheck the bundled prelude. Exposed so CLI commands that
+--   typecheck user code can surface a clean diagnostic if the shipped
+--   prelude is broken, rather than failing later with a confusing
+--   error. The prelude itself uses no platform-gated names, so the
+--   check result is independent of the program type — we still take
+--   one for uniform plumbing with 'typecheckProgram'.
+verifyPrelude :: ProgramType -> Either TypeError [Warning]
+verifyPrelude progType = typecheckProgram progType preludeProgram
 
 -- | Prepend the bundled prelude's imports and declarations to a user
 --   program. This is how the \"implicit @import Prelude@\" is realised:

@@ -17,6 +17,7 @@ module Awsum.Render
 where
 
 import Awsum.Syntax
+import Data.Char qualified as Char
 import Data.Text qualified as T
 import Relude
 
@@ -60,11 +61,11 @@ renderImport (ImportDecl comments mods tcom) =
 renderDecl :: Decl -> Text
 renderDecl = \case
   Sig _sp name ty mc ->
-    name <> " : " <> renderType ty <> renderTrailingComment mc
+    renderDeclName name <> " : " <> renderType ty <> renderTrailingComment mc
   FunDef _sp name args e mc ->
     ( case args of
-        [] -> name <> " = " <> renderExpr e
-        _ -> name <> " " <> T.intercalate " " (map paramName args) <> " = " <> renderExpr e
+        [] -> renderDeclName name <> " = " <> renderExpr e
+        _ -> renderDeclName name <> " " <> T.intercalate " " (map paramName args) <> " = " <> renderExpr e
     )
       <> renderTrailingComment mc
   TypeDecl _sp name tvars cons mc ->
@@ -79,6 +80,17 @@ renderDecl = \case
     renderConDef (ConDef _ n []) = n
     renderConDef (ConDef _ n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
+
+-- | Wrap a top-level declaration name in parens when it's an operator
+--   (e.g. @"++"@ renders as @(++)@), so @renderProgram . parseProgram@ is
+--   a fixpoint on files that declare operators in the prelude style.
+renderDeclName :: Name -> Text
+renderDeclName n
+  | T.null n = n
+  | isBinderStart (T.head n) = n
+  | otherwise = "(" <> n <> ")"
+  where
+    isBinderStart c = Char.isLower c || c == '_'
 
 renderComment :: Comment -> Text
 renderComment = \case

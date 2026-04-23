@@ -32,12 +32,23 @@ builtIns =
       ("showUInt8", TyArrow noSpan uint8Ty stringTy),
       -- predInt32 : Int32 -> Either UnderflowError Int32
       -- Returns `Left UnderflowError` on 'minInt32', `Right (x - 1)` elsewhere.
-      ("predInt32", TyArrow noSpan int32Ty (eitherTy underflowErrorTy int32Ty))
+      ("predInt32", TyArrow noSpan int32Ty (eitherTy underflowErrorTy int32Ty)),
+      -- predUInt8 : UInt8 -> Either UnderflowError UInt8
+      -- Returns `Left UnderflowError` on 0, `Right (x - 1)` elsewhere.
+      ("predUInt8", TyArrow noSpan uint8Ty (eitherTy underflowErrorTy uint8Ty)),
+      -- eqInt32 : Int32 -> Int32 -> Bool
+      ("eqInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty boolTy)),
+      -- eqUInt8 : UInt8 -> UInt8 -> Bool
+      ("eqUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty boolTy)),
+      -- concatString : String -> String -> String
+      -- The '++' operator is parser sugar for a call to this built-in.
+      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy))
     ]
   where
     int32Ty = TyCon noSpan "Int32"
     uint8Ty = TyCon noSpan "UInt8"
     stringTy = TyCon noSpan "String"
+    boolTy = TyCon noSpan "Bool"
     underflowErrorTy = TyCon noSpan "UnderflowError"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
 

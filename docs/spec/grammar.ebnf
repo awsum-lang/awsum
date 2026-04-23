@@ -12,8 +12,18 @@ TopItem             = TopComment | TypeDecl | Sig | FunDef ;
 TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , ConDef } ] ;
 ConDef              = UIdent , { TypeAtom } ;
 
-Sig                 = LIdent , ":" , Type , [ TrailingLineComment ] ;
-FunDef              = LIdent , { LIdent } , "=" , Expr , [ TrailingLineComment ] ;
+Sig                 = DeclName , ":" , Type , [ TrailingLineComment ] ;
+FunDef              = DeclName , { LIdent } , "=" , Expr , [ TrailingLineComment ] ;
+
+(* Name of a top-level declaration. The parenthesised "++" form is how the
+   bundled prelude spells the concatenation operator itself
+   (`(++) = BuiltIn.concatString`), so hover and go-to-definition on `a ++ b`
+   land on the same binding. The form is syntactically allowed in user files
+   too but is practically prelude-only: only the literal "++" token is
+   accepted, `a ++ b` always compiles to the prelude binding regardless of
+   any user-level redefinition, and a user declaration would collide with
+   the prelude's. User-defined infix operators are not a language feature. *)
+DeclName            = LIdent | "(" , "++" , ")" ;
 
 TopComment          = LineComment | BlockComment ;
 LineComment         = "--" , LineText ;

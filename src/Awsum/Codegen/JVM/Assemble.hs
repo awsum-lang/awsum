@@ -179,6 +179,14 @@ bcIconst n
   | n >= -128 && n <= 127 = [0x10, fromIntegral n] -- bipush
   | otherwise = [0x11, fromIntegral (n `div` 256), fromIntegral (n `mod` 256)] -- sipush
 
+-- | @goto@ with a 2-byte signed offset, properly encoded for negative
+-- deltas via 'Word16' wrap. Used by TCO to branch backward from inside
+-- the body to the method's first instruction (offset 0).
+bcGoto :: Int -> [Word8]
+bcGoto delta =
+  let w = fromIntegral delta :: Word16
+   in [0xA7, hi8 w, lo8 w]
+
 -- | Push an arbitrary signed 32-bit integer on the stack.
 --   Uses iconst/bipush/sipush for values that fit in a short, otherwise
 --   loads a CPInteger from the constant pool via ldc.
@@ -216,18 +224,20 @@ doAssemble prog@(CoreProgram decls) = do
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
-      prims = usedPrims prog
       builtIns = usedBuiltIns prog
 
   m0 <- mkInit
   -- Runtime helpers are emitted only when referenced in Core, so hello-world
   -- style programs that never call 'showInt32' or 'predInt32' don't pay for them.
-  m1s <- if Set.member PrimConcat prims then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member PrimPrint prims then (: []) <$> mkPrint else pure []
+  m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
+  m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
+  m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
+  m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
+  m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m4s <> m5s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -391,6 +401,169 @@ mkPredInt32 = do
         mCodeAttrs = smtAttr
       }
 
+-- | predUInt8: UInt8 -> Either UnderflowError UInt8.
+--   Mirrors 'mkPredInt32' except the zero check uses 'ifne' (opcode 0x9A,
+--   "branch if int != 0") instead of 'if_icmpne' against a pushed
+--   constant — no extra push is needed, so the preamble is 9 bytes
+--   (aload_0 + checkcast + invokevirtual + istore_1 + iload_1) instead
+--   of 12. No mask on (v - 1): when v >= 1 the result is 0..254.
+mkPredUInt8 :: AsmM MInfo
+mkPredUInt8 = do
+  ni <- addUtf8 "__predUInt8"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let preamble =
+        [0x2A] -- aload_0
+          <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
+          <> [0x3C] -- istore_1
+          <> [0x1B] -- iload_1
+      ifAt = length preamble
+      overflow =
+        -- UnderflowError instance: Object[1] = [Integer(0)]
+        [0x04] -- iconst_1
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0 (index)
+          <> [0x03] -- iconst_0 (UE tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x4D] -- astore_2 (save UE)
+          -- Left: Object[2] = [Integer(0), UE]
+          <> [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x03] -- iconst_0 (Left tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1 (index)
+          <> [0x2C] -- aload_2
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      okAt = ifAt + 3 + length overflow
+      ok =
+        -- Right: Object[2] = [Integer(1), Integer(v - 1)]
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x04] -- iconst_1 (Right tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1 (index)
+          <> [0x1B] -- iload_1
+          <> [0x04] -- iconst_1
+          <> [0x64] -- isub
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      ifRel = okAt - ifAt
+      ifBytes = [0x9A, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)]
+      code = preamble <> ifBytes <> overflow <> ok
+      -- First (and only) frame at okAt. Locals change from [Object]
+      -- (initial) to [Object, int] (after istore_1); frame_type 252 =
+      -- append_frame with 1 new local (ITEM_Integer = tag 1).
+      okAt16 = fromIntegral okAt :: Word16
+      smtEntries = [252, hi8 okAt16, lo8 okAt16, 0x01]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1] -- number_of_entries = 1
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
+-- | eqInt32 / eqUInt8: two values of the same integer type → Bool.
+--   On the JVM both Int32 and UInt8 are boxed as 'java.lang.Integer',
+--   so the two methods share a single builder parameterised by name.
+--   Returns a one-slot 'Object[]' with boxed tag 0 (True) on equal, 1
+--   (False) otherwise — matching declaration order in
+--   `type Bool = True | False` and user-code CCon emission.
+--   Classfile v51+ requires a StackMapTable at the if_icmpne target;
+--   locals don't change across the branch (two Object params, no new
+--   stores), so a same_frame is sufficient.
+mkEq :: Text -> AsmM MInfo
+mkEq methodName = do
+  ni <- addUtf8 methodName
+  di <- addUtf8 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let unbox =
+        [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
+      preamble =
+        [0x2A] -- aload_0
+          <> unbox
+          <> [0x2B] -- aload_1
+          <> unbox
+      -- Both branches build a one-slot Object[] holding a boxed tag.
+      boolBox tag =
+        [0x04] -- iconst_1 (array length)
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0 (index)
+          <> [tag] -- iconst_0 (True=0) or iconst_1 (False=1)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- Integer.valueOf
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      equalBlock = boolBox 0x03 -- True tag = 0
+      notEqualBlock = boolBox 0x04 -- False tag = 1
+      ifAt = length preamble
+      notEqAt = ifAt + 3 + length equalBlock
+      ifRel = notEqAt - ifAt
+      ifBytes = [0xA0, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)]
+      code = preamble <> ifBytes <> equalBlock <> notEqualBlock
+      -- First (and only) frame at notEqAt. offset_delta = notEqAt (first
+      -- frame's delta is the raw bci). Locals unchanged from entry
+      -- ([Object, Object]), stack empty — a same_frame covers it when
+      -- notEqAt <= 63 (which it is: preamble=14, equalBlock=12, so
+      -- notEqAt = 14 + 3 + 12 = 29).
+      frameType = fromIntegral notEqAt :: Word8
+      smtEntries = [frameType]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1] -- number_of_entries = 1
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
 mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
@@ -489,6 +662,42 @@ data CodeWithMeta = CodeWithMeta
 
 mkDecl :: Set Text -> Set Text -> Map Text Int -> CDecl -> AsmM MInfo
 mkDecl valDefs funDefs arities = \case
+  -- TCO-wrapped body. The method's first bytecode byte (offset 0) is the
+  -- implicit @L_tco_loop@: JVM already gives us a StackMapTable frame
+  -- there based on the method signature. 'CContinue' evaluates new args,
+  -- @astore@s them into parameter slots in reverse (LIFO), and @goto@s
+  -- back to offset 0. Value tails emit their own @areturn@, so the
+  -- method body needs no fallthrough @areturn@.
+  CFunDef nm args (CLoop body) -> do
+    let paramMap = Map.fromList (zip args [0 ..])
+        ctx =
+          ECtx
+            { cParams = paramMap,
+              cLocals = Map.empty,
+              cValDefs = valDefs,
+              cFunDefs = funDefs,
+              cArities = arities,
+              cNextLocal = length args
+            }
+    ni <- addUtf8 (mangle nm)
+    di <- addUtf8 (objMethodDesc (length args))
+    codeMeta <- emitTailBin ctx args 0 body
+    -- The @goto@ emitted by 'CContinue' branches back to offset 0, so
+    -- the JVM verifier requires an explicit StackMapTable frame there
+    -- (the implicit initial frame is not enough once offset 0 is a real
+    -- branch target). The locals at entry are the @length args@ param
+    -- slots, all @java/lang/Object@, and the operand stack is empty —
+    -- matching the signature-derived initial state exactly.
+    let tcoLoopTarget =
+          BranchTarget
+            { btOffset = 0,
+              btLocals = length args,
+              btArrSlot = -1,
+              btTagSlot = -1,
+              btIsJoinPoint = False
+            }
+    (smtCount, smtBytes) <- caseSMT ctx (tcoLoopTarget : codeMeta.cwBranchTargets)
+    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = codeMeta.cwCode, mCodeAttrCount = smtCount, mCodeAttrs = smtBytes}
   CFunDef nm args body -> do
     let paramMap = Map.fromList (zip args [0 ..])
         ctx =
@@ -546,8 +755,6 @@ emitExpr ctx = \case
         pure $ CodeWithMeta (bcLdc hi) []
     | otherwise ->
         pure $ CodeWithMeta [0x01] [] -- aconst_null
-  CPrim _ ->
-    pure $ CodeWithMeta [0x01] [] -- aconst_null
   CBuiltIn _ ->
     pure $ CodeWithMeta [0x01] [] -- aconst_null; dispatched from CCall
   CIntLit n it -> do
@@ -671,36 +878,21 @@ emitExpr ctx = \case
     pure $ CodeWithMeta finalCode allTargets
   CCall f xs ->
     case f of
-      CPrim PrimConcat | [a, b] <- xs -> do
-        aMeta <- emitExpr ctx a
-        bMeta <- emitExpr ctx b
-        ref <- addMRef "AwsumMain" "__concat" "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
-        pure
-          $ CodeWithMeta
-            (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
-            (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
-      CPrim PrimPrint | [x] <- xs -> do
+      CBuiltIn "IO.Stdout.print" | [x] <- xs -> do
         xMeta <- emitExpr ctx x
         ref <- addMRef "AwsumMain" "__print" "(Ljava/lang/Object;)Ljava/lang/Object;"
         pure
           $ CodeWithMeta
             (xMeta.cwCode <> bcInvokeStatic ref)
             xMeta.cwBranchTargets
-      CPrim (PrimShowInt _) | [x] <- xs -> do
-        -- The value on the stack is a java.lang.Integer (how CIntLit emits
-        -- both Int32 and UInt8). Cast to Integer and call its toString() —
-        -- decimal representation with no padding or signs beyond '-', matching
-        -- snprintf("%d") on LLVM and tostring() on Lua.
-        xMeta <- emitExpr ctx x
-        intCls <- addClass "java/lang/Integer"
-        toStr <- addMRef "java/lang/Integer" "toString" "()Ljava/lang/String;"
-        pure
-          $ CodeWithMeta
-            (xMeta.cwCode <> bcCheckCast intCls <> bcInvokeVirtual toStr)
-            xMeta.cwBranchTargets
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs -> do
+            -- The value on the stack is a java.lang.Integer (how CIntLit
+            -- emits both Int32 and UInt8). Cast to Integer and call its
+            -- toString() — decimal representation with no padding or signs
+            -- beyond '-', matching snprintf("%d") on LLVM and tostring()
+            -- on Lua.
             xMeta <- emitExpr ctx x
             intCls <- addClass "java/lang/Integer"
             toStr <- addMRef "java/lang/Integer" "toString" "()Ljava/lang/String;"
@@ -715,6 +907,32 @@ emitExpr ctx = \case
           $ CodeWithMeta
             (xMeta.cwCode <> bcInvokeStatic ref)
             xMeta.cwBranchTargets
+      CBuiltIn "predUInt8" | [x] <- xs -> do
+        xMeta <- emitExpr ctx x
+        ref <- addMRef "AwsumMain" "__predUInt8" "(Ljava/lang/Object;)Ljava/lang/Object;"
+        pure
+          $ CodeWithMeta
+            (xMeta.cwCode <> bcInvokeStatic ref)
+            xMeta.cwBranchTargets
+      CBuiltIn name
+        | name == "eqInt32" || name == "eqUInt8",
+          [a, b] <- xs -> do
+            aMeta <- emitExpr ctx a
+            bMeta <- emitExpr ctx b
+            let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+            ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+            pure
+              $ CodeWithMeta
+                (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
+                (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
+      CBuiltIn "concatString" | [a, b] <- xs -> do
+        aMeta <- emitExpr ctx a
+        bMeta <- emitExpr ctx b
+        ref <- addMRef "AwsumMain" "__concat" "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+        pure
+          $ CodeWithMeta
+            (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
+            (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n | n `Set.member` ctx.cFunDefs -> do
@@ -735,6 +953,177 @@ emitExpr ctx = \case
         let allCode = fMeta.cwCode <> bcCheckCast mhCls <> concatMap cwCode argMetas <> bcInvokeVirtual ref
             allTargets = fMeta.cwBranchTargets ++ concatMap cwBranchTargets argMetas
         pure $ CodeWithMeta allCode allTargets
+  CLoop _ -> error "JVM Assemble: CLoop reached emitExpr (non-tail position)"
+  CContinue _ -> error "JVM Assemble: CContinue reached emitExpr (non-tail position)"
+
+-- | Emit @body@ in tail position under the implicit @L_tco_loop:@ label
+-- at method offset 0. 'CContinue' evaluates new parameter values onto
+-- the operand stack (so cross-parameter reads see the old bindings),
+-- pops them back into the parameter locals in reverse (LIFO), and
+-- @goto@s the method's first byte. Tail value shapes emit their own
+-- @areturn@. 'CCase' dispatches via an @if_icmpne@ chain where each
+-- arm self-terminates — no @goto join@ is needed. StackMapTable entries
+-- are collected for every @if_icmpne@ target; offset 0 needs no entry
+-- because the method signature gives the implicit initial frame.
+emitTailBin :: ECtx -> [Text] -> Int -> CExpr -> AsmM CodeWithMeta
+emitTailBin ctx0 params = goTop ctx0
+  where
+    goTop :: ECtx -> Int -> CExpr -> AsmM CodeWithMeta
+    goTop ctx offset = \case
+      CContinue newArgs -> emitContinue ctx offset newArgs
+      CCase scrut alts -> emitTailCase ctx offset scrut alts
+      other -> emitTailValue ctx other
+
+    emitContinue :: ECtx -> Int -> [CExpr] -> AsmM CodeWithMeta
+    emitContinue ctx offset newArgs = do
+      argMetas <- traverse (emitExpr ctx) newArgs
+      let argBytes = concatMap cwCode argMetas
+          -- Nested branch targets inside arg evaluations would need offset
+          -- adjustment, but in practice argument expressions rarely contain
+          -- CCase; the existing CCon/CCall paths also pass them through
+          -- without adjustment, so we match that convention.
+          argTargets = concatMap cwBranchTargets argMetas
+          paramSlots :: [Int]
+          paramSlots =
+            [ fromMaybe
+                (error $ "JVM Assemble: no param slot for " <> show p)
+                (Map.lookup p ctx.cParams)
+            | p <- params
+            ]
+          astoreBytes :: [Word8]
+          astoreBytes = concat [bcAstore s | s <- reverse paramSlots]
+          gotoStart :: Int
+          gotoStart = offset + length argBytes + length astoreBytes
+          delta :: Int
+          delta = negate gotoStart
+          gotoBytes = bcGoto delta
+      pure (CodeWithMeta (argBytes <> astoreBytes <> gotoBytes) argTargets)
+
+    emitTailValue :: ECtx -> CExpr -> AsmM CodeWithMeta
+    emitTailValue ctx expr = do
+      meta <- emitExpr ctx expr
+      pure (CodeWithMeta (meta.cwCode <> [0xB0]) meta.cwBranchTargets) -- areturn
+    emitTailCase :: ECtx -> Int -> CExpr -> [(Int, [Text], CExpr)] -> AsmM CodeWithMeta
+    emitTailCase ctx offset scrut alts = do
+      intCls <- addClass "java/lang/Integer"
+      intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+      arrCls <- addClass "[Ljava/lang/Object;"
+      scrutMeta <- emitExpr ctx scrut
+      let sorted = sortWith (\(t, _, _) -> t) alts
+          arrSlot = ctx.cNextLocal
+          tagSlot = arrSlot + 1
+          bindSlotStart = tagSlot + 1
+          loadArr = bcAload arrSlot
+          loadTag = bcIload tagSlot
+          maxBindingsCount = foldl' max 0 [length vs | (_, vs, _) <- sorted]
+          extractAndStore =
+            bcCheckCast arrCls
+              <> bcAstore arrSlot
+              <> loadArr
+              <> bcIconst 0
+              <> [0x32] -- aaload
+              <> bcCheckCast intCls
+              <> bcInvokeVirtual intValRef
+              <> bcIstore tagSlot
+          preambleLen = length scrutMeta.cwCode + length extractAndStore
+          armsBaseOffset = offset + preambleLen
+      -- Emit each arm's body in tail form. The binding code depends on
+      -- ctx; the body offset depends on the chain built so far — so we
+      -- fold across arms, threading the running arm-start offset and
+      -- accumulating code + branch targets.
+      let goArms :: Int -> [(Int, [Text], CExpr)] -> AsmM ([Word8], [BranchTarget])
+          goArms _ [] =
+            -- Empty CCase: emit aconst_null so the stack is consistent.
+            -- Should not happen for well-typed programs.
+            pure ([0x01], [])
+          goArms armOffset [(_, vars, armBody)] = do
+            let bindings = zip vars [bindSlotStart ..]
+                ctx' =
+                  ctx
+                    { cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings,
+                      cNextLocal = bindSlotStart + maxBindingsCount
+                    }
+                bindCode :: [Word8]
+                bindCode =
+                  concatMap
+                    ( \((_, slot), i) ->
+                        loadArr <> bcIconst (i :: Int) <> [0x32] <> bcAstore slot
+                    )
+                    (zip bindings [1 :: Int ..])
+                numUnusedSlots = maxBindingsCount - length vars
+                paddingCode :: [Word8]
+                paddingCode =
+                  if numUnusedSlots > 0
+                    then
+                      concatMap
+                        (\slot -> [0x01] <> bcAstore slot)
+                        [bindSlotStart + length vars .. bindSlotStart + maxBindingsCount - 1]
+                    else []
+                prefix = bindCode <> paddingCode
+                bodyStart = armOffset + length prefix
+            bodyMeta <- goTop ctx' bodyStart armBody
+            pure (prefix <> bodyMeta.cwCode, bodyMeta.cwBranchTargets)
+          goArms armOffset ((tag, vars, armBody) : rest) = do
+            let cmpPrefixBytes = loadTag <> bcIconst tag
+                cmpPrefixLen = length cmpPrefixBytes
+                icmpneLen :: Int
+                icmpneLen = 3
+                bindings = zip vars [bindSlotStart ..]
+                ctx' =
+                  ctx
+                    { cLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.cLocals bindings,
+                      cNextLocal = bindSlotStart + maxBindingsCount
+                    }
+                bindCode :: [Word8]
+                bindCode =
+                  concatMap
+                    ( \((_, slot), i) ->
+                        loadArr <> bcIconst (i :: Int) <> [0x32] <> bcAstore slot
+                    )
+                    (zip bindings [1 :: Int ..])
+                numUnusedSlots = maxBindingsCount - length vars
+                paddingCode :: [Word8]
+                paddingCode =
+                  if numUnusedSlots > 0
+                    then
+                      concatMap
+                        (\slot -> [0x01] <> bcAstore slot)
+                        [bindSlotStart + length vars .. bindSlotStart + maxBindingsCount - 1]
+                    else []
+                prefix = bindCode <> paddingCode
+                bodyStart = armOffset + cmpPrefixLen + icmpneLen + length prefix
+            bodyMeta <- goTop ctx' bodyStart armBody
+            let armBodyLen = length bodyMeta.cwCode
+                -- @if_icmpne@ target is the next arm's start — after
+                -- cmpPrefix + icmpne + bind/padding + arm body.
+                skipOff = icmpneLen + length prefix + armBodyLen
+                nextArmOffset = armOffset + cmpPrefixLen + skipOff
+                icmpneBytes =
+                  [ 0xA0,
+                    fromIntegral (skipOff `div` 256),
+                    fromIntegral (skipOff `mod` 256)
+                  ]
+                myTarget =
+                  BranchTarget
+                    { -- At the branch target the next arm's bindings have
+                      -- not been stored yet, so only slots up to (but not
+                      -- including) 'bindSlotStart' are live. Mirrors the
+                      -- non-tail 'CCase' emission — see 'emitExpr'.
+                      btOffset = nextArmOffset,
+                      btLocals = bindSlotStart,
+                      btArrSlot = arrSlot,
+                      btTagSlot = tagSlot,
+                      btIsJoinPoint = False
+                    }
+            (restBytes, restTargets) <- goArms nextArmOffset rest
+            pure
+              ( cmpPrefixBytes <> icmpneBytes <> prefix <> bodyMeta.cwCode <> restBytes,
+                myTarget : bodyMeta.cwBranchTargets <> restTargets
+              )
+      (chainBytes, chainTargets) <- goArms armsBaseOffset sorted
+      let allBytes = scrutMeta.cwCode <> extractAndStore <> chainBytes
+          allTargets = scrutMeta.cwBranchTargets <> chainTargets
+      pure (CodeWithMeta allBytes allTargets)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- StackMapTable for CCase branches
@@ -769,27 +1158,31 @@ caseSMT _ctx targets
         buildFrames _ _ [] = []
         buildFrames allTgts prev (bt : rest) =
           let delta = if prev == -1 then bt.btOffset else bt.btOffset - prev - 1
-              isLastFrame = null rest
               currentLocals = bt.btLocals
               allArrTagPairs = [(t.btArrSlot, t.btTagSlot) | t <- allTgts]
               localsTypes = buildLocalsTypes allArrTagPairs bt
-              -- Use full_frame for everything except simple cases
+              -- Join points are reached by an explicit @goto@ emitted
+              -- after the arm body has left its value on the stack, so
+              -- SMT records one 'Object' there. Every other target is
+              -- an @if_icmpne@ landing site, which is reached after the
+              -- comparison has popped both ints — the stack is empty.
+              -- (Pre-TCO this happened to coincide with "last frame",
+              -- because the join always sat at the highest offset; the
+              -- TCO path has no join, so we must not infer it.)
               frame
-                | bt.btIsJoinPoint || isLastFrame =
-                    -- Join point or last frame: has return value on stack
+                | bt.btIsJoinPoint =
                     [255]
                       <> encodeDelta delta
                       <> encodeU2 currentLocals
                       <> localsTypes
                       <> encodeU2 1
-                      <> [0x07, hi8 objClsIdx, lo8 objClsIdx] -- 1 Object on stack
+                      <> [0x07, hi8 objClsIdx, lo8 objClsIdx]
                 | otherwise =
-                    -- if_icmpne target: empty stack
                     [255]
                       <> encodeDelta delta
                       <> encodeU2 currentLocals
                       <> localsTypes
-                      <> encodeU2 0 -- empty stack
+                      <> encodeU2 0
            in frame <> buildFrames allTgts bt.btOffset rest
 
         buildLocalsTypes :: [(Int, Int)] -> BranchTarget -> [Word8]

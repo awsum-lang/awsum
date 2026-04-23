@@ -1,0 +1,25 @@
+-- Stress test: tail-recursive countDown from 100_000 to 0 over Int32.
+-- 100_000 frames would blow the system stack on every target without
+-- TCO (V8 default is ~13k, JVM ~16k, stock libc threads 8k pages), so
+-- if this program returns "done" on all six backends the compiler is
+-- actually eliminating the self-tail call and turning it into a jump.
+--
+-- The body uses @eqInt32 n 0@ instead of an integer-literal pattern
+-- because integer-literal patterns are not implemented yet; once they
+-- are, the termination check can collapse to @case n of 0 -> "done"@.
+-- The @Right m@ branch of @predInt32@ is also unreachable for positive
+-- inputs but kept explicit so the test exercises the full Either shape.
+import IO.Stdout
+
+countDown : Int32 -> String -> String
+countDown n acc = case eqInt32 n 0 of
+  True -> acc
+  False -> case predInt32 n of
+    Left _ -> acc
+    Right m -> countDown m acc
+
+start : Int32
+start = 100000
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (countDown start "done")

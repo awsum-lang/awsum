@@ -1,15 +1,17 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function v_unwrap(v_box)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.v_unwrap(v_box)
   return (function(s) if s[1] == 0 then local v_value = s[2]; return v_value end end)(v_box)
 end
 
-function v_showResult(v_r)
+function M.v_showResult(v_r)
   return (function(s) if s[1] == 0 then local v_a = s[2]; return v_a elseif s[1] == 1 then local v_e = s[2]; return v_e end end)(v_r)
 end
 
-function main(v__input)
-  return __print(table.concat({(v_unwrap)({0, "from box"}), " ", (v_showResult)((v_unwrap)({0, {0, "nested"}}))}))
+function M.main(v__input)
+  return M.__print(table.concat({(M.v_unwrap)({0, "from box"}), " ", (M.v_showResult)((M.v_unwrap)({0, {0, "nested"}}))}))
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -22,5 +24,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

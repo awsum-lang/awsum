@@ -1,7 +1,9 @@
-local function __print(s) io.write(tostring(s)); return nil end
+local M = {}
 
-function main(v_input)
-  return __print(v_input)
+function M.__print(s) io.write(tostring(s)); return nil end
+
+function M.main(v_input)
+  return M.__print(v_input)
 end
 
 local ok, dbg = pcall(require, 'debug')
@@ -14,5 +16,5 @@ else
 end
 if should_run then
   local input = (_G and _G.arg and _G.arg[1]) or ""
-  if type(main) == 'function' then main(input) end
+  if type(M.main) == 'function' then M.main(input) end
 end

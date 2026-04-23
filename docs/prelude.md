@@ -102,6 +102,26 @@ not = BuiltIn.not
 
 The user sees no change — the signature is identical, go-to-definition lands in the same place. Internally the compiler's table grows a `not` entry with per-target implementations. Migrating back is symmetric.
 
+## Program type and platform-gated effects
+
+`BuiltIn.foo` covers one class of compiler-known name: prelude-visible functions that behave the same on every target (`showInt32`, `predInt32`, `concatString`, …). A second class exists: effects whose availability depends on the *kind of program* the user is writing — `IO.Stdout.print` for a CLI program, `Window.focus` for a browser program, and so on. Mixing these into `BuiltIn` would lose the gating.
+
+The design distinguishes them at the key shape:
+
+- `CBuiltIn "showInt32"` — flat unqualified key, resolved through `Awsum.BuiltIn`.
+- `CBuiltIn "IO.Stdout.print"` — dotted qualified key, resolved through `Awsum.Program.platformTable`.
+
+Two independent gates decide whether a platform name is usable in a given file:
+
+1. **Program type** (`--program-type cli`, mandatory on typecheck-bearing commands) picks which platform table the typechecker and `ElaborateLower` see. Today only `ProgramCli` is implemented in `Awsum.Program.Cli`; `ProgramBrowser` / `ProgramModule` will arrive as new modules without touching the existing ones.
+2. **Module import** (`import IO.Stdout`) is the per-file visibility gate. It's independent of the program type — a CLI program that omits the import still cannot call `IO.Stdout.print`.
+
+Both gates are enforced in `Awsum.Typing.builtinEnvFromImports` — it computes the intersection of the current program type's table and the file's imports.
+
+A future `awsum.json` workspace file will set the program type per artifact, at which point the CLI flag will become optional (inherited from the config). Until then the flag is mandatory to force an explicit choice: a silently defaulted program type would typecheck a browser program against CLI effects (or vice versa) and only fail at runtime.
+
+Core-level uniformity is deliberate: both classes of names collapse to `CBuiltIn`. The backends don't care which table a name came from — they dispatch on the key string alone. The distinction is a typing / availability concern, not an IR concern. This makes migrations symmetric: a function can move between `BuiltIn` and a program's platform table, or between program types, without touching any backend.
+
 ## Tradeoffs
 
 - **One extra pipeline stage**: every compilation parses and type-checks `Prelude.aww`. Whole-program tree-shaking runs between lowering and codegen (reachability from `main` across every `CDecl`, including prelude entries and generated constructor wrappers), so unused prelude functions never reach any backend. Adding new prelude entries has zero cost on programs that don't use them.
@@ -118,10 +138,12 @@ The user sees no change — the signature is identical, go-to-definition lands i
 
 - `stdlib/Prelude.aww` — the prelude source, embedded into the compiler binary via `file-embed`.
 - `src/Awsum/Prelude.hs` — loading, `withPrelude`, prelude-warning filtering.
-- `src/Awsum/BuiltIn.hs` — the registered built-in table and `lookupBuiltIn`.
+- `src/Awsum/BuiltIn.hs` — the prelude built-in table (flat keys) and `lookupBuiltIn`.
+- `src/Awsum/Program.hs` — `ProgramType` enum + `platformTable` dispatch.
+- `src/Awsum/Program/Cli.hs` — the CLI platform-effect table (dotted qualified keys: `IO.Stdout.print`, …). Future `Awsum/Program/Browser.hs` etc. will follow the same shape.
 - `src/Awsum/Syntax.hs` — `EBuiltIn` surface node.
-- `src/Awsum/Core.hs` — `CBuiltIn` core node.
+- `src/Awsum/Core.hs` — `CBuiltIn` core node (the one node for both built-in kinds — dispatch is on the key string).
 - `src/Awsum/Parser.hs` — recognising `BuiltIn.foo` as a syntactic primitive.
-- `src/Awsum/Typing.hs` — alias-form arity rule, `UnknownBuiltIn`, `BuiltInTypeMismatch`.
-- `src/Awsum/ElaborateLower.hs` — lowering `EBuiltIn` to `CBuiltIn`, skipping alias `FunDef`s, reachability-based tree-shake (`reachableCore`) that drops any top-level Core declaration not reachable from `main`, including prelude helpers and constructor wrappers.
-- Each backend in `src/Awsum/Codegen/*` — per-target dispatch on `CCall (CBuiltIn name) args` and the runtime helper each built-in compiles to (`@__showInt32`, `@__predInt32`, etc.).
+- `src/Awsum/Typing.hs` — alias-form arity rule, `UnknownBuiltIn`, `BuiltInTypeMismatch`, and `builtinEnvFromImports` (intersects the program type's platform table with the file's imports).
+- `src/Awsum/ElaborateLower.hs` — lowering `EBuiltIn` to `CBuiltIn` (flat key), qualified names to `CBuiltIn` (dotted key) via the program's platform table, skipping alias `FunDef`s, reachability-based tree-shake (`reachableCore`) that drops any top-level Core declaration not reachable from `main`, including prelude helpers and constructor wrappers.
+- Each backend in `src/Awsum/Codegen/*` — per-target dispatch on `CCall (CBuiltIn name) args` keyed by the name string, e.g. `@__showInt32`, `@__predInt32`, `@__print` for `IO.Stdout.print`.
