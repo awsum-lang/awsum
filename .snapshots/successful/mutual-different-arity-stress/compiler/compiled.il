@@ -120,27 +120,6 @@
   }
 
 
-  .method public hidebysig static object v_showBool(object) cil managed
-  {
-    ldarg.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    pop
-    ldstr "true"
-    br.s IL_join
-  IL_arm_1:
-    pop
-    ldstr "false"
-    br.s IL_join
-  IL_join:
-    ret
-  }
-
-
   .method public hidebysig static object v_showResult(object) cil managed
   {
     ldarg.0
@@ -168,7 +147,7 @@
     pop
     ldstr "right: "
     ldloc.0
-    call object AwsumMain::v_showBool(object)
+    callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
     br.s IL_join
   IL_join:
@@ -178,7 +157,7 @@
 
   .method public hidebysig static object v_start() cil managed
   {
-    ldc.i4 1000000
+    ldc.i4 100000
     box [System.Runtime]System.Int32
     ret
   }
@@ -187,14 +166,14 @@
   .method public hidebysig static object v_main(object) cil managed
   {
     call object AwsumMain::v_start()
-    call object AwsumMain::v_evenInt(object)
+    call object AwsumMain::v_pingOne(object)
     call object AwsumMain::v_showResult(object)
     call object AwsumMain::__print(object)
     ret
   }
 
 
-  .method public hidebysig static object v__scc_evenInt_oddInt(object) cil managed
+  .method public hidebysig static object v__scc_pingOne_pongTwo(object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -228,13 +207,7 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.0
-    box [System.Runtime]System.Int32
-    stelem.ref
+    call object AwsumMain::v_zero()
     stelem.ref
     ret
   IL_tco_arm_1:
@@ -270,7 +243,7 @@
     ldelem.ref
     stloc.1
     pop
-    ldc.i4.2
+    ldc.i4.3
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
@@ -281,6 +254,10 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
+    dup
+    ldc.i4.2
+    call object AwsumMain::v_zero()
+    stelem.ref
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_1:
@@ -288,6 +265,10 @@
     ldc.i4.1
     ldelem.ref
     stloc.0
+    dup
+    ldc.i4.2
+    ldelem.ref
+    stloc.1
     pop
     ldloc.0
     call object AwsumMain::v_zero()
@@ -308,13 +289,7 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
+    call object AwsumMain::v_zero()
     stelem.ref
     ret
   IL_tco_arm_1:
@@ -330,7 +305,7 @@
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.1
+    stloc.2
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -341,14 +316,14 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldloc.1
+    ldloc.2
     stelem.ref
     ret
   IL_tco_arm_1:
     dup
     ldc.i4.1
     ldelem.ref
-    stloc.1
+    stloc.2
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -359,14 +334,14 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldloc.1
+    ldloc.2
     stelem.ref
     starg.s 0
     br IL_tco_loop
   }
 
 
-  .method public hidebysig static object v_evenInt(object) cil managed
+  .method public hidebysig static object v_pingOne(object) cil managed
   {
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -379,14 +354,14 @@
     ldc.i4.1
     ldarg.0
     stelem.ref
-    call object AwsumMain::v__scc_evenInt_oddInt(object)
+    call object AwsumMain::v__scc_pingOne_pongTwo(object)
     ret
   }
 
 
-  .method public hidebysig static object v_oddInt(object) cil managed
+  .method public hidebysig static object v_pongTwo(object, object) cil managed
   {
-    ldc.i4.2
+    ldc.i4.3
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
@@ -397,7 +372,11 @@
     ldc.i4.1
     ldarg.0
     stelem.ref
-    call object AwsumMain::v__scc_evenInt_oddInt(object)
+    dup
+    ldc.i4.2
+    ldarg.1
+    stelem.ref
+    call object AwsumMain::v__scc_pingOne_pongTwo(object)
     ret
   }
 

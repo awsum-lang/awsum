@@ -4,21 +4,6 @@ CoreProgram
             ( CString "UnderflowError" )
         , CValDef "zero"
             ( CIntLit 0 TInt32 )
-        , CFunDef "showBool" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 0
-                    , []
-                    , CString "true"
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CString "false"
-                    )
-                ]
-            )
         , CFunDef "showResult" [ "r" ]
             ( CCase
                 ( CVar "r" )
@@ -35,31 +20,31 @@ CoreProgram
                     )
                 ,
                     ( 1
-                    , [ "b" ]
+                    , [ "v" ]
                     , CCall
                         ( CBuiltIn "concatString" )
                         [ CString "right: "
                         , CCall
-                            ( CVar "showBool" )
-                            [ CVar "b" ]
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
                         ]
                     )
                 ]
             )
         , CValDef "start"
-            ( CIntLit 1000000 TInt32 )
+            ( CIntLit 100000 TInt32 )
         , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
-                        ( CVar "evenInt" )
+                        ( CVar "pingOne" )
                         [ CVar "start" ]
                     ]
                 ]
             )
-        , CFunDef "$scc$evenInt_oddInt" [ "$args" ]
+        , CFunDef "$scc$pingOne_pongTwo" [ "$args" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args" )
@@ -77,7 +62,7 @@ CoreProgram
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CCon 0 [] ]
+                                    [ CVar "zero" ]
                                 )
                             ,
                                 ( 1
@@ -98,7 +83,9 @@ CoreProgram
                                         , [ "m" ]
                                         , CContinue
                                             [ CCon 1
-                                                [ CVar "m" ]
+                                                [ CVar "m"
+                                                , CVar "zero"
+                                                ]
                                             ]
                                         )
                                     ]
@@ -107,7 +94,10 @@ CoreProgram
                         )
                     ,
                         ( 1
-                        , [ "n" ]
+                        ,
+                            [ "n"
+                            , "_acc"
+                            ]
                         , CCase
                             ( CCall
                                 ( CBuiltIn "eqInt32" )
@@ -119,7 +109,7 @@ CoreProgram
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CCon 1 [] ]
+                                    [ CVar "zero" ]
                                 )
                             ,
                                 ( 1
@@ -150,18 +140,23 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "evenInt" [ "n" ]
+        , CFunDef "pingOne" [ "n" ]
             ( CCall
-                ( CVar "$scc$evenInt_oddInt" )
+                ( CVar "$scc$pingOne_pongTwo" )
                 [ CCon 0
                     [ CVar "n" ]
                 ]
             )
-        , CFunDef "oddInt" [ "n" ]
+        , CFunDef "pongTwo"
+            [ "n"
+            , "_acc"
+            ]
             ( CCall
-                ( CVar "$scc$evenInt_oddInt" )
+                ( CVar "$scc$pingOne_pongTwo" )
                 [ CCon 1
-                    [ CVar "n" ]
+                    [ CVar "n"
+                    , CVar "_acc"
+                    ]
                 ]
             )
         ]

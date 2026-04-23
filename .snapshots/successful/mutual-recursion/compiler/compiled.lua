@@ -6,62 +6,52 @@ function M.main(v__input)
   return M.__print((M.v_handleA)({0}))
 end
 
-function M.v__scc_handleA_handleB(v__fn, v__arg_0)
-  return (M.v__cps__scc_handleA_handleB)(v__fn, v__arg_0, {0})
+function M.v__scc_handleA_handleB(v__args)
+  return (M.v__cps__scc_handleA_handleB)(v__args, {0})
 end
 
-function M.v__cps__scc_handleA_handleB(v__fn, v__arg_0, v__k)
+function M.v__cps__scc_handleA_handleB(v__args, v__k)
   while true do
-    local __s = v__fn
+    local __s = v__args
     if __s[1] == 0 then
-      local __s = v__arg_0
+      local v_step = __s[2]
+      local __s = v_step
       if __s[1] == 0 then
-        local __t0 = {1}
-        local __t1 = {1}
-        local __t2 = {1, v__k}
-        v__fn = __t0
-        v__arg_0 = __t1
-        v__k = __t2
+        local __t0 = {1, {1}}
+        local __t1 = {1, v__k}
+        v__args = __t0
+        v__k = __t1
       elseif __s[1] == 1 then
-        local __t0 = {1}
-        local __t1 = v__arg_0
-        local __t2 = v__k
-        v__fn = __t0
-        v__arg_0 = __t1
-        v__k = __t2
+        local __t0 = {1, v_step}
+        local __t1 = v__k
+        v__args = __t0
+        v__k = __t1
       elseif __s[1] == 2 then
-        local __t0 = {1}
-        local __t1 = v__arg_0
-        local __t2 = v__k
-        v__fn = __t0
-        v__arg_0 = __t1
-        v__k = __t2
+        local __t0 = {1, v_step}
+        local __t1 = v__k
+        v__args = __t0
+        v__k = __t1
       elseif __s[1] == 3 then
         return (M.v__apply__scc_handleA_handleB)(v__k, "")
       end
     elseif __s[1] == 1 then
-      local __s = v__arg_0
+      local v_step = __s[2]
+      local __s = v_step
       if __s[1] == 0 then
-        local __t0 = {0}
-        local __t1 = v__arg_0
-        local __t2 = v__k
-        v__fn = __t0
-        v__arg_0 = __t1
-        v__k = __t2
+        local __t0 = {0, v_step}
+        local __t1 = v__k
+        v__args = __t0
+        v__k = __t1
       elseif __s[1] == 1 then
-        local __t0 = {0}
-        local __t1 = {2}
-        local __t2 = {2, v__k}
-        v__fn = __t0
-        v__arg_0 = __t1
-        v__k = __t2
+        local __t0 = {0, {2}}
+        local __t1 = {2, v__k}
+        v__args = __t0
+        v__k = __t1
       elseif __s[1] == 2 then
-        local __t0 = {0}
-        local __t1 = {3}
-        local __t2 = {3, v__k}
-        v__fn = __t0
-        v__arg_0 = __t1
-        v__k = __t2
+        local __t0 = {0, {3}}
+        local __t1 = {3, v__k}
+        v__args = __t0
+        v__k = __t1
       elseif __s[1] == 3 then
         return (M.v__apply__scc_handleA_handleB)(v__k, "")
       end
@@ -97,11 +87,11 @@ function M.v__apply__scc_handleA_handleB(v__k, v__x)
 end
 
 function M.v_handleA(v_step)
-  return (M.v__scc_handleA_handleB)({0}, v_step)
+  return (M.v__scc_handleA_handleB)({0, v_step})
 end
 
 function M.v_handleB(v_step)
-  return (M.v__scc_handleA_handleB)({1}, v_step)
+  return (M.v__scc_handleA_handleB)({1, v_step})
 end
 
 local ok, dbg = pcall(require, 'debug')

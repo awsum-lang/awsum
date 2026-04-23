@@ -10,28 +10,24 @@ end
 
 M.v_zero = 0
 
-function M.v_showBool(v_b)
-  return (function(s) if s[1] == 0 then return "true" elseif s[1] == 1 then return "false" end end)(v_b)
-end
-
 function M.v_showResult(v_r)
-  return (function(s) if s[1] == 0 then local v_e = s[2]; return ("left: " .. (M.v_showUnderflowError)(v_e)) elseif s[1] == 1 then local v_b = s[2]; return ("right: " .. (M.v_showBool)(v_b)) end end)(v_r)
+  return (function(s) if s[1] == 0 then local v_e = s[2]; return ("left: " .. (M.v_showUnderflowError)(v_e)) elseif s[1] == 1 then local v_v = s[2]; return ("right: " .. tostring(v_v)) end end)(v_r)
 end
 
-M.v_start = 1000000
+M.v_start = 100000
 
 function M.main(v__input)
-  return M.__print((M.v_showResult)((M.v_evenInt)(M.v_start)))
+  return M.__print((M.v_showResult)((M.v_pingOne)(M.v_start)))
 end
 
-function M.v__scc_evenInt_oddInt(v__args)
+function M.v__scc_pingOne_pongTwo(v__args)
   while true do
     local __s = v__args
     if __s[1] == 0 then
       local v_n = __s[2]
       local __s = M.__eqInt32(v_n, M.v_zero)
       if __s[1] == 0 then
-        return {1, {0}}
+        return {1, M.v_zero}
       elseif __s[1] == 1 then
         local __s = M.__predInt32(v_n)
         if __s[1] == 0 then
@@ -39,15 +35,16 @@ function M.v__scc_evenInt_oddInt(v__args)
           return {0, v_e}
         elseif __s[1] == 1 then
           local v_m = __s[2]
-          local __t0 = {1, v_m}
+          local __t0 = {1, v_m, M.v_zero}
           v__args = __t0
         end
       end
     elseif __s[1] == 1 then
       local v_n = __s[2]
+      local v__acc = __s[3]
       local __s = M.__eqInt32(v_n, M.v_zero)
       if __s[1] == 0 then
-        return {1, {1}}
+        return {1, M.v_zero}
       elseif __s[1] == 1 then
         local __s = M.__predInt32(v_n)
         if __s[1] == 0 then
@@ -63,12 +60,12 @@ function M.v__scc_evenInt_oddInt(v__args)
   end
 end
 
-function M.v_evenInt(v_n)
-  return (M.v__scc_evenInt_oddInt)({0, v_n})
+function M.v_pingOne(v_n)
+  return (M.v__scc_pingOne_pongTwo)({0, v_n})
 end
 
-function M.v_oddInt(v_n)
-  return (M.v__scc_evenInt_oddInt)({1, v_n})
+function M.v_pongTwo(v_n, v__acc)
+  return (M.v__scc_pingOne_pongTwo)({1, v_n, v__acc})
 end
 
 local ok, dbg = pcall(require, 'debug')
