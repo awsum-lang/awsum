@@ -78,6 +78,17 @@ header builtIns =
             if Set.member "predUInt8" builtIns
               then "function M.__predUInt8(x) if x == 0 then return {0, {0}} else return {1, x - 1} end end"
               else "",
+            -- succInt32: Left OverflowError on INT32_MAX, else Right (x + 1).
+            -- Tag assignment mirrors __predInt32 (OverflowError=0 like
+            -- UnderflowError — both single-constructor types).
+            if Set.member "succInt32" builtIns
+              then "function M.__succInt32(x) if x == 2147483647 then return {0, {0}} else return {1, x + 1} end end"
+              else "",
+            -- succUInt8: Left OverflowError on 255, else Right (x + 1). Since
+            -- x <= 254 implies (x + 1) is in 1..255, no mask is needed.
+            if Set.member "succUInt8" builtIns
+              then "function M.__succUInt8(x) if x == 255 then return {0, {0}} else return {1, x + 1} end end"
+              else "",
             -- eqInt32 / eqUInt8: True=0, False=1 for `type Bool = True | False`.
             -- Nullary constructors are one-slot tables holding only the tag.
             if Set.member "eqInt32" builtIns
@@ -267,6 +278,14 @@ emitExpr topNames = go
             case xs of
               [x] -> "M.__predUInt8(" <> go x <> ")"
               _ -> error "BuiltIn.predUInt8: arity mismatch"
+          CBuiltIn "succInt32" ->
+            case xs of
+              [x] -> "M.__succInt32(" <> go x <> ")"
+              _ -> error "BuiltIn.succInt32: arity mismatch"
+          CBuiltIn "succUInt8" ->
+            case xs of
+              [x] -> "M.__succUInt8(" <> go x <> ")"
+              _ -> error "BuiltIn.succUInt8: arity mismatch"
           CBuiltIn name
             | name == "eqInt32" || name == "eqUInt8" ->
                 case xs of

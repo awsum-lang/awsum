@@ -40,6 +40,10 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "predUInt8" builtIns) predUInt8Method,
             "",
+            gate (Set.member "succInt32" builtIns) succInt32Method,
+            "",
+            gate (Set.member "succUInt8" builtIns) succUInt8Method,
+            "",
             gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "L_eq_i32"),
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "L_eq_u8"),
@@ -216,6 +220,120 @@ predUInt8Method =
       "  iload_1",
       "  iconst_1",
       "  isub",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- succInt32: Int32 -> Either OverflowError Int32.
+--   Mirror of predInt32Method with INT32_MAX as the boundary and 'iadd'
+--   for the non-overflow branch. OverflowError is single-constructor, so
+--   its tag is 0 — the error-branch encoding is identical to the
+--   UnderflowError case in predInt32.
+succInt32Method :: Text
+succInt32Method =
+  unlines
+    [ ".method public static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  ldc 2147483647",
+      "  if_icmpne L_succ_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_succ_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  iconst_1",
+      "  iadd",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- succUInt8: UInt8 -> Either OverflowError UInt8.
+--   Mirrors succInt32Method with boundary 255. Since v <= 254 on the ok
+--   path, (v + 1) is in 1..255, so no mask is needed to stay in UInt8
+--   range. 'sipush' is used for 255 (outside the 'bipush' signed byte
+--   range but inside signed short).
+succUInt8Method :: Text
+succUInt8Method =
+  unlines
+    [ ".method public static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  sipush 255",
+      "  if_icmpne L_succu8_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_succu8_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  iconst_1",
+      "  iadd",
       "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
       "  aastore",
       "  areturn",
@@ -434,6 +552,20 @@ emitExprText ctx paramMap = \case
               "\n"
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__predUInt8(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn "succInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__succInt32(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn "succUInt8"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__succUInt8(Ljava/lang/Object;)Ljava/lang/Object;"
               ]
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8",

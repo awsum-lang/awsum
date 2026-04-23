@@ -2,25 +2,43 @@ local M = {}
 
 function M.__print(s) io.write(tostring(s)); return nil end
 function M.__predUInt8(x) if x == 0 then return {0, {0}} else return {1, x - 1} end end
+function M.__eqUInt8(a, b) if a == b then return {0} else return {1} end end
+
+function M.v_showUnderflowError(v__wild0)
+  return "UnderflowError"
+end
+
+M.v_zero = 0
 
 function M.v_countDown(v_n, v_acc)
   while true do
-    local __s = M.__predUInt8(v_n)
+    local __s = M.__eqUInt8(v_n, M.v_zero)
     if __s[1] == 0 then
-      local v___w0 = __s[2]
-      return (v_acc .. tostring(v_n))
+      return {1, (v_acc .. tostring(v_n))}
     elseif __s[1] == 1 then
-      local v_m = __s[2]
-      local __t0 = v_m
-      local __t1 = table.concat({v_acc, tostring(v_n), ","})
-      v_n = __t0
-      v_acc = __t1
+      local __s = M.__predUInt8(v_n)
+      if __s[1] == 0 then
+        local v_e = __s[2]
+        return {0, v_e}
+      elseif __s[1] == 1 then
+        local v_m = __s[2]
+        local __t0 = v_m
+        local __t1 = table.concat({v_acc, tostring(v_n), ","})
+        v_n = __t0
+        v_acc = __t1
+      end
     end
   end
 end
 
+function M.v_showResult(v_r)
+  return (function(s) if s[1] == 0 then local v_e = s[2]; return ("left: " .. (M.v_showUnderflowError)(v_e)) elseif s[1] == 1 then local v_s = s[2]; return ("right: " .. v_s) end end)(v_r)
+end
+
+M.v_start = 255
+
 function M.main(v__input)
-  return M.__print((M.v_countDown)(255, ""))
+  return M.__print((M.v_showResult)((M.v_countDown)(M.v_start, "")))
 end
 
 local ok, dbg = pcall(require, 'debug')

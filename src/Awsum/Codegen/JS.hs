@@ -88,6 +88,17 @@ header builtIns =
             if Set.member "predUInt8" builtIns
               then "function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }"
               else "",
+            -- succInt32: returns Left OverflowError on INT32_MAX, else Right (x + 1).
+            -- Left=0, Right=1, OverflowError=0 — tag assignment mirrors
+            -- __predInt32 since both error types are single-constructor.
+            if Set.member "succInt32" builtIns
+              then "function __succInt32(x){ return x === 2147483647 ? [0, [0]] : [1, ((x + 1)|0)]; }"
+              else "",
+            -- succUInt8: returns Left OverflowError on 255, else Right (x + 1).
+            -- '& 0xFF' kept for parallel structure with __predUInt8.
+            if Set.member "succUInt8" builtIns
+              then "function __succUInt8(x){ return x === 255 ? [0, [0]] : [1, ((x + 1) & 0xFF)]; }"
+              else "",
             -- eqInt32 / eqUInt8: True=0, False=1 for `type Bool = True | False`.
             -- Both incoming values are already '|0' / '& 0xFF' coerced, so '===' on
             -- the JS Numbers gives the same answer as native i32/u8 equality.
@@ -246,6 +257,14 @@ emitExpr = \case
         case xs of
           [x] -> "__predUInt8(" <> emitExpr x <> ")"
           _ -> error "BuiltIn.predUInt8: arity mismatch"
+      CBuiltIn "succInt32" ->
+        case xs of
+          [x] -> "__succInt32(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.succInt32: arity mismatch"
+      CBuiltIn "succUInt8" ->
+        case xs of
+          [x] -> "__succUInt8(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.succUInt8: arity mismatch"
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8" ->
             case xs of

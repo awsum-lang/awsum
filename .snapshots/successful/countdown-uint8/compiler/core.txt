@@ -1,43 +1,165 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "countDown" [ "n" ]
-            ( CCase
-                ( CCall
-                    ( CBuiltIn "predUInt8" )
-                    [ CVar "n" ]
+        [ CFunDef "showUnderflowError" [ "$wild0" ]
+            ( CString "UnderflowError" )
+        , CValDef "zero"
+            ( CIntLit 0 TUInt8 )
+        , CFunDef "countDown" [ "n" ]
+            ( CCall
+                ( CVar "$cps$countDown" )
+                [ CVar "n"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$countDown"
+            [ "n"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqUInt8" )
+                        [ CVar "n"
+                        , CVar "zero"
+                        ]
+                    )
+                    [
+                        ( 0
+                        , []
+                        , CCall
+                            ( CVar "$apply$countDown" )
+                            [ CVar "$k"
+                            , CCon 1
+                                [ CCall
+                                    ( CBuiltIn "showUInt8" )
+                                    [ CVar "n" ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predUInt8" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 0
+                                , [ "e" ]
+                                , CCall
+                                    ( CVar "$apply$countDown" )
+                                    [ CVar "$k"
+                                    , CCon 0
+                                        [ CVar "e" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "m" ]
+                                , CContinue
+                                    [ CVar "m"
+                                    , CCon 1
+                                        [ CVar "$k"
+                                        , CVar "n"
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
                 )
+            )
+        , CFunDef "$apply$countDown"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "n"
+                            ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "e" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 0
+                                        [ CVar "e" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "s" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CBuiltIn "showUInt8" )
+                                                    [ CVar "n" ]
+                                                , CString ","
+                                                ]
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "showResult" [ "r" ]
+            ( CCase
+                ( CVar "r" )
                 [
                     ( 0
-                    , [ "__w0" ]
+                    , [ "e" ]
                     , CCall
-                        ( CBuiltIn "showUInt8" )
-                        [ CVar "n" ]
+                        ( CBuiltIn "concatString" )
+                        [ CString "left: "
+                        , CCall
+                            ( CVar "showUnderflowError" )
+                            [ CVar "e" ]
+                        ]
                     )
                 ,
                     ( 1
-                    , [ "m" ]
+                    , [ "s" ]
                     , CCall
                         ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CBuiltIn "showUInt8" )
-                                [ CVar "n" ]
-                            , CString ","
-                            ]
-                        , CCall
-                            ( CVar "countDown" )
-                            [ CVar "m" ]
+                        [ CString "right: "
+                        , CVar "s"
                         ]
                     )
                 ]
             )
+        , CValDef "start"
+            ( CIntLit 255 TUInt8 )
         , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
-                    ( CVar "countDown" )
-                    [ CIntLit 255 TUInt8 ]
+                    ( CVar "showResult" )
+                    [ CCall
+                        ( CVar "countDown" )
+                        [ CVar "start" ]
+                    ]
                 ]
             )
         ]

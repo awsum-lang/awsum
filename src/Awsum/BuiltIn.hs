@@ -36,6 +36,12 @@ builtIns =
       -- predUInt8 : UInt8 -> Either UnderflowError UInt8
       -- Returns `Left UnderflowError` on 0, `Right (x - 1)` elsewhere.
       ("predUInt8", TyArrow noSpan uint8Ty (eitherTy underflowErrorTy uint8Ty)),
+      -- succInt32 : Int32 -> Either OverflowError Int32
+      -- Returns `Left OverflowError` on 'maxInt32', `Right (x + 1)` elsewhere.
+      ("succInt32", TyArrow noSpan int32Ty (eitherTy overflowErrorTy int32Ty)),
+      -- succUInt8 : UInt8 -> Either OverflowError UInt8
+      -- Returns `Left OverflowError` on 255, `Right (x + 1)` elsewhere.
+      ("succUInt8", TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty)),
       -- eqInt32 : Int32 -> Int32 -> Bool
       ("eqInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty boolTy)),
       -- eqUInt8 : UInt8 -> UInt8 -> Bool
@@ -50,6 +56,7 @@ builtIns =
     stringTy = TyCon noSpan "String"
     boolTy = TyCon noSpan "Bool"
     underflowErrorTy = TyCon noSpan "UnderflowError"
+    overflowErrorTy = TyCon noSpan "OverflowError"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
 
 -- | Look up a built-in by its surface name. 'Nothing' is an "unknown

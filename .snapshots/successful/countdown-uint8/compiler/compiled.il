@@ -78,10 +78,230 @@
     ret
   }
 
+  .method public hidebysig static object __eqUInt8(object, object) cil managed
+  {
+    .maxstack 5
+    ldarg.0
+    unbox.any [System.Runtime]System.Int32
+    ldarg.1
+    unbox.any [System.Runtime]System.Int32
+    bne.un.s IL_eq_u8_ne
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ret
+  IL_eq_u8_ne:
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    ret
+  }
+
+  .method public hidebysig static object v_showUnderflowError(object) cil managed
+  {
+    ldstr "UnderflowError"
+    ret
+  }
+
+
+  .method public hidebysig static object v_zero() cil managed
+  {
+    ldc.i4 0
+    box [System.Runtime]System.Int32
+    ret
+  }
+
+
   .method public hidebysig static object v_countDown(object) cil managed
   {
     ldarg.0
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v__cps_countDown(object, object)
+    ret
+  }
+
+
+  .method public hidebysig static object v__cps_countDown(object, object) cil managed
+  {
+  IL_tco_loop:
+    ldarg.0
+    call object AwsumMain::v_zero()
+    call object AwsumMain::__eqUInt8(object, object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_1)
+  IL_tco_arm_0:
+    pop
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldarg.0
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    stelem.ref
+    call object AwsumMain::v__apply_countDown(object, object)
+    ret
+  IL_tco_arm_1:
+    pop
+    ldarg.0
     call object AwsumMain::__predUInt8(object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_1)
+  IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldarg.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    call object AwsumMain::v__apply_countDown(object, object)
+    ret
+  IL_tco_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldarg.1
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldarg.0
+    stelem.ref
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  }
+
+
+  .method public hidebysig static object v__apply_countDown(object, object) cil managed
+  {
+  IL_tco_loop:
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_1)
+  IL_tco_arm_0:
+    pop
+    ldarg.1
+    ret
+  IL_tco_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    dup
+    ldc.i4.2
+    ldelem.ref
+    stloc.1
+    pop
+    ldarg.1
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_1)
+  IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.2
+    stelem.ref
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  IL_tco_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.1
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    ldstr ","
+    call object AwsumMain::__concat(object, object)
+    ldloc.2
+    call object AwsumMain::__concat(object, object)
+    stelem.ref
+    starg.s 1
+    starg.s 0
+    br IL_tco_loop
+  }
+
+
+  .method public hidebysig static object v_showResult(object) cil managed
+  {
+    ldarg.0
     dup
     ldc.i4.0
     ldelem.ref
@@ -93,8 +313,10 @@
     ldelem.ref
     stloc.0
     pop
-    ldarg.0
-    callvirt instance string [System.Runtime]System.Object::ToString()
+    ldstr "left: "
+    ldloc.0
+    call object AwsumMain::v_showUnderflowError(object)
+    call object AwsumMain::__concat(object, object)
     br.s IL_join
   IL_arm_1:
     dup
@@ -102,12 +324,8 @@
     ldelem.ref
     stloc.0
     pop
-    ldarg.0
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    ldstr ","
-    call object AwsumMain::__concat(object, object)
+    ldstr "right: "
     ldloc.0
-    call object AwsumMain::v_countDown(object)
     call object AwsumMain::__concat(object, object)
     br.s IL_join
   IL_join:
@@ -115,11 +333,19 @@
   }
 
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method public hidebysig static object v_start() cil managed
   {
     ldc.i4 255
     box [System.Runtime]System.Int32
+    ret
+  }
+
+
+  .method public hidebysig static object v_main(object) cil managed
+  {
+    call object AwsumMain::v_start()
     call object AwsumMain::v_countDown(object)
+    call object AwsumMain::v_showResult(object)
     call object AwsumMain::__print(object)
     ret
   }

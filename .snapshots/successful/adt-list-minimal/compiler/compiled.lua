@@ -3,7 +3,39 @@ local M = {}
 function M.__print(s) io.write(tostring(s)); return nil end
 
 function M.v_show(v_xs)
-  return (function(s) if s[1] == 0 then local v_h = s[2]; local v_t = s[3]; return table.concat({v_h, ",", (M.v_show)(v_t)}) elseif s[1] == 1 then return "" end end)(v_xs)
+  return (M.v__cps_show)(v_xs, {0})
+end
+
+function M.v__cps_show(v_xs, v__k)
+  while true do
+    local __s = v_xs
+    if __s[1] == 0 then
+      local v_h = __s[2]
+      local v_t = __s[3]
+      local __t0 = v_t
+      local __t1 = {1, v__k, v_h}
+      v_xs = __t0
+      v__k = __t1
+    elseif __s[1] == 1 then
+      return (M.v__apply_show)(v__k, "")
+    end
+  end
+end
+
+function M.v__apply_show(v__k, v__x)
+  while true do
+    local __s = v__k
+    if __s[1] == 0 then
+      return v__x
+    elseif __s[1] == 1 then
+      local v__pk_1 = __s[2]
+      local v_h = __s[3]
+      local __t0 = v__pk_1
+      local __t1 = table.concat({v_h, ",", v__x})
+      v__k = __t0
+      v__x = __t1
+    end
+  end
 end
 
 M.v_exampleList = {0, "a", {0, "b", {0, "c", {1}}}}

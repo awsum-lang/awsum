@@ -46,6 +46,9 @@ src/Awsum/
 ├── BuiltIn.hs        # Registered prelude built-ins: surface name → surface type (see docs/prelude.md)
 ├── Program.hs        # ProgramType enum + platformTable dispatch (CLI/Browser/…)
 ├── Program/Cli.hs    # CLI-program platform-effect table (IO.Stdout.print, …)
+├── Scc.hs            # Mutual recursion → self-recursion (Tarjan + SCC merge); see docs/recursion.md
+├── Cps.hs            # Non-tail self-recursion → tail-self via K chain (CPS + defunctionalization)
+├── Tco.hs            # Self-tail-call → CLoop / CContinue (loop + jump)
 ├── Codegen.hs        # Target enum (LLVM, JVM, CLR, WASM, JS, Lua)
 ├── Codegen/LLVM.hs   # LLVM IR backend
 ├── Codegen/JVM.hs    # JVM text codegen (Jasmin-like, for snapshots)
@@ -71,6 +74,7 @@ test/sources/
 ├── successful/       # Golden outputs for successful programs
 └── errors/           # Golden diagnostics for error programs
 docs/prelude.md       # Prelude + BuiltIn architecture (design doc)
+docs/recursion.md     # Stack-safe recursion pipeline: Scc + Cps + Tco passes
 docs/targets.md       # Target implementation details
 docs/spec/grammar.ebnf # Formal grammar
 ```
@@ -78,10 +82,10 @@ docs/spec/grammar.ebnf # Formal grammar
 ## Compilation Pipeline
 
 ```
-Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLower → Core (tree-shaken) → Codegen → LLVM/JVM/CLR/WASM/JS/Lua
-                                    ↑                ↑               ↑
-                         stdlib/Prelude.aww   Awsum.Program   Awsum.BuiltIn table (per-target impls)
-                         (embedded, implicit)   .platformTable
+Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLower → Core → Codegen → LLVM/JVM/CLR/WASM/JS/Lua
+                                    ↑                ↑               ↓
+                         stdlib/Prelude.aww   Awsum.Program   tree-shake → saturate → Scc → Cps → Tco
+                         (embedded, implicit)   .platformTable        (see docs/recursion.md for the recursion passes)
                                                 (CLI/Browser/…)
 ```
 
@@ -90,7 +94,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLo
 - **Prelude built-ins** (`Awsum.BuiltIn`): unqualified names reached through the `BuiltIn.foo` alias in `Prelude.aww` (`showInt32`, `concatString`, `predInt32`, …). Always in scope.
 - **Platform-gated effects** (`Awsum.Program.platformTable`): qualified names (`IO.Stdout.print`, …) whose availability is scoped by both the program type (`--program-type cli`, mandatory) and a matching `import IO.Stdout`.
 
-`ElaborateLower` also runs reachability-based tree-shake from `main`, so unused prelude entries and generated constructor wrappers never reach codegen. See [docs/prelude.md](docs/prelude.md).
+`ElaborateLower` also runs reachability-based tree-shake from `main`, so unused prelude entries and generated constructor wrappers never reach codegen. After tree-shake and saturate, three Core-to-Core passes turn every recursion shape into a self-tail-call that each backend lowers to a loop — `Awsum.Scc` merges mutual recursion into self-recursion, `Awsum.Cps` pushes non-tail self-recursion off the stack into a heap-allocated K chain, `Awsum.Tco` folds the remaining self-tail-calls into `CLoop` / `CContinue`. See [docs/prelude.md](docs/prelude.md) and [docs/recursion.md](docs/recursion.md).
 
 ## Language Features
 

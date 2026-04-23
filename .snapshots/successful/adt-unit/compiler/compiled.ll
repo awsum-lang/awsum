@@ -11,7 +11,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant [1 x i8] c"\00"
 
-@.str.0 = private unnamed_addr constant [5 x i8] c"Unit\00"
+@.str.0 = private unnamed_addr constant [11 x i8] c"CustomUnit\00"
 
 define ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
@@ -25,7 +25,7 @@ define ptr @v_show(ptr %v_u) {
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 ]
 case.arm.0.5:
-  %t7 = getelementptr [5 x i8], ptr @.str.0, i64 0, i64 0
+  %t7 = getelementptr [11 x i8], ptr @.str.0, i64 0, i64 0
   br label %case.end.0.6
 case.end.0.6:
   br label %case.join.4

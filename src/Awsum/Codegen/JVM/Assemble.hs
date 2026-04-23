@@ -233,11 +233,13 @@ doAssemble prog@(CoreProgram decls) = do
   m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
+  m3sI <- if Set.member "succInt32" builtIns then (: []) <$> mkSuccInt32 else pure []
+  m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m4s <> m5s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -482,6 +484,184 @@ mkPredUInt8 = do
                    fromIntegral (totalLen `mod` 256)
                  ]
                    <> [0, 1] -- number_of_entries = 1
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
+-- | succInt32: Int32 -> Either OverflowError Int32.
+--   Mirror of 'mkPredInt32' with boundary INT32_MAX and 'iadd' (0x60)
+--   instead of 'isub' (0x64). OverflowError is single-constructor, so
+--   its boxed-tag is 0 — the Left-branch encoding is byte-identical to
+--   the UnderflowError case.
+mkSuccInt32 :: AsmM MInfo
+mkSuccInt32 = do
+  ni <- addUtf8 "__succInt32"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  maxLoad <- bcLoadInt32 2147483647
+  let preamble =
+        [0x2A] -- aload_0
+          <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
+          <> [0x3C] -- istore_1
+          <> [0x1B] -- iload_1
+          <> maxLoad
+      ifAt = length preamble
+      overflow =
+        -- OverflowError instance: Object[1] = [Integer(0)]
+        [0x04] -- iconst_1
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0 (index)
+          <> [0x03] -- iconst_0 (OE tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x4D] -- astore_2 (save OE)
+          -- Left: Object[2] = [Integer(0), OE]
+          <> [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x03] -- iconst_0 (Left tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1 (index)
+          <> [0x2C] -- aload_2
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      okAt = ifAt + 3 + length overflow
+      ok =
+        -- Right: Object[2] = [Integer(1), Integer(v + 1)]
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x04] -- iconst_1 (Right tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1 (index)
+          <> [0x1B] -- iload_1
+          <> [0x04] -- iconst_1
+          <> [0x60] -- iadd
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      ifRel = okAt - ifAt
+      ifBytes = [0xA0, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)]
+      code = preamble <> ifBytes <> overflow <> ok
+      okAt16 = fromIntegral okAt :: Word16
+      smtEntries = [252, hi8 okAt16, lo8 okAt16, 0x01]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1] -- number_of_entries = 1
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
+-- | succUInt8: UInt8 -> Either OverflowError UInt8.
+--   Mirror of 'mkSuccInt32' with boundary 255 ('sipush 255' = 3-byte
+--   inline constant, no constant-pool entry) and no mask on (v + 1),
+--   which stays in 1..255 when v <= 254.
+mkSuccUInt8 :: AsmM MInfo
+mkSuccUInt8 = do
+  ni <- addUtf8 "__succUInt8"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let preamble =
+        [0x2A] -- aload_0
+          <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
+          <> [0x3C] -- istore_1
+          <> [0x1B] -- iload_1
+          <> [0x11, 0x00, 0xFF] -- sipush 255
+      ifAt = length preamble
+      overflow =
+        -- OverflowError instance: Object[1] = [Integer(0)]
+        [0x04]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03]
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x4D]
+          -- Left: Object[2] = [Integer(0), OE]
+          <> [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03]
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x2C]
+          <> [0x53]
+          <> [0xB0]
+      okAt = ifAt + 3 + length overflow
+      ok =
+        -- Right: Object[2] = [Integer(1), Integer(v + 1)]
+        [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x04]
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x1B]
+          <> [0x04]
+          <> [0x60] -- iadd
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0xB0]
+      ifRel = okAt - ifAt
+      ifBytes = [0xA0, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)]
+      code = preamble <> ifBytes <> overflow <> ok
+      okAt16 = fromIntegral okAt :: Word16
+      smtEntries = [252, hi8 okAt16, lo8 okAt16, 0x01]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1]
                    <> smtEntries
   pure
     MInfo
@@ -914,6 +1094,20 @@ emitExpr ctx = \case
           $ CodeWithMeta
             (xMeta.cwCode <> bcInvokeStatic ref)
             xMeta.cwBranchTargets
+      CBuiltIn "succInt32" | [x] <- xs -> do
+        xMeta <- emitExpr ctx x
+        ref <- addMRef "AwsumMain" "__succInt32" "(Ljava/lang/Object;)Ljava/lang/Object;"
+        pure
+          $ CodeWithMeta
+            (xMeta.cwCode <> bcInvokeStatic ref)
+            xMeta.cwBranchTargets
+      CBuiltIn "succUInt8" | [x] <- xs -> do
+        xMeta <- emitExpr ctx x
+        ref <- addMRef "AwsumMain" "__succUInt8" "(Ljava/lang/Object;)Ljava/lang/Object;"
+        pure
+          $ CodeWithMeta
+            (xMeta.cwCode <> bcInvokeStatic ref)
+            xMeta.cwBranchTargets
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8",
           [a, b] <- xs -> do
@@ -1138,8 +1332,18 @@ caseSMT _ctx targets
       objClsIdx <- addClass "java/lang/Object"
       arrClsIdx <- addClass "[Ljava/lang/Object;"
       let sorted = sortOn btOffset targets
-          -- Deduplicate by offset, keeping the one with max btLocals
-          deduped = Map.elems $ Map.fromListWith (\a b -> if a.btLocals >= b.btLocals then a else b) [(t.btOffset, t) | t <- sorted]
+          -- Deduplicate by offset, keeping the target with the NARROWEST
+          -- live-locals set. Nested 'CCase's emit their own join-point
+          -- targets, and when no instructions sit between inner and outer
+          -- joins (typical when the inner case is the last expression of
+          -- an outer arm) the targets collapse onto the same bytecode
+          -- offset. The stackmap at that offset must describe the
+          -- intersection of live locals across every incoming edge — the
+          -- outermost case's (smaller) frame — because outer-arm gotos
+          -- arrive there with only the outer case's slots defined. Slots
+          -- above this min are treated as @top@ by the verifier, which is
+          -- safe because no post-join code reads them.
+          deduped = Map.elems $ Map.fromListWith (\a b -> if a.btLocals <= b.btLocals then a else b) [(t.btOffset, t) | t <- sorted]
           dedupedSorted = sortOn btOffset deduped
       pure (1, buildSMTAttr smtNameIdx arrClsIdx objClsIdx dedupedSorted)
   where

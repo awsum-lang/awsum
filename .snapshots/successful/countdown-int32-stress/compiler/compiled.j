@@ -10,6 +10,15 @@
   return
 .end method
 
+.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  checkcast java/lang/String
+  aload_1
+  checkcast java/lang/String
+  invokevirtual java/lang/String/concat(Ljava/lang/String;)Ljava/lang/String;
+  areturn
+.end method
+
 .method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
@@ -95,11 +104,37 @@ L_eq_i32_ne:
   areturn
 .end method
 
-.method public static v_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-L_tco_loop:
-  aload_0
+.method public static v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
+  ldc "UnderflowError"
+  areturn
+.end method
+
+
+.method public static v_zero()Ljava/lang/Object;
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
+.method public static v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  invokestatic AwsumMain/v__cps_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method public static v__cps_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
+  aload_0
+  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
   invokestatic AwsumMain/__eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -113,6 +148,18 @@ L_tco_loop:
 L_tco_arm_0:
   pop
   aload_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  aastore
+  invokestatic AwsumMain/v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tco_arm_1:
   pop
@@ -134,6 +181,18 @@ L_tco_arm_0:
   astore_2
   pop
   aload_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_2
+  aastore
+  invokestatic AwsumMain/v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tco_arm_1:
   dup
@@ -142,10 +201,136 @@ L_tco_arm_1:
   astore_2
   pop
   aload_2
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
   aload_1
+  aastore
   astore_1
   astore_0
   goto L_tco_loop
+.end method
+
+
+.method public static v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    1: L_tco_arm_1
+    default: L_tco_arm_0
+L_tco_arm_0:
+  pop
+  aload_1
+  areturn
+L_tco_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  aload_1
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    1: L_tco_arm_1
+    default: L_tco_arm_0
+L_tco_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_3
+  pop
+  aload_2
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_3
+  aastore
+  astore_1
+  astore_0
+  goto L_tco_loop
+L_tco_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_3
+  pop
+  aload_2
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_3
+  aastore
+  astore_1
+  astore_0
+  goto L_tco_loop
+.end method
+
+
+.method public static v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  ldc "left: "
+  aload_1
+  invokestatic AwsumMain/v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  ldc "right: "
+  aload_1
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/toString()Ljava/lang/String;
+  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_join:
+  areturn
 .end method
 
 
@@ -158,8 +343,8 @@ L_tco_arm_1:
 
 .method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_start()Ljava/lang/Object;
-  ldc "done"
-  invokestatic AwsumMain/v_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method

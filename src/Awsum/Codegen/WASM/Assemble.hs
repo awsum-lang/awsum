@@ -134,12 +134,13 @@ importCount :: Word32
 importCount = 3
 
 -- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
--- __box_i32, __show_i32, __predInt32, __predUInt8, __eq_i32, __get_arg
+-- __box_i32, __show_i32, __predInt32, __predUInt8, __succInt32, __succUInt8,
+-- __eq_i32, __get_arg
 runtimeCount :: Word32
-runtimeCount = 11
+runtimeCount = 13
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxEqI32, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -149,8 +150,10 @@ idxBoxI32 = importCount + 5
 idxShowI32 = importCount + 6
 idxPredI32 = importCount + 7
 idxPredU8 = importCount + 8
-idxEqI32 = importCount + 9
-idxGetArg = importCount + 10
+idxSuccI32 = importCount + 9
+idxSuccU8 = importCount + 10
+idxEqI32 = importCount + 11
+idxGetArg = importCount + 12
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -337,6 +340,8 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __show_i32
           lookupType (FuncType 1 True) typeMap, -- __predInt32
           lookupType (FuncType 1 True) typeMap, -- __predUInt8
+          lookupType (FuncType 1 True) typeMap, -- __succInt32
+          lookupType (FuncType 1 True) typeMap, -- __succUInt8
           lookupType (FuncType 2 True) typeMap, -- __eq_i32
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
@@ -443,6 +448,8 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeShowI32 info,
           codePredI32 info,
           codePredU8 info,
+          codeSuccI32 info,
+          codeSuccU8 info,
           codeEqI32 info,
           codeGetArg info
         ]
@@ -540,7 +547,11 @@ codeAlloc =
         [op_i32_add],
         [op_global_set],
         encodeULEB128 0,
-        -- if heap > memory.size * 65536 then memory.grow(1)
+        -- Grow loop: while heap > memory.size * 65536, grow by 1 page.
+        -- A single grow is not enough when one allocation (or one CPS
+        -- non-tail unwind) overshoots memory by more than one page;
+        -- keep growing until the heap fits. Falls through when it does.
+        [op_loop, blocktype_void],
         [op_global_get],
         encodeULEB128 0, -- heap
         [op_memory_size, 0x00],
@@ -553,7 +564,10 @@ codeAlloc =
         encodeSLEB128 1, -- 1 page
         [op_memory_grow, 0x00], -- grows memory, pushes old size or -1
         [op_drop], -- discard result
+        [op_br], -- br $grow_loop (restart the outer loop)
+        encodeULEB128 1, -- 1 level up: past the 'if', back to the loop
         [op_end], -- end if
+        [op_end], -- end loop
         -- return ptr
         [op_local_get],
         encodeULEB128 1
@@ -915,6 +929,196 @@ codePredU8 _info =
         [op_end]
       ]
 
+-- __succInt32(p: i32) -> i32
+-- succInt32: Int32 -> Either OverflowError Int32.
+--   Mirrors 'codePredI32' with boundary INT32_MAX and i32.add instead of
+--   i32.sub. OverflowError is single-constructor, so its inner-box tag is
+--   0 (same as UnderflowError) — encoding is bit-identical to the
+--   predecessor case on this axis.
+-- Locals: $v(1) $oe(2) $box(3) $cell(4)
+codeSuccI32 :: WasmInfo -> [Word8]
+codeSuccI32 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- v = i32.load(p)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 1,
+        -- if (v == INT32_MAX) result i32
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 2147483647,
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        -- then: Left OverflowError
+        -- oe = __alloc(4); store tag 0
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 0; store[offset=4] oe
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_else],
+        -- else: Right (v + 1)
+        -- box = __alloc(4); store (v + 1)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 1; store[offset=4] box
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_end]
+      ]
+
+-- __succUInt8(p: i32) -> i32
+-- succUInt8: UInt8 -> Either OverflowError UInt8.
+--   Mirrors 'codeSuccI32' but checks against 255. Masking is unnecessary —
+--   (v + 1) is in 1..255 when v <= 254, so the result stays in UInt8 range
+--   naturally. Same locals layout: $v(1) $oe(2) $box(3) $cell(4).
+codeSuccU8 :: WasmInfo -> [Word8]
+codeSuccU8 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- v = i32.load(p)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 1,
+        -- if (v == 255) result i32
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 255,
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        -- then: Left OverflowError
+        -- oe = __alloc(4); store tag 0
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 0; store[offset=4] oe
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_else],
+        -- else: Right (v + 1)
+        -- box = __alloc(4); store (v + 1)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 1; store[offset=4] box
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_end]
+      ]
+
 -- __eq_i32(a: i32, b: i32) -> i32
 -- eqInt32 / eqUInt8: compare two boxed integers, return a Bool container.
 --   Int32 and UInt8 both flow as pointers to i32 cells (UInt8 values are
@@ -1246,10 +1450,15 @@ exprHasCCase = \case
   CContinue xs -> any exprHasCCase xs
   _ -> False
 
+-- | Worst-case concurrently-live case-arm binding count. Outer-arm
+-- bindings remain live inside inner-case arm bodies, so nested 'CCase's
+-- must get fresh slots on top of their ancestors — take the per-arm
+-- sum, not the max. See 'bindArmVars' for the matching slot-base bump.
 exprMaxBoundVars :: CExpr -> Int
 exprMaxBoundVars = \case
-  CCase _ alts -> foldl' max 0 [max (length vs) (exprMaxBoundVars b) | (_, vs, b) <- alts]
+  CCase _ alts -> foldl' max 0 [length vs + exprMaxBoundVars b | (_, vs, b) <- alts]
   CCall f xs -> foldl' max 0 (exprMaxBoundVars f : map exprMaxBoundVars xs)
+  CCon _ fs -> foldl' max 0 (map exprMaxBoundVars fs)
   CLoop b -> exprMaxBoundVars b
   CContinue xs -> foldl' max 0 (map exprMaxBoundVars xs)
   _ -> 0
@@ -1478,6 +1687,16 @@ emitExpr ctx = \case
             emitExpr ctx x
               <> [op_call]
               <> encodeULEB128 idxPredU8
+      CBuiltIn "succInt32"
+        | [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxSuccI32
+      CBuiltIn "succUInt8"
+        | [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxSuccU8
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8",
           [a, b] <- xs ->
@@ -1554,6 +1773,10 @@ emitArmChain ctx ((tag, vars, body) : rest) =
         <> [op_end]
 
 -- | Bind case arm variables: load fields from scrutinee container into locals.
+-- The returned context advances 'ecBoundBase' past the fresh slots so any
+-- nested 'CCase' inside the arm body allocates beyond the still-live outer
+-- bindings. Slot demand is bounded by 'exprMaxBoundVars' (sum across the
+-- deepest nesting path).
 bindArmVars :: ExprCtx -> [Text] -> ([Word8], ExprCtx)
 bindArmVars ctx vars =
   let base = ctx.ecBoundBase
@@ -1573,7 +1796,11 @@ bindArmVars ctx vars =
       results = zipWith bindOne vars [0 :: Int ..]
       code = concatMap fst results
       newLocals = foldl' (\m (v, slot) -> Map.insert v slot m) ctx.ecLocals (map snd results)
-      ctx' = ctx {ecLocals = newLocals}
+      ctx' =
+        ctx
+          { ecLocals = newLocals,
+            ecBoundBase = base + fromIntegral (length vars)
+          }
    in (code, ctx')
 
 -- | Emit @body@ in tail position under @(loop $tco_top (result i32) ...)@.

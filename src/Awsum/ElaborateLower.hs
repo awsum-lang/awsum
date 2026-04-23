@@ -21,7 +21,9 @@ module Awsum.ElaborateLower (elaborateLowerProgram) where
 
 import Awsum.BuiltIn (lookupBuiltIn)
 import Awsum.Core
+import Awsum.Cps (cpsProgram)
 import Awsum.Program (ProgramType, platformTable)
+import Awsum.Scc (sccMergeProgram)
 import Awsum.Syntax
 import Awsum.Tco (tcoProgram)
 import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, typecheckProgram)
@@ -108,11 +110,26 @@ elaborateLowerProgram progType prog = do
       core = CoreProgram live
   -- 4) Saturate under-applied direct calls via lambda-lifting.
   core' <- saturateProgram core
-  -- 5) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
+  -- 5) SCC-merge for mutual recursion. Every strongly-connected
+  --    component with more than one function is fused into a single
+  --    self-recursive '$scc$' function tagged by "which member is
+  --    active"; each original public name becomes a one-line wrapper.
+  --    After this step, mutual recursion has become self-recursion —
+  --    tail cross-calls get TCO'd below, non-tail cross-calls feed into
+  --    the CPS pass. See 'Awsum.Scc' and docs/recursion.md.
+  let sccMerged = sccMergeProgram core'
+  -- 6) CPS + defunctionalization for non-tail self-recursion. For each
+  --    function with a non-tail self-call, emit a (wrapper, '$cps$f',
+  --    '$apply$f') trio; the continuation chain now lives as an ADT on
+  --    the heap instead of as frames on the system stack, and '$cps$f'
+  --    and '$apply$f' are both self-tail-recursive so the following TCO
+  --    pass folds them into loops. See 'Awsum.Cps' and docs/recursion.md.
+  let cpsed = cpsProgram sccMerged
+  -- 7) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
   --    wrap affected function bodies in 'CLoop'. Backends compile the
   --    wrapped form into a loop + jump rather than a recursive call,
   --    guaranteeing stack safety for tail recursion across all targets.
-  pure (warnings, tcoProgram core')
+  pure (warnings, tcoProgram cpsed)
 
 -- | Reachability over the Core call graph starting from @root@.
 reachableCore :: Name -> M.Map Name (Set Name) -> Set Name

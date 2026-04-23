@@ -6,7 +6,7 @@ CoreProgram
                 [
                     ( 0
                     , []
-                    , CString "Unit"
+                    , CString "CustomUnit"
                     )
                 ]
             )

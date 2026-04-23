@@ -29,6 +29,7 @@ library
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
       Awsum.Core
+      Awsum.Cps
       Awsum.Diagnostic
       Awsum.ElaborateLower
       Awsum.Format
@@ -38,6 +39,7 @@ library
       Awsum.Program
       Awsum.Program.Cli
       Awsum.Render
+      Awsum.Scc
       Awsum.Symbols
       Awsum.Syntax
       Awsum.Tco

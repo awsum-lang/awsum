@@ -9,10 +9,42 @@
    no `main`: the presence of `main` is an entry-point concern, not a
    module-level one. -}
 
+-- ---------------------- String
+
+(++) : String -> String -> String
+(++) = BuiltIn.concatString
+
+-- ---------------------- Unit
+
+{- Single-constructor type carrying no information. Useful as a
+   placeholder return value for functions called purely for their
+   effect, and as a sentinel in generic containers. -}
+
+type Unit = Unit
+
+-- ---------------------- Bool
+
 {- Two-valued sum used by equality and other boolean-returning primitives.
    Foundation for a future `if`/`then`/`else` sugar and logical operators. -}
 
 type Bool = True | False
+
+not : Bool -> Bool
+not b = case b of
+  True -> False
+  False -> True
+
+and : Bool -> Bool -> Bool
+and a b = case a of
+  True -> b
+  False -> False
+
+or : Bool -> Bool -> Bool
+or a b = case a of
+  True -> True
+  False -> b
+
+-- ---------------------- Either
 
 {- Two-constructor sum: a `Left` carrying an error / failure value, or a
    `Right` carrying a success value. This is how honest-arithmetic and
@@ -21,17 +53,39 @@ type Bool = True | False
 
 type Either a b = Left a | Right b
 
+-- ---------------------- Maybe
+
+{- Optional value: `Just x` carries a payload, `Nothing` doesn't. For
+   computations that can legitimately produce "no result" without that
+   being an error (e.g. a lookup). When a reason *why* there's no value
+   matters, reach for `Either` instead. -}
+
+type Maybe a = Nothing | Just a
+
+-- ---------------------- UnderflowError
+
 {- Reported by integer primitives when a result would leave the declared
    type's range (e.g. `predInt32 minInt32`). Single-constructor sum so
    there is nothing to pattern-match on beyond the fact that it happened. -}
-
-(++) : String -> String -> String
-(++) = BuiltIn.concatString
 
 type UnderflowError = UnderflowError
 
 showUnderflowError : UnderflowError -> String
 showUnderflowError _ = "UnderflowError"
+
+-- ---------------------- OverflowError
+
+{- Reported by integer primitives when a result would exceed the declared
+   type's range (e.g. `succInt32 maxInt32`). Symmetric twin of
+   `UnderflowError` — single-constructor sum with nothing to pattern-match
+   on beyond the fact that it happened. -}
+
+type OverflowError = OverflowError
+
+showOverflowError : OverflowError -> String
+showOverflowError _ = "OverflowError"
+
+-- ---------------------- UInt8
 
 eqUInt8 : UInt8 -> UInt8 -> Bool
 eqUInt8 = BuiltIn.eqUInt8
@@ -42,6 +96,11 @@ showUInt8 = BuiltIn.showUInt8
 predUInt8 : UInt8 -> Either UnderflowError UInt8
 predUInt8 = BuiltIn.predUInt8
 
+succUInt8 : UInt8 -> Either OverflowError UInt8
+succUInt8 = BuiltIn.succUInt8
+
+-- ---------------------- Int32
+
 eqInt32 : Int32 -> Int32 -> Bool
 eqInt32 = BuiltIn.eqInt32
 
@@ -50,3 +109,6 @@ showInt32 = BuiltIn.showInt32
 
 predInt32 : Int32 -> Either UnderflowError Int32
 predInt32 = BuiltIn.predInt32
+
+succInt32 : Int32 -> Either OverflowError Int32
+succInt32 = BuiltIn.succInt32

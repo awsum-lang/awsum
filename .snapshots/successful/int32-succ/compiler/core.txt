@@ -1,0 +1,61 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showOverflowError" [ "$wild0" ]
+            ( CString "OverflowError" )
+        , CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "overflow: "
+                        , CCall
+                            ( CVar "showOverflowError" )
+                            [ CVar "e" ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok: "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CValDef "maxInt32"
+            ( CIntLit 2147483647 TInt32 )
+        , CValDef "ordinary"
+            ( CIntLit 42 TInt32 )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "succInt32" )
+                                [ CVar "ordinary" ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "succInt32" )
+                            [ CVar "maxInt32" ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

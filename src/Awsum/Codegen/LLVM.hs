@@ -198,6 +198,8 @@ runtime builtIns =
         if Set.member "showUInt8" builtIns then rtShowUInt8 else "",
         if Set.member "predInt32" builtIns then rtPredInt32 else "",
         if Set.member "predUInt8" builtIns then rtPredUInt8 else "",
+        if Set.member "succInt32" builtIns then rtSuccInt32 else "",
+        if Set.member "succUInt8" builtIns then rtSuccUInt8 else "",
         if Set.member "eqInt32" builtIns then rtEqInt32 else "",
         if Set.member "eqUInt8" builtIns then rtEqUInt8 else ""
       ]
@@ -299,6 +301,70 @@ runtime builtIns =
           "  ret ptr %left",
           "ok:",
           "  %newv = sub i8 %v, 1",
+          "  %box = call ptr @malloc(i64 1)",
+          "  store i8 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- succInt32 : Int32 -> Either OverflowError Int32
+    --   On INT32_MAX, returns Left OverflowError (tags: Left=0,
+    --   OverflowError=0). Otherwise returns Right (x + 1) (Right=1). Mirrors
+    --   'rtPredInt32' with the boundary flipped and 'sub' swapped for 'add'.
+    rtSuccInt32 =
+      unlines
+        [ "define ptr @__succInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %is_max = icmp eq i32 %v, 2147483647",
+          "  br i1 %is_max, label %overflow, label %ok",
+          "overflow:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = add i32 %v, 1",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- succUInt8 : UInt8 -> Either OverflowError UInt8
+    --   `Left OverflowError` on 255, `Right (v + 1)` otherwise. Value is
+    --   loaded as i8 and added at i8 width; overflow is impossible on this
+    --   path since v <= 254.
+    rtSuccUInt8 =
+      unlines
+        [ "define ptr @__succUInt8(ptr %p) {",
+          "  %v = load i8, ptr %p",
+          "  %is_max = icmp eq i8 %v, 255",
+          "  br i1 %is_max, label %overflow, label %ok",
+          "overflow:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = add i8 %v, 1",
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
@@ -812,6 +878,26 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "BuiltIn.predUInt8: arity mismatch"
+      CBuiltIn "succInt32" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__succInt32(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.succInt32: arity mismatch"
+      CBuiltIn "succUInt8" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__succUInt8(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.succUInt8: arity mismatch"
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8" ->
             case xs of

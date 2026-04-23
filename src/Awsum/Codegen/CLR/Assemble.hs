@@ -375,6 +375,9 @@ cilStarg n
 cilSub :: [Word8]
 cilSub = [0x59]
 
+cilAdd :: [Word8]
+cilAdd = [0x58]
+
 cilBox, cilUnboxAny :: Word32 -> [Word8]
 cilBox tok = 0x8C : w32le tok
 cilUnboxAny tok = 0xA5 : w32le tok
@@ -495,6 +498,8 @@ doAssemble (CoreProgram decls) = do
                    ("__print", Set.member "IO.Stdout.print" builtIns),
                    ("__predInt32", Set.member "predInt32" builtIns),
                    ("__predUInt8", Set.member "predUInt8" builtIns),
+                   ("__succInt32", Set.member "succInt32" builtIns),
+                   ("__succUInt8", Set.member "succUInt8" builtIns),
                    ("__eqInt32", Set.member "eqInt32" builtIns),
                    ("__eqUInt8", Set.member "eqUInt8" builtIns)
                  ],
@@ -513,11 +518,13 @@ doAssemble (CoreProgram decls) = do
   m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
+  m3sI <- if Set.member "succInt32" builtIns then (: []) <$> mkSuccInt32 else pure []
+  m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m4s <> m5s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -679,6 +686,133 @@ mkPredUInt8 = do
           <> cilStloc 0
           <> cilLdloc 0
           <> cilLdcI4 0
+          <> cilBneUnS branchOffset
+          <> overflow
+          <> okBranch
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
+-- | succInt32: Int32 -> Either OverflowError Int32.
+--   Binary equivalent of 'Awsum.Codegen.CLR.succInt32Method'. Mirror of
+--   'mkPredInt32' with INT32_MAX as the boundary and 'cilAdd' for the
+--   non-overflow branch. OverflowError shares UnderflowError's tag (0),
+--   so the Left-branch encoding is byte-identical.
+mkSuccInt32 :: AsmM MInfo
+mkSuccInt32 = do
+  ni <- w16 <$> addStr "__succInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      overflow =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      okBranch =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdcI4 1
+          <> cilAdd
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length overflow) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 2147483647
+          <> cilBneUnS branchOffset
+          <> overflow
+          <> okBranch
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
+-- | succUInt8: UInt8 -> Either OverflowError UInt8.
+--   Binary equivalent of 'Awsum.Codegen.CLR.succUInt8Method'. Same local
+--   layout as 'mkSuccInt32'; boundary constant is 255 (emits 5-byte long
+--   'ldc.i4' since it's outside the signed-byte range of 'ldc.i4.s').
+mkSuccUInt8 :: AsmM MInfo
+mkSuccUInt8 = do
+  ni <- w16 <$> addStr "__succUInt8"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      overflow =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      okBranch =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdcI4 1
+          <> cilAdd
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length overflow) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 255
           <> cilBneUnS branchOffset
           <> overflow
           <> okBranch
@@ -847,9 +981,14 @@ emitExpr ctx = \case
     trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
     scrutCode <- emitExpr ctx scrut
     let sorted = sortWith (\(t, _, _) -> t) alts
-        -- Store array to local 0, extract tag to local 1
-        arrSlot = 0 :: Int
-        bindSlotStart = 1 :: Int
+        -- Allocate fresh slots beyond anything currently in scope so
+        -- nested 'CCase's never clobber outer arm bindings. The outer
+        -- array in slot 'arrSlot' stays live for the duration of the
+        -- arm body, so we must skip past the highest occupied local —
+        -- @Map.size@ would miss earlier 'arrSlot's that aren't tracked
+        -- in 'eLocals'. The slot demand matches 'exprLocalsNeeded'.
+        arrSlot = foldl' max (-1) (Map.elems ctx.eLocals) + 1
+        bindSlotStart = arrSlot + 1
     -- Emit arm bodies with bound variables
     armCodes <- forM sorted $ \(_, vars, body) -> do
       let bindings = zip vars [bindSlotStart ..]
@@ -916,6 +1055,12 @@ emitExpr ctx = \case
     CBuiltIn "predUInt8" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__predUInt8"))
+    CBuiltIn "succInt32" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__succInt32"))
+    CBuiltIn "succUInt8" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__succUInt8"))
     CBuiltIn name
       | name == "eqInt32" || name == "eqUInt8",
         [a, b] <- xs -> do
@@ -952,8 +1097,12 @@ emitExpr ctx = \case
 emitTailBin :: ECtx -> [Text] -> CExpr -> AsmM [Word8]
 emitTailBin ctx0 params = fmap fst . goTop ctx0 0
   where
-    arrSlot :: Int
-    arrSlot = 0
+    -- Fresh array-scratch slot per 'CCase' level, beyond every local
+    -- already in scope. See the same trick in 'emitExpr' for 'CCase'.
+    -- @Map.size@ would miss outer arrSlots that aren't tracked in
+    -- 'eLocals'; instead take max+1.
+    freshArrSlot :: ECtx -> Int
+    freshArrSlot ctx = foldl' max (-1) (Map.elems ctx.eLocals) + 1
 
     goTop :: ECtx -> Int -> CExpr -> AsmM ([Word8], Int)
     goTop ctx offset = \case
@@ -993,8 +1142,8 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
       trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
       scrutCode <- emitExpr ctx scrut
       let sorted = sortWith (\(t, _, _) -> t) alts
-          bindSlotStart :: Int
-          bindSlotStart = 1
+          arrSlot = freshArrSlot ctx
+          bindSlotStart = arrSlot + 1
           extractAndStore =
             cilStloc arrSlot
               <> cilLdloc arrSlot
@@ -1003,13 +1152,13 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
               <> cilUnboxAny (tokTR trInt32)
           prefix = scrutCode <> extractAndStore
           chainStartOffset = offset + length prefix
-      (chainBytes, endOffset) <- buildTailChain ctx chainStartOffset sorted bindSlotStart
+      (chainBytes, endOffset) <- buildTailChain ctx arrSlot chainStartOffset sorted bindSlotStart
       pure (prefix <> chainBytes, endOffset)
 
-    buildTailChain :: ECtx -> Int -> [(Int, [Text], CExpr)] -> Int -> AsmM ([Word8], Int)
-    buildTailChain _ offset [] _ =
+    buildTailChain :: ECtx -> Int -> Int -> [(Int, [Text], CExpr)] -> Int -> AsmM ([Word8], Int)
+    buildTailChain _ _ offset [] _ =
       pure (cilLdnull <> cilRet, offset + length cilLdnull + length cilRet)
-    buildTailChain ctx offset [(_, vars, armBody)] bindStart = do
+    buildTailChain ctx arrSlot offset [(_, vars, armBody)] bindStart = do
       let bindings = zip vars [bindStart ..]
           ctx' = ctx {eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings}
           bindCode :: [Word8]
@@ -1025,7 +1174,7 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
           armStart = offset + length armPrefix
       (armBytes, endOff) <- goTop ctx' armStart armBody
       pure (armPrefix <> armBytes, endOff)
-    buildTailChain ctx offset ((tag, vars, armBody) : rest) bindStart = do
+    buildTailChain ctx arrSlot offset ((tag, vars, armBody) : rest) bindStart = do
       let dupCode :: [Word8]
           dupCode = [0x25] -- dup
           ldcCode :: [Word8]
@@ -1047,7 +1196,7 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
           armStart = offset + armPrefixLen + length popTag + length bindCode
       (armBytes, armEnd) <- goTop ctx' armStart armBody
       let skipLen = length popTag + length bindCode + length armBytes
-      (restBytes, restEnd) <- buildTailChain ctx armEnd rest bindStart
+      (restBytes, restEnd) <- buildTailChain ctx arrSlot armEnd rest bindStart
       let bne = cilBneUn (fromIntegral skipLen)
       pure
         ( dupCode <> ldcCode <> bne <> popTag <> bindCode <> armBytes <> restBytes,

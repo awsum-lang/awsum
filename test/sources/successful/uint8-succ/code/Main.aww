@@ -1,0 +1,16 @@
+-- Test: `succUInt8` returns `Right (x + 1)` on ordinary values and
+-- `Left OverflowError` on `255` (the UInt8 maximum). Covers the
+-- upper boundary (`succUInt8 255`), the highest non-overflowing value
+-- (`succUInt8 254 = Right 255` — the strongest check that the JVM
+-- backend carries unsigned width correctly, since a naive signed byte
+-- round-trip would have clipped 255 to -1), and the zero boundary
+-- (`succUInt8 0 = Right 1`).
+import IO.Stdout
+
+render : Either OverflowError UInt8 -> String
+render r = case r of
+  Left e -> "overflow: " ++ showOverflowError e
+  Right v -> "ok: " ++ showUInt8 v
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (render (succUInt8 255) ++ ", " ++ render (succUInt8 254) ++ ", " ++ render (succUInt8 0))
