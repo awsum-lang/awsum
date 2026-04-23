@@ -43,6 +43,7 @@
 -- See @docs\/recursion.md@ for the full pipeline story.
 module Awsum.Scc (sccMergeProgram) where
 
+import Awsum.CallGraph (declName, stronglyConnected)
 import Awsum.Core
 import Awsum.Syntax (Name)
 import Data.Graph qualified as G
@@ -57,10 +58,9 @@ import Relude
 -- merged SCC we emit @$scc$<joined names>@ plus N one-line wrappers
 -- preserving the original public names.
 sccMergeProgram :: CoreProgram -> CoreProgram
-sccMergeProgram (CoreProgram ds) =
+sccMergeProgram prog@(CoreProgram ds) =
   let declMap = Map.fromList [(declName d, d) | d <- ds]
-      topLevels = Map.keysSet declMap
-      sccs = stronglyConnected topLevels ds
+      sccs = stronglyConnected prog
       -- Classify: each SCC either triggers a merge (resulting in one
       -- merged CFunDef + N wrappers, replacing its members) or is left
       -- as-is.
@@ -180,37 +180,3 @@ rewriteCrossCalls memberSet mergedName memberOrder = go
       e@(CString _) -> e
       e@(CIntLit _ _) -> e
       e@(CBuiltIn _) -> e
-
--- | Build the call graph and run Tarjan to produce SCCs in topological
--- order (sinks first). Only direct call-graph edges via @CCall (CVar
--- n)@ are counted, restricted to top-level names (parameters and
--- 'CBuiltIn' references don't contribute to the graph).
-stronglyConnected :: Set Name -> [CDecl] -> [G.SCC Name]
-stronglyConnected topLevels ds =
-  let edges =
-        [ (declName d, declName d, Set.toList (callees d))
-        | d <- ds
-        ]
-   in G.stronglyConnComp edges
-  where
-    callees :: CDecl -> Set Name
-    callees (CFunDef _ _ body) = calls body `Set.intersection` topLevels
-    callees (CValDef _ body) = calls body `Set.intersection` topLevels
-
-    calls :: CExpr -> Set Name
-    calls = \case
-      CCall (CVar n) args -> Set.insert n (foldMap calls args)
-      CCall c args -> calls c <> foldMap calls args
-      CCon _ fs -> foldMap calls fs
-      CCase s alts -> calls s <> foldMap (\(_, _, b) -> calls b) alts
-      CVar n -> Set.singleton n -- first-class function reference
-      CLoop b -> calls b
-      CContinue xs -> foldMap calls xs
-      CString _ -> mempty
-      CIntLit _ _ -> mempty
-      CBuiltIn _ -> mempty
-
-declName :: CDecl -> Name
-declName = \case
-  CFunDef n _ _ -> n
-  CValDef n _ -> n

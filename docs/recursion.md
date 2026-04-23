@@ -46,6 +46,8 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker
                         LLVM / JVM / CLR / WASM / JS / Lua
 ```
 
+Between Cps and Tco, [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) verifies that none of those invariants slipped — see below.
+
 Each pass is Core-to-Core. None of them add new Core IR constructs. None of them need backend-specific support beyond what the backend already does for ordinary ADTs and functions.
 
 ### 1. `Awsum.Scc` — mutual recursion → self-recursion
@@ -116,7 +118,28 @@ the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/co
 
 **Works on any non-tail position.** The transformer walks `goTail`, `goNonTail`, and `goArgs` in strict evaluation order. A non-tail self-call buried inside a constructor field (`Cons (f head) (map f tail)`), inside a call argument (`g (f x)`), or inside an arbitrary case scrutinee all generate their own `K_i` with the right captures. Multiple non-tail calls in one expression chain naturally: the apply-handler of the first `K_i` can itself emit a tail call to `$cps$f` with a later `K_j`, so a pair of sibling self-calls produces a pair of Ks that ping-pong through `$apply$f` as the first's result becomes the trigger for the second.
 
-### 3. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
+### 3. `Awsum.StackSafety` — post-pass verifier (guard rail)
+
+[Source](../src/Awsum/StackSafety.hs). Runs between CPS and TCO. Input invariant: after SCC and CPS, the Core program should contain no non-trivial call-graph cycle and no non-tail self-call in any `CFunDef`. This module checks exactly that and refuses to lower the program (via a `TypeError`) on any violation.
+
+Two classes of issues are caught:
+
+- **`MutualCycleRemains [Name]`** — Tarjan still reports a size > 1 SCC in the post-CPS call graph. Today the only way to hit this is a mutually recursive `CValDef` cluster (which `Awsum.Scc` cannot merge because constants have no fixed point, and which represents a user-level ill-formed program anyway). Any other pattern would indicate an `Awsum.Scc` bug.
+- **`NonTailSelfCallRemains Name`** — a `CFunDef` still has a non-tail self-call after `Awsum.Cps` had its chance. Today this cannot fire on any test because `Awsum.Cps` handles every non-tail self-call shape. It exists as a guard rail against future regressions in the CPS pass.
+
+The verifier produces hard `TypeError`s, not warnings — there is no escape hatch. If you see one of these messages, either the program is genuinely stack-unsafe (mutually recursive `CValDef`s) or the compiler has a bug. The canonical failing program looks like:
+
+```aww
+foo : String
+foo = bar
+
+bar : String
+bar = foo
+```
+
+which the compiler rejects with `Mutually recursive top-level declarations cannot be made stack-safe: bar, foo`. See [`test/sources/errors/mutually-recursive-values`](../test/sources/errors/mutually-recursive-values/code/Main.aww).
+
+### 4. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
 
 [Source](../src/Awsum/Tco.hs). Runs last in the Core pipeline. Input invariant: every self-call is in tail position (enforced by the two preceding passes plus whatever the user wrote). Output: the body is wrapped in a `CLoop`, and each self-tail-call is rewritten to `CContinue` carrying the new argument values.
 
@@ -130,11 +153,12 @@ Per-backend emission details (how `CLoop` / `CContinue` lower to a jump on each 
 
 Each pass has a tightly-defined precondition and postcondition. The preconditions of the later pass match the postconditions of the earlier one:
 
-| Pass  | Precondition (input)                                                   | Postcondition (output)                       |
-| ----- | ---------------------------------------------------------------------- | -------------------------------------------- |
-| `Scc` | any Core program                                                       | no call-graph cycle of size > 1              |
-| `Cps` | no call-graph cycle of size > 1 (i.e., only self-recursion, no mutual) | every self-call is in tail position          |
-| `Tco` | every self-call is in tail position                                    | self-tail-calls are `CContinue` in a `CLoop` |
+| Pass          | Precondition (input)                                                   | Postcondition (output)                                   |
+| ------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| `Scc`         | any Core program                                                       | no call-graph cycle of size > 1 among mergeable members  |
+| `Cps`         | no mergeable call-graph cycle                                          | every self-call is in tail position                      |
+| `StackSafety` | both of the above                                                      | `TypeError` on any violation; unchanged Core on success  |
+| `Tco`         | every self-call is in tail position                                    | self-tail-calls are `CContinue` in a `CLoop`             |
 
 This is what the earlier design document called "applying Reynolds' defunctionalization to two different objects": SCC defunctionalizes **which function is active**, CPS defunctionalizes **what to do after the current call returns**. Both produce ordinary ADTs dispatched by ordinary `case` expressions, which the backends already handle.
 
@@ -175,13 +199,13 @@ Non-tail self-recursion produces nested `case` expressions whose outer arm-bindi
 
 Still to do for a complete stack-safety story.
 
-- **Post-pass recursion-safety verification.** A verifier between `Cps` and `Tco` that confirms no non-tail recursive call survives the pipeline. Any remainder is either an SCC skip (only mutually recursive `CValDef` today) or a CPS bug; the verifier surfaces that as a diagnostic instead of leaving it silent.
-- **Compile error on mutually recursive `CValDef`.** Today `Awsum.Scc` silently passes such SCCs through and the program compiles fine, then stack-overflows on first use. Mutually recursive top-level values have no fixed point — this is a user error and deserves a diagnostic at compile time.
 - **SCC-level dispatch specialization.** If a merged function is only reachable through some of its wrappers, the unreachable tag branches could be tree-shaken. Not needed for current tests — the existing reachability tree-shake in `ElaborateLower` already removes whole unreachable members.
 - **Monadic recursion.** Desugaring `do` into `>>=` calls in elaboration makes monadic code flow through the same SCC + CPS passes. Works transparently for "ordinary" monads (`IO`, `State`, `Reader`, `Writer`, `Either`, `Maybe`) whose `>>=` does not itself encode deep control flow; exotic monads (continuations, free monads with deep nesting, search with backtracking) will need an explicit `tailRecM` method à la PureScript. The prerequisites (type classes, monads, `do`-desugaring) are unimplemented today.
 
 ## References
 
 - [`Awsum.Scc`](../src/Awsum/Scc.hs), [`Awsum.Cps`](../src/Awsum/Cps.hs), [`Awsum.Tco`](../src/Awsum/Tco.hs) — the three passes.
+- [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) — post-pass verifier.
+- [`Awsum.CallGraph`](../src/Awsum/CallGraph.hs) — shared call-graph + self-call analysis.
 - [`Awsum.ElaborateLower`](../src/Awsum/ElaborateLower.hs) — pipeline wiring.
 - [Per-backend emission of `CLoop` / `CContinue`](targets.md#recursion-and-tail-calls) in `targets.md`.

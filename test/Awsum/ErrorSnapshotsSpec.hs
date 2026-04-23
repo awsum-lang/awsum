@@ -1,10 +1,11 @@
 module Awsum.ErrorSnapshotsSpec (spec) where
 
 import Awsum.Diagnostic
+import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, withPrelude)
 import Awsum.Program (ProgramType (..))
-import Awsum.Typing (requireMain, typecheckProgram)
+import Awsum.Typing (requireMain)
 import Common.File
 import Matchers
 import Relude
@@ -25,9 +26,11 @@ discoverTests = do
   entries <- listDirectory sourcesDir
   sort <$> filterM (\e -> doesDirectoryExist (sourcesDir </> e)) entries
 
--- | Snapshots here model what @awsum build@ reports: module-level
---   type-check diagnostics plus the entry-point check. LSP/@awsum check@
---   skip 'requireMain' — those are covered by unit tests.
+-- | Snapshots here model what @awsum build@ reports: the full
+--   elaborate+lower pipeline (so stack-safety violations caught by
+--   'Awsum.StackSafety' also show up here) plus the entry-point check.
+--   LSP/@awsum check@ skip 'requireMain' — those are covered by unit
+--   tests.
 testError :: FilePath -> Spec
 testError testName = do
   let prepare :: IO Text = do
@@ -36,9 +39,9 @@ testError testName = do
           Left parseErrs -> map parseErrorToDiagnostic parseErrs
           Right userProg ->
             let prog = withPrelude userProg
-             in case typecheckProgram ProgramCli prog of
+             in case elaborateLowerProgram ProgramCli prog of
                   Left typeErr -> [typeErrorToDiagnostic typeErr]
-                  Right warns ->
+                  Right (warns, _core) ->
                     case requireMain prog of
                       Left typeErr -> [typeErrorToDiagnostic typeErr]
                       Right () -> map warningToDiagnostic (stripPreludeWarnings warns)

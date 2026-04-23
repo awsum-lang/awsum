@@ -24,6 +24,8 @@ import Awsum.Core
 import Awsum.Cps (cpsProgram)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Scc (sccMergeProgram)
+import Awsum.StackSafety (verifyStackSafety)
+import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
 import Awsum.Tco (tcoProgram)
 import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, typecheckProgram)
@@ -125,11 +127,43 @@ elaborateLowerProgram progType prog = do
   --    and '$apply$f' are both self-tail-recursive so the following TCO
   --    pass folds them into loops. See 'Awsum.Cps' and docs/recursion.md.
   let cpsed = cpsProgram sccMerged
-  -- 7) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
+  -- 7) Stack-safety verifier. After SCC merge and CPS there must be
+  --    no non-trivial call-graph cycle and no CFunDef with a non-tail
+  --    self-call — both mean a recursion shape that would silently
+  --    overflow the system stack at depth on some backend. Any
+  --    remainder is a compile error (no escape hatch): the program is
+  --    either user-level ill-formed (mutually recursive 'CValDef's,
+  --    which have no fixed point) or a compiler bug.
+  case verifyStackSafety cpsed of
+    [] -> pass
+    (issue : _) -> Left (toTypeError sigMap issue)
+  -- 8) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
   --    wrap affected function bodies in 'CLoop'. Backends compile the
   --    wrapped form into a loop + jump rather than a recursive call,
   --    guaranteeing stack safety for tail recursion across all targets.
   pure (warnings, tcoProgram cpsed)
+
+-- | Translate a 'StackSafetyIssue' into a user-facing 'TypeError',
+-- recovering a source span from the corresponding 'Sig' in the surface
+-- AST when available (generated names like @$cps$f@ won't have one
+-- and fall back to 'noSpan').
+toTypeError :: M.Map Name Type' -> StackSafety.StackSafetyIssue -> TypeError
+toTypeError sigMap = \case
+  StackSafety.MutuallyRecursiveValues names ->
+    MutuallyRecursiveValues (spanFor names) names
+  StackSafety.UnsupportedRecursionShape names ->
+    StackUnsafeRecursion (spanFor names) names
+  where
+    spanFor :: [Name] -> SrcSpan
+    spanFor names = fromMaybe noSpan (viaNonEmpty head (mapMaybe lookupSpan names))
+
+    lookupSpan :: Name -> Maybe SrcSpan
+    lookupSpan n = case M.lookup n sigMap of
+      Just (TyVar sp _) -> Just sp
+      Just (TyCon sp _) -> Just sp
+      Just (TyApp sp _ _) -> Just sp
+      Just (TyArrow sp _ _) -> Just sp
+      Nothing -> Nothing
 
 -- | Reachability over the Core call graph starting from @root@.
 reachableCore :: Name -> M.Map Name (Set Name) -> Set Name

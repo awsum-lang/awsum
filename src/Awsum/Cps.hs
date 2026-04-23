@@ -53,6 +53,7 @@
 -- concern and doesn't apply to the post-elaboration Core we generate.
 module Awsum.Cps (cpsProgram) where
 
+import Awsum.CallGraph (hasNonTailSelfCall)
 import Awsum.Core
 import Awsum.Syntax (Name)
 import Data.Set qualified as Set
@@ -78,34 +79,6 @@ transformDecl topLevel = \case
         cpsDefunc topLevel f params body
     | otherwise -> [CFunDef f params body]
   d@CValDef {} -> [d]
-
--- | True iff @body@ contains a call to @f@ in a non-tail position.
--- Walks top-down tracking tail context: the function body itself is
--- tail, each 'CCase' arm /inside a tail case/ is tail, and everything
--- else (scrutinees, call arguments, 'CCon' fields) is non-tail.
-hasNonTailSelfCall :: Name -> CExpr -> Bool
-hasNonTailSelfCall f = inTail
-  where
-    inTail = \case
-      CCall (CVar n) args | n == f -> any inNonTail args
-      CCall callee args -> inNonTail callee || any inNonTail args
-      CCase scrut alts -> inNonTail scrut || any (\(_, _, b) -> inTail b) alts
-      CCon _ fs -> any inNonTail fs
-      CLoop b -> inTail b
-      CContinue xs -> any inNonTail xs
-      CVar _ -> False
-      CString _ -> False
-      CIntLit _ _ -> False
-      CBuiltIn _ -> False
-
-    inNonTail = \case
-      CCall (CVar n) _ | n == f -> True
-      CCall callee args -> inNonTail callee || any inNonTail args
-      CCase scrut alts -> inNonTail scrut || any (\(_, _, b) -> inNonTail b) alts
-      CCon _ fs -> any inNonTail fs
-      CLoop b -> inNonTail b
-      CContinue xs -> any inNonTail xs
-      _ -> False
 
 -- | Free variables of a Core expression. Arm pattern binders scope over
 -- their body only and are subtracted.
