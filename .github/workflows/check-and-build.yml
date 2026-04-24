@@ -33,10 +33,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,    target: x86_64-unknown-linux-gnu,  ext: "" }
-          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, ext: "" }
-          - { os: macos-latest,     target: aarch64-apple-darwin,      ext: "" }
-          - { os: windows-latest,   target: x86_64-pc-windows-msvc,    ext: ".exe" }
+          - { os: ubuntu-latest,    target: x86_64-linux-gnu,       ext: "" }
+          - { os: ubuntu-24.04-arm, target: aarch64-linux-gnu,      ext: "" }
+          - { os: macos-latest,     target: aarch64-apple-darwin,   ext: "" }
+          - { os: windows-latest,   target: x86_64-pc-windows-msvc, ext: ".exe" }
 
     env:
       # Pin STACK_ROOT to a workspace-relative path so cache keys and paths are
@@ -77,9 +77,50 @@ jobs:
 
       - name: Set up LLVM 15 (Windows)
         if: runner.os == 'Windows'
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "15.0.7"
+        shell: pwsh
+        # Download the official LLVM 15.0.7 Windows installer and silent-install
+        # into a pristine per-runner directory. Avoids two traps we hit with
+        # choco / KyleMayes action:
+        #   1. Preinstalled LLVM 20 lives at `C:\Program Files\LLVM` — installing
+        #      over it left behind a mixed 15/20 tree, or the preinstall was still
+        #      first on PATH.
+        #   2. Visual Studio 2022's bundled clang (`VC\Tools\Llvm\bin\clang.exe`)
+        #      has been shadowing everything on some runner images, giving
+        #      LLVM-14-era `ptr type is only supported in -opaque-pointers mode`
+        #      errors even after 15.0.7 install succeeded.
+        # Prepending our pristine bin to $GITHUB_PATH puts it ahead of both.
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url  = "https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/LLVM-15.0.7-win64.exe"
+          $exe  = "$env:RUNNER_TEMP\llvm-installer.exe"
+          $dest = "$env:RUNNER_TEMP\llvm"
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $exe $url
+          $size = (Get-Item $exe).Length
+          if ($size -lt 1000000) {
+            throw "LLVM installer is only $size bytes — download likely failed"
+          }
+          # NSIS silent install with custom destination (/D must be last, unquoted).
+          Start-Process -FilePath $exe -ArgumentList "/S","/D=$dest" -Wait -NoNewWindow
+          if (-not (Test-Path "$dest\bin\clang.exe")) {
+            throw "clang.exe not found at $dest\bin after install"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value "$dest\bin"
+
+      - name: Verify clang resolves to LLVM 15
+        shell: bash
+        run: |
+          set -eu
+          echo "=== clang --version ==="
+          clang --version
+          echo "=== which clang ==="
+          command -v clang
+          # Hard fail if the major version isn't 15 — catches the Windows
+          # PATH-shadowing case before the actual tests run (and without
+          # dumping a 50k-line AST on mismatch).
+          case "$(clang --version | head -n1)" in
+            *"version 15."*) echo "OK: clang is LLVM 15.x" ;;
+            *) echo "ERROR: clang is not LLVM 15.x"; exit 1 ;;
+          esac
 
       # Pin Java to 8 — lowest JVM still installable across our four runners.
       # README ▸ Targets documents "Java 7+" as the minimum; the assembler
