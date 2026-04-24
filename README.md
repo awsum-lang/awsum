@@ -18,7 +18,7 @@ A functional language where computation results are guaranteed equivalent across
 - **JVM** — Java 7+ bytecode (generated directly, no Jasmin/javac)
 - **CLR** — .NET 9+ DLL (generated directly, no ilasm/csc)
 - **WASM** — WebAssembly via WASI (wasmtime)
-- **JS** — Node.js 14+, browser (planned)
+- **JS** — Node.js 22+ (LTS), browser (planned)
 - **Lua** — Lua 5.1+
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
