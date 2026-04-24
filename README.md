@@ -18,7 +18,7 @@ A functional language where computation results are guaranteed equivalent across
 - **JVM** — Java 7+ bytecode (generated directly, no Jasmin/javac)
 - **CLR** — .NET 9+ DLL (generated directly, no ilasm/csc)
 - **WASM** — WebAssembly via WASI (wasmtime)
-- **JS** — Node.js 14+, browser (planned)
+- **JS** — Node.js 22+ (LTS), browser (planned)
 - **Lua** — Lua 5.1+
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
@@ -173,6 +173,7 @@ awsum --version
 - [Prelude and built-in functions](docs/prelude.md) — how types and functions written in Awsum coexist with per-target compiler implementations.
 - [Recursion](docs/recursion.md) — the three-pass pipeline (SCC merge, CPS defunctionalization, TCO) that turns any recursion shape into stack-safe code on every backend.
 - [Target implementation details](docs/targets.md) — how each backend maps the same program to its native shape.
+- [Platform version policy](docs/platform-version-policy.md) — which runtime versions each backend targets and why (latest LTS for server/browser, oldest manufacturer-supported for mobile).
 
 ## Roadmap
 

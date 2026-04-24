@@ -1,11 +1,6 @@
 _default:
   @ just --list --unsorted
 
-# TODO: drop-package-cache
-# TODO: setup-tooling
-# TODO: check-tooling
-# TODO: weeder
-# TODO: rerun-weeder
 lint-check:
   hlint .
 

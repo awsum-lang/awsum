@@ -2,48 +2,15 @@
 
 Design notes and future directions for the Awsum compiler.
 
-## Language
+## General directions
 
-- Numbers and `Either`-based arithmetic with equivalent semantics across targets
-- ~~Algebraic data types and pattern matching~~ ✓ (sum types + exhaustive `case`/`of`)
-- Let-bindings and where-clauses
-- Platform-aware effects: compile-time gating of `Terminal`, `DOM`, `Window`, `Ports`
-- Application formats: CLI, browser, library
-
-## AI Tooling
-
-- MCP server exposing compiler intelligence to AI agents:
-  - `awsum/typecheck` — typecheck a snippet without writing to disk
-  - `awsum/typeof` — get the type of an expression or definition by name
-  - `awsum/completions` — list valid completions at a given position
-  - `awsum/signature` — look up a function signature by name
-  - ~~`awsum/errors` — structured errors as JSON with source spans~~ ✓ (`awsum check --json`)
-  - `awsum/available-effects` — list effects available for a given target
-  - `awsum/project-index` — all definitions with types, without function bodies
-- Grammar-constrained generation via EBNF for syntactically valid AI output
-
-## Platform Version Policy
-
-Awsum targets **the latest LTS versions of server and browser platforms**, and **the oldest manufacturer-supported versions of mobile platforms**.
-
-The reasoning:
-
-- **Server and browser platforms** (Node.js, JVM, .NET, Lua runtimes, browsers) are environments where end users can update software without replacing hardware. We target the latest LTS release — not bleeding edge, not legacy. There is no reason to support an outdated server runtime when updating is a configuration change.
-
-- **Mobile platforms** (iOS, Android) are environments where the hardware manufacturer controls OS updates. A person with a 4-year-old phone may be stuck on the OS version it shipped with. Programs written in Awsum are built by companies whose customers are regular people, not developers — they have every right to use older devices for as long as those devices work. We target the oldest OS version still supported by the manufacturer.
-
-The exact criteria for selecting minimum mobile OS versions are yet to be defined. The principle is clear: don't punish end users for not buying new hardware.
-
-### Current targets
-
-| Target     | Minimum version | Rationale                     |
-| ---------- | --------------- | ----------------------------- |
-| Node.js    | 22 (LTS)        | Latest LTS                    |
-| Lua        | 5.1             | Oldest widely deployed        |
-| LLVM/Clang | 15              | Opaque pointer support        |
-| JVM        | 7               | CONSTANT_MethodHandle support |
-| WASM/WASI  | wasmtime        | WASI preview 1                |
-| .NET       | 9.0             | Latest LTS-adjacent release   |
+- More numeric types: `Int64`, `BigInt`, `Decimal`
+- Type classes, monads, and `do`-notation.
+- Modules and multi-file programs.
+- Incremental recompilation.
+- AI tooling: MCP server, grammar-constrained generation.
+- Platform effects beyond CLI: browser, library.
+- Mobile targets: iOS, Android.
 
 ## Mobile Targets: Platform Effects as Separate Targets
 

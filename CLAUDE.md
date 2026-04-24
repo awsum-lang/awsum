@@ -73,10 +73,11 @@ test/sources/
 .snapshots/
 ├── successful/       # Golden outputs for successful programs
 └── errors/           # Golden diagnostics for error programs
-docs/prelude.md       # Prelude + BuiltIn architecture (design doc)
-docs/recursion.md     # Stack-safe recursion pipeline: Scc + Cps + Tco passes
-docs/targets.md       # Target implementation details
-docs/spec/grammar.ebnf # Formal grammar
+docs/prelude.md                 # Prelude + BuiltIn architecture (design doc)
+docs/recursion.md               # Stack-safe recursion pipeline: Scc + Cps + Tco passes
+docs/targets.md                 # Target implementation details
+docs/platform-version-policy.md # Which runtime versions each backend targets and why
+docs/spec/grammar.ebnf          # Formal grammar
 ```
 
 ## Compilation Pipeline

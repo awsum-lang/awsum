@@ -1,6 +1,6 @@
 -- | Simple /monomorphic/ type checker for the surface AST ('Awsum.Syntax').
 --
--- MVP scope and design notes:
+-- Scope and design notes:
 --   • Built-in type constructors: @"String"@ and @"IOUnit"@.
 --   • User-defined sum types via @type Color = Red | Green | Blue@.
 --   • The only function type constructor is right-associative arrow @->@.
