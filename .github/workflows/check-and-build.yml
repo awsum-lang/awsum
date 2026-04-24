@@ -52,12 +52,31 @@ jobs:
       - uses: actions/checkout@v6
 
       # LLVM 15+ is required for opaque pointers (see README — Installation ▸ Target runtimes).
-      # KyleMayes/install-llvm-action downloads the official LLVM release binaries and
-      # *prepends* them to PATH on every OS. We previously used per-OS package managers
-      # (apt / brew / choco) but on windows-latest a preinstalled clang 14 kept shadowing
-      # the choco-installed LLVM 15, producing `ptr type is only supported in
-      # -opaque-pointers mode` errors (LLVM 14 diagnostic).
-      - name: Set up LLVM 15
+      # Per-OS setup because no single mechanism covers all four runners cleanly:
+      # - apt has clang-15 prebuilt for both Linux x64 and Linux arm64 (upstream LLVM
+      #   doesn't publish prebuilt linux-arm64 archives for 15.0.7, ruling out the
+      #   otherwise-nice KyleMayes action here).
+      # - brew has llvm@15 for macOS arm64.
+      # - Windows runners preinstall a newer clang and put it earlier on PATH than
+      #   anything choco installs; KyleMayes's action is the only Windows setup
+      #   that prepends (not appends) its install to PATH, so it actually wins over
+      #   the preinstalled version.
+
+      - name: Set up LLVM 15 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-15
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100
+
+      - name: Set up LLVM 15 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm@15
+          echo "$(brew --prefix llvm@15)/bin" >> "$GITHUB_PATH"
+
+      - name: Set up LLVM 15 (Windows)
+        if: runner.os == 'Windows'
         uses: KyleMayes/install-llvm-action@v2
         with:
           version: "15.0.7"
