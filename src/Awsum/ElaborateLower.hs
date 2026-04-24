@@ -1,6 +1,6 @@
 -- | Single-pass /elaboration + lowering/ from surface 'Awsum.Syntax' to 'Awsum.Core'.
 --
--- Why one pass?  For the MVP we do the minimal work:
+-- Why one pass?  Minimal work for the current surface language:
 --   1) /Elaboration/ : rely on the type checker to validate the program
 --      (no dictionaries/implicit args yet).
 --   2) /Lowering/    : erase surface sugar and map built-ins to Core nodes.
@@ -88,7 +88,7 @@ genConWrappers conInfo =
 --   plus any non-fatal warnings the typechecker collected.
 elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], CoreProgram)
 elaborateLowerProgram progType prog = do
-  -- 1) Elaboration step (MVP): just typecheck; no evidence/dictionaries yet.
+  -- 1) Elaboration step: just typecheck; no evidence/dictionaries yet.
   warnings <- typecheckProgram progType prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let ds = toList (decls prog)

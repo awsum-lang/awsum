@@ -1,0 +1,134 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "not" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CCon 1 []
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CCon 0 []
+                    )
+                ]
+            )
+        , CFunDef "and"
+            [ "a"
+            , "b"
+            ]
+            ( CCase
+                ( CVar "a" )
+                [
+                    ( 0
+                    , []
+                    , CVar "b"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CCon 1 []
+                    )
+                ]
+            )
+        , CFunDef "or"
+            [ "a"
+            , "b"
+            ]
+            ( CCase
+                ( CVar "a" )
+                [
+                    ( 0
+                    , []
+                    , CCon 0 []
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CVar "b"
+                    )
+                ]
+            )
+        , CFunDef "showBool" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CString "T"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "F"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CVar "showBool" )
+                                        [ CCall
+                                            ( CVar "not" )
+                                            [ CCon 0 [] ]
+                                        ]
+                                    , CCall
+                                        ( CVar "showBool" )
+                                        [ CCall
+                                            ( CVar "not" )
+                                            [ CCon 1 [] ]
+                                        ]
+                                    ]
+                                , CCall
+                                    ( CVar "showBool" )
+                                    [ CCall
+                                        ( CVar "and" )
+                                        [ CCon 0 []
+                                        , CCon 1 []
+                                        ]
+                                    ]
+                                ]
+                            , CCall
+                                ( CVar "showBool" )
+                                [ CCall
+                                    ( CVar "and" )
+                                    [ CCon 0 []
+                                    , CCon 0 []
+                                    ]
+                                ]
+                            ]
+                        , CCall
+                            ( CVar "showBool" )
+                            [ CCall
+                                ( CVar "or" )
+                                [ CCon 1 []
+                                , CCon 1 []
+                                ]
+                            ]
+                        ]
+                    , CCall
+                        ( CVar "showBool" )
+                        [ CCall
+                            ( CVar "or" )
+                            [ CCon 0 []
+                            , CCon 1 []
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

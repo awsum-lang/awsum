@@ -32,13 +32,13 @@
 -- @parseBinary : Input -> Int -> Result@ calling each other) works out
 -- of the box.
 --
--- MVP restrictions (the plan skips the SCC and leaves its members
+-- Current restrictions (the plan skips the SCC and leaves its members
 -- intact when they fail):
 --
 --   * Every member must be a 'CFunDef' (no constants). Mutually
 --     recursive top-level values have no fixed point and are a
---     user-level error; a future pass will reject them with a
---     diagnostic (see @docs\/recursion-roadmap.md@).
+--     user-level error; 'Awsum.StackSafety.verifyStackSafety' rejects
+--     them with a diagnostic before this pass runs.
 --
 -- See @docs\/recursion.md@ for the full pipeline story.
 module Awsum.Scc (sccMergeProgram) where

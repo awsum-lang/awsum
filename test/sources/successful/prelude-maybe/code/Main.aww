@@ -1,0 +1,11 @@
+-- Test: `Maybe a` and its constructors `Just`/`Nothing` from the prelude.
+-- Parallel to `prelude-either`, which covers `Either a b`.
+import IO.Stdout
+
+unwrap : Maybe String -> String
+unwrap m = case m of
+  Just s -> "just: " ++ s
+  Nothing -> "nothing"
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (unwrap (Just "hi") ++ ", " ++ unwrap Nothing)

@@ -38,7 +38,7 @@ import System.IO.Temp (withSystemTempDirectory)
 import System.Process (readProcessWithExitCode)
 import Text.Pretty.Simple (pPrint)
 
--- | Rendered version string, e.g. "awsum 0.0.1".
+-- | Rendered version string, e.g. "9.9.9".
 awsumVersion :: Text
 awsumVersion = toText (showVersion Meta.version)
 

@@ -1,0 +1,43 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "unwrap" [ "m" ]
+            ( CCase
+                ( CVar "m" )
+                [
+                    ( 0
+                    , []
+                    , CString "nothing"
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "just: "
+                        , CVar "s"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CVar "unwrap" )
+                            [ CCon 1
+                                [ CString "hi" ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "unwrap" )
+                        [ CCon 0 [] ]
+                    ]
+                ]
+            )
+        ]
+    }
