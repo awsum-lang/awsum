@@ -41,9 +41,8 @@
 .end method
 
 
-.method public static v__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method public static v__scc_handleA_handleB(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  aload_1
   iconst_1
   anewarray java/lang/Object
   dup
@@ -51,12 +50,12 @@
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method public static v__cps__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method public static v__cps__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -69,8 +68,12 @@ L_tco_loop:
     1: L_tco_arm_1
     default: L_tco_arm_0
 L_tco_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_2
   pop
-  aload_1
+  aload_2
   dup
   iconst_0
   aaload
@@ -84,6 +87,15 @@ L_tco_arm_0:
     default: L_tco_arm_0
 L_tco_arm_0:
   pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
   iconst_1
   anewarray java/lang/Object
   dup
@@ -91,13 +103,23 @@ L_tco_arm_0:
   iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  iconst_1
+  aastore
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  astore_1
+  astore_0
+  goto L_tco_loop
+L_tco_arm_1:
+  pop
   iconst_2
   anewarray java/lang/Object
   dup
@@ -109,49 +131,40 @@ L_tco_arm_0:
   iconst_1
   aload_2
   aastore
-  astore_2
-  astore_1
-  astore_0
-  goto L_tco_loop
-L_tco_arm_1:
-  pop
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
   aload_1
-  aload_2
-  astore_2
   astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_2:
   pop
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  aload_1
+  dup
+  iconst_1
   aload_2
-  astore_2
+  aastore
+  aload_1
   astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_3:
   pop
-  aload_2
+  aload_1
   ldc ""
   invokestatic AwsumMain/v__apply__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tco_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_2
   pop
-  aload_1
+  aload_2
   dup
   iconst_0
   aaload
@@ -165,28 +178,32 @@ L_tco_arm_1:
     default: L_tco_arm_0
 L_tco_arm_0:
   pop
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  aload_1
+  dup
+  iconst_1
   aload_2
-  astore_2
+  aastore
+  aload_1
   astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_1:
   pop
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  dup
+  iconst_1
   iconst_1
   anewarray java/lang/Object
   dup
@@ -194,6 +211,7 @@ L_tco_arm_1:
   iconst_2
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  aastore
   iconst_2
   anewarray java/lang/Object
   dup
@@ -203,27 +221,29 @@ L_tco_arm_1:
   aastore
   dup
   iconst_1
-  aload_2
+  aload_1
   aastore
-  astore_2
   astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_2:
   pop
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  dup
+  iconst_1
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_3
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
   aastore
   iconst_2
   anewarray java/lang/Object
@@ -234,15 +254,14 @@ L_tco_arm_2:
   aastore
   dup
   iconst_1
-  aload_2
+  aload_1
   aastore
-  astore_2
   astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_3:
   pop
-  aload_2
+  aload_1
   ldc ""
   invokestatic AwsumMain/v__apply__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
@@ -310,29 +329,18 @@ L_tco_arm_3:
 
 
 .method public static v_handleA(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  aload_0
-  invokestatic AwsumMain/v__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method public static v_handleB(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_1
-  anewarray java/lang/Object
   dup
-  iconst_0
   iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
   aload_0
-  invokestatic AwsumMain/v__scc_handleA_handleB(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aastore
+  invokestatic AwsumMain/v__scc_handleA_handleB(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

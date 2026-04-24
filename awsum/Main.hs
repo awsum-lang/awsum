@@ -22,7 +22,7 @@ import Awsum.Prelude (stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.Program (ProgramType, parseProgramType)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
-import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, requireMain, typecheckProgram)
+import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, requireMain)
 import Common.File
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
@@ -439,12 +439,18 @@ runCheck :: FilePath -> ProgramType -> Bool -> Bool -> IO ()
 runCheck filePath progType useJson strict = do
   verifyPreludeOrDie progType
   src <- readFileTextUtf8 filePath
+  -- Go through the full 'elaborateLowerProgram' pipeline (not plain
+  -- 'typecheckProgram') so 'check' also surfaces post-lowering
+  -- diagnostics like stack-safety violations caught by the
+  -- 'Awsum.StackSafety' verifier. Typing-level errors still bubble up
+  -- through the same 'Either' channel.
   let result = case parseProgramDiagnostic src of
         Left parseErrs -> Left (map parseErrorToDiagnostic parseErrs)
         Right userProg ->
-          case typecheckProgram progType (withPrelude userProg) of
+          case elaborateLowerProgram progType (withPrelude userProg) of
             Left typeErr -> Left [typeErrorToDiagnostic typeErr]
-            Right warns -> Right (map warningToDiagnostic (stripPreludeWarnings warns))
+            Right (warns, _core) ->
+              Right (map warningToDiagnostic (stripPreludeWarnings warns))
   let diagnostics = either id id result
       hasError = isLeft result
       hasWarn = not (null diagnostics) && not hasError

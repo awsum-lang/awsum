@@ -45,10 +45,9 @@
   }
 
 
-  .method public hidebysig static object v__scc_handleA_handleB(object, object) cil managed
+  .method public hidebysig static object v__scc_handleA_handleB(object) cil managed
   {
     ldarg.0
-    ldarg.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
@@ -56,12 +55,12 @@
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
-    call object AwsumMain::v__cps__scc_handleA_handleB(object, object, object)
+    call object AwsumMain::v__cps__scc_handleA_handleB(object, object)
     ret
   }
 
 
-  .method public hidebysig static object v__cps__scc_handleA_handleB(object, object, object) cil managed
+  .method public hidebysig static object v__cps__scc_handleA_handleB(object, object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -71,8 +70,12 @@
     unbox.any [System.Runtime]System.Int32
     switch (IL_tco_arm_0, IL_tco_arm_1)
   IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
     pop
-    ldarg.1
+    ldloc.0
     dup
     ldc.i4.0
     ldelem.ref
@@ -80,6 +83,15 @@
     switch (IL_tco_arm_0, IL_tco_arm_1, IL_tco_arm_2, IL_tco_arm_3)
   IL_tco_arm_0:
     pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
@@ -87,12 +99,6 @@
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
     stelem.ref
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -103,51 +109,58 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldarg.2
+    ldarg.1
     stelem.ref
-    starg.s 2
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_1:
     pop
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     ldarg.1
-    ldarg.2
-    starg.s 2
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_2:
     pop
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     ldarg.1
-    ldarg.2
-    starg.s 2
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_3:
     pop
-    ldarg.2
+    ldarg.1
     ldstr ""
     call object AwsumMain::v__apply__scc_handleA_handleB(object, object)
     ret
   IL_tco_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
     pop
-    ldarg.1
+    ldloc.0
     dup
     ldc.i4.0
     ldelem.ref
@@ -155,28 +168,32 @@
     switch (IL_tco_arm_0, IL_tco_arm_1, IL_tco_arm_2, IL_tco_arm_3)
   IL_tco_arm_0:
     pop
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     ldarg.1
-    ldarg.2
-    starg.s 2
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_1:
     pop
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
+    dup
+    ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
@@ -184,6 +201,7 @@
     ldc.i4.2
     box [System.Runtime]System.Int32
     stelem.ref
+    stelem.ref
     ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
@@ -193,27 +211,29 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldarg.2
+    ldarg.1
     stelem.ref
-    starg.s 2
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_2:
     pop
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
+    dup
+    ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.3
     box [System.Runtime]System.Int32
+    stelem.ref
     stelem.ref
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -224,15 +244,14 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldarg.2
+    ldarg.1
     stelem.ref
-    starg.s 2
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_3:
     pop
-    ldarg.2
+    ldarg.1
     ldstr ""
     call object AwsumMain::v__apply__scc_handleA_handleB(object, object)
     ret
@@ -296,30 +315,18 @@
 
   .method public hidebysig static object v_handleA(object) cil managed
   {
-    ldc.i4.1
+    ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
-    ldarg.0
-    call object AwsumMain::v__scc_handleA_handleB(object, object)
-    ret
-  }
-
-
-  .method public hidebysig static object v_handleB(object) cil managed
-  {
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
     dup
-    ldc.i4.0
     ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
     ldarg.0
-    call object AwsumMain::v__scc_handleA_handleB(object, object)
+    stelem.ref
+    call object AwsumMain::v__scc_handleA_handleB(object)
     ret
   }
 

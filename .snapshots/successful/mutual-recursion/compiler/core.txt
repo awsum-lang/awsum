@@ -8,36 +8,31 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$scc$handleA_handleB"
-            [ "$fn"
-            , "$arg_0"
-            ]
+        , CFunDef "$scc$handleA_handleB" [ "$args" ]
             ( CCall
                 ( CVar "$cps$$scc$handleA_handleB" )
-                [ CVar "$fn"
-                , CVar "$arg_0"
+                [ CVar "$args"
                 , CCon 0 []
                 ]
             )
         , CFunDef "$cps$$scc$handleA_handleB"
-            [ "$fn"
-            , "$arg_0"
+            [ "$args"
             , "$k"
             ]
             ( CLoop
                 ( CCase
-                    ( CVar "$fn" )
+                    ( CVar "$args" )
                     [
                         ( 0
-                        , []
+                        , [ "step" ]
                         , CCase
-                            ( CVar "$arg_0" )
+                            ( CVar "step" )
                             [
                                 ( 0
                                 , []
                                 , CContinue
-                                    [ CCon 1 []
-                                    , CCon 1 []
+                                    [ CCon 1
+                                        [ CCon 1 [] ]
                                     , CCon 1
                                         [ CVar "$k" ]
                                     ]
@@ -46,8 +41,8 @@ CoreProgram
                                 ( 1
                                 , []
                                 , CContinue
-                                    [ CCon 1 []
-                                    , CVar "$arg_0"
+                                    [ CCon 1
+                                        [ CVar "step" ]
                                     , CVar "$k"
                                     ]
                                 )
@@ -55,8 +50,8 @@ CoreProgram
                                 ( 2
                                 , []
                                 , CContinue
-                                    [ CCon 1 []
-                                    , CVar "$arg_0"
+                                    [ CCon 1
+                                        [ CVar "step" ]
                                     , CVar "$k"
                                     ]
                                 )
@@ -73,15 +68,15 @@ CoreProgram
                         )
                     ,
                         ( 1
-                        , []
+                        , [ "step" ]
                         , CCase
-                            ( CVar "$arg_0" )
+                            ( CVar "step" )
                             [
                                 ( 0
                                 , []
                                 , CContinue
-                                    [ CCon 0 []
-                                    , CVar "$arg_0"
+                                    [ CCon 0
+                                        [ CVar "step" ]
                                     , CVar "$k"
                                     ]
                                 )
@@ -89,8 +84,8 @@ CoreProgram
                                 ( 1
                                 , []
                                 , CContinue
-                                    [ CCon 0 []
-                                    , CCon 2 []
+                                    [ CCon 0
+                                        [ CCon 2 [] ]
                                     , CCon 2
                                         [ CVar "$k" ]
                                     ]
@@ -99,8 +94,8 @@ CoreProgram
                                 ( 2
                                 , []
                                 , CContinue
-                                    [ CCon 0 []
-                                    , CCon 3 []
+                                    [ CCon 0
+                                        [ CCon 3 [] ]
                                     , CCon 3
                                         [ CVar "$k" ]
                                     ]
@@ -173,15 +168,8 @@ CoreProgram
         , CFunDef "handleA" [ "step" ]
             ( CCall
                 ( CVar "$scc$handleA_handleB" )
-                [ CCon 0 []
-                , CVar "step"
-                ]
-            )
-        , CFunDef "handleB" [ "step" ]
-            ( CCall
-                ( CVar "$scc$handleA_handleB" )
-                [ CCon 1 []
-                , CVar "step"
+                [ CCon 0
+                    [ CVar "step" ]
                 ]
             )
         ]

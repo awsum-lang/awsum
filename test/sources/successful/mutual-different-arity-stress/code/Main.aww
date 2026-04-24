@@ -1,0 +1,44 @@
+-- Stress test: mutual tail recursion where the two members have
+-- DIFFERENT ARITY — @pingOne@ takes one @Int32@, @pongTwo@ takes two.
+-- They alternate as the counter decrements, so over 100 000 iterations
+-- half the cross-calls pack one arg and half pack two.
+--
+-- Without @Awsum.Scc@'s sum-typed args merge, heterogeneous SCCs would
+-- be skipped and the members would stay as separate functions calling
+-- each other on the system stack — guaranteed overflow at this depth on
+-- every backend. The test proves the pass fuses arity-mismatched
+-- members into a single self-recursive function whose scrutinee is a
+-- 'CCon' that carries the right field count per tag, at which point
+-- TCO folds the whole thing into a loop.
+--
+-- Paired with @mutual-different-arity-smoke@, which runs the same shape
+-- at trivial depth and is useful as a shape-regression anchor.
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+pingOne : Int32 -> Either UnderflowError Int32
+pingOne n = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> pongTwo m zero
+
+pongTwo : Int32 -> Int32 -> Either UnderflowError Int32
+pongTwo n _acc = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> pingOne m
+
+showResult : Either UnderflowError Int32 -> String
+showResult r = case r of
+  Left e -> "left: " ++ showUnderflowError e
+  Right v -> "right: " ++ showInt32 v
+
+start : Int32
+start = 100000
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (showResult (pingOne start))

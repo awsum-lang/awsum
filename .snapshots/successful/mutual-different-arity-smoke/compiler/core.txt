@@ -1,0 +1,76 @@
+CoreProgram
+    { cdecls =
+        [ CValDef "zero"
+            ( CIntLit 0 TInt32 )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "parseExpr" )
+                        [ CCon 1 [] ]
+                    ]
+                ]
+            )
+        , CFunDef "$scc$parseBinary_parseExpr" [ "$args" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 0
+                        ,
+                            [ "tok"
+                            , "_acc"
+                            ]
+                        , CCase
+                            ( CVar "tok" )
+                            [
+                                ( 0
+                                , []
+                                , CVar "zero"
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CContinue
+                                    [ CCon 1
+                                        [ CCon 0 [] ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , [ "tok" ]
+                        , CCase
+                            ( CVar "tok" )
+                            [
+                                ( 0
+                                , []
+                                , CVar "zero"
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CContinue
+                                    [ CCon 0
+                                        [ CVar "tok"
+                                        , CVar "zero"
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "parseExpr" [ "tok" ]
+            ( CCall
+                ( CVar "$scc$parseBinary_parseExpr" )
+                [ CCon 1
+                    [ CVar "tok" ]
+                ]
+            )
+        ]
+    }

@@ -24,41 +24,39 @@ function M.main(v__input)
   return M.__print((M.v_showResult)((M.v_evenInt)(M.v_start)))
 end
 
-function M.v__scc_evenInt_oddInt(v__fn, v__arg_0)
+function M.v__scc_evenInt_oddInt(v__args)
   while true do
-    local __s = v__fn
+    local __s = v__args
     if __s[1] == 0 then
-      local __s = M.__eqInt32(v__arg_0, M.v_zero)
+      local v_n = __s[2]
+      local __s = M.__eqInt32(v_n, M.v_zero)
       if __s[1] == 0 then
         return {1, {0}}
       elseif __s[1] == 1 then
-        local __s = M.__predInt32(v__arg_0)
+        local __s = M.__predInt32(v_n)
         if __s[1] == 0 then
           local v_e = __s[2]
           return {0, v_e}
         elseif __s[1] == 1 then
           local v_m = __s[2]
-          local __t0 = {1}
-          local __t1 = v_m
-          v__fn = __t0
-          v__arg_0 = __t1
+          local __t0 = {1, v_m}
+          v__args = __t0
         end
       end
     elseif __s[1] == 1 then
-      local __s = M.__eqInt32(v__arg_0, M.v_zero)
+      local v_n = __s[2]
+      local __s = M.__eqInt32(v_n, M.v_zero)
       if __s[1] == 0 then
         return {1, {1}}
       elseif __s[1] == 1 then
-        local __s = M.__predInt32(v__arg_0)
+        local __s = M.__predInt32(v_n)
         if __s[1] == 0 then
           local v_e = __s[2]
           return {0, v_e}
         elseif __s[1] == 1 then
           local v_m = __s[2]
-          local __t0 = {0}
-          local __t1 = v_m
-          v__fn = __t0
-          v__arg_0 = __t1
+          local __t0 = {0, v_m}
+          v__args = __t0
         end
       end
     end
@@ -66,11 +64,7 @@ function M.v__scc_evenInt_oddInt(v__fn, v__arg_0)
 end
 
 function M.v_evenInt(v_n)
-  return (M.v__scc_evenInt_oddInt)({0}, v_n)
-end
-
-function M.v_oddInt(v_n)
-  return (M.v__scc_evenInt_oddInt)({1}, v_n)
+  return (M.v__scc_evenInt_oddInt)({0, v_n})
 end
 
 local ok, dbg = pcall(require, 'debug')

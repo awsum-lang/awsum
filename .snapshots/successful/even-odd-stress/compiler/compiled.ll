@@ -151,24 +151,23 @@ define ptr @v_main(ptr %v__input) {
   ret ptr %t3
 }
 
-define ptr @v__scc_evenInt_oddInt(ptr %v__fn, ptr %v__arg_0) {
+define ptr @v__scc_evenInt_oddInt(ptr %v__args) {
 entry:
   %t3 = alloca ptr
-  store ptr %v__fn, ptr %t3
-  %t4 = alloca ptr
-  store ptr %v__arg_0, ptr %t4
+  store ptr %v__args, ptr %t3
   %t2 = alloca ptr
   br label %tco.loop.0
 tco.loop.0:
-  %t5 = load ptr, ptr %t3
-  %t6 = load ptr, ptr %t4
-  %t7 = getelementptr ptr, ptr %t5, i32 0
-  %t8 = load ptr, ptr %t7
-  %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %tco.case.default.10 [ i64 0, label %tco.case.arm.0.11 i64 1, label %tco.case.arm.1.45 ]
-tco.case.arm.0.11:
+  %t4 = load ptr, ptr %t3
+  %t5 = getelementptr ptr, ptr %t4, i32 0
+  %t6 = load ptr, ptr %t5
+  %t7 = ptrtoint ptr %t6 to i64
+  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 1, label %tco.case.arm.1.46 ]
+tco.case.arm.0.9:
+  %t10 = getelementptr ptr, ptr %t4, i32 1
+  %t11 = load ptr, ptr %t10
   %t12 = call ptr @v_zero()
-  %t13 = call ptr @__eqInt32(ptr %t6, ptr %t12)
+  %t13 = call ptr @__eqInt32(ptr %t11, ptr %t12)
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
@@ -187,7 +186,7 @@ tco.case.arm.0.18:
   store ptr %t19, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.26:
-  %t27 = call ptr @__predInt32(ptr %t6)
+  %t27 = call ptr @__predInt32(ptr %t11)
   %t28 = getelementptr ptr, ptr %t27, i32 0
   %t29 = load ptr, ptr %t28
   %t30 = ptrtoint ptr %t29 to i64
@@ -206,91 +205,88 @@ tco.case.arm.0.32:
 tco.case.arm.1.39:
   %t40 = getelementptr ptr, ptr %t27, i32 1
   %t41 = load ptr, ptr %t40
-  %t42 = call ptr @malloc(i64 8)
+  %t42 = call ptr @malloc(i64 16)
   %t43 = inttoptr i64 1 to ptr
   %t44 = getelementptr ptr, ptr %t42, i32 0
   store ptr %t43, ptr %t44
+  %t45 = getelementptr ptr, ptr %t42, i32 1
+  store ptr %t41, ptr %t45
   store ptr %t42, ptr %t3
-  store ptr %t41, ptr %t4
   br label %tco.loop.0
 tco.case.default.31:
   unreachable
 tco.case.default.17:
   unreachable
-tco.case.arm.1.45:
-  %t46 = call ptr @v_zero()
-  %t47 = call ptr @__eqInt32(ptr %t6, ptr %t46)
-  %t48 = getelementptr ptr, ptr %t47, i32 0
-  %t49 = load ptr, ptr %t48
-  %t50 = ptrtoint ptr %t49 to i64
-  switch i64 %t50, label %tco.case.default.51 [ i64 0, label %tco.case.arm.0.52 i64 1, label %tco.case.arm.1.60 ]
-tco.case.arm.0.52:
-  %t53 = call ptr @malloc(i64 16)
-  %t54 = inttoptr i64 1 to ptr
-  %t55 = getelementptr ptr, ptr %t53, i32 0
-  store ptr %t54, ptr %t55
-  %t56 = call ptr @malloc(i64 8)
+tco.case.arm.1.46:
+  %t47 = getelementptr ptr, ptr %t4, i32 1
+  %t48 = load ptr, ptr %t47
+  %t49 = call ptr @v_zero()
+  %t50 = call ptr @__eqInt32(ptr %t48, ptr %t49)
+  %t51 = getelementptr ptr, ptr %t50, i32 0
+  %t52 = load ptr, ptr %t51
+  %t53 = ptrtoint ptr %t52 to i64
+  switch i64 %t53, label %tco.case.default.54 [ i64 0, label %tco.case.arm.0.55 i64 1, label %tco.case.arm.1.63 ]
+tco.case.arm.0.55:
+  %t56 = call ptr @malloc(i64 16)
   %t57 = inttoptr i64 1 to ptr
   %t58 = getelementptr ptr, ptr %t56, i32 0
   store ptr %t57, ptr %t58
-  %t59 = getelementptr ptr, ptr %t53, i32 1
-  store ptr %t56, ptr %t59
-  store ptr %t53, ptr %t2
+  %t59 = call ptr @malloc(i64 8)
+  %t60 = inttoptr i64 1 to ptr
+  %t61 = getelementptr ptr, ptr %t59, i32 0
+  store ptr %t60, ptr %t61
+  %t62 = getelementptr ptr, ptr %t56, i32 1
+  store ptr %t59, ptr %t62
+  store ptr %t56, ptr %t2
   br label %tco.exit.1
-tco.case.arm.1.60:
-  %t61 = call ptr @__predInt32(ptr %t6)
-  %t62 = getelementptr ptr, ptr %t61, i32 0
-  %t63 = load ptr, ptr %t62
-  %t64 = ptrtoint ptr %t63 to i64
-  switch i64 %t64, label %tco.case.default.65 [ i64 0, label %tco.case.arm.0.66 i64 1, label %tco.case.arm.1.73 ]
-tco.case.arm.0.66:
-  %t67 = getelementptr ptr, ptr %t61, i32 1
-  %t68 = load ptr, ptr %t67
-  %t69 = call ptr @malloc(i64 16)
-  %t70 = inttoptr i64 0 to ptr
-  %t71 = getelementptr ptr, ptr %t69, i32 0
-  store ptr %t70, ptr %t71
-  %t72 = getelementptr ptr, ptr %t69, i32 1
-  store ptr %t68, ptr %t72
-  store ptr %t69, ptr %t2
+tco.case.arm.1.63:
+  %t64 = call ptr @__predInt32(ptr %t48)
+  %t65 = getelementptr ptr, ptr %t64, i32 0
+  %t66 = load ptr, ptr %t65
+  %t67 = ptrtoint ptr %t66 to i64
+  switch i64 %t67, label %tco.case.default.68 [ i64 0, label %tco.case.arm.0.69 i64 1, label %tco.case.arm.1.76 ]
+tco.case.arm.0.69:
+  %t70 = getelementptr ptr, ptr %t64, i32 1
+  %t71 = load ptr, ptr %t70
+  %t72 = call ptr @malloc(i64 16)
+  %t73 = inttoptr i64 0 to ptr
+  %t74 = getelementptr ptr, ptr %t72, i32 0
+  store ptr %t73, ptr %t74
+  %t75 = getelementptr ptr, ptr %t72, i32 1
+  store ptr %t71, ptr %t75
+  store ptr %t72, ptr %t2
   br label %tco.exit.1
-tco.case.arm.1.73:
-  %t74 = getelementptr ptr, ptr %t61, i32 1
-  %t75 = load ptr, ptr %t74
-  %t76 = call ptr @malloc(i64 8)
-  %t77 = inttoptr i64 0 to ptr
-  %t78 = getelementptr ptr, ptr %t76, i32 0
-  store ptr %t77, ptr %t78
-  store ptr %t76, ptr %t3
-  store ptr %t75, ptr %t4
+tco.case.arm.1.76:
+  %t77 = getelementptr ptr, ptr %t64, i32 1
+  %t78 = load ptr, ptr %t77
+  %t79 = call ptr @malloc(i64 16)
+  %t80 = inttoptr i64 0 to ptr
+  %t81 = getelementptr ptr, ptr %t79, i32 0
+  store ptr %t80, ptr %t81
+  %t82 = getelementptr ptr, ptr %t79, i32 1
+  store ptr %t78, ptr %t82
+  store ptr %t79, ptr %t3
   br label %tco.loop.0
-tco.case.default.65:
+tco.case.default.68:
   unreachable
-tco.case.default.51:
+tco.case.default.54:
   unreachable
-tco.case.default.10:
+tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t79 = load ptr, ptr %t2
-  ret ptr %t79
+  %t83 = load ptr, ptr %t2
+  ret ptr %t83
 }
 
 define ptr @v_evenInt(ptr %v_n) {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__scc_evenInt_oddInt(ptr %t0, ptr %v_n)
-  ret ptr %t3
-}
-
-define ptr @v_oddInt(ptr %v_n) {
-  %t0 = call ptr @malloc(i64 8)
-  %t1 = inttoptr i64 1 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = call ptr @v__scc_evenInt_oddInt(ptr %t0, ptr %v_n)
-  ret ptr %t3
+  %t3 = getelementptr ptr, ptr %t0, i32 1
+  store ptr %v_n, ptr %t3
+  %t4 = call ptr @v__scc_evenInt_oddInt(ptr %t0)
+  ret ptr %t4
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

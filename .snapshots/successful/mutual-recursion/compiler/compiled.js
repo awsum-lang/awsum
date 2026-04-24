@@ -6,44 +6,39 @@ function main(v__input){
   return __print((v_handleA)([0]));
 }
 
-function v__scc_handleA_handleB(v__fn, v__arg_0){
-  return (v__cps__scc_handleA_handleB)(v__fn, v__arg_0, [0]);
+function v__scc_handleA_handleB(v__args){
+  return (v__cps__scc_handleA_handleB)(v__args, [0]);
 }
 
-function v__cps__scc_handleA_handleB(v__fn, v__arg_0, v__k){
+function v__cps__scc_handleA_handleB(v__args, v__k){
   while (true) {
     {
-      const __s = v__fn;
+      const __s = v__args;
       switch (__s[0]) {
         case 0: {
+          const v_step = __s[1];
           {
-            const __s = v__arg_0;
+            const __s = v_step;
             switch (__s[0]) {
               case 0: {
-                const __t0 = [1];
-                const __t1 = [1];
-                const __t2 = [1, v__k];
-                v__fn = __t0;
-                v__arg_0 = __t1;
-                v__k = __t2;
+                const __t0 = [1, [1]];
+                const __t1 = [1, v__k];
+                v__args = __t0;
+                v__k = __t1;
                 continue;
               }
               case 1: {
-                const __t0 = [1];
-                const __t1 = v__arg_0;
-                const __t2 = v__k;
-                v__fn = __t0;
-                v__arg_0 = __t1;
-                v__k = __t2;
+                const __t0 = [1, v_step];
+                const __t1 = v__k;
+                v__args = __t0;
+                v__k = __t1;
                 continue;
               }
               case 2: {
-                const __t0 = [1];
-                const __t1 = v__arg_0;
-                const __t2 = v__k;
-                v__fn = __t0;
-                v__arg_0 = __t1;
-                v__k = __t2;
+                const __t0 = [1, v_step];
+                const __t1 = v__k;
+                v__args = __t0;
+                v__k = __t1;
                 continue;
               }
               case 3: {
@@ -53,34 +48,29 @@ function v__cps__scc_handleA_handleB(v__fn, v__arg_0, v__k){
           }
         }
         case 1: {
+          const v_step = __s[1];
           {
-            const __s = v__arg_0;
+            const __s = v_step;
             switch (__s[0]) {
               case 0: {
-                const __t0 = [0];
-                const __t1 = v__arg_0;
-                const __t2 = v__k;
-                v__fn = __t0;
-                v__arg_0 = __t1;
-                v__k = __t2;
+                const __t0 = [0, v_step];
+                const __t1 = v__k;
+                v__args = __t0;
+                v__k = __t1;
                 continue;
               }
               case 1: {
-                const __t0 = [0];
-                const __t1 = [2];
-                const __t2 = [2, v__k];
-                v__fn = __t0;
-                v__arg_0 = __t1;
-                v__k = __t2;
+                const __t0 = [0, [2]];
+                const __t1 = [2, v__k];
+                v__args = __t0;
+                v__k = __t1;
                 continue;
               }
               case 2: {
-                const __t0 = [0];
-                const __t1 = [3];
-                const __t2 = [3, v__k];
-                v__fn = __t0;
-                v__arg_0 = __t1;
-                v__k = __t2;
+                const __t0 = [0, [3]];
+                const __t1 = [3, v__k];
+                v__args = __t0;
+                v__k = __t1;
                 continue;
               }
               case 3: {
@@ -132,11 +122,7 @@ function v__apply__scc_handleA_handleB(v__k, v__x){
 }
 
 function v_handleA(v_step){
-  return (v__scc_handleA_handleB)([0], v_step);
-}
-
-function v_handleB(v_step){
-  return (v__scc_handleA_handleB)([1], v_step);
+  return (v__scc_handleA_handleB)([0, v_step]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

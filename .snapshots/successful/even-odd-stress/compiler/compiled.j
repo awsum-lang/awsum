@@ -195,7 +195,7 @@ L_join:
 .end method
 
 
-.method public static v__scc_evenInt_oddInt(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method public static v__scc_evenInt_oddInt(Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -208,6 +208,10 @@ L_tco_loop:
     1: L_tco_arm_1
     default: L_tco_arm_0
 L_tco_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_1
   pop
   aload_1
   invokestatic AwsumMain/v_zero()Ljava/lang/Object;
@@ -278,18 +282,24 @@ L_tco_arm_1:
   aaload
   astore_2
   pop
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  dup
+  iconst_1
   aload_2
-  astore_1
+  aastore
   astore_0
   goto L_tco_loop
 L_tco_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_1
   pop
   aload_1
   invokestatic AwsumMain/v_zero()Ljava/lang/Object;
@@ -360,44 +370,35 @@ L_tco_arm_1:
   aaload
   astore_2
   pop
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  dup
+  iconst_1
   aload_2
-  astore_1
+  aastore
   astore_0
   goto L_tco_loop
 .end method
 
 
 .method public static v_evenInt(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_1
+  iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  aload_0
-  invokestatic AwsumMain/v__scc_evenInt_oddInt(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method public static v_oddInt(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_1
-  anewarray java/lang/Object
   dup
-  iconst_0
   iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
   aload_0
-  invokestatic AwsumMain/v__scc_evenInt_oddInt(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aastore
+  invokestatic AwsumMain/v__scc_evenInt_oddInt(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

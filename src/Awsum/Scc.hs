@@ -2,11 +2,13 @@
 --
 -- Finds strongly connected components (Tarjan) in the Core call graph.
 -- For every cyclic component with more than one function, merges the
--- members into a single self-recursive function with a "function tag"
--- parameter; cross-calls within the SCC become self-calls on the merged
--- function with a different tag; non-SCC callers still reach each
--- original name through a one-line wrapper. The canonical "merge
--- mutual recursion by tagging" transformation; the same
+-- members into a single self-recursive function whose parameter is a
+-- sum-typed @CCon tag args@ value — one tag per SCC member, fields
+-- carrying that member's original arguments. Cross-calls within the
+-- SCC become self-calls on the merged function with a different tag;
+-- non-SCC callers still reach each original name through a one-line
+-- wrapper that packs its args into the right @CCon@. The canonical
+-- "merge mutual recursion by tagging" transformation; the same
 -- defunctionalization-by-Reynolds primitive used in 'Awsum.Cps', just
 -- applied to "which function is active" instead of "what to do after
 -- this call returns".
@@ -22,18 +24,26 @@
 --     is an ordinary self-recursive 'CFunDef', the tag is an ordinary
 --     'CCon' dispatched by an ordinary 'CCase'.
 --
--- MVP restrictions (the plan skips the SCC and leaves its members
--- intact when any of these fail):
+-- **Heterogeneous arity.** The sum-typed args shape means members can
+-- have different arities (or different parameter types, though Awsum's
+-- types are erased at Core level so that is invisible to us) — each
+-- tag's fields correspond to exactly one member's parameter list.
+-- Classic parser-combinator style (@parseExpr : Input -> Result@ and
+-- @parseBinary : Input -> Int -> Result@ calling each other) works out
+-- of the box.
 --
---   * Every member must be a 'CFunDef' (no constants).
---   * All members share the same arity. Awsum's types are erased at
---     Core level, so we can only check arity, not full type equality;
---     different-arity SCCs would need a sum-of-args codomain that is
---     out of scope for MVP.
+-- MVP restrictions (the plan skips the SCC and leaves its members
+-- intact when they fail):
+--
+--   * Every member must be a 'CFunDef' (no constants). Mutually
+--     recursive top-level values have no fixed point and are a
+--     user-level error; a future pass will reject them with a
+--     diagnostic (see @docs\/recursion-roadmap.md@).
 --
 -- See @docs\/recursion.md@ for the full pipeline story.
 module Awsum.Scc (sccMergeProgram) where
 
+import Awsum.CallGraph (declName, stronglyConnected)
 import Awsum.Core
 import Awsum.Syntax (Name)
 import Data.Graph qualified as G
@@ -48,10 +58,9 @@ import Relude
 -- merged SCC we emit @$scc$<joined names>@ plus N one-line wrappers
 -- preserving the original public names.
 sccMergeProgram :: CoreProgram -> CoreProgram
-sccMergeProgram (CoreProgram ds) =
+sccMergeProgram prog@(CoreProgram ds) =
   let declMap = Map.fromList [(declName d, d) | d <- ds]
-      topLevels = Map.keysSet declMap
-      sccs = stronglyConnected topLevels ds
+      sccs = stronglyConnected prog
       -- Classify: each SCC either triggers a merge (resulting in one
       -- merged CFunDef + N wrappers, replacing its members) or is left
       -- as-is.
@@ -89,39 +98,50 @@ processScc declMap = \case
           }
 
 -- | Build the @$scc$@ merged function and its wrappers, or fail out
--- and let the SCC pass through untouched.
+-- and let the SCC pass through untouched (happens only when a member
+-- is a 'CValDef' — arity and parameter count are handled via a
+-- sum-typed argument value, so heterogeneity is no obstacle).
+--
+-- Emission shape:
+--
+-- @
+--   $scc$…( $args ) =
+--     case $args of
+--       0 (p_0_0, p_0_1, …) -> <body of f_0 with cross-calls rewritten>
+--       1 (p_1_0, p_1_1, …) -> <body of f_1 with cross-calls rewritten>
+--       …
+--
+--   f_i(p_0, p_1, …) = $scc$… (CCon i [p_0, p_1, …])              -- wrapper
+-- @
+--
+-- Arm binders are the /original/ parameter names of each member, so
+-- that member's body references resolve naturally — no alpha-rename
+-- required. This also removes the homogeneous-arity restriction: each
+-- tag carries exactly the number of fields that member expects.
 planMerge :: Map Name CDecl -> [Name] -> Maybe (CDecl, [CDecl])
 planMerge declMap members = do
   memberDecls <- traverse (`Map.lookup` declMap) members
   parts <- traverse asFun memberDecls
-  -- All members must share arity.
-  let arities = map (\(_, ps, _) -> length ps) parts
-  guard (all (== head' arities) (tail' arities))
-  -- Sort by name for a stable layout regardless of call-graph order.
+  -- Sort by name for a stable tag assignment regardless of call-graph order.
   let sorted = sortWith (\(n, _, _) -> n) parts
       names = [n | (n, _, _) <- sorted]
       memberSet = Set.fromList names
       mergedName = "$scc$" <> T.intercalate "_" names
-      fnParam :: Name
-      fnParam = "$fn"
-      -- Use unified positional argument names so bodies from different
-      -- members can live in one scope without clashing on their
-      -- original param names.
-      arity = length (head' (map (\(_, ps, _) -> ps) sorted))
-      argParams = ["$arg_" <> show i | i <- [0 .. arity - 1]]
+      argsParam :: Name
+      argsParam = "$args"
       alts =
-        [ (i, [], rewriteBody memberSet mergedName names (ps, body) argParams)
+        [ (i, ps, rewriteCrossCalls memberSet mergedName names body)
         | (i, (_, ps, body)) <- zip [0 ..] sorted
         ]
-      mergedBody = CCase (CVar fnParam) alts
-      mergedDecl = CFunDef mergedName (fnParam : argParams) mergedBody
+      mergedBody = CCase (CVar argsParam) alts
+      mergedDecl = CFunDef mergedName [argsParam] mergedBody
       wrappers =
         [ CFunDef
             n
             origParams
             ( CCall
                 (CVar mergedName)
-                (CCon i [] : map CVar origParams)
+                [CCon i (map CVar origParams)]
             )
         | (i, (n, origParams, _)) <- zip [0 ..] sorted
         ]
@@ -131,92 +151,32 @@ planMerge declMap members = do
     asFun = \case
       CFunDef n ps b -> Just (n, ps, b)
       CValDef {} -> Nothing
-    head' xs = fromMaybe (error "Awsum.Scc: empty SCC") (viaNonEmpty head xs)
-    tail' xs = fromMaybe [] (viaNonEmpty tail xs)
 
--- | Rewrite a member's body for emission inside the merged function:
---
---   1. Alpha-rename the member's own parameter names to the merged
---      function's unified names (@$arg_0@, @$arg_1@, …).
---   2. Redirect every call to a fellow SCC member into a self-call on
---      the merged function, tagged by that member's position.
-rewriteBody :: Set Name -> Name -> [Name] -> ([Name], CExpr) -> [Name] -> CExpr
-rewriteBody memberSet mergedName memberOrder (origParams, body) unifiedParams =
-  let renamed = foldr (\(a, b) e -> alphaRename a b e) body (zip origParams unifiedParams)
-   in rewriteCalls renamed
+-- | Redirect every direct call @f_j(x, y, …)@ to a fellow SCC member
+-- into a tail call on the merged function with its args packed into a
+-- tagged 'CCon'. Everything else is traversed structurally and left
+-- alone.
+rewriteCrossCalls :: Set Name -> Name -> [Name] -> CExpr -> CExpr
+rewriteCrossCalls memberSet mergedName memberOrder = go
   where
     tagFor :: Name -> Int
     tagFor n = case elemIndex n memberOrder of
       Just i -> i
       Nothing -> error ("Awsum.Scc: tagFor: not an SCC member: " <> n)
 
-    rewriteCalls :: CExpr -> CExpr
-    rewriteCalls = \case
+    go :: CExpr -> CExpr
+    go = \case
       CCall (CVar n) args
         | n `Set.member` memberSet ->
             CCall
               (CVar mergedName)
-              (CCon (tagFor n) [] : map rewriteCalls args)
-      CCall c args -> CCall (rewriteCalls c) (map rewriteCalls args)
-      CCon t fs -> CCon t (map rewriteCalls fs)
-      CCase s alts -> CCase (rewriteCalls s) [(t, vs, rewriteCalls b) | (t, vs, b) <- alts]
-      CLoop b -> CLoop (rewriteCalls b)
-      CContinue xs -> CContinue (map rewriteCalls xs)
-      e@(CVar _) -> e
-      e@(CString _) -> e
-      e@(CIntLit _ _) -> e
-      e@(CBuiltIn _) -> e
-
--- | Alpha-rename free occurrences of @from@ to @to@. Arm binders that
--- reintroduce @from@ shadow, so we stop descending there.
-alphaRename :: Name -> Name -> CExpr -> CExpr
-alphaRename from to = go
-  where
-    go = \case
-      CVar n | n == from -> CVar to
-      e@(CVar _) -> e
-      e@(CString _) -> e
-      e@(CIntLit _ _) -> e
-      e@(CBuiltIn _) -> e
-      CCall c xs -> CCall (go c) (map go xs)
+              [CCon (tagFor n) (map go args)]
+      CCall c args -> CCall (go c) (map go args)
       CCon t fs -> CCon t (map go fs)
-      CCase s alts -> CCase (go s) (map goAlt alts)
+      CCase s alts -> CCase (go s) [(t, vs, go b) | (t, vs, b) <- alts]
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
-    goAlt (t, vs, b)
-      | from `elem` vs = (t, vs, b)
-      | otherwise = (t, vs, go b)
-
--- | Build the call graph and run Tarjan to produce SCCs in topological
--- order (sinks first). Only direct call-graph edges via @CCall (CVar
--- n)@ are counted, restricted to top-level names (parameters and
--- 'CBuiltIn' references don't contribute to the graph).
-stronglyConnected :: Set Name -> [CDecl] -> [G.SCC Name]
-stronglyConnected topLevels ds =
-  let edges =
-        [ (declName d, declName d, Set.toList (callees d))
-        | d <- ds
-        ]
-   in G.stronglyConnComp edges
-  where
-    callees :: CDecl -> Set Name
-    callees (CFunDef _ _ body) = calls body `Set.intersection` topLevels
-    callees (CValDef _ body) = calls body `Set.intersection` topLevels
-
-    calls :: CExpr -> Set Name
-    calls = \case
-      CCall (CVar n) args -> Set.insert n (foldMap calls args)
-      CCall c args -> calls c <> foldMap calls args
-      CCon _ fs -> foldMap calls fs
-      CCase s alts -> calls s <> foldMap (\(_, _, b) -> calls b) alts
-      CVar n -> Set.singleton n -- first-class function reference
-      CLoop b -> calls b
-      CContinue xs -> foldMap calls xs
-      CString _ -> mempty
-      CIntLit _ _ -> mempty
-      CBuiltIn _ -> mempty
-
-declName :: CDecl -> Name
-declName = \case
-  CFunDef n _ _ -> n
-  CValDef n _ -> n
+      e@(CVar _) -> e
+      e@(CString _) -> e
+      e@(CIntLit _ _) -> e
+      e@(CBuiltIn _) -> e

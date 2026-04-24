@@ -24,21 +24,22 @@ function main(v__input){
   return __print((v_showResult)((v_evenInt)(v_start)));
 }
 
-function v__scc_evenInt_oddInt(v__fn, v__arg_0){
+function v__scc_evenInt_oddInt(v__args){
   while (true) {
     {
-      const __s = v__fn;
+      const __s = v__args;
       switch (__s[0]) {
         case 0: {
+          const v_n = __s[1];
           {
-            const __s = __eqInt32(v__arg_0, v_zero);
+            const __s = __eqInt32(v_n, v_zero);
             switch (__s[0]) {
               case 0: {
                 return [1, [0]];
               }
               case 1: {
                 {
-                  const __s = __predInt32(v__arg_0);
+                  const __s = __predInt32(v_n);
                   switch (__s[0]) {
                     case 0: {
                       const v_e = __s[1];
@@ -46,10 +47,8 @@ function v__scc_evenInt_oddInt(v__fn, v__arg_0){
                     }
                     case 1: {
                       const v_m = __s[1];
-                      const __t0 = [1];
-                      const __t1 = v_m;
-                      v__fn = __t0;
-                      v__arg_0 = __t1;
+                      const __t0 = [1, v_m];
+                      v__args = __t0;
                       continue;
                     }
                   }
@@ -59,15 +58,16 @@ function v__scc_evenInt_oddInt(v__fn, v__arg_0){
           }
         }
         case 1: {
+          const v_n = __s[1];
           {
-            const __s = __eqInt32(v__arg_0, v_zero);
+            const __s = __eqInt32(v_n, v_zero);
             switch (__s[0]) {
               case 0: {
                 return [1, [1]];
               }
               case 1: {
                 {
-                  const __s = __predInt32(v__arg_0);
+                  const __s = __predInt32(v_n);
                   switch (__s[0]) {
                     case 0: {
                       const v_e = __s[1];
@@ -75,10 +75,8 @@ function v__scc_evenInt_oddInt(v__fn, v__arg_0){
                     }
                     case 1: {
                       const v_m = __s[1];
-                      const __t0 = [0];
-                      const __t1 = v_m;
-                      v__fn = __t0;
-                      v__arg_0 = __t1;
+                      const __t0 = [0, v_m];
+                      v__args = __t0;
                       continue;
                     }
                   }
@@ -93,11 +91,7 @@ function v__scc_evenInt_oddInt(v__fn, v__arg_0){
 }
 
 function v_evenInt(v_n){
-  return (v__scc_evenInt_oddInt)([0], v_n);
-}
-
-function v_oddInt(v_n){
-  return (v__scc_evenInt_oddInt)([1], v_n);
+  return (v__scc_evenInt_oddInt)([0, v_n]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

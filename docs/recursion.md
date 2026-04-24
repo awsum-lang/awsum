@@ -46,6 +46,8 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker
                         LLVM / JVM / CLR / WASM / JS / Lua
 ```
 
+Between Cps and Tco, [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) verifies that none of those invariants slipped — see below.
+
 Each pass is Core-to-Core. None of them add new Core IR constructs. None of them need backend-specific support beyond what the backend already does for ordinary ADTs and functions.
 
 ### 1. `Awsum.Scc` — mutual recursion → self-recursion
@@ -57,25 +59,22 @@ Each pass is Core-to-Core. None of them add new Core IR constructs. None of them
 1. Build the call graph from Core declarations: nodes are top-level names, edges are direct callees (`CCall (CVar n)` plus first-class `CVar n`), intersected with the set of top-level names so parameters and built-ins are not counted.
 2. Run Tarjan (`Data.Graph.stronglyConnComp` from `containers`) to get SCCs in topological order.
 3. For each **non-trivial** (cyclic, size > 1) SCC:
-   - Check the MVP precondition: every member must be a `CFunDef` (not a `CValDef`) and all members must share the same arity. If either fails, skip the SCC and leave its members alone.
+   - Check the precondition: every member must be a `CFunDef` (not a `CValDef`). If any member is a constant, skip the SCC and leave its members alone — mutually recursive values have no fixed point and are caught as a compile error by `Awsum.StackSafety` in the next step.
    - Sort members by name for a deterministic tag assignment (`0`, `1`, …).
-   - Emit one merged function `$scc$<name_0>_<name_1>_...` with signature `(fn :: Int, arg_0, arg_1, …)`. Its body is a `case` on the tag parameter, each arm carrying one member's original body with:
-     - original parameter names alpha-renamed to unified `$arg_0`, `$arg_1`, …;
-     - every call `f_j(x, y, …)` to a fellow SCC member rewritten to `$scc$…(CCon j [], x, y, …)`.
-   - Emit one wrapper per original name: `f_i(args) = $scc$…(CCon i [], args)`. The original public name stays callable from everywhere outside the SCC.
+   - Emit one merged function `$scc$<name_0>_<name_1>_...` whose single parameter `$args` is a sum-typed `CCon` — tag `i` carries member `i`'s arguments as fields. The body is `case $args of …`, each arm destructuring the `CCon` back into that member's original parameter names, with cross-calls `f_j(x, y, …)` rewritten to `$scc$…(CCon j [x, y, …])`.
+   - Emit one wrapper per original name: `f_i(p_0, p_1, …) = $scc$…(CCon i [p_0, p_1, …])`. The original public name stays callable from everywhere outside the SCC.
 
 **Why this is enough.** After merge, every cross-call has become a self-call on the merged function. Tail cross-calls are tail self-calls and fall through to TCO below. Non-tail cross-calls are non-tail self-calls and fall through to CPS.
 
-**Why this shape.** The tag `CCon i []` and its destructuring `case fn of 0 -> …; 1 -> …` reuse the uniform container layout every backend already has for ordinary ADTs. No new IR nodes, no runtime helpers.
+**Why this shape.** The tag `CCon i [args...]` and its destructuring `case $args of i (p_0, p_1, …) -> …` reuse the uniform container layout every backend already has for ordinary ADTs. No new IR nodes, no runtime helpers. Arm binders are the member's /original/ parameter names, so member bodies resolve variables naturally — no alpha-rename required.
 
 **Why this belongs at this position in the pipeline.** SCC must run before CPS. If CPS ran first, each member would be individually CPS'd into a `$cps$f`/`$apply$f` pair, and merging those pairs after the fact would be both semantically awkward and pointless noise in the snapshots. The current order (saturate → **SCC** → **CPS** → TCO) produces the minimal, predictable output.
 
-**Current limitations (the SCC is passed through unchanged when any of these trip):**
+**Post-SCC tree-shake.** SCC rewrites every cross-call from `f_j(...)` to `$scc$...(CCon j [...])`, so the original member's public name (the wrapper) is no longer referenced by any sibling arm. Wrappers for members that were only ever called from /inside/ the SCC end up dead, and the `treeShakeFromMain` pass in `elaborateLowerProgram` prunes them immediately after merge. In the classic `handleA ⇄ handleB` test only `handleA` is reachable from `main`, so only its wrapper survives; `handleB`'s wrapper is dropped. Same for the three-member `stepA → stepB → stepC → stepA` cycle: only `stepA` survives if that is the sole public entry point.
 
-- Members of different arity. Awsum's types are erased at Core level, so arity is the finest check we can do; different-arity SCCs would need a sum-typed argument codomain, which is not implemented.
-- SCCs containing a `CValDef`. Mutually recursive constants are meaningless (they would loop at initialization time); skip is the right behaviour.
+**Sum-typed args.** Each member's arguments are packed into a `CCon` with a member-specific tag (the field count matches that member's arity), and the merged function's parameter is a single value destructured by `case`. This means members can have different arities — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) is handled out of the box. See [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) for the cross-backend 100 000-iteration proof.
 
-Neither limitation matches any existing test, including `mutual-recursion` and `even-odd-stress`.
+**Current limitation.** SCCs containing a `CValDef` are passed through unchanged here and then caught as a compile error by [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) (see below). Mutually recursive top-level values have no fixed point — `a = b; b = a` has no evaluable value — so this is really a user-level error, and the verifier refuses to lower the program.
 
 ### 2. `Awsum.Cps` — non-tail self-recursion → tail-self via K chain
 
@@ -119,7 +118,28 @@ the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/co
 
 **Works on any non-tail position.** The transformer walks `goTail`, `goNonTail`, and `goArgs` in strict evaluation order. A non-tail self-call buried inside a constructor field (`Cons (f head) (map f tail)`), inside a call argument (`g (f x)`), or inside an arbitrary case scrutinee all generate their own `K_i` with the right captures. Multiple non-tail calls in one expression chain naturally: the apply-handler of the first `K_i` can itself emit a tail call to `$cps$f` with a later `K_j`, so a pair of sibling self-calls produces a pair of Ks that ping-pong through `$apply$f` as the first's result becomes the trigger for the second.
 
-### 3. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
+### 3. `Awsum.StackSafety` — post-pass verifier (guard rail)
+
+[Source](../src/Awsum/StackSafety.hs). Runs between CPS and TCO. Input invariant: after SCC and CPS, the Core program should contain no non-trivial call-graph cycle and no non-tail self-call in any `CFunDef`. This module checks exactly that and refuses to lower the program (via a `TypeError`) on any violation.
+
+Two classes of issues are caught and classified by `Awsum.StackSafety.StackSafetyIssue`:
+
+- **`MutuallyRecursiveValues [Name]`** — the verifier sees a size > 1 SCC whose members are /all/ `CValDef`s. This is a user error that the rest of the pipeline would have silently lowered to code that loops forever during initialisation. Reported as a hard error without any "compiler bug" hedging — `Mutually recursive top-level values cannot be evaluated: bar, foo. The values reference each other in a cycle with no base case, so there is no computable result.`
+- **`UnsupportedRecursionShape [Name]`** — any other remnant: a non-tail self-call that `Awsum.Cps` did not rewrite, or a call-graph cycle involving at least one `CFunDef` that `Awsum.Scc` did not know how to merge. Today no test triggers this path; it exists as a guard rail. Reported as `Awsum cannot guarantee stack safety for this program … If you believe this is a bug, please open an issue on GitHub with a minimal example.` — the program may well be correct, the compiler just lacks the transformation to lower it safely.
+
+The verifier produces hard `TypeError`s, not warnings — there is no escape hatch. The canonical failing program looks like:
+
+```aww
+foo : String
+foo = bar
+
+bar : String
+bar = foo
+```
+
+See [`test/sources/errors/mutually-recursive-values`](../test/sources/errors/mutually-recursive-values/code/Main.aww) for the snapshot.
+
+### 4. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
 
 [Source](../src/Awsum/Tco.hs). Runs last in the Core pipeline. Input invariant: every self-call is in tail position (enforced by the two preceding passes plus whatever the user wrote). Output: the body is wrapped in a `CLoop`, and each self-tail-call is rewritten to `CContinue` carrying the new argument values.
 
@@ -133,26 +153,30 @@ Per-backend emission details (how `CLoop` / `CContinue` lower to a jump on each 
 
 Each pass has a tightly-defined precondition and postcondition. The preconditions of the later pass match the postconditions of the earlier one:
 
-| Pass  | Precondition (input)                                                   | Postcondition (output)                       |
-| ----- | ---------------------------------------------------------------------- | -------------------------------------------- |
-| `Scc` | any Core program                                                       | no call-graph cycle of size > 1              |
-| `Cps` | no call-graph cycle of size > 1 (i.e., only self-recursion, no mutual) | every self-call is in tail position          |
-| `Tco` | every self-call is in tail position                                    | self-tail-calls are `CContinue` in a `CLoop` |
+| Pass          | Precondition (input)                                                   | Postcondition (output)                                   |
+| ------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| `Scc`         | any Core program                                                       | no call-graph cycle of size > 1 among mergeable members  |
+| `Cps`         | no mergeable call-graph cycle                                          | every self-call is in tail position                      |
+| `StackSafety` | both of the above                                                      | `TypeError` on any violation; unchanged Core on success  |
+| `Tco`         | every self-call is in tail position                                    | self-tail-calls are `CContinue` in a `CLoop`             |
 
 This is what the earlier design document called "applying Reynolds' defunctionalization to two different objects": SCC defunctionalizes **which function is active**, CPS defunctionalizes **what to do after the current call returns**. Both produce ordinary ADTs dispatched by ordinary `case` expressions, which the backends already handle.
 
 ## Stack-safety test matrix
 
-| Test                                                                                                  | Shape                                             | Depth     | What it verifies                                                                                                                                  |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`countdown-int32-stress-tail`](../test/sources/successful/countdown-int32-stress-tail/code/Main.aww) | tail self                                         | 100 000   | TCO folds `Right m -> countDown m` into a loop on all six targets.                                                                                |
-| [`countdown-int32-stress`](../test/sources/successful/countdown-int32-stress/code/Main.aww)           | non-tail self (case scrutinee)                    | 100 000   | CPS moves post-call `Left e -> Left e` / `Right v -> Right v` reconstruction into a K chain.                                                      |
-| [`countdown-uint8-tail`](../test/sources/successful/countdown-uint8-tail/code/Main.aww)               | tail self with accumulator                        | 255       | Same as tail stress but exercises accumulator threading through `CContinue`.                                                                      |
-| [`countdown-uint8`](../test/sources/successful/countdown-uint8/code/Main.aww)                         | non-tail self, post-call captures outer parameter | 255       | `K_1` carries `n` from outer scope for use inside `Right (showUInt8 n ++ "," ++ s)`.                                                              |
-| [`adt-list-map`](../test/sources/successful/adt-list-map/code/Main.aww)                               | non-tail self in `CCon` field                     | 3         | Exercises the general CPS path: self-call in `Cons head (map f tail)`. Depth is small because the test is about the shape, not stack pressure.    |
-| [`mutual-recursion`](../test/sources/successful/mutual-recursion/code/Main.aww)                       | mutual, mixed tail + non-tail cross-calls         | 4         | SCC-merges `handleA` ⇄ `handleB` into `$scc$handleA_handleB`; the merged function's non-tail cross-calls (`"A" ++ handleB StepB`) go through CPS. |
-| [`even-odd-stress`](../test/sources/successful/even-odd-stress/code/Main.aww)                         | mutual, all tail                                  | 1 000 000 | SCC turns `evenInt` ⇄ `oddInt` into self-recursion, TCO folds that into a loop. Classic "mutual tail recursion must not blow up."                 |
-| [`recursive-function-call`](../test/sources/successful/recursive-function-call/code/Main.aww)         | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                            |
+| Test                                                                                                      | Shape                                             | Depth     | What it verifies                                                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`countdown-int32-stress-tail`](../test/sources/successful/countdown-int32-stress-tail/code/Main.aww)     | tail self                                         | 100 000   | TCO folds `Right m -> countDown m` into a loop on all six targets.                                                                                                   |
+| [`countdown-int32-stress`](../test/sources/successful/countdown-int32-stress/code/Main.aww)               | non-tail self (case scrutinee)                    | 100 000   | CPS moves post-call `Left e -> Left e` / `Right v -> Right v` reconstruction into a K chain.                                                                         |
+| [`countdown-uint8-tail`](../test/sources/successful/countdown-uint8-tail/code/Main.aww)                   | tail self with accumulator                        | 255       | Same as tail stress but exercises accumulator threading through `CContinue`.                                                                                         |
+| [`countdown-uint8`](../test/sources/successful/countdown-uint8/code/Main.aww)                             | non-tail self, post-call captures outer parameter | 255       | `K_1` carries `n` from outer scope for use inside `Right (showUInt8 n ++ "," ++ s)`.                                                                                 |
+| [`adt-list-map`](../test/sources/successful/adt-list-map/code/Main.aww)                                   | non-tail self in `CCon` field                     | 3         | Exercises the general CPS path: self-call in `Cons head (map f tail)`. Depth is small because the test is about the shape, not stack pressure.                       |
+| [`mutual-recursion`](../test/sources/successful/mutual-recursion/code/Main.aww)                           | mutual, mixed tail + non-tail cross-calls         | 4         | SCC-merges `handleA` ⇄ `handleB` into `$scc$handleA_handleB`; the merged function's non-tail cross-calls (`"A" ++ handleB StepB`) go through CPS.                    |
+| [`even-odd-stress`](../test/sources/successful/even-odd-stress/code/Main.aww)                             | mutual, all tail                                  | 1 000 000 | SCC turns `evenInt` ⇄ `oddInt` into self-recursion, TCO folds that into a loop. Classic "mutual tail recursion must not blow up."                                    |
+| [`mutual-different-arity-smoke`](../test/sources/successful/mutual-different-arity-smoke/code/Main.aww)   | mutual, heterogeneous arity (1 arg ⇄ 2 args)      | small     | Shape regression anchor: SCC merges members of different arity via sum-typed args `CCon`.                                                                            |
+| [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) | mutual, heterogeneous arity, all tail             | 100 000   | `pingOne` (1 arg) ⇄ `pongTwo` (2 args) alternating — the sum-typed merge threads the right number of fields per iteration, TCO folds the fused function into a loop. |
+| [`mutual-three-way-stress`](../test/sources/successful/mutual-three-way-stress/code/Main.aww)             | mutual, three-way cycle, all tail                 | 1 000 000 | `stepA → stepB → stepC → stepA`: SCC handles cycles of arbitrary length; the merged function dispatches over three tags but each iteration stays on the same frame.  |
+| [`recursive-function-call`](../test/sources/successful/recursive-function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
 
 Every test in the table runs on all six backends with byte-identical stdout via `ProgramSnapshotsSpec`.
 
@@ -176,12 +200,12 @@ Non-tail self-recursion produces nested `case` expressions whose outer arm-bindi
 
 Still to do for a complete stack-safety story.
 
-- **Heterogeneous-signature SCC merge.** Today `Awsum.Scc` skips SCCs whose members differ in arity; handling them would require a sum-of-args codomain at the merged function.
-- **SCC-level dispatch specialization.** If a merged function is only reachable through some of its wrappers, the unreachable tag branches could be tree-shaken. Not needed for current tests — the existing reachability tree-shake in `ElaborateLower` already removes whole unreachable members.
 - **Monadic recursion.** Desugaring `do` into `>>=` calls in elaboration makes monadic code flow through the same SCC + CPS passes. Works transparently for "ordinary" monads (`IO`, `State`, `Reader`, `Writer`, `Either`, `Maybe`) whose `>>=` does not itself encode deep control flow; exotic monads (continuations, free monads with deep nesting, search with backtracking) will need an explicit `tailRecM` method à la PureScript. The prerequisites (type classes, monads, `do`-desugaring) are unimplemented today.
 
 ## References
 
 - [`Awsum.Scc`](../src/Awsum/Scc.hs), [`Awsum.Cps`](../src/Awsum/Cps.hs), [`Awsum.Tco`](../src/Awsum/Tco.hs) — the three passes.
+- [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) — post-pass verifier.
+- [`Awsum.CallGraph`](../src/Awsum/CallGraph.hs) — shared call-graph + self-call analysis.
 - [`Awsum.ElaborateLower`](../src/Awsum/ElaborateLower.hs) — pipeline wiring.
 - [Per-backend emission of `CLoop` / `CContinue`](targets.md#recursion-and-tail-calls) in `targets.md`.

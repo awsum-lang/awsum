@@ -140,6 +140,22 @@ data TypeError
     --   quick-fixes / diagnostics can point at both the signature (the
     --   thing the user typed) and the reference (what it aliases).
     BuiltInTypeMismatch SrcSpan SrcSpan Name Type' Type'
+  | -- | Two or more top-level /values/ reference each other in a cycle
+    --   with no function indirection. There is no fixed point —
+    --   evaluating any of them demands another with no base case — so
+    --   the program is semantically ill-formed. Pure user error;
+    --   reported without any "compiler bug" hedging. Span points at
+    --   the first member whose source location we can recover.
+    MutuallyRecursiveValues SrcSpan [Name]
+  | -- | A recursion shape the compiler cannot currently transform to
+    --   a stack-safe form: either a call-graph cycle involving at
+    --   least one 'CFunDef' that 'Awsum.Scc' did not know how to
+    --   merge, or a 'CFunDef' with a non-tail self-call that
+    --   'Awsum.Cps' did not rewrite. Programs landing here may well
+    --   be correct — the compiler just lacks the transformation to
+    --   lower them safely. Span points at the first member whose
+    --   source location we can recover.
+    StackUnsafeRecursion SrcSpan [Name]
   deriving stock (Show, Eq)
 
 -- | Extract the source span from a TypeError, if available.
@@ -177,6 +193,8 @@ typeErrorSpan = \case
   ReferencingIgnoredConstructor sp _ _ -> Just sp
   UnknownBuiltIn sp _ -> Just sp
   BuiltInTypeMismatch sp _ _ _ _ -> Just sp
+  MutuallyRecursiveValues sp _ -> Just sp
+  StackUnsafeRecursion sp _ -> Just sp
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -226,6 +244,18 @@ prettyPrintTypeError = \case
       <> showType declared
       <> ", but the compiler registers it as "
       <> showType registered
+  MutuallyRecursiveValues _ names ->
+    "Mutually recursive top-level values cannot be evaluated: "
+      <> T.intercalate ", " names
+      <> ". The values reference each other in a cycle with no base case, "
+      <> "so there is no computable result."
+  StackUnsafeRecursion _ names ->
+    "Awsum cannot guarantee stack safety for this program. The recursion "
+      <> "involving "
+      <> T.intercalate ", " names
+      <> " uses a shape the compiler does not currently transform to a "
+      <> "stack-safe form. If you believe this is a bug, please open an "
+      <> "issue on GitHub with a minimal example."
   where
     showType :: Type' -> Text
     showType = \case

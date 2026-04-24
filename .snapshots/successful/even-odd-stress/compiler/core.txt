@@ -59,20 +59,17 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$scc$evenInt_oddInt"
-            [ "$fn"
-            , "$arg_0"
-            ]
+        , CFunDef "$scc$evenInt_oddInt" [ "$args" ]
             ( CLoop
                 ( CCase
-                    ( CVar "$fn" )
+                    ( CVar "$args" )
                     [
                         ( 0
-                        , []
+                        , [ "n" ]
                         , CCase
                             ( CCall
                                 ( CBuiltIn "eqInt32" )
-                                [ CVar "$arg_0"
+                                [ CVar "n"
                                 , CVar "zero"
                                 ]
                             )
@@ -88,7 +85,7 @@ CoreProgram
                                 , CCase
                                     ( CCall
                                         ( CBuiltIn "predInt32" )
-                                        [ CVar "$arg_0" ]
+                                        [ CVar "n" ]
                                     )
                                     [
                                         ( 0
@@ -100,8 +97,8 @@ CoreProgram
                                         ( 1
                                         , [ "m" ]
                                         , CContinue
-                                            [ CCon 1 []
-                                            , CVar "m"
+                                            [ CCon 1
+                                                [ CVar "m" ]
                                             ]
                                         )
                                     ]
@@ -110,11 +107,11 @@ CoreProgram
                         )
                     ,
                         ( 1
-                        , []
+                        , [ "n" ]
                         , CCase
                             ( CCall
                                 ( CBuiltIn "eqInt32" )
-                                [ CVar "$arg_0"
+                                [ CVar "n"
                                 , CVar "zero"
                                 ]
                             )
@@ -130,7 +127,7 @@ CoreProgram
                                 , CCase
                                     ( CCall
                                         ( CBuiltIn "predInt32" )
-                                        [ CVar "$arg_0" ]
+                                        [ CVar "n" ]
                                     )
                                     [
                                         ( 0
@@ -142,8 +139,8 @@ CoreProgram
                                         ( 1
                                         , [ "m" ]
                                         , CContinue
-                                            [ CCon 0 []
-                                            , CVar "m"
+                                            [ CCon 0
+                                                [ CVar "m" ]
                                             ]
                                         )
                                     ]
@@ -156,15 +153,8 @@ CoreProgram
         , CFunDef "evenInt" [ "n" ]
             ( CCall
                 ( CVar "$scc$evenInt_oddInt" )
-                [ CCon 0 []
-                , CVar "n"
-                ]
-            )
-        , CFunDef "oddInt" [ "n" ]
-            ( CCall
-                ( CVar "$scc$evenInt_oddInt" )
-                [ CCon 1 []
-                , CVar "n"
+                [ CCon 0
+                    [ CVar "n" ]
                 ]
             )
         ]
