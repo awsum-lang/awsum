@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CI / supported host platforms**
+  - Build-and-test workflow now runs across four OS / architecture combinations instead of Linux x86_64 only: `ubuntu-latest` (x86_64), `ubuntu-24.04-arm` (aarch64), `macos-latest` (aarch64), `windows-latest` (x86_64). `fail-fast: false`, per-arch cache keys (`runner.os` + `runner.arch`), `STACK_ROOT` pinned to a workspace-relative path so caching works identically on all three operating systems.
+  - LLVM 15 (the documented minimum) is now explicitly pinned on every runner — `clang-15` via apt + `update-alternatives` on Linux, `brew install llvm@15` with PATH prepend on macOS, `choco install llvm --version=15.0.7` on Windows.
+  - README gained a **Supported host platforms** table next to **Targets**, listing the exact OS / architecture / target-triple / runner combinations that are verified in CI.
+
 ## [0.0.2] - 2026-04-24
 
 ### Added

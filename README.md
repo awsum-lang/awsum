@@ -23,6 +23,19 @@ A functional language where computation results are guaranteed equivalent across
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
+## Supported host platforms
+
+The full test suite runs on every push to `main` and every PR across the following host OS / architecture combinations — these are the platforms the compiler is verified to build and run on:
+
+| OS      | Architecture | Target triple               | GitHub runner      |
+| ------- | ------------ | --------------------------- | ------------------ |
+| Linux   | x86_64       | `x86_64-unknown-linux-gnu`  | `ubuntu-latest`    |
+| Linux   | aarch64      | `aarch64-unknown-linux-gnu` | `ubuntu-24.04-arm` |
+| macOS   | aarch64      | `aarch64-apple-darwin`      | `macos-latest`     |
+| Windows | x86_64       | `x86_64-pc-windows-msvc`    | `windows-latest`   |
+
+Other host platforms may work but are not exercised in CI.
+
 ## Editor support
 
 ### VSCode
