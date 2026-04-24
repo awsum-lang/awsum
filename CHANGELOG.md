@@ -71,12 +71,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `awsum symbols FILE --json` — emit an LSP-style `DocumentSymbol` array for Outline view and workspace symbol search.
   - `awsum run --input TEXT` / `awsum run --stdin` for passing input to `main`.
 
-- **Editor support**
-  - VSCode extension shows inline error diagnostics (red) and warnings (yellow, theme-aware) on open, save, and as-you-type with debounce.
-  - `AwsumCodeActionProvider` surfaces compiler-supplied quick-fixes as lightbulb actions. No language-aware logic in the extension — edits come straight from the diagnostic payload.
-  - Document symbols + workspace symbols (driven by `awsum symbols --json`) power Outline, breadcrumbs, `Ctrl+Shift+O`, and `Ctrl+T`.
-  - TextMate grammar updated to highlight integer literals and `_`-prefixed identifiers in declaration sites (`_A`, `_B`, `_tag`, `_foo`, `_input`).
-
 - **Documentation**
   - `docs/prelude.md` — Prelude + BuiltIn architecture design doc.
   - `docs/recursion.md` — stack-safe recursion pipeline walkthrough.
@@ -117,9 +111,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Documentation**
   - EBNF grammar at `docs/spec/grammar.ebnf` (applies to current release).
-
-- **Editor support**
-  - TextMate grammar (`source.awsum`) for `*.aww` with robust string handling
-    (non-escaped quote termination, escape highlighting).
 
 [0.0.1]: https://github.com/awsum-lang/awsum/releases/tag/v0.0.1
