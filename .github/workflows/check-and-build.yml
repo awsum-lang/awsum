@@ -70,7 +70,9 @@ jobs:
 
       - name: Set up LLVM 15 (Windows)
         if: runner.os == 'Windows'
-        run: choco install --no-progress -y llvm --version=15.0.7
+        # windows-latest ships a newer LLVM preinstalled; --allow-downgrade lets
+        # choco replace it with the pinned 15.0.7 we actually want.
+        run: choco install --no-progress -y --allow-downgrade llvm --version=15.0.7
 
       - name: Set up JDK
         uses: actions/setup-java@v4
