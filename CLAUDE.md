@@ -16,6 +16,8 @@ just fix            # Full precommit checks (format, lint, build, test)
 
 After completing a plan, run `just fix` to verify everything passes (format, lint, build, test), then `stack install` to update the global `awsum` binary.
 
+When a feature is done, add an entry for it under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) — one bullet per user-visible change, grouped by the Keep-a-Changelog section (`Added` / `Changed` / `Fixed` / `Removed`). Do this as part of finishing the feature, not later — if the changelog isn't updated, the feature isn't finished. Infrastructure-only changes (CI, dev tooling, internal refactors) still get an entry so the next release notes are complete.
+
 ## CLI Commands
 
 Commands that go through the typechecker require `--program-type cli`

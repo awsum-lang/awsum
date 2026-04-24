@@ -1,1 +1,20 @@
+# Force LF for every text file the compiler and its tests touch, regardless of
+# the clone's core.autocrlf setting (Windows' git default is `true`, which would
+# rewrite these to CRLF on checkout). The parser's column tracker counts `\r`
+# as a column increment, and the golden-snapshot matcher does byte-for-byte
+# text comparison — either one turns CRLF drift into a cross-platform diff.
+*                  text=auto eol=lf
+*.aww              text eol=lf
+*.hs               text eol=lf
+*.yaml             text eol=lf
+*.cabal            text eol=lf
+.snapshots/**      text eol=lf
+test/sources/**    text eol=lf
+stdlib/**          text eol=lf
+
+# Keep Windows-only scripts as CRLF so cmd.exe / PowerShell handle them.
+*.bat              text eol=crlf
+*.cmd              text eol=crlf
+*.ps1              text eol=crlf
+
 .snapshots/* linguist-generated=true
