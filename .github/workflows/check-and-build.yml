@@ -127,11 +127,23 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          # SourceForge serves the real archive only after following a chain of
+          # redirects and picking a mirror; Invoke-WebRequest has historically
+          # landed on the HTML "download page" instead of the zip (observable
+          # as Expand-Archive throwing `OperationStopped` on a tiny HTML file).
+          # curl.exe with -L + retries follows SF's redirects reliably.
           $url  = "https://sourceforge.net/projects/luabinaries/files/5.1.5/Tools%20Executables/lua-5.1.5_Win64_bin.zip/download"
           $zip  = "$env:RUNNER_TEMP\lua.zip"
           $dest = "$env:RUNNER_TEMP\lua"
           New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $zip $url
+          # Real zip is ~700KB; HTML interstitial is ~10KB. Fail loud if SF
+          # regresses to serving the interstitial again.
+          $size = (Get-Item $zip).Length
+          if ($size -lt 100000) {
+            throw "Downloaded file is only $size bytes — SourceForge likely served an HTML interstitial instead of the zip."
+          }
           Expand-Archive -Path $zip -DestinationPath $dest -Force
           # LuaBinaries ships the interpreter as `lua5.1.exe`; alias it to
           # `lua.exe` so the test harness can call `lua` without a version suffix.
