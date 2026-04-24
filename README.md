@@ -173,6 +173,7 @@ awsum --version
 - [Prelude and built-in functions](docs/prelude.md) — how types and functions written in Awsum coexist with per-target compiler implementations.
 - [Recursion](docs/recursion.md) — the three-pass pipeline (SCC merge, CPS defunctionalization, TCO) that turns any recursion shape into stack-safe code on every backend.
 - [Target implementation details](docs/targets.md) — how each backend maps the same program to its native shape.
+- [Platform version policy](docs/platform-version-policy.md) — which runtime versions each backend targets and why (latest LTS for server/browser, oldest manufacturer-supported for mobile).
 
 ## Roadmap
 
