@@ -64,10 +64,15 @@ jobs:
 
       - name: Set up LLVM 15 (Linux)
         if: runner.os == 'Linux'
+        # Ubuntu 24.04 runners preinstall clang-18 with a high-priority
+        # update-alternatives entry, so `--install … 100` for clang-15 creates
+        # the alternative but doesn't win. A symlink in /usr/local/bin
+        # sidesteps alternatives entirely — it's ahead of /usr/bin in the
+        # runner's default PATH.
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-15
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100
+          sudo ln -sf /usr/bin/clang-15 /usr/local/bin/clang
 
       - name: Set up LLVM 15 (macOS)
         if: runner.os == 'macOS'
