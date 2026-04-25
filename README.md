@@ -27,12 +27,12 @@ See [Target Implementation Details](docs/targets.md) for how each backend works 
 
 The full test suite runs on every push to `main` and every PR across the following host OS / architecture combinations — these are the platforms the compiler is verified to build and run on:
 
-| OS      | Architecture | Platform identifier   | GitHub runner      |
-| ------- | ------------ | --------------------- | ------------------ |
-| Linux   | x86_64       | `linux-x86_64-gnu`    | `ubuntu-24.04`     |
-| Linux   | aarch64      | `linux-aarch64-gnu`   | `ubuntu-24.04-arm` |
-| macOS   | aarch64      | `macos-aarch64`       | `macos-15`         |
-| Windows | x86_64       | `windows-x86_64`      | `windows-2025`     |
+| OS      | Architecture | Platform identifier | GitHub runner      |
+| ------- | ------------ | ------------------- | ------------------ |
+| Linux   | x86_64       | `linux-x86_64-gnu`  | `ubuntu-24.04`     |
+| Linux   | aarch64      | `linux-aarch64-gnu` | `ubuntu-24.04-arm` |
+| macOS   | aarch64      | `macos-aarch64`     | `macos-15`         |
+| Windows | x86_64       | `windows-x86_64`    | `windows-2025`     |
 
 The platform identifiers double as the suffix in release-asset filenames (e.g. `awsum-<version>-linux-x86_64-gnu.tar.gz`). Linux entries keep the `-gnu` suffix to leave room for a future `-musl` build alongside; macOS and Windows have a single ABI per OS in our build pipeline, so no suffix is needed.
 
@@ -42,7 +42,7 @@ Other host platforms may work but are not exercised in CI.
 
 ### VSCode
 
-Install the `Awsum` extension to enable:
+Install the `awsum-vscode` extension to enable:
 
 - Syntax highlighting (including integer literals)
 - Formatting (on save or on demand)
@@ -125,7 +125,7 @@ brew install lua
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
 - `awsum asm FILE [-t jvm|clr|wasm]` — print target assembly text: Jasmin-like for JVM, CIL for CLR, WAT for WASM (for debugging).
-- `awsum symbols FILE [--json]` — list top-level declarations. With `--json`, outputs an LSP-style `DocumentSymbol` array (kind, name, range, selectionRange, children) consumed by the VSCode extension to drive the Outline view.
+- `awsum symbols FILE [--json]` — list top-level declarations. With `--json`, outputs an LSP-style `DocumentSymbol` array (kind, name, range, selectionRange, children) consumed by `awsum-vscode` to drive the Outline view.
 - `awsum --version` — show version
 
 Examples:
