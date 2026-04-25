@@ -2,6 +2,11 @@ name: CI
 
 on:
   workflow_call:
+    inputs:
+      upload-artifacts:
+        description: "Upload the built awsum binary as a workflow artifact (consumed by the release workflow)."
+        type: boolean
+        default: false
 
 jobs:
   hlint:
@@ -255,6 +260,19 @@ jobs:
 
       - name: Test
         run: stack test --pedantic
+
+      # Only runs when called from the release workflow. The path glob picks up
+      # `awsum` on Unix and `awsum.exe` on Windows; upload-artifact strips the
+      # `target/` prefix because the wildcard sits at the leaf, so consumers
+      # download a flat archive containing just the binary.
+      - name: Upload binary artifact
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: awsum-${{ matrix.target }}
+          path: target/awsum*
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Save STACK_ROOT cache
         if: always()
