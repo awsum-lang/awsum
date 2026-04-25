@@ -26,20 +26,120 @@ jobs:
           fail-on: warning
 
   build-and-test:
-    name: Build and Test
-    runs-on: ubuntu-24.04
+    name: Build and Test (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04,     target: linux-x86_64-gnu  }
+          - { os: ubuntu-24.04-arm, target: linux-aarch64-gnu }
+          - { os: macos-15,         target: macos-aarch64     }
+          - { os: windows-2025,     target: windows-x86_64    }
+
+    env:
+      # Pin STACK_ROOT to a workspace-relative path so cache keys and paths are
+      # identical across Linux / macOS / Windows (stack's default root differs
+      # per OS, which would break the cache action's ~ expansion on Windows).
+      STACK_ROOT: ${{ github.workspace }}/.stack-root
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Clang
-        run: sudo apt-get update && sudo apt-get install -y clang
+      # LLVM 15+ is required for opaque pointers (see README — Installation ▸ Target runtimes).
+      # Per-OS setup because no single mechanism covers all four runners cleanly:
+      # - apt has clang-15 prebuilt for both Linux x64 and Linux arm64 (upstream LLVM
+      #   doesn't publish prebuilt linux-arm64 archives for 15.0.7, ruling out the
+      #   otherwise-nice KyleMayes action here).
+      # - brew has llvm@15 for macOS arm64.
+      # - Windows runners preinstall a newer clang and put it earlier on PATH than
+      #   anything choco installs; KyleMayes's action is the only Windows setup
+      #   that prepends (not appends) its install to PATH, so it actually wins over
+      #   the preinstalled version.
 
+      - name: Set up LLVM 15 (Linux)
+        if: runner.os == 'Linux'
+        # Ubuntu 24.04 runners preinstall clang-18 with a high-priority
+        # update-alternatives entry, so `--install … 100` for clang-15 creates
+        # the alternative but doesn't win. A symlink in /usr/local/bin
+        # sidesteps alternatives entirely — it's ahead of /usr/bin in the
+        # runner's default PATH.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-15
+          sudo ln -sf /usr/bin/clang-15 /usr/local/bin/clang
+
+      - name: Set up LLVM 15 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm@15
+          echo "$(brew --prefix llvm@15)/bin" >> "$GITHUB_PATH"
+
+      - name: Set up LLVM 15 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        # Download the official LLVM 15.0.7 Windows installer and silent-install
+        # into a pristine per-runner directory. Avoids two traps we hit with
+        # choco / KyleMayes action:
+        #   1. Preinstalled LLVM 20 lives at `C:\Program Files\LLVM` — installing
+        #      over it left behind a mixed 15/20 tree, or the preinstall was still
+        #      first on PATH.
+        #   2. Visual Studio 2022's bundled clang (`VC\Tools\Llvm\bin\clang.exe`)
+        #      has been shadowing everything on some runner images, giving
+        #      LLVM-14-era `ptr type is only supported in -opaque-pointers mode`
+        #      errors even after 15.0.7 install succeeded.
+        # Prepending our pristine bin to $GITHUB_PATH puts it ahead of both.
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url  = "https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/LLVM-15.0.7-win64.exe"
+          $exe  = "$env:RUNNER_TEMP\llvm-installer.exe"
+          $dest = "$env:RUNNER_TEMP\llvm"
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $exe $url
+          $size = (Get-Item $exe).Length
+          if ($size -lt 1000000) {
+            throw "LLVM installer is only $size bytes — download likely failed"
+          }
+          # NSIS silent install with custom destination (/D must be last, unquoted).
+          Start-Process -FilePath $exe -ArgumentList "/S","/D=$dest" -Wait -NoNewWindow
+          if (-not (Test-Path "$dest\bin\clang.exe")) {
+            throw "clang.exe not found at $dest\bin after install"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value "$dest\bin"
+
+      - name: Verify clang resolves to LLVM 15
+        shell: bash
+        run: |
+          set -eu
+          echo "=== clang --version ==="
+          clang --version
+          echo "=== which clang ==="
+          command -v clang
+          # Hard fail if the major version isn't 15 — catches the Windows
+          # PATH-shadowing case before the actual tests run (and without
+          # dumping a 50k-line AST on mismatch).
+          case "$(clang --version | head -n1)" in
+            *"version 15."*) echo "OK: clang is LLVM 15.x" ;;
+            *) echo "ERROR: clang is not LLVM 15.x"; exit 1 ;;
+          esac
+
+      # Pin Java to 8 — lowest JVM still installable across our four runners.
+      # README ▸ Targets documents "Java 7+" as the minimum; the assembler
+      # (awsum/CLAUDE.md ▸ "Class file version") emits 51.0 to stay compatible
+      # with Android's dex input requirement. Java 7 itself is no longer
+      # available via actions/setup-java on macOS ARM64, so 8 is the realistic
+      # floor — still an old-enough JVM to catch anything that would break on
+      # pre-9 runtimes, without going through Rosetta hacks. Zulu because
+      # Temurin has no native macOS-ARM64 build of 8.
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
-          java-version: "21"
+          distribution: "zulu"
+          java-version: "8"
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
@@ -56,35 +156,71 @@ jobs:
         with:
           node-version: 22
 
-      - name: Set up Lua
+      # Pin Lua to 5.1 — the minimum version documented in README ▸ Targets
+      # ("Lua 5.1+"). Testing against the floor of the supported range proves the
+      # compatibility contract; anything newer is implicitly covered via Lua's
+      # own backward-compat guarantees. leafo/gh-actions-lua handles this
+      # uniformly on Linux/macOS; Windows has no maintained action that supports
+      # Lua 5.1, so we fetch the official LuaBinaries build directly.
+
+      - name: Set up Lua 5.1 (Linux/macOS)
+        if: runner.os != 'Windows'
         uses: leafo/gh-actions-lua@v11
         with:
-          luaVersion: "5.4.8"
+          luaVersion: "5.1.5"
+
+      - name: Set up Lua 5.1 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # SourceForge serves the real archive only after following a chain of
+          # redirects and picking a mirror; Invoke-WebRequest has historically
+          # landed on the HTML "download page" instead of the zip (observable
+          # as Expand-Archive throwing `OperationStopped` on a tiny HTML file).
+          # curl.exe with -L + retries follows SF's redirects reliably.
+          $url  = "https://sourceforge.net/projects/luabinaries/files/5.1.5/Tools%20Executables/lua-5.1.5_Win64_bin.zip/download"
+          $zip  = "$env:RUNNER_TEMP\lua.zip"
+          $dest = "$env:RUNNER_TEMP\lua"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $zip $url
+          # Real zip is ~700KB; HTML interstitial is ~10KB. Fail loud if SF
+          # regresses to serving the interstitial again.
+          $size = (Get-Item $zip).Length
+          if ($size -lt 100000) {
+            throw "Downloaded file is only $size bytes — SourceForge likely served an HTML interstitial instead of the zip."
+          }
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          # LuaBinaries ships the interpreter as `lua5.1.exe`; alias it to
+          # `lua.exe` so the test harness can call `lua` without a version suffix.
+          Copy-Item "$dest\lua5.1.exe" "$dest\lua.exe" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value $dest
+          & "$dest\lua.exe" -v
 
       - name: Set up Haskell
         uses: haskell-actions/setup@v2
         with:
           enable-stack: true
-          stack-version: latest
+          stack-version: "3.9.1"
           stack-no-global: true
 
-      - name: Restore ~/.stack cache
+      - name: Restore STACK_ROOT cache
         id: cache-stack-global
         uses: actions/cache/restore@v5
         with:
-          path: ~/.stack
-          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal') }}
+          path: ${{ env.STACK_ROOT }}
+          key: ${{ runner.os }}-${{ runner.arch }}-stack-global-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal') }}
           restore-keys: |
-            ${{ runner.os }}-stack-global-
+            ${{ runner.os }}-${{ runner.arch }}-stack-global-
 
       - name: Restore .stack-work cache
         id: cache-stack-work
         uses: actions/cache/restore@v5
         with:
           path: .stack-work
-          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal', 'src/**/*.hs', 'test/**/*.hs', 'awsum/**/*.hs') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-stack-work-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal', 'src/**/*.hs', 'test/**/*.hs', 'awsum/**/*.hs') }}
           restore-keys: |
-            ${{ runner.os }}-stack-work-
+            ${{ runner.os }}-${{ runner.arch }}-stack-work-
 
       - name: Build dependencies
         run: stack build --only-dependencies --test --no-run-tests
@@ -92,14 +228,39 @@ jobs:
       - name: Build
         run: stack build --pedantic --copy-bins --local-bin-path target --test --no-run-tests
 
+      # Stack on Windows prepends GHC's bundled mingw bin to PATH for child
+      # processes (incl. test executables), and the clang.exe in that mingw is
+      # an older LLVM 14 build — see the `ptr type is only supported in
+      # -opaque-pointers mode` errors in CI before this step existed. We can't
+      # replace GHC's mingw clang because GHC itself needs it (with its MinGW
+      # headers) for its FFI C compilation pipeline.
+      #
+      # Workaround: drop a symlink named `clang.exe` in the project root.
+      # CreateProcess on Windows searches CWD before PATH, so the test
+      # harness's `readCreateProcessWithExitCode "clang"` resolves to our
+      # LLVM 15 binary, while GHC's compilation keeps using its mingw clang
+      # via the absolute path stored in GHC's `settings` file (no CWD lookup).
+      # The symlink form preserves the LLVM bin dir as the image directory,
+      # so clang's DLL dependencies resolve out of $RUNNER_TEMP\llvm\bin
+      # without us needing to copy them next to the symlink.
+      - name: Route clang to LLVM 15 for the test harness (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Remove-Item clang.exe -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType SymbolicLink -Path "clang.exe" -Target "$env:RUNNER_TEMP\llvm\bin\clang.exe" | Out-Null
+          Write-Host "clang.exe in project root resolves to:"
+          & .\clang.exe --version | Select-Object -First 1
+
       - name: Test
         run: stack test --pedantic
 
-      - name: Save ~/.stack cache
+      - name: Save STACK_ROOT cache
         if: always()
         uses: actions/cache/save@v5
         with:
-          path: ~/.stack
+          path: ${{ env.STACK_ROOT }}
           key: ${{ steps.cache-stack-global.outputs.cache-primary-key }}
 
       - name: Save .stack-work cache

@@ -23,6 +23,21 @@ A functional language where computation results are guaranteed equivalent across
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
+## Supported host platforms
+
+The full test suite runs on every push to `main` and every PR across the following host OS / architecture combinations — these are the platforms the compiler is verified to build and run on:
+
+| OS      | Architecture | Platform identifier   | GitHub runner      |
+| ------- | ------------ | --------------------- | ------------------ |
+| Linux   | x86_64       | `linux-x86_64-gnu`    | `ubuntu-24.04`     |
+| Linux   | aarch64      | `linux-aarch64-gnu`   | `ubuntu-24.04-arm` |
+| macOS   | aarch64      | `macos-aarch64`       | `macos-15`         |
+| Windows | x86_64       | `windows-x86_64`      | `windows-2025`     |
+
+The platform identifiers double as the suffix in release-asset filenames (e.g. `awsum-<version>-linux-x86_64-gnu.tar.gz`). Linux entries keep the `-gnu` suffix to leave room for a future `-musl` build alongside; macOS and Windows have a single ABI per OS in our build pipeline, so no suffix is needed.
+
+Other host platforms may work but are not exercised in CI.
+
 ## Editor support
 
 ### VSCode
