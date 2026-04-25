@@ -141,13 +141,13 @@ jobs:
       # pre-9 runtimes, without going through Rosetta hacks. Zulu because
       # Temurin has no native macOS-ARM64 build of 8.
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "zulu"
           java-version: "8"
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "9"
 
@@ -267,7 +267,7 @@ jobs:
       # download a flat archive containing just the binary.
       - name: Upload binary artifact
         if: inputs.upload-artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: awsum-${{ matrix.target }}
           path: target/awsum*

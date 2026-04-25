@@ -22,6 +22,9 @@
 
 type Unit = Unit
 
+showUnit : Unit -> String
+showUnit _ = "Unit"
+
 -- ---------------------- Bool
 
 {- Two-valued sum used by equality and other boolean-returning primitives.
