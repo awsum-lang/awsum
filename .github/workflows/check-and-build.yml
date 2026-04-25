@@ -225,43 +225,33 @@ jobs:
       - name: Build dependencies
         run: stack build --only-dependencies --test --no-run-tests
 
-      # Stack on Windows prepends GHC's bundled mingw bin to the PATH it gives
-      # to child processes (incl. `stack test`). The GHC bindist historically
-      # ships an older clang.exe in that mingw — old enough to emit the LLVM-14
-      # diagnostic `ptr type is only supported in -opaque-pointers mode` —
-      # which shadows our LLVM 15 install no matter what we do at the
-      # GitHub-Actions PATH level. The fix is to overwrite GHC's bundled clang
-      # (and the surrounding DLLs it depends on) with our LLVM 15 binaries
-      # so the version Stack-spawned subprocesses pick up is the one we want.
-      - name: Override GHC's bundled clang with LLVM 15 (Windows)
+      - name: Build
+        run: stack build --pedantic --copy-bins --local-bin-path target --test --no-run-tests
+
+      # Stack on Windows prepends GHC's bundled mingw bin to PATH for child
+      # processes (incl. test executables), and the clang.exe in that mingw is
+      # an older LLVM 14 build — see the `ptr type is only supported in
+      # -opaque-pointers mode` errors in CI before this step existed. We can't
+      # replace GHC's mingw clang because GHC itself needs it (with its MinGW
+      # headers) for its FFI C compilation pipeline.
+      #
+      # Workaround: drop a symlink named `clang.exe` in the project root.
+      # CreateProcess on Windows searches CWD before PATH, so the test
+      # harness's `readCreateProcessWithExitCode "clang"` resolves to our
+      # LLVM 15 binary, while GHC's compilation keeps using its mingw clang
+      # via the absolute path stored in GHC's `settings` file (no CWD lookup).
+      # The symlink form preserves the LLVM bin dir as the image directory,
+      # so clang's DLL dependencies resolve out of $RUNNER_TEMP\llvm\bin
+      # without us needing to copy them next to the symlink.
+      - name: Route clang to LLVM 15 for the test harness (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $ghcBin  = (stack path --compiler-bin).Trim()
-          $ghcRoot = Split-Path -Parent $ghcBin
-          Write-Host "GHC root: $ghcRoot"
-          $mingwBin = $null
-          foreach ($cand in @("$ghcRoot\mingw\bin","$ghcRoot\mingw64\bin","$ghcRoot\mingw32\bin")) {
-            if (Test-Path $cand) { $mingwBin = $cand; break }
-          }
-          if ($null -eq $mingwBin) {
-            Write-Host "No GHC mingw bin found — skipping clang override (diagnose elsewhere)."
-            exit 0
-          }
-          Write-Host "GHC mingw bin: $mingwBin"
-          if (Test-Path "$mingwBin\clang.exe") {
-            Write-Host "Pre-override GHC clang version:"
-            & "$mingwBin\clang.exe" --version | Select-Object -First 1
-          } else {
-            Write-Host "(GHC mingw has no clang.exe yet — copying ours in fresh)"
-          }
-          Copy-Item "$env:RUNNER_TEMP\llvm\bin\*" $mingwBin -Force -Recurse
-          Write-Host "Post-override GHC clang version:"
-          & "$mingwBin\clang.exe" --version | Select-Object -First 1
-
-      - name: Build
-        run: stack build --pedantic --copy-bins --local-bin-path target --test --no-run-tests
+          Remove-Item clang.exe -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType SymbolicLink -Path "clang.exe" -Target "$env:RUNNER_TEMP\llvm\bin\clang.exe" | Out-Null
+          Write-Host "clang.exe in project root resolves to:"
+          & .\clang.exe --version | Select-Object -First 1
 
       - name: Test
         run: stack test --pedantic
