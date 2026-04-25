@@ -1,7 +1,7 @@
 -- | Editor-facing diagnostic representation.
 --
 -- A 'Diagnostic' is the unit of feedback the compiler emits to consumers
--- (the CLI's @--json@ output, the VSCode extension, future LSP). The shape
+-- (the CLI's @--json@ output, @awsum-vscode@, future LSP). The shape
 -- intentionally mirrors what 'vscode.Diagnostic' + 'vscode.CodeAction'
 -- expect, so producing the JSON is the only translation needed.
 --
