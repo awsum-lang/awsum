@@ -4,4 +4,4 @@
 # Force LF everywhere.
 * text=auto eol=lf
 
-.snapshots/* linguist-generated=true
+.snapshots/** linguist-generated=true
