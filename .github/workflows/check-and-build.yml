@@ -225,6 +225,41 @@ jobs:
       - name: Build dependencies
         run: stack build --only-dependencies --test --no-run-tests
 
+      # Stack on Windows prepends GHC's bundled mingw bin to the PATH it gives
+      # to child processes (incl. `stack test`). The GHC bindist historically
+      # ships an older clang.exe in that mingw — old enough to emit the LLVM-14
+      # diagnostic `ptr type is only supported in -opaque-pointers mode` —
+      # which shadows our LLVM 15 install no matter what we do at the
+      # GitHub-Actions PATH level. The fix is to overwrite GHC's bundled clang
+      # (and the surrounding DLLs it depends on) with our LLVM 15 binaries
+      # so the version Stack-spawned subprocesses pick up is the one we want.
+      - name: Override GHC's bundled clang with LLVM 15 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ghcBin  = (stack path --compiler-bin).Trim()
+          $ghcRoot = Split-Path -Parent $ghcBin
+          Write-Host "GHC root: $ghcRoot"
+          $mingwBin = $null
+          foreach ($cand in @("$ghcRoot\mingw\bin","$ghcRoot\mingw64\bin","$ghcRoot\mingw32\bin")) {
+            if (Test-Path $cand) { $mingwBin = $cand; break }
+          }
+          if ($null -eq $mingwBin) {
+            Write-Host "No GHC mingw bin found — skipping clang override (diagnose elsewhere)."
+            exit 0
+          }
+          Write-Host "GHC mingw bin: $mingwBin"
+          if (Test-Path "$mingwBin\clang.exe") {
+            Write-Host "Pre-override GHC clang version:"
+            & "$mingwBin\clang.exe" --version | Select-Object -First 1
+          } else {
+            Write-Host "(GHC mingw has no clang.exe yet — copying ours in fresh)"
+          }
+          Copy-Item "$env:RUNNER_TEMP\llvm\bin\*" $mingwBin -Force -Recurse
+          Write-Host "Post-override GHC clang version:"
+          & "$mingwBin\clang.exe" --version | Select-Object -First 1
+
       - name: Build
         run: stack build --pedantic --copy-bins --local-bin-path target --test --no-run-tests
 
