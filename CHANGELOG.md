@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **CI / supported host platforms**
-  - Build-and-test workflow now runs across four OS / architecture combinations instead of Linux x86_64 only: `ubuntu-latest` (x86_64), `ubuntu-24.04-arm` (aarch64), `macos-latest` (aarch64), `windows-latest` (x86_64). `fail-fast: false`, per-arch cache keys (`runner.os` + `runner.arch`), `STACK_ROOT` pinned to a workspace-relative path so caching works identically on all three operating systems.
-  - LLVM 15 (the documented minimum) is now explicitly pinned on every runner — `clang-15` via apt + `update-alternatives` on Linux, `brew install llvm@15` with PATH prepend on macOS, `choco install llvm --version=15.0.7` on Windows.
-  - README gained a **Supported host platforms** table next to **Targets**, listing the exact OS / architecture / target-triple / runner combinations that are verified in CI.
+- **Cross-platform CI** — `check-and-build.yml` now runs on four OS / architecture combinations (was Linux x86_64 only): `ubuntu-24.04` (x86_64), `ubuntu-24.04-arm` (aarch64), `macos-15` (Apple Silicon), `windows-2025` (x86_64). `fail-fast: false`, per-arch cache keys, `STACK_ROOT` pinned to a workspace-relative path so caching works identically on every OS, runner OS versions pinned (no `*-latest`).
+
+- **Toolchain versions pinned to the documented floor on every runner** — LLVM 15.0.7 (apt `clang-15` + `/usr/local/bin` symlink on Linux, `brew install llvm@15` with PATH prepend on macOS, official LLVM Windows installer silent-extracted into a pristine directory on Windows; verify-step fails CI loudly if `clang --version` doesn't report 15.x), Java 8 Zulu (lowest JDK installable on macOS ARM64 via `actions/setup-java`), Lua 5.1.5 (LuaBinaries direct download on Windows, `leafo/gh-actions-lua` elsewhere), Stack 3.9.1 (manual upgrades). On Windows the test harness's `clang` is routed via a project-root symlink to LLVM 15 — Stack would otherwise prepend GHC's bundled mingw clang (LLVM 14-era) to the child process PATH and shadow the install.
+
+- **Supported host platforms documented in README** — a new table next to **Targets** lists OS / architecture / platform identifier / GitHub runner. Platform identifiers (`linux-x86_64-gnu`, `linux-aarch64-gnu`, `macos-aarch64`, `windows-x86_64`) double as the suffix in future release-asset filenames; Linux keeps `-gnu` to leave room for a future `-musl` build alongside, macOS / Windows have a single ABI per OS in our build pipeline so no suffix is needed.
+
+- **`.gitattributes` forces LF on all text files** — Windows checkouts with default `core.autocrlf=true` were silently turning `.aww` sources, `stdlib/Prelude.aww` (embedded into the binary via `file-embed` at compile time), and `.snapshots/**` golden files into CRLF. That broke the parser's column tracker (Megaparsec counts `\r` as a column increment) and the byte-for-byte golden-snapshot matcher. Single rule `* text=auto eol=lf` covers every text extension uniformly.
 
 ## [0.0.2] - 2026-04-24
 

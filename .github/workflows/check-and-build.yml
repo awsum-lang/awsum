@@ -33,10 +33,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,    target: x86_64-linux-gnu,       ext: "" }
-          - { os: ubuntu-24.04-arm, target: aarch64-linux-gnu,      ext: "" }
-          - { os: macos-latest,     target: aarch64-apple-darwin,   ext: "" }
-          - { os: windows-latest,   target: x86_64-pc-windows-msvc, ext: ".exe" }
+          - { os: ubuntu-24.04,     target: linux-x86_64-gnu  }
+          - { os: ubuntu-24.04-arm, target: linux-aarch64-gnu }
+          - { os: macos-15,         target: macos-aarch64     }
+          - { os: windows-2025,     target: windows-x86_64    }
 
     env:
       # Pin STACK_ROOT to a workspace-relative path so cache keys and paths are
@@ -201,7 +201,7 @@ jobs:
         uses: haskell-actions/setup@v2
         with:
           enable-stack: true
-          stack-version: latest
+          stack-version: "3.9.1"
           stack-no-global: true
 
       - name: Restore STACK_ROOT cache
