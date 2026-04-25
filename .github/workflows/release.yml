@@ -69,5 +69,5 @@ jobs:
           set -euo pipefail
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes \
+            --notes "See [CHANGELOG.md](./CHANGELOG.md)" \
             dist/*
