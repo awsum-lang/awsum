@@ -2,6 +2,11 @@ name: CI
 
 on:
   workflow_call:
+    inputs:
+      upload-artifacts:
+        description: "Upload the built awsum binary as a workflow artifact (consumed by the release workflow)."
+        type: boolean
+        default: false
 
 jobs:
   hlint:
@@ -136,13 +141,13 @@ jobs:
       # pre-9 runtimes, without going through Rosetta hacks. Zulu because
       # Temurin has no native macOS-ARM64 build of 8.
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "zulu"
           java-version: "8"
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "9"
 
@@ -255,6 +260,19 @@ jobs:
 
       - name: Test
         run: stack test --pedantic
+
+      # Only runs when called from the release workflow. The path glob picks up
+      # `awsum` on Unix and `awsum.exe` on Windows; upload-artifact strips the
+      # `target/` prefix because the wildcard sits at the leaf, so consumers
+      # download a flat archive containing just the binary.
+      - name: Upload binary artifact
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: awsum-${{ matrix.target }}
+          path: target/awsum*
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Save STACK_ROOT cache
         if: always()

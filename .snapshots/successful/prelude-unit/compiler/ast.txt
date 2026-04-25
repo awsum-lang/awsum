@@ -1,0 +1,122 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ LineComment " Test: showUnit from the prelude."
+            , LineComment " Unit is known from Prelude (no import needed)."
+            ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 5
+            , spanStartCol = 1
+            , spanEndLine = 5
+            , spanEndCol = 24
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 8
+                , spanEndLine = 5
+                , spanEndCol = 24
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 8
+                    , spanEndLine = 5
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 18
+                    , spanEndLine = 5
+                    , spanEndCol = 24
+                    }
+                ) "IOUnit"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 46
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 6
+                    , spanEndLine = 6
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 15
+                    , spanEndLine = 6
+                    , spanEndCol = 46
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 15
+                        , spanEndLine = 6
+                        , spanEndCol = 31
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 31
+                        , spanEndLine = 6
+                        , spanEndCol = 46
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 32
+                            , spanEndLine = 6
+                            , spanEndCol = 45
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 32
+                                , spanEndLine = 6
+                                , spanEndCol = 41
+                                }
+                            )
+                            ( QName [] "showUnit" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 41
+                                , spanEndLine = 6
+                                , spanEndCol = 45
+                                }
+                            ) "Unit"
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

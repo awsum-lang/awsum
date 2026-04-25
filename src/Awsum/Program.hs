@@ -7,11 +7,8 @@
 -- type exists) would reach @Window.focus@ / @Document.querySelector@
 -- and so on.
 --
--- Today the only program type is 'ProgramCli'. The enum is open to
--- new constructors (@ProgramBrowser@, @ProgramModule@, …) which will
--- introduce their own tables in @Awsum.Program.Browser@,
--- @Awsum.Program.Module@ etc. See @docs/prelude.md@ for how program
--- types interact with the prelude + built-in mechanism.
+-- Today the only program type is 'ProgramCli'. See @docs/prelude.md@
+-- for how program types interact with the prelude + built-in mechanism.
 module Awsum.Program
   ( ProgramType (..),
     parseProgramType,

@@ -8,7 +8,7 @@ The language has three categories of public functions and types:
 
 1. **Fully expressible in Awsum.** Things like `map : (a -> b) -> List a -> List b`. We want to write them in Awsum and hide nothing from the reader.
 2. **Expressible in Awsum in terms of lower-level operations.** Things like `not : Bool -> Bool`. Technically buildable with `case`, and we still want the Awsum source visible.
-3. **Not expressible in the current language.** Things like `addInt32 : Int32 -> Int32 -> Either Overflow Int32`. The implementation needs target-specific tricks (LLVM intrinsics, JVM masking, WASM instrumentation). Adding `Int64` or `Int128` adds more target-specific workarounds, not fewer.
+3. **Not expressible in the current language.** Things like `predInt32 : Int32 -> Either UnderflowError Int32`. The implementation needs target-specific primitives (range check + tagged-sum construction at codegen time). Adding `Int64` or `Int128` adds more target-specific workarounds, not fewer.
 
 The design goals:
 
@@ -21,7 +21,7 @@ The design goals:
 
 `Prelude.aww` is a regular Awsum file that ships inside the compiler and is parsed and type-checked the same way user code is. In it:
 
-- Prelude-visible types are declared (`Either`, eventually `List`, …).
+- Prelude-visible types are declared (`Either`, `Maybe`, `Bool`, `Unit`, etc).
 - Every prelude-visible function has a signature.
 - Category-3 function bodies are a reference to the compiler-provided implementation:
 
@@ -29,8 +29,8 @@ The design goals:
   showInt32 : Int32 -> String
   showInt32 = BuiltIn.showInt32
 
-  addInt32 : Int32 -> Int32 -> Either Overflow Int32
-  addInt32 = BuiltIn.addInt32
+  predInt32 : Int32 -> Either UnderflowError Int32
+  predInt32 = BuiltIn.predInt32
   ```
 
 Category-1 and category-2 bodies are ordinary Awsum — `BuiltIn` does not appear there.
@@ -55,15 +55,15 @@ The alias form — zero parameters on the left of `=`, a bare `BuiltIn.bar` on t
 
 ### Bootstrap order and the apparent cycle
 
-There is an order-of-operations puzzle: the signature of `addInt32` in `Prelude.aww` mentions `Either`, which is _also_ declared in `Prelude.aww`; the compiler's built-in table wants to cross-check the `addInt32` entry against a type that mentions `Either` too.
+There is an order-of-operations puzzle: the signature of `predInt32` in `Prelude.aww` mentions `Either`, which is _also_ declared in `Prelude.aww`; the compiler's built-in table wants to cross-check the `predInt32` entry against a type that mentions `Either` too.
 
 The cycle is on values, not on types. The sequence is:
 
 1. The parser reads `Prelude.aww`.
 2. The type-checker processes type declarations (`type Either a b = Left a | Right b`). The environment now has `Either`.
-3. The type-checker processes function signatures. The environment now has `addInt32 : Int32 -> Int32 -> Either Overflow Int32`.
+3. The type-checker processes function signatures. The environment now has `predInt32 : Int32 -> Either UnderflowError Int32`.
 4. The type-checker processes function bodies. When it hits `= BuiltIn.bar`, it looks up `bar` in the compiler's table and compares types.
-5. The table's entry for `addInt32` also refers to `Either` — and resolves through the same environment that step 2 populated. There is no second copy of `Either` hiding in the compiler's Haskell.
+5. The table's entry for `predInt32` also refers to `Either` — and resolves through the same environment that step 2 populated. There is no second copy of `Either` hiding in the compiler's Haskell.
 
 The key is that the built-in table stores types as `Core.Type` values, not as Haskell types. Name resolution for `Either` in the table goes through the same `TypeEnv` into which `Prelude.aww` just injected it. The table is visited twice through one environment, not two environments pretending to be the same.
 
@@ -104,7 +104,7 @@ The user sees no change — the signature is identical, go-to-definition lands i
 
 ## Program type and platform-gated effects
 
-`BuiltIn.foo` covers one class of compiler-known name: prelude-visible functions that behave the same on every target (`showInt32`, `predInt32`, `concatString`, …). A second class exists: effects whose availability depends on the *kind of program* the user is writing — `IO.Stdout.print` for a CLI program, `Window.focus` for a browser program, and so on. Mixing these into `BuiltIn` would lose the gating.
+`BuiltIn.foo` covers one class of compiler-known name: prelude-visible functions that behave the same on every target (`showInt32`, `predInt32`, `concatString`, …). A second class exists: effects whose availability depends on the _kind of program_ the user is writing — `IO.Stdout.print` for a CLI program, `Window.focus` for a browser program, and so on. Mixing these into `BuiltIn` would lose the gating.
 
 The design distinguishes them at the key shape:
 
@@ -113,12 +113,12 @@ The design distinguishes them at the key shape:
 
 Two independent gates decide whether a platform name is usable in a given file:
 
-1. **Program type** (`--program-type cli`, mandatory on typecheck-bearing commands) picks which platform table the typechecker and `ElaborateLower` see. Today only `ProgramCli` is implemented in `Awsum.Program.Cli`; `ProgramBrowser` / `ProgramModule` will arrive as new modules without touching the existing ones.
+1. **Program type** (`--program-type cli`, mandatory on typecheck-bearing commands) picks which platform table the typechecker and `ElaborateLower` see. Today only `ProgramCli` is implemented in `Awsum.Program.Cli`.
 2. **Module import** (`import IO.Stdout`) is the per-file visibility gate. It's independent of the program type — a CLI program that omits the import still cannot call `IO.Stdout.print`.
 
 Both gates are enforced in `Awsum.Typing.builtinEnvFromImports` — it computes the intersection of the current program type's table and the file's imports.
 
-A future `awsum.json` workspace file will set the program type per artifact, at which point the CLI flag will become optional (inherited from the config). Until then the flag is mandatory to force an explicit choice: a silently defaulted program type would typecheck a browser program against CLI effects (or vice versa) and only fail at runtime.
+The CLI flag is mandatory to force an explicit choice rather than a silent default that could typecheck a program against the wrong effect set.
 
 Core-level uniformity is deliberate: both classes of names collapse to `CBuiltIn`. The backends don't care which table a name came from — they dispatch on the key string alone. The distinction is a typing / availability concern, not an IR concern. This makes migrations symmetric: a function can move between `BuiltIn` and a program's platform table, or between program types, without touching any backend.
 

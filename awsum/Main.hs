@@ -76,11 +76,8 @@ argFilePath = OA.strArgument (OA.metavar "FILE")
 
 -- | Mandatory program-type selector. Decides which platform-effect
 --   table the typechecker and lowering see (see 'Awsum.Program'). We
---   deliberately require the flag rather than defaulting to @cli@:
---   once browser/module program types land, a silently-defaulted build
---   would typecheck against the wrong effect set. When @awsum.json@
---   lands, the workspace file will set this and the flag will become
---   optional.
+--   deliberately require the flag rather than defaulting to @cli@ to
+--   force an explicit choice.
 optProgramType :: OA.Parser ProgramType
 optProgramType =
   OA.option

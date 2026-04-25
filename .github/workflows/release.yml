@@ -1,0 +1,73 @@
+name: Release
+
+# Tag is the source of truth: pushing `v*` is what creates an immutable release
+# tied to a specific commit. There is intentionally no `workflow_dispatch` here —
+# if a release run fails, delete the tag, fix, retag.
+on:
+  push:
+    tags:
+      - "v*"
+
+# Don't cancel a release mid-flight if a second tag arrives somehow.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/check-and-build.yml
+    with:
+      upload-artifacts: true
+
+  release:
+    name: Publish GitHub Release
+    needs: ci
+    runs-on: ubuntu-24.04
+    permissions:
+      # Required for `gh release create` to upload assets.
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          pattern: awsum-*
+
+      # Asset names embed the version (`awsum-<version>-<target>.{tar.gz,zip}`)
+      # — the website always links to a specific version, so the GitHub
+      # `releases/latest/download/` redirect is intentionally not used. Once a
+      # user has downloaded the file, the filename itself records what they got.
+      #
+      # `actions/upload-artifact@v4` does not preserve the executable bit on
+      # POSIX targets, so we re-`chmod +x` before packaging. Tar/zip then
+      # preserve it on extract.
+      - name: Package binaries
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          for dir in artifacts/awsum-*; do
+            target="${dir#artifacts/awsum-}"
+            stage="$(mktemp -d)"
+            cp "$dir"/awsum* "$stage"/
+            chmod +x "$stage"/awsum*
+            if [[ "$target" == windows-* ]]; then
+              ( cd "$stage" && zip -j -q "$GITHUB_WORKSPACE/dist/awsum-${version}-${target}.zip" awsum.exe )
+            else
+              tar -C "$stage" -czf "dist/awsum-${version}-${target}.tar.gz" awsum
+            fi
+          done
+          ( cd dist && sha256sum awsum-* > SHA256SUMS )
+          ls -la dist
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "See [CHANGELOG.md](./CHANGELOG.md)" \
+            dist/*

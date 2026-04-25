@@ -1,0 +1,14 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showUnit" [ "$wild0" ]
+            ( CString "Unit" )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "showUnit" )
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

@@ -12,12 +12,8 @@
 --   * /constants/  — zero-arg 'FunDef'
 --   * /types/      — 'TypeDecl'
 --
--- What we currently skip:
---
---   * imports     — no 'SrcSpan' on 'ImportDecl' yet
---   * constructors — no 'SrcSpan' on 'ConDef' yet; will appear as children
---                   of their 'type' once spans are tracked
---   * comments    — not useful in the outline
+-- We skip imports, constructors, and comments — they don't appear in
+-- the outline shape we emit.
 --
 -- A 'Sig' immediately paired with a 'FunDef' of the same name is merged into
 -- a single symbol so the outline shows one entry per binding (the signature's
