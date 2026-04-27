@@ -158,6 +158,16 @@ bcIstore n
   | n <= 3 = [fromIntegral (0x3B + n)] -- istore_0..istore_3
   | otherwise = [0x36, fromIntegral n]
 
+bcLload :: Int -> [Word8]
+bcLload n
+  | n <= 3 = [fromIntegral (0x1E + n)] -- lload_0..lload_3
+  | otherwise = [0x16, fromIntegral n]
+
+bcLstore :: Int -> [Word8]
+bcLstore n
+  | n <= 3 = [fromIntegral (0x3F + n)] -- lstore_0..lstore_3
+  | otherwise = [0x37, fromIntegral n]
+
 bcInvokeStatic :: Word16 -> [Word8]
 bcInvokeStatic ref = [0xB8, hi8 ref, lo8 ref]
 
@@ -240,9 +250,11 @@ doAssemble prog@(CoreProgram decls) = do
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
   m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
+  m8sI <- if Set.member "parseInt32" builtIns then (: []) <$> mkParseInt32 else pure []
+  m8sU <- if Set.member "parseUInt8" builtIns then (: []) <$> mkParseUInt8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> m7s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> m7s <> m8sI <> m8sU <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -1095,6 +1107,480 @@ mkSplitOnFirst = do
         mCodeAttrs = smtAttr
       }
 
+-- | parseInt32: String -> Either ParseError Int32. Binary equivalent of
+--   'Awsum.Codegen.JVM.parseInt32Method'. Same handrolled algorithm as
+--   the LLVM and WASM helpers — long accumulator capped at the magnitude
+--   `|minInt32|`. The constant 2147483648L is built with the shift trick
+--   `iconst_1 i2l bipush 31 lshl` rather than ldc2_w on a long literal,
+--   so the assembler does not need a CPLong slot. INT_MAX (2147483647)
+--   is loaded via 'bcLoadInt32' and widened with i2l.
+--   Locals: 0 = arg, 1 = String s, 2 = int len, 3 = int i, 4 = int neg
+--   (later reused as Object slot for the boxed ParseError on the fail
+--   path), 5-6 = long acc, 7 = int c.
+mkParseInt32 :: AsmM MInfo
+mkParseInt32 = do
+  ni <- addUtf8 "__parseInt32"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  objCls <- addClass "java/lang/Object"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
+  charAtRef <- addMRef "java/lang/String" "charAt" "(I)C"
+  intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  ldcMaxInt <- bcLoadInt32 2147483647
+  let -- block A: aload_0; checkcast; astore_1; aload_1; invokevirtual length; istore_2
+      blockA =
+        bcAload 0
+          <> bcCheckCast strCls
+          <> bcAstore 1
+          <> bcAload 1
+          <> bcInvokeVirtual lengthRef
+          <> bcIstore 2
+      lenA = length blockA
+      -- block B: iload_2  (followed by ifeq L_fail, which we patch in)
+      blockB = bcIload 2
+      lenB = length blockB
+      ifeqAt = lenA + lenB
+      -- after ifeq (3 bytes): start of block C
+      cAt = ifeqAt + 3
+      -- block C: init i=0, neg=0
+      blockC = bcIconst 0 <> bcIstore 3 <> bcIconst 0 <> bcIstore 4
+      lenC = length blockC
+      -- block D: charAt(0); bipush 45
+      blockD =
+        bcAload 1
+          <> bcIconst 0
+          <> bcInvokeVirtual charAtRef
+          <> [0x10, 45]
+      lenD = length blockD
+      ifNeAt = cAt + lenC + lenD
+      afterIfNe = ifNeAt + 3
+      -- block F: minus path (set neg=1, i=1, then load len, push 1)
+      blockF =
+        bcIconst 1
+          <> bcIstore 4
+          <> bcIconst 1
+          <> bcIstore 3
+          <> bcIload 2
+          <> bcIconst 1
+      lenF = length blockF
+      ifEqAt = afterIfNe + lenF
+      initAccAt = ifEqAt + 3
+      -- block H: lconst_0 (1); lstore 5 (2)
+      blockH = [0x09] <> bcLstore 5
+      lenH = length blockH
+      loopAt = initAccAt + lenH
+      -- block I: iload_3; iload_2
+      blockI = bcIload 3 <> bcIload 2
+      lenI = length blockI
+      ifGeAt = loopAt + lenI
+      afterIfGe = ifGeAt + 3
+      -- block K: charAt(i); istore 7
+      blockK =
+        bcAload 1
+          <> bcIload 3
+          <> bcInvokeVirtual charAtRef
+          <> bcIstore 7
+      lenK = length blockK
+      -- block L: iload 7; bipush 48
+      blockL = bcIload 7 <> [0x10, 48]
+      lenL = length blockL
+      ifLtAt = afterIfGe + lenK + lenL
+      afterIfLt = ifLtAt + 3
+      -- block N: iload 7; bipush 57
+      blockN = bcIload 7 <> [0x10, 57]
+      lenN = length blockN
+      ifGtCharAt = afterIfLt + lenN
+      afterIfGtChar = ifGtCharAt + 3
+      -- block P: acc = acc * 10 + (c - '0')
+      blockP =
+        bcLload 5
+          <> [0x10, 10] -- bipush 10
+          <> [0x85] -- i2l
+          <> [0x69] -- lmul
+          <> bcIload 7
+          <> [0x10, 48]
+          <> [0x64] -- isub
+          <> [0x85] -- i2l
+          <> [0x61] -- ladd
+          <> bcLstore 5
+      lenP = length blockP
+      -- block Q: lload 5; iconst_1; i2l; bipush 31; lshl; lcmp  (compare against 2147483648L)
+      blockQ =
+        bcLload 5
+          <> bcIconst 1
+          <> [0x85]
+          <> [0x10, 31]
+          <> [0x79] -- lshl
+          <> [0x94] -- lcmp
+      lenQ = length blockQ
+      ifGtAccAt = afterIfGtChar + lenP + lenQ
+      afterIfGtAcc = ifGtAccAt + 3
+      -- block S: iinc 3 1 (3 bytes)
+      blockS = [0x84, 3, 1] :: [Word8]
+      lenS = length blockS
+      gotoLoopAt = afterIfGtAcc + lenS
+      -- after goto (3 bytes): L_after_loop
+      afterLoopAt = gotoLoopAt + 3
+      -- block T: iload 4
+      blockT = bcIload 4
+      lenT = length blockT
+      ifEq2At = afterLoopAt + lenT
+      afterIfEq2 = ifEq2At + 3
+      -- block U: lload 5; lneg; lstore 5
+      blockU = bcLload 5 <> [0x75] <> bcLstore 5
+      lenU = length blockU
+      gotoBuildAt = afterIfEq2 + lenU
+      posCheckAt = gotoBuildAt + 3
+      -- block V: lload 5; ldc INT_MAX; i2l; lcmp
+      blockV = bcLload 5 <> ldcMaxInt <> [0x85] <> [0x94]
+      lenV = length blockV
+      ifGtPosAt :: Int
+      ifGtPosAt = posCheckAt + lenV
+      buildRightAt = ifGtPosAt + 3
+      -- block X: build Right (Object[2] = [Integer(1), Integer(acc as int)])
+      blockX =
+        bcIconst 2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 1
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> bcIconst 1
+          <> bcLload 5
+          <> [0x88] -- l2i
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> [0xB0]
+      lenX = length blockX
+      failAt = buildRightAt + lenX
+      -- block Y: L_fail body (build Left of ParseError)
+      blockY =
+        bcIconst 1
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 0
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> bcAstore 4
+          <> bcIconst 2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 0
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> bcIconst 1
+          <> bcAload 4
+          <> [0x53]
+          <> [0xB0]
+      -- branch offset helper (16-bit signed via Word16 wrap)
+      enc16 :: Int -> [Word8]
+      enc16 n = let w = fromIntegral n :: Word16 in [hi8 w, lo8 w]
+      ifeqOff = failAt - ifeqAt
+      ifNeOff = initAccAt - ifNeAt
+      ifEqOff = failAt - ifEqAt
+      ifGeOff = afterLoopAt - ifGeAt
+      ifLtOff = failAt - ifLtAt
+      ifGtCharOff = failAt - ifGtCharAt
+      ifGtAccOff = failAt - ifGtAccAt
+      gotoLoopOff = loopAt - gotoLoopAt
+      ifEq2Off = posCheckAt - ifEq2At
+      gotoBuildOff = buildRightAt - gotoBuildAt
+      ifGtPosOff = failAt - ifGtPosAt
+      code =
+        blockA
+          <> blockB
+          <> [0x99]
+          <> enc16 ifeqOff
+          <> blockC
+          <> blockD
+          <> [0xA0]
+          <> enc16 ifNeOff
+          <> blockF
+          <> [0x9F]
+          <> enc16 ifEqOff
+          <> blockH
+          <> blockI
+          <> [0xA2]
+          <> enc16 ifGeOff
+          <> blockK
+          <> blockL
+          <> [0xA1]
+          <> enc16 ifLtOff
+          <> blockN
+          <> [0xA3]
+          <> enc16 ifGtCharOff
+          <> blockP
+          <> blockQ
+          <> [0x9D]
+          <> enc16 ifGtAccOff
+          <> blockS
+          <> [0xA7]
+          <> enc16 gotoLoopOff
+          <> blockT
+          <> [0x99]
+          <> enc16 ifEq2Off
+          <> blockU
+          <> [0xA7]
+          <> enc16 gotoBuildOff
+          <> blockV
+          <> [0x9D]
+          <> enc16 ifGtPosOff
+          <> blockX
+          <> blockY
+      -- StackMapTable: 6 frames at L_init_acc, L_loop, L_after_loop,
+      -- L_pos_check, L_build_right, L_fail. The first uses full_frame
+      -- because we add 4 locals in one go from initial; subsequent
+      -- frames use append/same/chop.
+      initAcc16 = fromIntegral initAccAt :: Word16
+      delta2 = fromIntegral (loopAt - initAccAt - 1) :: Word16
+      delta3 = fromIntegral (afterLoopAt - loopAt - 1) :: Word8
+      delta4 = fromIntegral (posCheckAt - afterLoopAt - 1) :: Word8
+      delta5 = fromIntegral (buildRightAt - posCheckAt - 1) :: Word8
+      delta6 = fromIntegral (failAt - buildRightAt - 1) :: Word16
+      smtEntries =
+        -- Frame 1: full_frame at offset L_init_acc, locals [Object, String, int, int, int]
+        [ 255,
+          hi8 initAcc16,
+          lo8 initAcc16,
+          0x00,
+          0x05,
+          7,
+          hi8 objCls,
+          lo8 objCls,
+          7,
+          hi8 strCls,
+          lo8 strCls,
+          1,
+          1,
+          1,
+          0x00,
+          0x00
+        ]
+          -- Frame 2: append +1 (Long) at L_loop
+          <> [252, hi8 delta2, lo8 delta2, 4]
+          -- Frame 3: same_frame at L_after_loop (delta fits in 0..63)
+          <> [delta3]
+          -- Frame 4: same_frame at L_pos_check
+          <> [delta4]
+          -- Frame 5: same_frame at L_build_right
+          <> [delta5]
+          -- Frame 6: chop 3 at L_fail (drops Long, int, int → leaves [Object, String, int])
+          <> [248, hi8 delta6, lo8 delta6]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 6]
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
+-- | parseUInt8: String -> Either ParseError UInt8. Binary equivalent of
+--   'Awsum.Codegen.JVM.parseUInt8Method'. Same handrolled shape as
+--   'mkParseInt32' minus the sign handling — UInt8 cannot be negative
+--   — and with an i32 accumulator (the running magnitude never exceeds
+--   2559 before the > 255 check fails the parse).
+--   Locals: 0 = arg, 1 = String s, 2 = int len, 3 = int i, 4 = int acc
+--   (later reused as Object on fail path), 5 = int c.
+mkParseUInt8 :: AsmM MInfo
+mkParseUInt8 = do
+  ni <- addUtf8 "__parseUInt8"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  objCls <- addClass "java/lang/Object"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
+  charAtRef <- addMRef "java/lang/String" "charAt" "(I)C"
+  intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let blockA =
+        bcAload 0
+          <> bcCheckCast strCls
+          <> bcAstore 1
+          <> bcAload 1
+          <> bcInvokeVirtual lengthRef
+          <> bcIstore 2
+      lenA = length blockA
+      blockB = bcIload 2
+      lenB = length blockB
+      ifeqAt = lenA + lenB
+      cAt = ifeqAt + 3
+      blockC = bcIconst 0 <> bcIstore 3 <> bcIconst 0 <> bcIstore 4
+      lenC = length blockC
+      loopAt = cAt + lenC
+      blockI = bcIload 3 <> bcIload 2
+      lenI = length blockI
+      ifGeAt = loopAt + lenI
+      afterIfGe = ifGeAt + 3
+      blockK =
+        bcAload 1
+          <> bcIload 3
+          <> bcInvokeVirtual charAtRef
+          <> bcIstore 5
+      lenK = length blockK
+      blockL = bcIload 5 <> [0x10, 48]
+      lenL = length blockL
+      ifLtAt = afterIfGe + lenK + lenL
+      afterIfLt = ifLtAt + 3
+      blockN = bcIload 5 <> [0x10, 57]
+      lenN = length blockN
+      ifGtCharAt = afterIfLt + lenN
+      afterIfGtChar = ifGtCharAt + 3
+      -- block P: acc = acc * 10 + (c - '0')  (i32 throughout)
+      blockP =
+        bcIload 4
+          <> [0x10, 10]
+          <> [0x68] -- imul
+          <> bcIload 5
+          <> [0x10, 48]
+          <> [0x64] -- isub
+          <> [0x60] -- iadd
+          <> bcIstore 4
+      lenP = length blockP
+      -- block Q: iload 4; sipush 255
+      blockQ = bcIload 4 <> [0x11, 0x00, 0xFF]
+      lenQ = length blockQ
+      ifGtAccAt = afterIfGtChar + lenP + lenQ
+      afterIfGtAcc = ifGtAccAt + 3
+      blockS = [0x84, 3, 1] :: [Word8]
+      lenS = length blockS
+      gotoLoopAt = afterIfGtAcc + lenS
+      okAt = gotoLoopAt + 3
+      -- block X: build Right (Object[2] = [Integer(1), Integer(acc)])
+      blockX =
+        bcIconst 2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 1
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> bcIconst 1
+          <> bcIload 4
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> [0xB0]
+      lenX = length blockX
+      failAt = okAt + lenX
+      blockY =
+        bcIconst 1
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 0
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> bcAstore 4
+          <> bcIconst 2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 0
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> bcIconst 1
+          <> bcAload 4
+          <> [0x53]
+          <> [0xB0]
+      enc16 :: Int -> [Word8]
+      enc16 n = let w = fromIntegral n :: Word16 in [hi8 w, lo8 w]
+      ifeqOff = failAt - ifeqAt
+      ifGeOff = okAt - ifGeAt
+      ifLtOff = failAt - ifLtAt
+      ifGtCharOff = failAt - ifGtCharAt
+      ifGtAccOff = failAt - ifGtAccAt
+      gotoLoopOff = loopAt - gotoLoopAt
+      code =
+        blockA
+          <> blockB
+          <> [0x99]
+          <> enc16 ifeqOff
+          <> blockC
+          <> blockI
+          <> [0xA2]
+          <> enc16 ifGeOff
+          <> blockK
+          <> blockL
+          <> [0xA1]
+          <> enc16 ifLtOff
+          <> blockN
+          <> [0xA3]
+          <> enc16 ifGtCharOff
+          <> blockP
+          <> blockQ
+          <> [0xA3]
+          <> enc16 ifGtAccOff
+          <> blockS
+          <> [0xA7]
+          <> enc16 gotoLoopOff
+          <> blockX
+          <> blockY
+      -- StackMapTable: 3 frames at L_loop, L_ok, L_fail.
+      -- Initial frame: [Object]. At L_loop: [Object, String, int len, int i, int acc].
+      loop16 = fromIntegral loopAt :: Word16
+      delta2 = fromIntegral (okAt - loopAt - 1) :: Word8
+      delta3 = fromIntegral (failAt - okAt - 1) :: Word16
+      smtEntries =
+        -- Frame 1: full_frame at L_loop (locals = 5 entries; can't append 4)
+        [ 255,
+          hi8 loop16,
+          lo8 loop16,
+          0x00,
+          0x05,
+          7,
+          hi8 objCls,
+          lo8 objCls,
+          7,
+          hi8 strCls,
+          lo8 strCls,
+          1,
+          1,
+          1,
+          0x00,
+          0x00
+        ]
+          <> [delta2] -- Frame 2: same_frame at L_ok
+          <> [249, hi8 delta3, lo8 delta3] -- Frame 3: chop 2 at L_fail (5 → 3)
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 3]
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
 mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
@@ -1497,6 +1983,16 @@ emitExpr ctx = \case
           $ CodeWithMeta
             (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
             (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8",
+          [x] <- xs -> do
+            xMeta <- emitExpr ctx x
+            let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+            ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
+            pure
+              $ CodeWithMeta
+                (xMeta.cwCode <> bcInvokeStatic ref)
+                xMeta.cwBranchTargets
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n | n `Set.member` ctx.cFunDefs -> do

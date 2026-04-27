@@ -214,7 +214,9 @@ runtime builtIns =
         if Set.member "eqUInt8" builtIns then rtEqUInt8 else "",
         if Set.member "addInt32" builtIns then rtAddInt32 else "",
         if Set.member "addUInt8" builtIns then rtAddUInt8 else "",
-        if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else ""
+        if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
+        if Set.member "parseInt32" builtIns then rtParseInt32 else "",
+        if Set.member "parseUInt8" builtIns then rtParseUInt8 else ""
       ]
     rtConcat =
       unlines
@@ -545,6 +547,164 @@ runtime builtIns =
           "  %just_f = getelementptr ptr, ptr %just, i32 1",
           "  store ptr %tuple, ptr %just_f",
           "  ret ptr %just",
+          "}"
+        ]
+    -- parseInt32 : String -> Either ParseError Int32.
+    --   Strict decimal parser; grammar mirrors Awsum's literal — optional
+    --   '-', one or more ASCII digits, nothing else. Accumulates into i64
+    --   (so the maximum legal value 2147483648 — i.e. -minInt32 — fits)
+    --   and fails fast as soon as the running magnitude exceeds 2147483648.
+    --   Loop variables live in alloca slots; clang's mem2reg pass at -O2
+    --   converts them to SSA phi nodes, so the emitted binary has no
+    --   stack traffic.
+    rtParseInt32 =
+      unlines
+        [ "define ptr @__parseInt32(ptr %s) {",
+          "entry:",
+          "  %neg_alloca = alloca i32, align 4",
+          "  store i32 0, ptr %neg_alloca",
+          "  %i_alloca = alloca i64, align 8",
+          "  store i64 0, ptr %i_alloca",
+          "  %acc_alloca = alloca i64, align 8",
+          "  store i64 0, ptr %acc_alloca",
+          "  %len = call i64 @strlen(ptr %s)",
+          "  %is_empty = icmp eq i64 %len, 0",
+          "  br i1 %is_empty, label %fail, label %check_sign",
+          "check_sign:",
+          "  %first = load i8, ptr %s",
+          "  %first_i32 = zext i8 %first to i32",
+          "  %is_neg = icmp eq i32 %first_i32, 45",
+          "  br i1 %is_neg, label %sign_minus, label %loop_head",
+          "sign_minus:",
+          "  %is_lone = icmp eq i64 %len, 1",
+          "  br i1 %is_lone, label %fail, label %sign_setup",
+          "sign_setup:",
+          "  store i32 1, ptr %neg_alloca",
+          "  store i64 1, ptr %i_alloca",
+          "  br label %loop_head",
+          "loop_head:",
+          "  %i = load i64, ptr %i_alloca",
+          "  %acc = load i64, ptr %acc_alloca",
+          "  %cond = icmp ult i64 %i, %len",
+          "  br i1 %cond, label %body, label %after",
+          "body:",
+          "  %ptr_c = getelementptr i8, ptr %s, i64 %i",
+          "  %c = load i8, ptr %ptr_c",
+          "  %c_i32 = zext i8 %c to i32",
+          "  %low = icmp ult i32 %c_i32, 48",
+          "  %high = icmp ugt i32 %c_i32, 57",
+          "  %bad = or i1 %low, %high",
+          "  br i1 %bad, label %fail, label %parse",
+          "parse:",
+          "  %d = sub i32 %c_i32, 48",
+          "  %d_i64 = zext i32 %d to i64",
+          "  %x10 = mul i64 %acc, 10",
+          "  %acc_next = add i64 %x10, %d_i64",
+          "  %big = icmp ugt i64 %acc_next, 2147483648",
+          "  br i1 %big, label %fail, label %body_end",
+          "body_end:",
+          "  store i64 %acc_next, ptr %acc_alloca",
+          "  %i_next = add i64 %i, 1",
+          "  store i64 %i_next, ptr %i_alloca",
+          "  br label %loop_head",
+          "after:",
+          "  %neg_val = load i32, ptr %neg_alloca",
+          "  %is_neg2 = icmp ne i32 %neg_val, 0",
+          "  br i1 %is_neg2, label %finalize_neg, label %finalize_pos",
+          "finalize_pos:",
+          "  %big_pos = icmp ugt i64 %acc, 2147483647",
+          "  br i1 %big_pos, label %fail, label %ok_pos",
+          "finalize_neg:",
+          "  %acc_neg = sub i64 0, %acc",
+          "  br label %ok_neg",
+          "ok_pos:",
+          "  %result_pos = trunc i64 %acc to i32",
+          "  br label %build_right",
+          "ok_neg:",
+          "  %result_neg = trunc i64 %acc_neg to i32",
+          "  br label %build_right",
+          "build_right:",
+          "  %result = phi i32 [%result_pos, %ok_pos], [%result_neg, %ok_neg]",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %result, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "fail:",
+          "  %pe = call ptr @malloc(i64 8)",
+          "  %pe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %pe_tag, ptr %pe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %pe, ptr %left_f",
+          "  ret ptr %left",
+          "}"
+        ]
+    -- parseUInt8 : String -> Either ParseError UInt8.
+    --   No sign accepted; one or more ASCII digits, range 0..255. Same
+    --   alloca-and-mem2reg pattern as 'rtParseInt32'; accumulator is i32
+    --   since the running value never exceeds 2559 (255 * 10 + 9) before
+    --   the '> 255' check fails the parse.
+    rtParseUInt8 =
+      unlines
+        [ "define ptr @__parseUInt8(ptr %s) {",
+          "entry:",
+          "  %i_alloca = alloca i64, align 8",
+          "  store i64 0, ptr %i_alloca",
+          "  %acc_alloca = alloca i32, align 4",
+          "  store i32 0, ptr %acc_alloca",
+          "  %len = call i64 @strlen(ptr %s)",
+          "  %is_empty = icmp eq i64 %len, 0",
+          "  br i1 %is_empty, label %fail, label %loop_head",
+          "loop_head:",
+          "  %i = load i64, ptr %i_alloca",
+          "  %acc = load i32, ptr %acc_alloca",
+          "  %cond = icmp ult i64 %i, %len",
+          "  br i1 %cond, label %body, label %ok",
+          "body:",
+          "  %ptr_c = getelementptr i8, ptr %s, i64 %i",
+          "  %c = load i8, ptr %ptr_c",
+          "  %c_i32 = zext i8 %c to i32",
+          "  %low = icmp ult i32 %c_i32, 48",
+          "  %high = icmp ugt i32 %c_i32, 57",
+          "  %bad = or i1 %low, %high",
+          "  br i1 %bad, label %fail, label %parse",
+          "parse:",
+          "  %d = sub i32 %c_i32, 48",
+          "  %x10 = mul i32 %acc, 10",
+          "  %acc_next = add i32 %x10, %d",
+          "  %big = icmp ugt i32 %acc_next, 255",
+          "  br i1 %big, label %fail, label %body_end",
+          "body_end:",
+          "  store i32 %acc_next, ptr %acc_alloca",
+          "  %i_next = add i64 %i, 1",
+          "  store i64 %i_next, ptr %i_alloca",
+          "  br label %loop_head",
+          "ok:",
+          "  %result_i8 = trunc i32 %acc to i8",
+          "  %box = call ptr @malloc(i64 1)",
+          "  store i8 %result_i8, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "fail:",
+          "  %pe = call ptr @malloc(i64 8)",
+          "  %pe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %pe_tag, ptr %pe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %pe, ptr %left_f",
+          "  ret ptr %left",
           "}"
         ]
 
@@ -1095,6 +1255,21 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "BuiltIn.splitOnFirst: arity mismatch"
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8" ->
+            case xs of
+              [a] -> do
+                (instrA, resA) <- emitExpr ctx a
+                tmp <- freshTemp
+                let fn :: Text
+                    fn = case name of
+                      "parseInt32" -> "@__parseInt32"
+                      _ -> "@__parseUInt8"
+                pure
+                  ( instrA <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ")\n",
+                    tmp
+                  )
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn n ->
         error ("LLVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ -> do

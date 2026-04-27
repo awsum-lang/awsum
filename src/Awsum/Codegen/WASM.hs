@@ -259,6 +259,8 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "addInt32" builtIns then rtAddI32 else "",
             if Set.member "addUInt8" builtIns then rtAddU8 else "",
             if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
+            if Set.member "parseInt32" builtIns then rtParseInt32 else "",
+            if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -662,6 +664,124 @@ rtSplitOnFirst =
       "        (local.get $cell))))"
     ]
 
+-- | parseInt32 : String -> Either ParseError Int32. Handrolled byte
+--   scan; same algorithm as the LLVM, JVM, and CLR helpers — i64
+--   accumulator capped at the magnitude `|minInt32|`. The constant
+--   2147483648 is built with the shift trick `1 << 31` (avoids needing
+--   a separate i64 literal in the binary). On any failure path we set
+--   the `$failed` flag and `br $exit` out of the parsing block; result
+--   construction (Right or Left) happens after the block based on the
+--   flag.
+rtParseInt32 :: Text
+rtParseInt32 =
+  unlines
+    [ "  (func $__parseInt32 (param $s i32) (result i32)",
+      "    (local $len i32) (local $i i32) (local $neg i32)",
+      "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
+      "    (local $failed i32) (local $acc i64)",
+      "    (local.set $failed (i32.const 0))",
+      "    (local.set $acc (i64.const 0))",
+      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (block $exit",
+      "      (if (i32.eqz (local.get $len))",
+      "        (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "      (local.set $i (i32.const 0))",
+      "      (local.set $neg (i32.const 0))",
+      "      (if (i32.eq (i32.load8_u (local.get $s)) (i32.const 45))",
+      "        (then",
+      "          (local.set $neg (i32.const 1))",
+      "          (local.set $i (i32.const 1))",
+      "          (if (i32.eq (local.get $len) (i32.const 1))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))))",
+      "      (block $loop_break",
+      "        (loop $loop",
+      "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (if (i32.lt_u (local.get $c) (i32.const 48))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (if (i32.gt_u (local.get $c) (i32.const 57))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $acc",
+      "            (i64.add",
+      "              (i64.mul (local.get $acc) (i64.const 10))",
+      "              (i64.extend_i32_u (i32.sub (local.get $c) (i32.const 48)))))",
+      "          (if (i64.gt_s (local.get $acc) (i64.shl (i64.const 1) (i64.const 31)))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "          (br $loop)))",
+      "      (if (local.get $neg)",
+      "        (then (local.set $acc (i64.sub (i64.const 0) (local.get $acc))))",
+      "        (else",
+      "          (if (i64.gt_s (local.get $acc) (i64.const 2147483647))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit))))))",
+      "    (if (result i32) (local.get $failed)",
+      "      (then",
+      "        (local.set $pe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.wrap_i64 (local.get $acc)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | parseUInt8 : String -> Either ParseError UInt8. Same shape as
+--   'rtParseInt32' minus the sign handling, with an i32 accumulator
+--   (the running magnitude never exceeds 2559 before the > 255 check
+--   fails the parse).
+rtParseUInt8 :: Text
+rtParseUInt8 =
+  unlines
+    [ "  (func $__parseUInt8 (param $s i32) (result i32)",
+      "    (local $len i32) (local $i i32) (local $acc i32)",
+      "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
+      "    (local $failed i32)",
+      "    (local.set $failed (i32.const 0))",
+      "    (local.set $acc (i32.const 0))",
+      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (block $exit",
+      "      (if (i32.eqz (local.get $len))",
+      "        (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "      (local.set $i (i32.const 0))",
+      "      (block $loop_break",
+      "        (loop $loop",
+      "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (if (i32.lt_u (local.get $c) (i32.const 48))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (if (i32.gt_u (local.get $c) (i32.const 57))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $acc",
+      "            (i32.add",
+      "              (i32.mul (local.get $acc) (i32.const 10))",
+      "              (i32.sub (local.get $c) (i32.const 48))))",
+      "          (if (i32.gt_u (local.get $acc) (i32.const 255))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "          (br $loop))))",
+      "    (if (result i32) (local.get $failed)",
+      "      (then",
+      "        (local.set $pe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $acc))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
 -- | eqInt32 / eqUInt8: two boxed integers → Bool (one-slot container).
 --   Int32 and UInt8 both flow as pointers to an i32 cell; UInt8 values are
 --   stored masked to 0..255, so a plain i32.eq gives the same answer as
@@ -881,6 +1001,11 @@ emitExpr ctx = \case
       CBuiltIn "splitOnFirst"
         | [a, b] <- xs ->
             "(call $__splitOnFirst " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8",
+          [x] <- xs ->
+            let fn = if name == "parseInt32" then "$__parseInt32" else "$__parseUInt8"
+             in "(call " <> fn <> " " <> emitExpr ctx x <> ")"
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             "(call $__concat " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"

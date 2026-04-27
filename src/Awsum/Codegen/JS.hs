@@ -128,6 +128,18 @@ header builtIns =
             -- Tuple2 has one constructor (tag 0).
             if Set.member "splitOnFirst" builtIns
               then "function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [0]; return [1, [0, str.substring(0, i), str.substring(i + sep.length)]]; }"
+              else "",
+            -- parseInt32: strict decimal grammar mirroring the language
+            -- literal — optional '-', one or more ASCII digits, nothing else.
+            -- Regex full-match enforces it; Number() then range-checks. JS
+            -- numbers are double-precision and represent every i32 (and the
+            -- absolute minInt32 boundary 2147483648) exactly.
+            if Set.member "parseInt32" builtIns
+              then "function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [0, [0]]; return [1, n | 0]; }"
+              else "",
+            -- parseUInt8: same shape but no sign accepted; range 0..255.
+            if Set.member "parseUInt8" builtIns
+              then "function __parseUInt8(s){ if (!/^[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n > 255) return [0, [0]]; return [1, n & 0xFF]; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -308,6 +320,13 @@ emitExpr = \case
         case xs of
           [a, b] -> "__splitOnFirst(" <> emitExpr a <> ", " <> emitExpr b <> ")"
           _ -> error "BuiltIn.splitOnFirst: arity mismatch"
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8" ->
+            case xs of
+              [a] ->
+                let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+                 in fn <> "(" <> emitExpr a <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn n ->
         error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->

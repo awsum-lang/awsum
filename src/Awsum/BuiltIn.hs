@@ -62,7 +62,15 @@ builtIns =
       -- splitOnFirst : String -> String -> Maybe (Tuple2 String String)
       -- Splits 'str' at the first occurrence of 'separator'; see
       -- 'stdlib/Prelude.aww' for the full edge-case spec.
-      ("splitOnFirst", TyArrow noSpan stringTy (TyArrow noSpan stringTy (maybeTy (tuple2Ty stringTy stringTy))))
+      ("splitOnFirst", TyArrow noSpan stringTy (TyArrow noSpan stringTy (maybeTy (tuple2Ty stringTy stringTy)))),
+      -- parseInt32 : String -> Either ParseError Int32
+      -- Strict decimal parser; grammar mirrors the language literal —
+      -- optional '-', one or more digits, nothing else. See Prelude.aww
+      -- for the full example list.
+      ("parseInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy int32Ty)),
+      -- parseUInt8 : String -> Either ParseError UInt8
+      -- Same grammar, no sign accepted (UInt8 is unsigned), range 0..255.
+      ("parseUInt8", TyArrow noSpan stringTy (eitherTy parseErrorTy uint8Ty))
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -72,6 +80,7 @@ builtIns =
     underflowErrorTy = TyCon noSpan "UnderflowError"
     overflowErrorTy = TyCon noSpan "OverflowError"
     arithErrorTy = TyCon noSpan "ArithError"
+    parseErrorTy = TyCon noSpan "ParseError"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

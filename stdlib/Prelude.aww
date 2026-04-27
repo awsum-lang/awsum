@@ -125,6 +125,20 @@ type OverflowError = OverflowError
 showOverflowError : OverflowError -> String
 showOverflowError _ = "OverflowError"
 
+-- ---------------------- ParseError
+
+{- Reported by parsing primitives (e.g. `parseInt32`) when the input
+   string does not match the expected grammar or yields a value outside
+   the target type's range. Single-constructor sum — there is nothing
+   to pattern-match on beyond the fact that parsing failed. The grammar
+   itself, and the precise list of inputs that fail, is documented on
+   each parser's own docstring. -}
+
+type ParseError = ParseError
+
+showParseError : ParseError -> String
+showParseError _ = "ParseError"
+
 -- ---------------------- ArithError
 
 {- Reported by signed integer primitives that can fail at *either* end of
@@ -157,6 +171,29 @@ succUInt8 = BuiltIn.succUInt8
 addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
 addUInt8 = BuiltIn.addUInt8
 
+{- Parse a `UInt8` from a decimal string. The grammar mirrors Awsum's
+   integer literal: one or more decimal digits, nothing else — no sign
+   (UInt8 cannot represent a negative number), no leading or trailing
+   whitespace, no trailing characters of any kind, no leading `+`.
+   Range is 0..255 inclusive.
+
+   Examples:
+   - `parseUInt8 "0"`   → `Right 0`
+   - `parseUInt8 "255"` → `Right 255`
+   - `parseUInt8 "256"` → `Left ParseError`   (above max)
+   - `parseUInt8 "-1"`  → `Left ParseError`   (negative)
+   - `parseUInt8 ""`    → `Left ParseError`   (empty)
+   - `parseUInt8 "abc"` → `Left ParseError`   (not digits)
+   - `parseUInt8 " 5"`  → `Left ParseError`   (whitespace)
+   - `parseUInt8 "12a"` → `Left ParseError`   (trailing garbage)
+
+   Strings are byte sequences and digits are recognised as the seven-bit
+   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
+   rejected. -}
+
+parseUInt8 : String -> Either ParseError UInt8
+parseUInt8 = BuiltIn.parseUInt8
+
 -- ---------------------- Int32
 
 eqInt32 : Int32 -> Int32 -> Bool
@@ -173,3 +210,30 @@ succInt32 = BuiltIn.succInt32
 
 addInt32 : Int32 -> Int32 -> Either ArithError Int32
 addInt32 = BuiltIn.addInt32
+
+{- Parse an `Int32` from a decimal string. The grammar mirrors Awsum's
+   integer literal: an optional leading `-`, then one or more decimal
+   digits, nothing else — no `+`, no leading or trailing whitespace, no
+   trailing characters of any kind. Range is `minInt32..maxInt32`
+   inclusive.
+
+   Examples:
+   - `parseInt32 "42"`           → `Right 42`
+   - `parseInt32 "-42"`          → `Right -42`
+   - `parseInt32 "0"`            → `Right 0`
+   - `parseInt32 "2147483647"`   → `Right 2147483647`     (maxInt32)
+   - `parseInt32 "-2147483648"`  → `Right -2147483648`    (minInt32)
+   - `parseInt32 "2147483648"`   → `Left ParseError`      (above max)
+   - `parseInt32 "-2147483649"`  → `Left ParseError`      (below min)
+   - `parseInt32 ""`             → `Left ParseError`      (empty)
+   - `parseInt32 "-"`            → `Left ParseError`      (sign without digits)
+   - `parseInt32 "+42"`          → `Left ParseError`      (`+` is not accepted, mirroring the literal grammar)
+   - `parseInt32 " 42"`          → `Left ParseError`      (leading whitespace)
+   - `parseInt32 "12abc"`        → `Left ParseError`      (trailing garbage)
+
+   Strings are byte sequences and digits are recognised as the seven-bit
+   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
+   rejected. -}
+
+parseInt32 : String -> Either ParseError Int32
+parseInt32 = BuiltIn.parseInt32

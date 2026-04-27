@@ -370,6 +370,19 @@ cilBr off = 0x38 : w32le (fromIntegral off :: Word32)
 cilBneUn :: Int32 -> [Word8]
 cilBneUn off = 0x40 : w32le (fromIntegral off :: Word32)
 
+cilBrfalse, cilBeq, cilBge, cilBgt, cilBlt :: Int32 -> [Word8]
+cilBrfalse off = 0x39 : w32le (fromIntegral off :: Word32)
+cilBeq off = 0x3B : w32le (fromIntegral off :: Word32)
+cilBge off = 0x3C : w32le (fromIntegral off :: Word32)
+cilBgt off = 0x3D : w32le (fromIntegral off :: Word32)
+cilBlt off = 0x3F : w32le (fromIntegral off :: Word32)
+
+cilNeg, cilMul, cilConvI8, cilShl :: [Word8]
+cilNeg = [0x65]
+cilMul = [0x5A]
+cilConvI8 = [0x6A]
+cilShl = [0x62]
+
 -- | @starg.s <n>@ / long form — stores the top of stack into argument
 -- slot @n@. Used by 'CContinue' to rebind parameters in place before
 -- branching back to the loop head.
@@ -510,7 +523,9 @@ doAssemble (CoreProgram decls) = do
                    ("__eqUInt8", Set.member "eqUInt8" builtIns),
                    ("__addInt32", Set.member "addInt32" builtIns),
                    ("__addUInt8", Set.member "addUInt8" builtIns),
-                   ("__splitOnFirst", Set.member "splitOnFirst" builtIns)
+                   ("__splitOnFirst", Set.member "splitOnFirst" builtIns),
+                   ("__parseInt32", Set.member "parseInt32" builtIns),
+                   ("__parseUInt8", Set.member "parseUInt8" builtIns)
                  ],
                keep
              ]
@@ -534,9 +549,11 @@ doAssemble (CoreProgram decls) = do
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
   m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
+  m8sI <- if Set.member "parseInt32" builtIns then (: []) <$> mkParseInt32 else pure []
+  m8sU <- if Set.member "parseUInt8" builtIns then (: []) <$> mkParseUInt8 else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> m7s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> m7s <> m8sI <> m8sU <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -1121,6 +1138,351 @@ mkSplitOnFirst = do
       code = preamble <> nothingBlock <> foundBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
 
+-- | parseInt32: String -> Either ParseError Int32. Binary equivalent
+--   of 'Awsum.Codegen.CLR.parseInt32Method'. Same handrolled algorithm
+--   as the JVM and LLVM helpers — int64 accumulator capped at the
+--   magnitude `|minInt32|`. The constant 2147483648 is built with the
+--   shift trick `1 << 31`.
+--   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int neg,
+--   4 = int64 acc, 5 = int c, 6 = object (Left payload on fail).
+mkParseInt32 :: AsmM MInfo
+mkParseInt32 = do
+  ni <- w16 <$> addStr "__parseInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
+  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
+  -- locals: string, int32, int32, int32, int64, int32, object
+  localTok <- addLocalSigBytes [0x07, 0x07, etString, 0x08, 0x08, 0x08, 0x0A, 0x08, etObject]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      castStr = cilCastclass (tokTR trStr)
+      callLength = cilCallvirt (tokMR lengthRef)
+      callChars = cilCallvirt (tokMR charsRef)
+      -- ───── code blocks (offsets computed bottom-up) ─────
+      -- A: load arg → s, get length → len
+      blockA =
+        cilLdarg 0
+          <> castStr
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> callLength
+          <> cilStloc 1
+      lenA = length blockA
+      -- B: ldloc len; brfalse L_fail
+      blockB = cilLdloc 1
+      lenB = length blockB
+      brfalse1At = lenA + lenB
+      after1 = brfalse1At + 5
+      -- C: i=0; neg=0
+      blockC = cilLdcI4 0 <> cilStloc 2 <> cilLdcI4 0 <> cilStloc 3
+      lenC = length blockC
+      -- D: charAt(0); push 45
+      blockD =
+        cilLdloc 0
+          <> cilLdcI4 0
+          <> callChars
+          <> cilLdcI4 45
+      lenD = length blockD
+      bneAt = after1 + lenC + lenD
+      after2 = bneAt + 2
+      -- F: minus path setup
+      blockF =
+        cilLdcI4 1
+          <> cilStloc 3
+          <> cilLdcI4 1
+          <> cilStloc 2
+          <> cilLdloc 1
+          <> cilLdcI4 1
+      lenF = length blockF
+      beq1At = after2 + lenF
+      initAccAt = beq1At + 5
+      -- H: acc = 0L
+      blockH = cilLdcI4 0 <> cilConvI8 <> cilStloc 4
+      lenH = length blockH
+      loopAt = initAccAt + lenH
+      -- I: ldloc i; ldloc len
+      blockI = cilLdloc 2 <> cilLdloc 1
+      lenI = length blockI
+      bgeAfterAt = loopAt + lenI
+      afterBge = bgeAfterAt + 5
+      -- K: charAt(i); stloc 5
+      blockK = cilLdloc 0 <> cilLdloc 2 <> callChars <> cilStloc 5
+      lenK = length blockK
+      -- L: ldloc 5; ldc 48
+      blockL = cilLdloc 5 <> cilLdcI4 48
+      lenL = length blockL
+      bltLowAt = afterBge + lenK + lenL
+      afterBltLow = bltLowAt + 5
+      -- N: ldloc 5; ldc 57
+      blockN = cilLdloc 5 <> cilLdcI4 57
+      lenN = length blockN
+      bgtHighAt = afterBltLow + lenN
+      afterBgtHigh = bgtHighAt + 5
+      -- P: acc = acc * 10 + (c - '0')
+      blockP =
+        cilLdloc 4
+          <> cilLdcI4 10
+          <> cilConvI8
+          <> cilMul
+          <> cilLdloc 5
+          <> cilLdcI4 48
+          <> cilSub
+          <> cilConvI8
+          <> cilAdd
+          <> cilStloc 4
+      lenP = length blockP
+      -- Q: ldloc acc; (1 << 31)L
+      blockQ =
+        cilLdloc 4
+          <> cilLdcI4 1
+          <> cilConvI8
+          <> cilLdcI4 31
+          <> cilShl
+      lenQ = length blockQ
+      bgtAccAt = afterBgtHigh + lenP + lenQ
+      afterBgtAcc = bgtAccAt + 5
+      -- S: i++
+      blockS = cilLdloc 2 <> cilLdcI4 1 <> cilAdd <> cilStloc 2
+      lenS = length blockS
+      brLoopAt = afterBgtAcc + lenS
+      afterBrLoop = brLoopAt + 5
+      -- T (after_loop): ldloc neg
+      blockT = cilLdloc 3
+      lenT = length blockT
+      brfalseNegAt = afterBrLoop + lenT
+      afterBrfalseNeg = brfalseNegAt + 5
+      -- U: acc = -acc
+      blockU = cilLdloc 4 <> cilNeg <> cilStloc 4
+      lenU = length blockU
+      brBuildAt = afterBrfalseNeg + lenU
+      posCheckAt = brBuildAt + 5
+      -- V: ldloc acc; INT_MAX as long
+      blockV = cilLdloc 4 <> cilLdcI4 2147483647 <> cilConvI8
+      lenV = length blockV
+      bgtPosAt = posCheckAt + lenV
+      buildRightAt = bgtPosAt + 5
+      -- X: build Right
+      blockX =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 4
+          <> cilConvI4
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      lenX = length blockX
+      failAt = buildRightAt + lenX
+      -- Y: build Left ParseError
+      blockY =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 6
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 6
+          <> cilStelemRef
+          <> cilRet
+      -- Branch offsets (from byte after the branch to target)
+      brfalse1Off = fromIntegral (failAt - after1) :: Int32
+      bneOff = fromIntegral (initAccAt - after2) :: Word8
+      beq1Off = fromIntegral (failAt - initAccAt) :: Int32
+      bgeAfterOff = fromIntegral (afterBrLoop - afterBge) :: Int32
+      bltLowOff = fromIntegral (failAt - afterBltLow) :: Int32
+      bgtHighOff = fromIntegral (failAt - afterBgtHigh) :: Int32
+      bgtAccOff = fromIntegral (failAt - afterBgtAcc) :: Int32
+      brLoopOff = fromIntegral (loopAt - afterBrLoop) :: Int32
+      brfalseNegOff = fromIntegral (posCheckAt - afterBrfalseNeg) :: Int32
+      brBuildOff = fromIntegral (buildRightAt - (brBuildAt + 5)) :: Int32
+      bgtPosOff = fromIntegral (failAt - buildRightAt) :: Int32
+      code =
+        blockA
+          <> blockB
+          <> cilBrfalse brfalse1Off
+          <> blockC
+          <> blockD
+          <> cilBneUnS bneOff
+          <> blockF
+          <> cilBeq beq1Off
+          <> blockH
+          <> blockI
+          <> cilBge bgeAfterOff
+          <> blockK
+          <> blockL
+          <> cilBlt bltLowOff
+          <> blockN
+          <> cilBgt bgtHighOff
+          <> blockP
+          <> blockQ
+          <> cilBgt bgtAccOff
+          <> blockS
+          <> cilBr brLoopOff
+          <> blockT
+          <> cilBrfalse brfalseNegOff
+          <> blockU
+          <> cilBr brBuildOff
+          <> blockV
+          <> cilBgt bgtPosOff
+          <> blockX
+          <> blockY
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
+-- | parseUInt8: String -> Either ParseError UInt8. Same shape as
+--   'mkParseInt32' minus the sign handling — UInt8 cannot represent a
+--   negative number — and with an i32 accumulator (the running
+--   magnitude never exceeds 2559 before the > 255 check fails).
+--   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int acc,
+--   4 = int c, 5 = object (Left payload on fail).
+mkParseUInt8 :: AsmM MInfo
+mkParseUInt8 = do
+  ni <- w16 <$> addStr "__parseUInt8"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
+  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
+  -- locals: string, int32 (×4), object
+  localTok <- addLocalSigBytes [0x07, 0x06, etString, 0x08, 0x08, 0x08, 0x08, etObject]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      castStr = cilCastclass (tokTR trStr)
+      callLength = cilCallvirt (tokMR lengthRef)
+      callChars = cilCallvirt (tokMR charsRef)
+      blockA =
+        cilLdarg 0
+          <> castStr
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> callLength
+          <> cilStloc 1
+      lenA = length blockA
+      blockB = cilLdloc 1
+      lenB = length blockB
+      brfalse1At = lenA + lenB
+      after1 = brfalse1At + 5
+      blockC = cilLdcI4 0 <> cilStloc 2 <> cilLdcI4 0 <> cilStloc 3
+      lenC = length blockC
+      loopAt = after1 + lenC
+      blockI = cilLdloc 2 <> cilLdloc 1
+      lenI = length blockI
+      bgeAt = loopAt + lenI
+      afterBge = bgeAt + 5
+      blockK = cilLdloc 0 <> cilLdloc 2 <> callChars <> cilStloc 4
+      lenK = length blockK
+      blockL = cilLdloc 4 <> cilLdcI4 48
+      lenL = length blockL
+      bltAt = afterBge + lenK + lenL
+      afterBlt = bltAt + 5
+      blockN = cilLdloc 4 <> cilLdcI4 57
+      lenN = length blockN
+      bgtCharAt = afterBlt + lenN
+      afterBgtChar = bgtCharAt + 5
+      blockP =
+        cilLdloc 3
+          <> cilLdcI4 10
+          <> cilMul
+          <> cilLdloc 4
+          <> cilLdcI4 48
+          <> cilSub
+          <> cilAdd
+          <> cilStloc 3
+      lenP = length blockP
+      blockQ = cilLdloc 3 <> cilLdcI4 255
+      lenQ = length blockQ
+      bgtAccAt = afterBgtChar + lenP + lenQ
+      afterBgtAcc = bgtAccAt + 5
+      blockS = cilLdloc 2 <> cilLdcI4 1 <> cilAdd <> cilStloc 2
+      lenS = length blockS
+      brLoopAt = afterBgtAcc + lenS
+      okAt = brLoopAt + 5
+      blockX =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      lenX = length blockX
+      failAt = okAt + lenX
+      blockY =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 5
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 5
+          <> cilStelemRef
+          <> cilRet
+      brfalse1Off = fromIntegral (failAt - after1) :: Int32
+      bgeOff = fromIntegral (okAt - afterBge) :: Int32
+      bltOff = fromIntegral (failAt - afterBlt) :: Int32
+      bgtCharOff = fromIntegral (failAt - afterBgtChar) :: Int32
+      bgtAccOff = fromIntegral (failAt - afterBgtAcc) :: Int32
+      brLoopOff = fromIntegral (loopAt - okAt) :: Int32
+      code =
+        blockA
+          <> blockB
+          <> cilBrfalse brfalse1Off
+          <> blockC
+          <> blockI
+          <> cilBge bgeOff
+          <> blockK
+          <> blockL
+          <> cilBlt bltOff
+          <> blockN
+          <> cilBgt bgtCharOff
+          <> blockP
+          <> blockQ
+          <> cilBgt bgtAccOff
+          <> blockS
+          <> cilBr brLoopOff
+          <> blockX
+          <> blockY
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -1348,6 +1710,12 @@ emitExpr ctx = \case
       ca <- emitExpr ctx a
       cb <- emitExpr ctx b
       pure (ca <> cb <> cilCall (lkTok ctx "__splitOnFirst"))
+    CBuiltIn name
+      | name == "parseInt32" || name == "parseUInt8",
+        [x] <- xs -> do
+          cx <- emitExpr ctx x
+          let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+          pure (cx <> cilCall (lkTok ctx fn))
     CBuiltIn n ->
       error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
     CVar n | n `Set.member` ctx.eFunDefs -> do

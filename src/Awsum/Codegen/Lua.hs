@@ -117,6 +117,20 @@ header builtIns =
             -- Maybe Nothing=0, Just=1; Tuple2 has one constructor (tag 0).
             if Set.member "splitOnFirst" builtIns
               then "function M.__splitOnFirst(sep, str) if sep == \"\" then return {1, {0, \"\", str}} end local i, j = string.find(str, sep, 1, true) if i == nil then return {0} end return {1, {0, string.sub(str, 1, i - 1), string.sub(str, j + 1)}} end"
+              else "",
+            -- parseInt32: anchored Lua pattern '^%-?%d+$' enforces the
+            -- strict grammar (optional '-', one or more ASCII digits, no
+            -- whitespace, no trailing chars, no '+'). After that
+            -- 'tonumber' on a pure decimal literal cannot return nil,
+            -- but the nil-guard is kept defensively. Range checked
+            -- against [minInt32, maxInt32]; Lua 5.1+ 'number' is double-
+            -- precision and represents every i32 exactly.
+            if Set.member "parseInt32" builtIns
+              then "function M.__parseInt32(s) if not string.match(s, \"^%-?%d+$\") then return {0, {0}} end local n = tonumber(s) if n == nil or n < -2147483648 or n > 2147483647 then return {0, {0}} end return {1, n} end"
+              else "",
+            -- parseUInt8: same shape, no sign accepted; range 0..255.
+            if Set.member "parseUInt8" builtIns
+              then "function M.__parseUInt8(s) if not string.match(s, \"^%d+$\") then return {0, {0}} end local n = tonumber(s) if n == nil or n > 255 then return {0, {0}} end return {1, n} end"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -325,6 +339,13 @@ emitExpr topNames = go
             case xs of
               [a, b] -> "M.__splitOnFirst(" <> go a <> ", " <> go b <> ")"
               _ -> error "BuiltIn.splitOnFirst: arity mismatch"
+          CBuiltIn name
+            | name == "parseInt32" || name == "parseUInt8" ->
+                case xs of
+                  [a] ->
+                    let fn = if name == "parseInt32" then "M.__parseInt32" else "M.__parseUInt8"
+                     in fn <> "(" <> go a <> ")"
+                  _ -> error ("BuiltIn." <> name <> ": arity mismatch")
           CBuiltIn "concatString" ->
             case xs of
               [a, b] ->
