@@ -177,6 +177,12 @@ header builtIns =
     <> [ "declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)"
        | Set.member "addInt32" builtIns
        ]
+    <> [ "declare ptr @strstr(ptr, ptr)"
+       | Set.member "splitOnFirst" builtIns
+       ]
+    <> [ "declare ptr @memcpy(ptr, ptr, i64)"
+       | Set.member "splitOnFirst" builtIns
+       ]
     <> [ "",
          "@.fmt = private unnamed_addr constant [3 x i8] c\"%s\\00\"",
          "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
@@ -207,7 +213,8 @@ runtime builtIns =
         if Set.member "eqInt32" builtIns then rtEqInt32 else "",
         if Set.member "eqUInt8" builtIns then rtEqUInt8 else "",
         if Set.member "addInt32" builtIns then rtAddInt32 else "",
-        if Set.member "addUInt8" builtIns then rtAddUInt8 else ""
+        if Set.member "addUInt8" builtIns then rtAddUInt8 else "",
+        if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else ""
       ]
     rtConcat =
       unlines
@@ -485,6 +492,59 @@ runtime builtIns =
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
           "  ret ptr %right",
+          "}"
+        ]
+    -- splitOnFirst : String -> String -> Maybe (Tuple2 String String).
+    --   Defers the substring search to libc 'strstr'; the empty-separator
+    --   case is correct for free since 'strstr(s, "")' returns 's'. On
+    --   miss returns a 1-slot Maybe container with tag 0 (Nothing). On
+    --   hit allocates two fresh null-terminated buffers (prefix /
+    --   suffix) — owning copies, never aliases into the input — and
+    --   wraps them in `Tuple2 prefix suffix` (3-slot, tag 0) inside
+    --   `Just` (2-slot, tag 1). Tags follow Prelude.aww declaration
+    --   order: Maybe = Nothing | Just (0, 1); Tuple2 has one constructor
+    --   (tag 0).
+    rtSplitOnFirst =
+      unlines
+        [ "define ptr @__splitOnFirst(ptr %sep, ptr %str) {",
+          "  %pos = call ptr @strstr(ptr %str, ptr %sep)",
+          "  %is_null = icmp eq ptr %pos, null",
+          "  br i1 %is_null, label %not_found, label %found",
+          "not_found:",
+          "  %nothing = call ptr @malloc(i64 8)",
+          "  %nothing_tag = inttoptr i64 0 to ptr",
+          "  store ptr %nothing_tag, ptr %nothing",
+          "  ret ptr %nothing",
+          "found:",
+          "  %str_int = ptrtoint ptr %str to i64",
+          "  %pos_int = ptrtoint ptr %pos to i64",
+          "  %prefix_len = sub i64 %pos_int, %str_int",
+          "  %sep_len = call i64 @strlen(ptr %sep)",
+          "  %suffix_start = getelementptr i8, ptr %pos, i64 %sep_len",
+          "  %suffix_len = call i64 @strlen(ptr %suffix_start)",
+          "  %prefix_total = add i64 %prefix_len, 1",
+          "  %prefix = call ptr @malloc(i64 %prefix_total)",
+          "  call ptr @memcpy(ptr %prefix, ptr %str, i64 %prefix_len)",
+          "  %prefix_term = getelementptr i8, ptr %prefix, i64 %prefix_len",
+          "  store i8 0, ptr %prefix_term",
+          "  %suffix_total = add i64 %suffix_len, 1",
+          "  %suffix = call ptr @malloc(i64 %suffix_total)",
+          "  call ptr @memcpy(ptr %suffix, ptr %suffix_start, i64 %suffix_len)",
+          "  %suffix_term = getelementptr i8, ptr %suffix, i64 %suffix_len",
+          "  store i8 0, ptr %suffix_term",
+          "  %tuple = call ptr @malloc(i64 24)",
+          "  %tuple_tag = inttoptr i64 0 to ptr",
+          "  store ptr %tuple_tag, ptr %tuple",
+          "  %tuple_a = getelementptr ptr, ptr %tuple, i32 1",
+          "  store ptr %prefix, ptr %tuple_a",
+          "  %tuple_b = getelementptr ptr, ptr %tuple, i32 2",
+          "  store ptr %suffix, ptr %tuple_b",
+          "  %just = call ptr @malloc(i64 16)",
+          "  %just_tag = inttoptr i64 1 to ptr",
+          "  store ptr %just_tag, ptr %just",
+          "  %just_f = getelementptr ptr, ptr %just, i32 1",
+          "  store ptr %tuple, ptr %just_f",
+          "  ret ptr %just",
           "}"
         ]
 
@@ -1024,6 +1084,17 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "BuiltIn.concatString: arity mismatch"
+      CBuiltIn "splitOnFirst" ->
+        case xs of
+          [a, b] -> do
+            (instrA, resA) <- emitExpr ctx a
+            (instrB, resB) <- emitExpr ctx b
+            tmp <- freshTemp
+            pure
+              ( instrA <> instrB <> "  " <> tmp <> " = call ptr @__splitOnFirst(ptr " <> resA <> ", ptr " <> resB <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.splitOnFirst: arity mismatch"
       CBuiltIn n ->
         error ("LLVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ -> do

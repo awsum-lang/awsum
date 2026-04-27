@@ -71,6 +71,48 @@ call object AwsumMain::__concat(object, object)
 ("Hello" .. ", " .. name .. "!")
 ```
 
+## Splitting at the first separator
+
+`splitOnFirst sep str` returns `Just (Tuple2 prefix suffix)` for the first occurrence of `sep` in `str`, or `Nothing` if it does not appear. Full edge-case spec — including the empty separator, separator at start / end / equal to string, separator longer than string — is on the function's docstring in [stdlib/Prelude.aww](../stdlib/Prelude.aww).
+
+Five of six backends defer to a native substring search; WASM hand-rolls a byte scan because no such primitive is available there.
+
+**LLVM** — `strstr` from libc returns a pointer to the first match (or `NULL`); the helper then `memcpy`s into two freshly `malloc`'d buffers (owning copies, not aliases). `strstr(s, "")` returns `s` per POSIX, so the empty-separator case is correct without special handling.
+
+**JVM** — `String.indexOf(String)I` (returns `-1` on miss, `0` on empty separator) plus the two `String.substring` overloads:
+
+```
+invokevirtual java/lang/String/indexOf(Ljava/lang/String;)I
+invokevirtual java/lang/String/substring(II)Ljava/lang/String;
+invokevirtual java/lang/String/substring(I)Ljava/lang/String;
+```
+
+**CLR** — same shape with the System.String members:
+
+```
+callvirt instance int32 [System.Runtime]System.String::IndexOf(string)
+callvirt instance string [System.Runtime]System.String::Substring(int32, int32)
+callvirt instance string [System.Runtime]System.String::Substring(int32)
+```
+
+**WASM** — outer loop over candidate positions `i ∈ 0..str_len - sep_len`, inner loop compares `str[i+j]` against `sep[j]` byte by byte; on match, `__memcpy` builds two fresh null-terminated buffers (the same allocator the rest of the runtime uses). Empty separator and separator-longer-than-`str` are handled implicitly by the loop bounds — no special cases in code.
+
+**JS** — `String.prototype.indexOf` plus `substring`:
+
+```javascript
+const i = str.indexOf(sep);
+return i < 0 ? [0] : [1, [0, str.substring(0, i), str.substring(i + sep.length)]];
+```
+
+**Lua** — `string.find` in plain-text mode (4th argument `true` to skip Lua-pattern interpretation), with an explicit branch for the empty separator: Lua 5.1's `find` returns `nil` for an empty pattern even in plain mode, contrary to every other backend's behaviour, so the prelude's "empty separator matches at position 0" semantics is enforced before the call:
+
+```lua
+if sep == "" then return {1, {0, "", str}} end
+local i, j = string.find(str, sep, 1, true)
+```
+
+Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be split inside a codepoint. UTF-8-aware splitting is a separate, future API.
+
 ## Print
 
 All backends print without a trailing newline — `IO.Stdout.print` outputs exactly what it receives.
@@ -582,8 +624,8 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
 
-**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Two boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer) and `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). The remainder are honest-arithmetic primitives — `__predInt32`, `__predUInt8`, `__succInt32`, `__succUInt8`, `__eq_i32` (shared by both equality builtins since both types flow as i32 cells), `__addInt32`, `__addUInt8` — each consuming pointer arguments and returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use.
+**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Two boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer) and `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). One string-manipulation: `__splitOnFirst` (handrolled byte scan because WASM has no native substring search). The remainder are honest-arithmetic primitives — `__predInt32`, `__predUInt8`, `__succInt32`, `__succUInt8`, `__eq_i32` (shared by both equality builtins since both types flow as i32 cells), `__addInt32`, `__addUInt8` — each consuming pointer arguments and returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use.
 
 **Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
 
-**~40 opcodes**: The assembler uses approximately forty WASM opcodes — enough for string manipulation, control flow, memory access, indirect calls, and the integer arithmetic the honest-arithmetic primitives need (`i32.sub`, `i32.div_u`, `i32.rem_u`, `i32.lt_s`, `i32.lt_u`, `i32.gt_u`, `i32.ge_s`, `i32.xor`, `i32.and`).
+**~40 opcodes**: The assembler uses approximately forty WASM opcodes — enough for string manipulation, control flow, memory access, indirect calls, and the integer arithmetic the honest-arithmetic primitives need (`i32.sub`, `i32.div_u`, `i32.rem_u`, `i32.lt_s`, `i32.lt_u`, `i32.gt_u`, `i32.ge_s`, `i32.xor`, `i32.and`, plus `i32.eq` / `i32.ne` for the byte-by-byte comparison inside `__splitOnFirst`).

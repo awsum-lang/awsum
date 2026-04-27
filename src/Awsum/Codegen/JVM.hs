@@ -52,6 +52,8 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "addUInt8" builtIns) addUInt8Method,
             "",
+            gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
             mainMethod,
@@ -530,6 +532,83 @@ addUInt8Method =
       ".end method"
     ]
 
+-- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   Defers substring search to 'String.indexOf(String)', which returns -1
+--   on miss and 0 on empty 'sep' — both behaviours match the prelude
+--   contract directly. On hit, 'String.substring' allocates fresh
+--   String objects (not aliased into the input), then we wrap them in
+--   Tuple2 (Object[3], tag 0) inside Just (Object[2], tag 1). On miss
+--   we return Nothing (Object[1], tag 0).
+splitOnFirstMethod :: Text
+splitOnFirstMethod =
+  unlines
+    [ ".method public static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 4",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/indexOf(Ljava/lang/String;)I",
+      "  istore_2",
+      "  iload_2",
+      "  iconst_m1",
+      "  if_icmpne L_split_found",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      "L_split_found:",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  iconst_0",
+      "  iload_2",
+      "  invokevirtual java/lang/String/substring(II)Ljava/lang/String;",
+      "  astore_3",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  iload_2",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/length()I",
+      "  iadd",
+      "  invokevirtual java/lang/String/substring(I)Ljava/lang/String;",
+      "  astore_2",
+      "  iconst_3",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_3",
+      "  aastore",
+      "  dup",
+      "  iconst_2",
+      "  aload_2",
+      "  aastore",
+      "  astore_3",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_3",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -746,6 +825,14 @@ emitExprText ctx paramMap = \case
               [ emitExprText ctx paramMap a,
                 emitExprText ctx paramMap b,
                 "  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap a,
+                emitExprText ctx paramMap b,
+                "  invokestatic AwsumMain/__splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
               ]
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")

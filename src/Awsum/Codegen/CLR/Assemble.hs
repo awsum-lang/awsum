@@ -509,7 +509,8 @@ doAssemble (CoreProgram decls) = do
                    ("__eqInt32", Set.member "eqInt32" builtIns),
                    ("__eqUInt8", Set.member "eqUInt8" builtIns),
                    ("__addInt32", Set.member "addInt32" builtIns),
-                   ("__addUInt8", Set.member "addUInt8" builtIns)
+                   ("__addUInt8", Set.member "addUInt8" builtIns),
+                   ("__splitOnFirst", Set.member "splitOnFirst" builtIns)
                  ],
                keep
              ]
@@ -532,9 +533,10 @@ doAssemble (CoreProgram decls) = do
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
+  m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> m7s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -1021,6 +1023,104 @@ mkAddUInt8 = do
           <> okBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
 
+-- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   Binary equivalent of 'Awsum.Codegen.CLR.splitOnFirstMethod'. Defers
+--   substring search to 'String.IndexOf(string)' (returns -1 on miss,
+--   0 on empty separator — both behaviours match the prelude contract
+--   directly). On hit the two 'String.Substring' calls allocate fresh
+--   strings (CLR strings are immutable; substrings are owning copies,
+--   not aliases). Locals: 0..1 = unboxed String operands, 2 = idx,
+--   3..4 = prefix/suffix, 5 = boxed Tuple2 staged before the Just wrap.
+mkSplitOnFirst :: AsmM MInfo
+mkSplitOnFirst = do
+  ni <- w16 <$> addStr "__splitOnFirst"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  indexOfRef <- addMemberRef (mrpTR trStr) "IndexOf" (sigInstance 0x08 [etString])
+  substring2Ref <- addMemberRef (mrpTR trStr) "Substring" (sigInstance etString [0x08, 0x08])
+  substring1Ref <- addMemberRef (mrpTR trStr) "Substring" (sigInstance etString [0x08])
+  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
+  -- locals: 6 (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)
+  localTok <- addLocalSigBytes [0x07, 0x06, etString, etString, 0x08, etString, etString, etObject]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      castStr = cilCastclass (tokTR trStr)
+      nothingBlock =
+        -- Nothing: object[1] = [box(0)]
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      foundBlock =
+        -- prefix = str.Substring(0, idx) → V_3
+        cilLdloc 1
+          <> cilLdcI4 0
+          <> cilLdloc 2
+          <> cilCallvirt (tokMR substring2Ref)
+          <> cilStloc 3
+          -- suffix = str.Substring(idx + sep.Length) → V_4
+          <> cilLdloc 1
+          <> cilLdloc 2
+          <> cilLdloc 0
+          <> cilCallvirt (tokMR lengthRef)
+          <> cilAdd
+          <> cilCallvirt (tokMR substring1Ref)
+          <> cilStloc 4
+          -- Tuple2: object[3] = [box(0), prefix, suffix] → V_5
+          <> cilLdcI4 3
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 2
+          <> cilLdloc 4
+          <> cilStelemRef
+          <> cilStloc 5
+          -- Just: object[2] = [box(1), tuple]
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 5
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length nothingBlock) :: Word8
+      preamble =
+        cilLdarg 0
+          <> castStr
+          <> cilStloc 0
+          <> cilLdarg 1
+          <> castStr
+          <> cilStloc 1
+          <> cilLdloc 1
+          <> cilLdloc 0
+          <> cilCallvirt (tokMR indexOfRef)
+          <> cilStloc 2
+          <> cilLdloc 2
+          <> cilLdcI4 (-1)
+          <> cilBneUnS branchOffset
+      code = preamble <> nothingBlock <> foundBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -1244,6 +1344,10 @@ emitExpr ctx = \case
       ca <- emitExpr ctx a
       cb <- emitExpr ctx b
       pure (ca <> cb <> cilCall (lkTok ctx "__concat"))
+    CBuiltIn "splitOnFirst" | [a, b] <- xs -> do
+      ca <- emitExpr ctx a
+      cb <- emitExpr ctx b
+      pure (ca <> cb <> cilCall (lkTok ctx "__splitOnFirst"))
     CBuiltIn n ->
       error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
     CVar n | n `Set.member` ctx.eFunDefs -> do

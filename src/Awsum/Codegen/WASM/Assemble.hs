@@ -85,9 +85,10 @@ op_memory_size, op_memory_grow :: Word8
 op_memory_size = 0x3F
 op_memory_grow = 0x40
 
-op_i32_eqz, op_i32_eq, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
+op_i32_eqz, op_i32_eq, op_i32_ne, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
 op_i32_eqz = 0x45
 op_i32_eq = 0x46
+op_i32_ne = 0x47
 op_i32_add = 0x6A
 op_i32_mul = 0x6C
 op_i32_and = 0x71
@@ -137,12 +138,12 @@ importCount = 3
 
 -- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
 -- __box_i32, __show_i32, __predInt32, __predUInt8, __succInt32, __succUInt8,
--- __eq_i32, __addInt32, __addUInt8, __get_arg
+-- __eq_i32, __addInt32, __addUInt8, __splitOnFirst, __get_arg
 runtimeCount :: Word32
-runtimeCount = 15
+runtimeCount = 16
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxAddI32, idxAddU8, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxAddI32, idxAddU8, idxSplitOnFirst, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -157,7 +158,8 @@ idxSuccU8 = importCount + 10
 idxEqI32 = importCount + 11
 idxAddI32 = importCount + 12
 idxAddU8 = importCount + 13
-idxGetArg = importCount + 14
+idxSplitOnFirst = importCount + 14
+idxGetArg = importCount + 15
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -349,6 +351,7 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 2 True) typeMap, -- __eq_i32
           lookupType (FuncType 2 True) typeMap, -- __addInt32
           lookupType (FuncType 2 True) typeMap, -- __addUInt8
+          lookupType (FuncType 2 True) typeMap, -- __splitOnFirst
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
           -- User declarations
@@ -459,6 +462,7 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeEqI32 info,
           codeAddI32 info,
           codeAddU8 info,
+          codeSplitOnFirst info,
           codeGetArg info
         ]
           -- User declarations
@@ -1393,6 +1397,280 @@ codeAddU8 _info =
         [op_end]
       ]
 
+-- __splitOnFirst(sep: i32, str: i32) -> i32
+-- splitOnFirst: String -> String -> Maybe (Tuple2 String String). Hand-
+-- rolled byte scan since WASM has no built-in substring search. The
+-- empty-separator and "separator longer than str" cases are handled
+-- implicitly by the loop bounds — see the WAT version for the
+-- annotated structure.
+-- Locals (beyond the two params): $sep_len(2) $str_len(3) $i(4) $j(5)
+-- pos(6) $match(7) $prefix(8) $suffix(9) $tuple(10) $cell(11) $suf_len(12).
+codeSplitOnFirst :: WasmInfo -> [Word8]
+codeSplitOnFirst _info =
+  encodeBody
+    (encodeLocals 11)
+    $ concat
+      [ -- sep_len = strlen($sep)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_call],
+        encodeULEB128 idxStrlen,
+        [op_local_set],
+        encodeULEB128 2,
+        -- str_len = strlen($str)
+        [op_local_get],
+        encodeULEB128 1,
+        [op_call],
+        encodeULEB128 idxStrlen,
+        [op_local_set],
+        encodeULEB128 3,
+        -- pos = -1
+        [op_i32_const],
+        encodeSLEB128 (-1),
+        [op_local_set],
+        encodeULEB128 6,
+        -- i = 0
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 4,
+        -- block $break
+        [op_block, blocktype_void],
+        --   loop $loop
+        [op_loop, blocktype_void],
+        --     br_if $break (i + sep_len > str_len)
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_gt_u],
+        [op_br_if],
+        encodeULEB128 1, -- depth 1 = $break
+        --     $j = 0
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 5,
+        --     $match = 1
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 7,
+        --     block $check_break
+        [op_block, blocktype_void],
+        --       loop $check_loop
+        [op_loop, blocktype_void],
+        --         br_if $check_break (j == sep_len)  — full match: leave $match=1
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_eq],
+        [op_br_if],
+        encodeULEB128 1, -- depth 1 = $check_break
+        --         if (str[i+j] != sep[j])
+        [op_local_get],
+        encodeULEB128 1, -- str
+        [op_local_get],
+        encodeULEB128 4, -- i
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 5, -- j
+        [op_i32_add],
+        [op_i32_load8_u, 0x00, 0x00],
+        [op_local_get],
+        encodeULEB128 0, -- sep
+        [op_local_get],
+        encodeULEB128 5, -- j
+        [op_i32_add],
+        [op_i32_load8_u, 0x00, 0x00],
+        [op_i32_ne],
+        [op_if, blocktype_void],
+        --           $match = 0; br $check_break
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_br],
+        encodeULEB128 2, -- if=0, check_loop=1, check_break=2
+        [op_end], -- end if
+        --         $j = $j + 1
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 5,
+        --         br $check_loop
+        [op_br],
+        encodeULEB128 0,
+        [op_end], -- end loop $check_loop
+        [op_end], -- end block $check_break
+        --     if ($match)  → record pos and break out
+        [op_local_get],
+        encodeULEB128 7,
+        [op_if, blocktype_void],
+        --       $pos = $i
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_set],
+        encodeULEB128 6,
+        --       br $break  (if=0, loop=1, break=2)
+        [op_br],
+        encodeULEB128 2,
+        [op_end], -- end if
+        --     $i = $i + 1
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 4,
+        --     br $loop
+        [op_br],
+        encodeULEB128 0,
+        [op_end], -- end loop $loop
+        [op_end], -- end block $break
+        -- if ($pos == -1) Nothing else Just (Tuple2 prefix suffix)
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_const],
+        encodeSLEB128 (-1),
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        --   Nothing: cell = alloc 4; store tag 0; return cell
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 11,
+        [op_local_get],
+        encodeULEB128 11,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 11,
+        [op_else],
+        --   prefix = alloc(pos + 1); memcpy(prefix, str, pos); store8 0 at end
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 8, -- prefix
+        [op_local_get],
+        encodeULEB128 8,
+        [op_local_get],
+        encodeULEB128 1, -- str
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_call],
+        encodeULEB128 idxMemcpy,
+        [op_local_get],
+        encodeULEB128 8,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store8, 0x00, 0x00],
+        --   suf_len = str_len - pos - sep_len
+        [op_local_get],
+        encodeULEB128 3, -- str_len
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_i32_sub],
+        [op_local_get],
+        encodeULEB128 2, -- sep_len
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 12, -- suf_len
+        --   suffix = alloc(suf_len + 1); memcpy; store8 0 at end
+        [op_local_get],
+        encodeULEB128 12,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 9, -- suffix
+        [op_local_get],
+        encodeULEB128 9,
+        [op_local_get],
+        encodeULEB128 1, -- str
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_local_get],
+        encodeULEB128 2, -- sep_len
+        [op_i32_add],
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 12, -- suf_len
+        [op_call],
+        encodeULEB128 idxMemcpy,
+        [op_local_get],
+        encodeULEB128 9,
+        [op_local_get],
+        encodeULEB128 12,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store8, 0x00, 0x00],
+        --   tuple = alloc 12; [tag=0, prefix, suffix]
+        [op_i32_const],
+        encodeSLEB128 12,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 10, -- tuple
+        [op_local_get],
+        encodeULEB128 10,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 10,
+        [op_local_get],
+        encodeULEB128 8,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 10,
+        [op_local_get],
+        encodeULEB128 9,
+        [op_i32_store, 0x02, 0x08],
+        --   cell = alloc 8; [tag=1, tuple]
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 11, -- cell
+        [op_local_get],
+        encodeULEB128 11,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 11,
+        [op_local_get],
+        encodeULEB128 10,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 11,
+        [op_end] -- end if (cell now on stack as result)
+      ]
+
 -- __box_i32(v: i32) -> i32
 -- Allocate a 4-byte cell, store v, return pointer.
 -- local $p: i32 (slot 1)
@@ -1939,6 +2217,12 @@ emitExpr ctx = \case
                   <> emitExpr ctx b
                   <> [op_call]
                   <> encodeULEB128 idx
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            emitExpr ctx a
+              <> emitExpr ctx b
+              <> [op_call]
+              <> encodeULEB128 idxSplitOnFirst
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             emitExpr ctx a

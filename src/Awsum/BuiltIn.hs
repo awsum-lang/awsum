@@ -58,7 +58,11 @@ builtIns =
       ("addUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty))),
       -- concatString : String -> String -> String
       -- The '++' operator is parser sugar for a call to this built-in.
-      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy))
+      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy)),
+      -- splitOnFirst : String -> String -> Maybe (Tuple2 String String)
+      -- Splits 'str' at the first occurrence of 'separator'; see
+      -- 'stdlib/Prelude.aww' for the full edge-case spec.
+      ("splitOnFirst", TyArrow noSpan stringTy (TyArrow noSpan stringTy (maybeTy (tuple2Ty stringTy stringTy))))
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -69,6 +73,8 @@ builtIns =
     overflowErrorTy = TyCon noSpan "OverflowError"
     arithErrorTy = TyCon noSpan "ArithError"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
+    maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
+    tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)
 
 -- | Look up a built-in by its surface name. 'Nothing' is an "unknown
 --   builtin" error — the caller is responsible for surfacing it as a

@@ -1,0 +1,163 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , []
+                    , CString "Nothing"
+                    )
+                ,
+                    ( 1
+                    , [ "t" ]
+                    , CCase
+                        ( CVar "t" )
+                        [
+                            ( 0
+                            ,
+                                [ "a"
+                                , "b"
+                                ]
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CString "Just("
+                                            , CVar "a"
+                                            ]
+                                        , CString "|"
+                                        ]
+                                    , CVar "b"
+                                    ]
+                                , CString ")"
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CCall
+                                                                ( CBuiltIn "concatString" )
+                                                                [ CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CCall
+                                                                            ( CVar "render" )
+                                                                            [ CCall
+                                                                                ( CBuiltIn "splitOnFirst" )
+                                                                                [ CString ","
+                                                                                , CString "a,b,c"
+                                                                                ]
+                                                                            ]
+                                                                        , CString ", "
+                                                                        ]
+                                                                    , CCall
+                                                                        ( CVar "render" )
+                                                                        [ CCall
+                                                                            ( CBuiltIn "splitOnFirst" )
+                                                                            [ CString "::"
+                                                                            , CString "user::42::admin"
+                                                                            ]
+                                                                        ]
+                                                                    ]
+                                                                , CString ", "
+                                                                ]
+                                                            , CCall
+                                                                ( CVar "render" )
+                                                                [ CCall
+                                                                    ( CBuiltIn "splitOnFirst" )
+                                                                    [ CString "x"
+                                                                    , CString "abc"
+                                                                    ]
+                                                                ]
+                                                            ]
+                                                        , CString ", "
+                                                        ]
+                                                    , CCall
+                                                        ( CVar "render" )
+                                                        [ CCall
+                                                            ( CBuiltIn "splitOnFirst" )
+                                                            [ CString ""
+                                                            , CString "abc"
+                                                            ]
+                                                        ]
+                                                    ]
+                                                , CString ", "
+                                                ]
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "splitOnFirst" )
+                                                    [ CString ":"
+                                                    , CString ":foo"
+                                                    ]
+                                                ]
+                                            ]
+                                        , CString ", "
+                                        ]
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "splitOnFirst" )
+                                            [ CString ":"
+                                            , CString "foo:"
+                                            ]
+                                        ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "splitOnFirst" )
+                                    [ CString "abc"
+                                    , CString "abc"
+                                    ]
+                                ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "splitOnFirst" )
+                            [ CString "abcde"
+                            , CString "ab"
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

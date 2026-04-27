@@ -239,9 +239,10 @@ doAssemble prog@(CoreProgram decls) = do
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
+  m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> m7s <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -978,6 +979,122 @@ mkAddUInt8 = do
         mCodeAttrs = smtAttr
       }
 
+-- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   Binary equivalent of 'Awsum.Codegen.JVM.splitOnFirstMethod'. Defers
+--   substring search to 'String.indexOf(String)I' which returns -1 on
+--   miss and 0 on empty separator — both behaviours match the Prelude
+--   contract directly. On hit the two 'String.substring' calls allocate
+--   fresh String objects (no aliasing into the input). One stack-map
+--   frame at the L_split_found target: locals grow by +1 (slot 2 = int).
+mkSplitOnFirst :: AsmM MInfo
+mkSplitOnFirst = do
+  ni <- addUtf8 "__splitOnFirst"
+  di <- addUtf8 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  objCls <- addClass "java/lang/Object"
+  intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  indexOfRef <- addMRef "java/lang/String" "indexOf" "(Ljava/lang/String;)I"
+  substring2Ref <- addMRef "java/lang/String" "substring" "(II)Ljava/lang/String;"
+  substring1Ref <- addMRef "java/lang/String" "substring" "(I)Ljava/lang/String;"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let preamble =
+        [0x2B] -- aload_1 (str)
+          <> [0xC0, hi8 strCls, lo8 strCls] -- checkcast String
+          <> [0x2A] -- aload_0 (sep)
+          <> [0xC0, hi8 strCls, lo8 strCls] -- checkcast String
+          <> [0xB6, hi8 indexOfRef, lo8 indexOfRef] -- invokevirtual indexOf
+          <> [0x3D] -- istore_2 (idx)
+          <> [0x1C] -- iload_2
+          <> [0x02] -- iconst_m1
+      ifAt = length preamble
+      nothing =
+        -- Nothing: Object[1] = [Integer(0)]
+        [0x04] -- iconst_1
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0 (idx)
+          <> [0x03] -- iconst_0 (Nothing tag)
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      foundAt = ifAt + 3 + length nothing
+      ifRel = foundAt - ifAt
+      ifBytes = [0xA0, hi8 (fromIntegral ifRel), lo8 (fromIntegral ifRel)]
+      foundBlock =
+        -- prefix = str.substring(0, idx) → slot 3
+        [0x2B] -- aload_1
+          <> [0xC0, hi8 strCls, lo8 strCls]
+          <> [0x03] -- iconst_0
+          <> [0x1C] -- iload_2
+          <> [0xB6, hi8 substring2Ref, lo8 substring2Ref]
+          <> [0x4E] -- astore_3 (prefix)
+          -- suffix = str.substring(idx + sep.length()) → slot 2
+          <> [0x2B] -- aload_1
+          <> [0xC0, hi8 strCls, lo8 strCls]
+          <> [0x1C] -- iload_2
+          <> [0x2A] -- aload_0
+          <> [0xC0, hi8 strCls, lo8 strCls]
+          <> [0xB6, hi8 lengthRef, lo8 lengthRef]
+          <> [0x60] -- iadd
+          <> [0xB6, hi8 substring1Ref, lo8 substring1Ref]
+          <> [0x4D] -- astore_2 (suffix; reuses slot 2 — idx no longer needed)
+          -- Tuple2: Object[3] = [Integer(0), prefix, suffix] → slot 3 (reuse)
+          <> [0x06] -- iconst_3
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x03] -- iconst_0 (Tuple2 tag)
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1
+          <> [0x2D] -- aload_3 (prefix)
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x05] -- iconst_2
+          <> [0x2C] -- aload_2 (suffix)
+          <> [0x53] -- aastore
+          <> [0x4E] -- astore_3 (tuple; overwrites prefix slot)
+          -- Just: Object[2] = [Integer(1), tuple]
+          <> [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x04] -- iconst_1 (Just tag)
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1
+          <> [0x2D] -- aload_3 (tuple)
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      code = preamble <> ifBytes <> nothing <> foundBlock
+      -- One frame at L_split_found. Locals: [Object, Object, int].
+      -- frame_type 252 = append_frame +1, ITEM_Integer (1).
+      foundAt16 = fromIntegral foundAt :: Word16
+      smtEntries = [252, hi8 foundAt16, lo8 foundAt16, 0x01]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1]
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
 mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
@@ -1368,6 +1485,14 @@ emitExpr ctx = \case
         aMeta <- emitExpr ctx a
         bMeta <- emitExpr ctx b
         ref <- addMRef "AwsumMain" "__concat" "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+        pure
+          $ CodeWithMeta
+            (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
+            (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
+      CBuiltIn "splitOnFirst" | [a, b] <- xs -> do
+        aMeta <- emitExpr ctx a
+        bMeta <- emitExpr ctx b
+        ref <- addMRef "AwsumMain" "__splitOnFirst" "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
         pure
           $ CodeWithMeta
             (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)

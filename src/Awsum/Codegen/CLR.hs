@@ -54,6 +54,8 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "addUInt8" builtIns) addUInt8Method,
             "",
+            gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
             mainMethod,
@@ -543,6 +545,85 @@ addUInt8Method =
       "  }"
     ]
 
+-- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   Defers substring search to 'String.IndexOf(string)' which returns
+--   -1 on miss and 0 on empty 'sep' — both behaviours match the
+--   prelude contract directly. On hit, 'String.Substring' allocates
+--   fresh strings (CLR strings are immutable; substrings are owning
+--   copies, not aliases). Containers: Maybe Nothing=0, Just=1; Tuple2
+--   has one constructor (tag 0).
+splitOnFirstMethod :: Text
+splitOnFirstMethod =
+  unlines
+    [ "  .method public hidebysig static object __splitOnFirst(object, object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    stloc.0",
+      "    ldarg.1",
+      "    castclass [System.Runtime]System.String",
+      "    stloc.1",
+      "    ldloc.1",
+      "    ldloc.0",
+      "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string)",
+      "    stloc.2",
+      "    ldloc.2",
+      "    ldc.i4.m1",
+      "    bne.un.s IL_split_found",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_split_found:",
+      "    ldloc.1",
+      "    ldc.i4.0",
+      "    ldloc.2",
+      "    callvirt instance string [System.Runtime]System.String::Substring(int32, int32)",
+      "    stloc.3",
+      "    ldloc.1",
+      "    ldloc.2",
+      "    ldloc.0",
+      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+      "    add",
+      "    callvirt instance string [System.Runtime]System.String::Substring(int32)",
+      "    stloc.4",
+      "    ldc.i4.3",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.2",
+      "    ldloc.4",
+      "    stelem.ref",
+      "    stloc.5",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.5",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -778,6 +859,14 @@ emitExprText ctx varMap = \case
               [ emitExprText ctx varMap a,
                 emitExprText ctx varMap b,
                 "    call object AwsumMain::__concat(object, object)"
+              ]
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap a,
+                emitExprText ctx varMap b,
+                "    call object AwsumMain::__splitOnFirst(object, object)"
               ]
       CBuiltIn n ->
         error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")

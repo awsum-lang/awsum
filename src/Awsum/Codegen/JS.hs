@@ -120,6 +120,14 @@ header builtIns =
             -- separates the branches.
             if Set.member "addUInt8" builtIns
               then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [0, [0]] : [1, s & 0xFF]; }"
+              else "",
+            -- splitOnFirst: 'indexOf("")' returns 0 in JS, so empty separator
+            -- naturally yields ["", str]. 'substring' creates fresh strings
+            -- (V8 sometimes shares storage internally — irrelevant at the
+            -- semantic level we observe). Tags: Maybe Nothing=0, Just=1;
+            -- Tuple2 has one constructor (tag 0).
+            if Set.member "splitOnFirst" builtIns
+              then "function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [0]; return [1, [0, str.substring(0, i), str.substring(i + sep.length)]]; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -296,6 +304,10 @@ emitExpr = \case
         case xs of
           [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
           _ -> error "BuiltIn.concatString: arity mismatch"
+      CBuiltIn "splitOnFirst" ->
+        case xs of
+          [a, b] -> "__splitOnFirst(" <> emitExpr a <> ", " <> emitExpr b <> ")"
+          _ -> error "BuiltIn.splitOnFirst: arity mismatch"
       CBuiltIn n ->
         error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->

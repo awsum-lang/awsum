@@ -108,6 +108,15 @@ header builtIns =
             -- single '> 255' check separates the branches.
             if Set.member "addUInt8" builtIns
               then "function M.__addUInt8(a, b) local s = a + b if s > 255 then return {0, {0}} else return {1, s} end end"
+              else "",
+            -- splitOnFirst: 'string.find' with the plain-text flag (4th arg
+            -- = true) skips Lua-pattern interpretation. Lua 5.1's 'find'
+            -- returns nil for an empty pattern in plain mode, so the
+            -- empty-separator case is handled explicitly to match the
+            -- shared spec: empty sep ⇒ Just (Tuple2 "" str). Tags:
+            -- Maybe Nothing=0, Just=1; Tuple2 has one constructor (tag 0).
+            if Set.member "splitOnFirst" builtIns
+              then "function M.__splitOnFirst(sep, str) if sep == \"\" then return {1, {0, \"\", str}} end local i, j = string.find(str, sep, 1, true) if i == nil then return {0} end return {1, {0, string.sub(str, 1, i - 1), string.sub(str, j + 1)}} end"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -312,6 +321,10 @@ emitExpr topNames = go
                     let fn = if name == "addInt32" then "M.__addInt32" else "M.__addUInt8"
                      in fn <> "(" <> go a <> ", " <> go b <> ")"
                   _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+          CBuiltIn "splitOnFirst" ->
+            case xs of
+              [a, b] -> "M.__splitOnFirst(" <> go a <> ", " <> go b <> ")"
+              _ -> error "BuiltIn.splitOnFirst: arity mismatch"
           CBuiltIn "concatString" ->
             case xs of
               [a, b] ->

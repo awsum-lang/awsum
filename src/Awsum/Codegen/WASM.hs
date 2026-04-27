@@ -258,6 +258,7 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if any (`Set.member` builtIns) ["eqInt32", "eqUInt8"] then rtEqI32 else "",
             if Set.member "addInt32" builtIns then rtAddI32 else "",
             if Set.member "addUInt8" builtIns then rtAddU8 else "",
+            if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -579,6 +580,88 @@ rtAddU8 =
       "        (local.get $cell))))"
     ]
 
+-- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   WASM has no built-in substring search, so we hand-roll a byte-by-byte
+--   scan: outer 'i' loop walks `0..str_len - sep_len`, inner 'j' loop
+--   compares `sep[j]` against `str[i + j]` until either a mismatch
+--   (advance i) or full match (capture pos, break). Empty separator is
+--   handled implicitly: the inner loop runs zero times, $match stays 1,
+--   the first iteration of the outer loop returns position 0. Separator
+--   longer than `str` is also implicit: the outer loop's bound check
+--   fails on the first iteration, returning Nothing.
+--   Container layout matches the rest of this file:
+--     Maybe Nothing : 1-slot cell [tag=0]
+--     Maybe Just    : 2-slot cell [tag=1, payload]
+--     Tuple2        : 3-slot cell [tag=0, prefix, suffix]
+rtSplitOnFirst :: Text
+rtSplitOnFirst =
+  unlines
+    [ "  (func $__splitOnFirst (param $sep i32) (param $str i32) (result i32)",
+      "    (local $sep_len i32) (local $str_len i32)",
+      "    (local $i i32) (local $j i32) (local $pos i32) (local $match i32)",
+      "    (local $prefix i32) (local $suffix i32) (local $tuple i32) (local $cell i32)",
+      "    (local $suf_len i32)",
+      "    (local.set $sep_len (call $__strlen (local.get $sep)))",
+      "    (local.set $str_len (call $__strlen (local.get $str)))",
+      "    (local.set $pos (i32.const -1))",
+      "    (local.set $i (i32.const 0))",
+      "    (block $break",
+      "      (loop $loop",
+      "        ;; if i + sep_len > str_len: not found, break",
+      "        (br_if $break",
+      "          (i32.gt_u",
+      "            (i32.add (local.get $i) (local.get $sep_len))",
+      "            (local.get $str_len)))",
+      "        ;; check whether sep matches at position i",
+      "        (local.set $j (i32.const 0))",
+      "        (local.set $match (i32.const 1))",
+      "        (block $check_break",
+      "          (loop $check_loop",
+      "            (br_if $check_break (i32.eq (local.get $j) (local.get $sep_len)))",
+      "            (if (i32.ne",
+      "                  (i32.load8_u (i32.add (local.get $str) (i32.add (local.get $i) (local.get $j))))",
+      "                  (i32.load8_u (i32.add (local.get $sep) (local.get $j))))",
+      "              (then",
+      "                (local.set $match (i32.const 0))",
+      "                (br $check_break)))",
+      "            (local.set $j (i32.add (local.get $j) (i32.const 1)))",
+      "            (br $check_loop)))",
+      "        (if (local.get $match)",
+      "          (then",
+      "            (local.set $pos (local.get $i))",
+      "            (br $break)))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $loop)))",
+      "    (if (result i32) (i32.eq (local.get $pos) (i32.const -1))",
+      "      (then",
+      "        (local.set $cell (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (local.get $cell))",
+      "      (else",
+      "        ;; prefix = str[0..pos], freshly allocated, null-terminated",
+      "        (local.set $prefix (call $__alloc (i32.add (local.get $pos) (i32.const 1))))",
+      "        (call $__memcpy (local.get $prefix) (local.get $str) (local.get $pos))",
+      "        (i32.store8 (i32.add (local.get $prefix) (local.get $pos)) (i32.const 0))",
+      "        ;; suffix = str[pos + sep_len..], freshly allocated, null-terminated",
+      "        (local.set $suf_len (i32.sub (i32.sub (local.get $str_len) (local.get $pos)) (local.get $sep_len)))",
+      "        (local.set $suffix (call $__alloc (i32.add (local.get $suf_len) (i32.const 1))))",
+      "        (call $__memcpy",
+      "          (local.get $suffix)",
+      "          (i32.add (local.get $str) (i32.add (local.get $pos) (local.get $sep_len)))",
+      "          (local.get $suf_len))",
+      "        (i32.store8 (i32.add (local.get $suffix) (local.get $suf_len)) (i32.const 0))",
+      "        ;; Tuple2 cell: [tag=0, prefix, suffix]",
+      "        (local.set $tuple (call $__alloc (i32.const 12)))",
+      "        (i32.store (local.get $tuple) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $tuple) (local.get $prefix))",
+      "        (i32.store offset=8 (local.get $tuple) (local.get $suffix))",
+      "        ;; Just cell: [tag=1, tuple]",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $tuple))",
+      "        (local.get $cell))))"
+    ]
+
 -- | eqInt32 / eqUInt8: two boxed integers → Bool (one-slot container).
 --   Int32 and UInt8 both flow as pointers to an i32 cell; UInt8 values are
 --   stored masked to 0..255, so a plain i32.eq gives the same answer as
@@ -795,6 +878,9 @@ emitExpr ctx = \case
           [a, b] <- xs ->
             let fn = if name == "addInt32" then "$__addInt32" else "$__addUInt8"
              in "(call " <> fn <> " " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            "(call $__splitOnFirst " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             "(call $__concat " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
