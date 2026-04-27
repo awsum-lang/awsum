@@ -174,7 +174,41 @@ callvirt instance string [System.Runtime]System.Object::ToString()
 tostring(n)   -- works for both Int32 and UInt8; Lua integer is 64-bit signed
 ```
 
-Signedness and width don't matter for show because Awsum has no integer arithmetic yet — when it arrives, the JVM / WASM paths will need masking on UInt8 operations (JVM `byte` is signed, WASM `i32` doesn't distinguish widths).
+Signedness and width are not visible at the show layer because both backends widen to a representation big enough to hold the full UInt8 / Int32 range (JVM `Integer`, Lua `number`). Where they *do* matter is in arithmetic — see the next subsection.
+
+### Honest arithmetic
+
+Every numeric primitive that can produce a value outside its declared type's range returns `Either <error> <result>` rather than wrapping or trapping at runtime. Currently:
+
+- `predInt32` / `succInt32` — `Left UnderflowError` / `Left OverflowError` at the boundaries; otherwise `Right (x ± 1)`.
+- `predUInt8` / `succUInt8` — same shape, with the boundaries at 0 and 255.
+- `addInt32 : Int32 -> Int32 -> Either ArithError Int32` — `Left Underflow` / `Left Overflow` (`type ArithError = Underflow | Overflow`), since signed addition can fail at *both* ends from a single operation.
+- `addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8` — only overflow is reachable for unsigned addition, so the closed `OverflowError` suffices.
+
+`eqInt32` / `eqUInt8` are also in this layer but cannot fail; they return `Bool` directly.
+
+Because the error type is part of the surface signature, tests pin both branches at the language level. Per-backend the detection methods do differ:
+
+**LLVM** — `addInt32` uses the `llvm.sadd.with.overflow.i32` intrinsic, which returns `{i32, i1}` with the wrapped sum and an overflow flag in one instruction. Direction (Underflow vs Overflow) is recovered from the sign of `a` — when overflow happens, `a` and `b` necessarily have the same sign, so `icmp sge i32 %a, 0` distinguishes the two `ArithError` constructors.
+
+**JVM / CLR / WASM** — none of these expose a "did the last add overflow" flag at the bytecode level, so all three use the classical XOR trick:
+
+```
+overflow = ((a ^ s) & (b ^ s)) < 0    -- where s = a + b (wraps mod 2^32)
+```
+
+`(a ^ s)` flips its sign bit iff the sign of `s` differs from `a`; the bitwise AND with `(b ^ s)` is true on the sign bit iff *both* sources disagree with the sum, which is exactly the same-sign-overflow condition. As on LLVM, `a >= 0` then picks Overflow (positive direction) vs Underflow. The CLR text emits `blt.s` / `ble.s`, the JVM uses `iflt`, WASM uses `i32.lt_s` against zero — three encodings of the same Boolean.
+
+**JS / Lua** — JS `number` and Lua 5.1+ `number` are both IEEE-754 doubles, which exactly represent every i32 sum (the result is at most 33 bits). The check is the most direct of the six:
+
+```
+const s = a + b;
+if (s > 2147483647) return Left Overflow;
+if (s < -2147483648) return Left Underflow;
+return Right (s | 0);
+```
+
+For `addUInt8` the picture is uniform: every backend widens both operands into a representation that holds at least 9 bits (i32 / Integer / number), sums, compares against 255, and either returns `Left OverflowError` or boxes the truncated low byte as `Right`. No native u8 add is used anywhere — even where the platform has one (LLVM `i8`), promoting first sidesteps the wrap-on-overflow that the Either-returning signature is designed to forbid.
 
 ## Higher-Order Functions
 
@@ -536,7 +570,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
 
-**~25 CIL opcodes**: The assembler uses approximately 25 CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `ldc.i4` (full 32-bit form, used for integer literals outside the compact range), `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`–`ldc.i4.8`/`ldc.i4.s`, `bge.s`, `br.s`, `beq.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`, `newarr`, `stelem.ref`, `box`, `unbox.any`, `stloc.0`–`stloc.3`, `ldloc.0`–`ldloc.3`.
+**~30 CIL opcodes**: The assembler uses approximately thirty CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `ldc.i4` (full 32-bit form, used for integer literals outside the compact range), `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`–`ldc.i4.8`/`ldc.i4.s`, `bge.s`, `br`/`br.s`, `beq.s`, `bne.un`/`bne.un.s`, `blt.s`, `ble.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`, `newarr`, `stelem.ref`, `box`, `unbox.any`, `stloc.0`–`stloc.3`, `ldloc.0`–`ldloc.3`, `add`, `xor`, `and`.
 
 ## WASM-Specific Details
 
@@ -548,8 +582,8 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
 
-**Runtime helpers**: Eight helpers implemented in WASM itself: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy), `__concat` (strlen + alloc + memcpy + null-terminate), `__print` (iovec + fd_write), `__box_i32` (allocate 4 bytes, store value, return pointer), `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude), `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string).
+**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Two boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer) and `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). The remainder are honest-arithmetic primitives — `__predInt32`, `__predUInt8`, `__succInt32`, `__succUInt8`, `__eq_i32` (shared by both equality builtins since both types flow as i32 cells), `__addInt32`, `__addUInt8` — each consuming pointer arguments and returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use.
 
 **Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
 
-**~35 opcodes**: The assembler uses approximately 35 WASM opcodes — enough for string manipulation, control flow, memory access, indirect calls, and integer arithmetic for `__show_i32` (`i32.sub`, `i32.div_u`, `i32.rem_u`, `i32.lt_s`).
+**~40 opcodes**: The assembler uses approximately forty WASM opcodes — enough for string manipulation, control flow, memory access, indirect calls, and the integer arithmetic the honest-arithmetic primitives need (`i32.sub`, `i32.div_u`, `i32.rem_u`, `i32.lt_s`, `i32.lt_u`, `i32.gt_u`, `i32.ge_s`, `i32.xor`, `i32.and`).
