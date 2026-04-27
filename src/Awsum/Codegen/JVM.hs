@@ -48,6 +48,10 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "L_eq_u8"),
             "",
+            gate (Set.member "addInt32" builtIns) addInt32Method,
+            "",
+            gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
             mainMethod,
@@ -378,6 +382,154 @@ eqMethod name lbl =
       ".end method"
     ]
 
+-- addInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Promote both operands to long, sum, then range-check against
+--   [-2147483648, 2147483647] with `lcmp`. ArithError tags follow the
+--   declaration order in `Prelude.aww`: Underflow=0, Overflow=1; Either
+--   tags are Left=0, Right=1 as everywhere else in this file.
+addInt32Method :: Text
+addInt32Method =
+  unlines
+    [ ".method public static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ladd",
+      "  dup2",
+      "  ldc2_w 2147483647",
+      "  lcmp",
+      "  ifgt L_addi32_over",
+      "  dup2",
+      "  ldc2_w -2147483648",
+      "  lcmp",
+      "  iflt L_addi32_under",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addi32_over:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addi32_under:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255, so `iadd` produces a value in 0..510 with
+--   no JVM-level overflow; one `if_icmple` against 255 picks the branch.
+--   On the ok path the sum is already a valid UInt8 — no mask needed.
+addUInt8Method :: Text
+addUInt8Method =
+  unlines
+    [ ".method public static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  iadd",
+      "  istore_2",
+      "  iload_2",
+      "  sipush 255",
+      "  if_icmple L_addu8_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addu8_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_2",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -571,6 +723,16 @@ emitExprText ctx paramMap = \case
         | name == "eqInt32" || name == "eqUInt8",
           [a, b] <- xs ->
             let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx paramMap a,
+                    emitExprText ctx paramMap b,
+                    "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+                  ]
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8",
+          [a, b] <- xs ->
+            let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap a,

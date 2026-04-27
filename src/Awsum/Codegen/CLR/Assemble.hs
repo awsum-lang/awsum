@@ -349,10 +349,16 @@ cilLdcI4_0 = [0x16]
 cilLdcI4_1 = [0x17]
 cilLdelemRef = [0x9A]
 
-cilBgeS, cilBrS, cilBneUnS :: Word8 -> [Word8]
+cilBgeS, cilBrS, cilBneUnS, cilBltS, cilBleS :: Word8 -> [Word8]
 cilBgeS off = [0x2F, off]
 cilBrS off = [0x2B, off]
 cilBneUnS off = [0x33, off] -- bne.un.s: 1-byte signed offset
+cilBltS off = [0x32, off] -- blt.s: 1-byte signed offset
+cilBleS off = [0x31, off] -- ble.s: 1-byte signed offset
+
+cilXor, cilAnd :: [Word8]
+cilXor = [0x61]
+cilAnd = [0x5F]
 
 -- | @br@ with a 4-byte signed offset — used by TCO to jump back to the
 -- method's @IL_tco_loop:@ position, which can be hundreds of bytes away
@@ -501,7 +507,9 @@ doAssemble (CoreProgram decls) = do
                    ("__succInt32", Set.member "succInt32" builtIns),
                    ("__succUInt8", Set.member "succUInt8" builtIns),
                    ("__eqInt32", Set.member "eqInt32" builtIns),
-                   ("__eqUInt8", Set.member "eqUInt8" builtIns)
+                   ("__eqUInt8", Set.member "eqUInt8" builtIns),
+                   ("__addInt32", Set.member "addInt32" builtIns),
+                   ("__addUInt8", Set.member "addUInt8" builtIns)
                  ],
                keep
              ]
@@ -522,9 +530,11 @@ doAssemble (CoreProgram decls) = do
   m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
+  m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
+  m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -856,6 +866,161 @@ mkEq methodName = do
           <> notEqualBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0}
 
+-- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Binary equivalent of 'Awsum.Codegen.CLR.addInt32Method'. Locals
+--   layout: V_0/V_1 = unboxed int operands, V_2 = wrapping sum,
+--   V_3 = boxed ArithError between Left construction and Object[2]
+--   wrap. Overflow detection uses the XOR trick — same logic as the
+--   JVM 'mkAddInt32', single-block, no try/catch needed.
+mkAddInt32 :: AsmM MInfo
+mkAddInt32 = do
+  ni <- w16 <$> addStr "__addInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3
+  localTok <- addLocalSigBytes [0x07, 0x04, 0x08, 0x08, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      makeLeft tagBytes =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> tagBytes
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 3
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- Left tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> cilStelemRef
+          <> cilRet
+      overBlock = makeLeft (cilLdcI4 1) -- ArithError Overflow = 1
+      underBlock = makeLeft (cilLdcI4 0) -- ArithError Underflow = 0
+      okBlock =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1 -- Right tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 2
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      blt2Off = fromIntegral (length overBlock) :: Word8
+      overSplit =
+        cilLdloc 0 -- a
+          <> cilLdcI4 0
+          <> cilBltS blt2Off -- if a < 0 → underBlock
+      blt1Off = fromIntegral (length okBlock) :: Word8
+      preamble =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdarg 1
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 1
+          <> cilLdloc 0
+          <> cilLdloc 1
+          <> cilAdd
+          <> cilStloc 2
+          <> cilLdloc 0
+          <> cilLdloc 2
+          <> cilXor
+          <> cilLdloc 1
+          <> cilLdloc 2
+          <> cilXor
+          <> cilAnd
+          <> cilLdcI4 0
+          <> cilBltS blt1Off -- if (a^sum)&(b^sum) < 0 → overSplit
+      code =
+        preamble
+          <> okBlock
+          <> overSplit
+          <> overBlock
+          <> underBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
+-- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Binary equivalent of 'Awsum.Codegen.CLR.addUInt8Method'. Both
+--   inputs are 0..255 so 'add' yields 0..510 in i32 and a single
+--   'ble.s' against 255 picks the branch — no widening needed.
+mkAddUInt8 :: AsmM MInfo
+mkAddUInt8 = do
+  ni <- w16 <$> addStr "__addUInt8"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- locals: int32 V_0 (sum), object V_1 (Left payload)
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      okBlock =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1 -- Right tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      overBlock =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- OverflowError tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- Left tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      bleOff = fromIntegral (length overBlock) :: Word8
+      preamble =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilLdarg 1
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilAdd
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 255
+          <> cilBleS bleOff -- if sum <= 255 → okBlock
+      code =
+        preamble
+          <> overBlock
+          <> okBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -1067,6 +1232,13 @@ emitExpr ctx = \case
           ca <- emitExpr ctx a
           cb <- emitExpr ctx b
           let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+          pure (ca <> cb <> cilCall (lkTok ctx fn))
+    CBuiltIn name
+      | name == "addInt32" || name == "addUInt8",
+        [a, b] <- xs -> do
+          ca <- emitExpr ctx a
+          cb <- emitExpr ctx b
+          let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
           pure (ca <> cb <> cilCall (lkTok ctx fn))
     CBuiltIn "concatString" | [a, b] <- xs -> do
       ca <- emitExpr ctx a

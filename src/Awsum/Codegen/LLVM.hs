@@ -37,7 +37,7 @@ codegenLLVM prog@(CoreProgram decls) =
       builtIns = usedBuiltIns prog
    in T.intercalate
         "\n"
-        [ header,
+        [ header builtIns,
           emitStringConstants pool,
           runtime builtIns,
           userCode,
@@ -163,22 +163,26 @@ llvmEscapeString = T.concatMap escChar
 -- Header: external declarations + format strings
 -- ════════════════════════════════════════════════════════════════════════════
 
-header :: Text
-header =
+header :: Set Name -> Text
+header builtIns =
   unlines
-    [ "; External C declarations",
-      "declare ptr @malloc(i64)",
-      "declare ptr @strcpy(ptr, ptr)",
-      "declare ptr @strcat(ptr, ptr)",
-      "declare i64 @strlen(ptr)",
-      "declare i32 @printf(ptr, ...)",
-      "declare i32 @snprintf(ptr, i64, ptr, ...)",
-      "",
-      "@.fmt = private unnamed_addr constant [3 x i8] c\"%s\\00\"",
-      "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
-      "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\"",
-      "@.empty = private unnamed_addr constant [1 x i8] c\"\\00\""
-    ]
+    $ [ "; External C declarations",
+        "declare ptr @malloc(i64)",
+        "declare ptr @strcpy(ptr, ptr)",
+        "declare ptr @strcat(ptr, ptr)",
+        "declare i64 @strlen(ptr)",
+        "declare i32 @printf(ptr, ...)",
+        "declare i32 @snprintf(ptr, i64, ptr, ...)"
+      ]
+    <> [ "declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)"
+       | Set.member "addInt32" builtIns
+       ]
+    <> [ "",
+         "@.fmt = private unnamed_addr constant [3 x i8] c\"%s\\00\"",
+         "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
+         "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\"",
+         "@.empty = private unnamed_addr constant [1 x i8] c\"\\00\""
+       ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Runtime helpers
@@ -201,7 +205,9 @@ runtime builtIns =
         if Set.member "succInt32" builtIns then rtSuccInt32 else "",
         if Set.member "succUInt8" builtIns then rtSuccUInt8 else "",
         if Set.member "eqInt32" builtIns then rtEqInt32 else "",
-        if Set.member "eqUInt8" builtIns then rtEqUInt8 else ""
+        if Set.member "eqUInt8" builtIns then rtEqUInt8 else "",
+        if Set.member "addInt32" builtIns then rtAddInt32 else "",
+        if Set.member "addUInt8" builtIns then rtAddUInt8 else ""
       ]
     rtConcat =
       unlines
@@ -402,6 +408,83 @@ runtime builtIns =
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
           "  ret ptr %box",
+          "}"
+        ]
+    -- addInt32 : Int32 -> Int32 -> Either ArithError Int32.
+    --   Uses 'llvm.sadd.with.overflow' to detect signed overflow in one
+    --   instruction. On overflow, signs of @a@ and @b@ must agree (else
+    --   the sum stays in range), so a single @icmp sge i32 %a, 0@ separates
+    --   positive overflow (Overflow, ArithError tag=1) from negative
+    --   overflow (Underflow, ArithError tag=0). The Left/Right encoding
+    --   matches the rest of this file: tags 0/1, payload at offset 8.
+    rtAddInt32 =
+      unlines
+        [ "define ptr @__addInt32(ptr %pa, ptr %pb) {",
+          "  %a = load i32, ptr %pa",
+          "  %b = load i32, ptr %pb",
+          "  %res = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %a, i32 %b)",
+          "  %sum = extractvalue {i32, i1} %res, 0",
+          "  %ovf = extractvalue {i32, i1} %res, 1",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %is_pos = icmp sge i32 %a, 0",
+          "  %ae_tag_idx = select i1 %is_pos, i64 1, i64 0",
+          "  %ae = call ptr @malloc(i64 8)",
+          "  %ae_tag = inttoptr i64 %ae_tag_idx to ptr",
+          "  store ptr %ae_tag, ptr %ae",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %ae, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %sum, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8.
+    --   Both operands fit in i8, so widening to i32 first and comparing
+    --   the sum against 255 gives a saturation-free overflow check
+    --   (unsigned underflow is impossible for a + b on UInt8). On the ok
+    --   path, the sum is in 0..510 — truncating to i8 keeps the low byte
+    --   exactly when the comparison falls through.
+    rtAddUInt8 =
+      unlines
+        [ "define ptr @__addUInt8(ptr %pa, ptr %pb) {",
+          "  %a = load i8, ptr %pa",
+          "  %b = load i8, ptr %pb",
+          "  %a32 = zext i8 %a to i32",
+          "  %b32 = zext i8 %b to i32",
+          "  %sum32 = add i32 %a32, %b32",
+          "  %ovf = icmp ugt i32 %sum32, 255",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = trunc i32 %sum32 to i8",
+          "  %box = call ptr @malloc(i64 1)",
+          "  store i8 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
           "}"
         ]
 
@@ -909,6 +992,22 @@ emitExpr ctx = \case
                     fn = case name of
                       "eqUInt8" -> "@__eqUInt8"
                       _ -> "@__eqInt32"
+                pure
+                  ( instrA <> instrB <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ", ptr " <> resB <> ")\n",
+                    tmp
+                  )
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8" ->
+            case xs of
+              [a, b] -> do
+                (instrA, resA) <- emitExpr ctx a
+                (instrB, resB) <- emitExpr ctx b
+                tmp <- freshTemp
+                let fn :: Text
+                    fn = case name of
+                      "addUInt8" -> "@__addUInt8"
+                      _ -> "@__addInt32"
                 pure
                   ( instrA <> instrB <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ", ptr " <> resB <> ")\n",
                     tmp

@@ -25,14 +25,14 @@ Commands that go through the typechecker require `--program-type cli`
 Purely syntactic commands (`ast`, `format`, `symbols`) don't take it.
 
 ```bash
-awsum build FILE --program-type cli [-t llvm|jvm|clr|wasm|js|lua] [-o OUT]   # Compile to file/stdout (binary for jvm/clr/wasm)
-awsum run FILE --program-type cli [-t llvm|jvm|clr|wasm|js|lua] [--input X]  # Compile and execute
-awsum check FILE --program-type cli [--json] [--strict]  # Typecheck only
-awsum core FILE --program-type cli            # Print Core IR
-awsum asm FILE --program-type cli [-t jvm|clr|wasm]  # Print target assembly text
-awsum format FILE [-i]                        # Format source
+awsum build --program-type cli -t llvm|jvm|clr|wasm|js|lua [-o OUT] FILE   # Compile to file/stdout (binary for jvm/clr/wasm)
+awsum run --program-type cli -t llvm|jvm|clr|wasm|js|lua [--input X] FILE  # Compile and execute
+awsum check --program-type cli [--json] [--strict] FILE  # Typecheck only
+awsum core --program-type cli FILE            # Print Core IR
+awsum asm --program-type cli -t jvm|clr|wasm FILE  # Print target assembly text
+awsum format [-i] FILE                        # Format source
 awsum ast FILE                                # Print AST
-awsum symbols FILE [--json]                   # List top-level declarations (outline)
+awsum symbols [--json] FILE                   # List top-level declarations (outline)
 ```
 
 ## Project Structure

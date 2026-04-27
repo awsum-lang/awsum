@@ -96,6 +96,18 @@ header builtIns =
               else "",
             if Set.member "eqUInt8" builtIns
               then "function M.__eqUInt8(a, b) if a == b then return {0} else return {1} end end"
+              else "",
+            -- addInt32: Either ArithError Int32. Lua 5.1+ stores numbers as
+            -- double, so the 33-bit sum is exact and the range checks
+            -- evaluate before any precision loss. ArithError tags follow
+            -- declaration order: Underflow=0, Overflow=1.
+            if Set.member "addInt32" builtIns
+              then "function M.__addInt32(a, b) local s = a + b if s > 2147483647 then return {0, {1}} elseif s < -2147483648 then return {0, {0}} else return {1, s} end end"
+              else "",
+            -- addUInt8: Either OverflowError UInt8. Sum ranges 0..510, a
+            -- single '> 255' check separates the branches.
+            if Set.member "addUInt8" builtIns
+              then "function M.__addUInt8(a, b) local s = a + b if s > 255 then return {0, {0}} else return {1, s} end end"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -291,6 +303,13 @@ emitExpr topNames = go
                 case xs of
                   [a, b] ->
                     let fn = if name == "eqInt32" then "M.__eqInt32" else "M.__eqUInt8"
+                     in fn <> "(" <> go a <> ", " <> go b <> ")"
+                  _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+          CBuiltIn name
+            | name == "addInt32" || name == "addUInt8" ->
+                case xs of
+                  [a, b] ->
+                    let fn = if name == "addInt32" then "M.__addInt32" else "M.__addUInt8"
                      in fn <> "(" <> go a <> ", " <> go b <> ")"
                   _ -> error ("BuiltIn." <> name <> ": arity mismatch")
           CBuiltIn "concatString" ->

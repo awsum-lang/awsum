@@ -1,0 +1,24 @@
+-- Test: `addInt32` returns `Right (a + b)` when the true sum stays
+-- in [minInt32, maxInt32] and `Left ArithError` otherwise — with
+-- `Left Overflow` for results above maxInt32 and `Left Underflow` for
+-- results below minInt32. Covers all five cases:
+--   (i)   ordinary positive sum                  → `Right`,
+--   (ii)  ordinary mixed-sign sum                → `Right` (no overflow possible),
+--   (iii) `maxInt32 + 1`                          → `Left Overflow`,
+--   (iv)  `minInt32 + (-1)`                       → `Left Underflow`,
+--   (v)   `maxInt32 + minInt32 = -1`              → `Right` (mixed signs cannot overflow).
+import IO.Stdout
+
+render : Either ArithError Int32 -> String
+render r = case r of
+  Left e -> "err: " ++ showArithError e
+  Right v -> "ok: " ++ showInt32 v
+
+maxInt32 : Int32
+maxInt32 = 2147483647
+
+minInt32 : Int32
+minInt32 = -2147483648
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (render (addInt32 100 23) ++ ", " ++ render (addInt32 100 (-50)) ++ ", " ++ render (addInt32 maxInt32 1) ++ ", " ++ render (addInt32 minInt32 (-1)) ++ ", " ++ render (addInt32 maxInt32 minInt32))

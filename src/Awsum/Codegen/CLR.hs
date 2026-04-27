@@ -50,6 +50,10 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "IL_eq_u8"),
             "",
+            gate (Set.member "addInt32" builtIns) addInt32Method,
+            "",
+            gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
             mainMethod,
@@ -388,6 +392,157 @@ eqMethod name lbl =
       "  }"
     ]
 
+-- addInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Signed overflow detected with the XOR trick: '(a ^ sum) & (b ^ sum)'
+--   has its sign bit set iff the carry into the sign bit differs from
+--   the carry out (= signed overflow). Direction is read off 'a >= 0'
+--   so a single 'blt' separates Overflow (AE tag 1) from Underflow
+--   (AE tag 0). Avoids 'add.ovf' / try-catch — keeps the method
+--   single-block and verifiable.
+addInt32Method :: Text
+addInt32Method =
+  unlines
+    [ "  .method public hidebysig static object __addInt32(object, object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.1",
+      "    ldloc.0",
+      "    ldloc.1",
+      "    add",
+      "    stloc.2",
+      "    ldloc.0",
+      "    ldloc.2",
+      "    xor",
+      "    ldloc.1",
+      "    ldloc.2",
+      "    xor",
+      "    and",
+      "    ldc.i4.0",
+      "    blt.s IL_addi32_over",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.2",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_addi32_over:",
+      "    ldloc.0",
+      "    ldc.i4.0",
+      "    blt.s IL_addi32_under",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.3",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    ret",
+      "  IL_addi32_under:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.3",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255 so 'add' yields 0..510 in i32 and a single
+--   'ble' against 255 selects the branch. No mask on the ok path — the
+--   sum is already a valid UInt8 value when the comparison falls through.
+addUInt8Method :: Text
+addUInt8Method =
+  unlines
+    [ "  .method public hidebysig static object __addUInt8(object, object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    add",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4 255",
+      "    ble.s IL_addu8_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_addu8_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -600,6 +755,16 @@ emitExprText ctx varMap = \case
         | name == "eqInt32" || name == "eqUInt8",
           [a, b] <- xs ->
             let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx varMap a,
+                    emitExprText ctx varMap b,
+                    "    call object AwsumMain::" <> fn <> "(object, object)"
+                  ]
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8",
+          [a, b] <- xs ->
+            let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap a,

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Prelude** — `addInt32 : Int32 -> Int32 -> Either ArithError Int32` and `addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8`, joining `predInt32` / `succInt32` / `predUInt8` / `succUInt8` as honest-arithmetic primitives. `addInt32` introduces a new prelude type `type ArithError = Underflow | Overflow` (with `showArithError`) because signed addition can fail at *both* ends from a single operation — `maxInt32 + 1` is `Overflow`, `minInt32 + (-1)` is `Underflow`. `addUInt8` keeps the existing `OverflowError` since unsigned addition can only overflow.
+
 - **Build provenance** — `release.yml` calls `actions/attest-build-provenance@v4` on each `awsum-<version>-<target>.{tar.gz,zip}` archive after packaging; the release job now declares `id-token: write` + `attestations: write`. Every published asset gets a Sigstore-signed attestation tying it to a specific workflow run and commit. Users verify with `gh attestation verify <file> --repo awsum-lang/awsum`. Closes the gap where a stolen maintainer token could replace a release asset without the workflow's OIDC identity.
 
 - **`CONTRIBUTING.md`** — covers the dev-loop commands, the signed-commits requirement on `main` (with a working `~/.gitconfig` example for SSH signing), and the PR / CHANGELOG conventions.

@@ -107,6 +107,19 @@ header builtIns =
               else "",
             if Set.member "eqUInt8" builtIns
               then "function __eqUInt8(a, b){ return a === b ? [0] : [1]; }"
+              else "",
+            -- addInt32: Either ArithError Int32. JS numbers exactly represent
+            -- the 33-bit sum of two i32s, so the range checks are direct
+            -- without intermediate '|0' wrapping. ArithError tags follow
+            -- declaration order: Underflow=0, Overflow=1.
+            if Set.member "addInt32" builtIns
+              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [1]]; if (s < -2147483648) return [0, [0]]; return [1, s|0]; }"
+              else "",
+            -- addUInt8: Either OverflowError UInt8. Both inputs in 0..255,
+            -- so the unmasked sum is in 0..510 and a single '> 255' check
+            -- separates the branches.
+            if Set.member "addUInt8" builtIns
+              then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [0, [0]] : [1, s & 0xFF]; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -270,6 +283,13 @@ emitExpr = \case
             case xs of
               [a, b] ->
                 let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+                 in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8" ->
+            case xs of
+              [a, b] ->
+                let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
                  in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn "concatString" ->

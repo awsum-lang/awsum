@@ -237,9 +237,11 @@ doAssemble prog@(CoreProgram decls) = do
   m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
+  m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
+  m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6us <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -744,6 +746,238 @@ mkEq methodName = do
         mCodeAttrs = smtAttr
       }
 
+-- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   The signed-overflow check is done with the classical XOR trick — sum
+--   wraps modulo 2^32, then `((a ^ sum) & (b ^ sum)) < 0` is true iff
+--   the carry into the sign bit differs from the carry out, which is
+--   exactly when signed overflow happens. Direction (over vs under) is
+--   read off `a >= 0`: same-sign overflow is positive when `a >= 0`,
+--   negative otherwise. Containers are 'Object[]' with boxed Integer
+--   tags as everywhere else; ArithError tags follow declaration order
+--   in `Prelude.aww`: Underflow=0, Overflow=1.
+mkAddInt32 :: AsmM MInfo
+mkAddInt32 = do
+  ni <- addUtf8 "__addInt32"
+  di <- addUtf8 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let unbox =
+        [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
+          -- Slots 0,1 are the two Object params (left untouched). Locals 2,3,4
+          -- hold int a, int b, int sum after unboxing; local 5 is reused for
+          -- the boxed sum / boxed AE on the way to the final Object[].
+      preamble =
+        [0x2A] -- aload_0
+          <> unbox
+          <> [0x3D] -- istore_2 (a → slot 2)
+          <> [0x2B] -- aload_1
+          <> unbox
+          <> [0x3E] -- istore_3 (b → slot 3)
+          <> [0x1C] -- iload_2
+          <> [0x1D] -- iload_3
+          <> [0x60] -- iadd
+          <> [0x36, 0x04] -- istore 4 (sum)
+          -- compute ((a ^ sum) & (b ^ sum)); a sign-bit set on overflow.
+          <> [0x1C] -- iload_2 (a)
+          <> [0x15, 0x04] -- iload 4 (sum)
+          <> [0x82] -- ixor
+          <> [0x1D] -- iload_3 (b)
+          <> [0x15, 0x04] -- iload 4 (sum)
+          <> [0x82] -- ixor
+          <> [0x7E] -- iand
+      iflt1At = length preamble
+      ok =
+        -- Right: Object[2] = [Integer(1), Integer(sum)]
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x04] -- iconst_1 (Right tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1
+          <> [0x15, 0x04] -- iload 4
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      overAt = iflt1At + 3 + length ok
+      iflt1Rel = overAt - iflt1At
+      iflt1Bytes = [0x9B, hi8 (fromIntegral iflt1Rel), lo8 (fromIntegral iflt1Rel)] :: [Word8]
+      -- L_overflow: split on a >= 0 vs a < 0
+      overSplit :: [Word8]
+      overSplit =
+        [0x1C] -- iload_2 (a)
+        -- iflt L_under (placeholder, patched below)
+      iflt2At = overAt + length overSplit
+      arithBox tag =
+        -- Object[1] = [Integer(tag)]
+        [0x04] -- iconst_1 (length)
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [tag] -- iconst_<tag>
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x3A, 0x05] -- astore 5
+      leftWrap =
+        -- Left: Object[2] = [Integer(0), Object @ slot 5]
+        [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03] -- Left tag
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x19, 0x05] -- aload 5
+          <> [0x53]
+          <> [0xB0]
+      overBlock = arithBox 0x04 <> leftWrap -- AE tag 1 = Overflow
+      underAt = iflt2At + 3 + length overBlock
+      iflt2Rel = underAt - iflt2At
+      iflt2Bytes = [0x9B, hi8 (fromIntegral iflt2Rel), lo8 (fromIntegral iflt2Rel)]
+      underBlock = arithBox 0x03 <> leftWrap -- AE tag 0 = Underflow
+      code =
+        preamble
+          <> iflt1Bytes
+          <> ok
+          <> overSplit
+          <> iflt2Bytes
+          <> overBlock
+          <> underBlock
+      -- Two stack-map frames: at L_overflow (overAt) and L_under (underAt).
+      -- Locals at both points: [Object, Object, int, int, int].
+      -- Stack at both: empty.
+      -- First frame: append_frame with 3 new locals (slots 2/3/4 = int).
+      -- Second frame: same_frame (locals identical to previous frame).
+      overAt16 = fromIntegral overAt :: Word16
+      underDelta = fromIntegral (underAt - overAt - 1) :: Word8
+      smtEntries =
+        [254, hi8 overAt16, lo8 overAt16, 0x01, 0x01, 0x01]
+          <> [underDelta]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 2] -- number_of_entries = 2
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
+-- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255, so 'iadd' produces 0..510 and a single
+--   `if_icmple 255` selects the branch. No widening or masking is
+--   needed; on the ok path the sum fits in UInt8 by construction.
+mkAddUInt8 :: AsmM MInfo
+mkAddUInt8 = do
+  ni <- addUtf8 "__addUInt8"
+  di <- addUtf8 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+  intCls <- addClass "java/lang/Integer"
+  intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let unbox =
+        [0xC0, hi8 intCls, lo8 intCls]
+          <> [0xB6, hi8 intValRef, lo8 intValRef]
+      preamble =
+        [0x2A] -- aload_0
+          <> unbox
+          <> [0x2B] -- aload_1
+          <> unbox
+          <> [0x60] -- iadd
+          <> [0x3D] -- istore_2 (sum → slot 2)
+          <> [0x1C] -- iload_2
+          <> [0x11, 0x00, 0xFF] -- sipush 255
+      ifAt = length preamble
+      overflow =
+        -- OverflowError box: Object[1] = [Integer(0)]
+        [0x04]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03]
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x4D] -- astore_2 (overwrite sum slot — no longer needed)
+          -- Left: Object[2] = [Integer(0), OE]
+          <> [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03]
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x2C] -- aload_2
+          <> [0x53]
+          <> [0xB0]
+      okAt = ifAt + 3 + length overflow
+      ok =
+        -- Right: Object[2] = [Integer(1), Integer(sum)]
+        [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x04] -- iconst_1 (Right tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x1C] -- iload_2
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0xB0]
+      ifRel = okAt - ifAt
+      -- if_icmple: opcode 0xA4. Branch if value2 (top) >= value1 — but we
+      -- pushed 255 last, so top = 255, second = sum, and `value1 cmp value2`
+      -- in JVM terms is "sum cmp 255". if_icmple branches if sum <= 255.
+      ifBytes = [0xA4, hi8 (fromIntegral ifRel), lo8 (fromIntegral ifRel)]
+      code = preamble <> ifBytes <> overflow <> ok
+      -- One frame at okAt. Locals: [Object, Object, int (slot 2 = sum)].
+      -- frame_type 252 = append_frame +1, ITEM_Integer = 1.
+      okAt16 = fromIntegral okAt :: Word16
+      smtEntries = [252, hi8 okAt16, lo8 okAt16, 0x01]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1]
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0009,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr
+      }
+
 mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
@@ -1114,6 +1348,17 @@ emitExpr ctx = \case
             aMeta <- emitExpr ctx a
             bMeta <- emitExpr ctx b
             let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+            ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+            pure
+              $ CodeWithMeta
+                (aMeta.cwCode <> bMeta.cwCode <> bcInvokeStatic ref)
+                (aMeta.cwBranchTargets ++ bMeta.cwBranchTargets)
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8",
+          [a, b] <- xs -> do
+            aMeta <- emitExpr ctx a
+            bMeta <- emitExpr ctx b
+            let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
             pure
               $ CodeWithMeta
