@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Build provenance** — `release.yml` calls `actions/attest-build-provenance@v4` on each `awsum-<version>-<target>.{tar.gz,zip}` archive after packaging; the release job now declares `id-token: write` + `attestations: write`. Every published asset gets a Sigstore-signed attestation tying it to a specific workflow run and commit. Users verify with `gh attestation verify <file> --repo awsum-lang/awsum`. Closes the gap where a stolen maintainer token could replace a release asset without the workflow's OIDC identity.
+
+- **`CONTRIBUTING.md`** — covers the dev-loop commands, the signed-commits requirement on `main` (with a working `~/.gitconfig` example for SSH signing), and the PR / CHANGELOG conventions.
+
 ## [0.0.3] - 2026-04-25
 
 ### Added

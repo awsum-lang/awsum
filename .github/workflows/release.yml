@@ -26,6 +26,10 @@ jobs:
     permissions:
       # Required for `gh release create` to upload assets.
       contents: write
+      # Required for `actions/attest-build-provenance` — it mints an OIDC token
+      # to identify the workflow to Sigstore, and writes the attestation entry.
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v6
 
@@ -61,6 +65,17 @@ jobs:
           done
           ( cd dist && sha256sum awsum-* > SHA256SUMS )
           ls -la dist
+
+      # Attest each binary archive (not SHA256SUMS — its provenance is "I summed
+      # these files", redundant given the per-archive attestations record the
+      # same hashes). Users verify with:
+      #   gh attestation verify awsum-X.Y.Z-<target>.tar.gz --repo awsum-lang/awsum
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/awsum-*.tar.gz
+            dist/awsum-*.zip
 
       - name: Create GitHub Release
         env:
