@@ -3,11 +3,11 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function main(v__input){
-  return __print((v_handleA)([0]));
+    return __print((v_handleA)([0]));
 }
 
 function v__scc_handleA_handleB(v__args){
-  return (v__cps__scc_handleA_handleB)(v__args, [0]);
+    return (v__cps__scc_handleA_handleB)(v__args, [0]);
 }
 
 function v__cps__scc_handleA_handleB(v__args, v__k){
@@ -122,7 +122,7 @@ function v__apply__scc_handleA_handleB(v__k, v__x){
 }
 
 function v_handleA(v_step){
-  return (v__scc_handleA_handleB)([0, v_step]);
+    return (v__scc_handleA_handleB)([0, v_step]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

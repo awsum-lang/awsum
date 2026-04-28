@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function main(v__input){
-  return __print(((((((String(v_minUInt8) + ", ") + String(v_small)) + ", ") + String(v_aboveSignedByte)) + ", ") + String(v_maxUInt8)));
+    return __print(((((((String(v_minUInt8) + ", ") + String(v_small)) + ", ") + String(v_aboveSignedByte)) + ", ") + String(v_maxUInt8)));
 }
 
 const v_minUInt8 = (0 & 0xFF);

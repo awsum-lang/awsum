@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_map(v_f, v_list){
-  return (v__cps_map)(v_f, v_list, [0]);
+    return (v__cps_map)(v_f, v_list, [0]);
 }
 
 function v__cps_map(v_f, v_list, v__k){
@@ -54,7 +54,7 @@ function v__apply_map(v__k, v__x){
 }
 
 function v_show(v_xs){
-  return (v__cps_show)(v_xs, [0]);
+    return (v__cps_show)(v_xs, [0]);
 }
 
 function v__cps_show(v_xs, v__k){
@@ -102,11 +102,11 @@ function v__apply_show(v__k, v__x){
 }
 
 function v_shout(v_s){
-  return (v_s + "!");
+    return (v_s + "!");
 }
 
 function main(v__input){
-  return __print((v_show)((v_map)(v_shout, [0, "a", [0, "b", [0, "c", [1]]]])));
+    return __print((v_show)((v_map)(v_shout, [0, "a", [0, "b", [0, "c", [1]]]])));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

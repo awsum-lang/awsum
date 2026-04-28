@@ -5,7 +5,7 @@ function __print(s){ process.stdout.write(String(s)); return undefined; }
 const v_zero = (0|0);
 
 function main(v__input){
-  return __print(String((v_parseExpr)([1])));
+    return __print(String((v_parseExpr)([1])));
 }
 
 function v__scc_parseBinary_parseExpr(v__args){
@@ -52,7 +52,7 @@ function v__scc_parseBinary_parseExpr(v__args){
 }
 
 function v_parseExpr(v_tok){
-  return (v__scc_parseBinary_parseExpr)([1, v_tok]);
+    return (v__scc_parseBinary_parseExpr)([1, v_tok]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

@@ -5,7 +5,7 @@ function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)];
 function __eqInt32(a, b){ return a === b ? [0] : [1]; }
 
 function v_showUnderflowError(v__wild0){
-  return "UnderflowError";
+    return "UnderflowError";
 }
 
 const v_zero = (0|0);
@@ -41,13 +41,25 @@ function v_countDown(v_n){
 }
 
 function v_showResult(v_r){
-  return ((s) => { switch(s[0]) { case 0: { const v_e = s[1]; return ("left: " + (v_showUnderflowError)(v_e)); } case 1: { const v_v = s[1]; return ("right: " + String(v_v)); } } })(v_r);
+    {
+      const __s = v_r;
+      switch (__s[0]) {
+        case 0: {
+          const v_e = __s[1];
+          return ("left: " + (v_showUnderflowError)(v_e));
+        }
+        case 1: {
+          const v_v = __s[1];
+          return ("right: " + String(v_v));
+        }
+      }
+    }
 }
 
 const v_start = (100000|0);
 
 function main(v__input){
-  return __print((v_showResult)((v_countDown)(v_start)));
+    return __print((v_showResult)((v_countDown)(v_start)));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

@@ -198,7 +198,12 @@ cliFooter =
 --     recursing. Rewriting a self-tail-call as a jump keeps the JS engine's
 --     call stack bounded, which matters on Node/V8 because ES2015 PTC was
 --     never shipped.
---   • 'CFunDef' without 'CLoop' → plain @return <expr>;@.
+--   • 'CFunDef' without 'CLoop' → also statement form. A 'CCase' in tail
+--     position becomes a 'switch' whose arms 'return' directly, instead of
+--     an IIFE. That keeps deeply nested pattern matches (N nested 'case'
+--     expressions in tail position) inside a single stack frame; the IIFE
+--     form would burn one frame per level and overflow on platforms with
+--     small default stacks (e.g. Windows Node ≈512 KB).
 --   • 'CValDef' → 'const name = <expr>;'.
 emitDecl :: CDecl -> Text
 emitDecl = \case
@@ -218,9 +223,7 @@ emitDecl = \case
       <> "("
       <> T.intercalate ", " (map mangle args)
       <> "){\n"
-      <> "  return "
-      <> emitExpr body
-      <> ";\n"
+      <> emitStmt args body
       <> "}"
   CValDef nm rhs ->
     "const " <> mangle nm <> " = " <> emitExpr rhs <> ";"

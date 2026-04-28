@@ -26,7 +26,7 @@ function v_advanceStep(v_x){
 }
 
 function main(v__input){
-  return __print((v_advanceStep)([0]));
+    return __print((v_advanceStep)([0]));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
