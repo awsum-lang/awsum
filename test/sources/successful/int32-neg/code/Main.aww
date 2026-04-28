@@ -1,0 +1,23 @@
+-- Test: `negInt32` returns `Right (-x)` for every Int32 except `minInt32`,
+-- and `Left OverflowError` for `minInt32` (negation would yield 2147483648,
+-- which doesn't fit in Int32). Covers four cases:
+--   (i)   positive value           `negInt32 5`           → `Right -5`,
+--   (ii)  negative value (non-min) `negInt32 -5`          → `Right 5`,
+--   (iii) zero                     `negInt32 0`           → `Right 0`,
+--   (iv)  maxInt32                 `negInt32 maxInt32`    → `Right minInt32 + 1`,
+--   (v)   minInt32                 `negInt32 minInt32`    → `Left OverflowError`.
+import IO.Stdout
+
+render : Either OverflowError Int32 -> String
+render r = case r of
+  Left e -> "overflow: " ++ showOverflowError e
+  Right v -> "ok: " ++ showInt32 v
+
+maxInt32 : Int32
+maxInt32 = 2147483647
+
+minInt32 : Int32
+minInt32 = -2147483648
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (render (negInt32 5) ++ ", " ++ render (negInt32 (-5)) ++ ", " ++ render (negInt32 0) ++ ", " ++ render (negInt32 maxInt32) ++ ", " ++ render (negInt32 minInt32))

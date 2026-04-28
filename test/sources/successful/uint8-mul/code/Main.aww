@@ -1,0 +1,18 @@
+-- Test: `mulUInt8` returns `Right (a * b)` when the product fits in
+-- 0..255 and `Left OverflowError` when it doesn't. Covers (i) the
+-- exact boundary `15 * 17 = Right 255` (the largest non-overflow
+-- result that isn't a power of two), (ii) the smallest overflow
+-- `16 * 16 = Left OverflowError` (256 is one above the boundary),
+-- (iii) `255 * 255 = Left OverflowError` (the maximum-overflow case
+-- — verifies the JVM/CLR Integer-boxed value isn't sign-extended
+-- before the comparison), and (iv) `0 * 200 = Right 0` (zero
+-- annihilates), and (v) `1 * 200 = Right 200` (one is the identity).
+import IO.Stdout
+
+render : Either OverflowError UInt8 -> String
+render r = case r of
+  Left e -> "overflow: " ++ showOverflowError e
+  Right v -> "ok: " ++ showUInt8 v
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (render (mulUInt8 15 17) ++ ", " ++ render (mulUInt8 16 16) ++ ", " ++ render (mulUInt8 255 255) ++ ", " ++ render (mulUInt8 0 200) ++ ", " ++ render (mulUInt8 1 200))

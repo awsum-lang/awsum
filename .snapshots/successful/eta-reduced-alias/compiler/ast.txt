@@ -1,0 +1,152 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ LineComment " Eta-reduced (point-free) alias for a platform effect."
+            , LineComment " @say@ and @print@ both have signature @String -> IOUnit@; @say@ is"
+            , LineComment " defined without listing its parameter and reuses @IO.Stdout.print@"
+            , LineComment " as its full implementation. The typechecker accepts the zero-param"
+            , LineComment " shape because the RHS already carries the full function type, and"
+            , LineComment " the lowering eta-expands @say@ into a regular first-order function."
+            ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 9
+            , spanStartCol = 1
+            , spanEndLine = 9
+            , spanEndCol = 23
+            }
+        ) "say"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 7
+                , spanEndLine = 9
+                , spanEndCol = 23
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 7
+                    , spanEndLine = 9
+                    , spanEndCol = 13
+                    }
+                ) "String"
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 17
+                    , spanEndLine = 9
+                    , spanEndCol = 23
+                    }
+                ) "IOUnit"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 22
+                }
+            ) "say" []
+            ( EVar
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 7
+                    , spanEndLine = 10
+                    , spanEndCol = 22
+                    }
+                )
+                ( QName
+                    [ "IO"
+                    , "Stdout"
+                    ] "print"
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 12
+                , spanEndCol = 24
+                }
+            ) "main"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 8
+                    , spanEndLine = 12
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 8
+                        , spanEndLine = 12
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 18
+                        , spanEndLine = 12
+                        , spanEndCol = 24
+                        }
+                    ) "IOUnit"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 13
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 23
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 6
+                    , spanEndLine = 13
+                    , spanEndCol = 11
+                    }
+                ) "input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 14
+                    , spanEndLine = 13
+                    , spanEndCol = 23
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 14
+                        , spanEndLine = 13
+                        , spanEndCol = 18
+                        }
+                    )
+                    ( QName [] "say" )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 18
+                        , spanEndLine = 13
+                        , spanEndCol = 23
+                        }
+                    )
+                    ( QName [] "input" )
+                )
+            ) Nothing
+        ]
+    }
