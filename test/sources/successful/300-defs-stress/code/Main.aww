@@ -1,6 +1,4 @@
 -- Stress test: 300 top-level String constants joined by ",".
--- Validates the Lua backend's module-table emission (no 200-local-per-chunk
--- ceiling) and long concat-chain handling across all backends.
 import IO.Stdout
 
 main : String -> IOUnit
@@ -905,4 +903,3 @@ s299 = "299"
 
 s300 : String
 s300 = "300"
-
