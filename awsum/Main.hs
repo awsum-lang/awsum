@@ -1,6 +1,6 @@
 -- | Awsum compiler CLI
 --   This entrypoint wires together parsing, typechecking, formatting,
---   code generation (LLVM/JVM/CLR/WASM/JS/Lua), and a tiny runner for those targets.
+--   code generation (LLVM/JVM/CLR/WASM/JS), and a tiny runner for those targets.
 module Main (main) where
 
 import Awsum.Codegen
@@ -10,7 +10,6 @@ import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
 import Awsum.Codegen.LLVM (codegenLLVM)
-import Awsum.Codegen.Lua (codegenLua)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
@@ -96,8 +95,8 @@ optTarget =
     ( OA.long "target"
         <> OA.short 't'
         <> OA.metavar "TARGET"
-        <> OA.help "Target backend: llvm | jvm | clr | wasm | js | lua"
-        <> OA.completeWith ["llvm", "jvm", "clr", "wasm", "js", "lua"]
+        <> OA.help "Target backend: llvm | jvm | clr | wasm | js"
+        <> OA.completeWith ["llvm", "jvm", "clr", "wasm", "js"]
     )
   where
     readTarget :: String -> Maybe Target
@@ -107,7 +106,6 @@ optTarget =
       "clr" -> Just TargetCLR
       "wasm" -> Just TargetWASM
       "js" -> Just TargetJS
-      "lua" -> Just TargetLua
       _ -> Nothing
 
 -- | Optional: output file path (defaults to stdout).
@@ -293,7 +291,6 @@ codegenText progType = \case
   TargetCLR -> codegenCLR
   TargetWASM -> codegenWASM
   TargetJS -> codegenJS progType
-  TargetLua -> codegenLua
 
 -- | Compile Core to target and run using the appropriate system runtime.
 runOnTarget :: ProgramType -> Target -> CoreProgram -> Text -> IO ()
@@ -339,8 +336,6 @@ runOnTarget progType target core input = case target of
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
   TargetJS ->
     runText "node" ".js" (codegenJS progType core) input
-  TargetLua ->
-    runText "lua" ".lua" (codegenLua core) input
 
 -- | Write text code to a temp file and run with the given interpreter.
 runText :: String -> String -> Text -> Text -> IO ()

@@ -28,7 +28,7 @@ import Awsum.StackSafety (verifyStackSafety)
 import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
 import Awsum.Tco (tcoProgram)
-import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, splitArrow, typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -320,6 +320,21 @@ lowerDecl env sigMap = \case
   -- so there is no function body to carry — the builtin itself is the
   -- implementation, and every backend knows how to emit it in place.
   FunDef _sp _n [] body _ | isBareBuiltIn body -> Right Nothing
+  -- Generalised alias form @foo = expr@ where the signature has arrow
+  -- shape and the RHS is not a bare @BuiltIn.bar@: eta-expand to a
+  -- regular first-order function. The body becomes a fully-applied call
+  -- of the RHS to fresh @$eta_i@ parameters, which keeps the invariant
+  -- that 'CBuiltIn' only ever appears in callee position of 'CCall' (the
+  -- RHS may be a platform effect like @IO.Stdout.print@) and lets every
+  -- backend treat @foo@ as a normal top-level function.
+  FunDef _sp n [] body _
+    | Just ty <- M.lookup n sigMap,
+      let (argTys, _) = splitArrow ty,
+      not (null argTys) -> do
+        body' <- lowerExpr env Nothing body
+        let etas = ["$eta" <> show (i :: Int) | i <- [0 .. length argTys - 1]]
+            call = CCall body' (map CVar etas)
+        pure $ Just $ CFunDef n etas call
   FunDef _sp n args body _ -> do
     let (argTys, resultTy) = case M.lookup n sigMap of
           Just t -> splitArrowN (length args) t

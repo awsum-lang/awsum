@@ -52,7 +52,17 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "addInt32" builtIns) addInt32Method,
             "",
+            gate (Set.member "subInt32" builtIns) subInt32Method,
+            "",
+            gate (Set.member "mulInt32" builtIns) mulInt32Method,
+            "",
+            gate (Set.member "negInt32" builtIns) negInt32Method,
+            "",
             gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            "",
+            gate (Set.member "subUInt8" builtIns) subUInt8Method,
+            "",
+            gate (Set.member "mulUInt8" builtIns) mulUInt8Method,
             "",
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
             "",
@@ -533,6 +543,360 @@ addUInt8Method =
       "    stelem.ref",
       "    ret",
       "  IL_addu8_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- subInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   XOR-based signed-overflow detection: '(a ^ b) & (a ^ diff)' has its
+--   sign bit set iff signed subtraction overflowed. Direction is read
+--   off 'a >= 0' — when subtraction overflows the signs of @a@ and @b@
+--   must differ, so @a >= 0@ implies @b < 0@ which implies positive
+--   overflow. Same single-block, no try/catch shape as 'addInt32Method'.
+subInt32Method :: Text
+subInt32Method =
+  unlines
+    [ "  .method public hidebysig static object __subInt32(object, object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.1",
+      "    ldloc.0",
+      "    ldloc.1",
+      "    sub",
+      "    stloc.2",
+      "    ldloc.0",
+      "    ldloc.1",
+      "    xor",
+      "    ldloc.0",
+      "    ldloc.2",
+      "    xor",
+      "    and",
+      "    ldc.i4.0",
+      "    blt.s IL_subi32_over",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.2",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_subi32_over:",
+      "    ldloc.0",
+      "    ldc.i4.0",
+      "    blt.s IL_subi32_under",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.3",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    ret",
+      "  IL_subi32_under:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.3",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- mulInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Promote both operands to int64, multiply at long width, range-check
+--   the result against [INT32_MIN, INT32_MAX] with @bgt@/@blt@ on long
+--   values. Direction (over vs under) is read off the lcmp result —
+--   ifgt → Overflow, iflt → Underflow. ArithError tags follow
+--   declaration order: Underflow = 0, Overflow = 1.
+mulInt32Method :: Text
+mulInt32Method =
+  unlines
+    [ "  .method public hidebysig static object __mulInt32(object, object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, int32 V_1, int64 V_2, object V_3)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.1",
+      "    ldloc.0",
+      "    conv.i8",
+      "    ldloc.1",
+      "    conv.i8",
+      "    mul",
+      "    stloc.2",
+      "    ldloc.2",
+      "    ldc.i4 2147483647",
+      "    conv.i8",
+      "    bgt IL_muli32_over",
+      "    ldloc.2",
+      "    ldc.i4 -2147483648",
+      "    conv.i8",
+      "    blt IL_muli32_under",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.2",
+      "    conv.i4",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_muli32_over:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.3",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    ret",
+      "  IL_muli32_under:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.3",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- negInt32: Int32 -> Either OverflowError Int32.
+--   Mirror of 'succInt32Method' with INT32_MIN as the boundary and 'neg'
+--   for the non-overflow branch. OverflowError is single-constructor, so
+--   its tag is 0 — Left-branch encoding is identical to predInt32.
+negInt32Method :: Text
+negInt32Method =
+  unlines
+    [ "  .method public hidebysig static object __negInt32(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4 -2147483648",
+      "    bne.un.s IL_neg_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_neg_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    neg",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
+--   Both operands are 0..255 so 'sub' yields a value in -255..255 in i32
+--   and a single 'blt' against 0 picks the underflow branch. No mask on
+--   the ok path — the result is already a valid UInt8 by construction.
+subUInt8Method :: Text
+subUInt8Method =
+  unlines
+    [ "  .method public hidebysig static object __subUInt8(object, object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    sub",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4.0",
+      "    blt.s IL_subu8_under",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_subu8_under:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255 so 'mul' yields 0..65025 in i32 with no
+--   CIL-level overflow; one 'ble.s' against 255 picks the branch.
+--   Same shape as 'addUInt8Method' with 'mul' replacing 'add'.
+mulUInt8Method :: Text
+mulUInt8Method =
+  unlines
+    [ "  .method public hidebysig static object __mulUInt8(object, object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    mul",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4 255",
+      "    ble.s IL_mulu8_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_mulu8_ok:",
       "    ldc.i4.2",
       "    newarr [System.Runtime]System.Object",
       "    dup",
@@ -1064,15 +1428,28 @@ emitExprText ctx varMap = \case
                     "    call object AwsumMain::" <> fn <> "(object, object)"
                   ]
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8",
+        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
           [a, b] <- xs ->
-            let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
+            let fn = case name of
+                  "addInt32" -> "__addInt32"
+                  "addUInt8" -> "__addUInt8"
+                  "subInt32" -> "__subInt32"
+                  "subUInt8" -> "__subUInt8"
+                  "mulInt32" -> "__mulInt32"
+                  _ -> "__mulUInt8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap a,
                     emitExprText ctx varMap b,
                     "    call object AwsumMain::" <> fn <> "(object, object)"
                   ]
+      CBuiltIn "negInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__negInt32(object)"
+              ]
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             T.intercalate

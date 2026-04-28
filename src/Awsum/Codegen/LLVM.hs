@@ -3,7 +3,7 @@
 -- Design goals:
 --   * Emit textual LLVM IR (.ll) that can be compiled with @clang@.
 --   * Keep a tiny C-based runtime (malloc/strlen/strcpy/strcat/printf).
---   * Mirror JS/Lua backend semantics for cross-backend equivalence.
+--   * Mirror JS backend semantics for cross-backend equivalence.
 --
 -- Semantics & assumptions:
 --   * All values are opaque pointers (@ptr@, LLVM 15+).
@@ -177,6 +177,12 @@ header builtIns =
     <> [ "declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)"
        | Set.member "addInt32" builtIns
        ]
+    <> [ "declare {i32, i1} @llvm.ssub.with.overflow.i32(i32, i32)"
+       | Set.member "subInt32" builtIns
+       ]
+    <> [ "declare {i32, i1} @llvm.smul.with.overflow.i32(i32, i32)"
+       | Set.member "mulInt32" builtIns
+       ]
     <> [ "declare ptr @strstr(ptr, ptr)"
        | Set.member "splitOnFirst" builtIns
        ]
@@ -213,7 +219,12 @@ runtime builtIns =
         if Set.member "eqInt32" builtIns then rtEqInt32 else "",
         if Set.member "eqUInt8" builtIns then rtEqUInt8 else "",
         if Set.member "addInt32" builtIns then rtAddInt32 else "",
+        if Set.member "subInt32" builtIns then rtSubInt32 else "",
+        if Set.member "mulInt32" builtIns then rtMulInt32 else "",
+        if Set.member "negInt32" builtIns then rtNegInt32 else "",
         if Set.member "addUInt8" builtIns then rtAddUInt8 else "",
+        if Set.member "subUInt8" builtIns then rtSubUInt8 else "",
+        if Set.member "mulUInt8" builtIns then rtMulUInt8 else "",
         if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
         if Set.member "parseInt32" builtIns then rtParseInt32 else "",
         if Set.member "parseUInt8" builtIns then rtParseUInt8 else ""
@@ -458,6 +469,120 @@ runtime builtIns =
           "  ret ptr %right",
           "}"
         ]
+    -- subInt32 : Int32 -> Int32 -> Either ArithError Int32.
+    --   Uses 'llvm.ssub.with.overflow' to detect signed overflow in one
+    --   instruction. On overflow, signs of @a@ and @b@ must differ
+    --   (otherwise the difference stays in range), so @icmp sge i32 %a, 0@
+    --   separates positive overflow (@a >= 0, b < 0@ ⇒ Overflow, ArithError
+    --   tag = 1) from negative (@a < 0, b > 0@ ⇒ Underflow, tag = 0). The
+    --   special case `b == minInt32` only overflows when `a >= 0`, which
+    --   stays inside the @a >= 0 ⇒ Overflow@ branch.
+    rtSubInt32 =
+      unlines
+        [ "define ptr @__subInt32(ptr %pa, ptr %pb) {",
+          "  %a = load i32, ptr %pa",
+          "  %b = load i32, ptr %pb",
+          "  %res = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %a, i32 %b)",
+          "  %diff = extractvalue {i32, i1} %res, 0",
+          "  %ovf = extractvalue {i32, i1} %res, 1",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %is_pos = icmp sge i32 %a, 0",
+          "  %ae_tag_idx = select i1 %is_pos, i64 1, i64 0",
+          "  %ae = call ptr @malloc(i64 8)",
+          "  %ae_tag = inttoptr i64 %ae_tag_idx to ptr",
+          "  store ptr %ae_tag, ptr %ae",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %ae, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %diff, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- mulInt32 : Int32 -> Int32 -> Either ArithError Int32.
+    --   Uses @llvm.smul.with.overflow.i32@ to detect signed overflow.
+    --   Direction: same-sign overflow is Overflow, opposite-sign is
+    --   Underflow. We read sign agreement off @icmp sge i32 (a xor b), 0@:
+    --   the xor's sign bit is 0 iff @a@ and @b@ have the same sign, so
+    --   overflow on same-sign means positive overflow → Overflow (tag 1).
+    --   The special case @minInt32 * -1@ = 2147483648 has same signs (both
+    --   negative) and lands on Overflow, which matches the math.
+    rtMulInt32 =
+      unlines
+        [ "define ptr @__mulInt32(ptr %pa, ptr %pb) {",
+          "  %a = load i32, ptr %pa",
+          "  %b = load i32, ptr %pb",
+          "  %res = call {i32, i1} @llvm.smul.with.overflow.i32(i32 %a, i32 %b)",
+          "  %prod = extractvalue {i32, i1} %res, 0",
+          "  %ovf = extractvalue {i32, i1} %res, 1",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %xor_ab = xor i32 %a, %b",
+          "  %same_sign = icmp sge i32 %xor_ab, 0",
+          "  %ae_tag_idx = select i1 %same_sign, i64 1, i64 0",
+          "  %ae = call ptr @malloc(i64 8)",
+          "  %ae_tag = inttoptr i64 %ae_tag_idx to ptr",
+          "  store ptr %ae_tag, ptr %ae",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %ae, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %prod, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- negInt32 : Int32 -> Either OverflowError Int32.
+    --   Only @minInt32@ overflows on negation (its absolute value is one
+    --   above maxInt32 in two's complement); every other input flips sign
+    --   exactly. Same Left / Right encoding as 'rtSuccInt32', just with a
+    --   different boundary and a 'sub 0, v' for the ok path.
+    rtNegInt32 =
+      unlines
+        [ "define ptr @__negInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %is_min = icmp eq i32 %v, -2147483648",
+          "  br i1 %is_min, label %overflow, label %ok",
+          "overflow:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = sub i32 0, %v",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
     -- addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8.
     --   Both operands fit in i8, so widening to i32 first and comparing
     --   the sum against 255 gives a saturation-free overflow check
@@ -486,6 +611,81 @@ runtime builtIns =
           "  ret ptr %left",
           "ok:",
           "  %newv = trunc i32 %sum32 to i8",
+          "  %box = call ptr @malloc(i64 1)",
+          "  store i8 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- mulUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8.
+    --   Both operands fit in i8, so widening to i32 and multiplying gives
+    --   a product in 0..65025 (= 255 * 255) — well inside the i32 range.
+    --   A single @icmp ugt 255@ separates the branches; on the ok path
+    --   the product is in 0..255, so truncating to i8 is faithful.
+    rtMulUInt8 =
+      unlines
+        [ "define ptr @__mulUInt8(ptr %pa, ptr %pb) {",
+          "  %a = load i8, ptr %pa",
+          "  %b = load i8, ptr %pb",
+          "  %a32 = zext i8 %a to i32",
+          "  %b32 = zext i8 %b to i32",
+          "  %prod32 = mul i32 %a32, %b32",
+          "  %ovf = icmp ugt i32 %prod32, 255",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = trunc i32 %prod32 to i8",
+          "  %box = call ptr @malloc(i64 1)",
+          "  store i8 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- subUInt8 : UInt8 -> UInt8 -> Either UnderflowError UInt8.
+    --   The signed-difference of two i8 values is in -128..127, but the
+    --   *unsigned* interpretation of UInt8 says the difference is in
+    --   -255..255. Widening to i32 first and comparing 'a < b' as unsigned
+    --   picks the underflow branch. On the ok path the difference is
+    --   already in 0..255, so truncating back to i8 is faithful.
+    rtSubUInt8 =
+      unlines
+        [ "define ptr @__subUInt8(ptr %pa, ptr %pb) {",
+          "  %a = load i8, ptr %pa",
+          "  %b = load i8, ptr %pb",
+          "  %a32 = zext i8 %a to i32",
+          "  %b32 = zext i8 %b to i32",
+          "  %unf = icmp ult i32 %a32, %b32",
+          "  br i1 %unf, label %err, label %ok",
+          "err:",
+          "  %ue = call ptr @malloc(i64 8)",
+          "  %ue_tag = inttoptr i64 0 to ptr",
+          "  store ptr %ue_tag, ptr %ue",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %ue, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %diff32 = sub i32 %a32, %b32",
+          "  %newv = trunc i32 %diff32 to i8",
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
@@ -1218,7 +1418,7 @@ emitExpr ctx = \case
                   )
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8" ->
+        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32" ->
             case xs of
               [a, b] -> do
                 (instrA, resA) <- emitExpr ctx a
@@ -1227,12 +1427,26 @@ emitExpr ctx = \case
                 let fn :: Text
                     fn = case name of
                       "addUInt8" -> "@__addUInt8"
+                      "subInt32" -> "@__subInt32"
+                      "subUInt8" -> "@__subUInt8"
+                      "mulUInt8" -> "@__mulUInt8"
+                      "mulInt32" -> "@__mulInt32"
                       _ -> "@__addInt32"
                 pure
                   ( instrA <> instrB <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ", ptr " <> resB <> ")\n",
                     tmp
                   )
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "negInt32" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__negInt32(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.negInt32: arity mismatch"
       CBuiltIn "concatString" ->
         case xs of
           [a, b] -> do

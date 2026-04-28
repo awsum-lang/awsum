@@ -35,6 +35,7 @@ module Awsum.Typing
     warningSpan,
     warningMessage,
     isBareBuiltIn,
+    splitArrow,
   )
 where
 
@@ -113,6 +114,13 @@ data TypeError
     UnnamedTypeParameter SrcSpan
   | -- | Two type parameters of the same type declaration share a name.
     DuplicateTypeParameter SrcSpan Name
+  | -- | A constructor field references a type variable that is not in
+    --   the type declaration's parameter list. Without this check the
+    --   typechecker would silently treat the free variable as a fresh
+    --   per-constructor tyvar, making the constructor unusable at any
+    --   concrete type — see e.g. @type X = X a@. Span points at the
+    --   offending @TyVar@ so the editor underlines just the identifier.
+    UnknownTypeVariable SrcSpan Name
   | -- | A type declaration uses bare @_@ as its type name. Type names
     --   must be addressable (any future signature mentioning the type
     --   needs a name to write down), so the wildcard form is rejected
@@ -188,6 +196,7 @@ typeErrorSpan = \case
   ReferencingIgnoredTypeVar sp _ -> Just sp
   UnnamedTypeParameter sp -> Just sp
   DuplicateTypeParameter sp _ -> Just sp
+  UnknownTypeVariable sp _ -> Just sp
   UnnamedType sp -> Just sp
   UnnamedConstructor sp -> Just sp
   ReferencingIgnoredConstructor sp _ _ -> Just sp
@@ -230,6 +239,8 @@ prettyPrintTypeError = \case
     "Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused"
   DuplicateTypeParameter _ n ->
     "Duplicate type parameter: '" <> n <> "' is already declared in this type"
+  UnknownTypeVariable _ n ->
+    "Unknown type variable: '" <> n <> "' is not declared as a type parameter"
   UnnamedType _ ->
     "Type name must not be bare '_'; use '_X' (or similar) to mark a type as intentionally unused"
   UnnamedConstructor _ ->
@@ -471,7 +482,7 @@ buildConEnv decls = do
            in Right (M.insert cName (ConInfo tName tvs (concat flds) siblings cSp) m)
 
 -- | Validate a single type declaration's parameter list and constructor
---   field types. Enforces three invariants:
+--   field types. Enforces four invariants:
 --
 --     1. Every parameter has a name; bare @_@ is rejected ('UnnamedTypeParameter').
 --     2. No two parameters share a name ('DuplicateTypeParameter').
@@ -479,6 +490,10 @@ buildConEnv decls = do
 --        'TyVar' whose name starts with @_@) — if the user marks a type
 --        parameter as intentionally unused, they must not then turn
 --        around and use it ('ReferencingIgnoredTypeVar').
+--     4. Every type variable in a constructor field must appear in the
+--        declaration's parameter list ('UnknownTypeVariable'). Without
+--        this, @type X = X a@ would silently treat @a@ as a fresh
+--        per-constructor tyvar disconnected from the type's parameters.
 validateTypeParams :: SrcSpan -> [Param] -> [ConDef] -> Either TypeError ()
 validateTypeParams _declSp params cons = do
   -- 1) Reject bare '_' as a type parameter name.
@@ -491,6 +506,10 @@ validateTypeParams _declSp params cons = do
   --    the exact identifier rather than the whole type declaration.
   forM_ cons $ \(ConDef _ _ flds) ->
     forM_ flds checkNoIgnoredTyVar
+  -- 4) Reject type variables that aren't in the parameter list.
+  let declared = S.fromList [n | Param _ n <- params]
+  forM_ cons $ \(ConDef _ _ flds) ->
+    forM_ flds (checkDeclaredTyVar declared)
   where
     checkDup seen (Param sp n) =
       if S.member n seen
@@ -503,6 +522,18 @@ validateTypeParams _declSp params cons = do
       TyCon _ _ -> Right ()
       TyApp _ f x -> checkNoIgnoredTyVar f >> checkNoIgnoredTyVar x
       TyArrow _ a b -> checkNoIgnoredTyVar a >> checkNoIgnoredTyVar b
+
+    -- The '_'-prefixed case is already rejected by checkNoIgnoredTyVar
+    -- above with a more specific error; skip it here to avoid masking
+    -- that diagnostic when both apply.
+    checkDeclaredTyVar declared = \case
+      TyVar _ n | "_" `T.isPrefixOf` n -> Right ()
+      TyVar sp n
+        | S.member n declared -> Right ()
+        | otherwise -> Left (UnknownTypeVariable sp n)
+      TyCon _ _ -> Right ()
+      TyApp _ f x -> checkDeclaredTyVar declared f >> checkDeclaredTyVar declared x
+      TyArrow _ a b -> checkDeclaredTyVar declared a >> checkDeclaredTyVar declared b
 
 -- | A non-fatal observation about a program. Surfaced to editors as
 --   yellow squigglies and to CI via @--strict@.
@@ -572,24 +603,24 @@ typecheckProgram progType Program {imports, decls} = do
   defWarnings <- forM defsList $ \(sp, n, args, body) -> do
     ty <- maybeToRight (MissingSignature sp n) (M.lookup n sigEnv)
     let (argTys, retTy) = splitArrow ty
-        -- The alias form @foo = BuiltIn.bar@ binds zero params even when
-        -- the signature has arrow shape: the RHS itself carries the whole
+        -- The alias form @foo = expr@ binds zero params even when the
+        -- signature has arrow shape: the RHS itself carries the whole
         -- function type, and we typecheck it against the full signature.
-        -- This is the only place the zero-param shape is allowed for a
-        -- non-trivial signature — every other zero-param def still needs
-        -- its arity on the left of @=@.
-        isBuiltInAlias = null args && isBareBuiltIn body
-    unless isBuiltInAlias
+        -- This generalizes the original @foo = BuiltIn.bar@ shape to any
+        -- expression of matching arrow type (e.g. @foo = IO.Stdout.print@
+        -- or @foo = otherTopLevel@), eta-expanded by 'lowerDecl'.
+        isAliasForm = null args && not (null argTys)
+    unless isAliasForm
       $ when (length argTys /= length args)
       $ Left (ArityMismatch sp n (length argTys) (length args))
 
-    -- For alias-form decls, check the builtin's registered type against
-    -- the declared signature up-front. If they disagree, surface a
-    -- dedicated 'BuiltInTypeMismatch' (with both spans) rather than the
+    -- For built-in alias-form decls, check the builtin's registered type
+    -- against the declared signature up-front. If they disagree, surface
+    -- a dedicated 'BuiltInTypeMismatch' (with both spans) rather than the
     -- generic 'TypeMismatch' 'checkExpr' would produce below — the
     -- compiler-dev reader needs to know this is a sig-vs-table
     -- disagreement, not an ordinary user type error.
-    when isBuiltInAlias $ case bareBuiltInRef body of
+    when (isAliasForm && isBareBuiltIn body) $ case bareBuiltInRef body of
       Just (bodySp, bn)
         | Just bty <- lookupBuiltIn bn,
           bty /= ty ->
@@ -610,7 +641,7 @@ typecheckProgram progType Program {imports, decls} = do
         envTop = M.fromList [(qLocal n', t') | (_sp', n', t') <- sigsList]
         envOuter = M.unions [envBuiltins, conValEnv, envTop]
         env = M.union envParams envOuter
-        expectedBodyTy = if isBuiltInAlias then ty else retTy
+        expectedBodyTy = if isAliasForm then ty else retTy
 
     -- Reject shadowing: params must be unique and must not collide with
     -- any already-visible name (constructor, import, top-level signature).

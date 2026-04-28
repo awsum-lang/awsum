@@ -23,7 +23,7 @@ cliPlatformTable =
     [ -- Print to stdout (no newline). Compiled per-target:
       -- printf on LLVM, System.out.print on JVM, Console.Write
       -- on CLR, WASI fd_write on WASM, process.stdout.write on
-      -- Node, io.write on Lua.
+      -- Node.
       ( QName ["IO", "Stdout"] "print",
         TyArrow noSpan stringTy ioUnitTy
       )

@@ -51,11 +51,41 @@ builtIns =
       -- if above 'maxInt32', `Right (a + b)` otherwise. Both ends are
       -- reachable from one operation, hence the two-constructor 'ArithError'.
       ("addInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
+      -- subInt32 : Int32 -> Int32 -> Either ArithError Int32
+      -- `Left Overflow` if `a - b > maxInt32`, `Left Underflow` if
+      -- `a - b < minInt32`, `Right (a - b)` otherwise. Both ends are
+      -- reachable (e.g. `maxInt32 - (-1)` overflows positively,
+      -- `minInt32 - 1` underflows), so the error type is the two-
+      -- constructor 'ArithError', mirroring 'addInt32'.
+      ("subInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
+      -- mulInt32 : Int32 -> Int32 -> Either ArithError Int32
+      -- `Left Overflow` if `a * b > maxInt32`, `Left Underflow` if
+      -- `a * b < minInt32`, `Right (a * b)` otherwise. Both ends are
+      -- reachable (e.g. `maxInt32 * 2`, `minInt32 * 2`), hence the
+      -- two-constructor 'ArithError'.
+      ("mulInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
+      -- negInt32 : Int32 -> Either OverflowError Int32
+      -- `Left OverflowError` on 'minInt32' (negation would yield 2147483648,
+      -- which doesn't fit in Int32), `Right (-x)` otherwise. Single-error
+      -- type because only positive overflow is reachable on negation.
+      ("negInt32", TyArrow noSpan int32Ty (eitherTy overflowErrorTy int32Ty)),
       -- addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
       -- `Left OverflowError` if `a + b > 255`, `Right (a + b)` otherwise.
       -- Underflow is unreachable for unsigned addition, so the error type
       -- stays `OverflowError`, not `ArithError`.
       ("addUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty))),
+      -- subUInt8 : UInt8 -> UInt8 -> Either UnderflowError UInt8
+      -- `Left UnderflowError` if `a < b`, `Right (a - b)` otherwise.
+      -- Overflow is unreachable for unsigned subtraction (the difference
+      -- of two UInt8 values is in -255..255 and stays in 0..255 when
+      -- non-negative), so the error type is 'UnderflowError', symmetric
+      -- to 'addUInt8' which uses 'OverflowError'.
+      ("subUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy underflowErrorTy uint8Ty))),
+      -- mulUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
+      -- `Left OverflowError` if `a * b > 255`, `Right (a * b)` otherwise.
+      -- Underflow is unreachable for unsigned multiplication (product of
+      -- two non-negative values is non-negative). Symmetric to 'addUInt8'.
+      ("mulUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty))),
       -- concatString : String -> String -> String
       -- The '++' operator is parser sugar for a call to this built-in.
       ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy)),

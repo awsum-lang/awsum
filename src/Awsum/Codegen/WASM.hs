@@ -257,7 +257,12 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "succUInt8" builtIns then rtSuccU8 else "",
             if any (`Set.member` builtIns) ["eqInt32", "eqUInt8"] then rtEqI32 else "",
             if Set.member "addInt32" builtIns then rtAddI32 else "",
+            if Set.member "subInt32" builtIns then rtSubI32 else "",
+            if Set.member "mulInt32" builtIns then rtMulI32 else "",
+            if Set.member "negInt32" builtIns then rtNegI32 else "",
             if Set.member "addUInt8" builtIns then rtAddU8 else "",
+            if Set.member "subUInt8" builtIns then rtSubU8 else "",
+            if Set.member "mulUInt8" builtIns then rtMulU8 else "",
             if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
             if Set.member "parseInt32" builtIns then rtParseInt32 else "",
             if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
@@ -576,6 +581,170 @@ rtAddU8 =
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $s))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | subInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Signed-subtraction overflow detected with the XOR trick:
+--   '(a ^ b) & (a ^ diff) < 0' holds iff signed subtraction overflowed.
+--   Direction is read off 'a >= 0' (when subtraction overflows the signs
+--   of @a@ and @b@ must differ, so @a >= 0@ implies @b < 0@ which implies
+--   positive overflow). Same shape as 'rtAddI32' with 'i32.sub' replacing
+--   'i32.add'.
+rtSubI32 :: Text
+rtSubI32 =
+  unlines
+    [ "  (func $__subInt32 (param $pa i32) (param $pb i32) (result i32)",
+      "    (local $a i32) (local $b i32) (local $d i32)",
+      "    (local $ae i32) (local $box i32) (local $cell i32)",
+      "    (local.set $a (i32.load (local.get $pa)))",
+      "    (local.set $b (i32.load (local.get $pb)))",
+      "    (local.set $d (i32.sub (local.get $a) (local.get $b)))",
+      "    (if (result i32)",
+      "      (i32.lt_s",
+      "        (i32.and",
+      "          (i32.xor (local.get $a) (local.get $b))",
+      "          (i32.xor (local.get $a) (local.get $d)))",
+      "        (i32.const 0))",
+      "      (then",
+      "        (local.set $ae (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $ae)",
+      "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
+      "            (then (i32.const 1))",
+      "            (else (i32.const 0))))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $d))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | mulInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Promote both operands to i64, multiply at 64-bit width, range-check
+--   the result against [INT32_MIN, INT32_MAX]. Direction (over vs under)
+--   is read off the lcmp result — i64.gt_s → Overflow, i64.lt_s →
+--   Underflow. The truncated i32 product is the correct ok-path value
+--   when the comparison falls through.
+rtMulI32 :: Text
+rtMulI32 =
+  unlines
+    [ "  (func $__mulInt32 (param $pa i32) (param $pb i32) (result i32)",
+      "    (local $p i64)",
+      "    (local $ae i32) (local $box i32) (local $cell i32)",
+      "    (local.set $p",
+      "      (i64.mul",
+      "        (i64.extend_i32_s (i32.load (local.get $pa)))",
+      "        (i64.extend_i32_s (i32.load (local.get $pb)))))",
+      "    (if (result i32) (i64.gt_s (local.get $p) (i64.const 2147483647))",
+      "      (then",
+      "        (local.set $ae (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $ae) (i32.const 1))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (if (result i32) (i64.lt_s (local.get $p) (i64.const -2147483648))",
+      "          (then",
+      "            (local.set $ae (call $__alloc (i32.const 4)))",
+      "            (i32.store (local.get $ae) (i32.const 0))",
+      "            (local.set $cell (call $__alloc (i32.const 8)))",
+      "            (i32.store (local.get $cell) (i32.const 0))",
+      "            (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "            (local.get $cell))",
+      "          (else",
+      "            (local.set $box (call $__alloc (i32.const 4)))",
+      "            (i32.store (local.get $box) (i32.wrap_i64 (local.get $p)))",
+      "            (local.set $cell (call $__alloc (i32.const 8)))",
+      "            (i32.store (local.get $cell) (i32.const 1))",
+      "            (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "            (local.get $cell))))))"
+    ]
+
+-- | negInt32: Int32 -> Either OverflowError Int32.
+--   Mirrors 'rtSuccI32' but checks against INT32_MIN and uses
+--   '(0 - v)' for the ok branch. OverflowError is single-constructor,
+--   so its inner-box tag is 0 — Left-branch encoding is byte-identical
+--   to predInt32.
+rtNegI32 :: Text
+rtNegI32 =
+  unlines
+    [ "  (func $__negInt32 (param $p i32) (result i32)",
+      "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
+      "    (local.set $v (i32.load (local.get $p)))",
+      "    (if (result i32) (i32.eq (local.get $v) (i32.const -2147483648))",
+      "      (then",
+      "        (local.set $oe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.sub (i32.const 0) (local.get $v)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
+--   Both operands are 0..255 so the i32 difference is in -255..255 and a
+--   single 'i32.lt_s 0' check selects the underflow branch. No mask on
+--   the ok path — when a >= b the difference is already a valid UInt8.
+rtSubU8 :: Text
+rtSubU8 =
+  unlines
+    [ "  (func $__subUInt8 (param $pa i32) (param $pb i32) (result i32)",
+      "    (local $d i32) (local $ue i32) (local $box i32) (local $cell i32)",
+      "    (local.set $d (i32.sub (i32.load (local.get $pa)) (i32.load (local.get $pb))))",
+      "    (if (result i32) (i32.lt_s (local.get $d) (i32.const 0))",
+      "      (then",
+      "        (local.set $ue (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $d))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255 so an i32 multiply gives 0..65025 — well
+--   inside i32 range. A single 'i32.gt_u 255' check selects the branch.
+rtMulU8 :: Text
+rtMulU8 =
+  unlines
+    [ "  (func $__mulUInt8 (param $pa i32) (param $pb i32) (result i32)",
+      "    (local $p i32) (local $oe i32) (local $box i32) (local $cell i32)",
+      "    (local.set $p (i32.mul (i32.load (local.get $pa)) (i32.load (local.get $pb))))",
+      "    (if (result i32) (i32.gt_u (local.get $p) (i32.const 255))",
+      "      (then",
+      "        (local.set $oe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $p))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $cell) (i32.const 1))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
@@ -994,10 +1163,19 @@ emitExpr ctx = \case
           [a, b] <- xs ->
             "(call $__eq_i32 " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8",
+        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
           [a, b] <- xs ->
-            let fn = if name == "addInt32" then "$__addInt32" else "$__addUInt8"
+            let fn = case name of
+                  "addInt32" -> "$__addInt32"
+                  "addUInt8" -> "$__addUInt8"
+                  "subInt32" -> "$__subInt32"
+                  "subUInt8" -> "$__subUInt8"
+                  "mulInt32" -> "$__mulInt32"
+                  _ -> "$__mulUInt8"
              in "(call " <> fn <> " " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn "negInt32"
+        | [x] <- xs ->
+            "(call $__negInt32 " <> emitExpr ctx x <> ")"
       CBuiltIn "splitOnFirst"
         | [a, b] <- xs ->
             "(call $__splitOnFirst " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"

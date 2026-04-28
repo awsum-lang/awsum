@@ -8,5 +8,4 @@ data Target
   | TargetCLR
   | TargetWASM
   | TargetJS
-  | TargetLua
   deriving stock (Eq, Show)
