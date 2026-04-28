@@ -1,8 +1,8 @@
--- Error: function defined without required argument (arity mismatch with signature)
+-- Error: function defined with more parameters than its signature allows
 import IO.Stdout
 
 foo : String -> IOUnit
-foo = IO.Stdout.print
+foo a b = IO.Stdout.print a
 
 main : String -> IOUnit
-main input = IO.Stdout.print input
+main input = foo input "extra"
