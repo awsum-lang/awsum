@@ -152,6 +152,36 @@ instance Arbitrary NoOverflowMulInt32 where
     bI <- chooseInteger (loI, hiI)
     pure (NoOverflowMulInt32 (a, fromInteger bI))
 
+-- | (a, b, c) such that @a*b@, @b*c@ and @a*b*c@ all fit in Int32.
+--   Mirrors 'NoOverflowMulUInt8Triple' on signed bounds: same lesson —
+--   under overflow-checked arithmetic the two associativity groupings
+--   @(a*b)*c@ and @a*(b*c)@ are not interchangeable, so the generator
+--   has to bound every intermediate product.
+--
+--   Pick @a@ uniformly. Then @b@ from @[-bA, bA]@ with
+--   @bA = maxI / max(1, |a|)@, ensuring @|a*b| ≤ maxI@. Then @c@ from
+--   the intersection of:
+--     * @|b*c| ≤ maxI@: @c ∈ [-bB, bB]@ with @bB = maxI / max(1, |b|)@
+--     * @|a*b*c| ≤ maxI@: @c ∈ [-bAB, bAB]@ with @bAB = maxI / max(1, |a*b|)@
+--   Each interval contains 0 (and 1), so the intersection is non-empty
+--   — no rejection sampling. @a == minInt32@ degenerates to
+--   @b = c = 0@ since @|a| > maxI@ forces @bA = 0@.
+newtype NoOverflowMulInt32Triple = NoOverflowMulInt32Triple (Int32, Int32, Int32) deriving stock (Show)
+
+instance Arbitrary NoOverflowMulInt32Triple where
+  arbitrary = do
+    a <- chooseBoundedIntegral (minBound :: Int32, maxBound :: Int32)
+    let aI = toInteger a
+        maxI = toInteger (maxBound :: Int32)
+        bA = maxI `div` max 1 (abs aI)
+    bI <- chooseInteger (negate bA, bA)
+    let abI = aI * bI
+        bB = maxI `div` max 1 (abs bI)
+        bAB = maxI `div` max 1 (abs abI)
+        cBound = min bB bAB
+    cI <- chooseInteger (negate cBound, cBound)
+    pure (NoOverflowMulInt32Triple (a, fromInteger bI, fromInteger cI))
+
 -- | (a, b, c) such that @b + c@, @a * b@, @a * c@ and @a * (b + c)@
 --   are all in Int32 range. This is the joint domain on which the
 --   distributivity law @a * (b + c) == a * b + a * c@ is well-
@@ -322,13 +352,19 @@ instance Arbitrary NoOverflowMulUInt8 where
     b <- chooseBoundedIntegral (0, bMax)
     pure (NoOverflowMulUInt8 (a, b))
 
--- | (a, b, c) such that a*b ≤ 255 AND a*b*c ≤ 255 (both groupings stay
---   in range, since multiplication is associative and commutative on
---   integers). Pick @a@ uniformly, then @b@ from the no-overflow
---   interval for @a*b@, then @c@ from the interval for @(a*b)*c@.
---   Each interval contains 0 (and 1), so the construction never has to
---   retry; @a == 0@ is handled by widening the @b@ / @c@ range to
---   @[0..255]@, which keeps every product zero.
+-- | (a, b, c) such that @a*b@, @b*c@ and @a*b*c@ all fit in UInt8.
+--   Under overflow-checked arithmetic the two groupings @(a*b)*c@ and
+--   @a*(b*c)@ are *not* interchangeable: a final product of 0 is no
+--   excuse for the intermediate @b*c@ overflowing on the right-hand
+--   grouping (e.g. @(0, 216, 99)@: @0*216*99 == 0@ but @216*99 == 21384@
+--   overflows). So we bound every intermediate product, not just the
+--   left-grouping ones.
+--
+--   Pick @a@ uniformly, then @b@ from the @a*b ≤ 255@ interval, then
+--   @c@ from the intersection of @b*c ≤ 255@ and @a*b*c ≤ 255@. Each
+--   interval contains 0 (and 1), so the construction never has to retry;
+--   a zero denominator widens its bound to 255 (the constraint is
+--   vacuous when the product is forced to 0).
 newtype NoOverflowMulUInt8Triple = NoOverflowMulUInt8Triple (Word8, Word8, Word8) deriving stock (Show)
 
 instance Arbitrary NoOverflowMulUInt8Triple where
@@ -337,7 +373,9 @@ instance Arbitrary NoOverflowMulUInt8Triple where
     let bMax = if a == 0 then 255 else 255 `div` a
     b <- chooseBoundedIntegral (0, bMax)
     let ab = a * b
-        cMax = if ab == 0 then 255 else 255 `div` ab
+        cMaxBC = if b == 0 then 255 else 255 `div` b
+        cMaxABC = if ab == 0 then 255 else 255 `div` ab
+        cMax = min cMaxBC cMaxABC
     c <- chooseBoundedIntegral (0, cMax)
     pure (NoOverflowMulUInt8Triple (a, b, c))
 
@@ -435,6 +473,7 @@ properties =
     SomeProperty mulInt32CommutativeProp,
     SomeProperty mulInt32OneIdentityLeftProp,
     SomeProperty mulInt32OneIdentityRightProp,
+    SomeProperty mulInt32AssociativeProp,
     SomeProperty mulInt32DistributiveProp,
     -- ── Successor / predecessor (round-trip + boundary) ──
     SomeProperty succPredRoundtripInt32Prop,
@@ -753,6 +792,17 @@ mulInt32OneIdentityRightProp =
       propSourceDir = "mulInt32-one-identity-right",
       propGen = arbitrary,
       propEncode = \(Int32V a) -> show a,
+      propExpectedOutput = const "OK"
+    }
+
+mulInt32AssociativeProp :: Property NoOverflowMulInt32Triple
+mulInt32AssociativeProp =
+  Property
+    { propName = "mulInt32-associative",
+      propSourceDir = "mulInt32-associative",
+      propGen = arbitrary,
+      propEncode = \(NoOverflowMulInt32Triple (a, b, c)) ->
+        show a <> ":" <> show b <> ":" <> show c,
       propExpectedOutput = const "OK"
     }
 
