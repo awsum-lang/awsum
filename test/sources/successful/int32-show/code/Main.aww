@@ -4,7 +4,7 @@
 -- in a single program.
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showInt32 minInt32 ++ ", " ++ showInt32 negative ++ ", " ++ showInt32 zero ++ ", " ++ showInt32 positive ++ ", " ++ showInt32 manyDigits ++ ", " ++ showInt32 maxInt32)
 
 minInt32 : Int32

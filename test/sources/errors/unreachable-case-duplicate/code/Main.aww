@@ -10,5 +10,5 @@ show c = case c of
   Green -> "even more Green"
   Blue -> "Blue"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print (show Red)

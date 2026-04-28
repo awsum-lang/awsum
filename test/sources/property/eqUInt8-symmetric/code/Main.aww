@@ -11,7 +11,7 @@ parsePair raw = case splitOnFirst ":" raw of
         Left e -> Left e
         Right b -> Right (Tuple2 a b)
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case parsePair raw of
   Left _ -> IO.Stdout.print "PARSE_ERROR"
   Right t -> case t of

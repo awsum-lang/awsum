@@ -12,5 +12,5 @@ render r = case r of
   Left e -> "underflow: " ++ showUnderflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (predUInt8 0) ++ ", " ++ render (predUInt8 1) ++ ", " ++ render (predUInt8 255))

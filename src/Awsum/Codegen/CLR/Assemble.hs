@@ -4,7 +4,7 @@
 -- user declarations, and a @Main(string[])@ entry point.
 --
 -- All values are @System.Object@; strings are @System.String@;
--- function references are @System.Func@ delegates; IOUnit is @null@.
+-- function references are @System.Func@ delegates; @IO Unit@ is @null@.
 --
 -- The PE file is assembled directly in Haskell — no ilasm, no csc, no MSBuild.
 -- Only @dotnet@ is needed to run the output.

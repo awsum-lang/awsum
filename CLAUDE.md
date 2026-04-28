@@ -105,7 +105,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLo
 
 ## Language Features
 
-- Types: `String`, `IOUnit`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), `Either a b` and `UnderflowError` (prelude-visible), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
+- Types: `String`, `IO a`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), `Either a b` and `UnderflowError` (prelude-visible), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
 - No defaulting, ever: the compiler never picks a type for the user — not for integer literals, not for a monadic context, not for anything else added later. Ambiguous = compile error, fix with an explicit annotation.
 - No shadowing, ever: a fresh binder must not reuse any name already visible in its scope at any level (function params, pattern binders, and every future binding form we add). Shadowing is a compile error, not a warning.
 - Underscore convention: a leading `_` marks a binding as intentionally unused. Applies to values (`_foo`), top-level defs (`_foo`), type params (`_a`), type names (`_A`) and constructors (`_C`). Referencing any `_`-prefixed name anywhere is a compile error. Bare `_` is a wildcard in pattern / function-param position (no binding); forbidden as a nameable declaration (top-level, type, constructor, type-param).
@@ -114,7 +114,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLo
 - Expressions: string literals, integer literals, `++` concatenation, function application, constructors (first-class — passable to HOFs), `case`/`of` pattern matching with field bindings
 - Declarations: type signatures required, function definitions, type declarations with exhaustiveness checking, constructor fields, uninhabited type detection
 - Comments: `--` line, `{- -}` block (preserved through formatting)
-- Built-ins: `IO.Stdout.print : String -> IOUnit` is a CLI-program platform effect — requires both `--program-type cli` at compile time and `import IO.Stdout` in the source (see `Awsum.Program.Cli`). Prelude-visible (no import) via the Prelude + BuiltIn mechanism: `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String`, `showUnderflowError : UnderflowError -> String`, `predInt32 : Int32 -> Either UnderflowError Int32` (honest arithmetic — `Left UnderflowError` on `minInt32`). Reserved `BuiltIn.foo` syntax forwards to the compiler's per-target implementation — see [docs/prelude.md](docs/prelude.md).
+- Built-ins: `IO.Stdout.print : String -> IO Unit` is a CLI-program platform effect — requires both `--program-type cli` at compile time and `import IO.Stdout` in the source (see `Awsum.Program.Cli`). Prelude-visible (no import) via the Prelude + BuiltIn mechanism: `showInt32 : Int32 -> String`, `showUInt8 : UInt8 -> String`, `showUnderflowError : UnderflowError -> String`, `predInt32 : Int32 -> Either UnderflowError Int32` (honest arithmetic — `Left UnderflowError` on `minInt32`). Reserved `BuiltIn.foo` syntax forwards to the compiler's per-target implementation — see [docs/prelude.md](docs/prelude.md).
 - Tree-shake: `elaborateLowerProgram` runs reachability analysis from `main` over all top-level Core declarations (user decls, prelude helpers, generated constructor wrappers) and drops anything unreachable before codegen. Prelude can grow without cost to programs that don't use the new entries.
 
 ## Testing

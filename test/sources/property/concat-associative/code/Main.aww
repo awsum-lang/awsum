@@ -13,7 +13,7 @@ unwrap3 raw = case splitOnFirst ":" raw of
       Just t2 -> case t2 of
         Tuple2 b c -> Just (Tuple3 a b c)
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case unwrap3 raw of
   Nothing -> IO.Stdout.print "PARSE_ERROR"
   Just t -> case t of

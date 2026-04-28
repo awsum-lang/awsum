@@ -40,5 +40,5 @@ showResult r = case r of
 start : Int32
 start = 100000
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showResult (countDown start))

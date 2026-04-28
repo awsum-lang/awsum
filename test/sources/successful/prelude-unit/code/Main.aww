@@ -2,5 +2,5 @@
 -- Unit is known from Prelude (no import needed).
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showUnit Unit)

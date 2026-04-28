@@ -1,7 +1,8 @@
 -- | Simple /monomorphic/ type checker for the surface AST ('Awsum.Syntax').
 --
 -- Scope and design notes:
---   • Built-in type constructors: @"String"@ and @"IOUnit"@.
+--   • Built-in type constructors: @"String"@ and @"IO"@ (the @Unit@ in
+--     @IO Unit@ is a prelude-defined sum type, not a built-in).
 --   • User-defined sum types via @type Color = Red | Green | Blue@.
 --   • The only function type constructor is right-associative arrow @->@.
 --   • No let-generalization, no unification variables, no inference beyond what is
@@ -216,7 +217,7 @@ prettyPrintTypeError = \case
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
   MainMissing -> "Missing 'main' function"
-  MainWrongType ty -> "Wrong type for 'main': expected String -> IOUnit, got " <> showType ty
+  MainWrongType ty -> "Wrong type for 'main': expected String -> IO Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
   TELowering msg -> msg
   DuplicateTypeDef _ name -> "Duplicate type definition: " <> name
@@ -349,7 +350,7 @@ wellFormedTypeWith userTypes = \case
   TyVar _ _ -> Right ()
   TyCon sp n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnored sp n)
   TyCon _ "String" -> Right ()
-  TyCon _ "IOUnit" -> Right ()
+  TyCon _ "IO" -> Right ()
   TyCon _ "Int32" -> Right ()
   TyCon _ "UInt8" -> Right ()
   TyCon sp n
@@ -738,7 +739,7 @@ bareBuiltInRef = \case
   EParens _ e -> bareBuiltInRef e
   _ -> Nothing
 
--- | Entry-point check: verify the program declares @main : String -> IOUnit@.
+-- | Entry-point check: verify the program declares @main : String -> IO Unit@.
 --   Called only from @build@/@run@ — modules without @main@ (libraries,
 --   @Prelude.aww@) pass 'typecheckProgram' but fail here when an executable
 --   is requested.
@@ -747,7 +748,7 @@ requireMain Program {decls} =
   case listToMaybe [t | Sig _ "main" t _ <- toList decls] of
     Nothing -> Left MainMissing
     Just ty ->
-      let want = TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")
+      let want = TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))
        in unless (ty == want) (Left (MainWrongType ty))
 
 -- | Reject a fresh list of binders if any of them are already in scope or

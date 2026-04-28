@@ -7,5 +7,5 @@ unwrap m = case m of
   Just s -> "just: " ++ s
   Nothing -> "nothing"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Just "hi") ++ ", " ++ unwrap Nothing)

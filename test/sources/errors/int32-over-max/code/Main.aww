@@ -1,7 +1,7 @@
 -- Error: Int32 literal 1 above upper bound (2^31)
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input
 
 overMax : Int32

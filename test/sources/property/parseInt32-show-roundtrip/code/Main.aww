@@ -5,7 +5,7 @@
 -- discrepancy shows up immediately on the failing backend.
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case parseInt32 raw of
   Left _ -> IO.Stdout.print "PARSE_ERROR"
   Right v -> IO.Stdout.print (showInt32 v)

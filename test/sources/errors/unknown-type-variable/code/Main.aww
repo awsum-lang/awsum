@@ -5,5 +5,5 @@ import IO.Stdout
 
 type X = X a
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input

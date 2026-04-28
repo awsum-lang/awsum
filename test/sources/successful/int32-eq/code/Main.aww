@@ -13,5 +13,5 @@ render b = case b of
 minInt32 : Int32
 minInt32 = -2147483648
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (eqInt32 42 42) ++ render (eqInt32 42 7) ++ render (eqInt32 minInt32 minInt32) ++ render (eqInt32 0 1))

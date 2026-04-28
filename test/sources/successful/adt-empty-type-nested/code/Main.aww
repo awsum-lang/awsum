@@ -11,5 +11,5 @@ unwrap : Result String (Box (Box (Box Never))) -> String
 unwrap r = case r of
   Ok value -> value
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Ok "hello"))

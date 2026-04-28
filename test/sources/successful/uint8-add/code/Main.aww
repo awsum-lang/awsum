@@ -13,5 +13,5 @@ render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (addUInt8 200 55) ++ ", " ++ render (addUInt8 200 56) ++ ", " ++ render (addUInt8 255 255) ++ ", " ++ render (addUInt8 0 0))

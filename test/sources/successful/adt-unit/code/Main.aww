@@ -7,5 +7,5 @@ show : CustomUnit -> String
 show u = case u of
   CustomUnit -> "CustomUnit"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (show CustomUnit)

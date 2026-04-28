@@ -1,7 +1,7 @@
 -- Stress test: chain of 300 non-recursive function calls, each appending its index to the accumulator.
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (f1 "")
 
 f1 : String -> String

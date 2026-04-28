@@ -4,5 +4,5 @@
 -- Haskell compares byte-for-byte).
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = IO.Stdout.print (raw ++ "")

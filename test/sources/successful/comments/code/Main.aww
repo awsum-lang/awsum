@@ -9,7 +9,7 @@ Block comment 2
 
 -- Line comment 3
 
-main : String -> IOUnit -- Signature comment
+main : String -> IO Unit -- Signature comment
 
 -- Line comment 4
 

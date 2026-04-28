@@ -8,5 +8,5 @@ type _A = B | C
 foo : _A -> String
 foo x = "hi"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input

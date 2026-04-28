@@ -16,5 +16,5 @@ showResult r = case r of
   Ok a -> a
   Err e -> e
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Box "from box") ++ " " ++ showResult (unwrap (Box (Ok "nested"))))

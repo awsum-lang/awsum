@@ -11,5 +11,5 @@ showToken token = case token of
   Comma -> ","
   EOF -> "<eof>"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showToken (Word "hello") ++ " " ++ showToken Comma ++ " " ++ showToken (Number "42") ++ " " ++ showToken EOF)

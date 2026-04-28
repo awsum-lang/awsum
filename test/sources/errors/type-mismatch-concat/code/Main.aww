@@ -1,5 +1,5 @@
 -- Error: ++ applied to a function value instead of String
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print ++ input

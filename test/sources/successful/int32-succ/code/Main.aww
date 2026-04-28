@@ -16,5 +16,5 @@ maxInt32 = 2147483647
 ordinary : Int32
 ordinary = 42
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (succInt32 ordinary) ++ ", " ++ render (succInt32 maxInt32))

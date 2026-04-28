@@ -1,3 +1,3 @@
 -- Error: applying a String value as if it were a function
-main : String -> IOUnit
+main : String -> IO Unit
 main input = input input

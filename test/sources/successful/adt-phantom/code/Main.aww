@@ -7,5 +7,5 @@ show : Phantom String -> String
 show p = case p of
   Phantom -> "Phantom"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (show Phantom)

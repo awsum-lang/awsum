@@ -2,5 +2,5 @@
 -- `concat-right-identity` on the other side.
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = IO.Stdout.print ("" ++ raw)

@@ -7,7 +7,7 @@ type Lookup a = Found a | NotFound
 search : String -> Lookup String
 search key = Found ("found:" ++ key)
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (case search "hello" of
   Found v -> v
   NotFound -> "nothing")

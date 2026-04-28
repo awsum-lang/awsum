@@ -1,7 +1,7 @@
 -- Error: UInt8 literal 1 above upper bound (256)
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input
 
 overMax : UInt8

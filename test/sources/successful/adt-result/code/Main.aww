@@ -8,5 +8,5 @@ unwrap r = case r of
   Ok value -> value
   Err value -> value
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Ok "1") ++ "," ++ unwrap (Err "2"))

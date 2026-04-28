@@ -4,7 +4,7 @@ import IO.Stdout
 minUInt8 : UInt8
 minUInt8 = 0
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case parseUInt8 raw of
   Left _ -> IO.Stdout.print "PARSE_ERROR"
   Right x -> case eqUInt8 x minUInt8 of

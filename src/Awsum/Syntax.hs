@@ -142,7 +142,7 @@ data ConDef = ConDef SrcSpan Name [Type']
 data Type'
   = -- | Type variable, e.g. 'a'.
     TyVar SrcSpan Name
-  | -- | Type constructor, e.g. @\"String\"@, @\"IOUnit\"@.
+  | -- | Type constructor, e.g. @\"String\"@, @\"IO\"@.
     TyCon SrcSpan Name
   | -- | Type application, e.g. @Lookup String@.
     TyApp SrcSpan Type' Type'

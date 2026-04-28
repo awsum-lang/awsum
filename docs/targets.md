@@ -583,7 +583,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Binary assembler**: The `.class` file is generated directly in Haskell (`Awsum.Codegen.JVM.Assemble`), with no external tools — no Jasmin, no javac. Only `java` is needed to run. The assembler emits a single `AwsumMain.class` with ~25 JVM instructions.
 
-**Value representation**: All values are `java/lang/Object`. Strings are `java/lang/String` (a subtype of Object). Function references are `java/lang/invoke/MethodHandle`. Integers (`Int32`, `UInt8`) are boxed `java/lang/Integer`. IOUnit is `null`.
+**Value representation**: All values are `java/lang/Object`. Strings are `java/lang/String` (a subtype of Object). Function references are `java/lang/invoke/MethodHandle`. Integers (`Int32`, `UInt8`) are boxed `java/lang/Integer`. `IO Unit` is `null`.
 
 **MethodHandle for higher-order functions**: When a function is used as a value (passed as an argument), it is loaded via `ldc` with a `CONSTANT_MethodHandle` constant pool entry (kind `REF_invokeStatic = 6`). The callee uses `invokevirtual MethodHandle.invoke(...)` for the indirect call. Direct calls to known functions skip the MethodHandle and use `invokestatic` directly.
 
@@ -597,7 +597,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Metadata**: The PE file contains 9 CLR metadata tables (Module, TypeRef, TypeDef, MethodDef, Param, MemberRef, StandAloneSig, TypeSpec, Assembly, AssemblyRef) and 4 metadata heaps (#Strings, #US for user strings in UTF-16LE, #Blob for signatures, #GUID). The StandAloneSig table declares local variables for methods that use `stloc`/`ldloc` (e.g. pattern matching).
 
-**Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. Integers (`Int32`, `UInt8`) are boxed `System.Int32`. IOUnit is `null`.
+**Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. Integers (`Int32`, `UInt8`) are boxed `System.Int32`. `IO Unit` is `null`.
 
 **Func delegates for higher-order functions**: When a function is used as a value (passed as an argument), it is wrapped in a `System.Func` delegate via `ldftn` + `newobj`. The arity determines the generic instantiation: a 1-arg function becomes `Func<object, object>`, a 2-arg function becomes `Func<object, object, object>`, etc. Indirect calls use `callvirt Invoke(...)` on the delegate. Direct calls to known functions use `call` directly — no delegate overhead.
 
@@ -613,7 +613,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **WASI imports**: Three WASI functions are imported from `wasi_snapshot_preview1`: `fd_write` (stdout), `args_sizes_get` and `args_get` (CLI arguments).
 
-**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. Integers (`Int32`, `UInt8`) are pointers to 4-byte heap cells holding the value. IOUnit is `0`.
+**Value representation**: All values are `i32` — pointers into linear memory. Strings are null-terminated byte sequences. Function references are table indices. Integers (`Int32`, `UInt8`) are pointers to 4-byte heap cells holding the value. `IO Unit` is `0`.
 
 **Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
 

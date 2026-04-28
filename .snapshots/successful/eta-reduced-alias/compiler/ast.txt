@@ -2,7 +2,7 @@ Program
     { imports =
         [ ImportDecl
             [ LineComment " Eta-reduced (point-free) alias for a platform effect."
-            , LineComment " @say@ and @print@ both have signature @String -> IOUnit@; @say@ is"
+            , LineComment " @say@ and @print@ both have signature @String -> IO Unit@; @say@ is"
             , LineComment " defined without listing its parameter and reuses @IO.Stdout.print@"
             , LineComment " as its full implementation. The typechecker accepts the zero-param"
             , LineComment " shape because the RHS already carries the full function type, and"
@@ -15,7 +15,7 @@ Program
             { spanStartLine = 9
             , spanStartCol = 1
             , spanEndLine = 9
-            , spanEndCol = 23
+            , spanEndCol = 24
             }
         ) "say"
         ( TyArrow
@@ -23,7 +23,7 @@ Program
                 { spanStartLine = 9
                 , spanStartCol = 7
                 , spanEndLine = 9
-                , spanEndCol = 23
+                , spanEndCol = 24
                 }
             )
             ( TyCon
@@ -35,14 +35,32 @@ Program
                     }
                 ) "String"
             )
-            ( TyCon
+            ( TyApp
                 ( SrcSpan
                     { spanStartLine = 9
                     , spanStartCol = 17
                     , spanEndLine = 9
-                    , spanEndCol = 23
+                    , spanEndCol = 24
                     }
-                ) "IOUnit"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 17
+                        , spanEndLine = 9
+                        , spanEndCol = 19
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 20
+                        , spanEndLine = 9
+                        , spanEndCol = 24
+                        }
+                    ) "Unit"
+                )
             )
         ) Nothing :|
         [ FunDef
@@ -72,7 +90,7 @@ Program
                 { spanStartLine = 12
                 , spanStartCol = 1
                 , spanEndLine = 12
-                , spanEndCol = 24
+                , spanEndCol = 25
                 }
             ) "main"
             ( TyArrow
@@ -80,7 +98,7 @@ Program
                     { spanStartLine = 12
                     , spanStartCol = 8
                     , spanEndLine = 12
-                    , spanEndCol = 24
+                    , spanEndCol = 25
                     }
                 )
                 ( TyCon
@@ -92,14 +110,32 @@ Program
                         }
                     ) "String"
                 )
-                ( TyCon
+                ( TyApp
                     ( SrcSpan
                         { spanStartLine = 12
                         , spanStartCol = 18
                         , spanEndLine = 12
-                        , spanEndCol = 24
+                        , spanEndCol = 25
                         }
-                    ) "IOUnit"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 18
+                            , spanEndLine = 12
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 21
+                            , spanEndLine = 12
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
                 )
             ) Nothing
         , FunDef

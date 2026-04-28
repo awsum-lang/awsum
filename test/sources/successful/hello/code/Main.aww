@@ -1,7 +1,7 @@
 -- Test: basic string concatenation, helper functions, and IO.Stdout.print
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print (addGreeting input)
 
 {- Block comment -}

@@ -8,5 +8,5 @@ import IO.Stdout
 wrongShow : UInt8 -> String
 wrongShow = BuiltIn.showInt32
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input

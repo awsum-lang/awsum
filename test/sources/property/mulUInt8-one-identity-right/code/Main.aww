@@ -2,7 +2,7 @@
 -- mulUInt8.
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case parseUInt8 raw of
   Left _ -> IO.Stdout.print "PARSE_ERROR"
   Right a -> case mulUInt8 a 1 of

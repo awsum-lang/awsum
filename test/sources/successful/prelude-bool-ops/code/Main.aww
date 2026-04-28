@@ -7,5 +7,5 @@ showBool b = case b of
   True -> "T"
   False -> "F"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showBool (not True) ++ showBool (not False) ++ showBool (and True False) ++ showBool (and True True) ++ showBool (or False False) ++ showBool (or True False))

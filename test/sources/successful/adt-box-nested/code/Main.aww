@@ -7,5 +7,5 @@ unwrap : Box (Box (Box String)) -> String
 unwrap b = case b of
   Box (Box (Box value)) -> value
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Box (Box (Box "hello"))))

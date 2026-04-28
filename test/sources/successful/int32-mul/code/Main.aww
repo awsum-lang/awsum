@@ -19,5 +19,5 @@ render r = case r of
 minInt32 : Int32
 minInt32 = -2147483648
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (mulInt32 6 7) ++ ", " ++ render (mulInt32 (-6) 7) ++ ", " ++ render (mulInt32 100000 100000) ++ ", " ++ render (mulInt32 (-100000) 100000) ++ ", " ++ render (mulInt32 minInt32 (-1)) ++ ", " ++ render (mulInt32 minInt32 1))

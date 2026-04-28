@@ -5,7 +5,7 @@
 -- entry point.
 --
 -- All values are @java\/lang\/Object@; strings are @java\/lang\/String@;
--- function references are @java\/lang\/invoke\/MethodHandle@; IOUnit is @null@.
+-- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
 module Awsum.Codegen.JVM.Assemble (assembleJVM) where
 
 import Awsum.Core

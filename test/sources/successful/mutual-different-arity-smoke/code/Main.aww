@@ -28,5 +28,5 @@ parseBinary tok _acc = case tok of
   IDone -> zero
   IStep -> parseExpr IDone
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showInt32 (parseExpr IStep))

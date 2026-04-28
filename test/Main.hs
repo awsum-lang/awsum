@@ -42,7 +42,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : String -> IOUnit",
+              "main : String -> IO Unit",
               "main input = IO.Stdout.print input"
             ]
     case parseProgram src of
@@ -60,7 +60,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : String -> IOUnit",
+              "main : String -> IO Unit",
               "main input = IO.Stdout.print input"
             ]
     case parseProgram src of
@@ -80,14 +80,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print input"
               ]
           expected =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -107,14 +107,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print (input ++ input)"
               ]
           expected =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -143,14 +143,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print input"
               ]
           ast =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -170,14 +170,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print (input ++ input)"
               ]
           ast =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "IOUnit")) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -217,24 +217,24 @@ typecheckerSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print input"
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram ProgramCli p `shouldBe` Right []
+        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p)) `shouldBe` Right []
 
     it "typechecks: print (input ++ input)" $ do
       let src =
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print (input ++ input)"
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram ProgramCli p `shouldBe` Right []
+        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p)) `shouldBe` Right []
 
     it "typechecks a module with no 'main' (library mode)" $ do
       let src =
@@ -269,12 +269,12 @@ typecheckerSpec = do
           Left (MainWrongType _) -> pass
           other -> expectationFailure ("expected MainWrongType, got: " <> show other)
 
-    it "accepts a module with 'main : String -> IOUnit'" $ do
+    it "accepts a module with 'main : String -> IO Unit'" $ do
       let src =
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IOUnit",
+                "main : String -> IO Unit",
                 "main input = IO.Stdout.print input"
               ]
       case parseProgram src of
@@ -288,25 +288,27 @@ elaborateSpec = do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : String -> IOUnit",
+              "main : String -> IO Unit",
               "main input = IO.Stdout.print (input ++ input)"
             ]
     case parseProgram src of
       Left e -> expectationFailure (toString e)
       Right p ->
-        elaborateLowerProgram ProgramCli p
-          `shouldBe` Right
-            ( [],
-              CoreProgram
-                [ CFunDef
-                    "main"
-                    ["input"]
-                    ( CCall
-                        (CBuiltIn "IO.Stdout.print")
-                        [ CCall
-                            (CBuiltIn "concatString")
-                            [CVar "input", CVar "input"]
-                        ]
-                    )
-                ]
-            )
+        case elaborateLowerProgram ProgramCli (withPrelude p) of
+          Left err -> expectationFailure ("expected Right, got: " <> show err)
+          Right (warns, core) ->
+            (stripPreludeWarnings warns, core)
+              `shouldBe` ( [],
+                           CoreProgram
+                             [ CFunDef
+                                 "main"
+                                 ["input"]
+                                 ( CCall
+                                     (CBuiltIn "IO.Stdout.print")
+                                     [ CCall
+                                         (CBuiltIn "concatString")
+                                         [CVar "input", CVar "input"]
+                                     ]
+                                 )
+                             ]
+                         )

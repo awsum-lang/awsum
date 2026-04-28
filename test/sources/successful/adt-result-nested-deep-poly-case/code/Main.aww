@@ -20,5 +20,5 @@ unwrap r = case r of
       Ok value -> value
       Err value -> value
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Ok (Ok (Ok "1"))) ++ "," ++ unwrap (Ok (Ok (Err "2"))) ++ "," ++ unwrap (Ok (Err (Ok "3"))) ++ "," ++ unwrap (Ok (Err (Err "4"))) ++ "," ++ unwrap (Err (Ok (Ok "5"))) ++ "," ++ unwrap (Err (Ok (Err "6"))) ++ "," ++ unwrap (Err (Err (Ok "7"))) ++ "," ++ unwrap (Err (Err (Err "8"))))

@@ -30,4 +30,4 @@ cliPlatformTable =
     ]
   where
     stringTy = TyCon noSpan "String"
-    ioUnitTy = TyCon noSpan "IOUnit"
+    ioUnitTy = TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit")

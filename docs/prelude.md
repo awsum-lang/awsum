@@ -72,7 +72,7 @@ The key is that the built-in table stores types as `Core.Type` values, not as Ha
 ```
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showInt32 42)
 ```
 

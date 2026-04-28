@@ -13,7 +13,7 @@ boolToStr b = case b of
   True -> "T"
   False -> "F"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case splitOnFirst ":" raw of
   Nothing -> IO.Stdout.print "PARSE_ERROR"
   Just t -> case t of

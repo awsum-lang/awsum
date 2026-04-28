@@ -7,7 +7,7 @@ import IO.Stdout
 maxInt32 : Int32
 maxInt32 = 2147483647
 
-main : String -> IOUnit
+main : String -> IO Unit
 main raw = case parseInt32 raw of
   Left _ -> IO.Stdout.print "PARSE_ERROR"
   Right x -> case eqInt32 x maxInt32 of

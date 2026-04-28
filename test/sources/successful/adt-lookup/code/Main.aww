@@ -8,5 +8,5 @@ unwrap x = case x of
   Found value -> value
   NotFound -> "not found"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Found "hello") ++ ", " ++ unwrap NotFound)

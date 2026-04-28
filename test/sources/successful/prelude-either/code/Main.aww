@@ -8,5 +8,5 @@ unwrap r = case r of
   Left e -> "left: " ++ e
   Right v -> "right: " ++ v
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (unwrap (Left "bad") ++ ", " ++ unwrap (Right "good"))
