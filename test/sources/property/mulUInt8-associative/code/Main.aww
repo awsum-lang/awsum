@@ -1,0 +1,38 @@
+-- Property: `mulUInt8 (mulUInt8 a b) c == mulUInt8 a (mulUInt8 b c)`
+-- whenever every intermediate product stays in range. Input format:
+-- "a:b:c" where a, b, c are decimal UInt8 literals. The Haskell-side
+-- generator picks triples constructively from the no-overflow region
+-- (see `NoOverflowMulUInt8Triple` in PropertySpec.hs), so the
+-- OVERFLOW branch is never expected to fire.
+import IO.Stdout
+
+parseTriple : String -> Either ParseError (Tuple3 UInt8 UInt8 UInt8)
+parseTriple raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just t1 -> case t1 of
+    Tuple2 aStr rest -> case splitOnFirst ":" rest of
+      Nothing -> Left ParseError
+      Just t2 -> case t2 of
+        Tuple2 bStr cStr -> case parseUInt8 aStr of
+          Left e -> Left e
+          Right a -> case parseUInt8 bStr of
+            Left e -> Left e
+            Right b -> case parseUInt8 cStr of
+              Left e -> Left e
+              Right c -> Right (Tuple3 a b c)
+
+main : String -> IOUnit
+main raw = case parseTriple raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right t -> case t of
+    Tuple3 a b c -> case mulUInt8 a b of
+      Left _ -> IO.Stdout.print "OVERFLOW"
+      Right ab -> case mulUInt8 ab c of
+        Left _ -> IO.Stdout.print "OVERFLOW"
+        Right abc -> case mulUInt8 b c of
+          Left _ -> IO.Stdout.print "OVERFLOW"
+          Right bc -> case mulUInt8 a bc of
+            Left _ -> IO.Stdout.print "OVERFLOW"
+            Right aBc -> case eqUInt8 abc aBc of
+              True -> IO.Stdout.print "OK"
+              False -> IO.Stdout.print ("FAIL: " ++ showUInt8 abc ++ " /= " ++ showUInt8 aBc)

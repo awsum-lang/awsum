@@ -1,0 +1,16 @@
+-- Property: `succInt32 (predInt32 x) == Right x` for every Int32 with
+-- `x /= minInt32`. Input: a single decimal Int32. The Haskell-side
+-- generator excludes minInt32, so neither pred nor succ should fail
+-- on a well-formed input.
+import IO.Stdout
+
+main : String -> IOUnit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right x -> case predInt32 x of
+    Left _ -> IO.Stdout.print "UNDERFLOW"
+    Right p -> case succInt32 p of
+      Left _ -> IO.Stdout.print "OVERFLOW"
+      Right s -> case eqInt32 s x of
+        True -> IO.Stdout.print "OK"
+        False -> IO.Stdout.print ("FAIL: " ++ showInt32 s ++ " /= " ++ showInt32 x)

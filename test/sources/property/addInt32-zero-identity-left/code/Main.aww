@@ -1,0 +1,13 @@
+-- Property: `addInt32 0 a == Right a` for every Int32. Input: a single
+-- decimal Int32 literal. Adding 0 is always in range, so OVERFLOW
+-- cannot fire on a well-formed input.
+import IO.Stdout
+
+main : String -> IOUnit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right a -> case addInt32 0 a of
+    Left _ -> IO.Stdout.print "OVERFLOW"
+    Right res -> case eqInt32 res a of
+      True -> IO.Stdout.print "OK"
+      False -> IO.Stdout.print ("FAIL: " ++ showInt32 res ++ " /= " ++ showInt32 a)

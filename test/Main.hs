@@ -10,6 +10,7 @@ import Awsum.Parser (parseProgram)
 import Awsum.Prelude (preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.Program (ProgramType (..))
 import Awsum.ProgramSnapshotsSpec qualified
+import Awsum.PropertySpec qualified
 import Awsum.Render (renderProgram)
 import Awsum.Syntax
 import Awsum.Typing (TypeError (..), requireMain, typecheckProgram)
@@ -27,6 +28,7 @@ main = hspec $ do
   Awsum.ProgramSnapshotsSpec.spec
   Awsum.FormattingSnapshotsSpec.spec
   Awsum.ErrorSnapshotsSpec.spec
+  Awsum.PropertySpec.spec
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do

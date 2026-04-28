@@ -1,0 +1,25 @@
+-- Property: when (a, b) is a no-overflow pair, `addInt32 a b ==
+-- Right (a + b)` with the result agreeing byte-for-byte with what
+-- Haskell's i32 addition produces. Stronger than commutativity:
+-- closes the "all backends agree but every backend agrees on the
+-- wrong value" gap. Awsum prints the computed sum as a decimal
+-- string; Haskell expects `show (a + b)`.
+import IO.Stdout
+
+parsePair : String -> Either ParseError (Tuple2 Int32 Int32)
+parsePair raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just t -> case t of
+    Tuple2 aStr bStr -> case parseInt32 aStr of
+      Left e -> Left e
+      Right a -> case parseInt32 bStr of
+        Left e -> Left e
+        Right b -> Right (Tuple2 a b)
+
+main : String -> IOUnit
+main raw = case parsePair raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right t -> case t of
+    Tuple2 a b -> case addInt32 a b of
+      Left _ -> IO.Stdout.print "OVERFLOW"
+      Right r -> IO.Stdout.print (showInt32 r)

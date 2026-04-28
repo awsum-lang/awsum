@@ -1,0 +1,24 @@
+-- Property: `not (and a b) == or (not a) (not b)`. Output is
+-- `boolToStr (not (and a b)) ++ boolToStr (or (not a) (not b))` —
+-- both halves should equal Haskell's `not (a && b)` byte-for-byte.
+import IO.Stdout
+
+intToBool : UInt8 -> Bool
+intToBool n = case eqUInt8 n 0 of
+  True -> False
+  False -> True
+
+boolToStr : Bool -> String
+boolToStr b = case b of
+  True -> "T"
+  False -> "F"
+
+main : String -> IOUnit
+main raw = case splitOnFirst ":" raw of
+  Nothing -> IO.Stdout.print "PARSE_ERROR"
+  Just t -> case t of
+    Tuple2 sa sb -> case parseUInt8 sa of
+      Left _ -> IO.Stdout.print "PARSE_ERROR"
+      Right na -> case parseUInt8 sb of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right nb -> IO.Stdout.print (boolToStr (not (and (intToBool na) (intToBool nb))) ++ boolToStr (or (not (intToBool na)) (not (intToBool nb))))

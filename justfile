@@ -11,13 +11,18 @@ lint-fix:
   # `hlint: Refactor flag can only be used with an individual file`
   find . -name '*.hs' | xargs -L1 hlint --refactor --refactor-options="--inplace"
 
-# Run tests
+# Run tests (excludes property tests — use `just test-property` for those)
 test:
-  stack test --pedantic
+  stack test --pedantic --ta '--skip "Property tests"'
   @echo "\n\n✅ Test completed!\n\n"
 
 test-watch:
-  stack test --pedantic --file-watch
+  stack test --pedantic --file-watch --ta '--skip "Property tests"'
+
+# Run only property-based tests (slow: spawns 5 backends per generated input)
+test-property:
+  stack test --pedantic --ta '--match "Property tests"'
+  @echo "\n\n✅ Property tests completed!\n\n"
 
 # Clean build artefacts (may help with weird compilation issues)
 clean:
@@ -101,3 +106,4 @@ fix:
   # just weeder # disabled because this tool is not configured well enough to be used in precommit yet.
   echo "Test..."
   just test
+  just test-property

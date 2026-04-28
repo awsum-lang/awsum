@@ -1,0 +1,8 @@
+-- Property: `s ++ "" == s` for every String. The Haskell side hands
+-- back the input unchanged as the expected output, so this is an
+-- expectedOutput-style property (Awsum prints the computed value;
+-- Haskell compares byte-for-byte).
+import IO.Stdout
+
+main : String -> IOUnit
+main raw = IO.Stdout.print (raw ++ "")

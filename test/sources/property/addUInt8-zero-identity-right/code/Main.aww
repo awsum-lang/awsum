@@ -1,0 +1,12 @@
+-- Property: `addUInt8 a 0 == Right a`. Right-identity of zero under
+-- addUInt8.
+import IO.Stdout
+
+main : String -> IOUnit
+main raw = case parseUInt8 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right a -> case addUInt8 a 0 of
+    Left _ -> IO.Stdout.print "OVERFLOW"
+    Right res -> case eqUInt8 res a of
+      True -> IO.Stdout.print "OK"
+      False -> IO.Stdout.print ("FAIL: " ++ showUInt8 res ++ " /= " ++ showUInt8 a)

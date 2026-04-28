@@ -1,0 +1,26 @@
+-- Property: `addUInt8 a b == addUInt8 b a` whenever the sum stays in
+-- 0..255. Input: "a:b" with a, b decimal UInt8 literals. The
+-- Haskell-side generator picks no-overflow pairs constructively.
+import IO.Stdout
+
+parsePair : String -> Either ParseError (Tuple2 UInt8 UInt8)
+parsePair raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just t -> case t of
+    Tuple2 aStr bStr -> case parseUInt8 aStr of
+      Left e -> Left e
+      Right a -> case parseUInt8 bStr of
+        Left e -> Left e
+        Right b -> Right (Tuple2 a b)
+
+main : String -> IOUnit
+main raw = case parsePair raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right t -> case t of
+    Tuple2 a b -> case addUInt8 a b of
+      Left _ -> IO.Stdout.print "OVERFLOW"
+      Right ab -> case addUInt8 b a of
+        Left _ -> IO.Stdout.print "OVERFLOW"
+        Right ba -> case eqUInt8 ab ba of
+          True -> IO.Stdout.print "OK"
+          False -> IO.Stdout.print ("FAIL: " ++ showUInt8 ab ++ " /= " ++ showUInt8 ba)

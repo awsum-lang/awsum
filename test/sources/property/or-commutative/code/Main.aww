@@ -1,0 +1,22 @@
+-- Property: `or a b == or b a`. Same shape as `and-commutative`.
+import IO.Stdout
+
+intToBool : UInt8 -> Bool
+intToBool n = case eqUInt8 n 0 of
+  True -> False
+  False -> True
+
+boolToStr : Bool -> String
+boolToStr b = case b of
+  True -> "T"
+  False -> "F"
+
+main : String -> IOUnit
+main raw = case splitOnFirst ":" raw of
+  Nothing -> IO.Stdout.print "PARSE_ERROR"
+  Just t -> case t of
+    Tuple2 sa sb -> case parseUInt8 sa of
+      Left _ -> IO.Stdout.print "PARSE_ERROR"
+      Right na -> case parseUInt8 sb of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right nb -> IO.Stdout.print (boolToStr (or (intToBool na) (intToBool nb)) ++ boolToStr (or (intToBool nb) (intToBool na)))

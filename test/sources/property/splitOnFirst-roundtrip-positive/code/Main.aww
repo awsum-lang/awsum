@@ -1,0 +1,16 @@
+-- Property: if `splitOnFirst sep s == Just (Tuple2 a b)`, then
+-- `a ++ sep ++ b == s`. Input: "sep:s" where sep is non-empty and
+-- contains only chars disjoint from s's alphabet, but s itself has
+-- been constructed Haskell-side as `a ++ sep ++ b` so the split is
+-- guaranteed to find a match. Output: the round-tripped string —
+-- Haskell compares byte-for-byte against `s`.
+import IO.Stdout
+
+main : String -> IOUnit
+main raw = case splitOnFirst ":" raw of
+  Nothing -> IO.Stdout.print "PARSE_ERROR"
+  Just t1 -> case t1 of
+    Tuple2 sep s -> case splitOnFirst sep s of
+      Nothing -> IO.Stdout.print "NO_MATCH"
+      Just t2 -> case t2 of
+        Tuple2 a b -> IO.Stdout.print (a ++ sep ++ b)

@@ -1,0 +1,19 @@
+-- Property: `succInt32 x` fails (returns `Left _`) iff `x == maxInt32`.
+-- Both branches must be exercised, so the Haskell-side generator
+-- biases towards `maxInt32` via QuickCheck `frequency` (~10% chance)
+-- to give the failure branch enough hits in N=20 runs.
+import IO.Stdout
+
+maxInt32 : Int32
+maxInt32 = 2147483647
+
+main : String -> IOUnit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right x -> case eqInt32 x maxInt32 of
+    True -> case succInt32 x of
+      Left _ -> IO.Stdout.print "OK"
+      Right _ -> IO.Stdout.print "FAIL: succ at max should fail"
+    False -> case succInt32 x of
+      Left _ -> IO.Stdout.print "FAIL: succ below max should succeed"
+      Right _ -> IO.Stdout.print "OK"

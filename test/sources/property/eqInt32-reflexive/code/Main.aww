@@ -1,0 +1,10 @@
+-- Property: `eqInt32 a a == True` for every Int32. Input: a single
+-- decimal Int32 literal.
+import IO.Stdout
+
+main : String -> IOUnit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right a -> case eqInt32 a a of
+    True -> IO.Stdout.print "OK"
+    False -> IO.Stdout.print ("FAIL: " ++ showInt32 a ++ " /= " ++ showInt32 a)
