@@ -171,13 +171,13 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_render (export "v_render") (param $v_r i32) (result i32)
+  (func $v_render (param $v_r i32) (result i32)
     (local $v___w0 i32)
     (local $v_v i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (i32.const 65)) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 69) (call $__show_i32 (local.get $v_v)))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_render (call $__parseUInt8 (i32.const 73))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 78)))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 82)))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 86)))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 64)))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 89)))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 93)))) (i32.const 75)) (call $v_render (call $__parseUInt8 (i32.const 96))))))
 
   (func $_start (export "_start")

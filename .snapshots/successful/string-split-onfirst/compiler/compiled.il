@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
+  .method private hidebysig static object __concat(object, object) cil managed
   {
     ldarg.0
     ldarg.1
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -30,7 +30,7 @@
     ret
   }
 
-  .method public hidebysig static object __splitOnFirst(object, object) cil managed
+  .method private hidebysig static object __splitOnFirst(object, object) cil managed
   {
     .maxstack 5
     .locals init (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)
@@ -98,7 +98,7 @@
     ret
   }
 
-  .method public hidebysig static object v_render(object) cil managed
+  .method private hidebysig static object v_render(object) cil managed
   {
     ldarg.0
     dup
@@ -149,7 +149,7 @@
   }
 
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldstr ","
     ldstr "a,b,c"
@@ -208,7 +208,7 @@
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

@@ -13,7 +13,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.str.0 = private unnamed_addr constant [3 x i8] c", \00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -25,13 +25,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showUInt8(ptr %p) {
+define internal ptr @__showUInt8(ptr %p) {
   %b = load i8, ptr %p
   %v = zext i8 %b to i32
   %buf = call ptr @malloc(i64 16)
@@ -40,7 +40,7 @@ define ptr @__showUInt8(ptr %p) {
 }
 
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_minUInt8()
   %t1 = call ptr @__showUInt8(ptr %t0)
   %t2 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
@@ -62,25 +62,25 @@ define ptr @v_main(ptr %v__input) {
   ret ptr %t17
 }
 
-define ptr @v_minUInt8() {
+define internal ptr @v_minUInt8() {
   %t0 = call ptr @malloc(i64 1)
   store i8 0, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_small() {
+define internal ptr @v_small() {
   %t0 = call ptr @malloc(i64 1)
   store i8 42, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_aboveSignedByte() {
+define internal ptr @v_aboveSignedByte() {
   %t0 = call ptr @malloc(i64 1)
   store i8 200, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_maxUInt8() {
+define internal ptr @v_maxUInt8() {
   %t0 = call ptr @malloc(i64 1)
   store i8 255, ptr %t0
   ret ptr %t0

@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
+  .method private hidebysig static object __concat(object, object) cil managed
   {
     ldarg.0
     ldarg.1
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -30,7 +30,7 @@
     ret
   }
 
-  .method public hidebysig static object __predInt32(object) cil managed
+  .method private hidebysig static object __predInt32(object) cil managed
   {
     .maxstack 5
     .locals init (int32 V_0, object V_1)
@@ -78,7 +78,7 @@
     ret
   }
 
-  .method public hidebysig static object __eqInt32(object, object) cil managed
+  .method private hidebysig static object __eqInt32(object, object) cil managed
   {
     .maxstack 5
     ldarg.0
@@ -105,14 +105,14 @@
     ret
   }
 
-  .method public hidebysig static object v_showUnderflowError(object) cil managed
+  .method private hidebysig static object v_showUnderflowError(object) cil managed
   {
     ldstr "UnderflowError"
     ret
   }
 
 
-  .method public hidebysig static object v_zero() cil managed
+  .method private hidebysig static object v_zero() cil managed
   {
     ldc.i4 0
     box [System.Runtime]System.Int32
@@ -120,7 +120,7 @@
   }
 
 
-  .method public hidebysig static object v_showBool(object) cil managed
+  .method private hidebysig static object v_showBool(object) cil managed
   {
     ldarg.0
     dup
@@ -141,7 +141,7 @@
   }
 
 
-  .method public hidebysig static object v_showResult(object) cil managed
+  .method private hidebysig static object v_showResult(object) cil managed
   {
     ldarg.0
     dup
@@ -176,7 +176,7 @@
   }
 
 
-  .method public hidebysig static object v_start() cil managed
+  .method private hidebysig static object v_start() cil managed
   {
     ldc.i4 1000000
     box [System.Runtime]System.Int32
@@ -184,7 +184,7 @@
   }
 
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     call object AwsumMain::v_start()
     call object AwsumMain::v_evenInt(object)
@@ -194,7 +194,7 @@
   }
 
 
-  .method public hidebysig static object v__scc_evenInt_oddInt(object) cil managed
+  .method private hidebysig static object v__scc_evenInt_oddInt(object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -366,7 +366,7 @@
   }
 
 
-  .method public hidebysig static object v_evenInt(object) cil managed
+  .method private hidebysig static object v_evenInt(object) cil managed
   {
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -383,7 +383,7 @@
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

@@ -166,14 +166,14 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_render (export "v_render") (param $v_r i32) (result i32)
+  (func $v_render (param $v_r i32) (result i32)
     (local $v_a i32)
     (local $v_b i32)
     (local $v_t i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (local.set $v_t (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_t)) (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (local.set $v_b (i32.load offset=8 (local.get $__scrut))) (call $__concat (call $__concat (call $__concat (call $__concat (i32.const 73) (local.get $v_a)) (i32.const 79)) (local.get $v_b)) (i32.const 81)))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_render (call $__splitOnFirst (i32.const 83) (i32.const 85))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 94) (i32.const 97)))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 113) (i32.const 115)))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 64) (i32.const 115)))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 119) (i32.const 121)))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 119) (i32.const 126)))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 115) (i32.const 115)))) (i32.const 91)) (call $v_render (call $__splitOnFirst (i32.const 131) (i32.const 137))))))
 
   (func $_start (export "_start")

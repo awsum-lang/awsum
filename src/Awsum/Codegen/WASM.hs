@@ -1016,9 +1016,7 @@ emitDecl ctx = \case
             ]
      in "  (func $"
           <> mangle nm
-          <> " (export \""
-          <> mangle nm
-          <> "\") "
+          <> " "
           <> wasmParams
           <> " (result i32)"
           <> locals
@@ -1033,9 +1031,7 @@ emitDecl ctx = \case
         locals = collectLocals body
      in "  (func $"
           <> mangle nm
-          <> " (export \""
-          <> mangle nm
-          <> "\") "
+          <> " "
           <> wasmParams
           <> " (result i32)"
           <> locals
@@ -1047,9 +1043,7 @@ emitDecl ctx = \case
         locals = collectLocals rhs
      in "  (func $"
           <> mangle nm
-          <> " (export \""
-          <> mangle nm
-          <> "\") (result i32)"
+          <> " (result i32)"
           <> locals
           <> "\n    "
           <> emitExpr localCtx rhs

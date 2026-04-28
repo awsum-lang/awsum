@@ -148,22 +148,22 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_showOverflowError (export "v_showOverflowError") (param $v__wild0 i32) (result i32)
+  (func $v_showOverflowError (param $v__wild0 i32) (result i32)
     (i32.const 65))
 
-  (func $v_render (export "v_render") (param $v_r i32) (result i32)
+  (func $v_render (param $v_r i32) (result i32)
     (local $v_e i32)
     (local $v_v i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 79) (call $v_showOverflowError (local.get $v_e)))) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 90) (call $__show_i32 (local.get $v_v)))))))
 
-  (func $v_maxInt32 (export "v_maxInt32") (result i32)
+  (func $v_maxInt32 (result i32)
     (call $__box_i32 (i32.const 2147483647)))
 
-  (func $v_ordinary (export "v_ordinary") (result i32)
+  (func $v_ordinary (result i32)
     (call $__box_i32 (i32.const 42)))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $v_render (call $__succInt32 (call $v_ordinary))) (i32.const 95)) (call $v_render (call $__succInt32 (call $v_maxInt32))))))
 
   (func $_start (export "_start")

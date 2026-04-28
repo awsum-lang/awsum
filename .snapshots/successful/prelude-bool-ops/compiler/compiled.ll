@@ -14,7 +14,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.0 = private unnamed_addr constant [2 x i8] c"T\00"
 @.str.1 = private unnamed_addr constant [2 x i8] c"F\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -26,13 +26,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_not(ptr %v_b) {
+define internal ptr @v_not(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -60,7 +60,7 @@ case.join.4:
   ret ptr %t15
 }
 
-define ptr @v_and(ptr %v_a, ptr %v_b) {
+define internal ptr @v_and(ptr %v_a, ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_a, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -84,7 +84,7 @@ case.join.4:
   ret ptr %t12
 }
 
-define ptr @v_or(ptr %v_a, ptr %v_b) {
+define internal ptr @v_or(ptr %v_a, ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_a, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -108,7 +108,7 @@ case.join.4:
   ret ptr %t12
 }
 
-define ptr @v_showBool(ptr %v_b) {
+define internal ptr @v_showBool(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -130,7 +130,7 @@ case.join.4:
   ret ptr %t11
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

@@ -12,18 +12,18 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.empty = private unnamed_addr constant [1 x i8] c"\00"
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_say(ptr %v__eta0) {
+define internal ptr @v_say(ptr %v__eta0) {
   %t0 = call ptr @__print(ptr %v__eta0)
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v_input) {
+define internal ptr @v_main(ptr %v_input) {
   %t0 = call ptr @v_say(ptr %v_input)
   ret ptr %t0
 }

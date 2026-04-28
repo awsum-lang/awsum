@@ -187,13 +187,13 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_render (export "v_render") (param $v_r i32) (result i32)
+  (func $v_render (param $v_r i32) (result i32)
     (local $v___w0 i32)
     (local $v_v i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (i32.const 65)) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 69) (call $__show_i32 (local.get $v_v)))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_render (call $__parseInt32 (i32.const 73))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 79)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 83)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 85)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 96)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 108)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 119)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 64)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 131)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 133)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 137)))) (i32.const 76)) (call $v_render (call $__parseInt32 (i32.const 141))))))
 
   (func $_start (export "_start")

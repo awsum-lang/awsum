@@ -88,22 +88,22 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_colorName (export "v_colorName") (param $v_c i32) (result i32)
+  (func $v_colorName (param $v_c i32) (result i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_c)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (i32.const 69)) (else (i32.const 75)))))))
 
-  (func $v_showBoxedColor (export "v_showBoxedColor") (param $v_bc i32) (result i32)
+  (func $v_showBoxedColor (param $v_bc i32) (result i32)
     (local $v_c i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_bc)) (local.set $v_c (i32.load offset=4 (local.get $__scrut))) (call $v_colorName (local.get $v_c))))
 
-  (func $v_showResult (export "v_showResult") (param $v_r i32) (result i32)
+  (func $v_showResult (param $v_r i32) (result i32)
     (local $v_box i32)
     (local $v_e i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_box (i32.load offset=4 (local.get $__scrut))) (call $v_showBoxedColor (local.get $v_box))) (else (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (local.get $v_e)))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)

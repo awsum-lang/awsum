@@ -18,7 +18,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.4 = private unnamed_addr constant [2 x i8] c"b\00"
 @.str.5 = private unnamed_addr constant [2 x i8] c"c\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -30,13 +30,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_map(ptr %v_f, ptr %v_list) {
+define internal ptr @v_map(ptr %v_f, ptr %v_list) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -45,7 +45,7 @@ define ptr @v_map(ptr %v_f, ptr %v_list) {
   ret ptr %t3
 }
 
-define ptr @v__cps_map(ptr %v_f, ptr %v_list, ptr %v__k) {
+define internal ptr @v__cps_map(ptr %v_f, ptr %v_list, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_f, ptr %t3
@@ -97,7 +97,7 @@ tco.exit.1:
   ret ptr %t29
 }
 
-define ptr @v__apply_map(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply_map(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -141,7 +141,7 @@ tco.exit.1:
   ret ptr %t25
 }
 
-define ptr @v_show(ptr %v_xs) {
+define internal ptr @v_show(ptr %v_xs) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -150,7 +150,7 @@ define ptr @v_show(ptr %v_xs) {
   ret ptr %t3
 }
 
-define ptr @v__cps_show(ptr %v_xs, ptr %v__k) {
+define internal ptr @v__cps_show(ptr %v_xs, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_xs, ptr %t3
@@ -193,7 +193,7 @@ tco.exit.1:
   ret ptr %t24
 }
 
-define ptr @v__apply_show(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply_show(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -229,13 +229,13 @@ tco.exit.1:
   ret ptr %t20
 }
 
-define ptr @v_shout(ptr %v_s) {
+define internal ptr @v_shout(ptr %v_s) {
   %t0 = getelementptr [2 x i8], ptr @.str.2, i64 0, i64 0
   %t1 = call ptr @__concat(ptr %v_s, ptr %t0)
   ret ptr %t1
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 24)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

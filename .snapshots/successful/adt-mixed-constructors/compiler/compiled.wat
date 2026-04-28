@@ -91,13 +91,13 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_showToken (export "v_showToken") (param $v_token i32) (result i32)
+  (func $v_showToken (param $v_token i32) (result i32)
     (local $v_n i32)
     (local $v_w i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_token)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_w (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 65) (local.get $v_w))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v_n (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 71) (local.get $v_n))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (i32.const 76)) (else (i32.const 78)))))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_showToken (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 84)) (local.get $__con_0))) (i32.const 90)) (call $v_showToken (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 2)) (local.get $__con_0)))) (i32.const 90)) (call $v_showToken (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (i32.const 92)) (local.get $__con_0)))) (i32.const 90)) (call $v_showToken (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 3)) (local.get $__con_0))))))
 

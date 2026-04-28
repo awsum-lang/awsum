@@ -112,7 +112,7 @@ classClose = "}"
 initMethod :: Text
 initMethod =
   unlines
-    [ "  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed",
+    [ "  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed",
       "  {",
       "    ldarg.0",
       "    call instance void [System.Runtime]System.Object::.ctor()",
@@ -123,7 +123,7 @@ initMethod =
 concatMethod :: Text
 concatMethod =
   unlines
-    [ "  .method public hidebysig static object __concat(object, object) cil managed",
+    [ "  .method private hidebysig static object __concat(object, object) cil managed",
       "  {",
       "    ldarg.0",
       "    ldarg.1",
@@ -135,7 +135,7 @@ concatMethod =
 printMethod :: Text
 printMethod =
   unlines
-    [ "  .method public hidebysig static object __print(object) cil managed",
+    [ "  .method private hidebysig static object __print(object) cil managed",
       "  {",
       "    ldarg.0",
       "    call void [System.Console]System.Console::Write(object)",
@@ -151,7 +151,7 @@ printMethod =
 predInt32Method :: Text
 predInt32Method =
   unlines
-    [ "  .method public hidebysig static object __predInt32(object) cil managed",
+    [ "  .method private hidebysig static object __predInt32(object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (int32 V_0, object V_1)",
@@ -209,7 +209,7 @@ predInt32Method =
 predUInt8Method :: Text
 predUInt8Method =
   unlines
-    [ "  .method public hidebysig static object __predUInt8(object) cil managed",
+    [ "  .method private hidebysig static object __predUInt8(object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (int32 V_0, object V_1)",
@@ -266,7 +266,7 @@ predUInt8Method =
 succInt32Method :: Text
 succInt32Method =
   unlines
-    [ "  .method public hidebysig static object __succInt32(object) cil managed",
+    [ "  .method private hidebysig static object __succInt32(object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (int32 V_0, object V_1)",
@@ -323,7 +323,7 @@ succInt32Method =
 succUInt8Method :: Text
 succUInt8Method =
   unlines
-    [ "  .method public hidebysig static object __succUInt8(object) cil managed",
+    [ "  .method private hidebysig static object __succUInt8(object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (int32 V_0, object V_1)",
@@ -380,7 +380,7 @@ succUInt8Method =
 eqMethod :: Text -> Text -> Text
 eqMethod name lbl =
   unlines
-    [ "  .method public hidebysig static object " <> name <> "(object, object) cil managed",
+    [ "  .method private hidebysig static object " <> name <> "(object, object) cil managed",
       "  {",
       "    .maxstack 5",
       "    ldarg.0",
@@ -418,7 +418,7 @@ eqMethod name lbl =
 addInt32Method :: Text
 addInt32Method =
   unlines
-    [ "  .method public hidebysig static object __addInt32(object, object) cil managed",
+    [ "  .method private hidebysig static object __addInt32(object, object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
@@ -509,7 +509,7 @@ addInt32Method =
 addUInt8Method :: Text
 addUInt8Method =
   unlines
-    [ "  .method public hidebysig static object __addUInt8(object, object) cil managed",
+    [ "  .method private hidebysig static object __addUInt8(object, object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (int32 V_0, object V_1)",
@@ -568,7 +568,7 @@ addUInt8Method =
 subInt32Method :: Text
 subInt32Method =
   unlines
-    [ "  .method public hidebysig static object __subInt32(object, object) cil managed",
+    [ "  .method private hidebysig static object __subInt32(object, object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
@@ -661,7 +661,7 @@ subInt32Method =
 mulInt32Method :: Text
 mulInt32Method =
   unlines
-    [ "  .method public hidebysig static object __mulInt32(object, object) cil managed",
+    [ "  .method private hidebysig static object __mulInt32(object, object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (int32 V_0, int32 V_1, int64 V_2, object V_3)",
@@ -751,7 +751,7 @@ mulInt32Method =
 negInt32Method :: Text
 negInt32Method =
   unlines
-    [ "  .method public hidebysig static object __negInt32(object) cil managed",
+    [ "  .method private hidebysig static object __negInt32(object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (int32 V_0, object V_1)",
@@ -806,7 +806,7 @@ negInt32Method =
 subUInt8Method :: Text
 subUInt8Method =
   unlines
-    [ "  .method public hidebysig static object __subUInt8(object, object) cil managed",
+    [ "  .method private hidebysig static object __subUInt8(object, object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (int32 V_0, object V_1)",
@@ -863,7 +863,7 @@ subUInt8Method =
 mulUInt8Method :: Text
 mulUInt8Method =
   unlines
-    [ "  .method public hidebysig static object __mulUInt8(object, object) cil managed",
+    [ "  .method private hidebysig static object __mulUInt8(object, object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (int32 V_0, object V_1)",
@@ -921,7 +921,7 @@ mulUInt8Method =
 parseInt32Method :: Text
 parseInt32Method =
   unlines
-    [ "  .method public hidebysig static object __parseInt32(object) cil managed",
+    [ "  .method private hidebysig static object __parseInt32(object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int64 V_4, int32 V_5, object V_6)",
@@ -1046,7 +1046,7 @@ parseInt32Method =
 parseUInt8Method :: Text
 parseUInt8Method =
   unlines
-    [ "  .method public hidebysig static object __parseUInt8(object) cil managed",
+    [ "  .method private hidebysig static object __parseUInt8(object) cil managed",
       "  {",
       "    .maxstack 4",
       "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int32 V_4, object V_5)",
@@ -1140,7 +1140,7 @@ parseUInt8Method =
 splitOnFirstMethod :: Text
 splitOnFirstMethod =
   unlines
-    [ "  .method public hidebysig static object __splitOnFirst(object, object) cil managed",
+    [ "  .method private hidebysig static object __splitOnFirst(object, object) cil managed",
       "  {",
       "    .maxstack 5",
       "    .locals init (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)",
@@ -1212,7 +1212,7 @@ splitOnFirstMethod =
 mainMethod :: Text
 mainMethod =
   unlines
-    [ "  .method public hidebysig static void Main(string[]) cil managed",
+    [ "  .method private hidebysig static void Main(string[]) cil managed",
       "  {",
       "    .entrypoint",
       "    ldarg.0",
@@ -1251,7 +1251,7 @@ emitDecl ctx = \case
         desc = objMethodDesc (length args)
         bodyText = emitTailText ctx varMap args body
      in unlines
-          [ "  .method public hidebysig static object " <> mangle nm <> desc <> " cil managed",
+          [ "  .method private hidebysig static object " <> mangle nm <> desc <> " cil managed",
             "  {",
             "  IL_tco_loop:",
             bodyText,
@@ -1262,7 +1262,7 @@ emitDecl ctx = \case
         desc = objMethodDesc (length args)
         bodyText = emitExprText ctx varMap body
      in unlines
-          [ "  .method public hidebysig static object " <> mangle nm <> desc <> " cil managed",
+          [ "  .method private hidebysig static object " <> mangle nm <> desc <> " cil managed",
             "  {",
             bodyText,
             "    ret",
@@ -1271,7 +1271,7 @@ emitDecl ctx = \case
   CValDef nm rhs ->
     let bodyText = emitExprText ctx Map.empty rhs
      in unlines
-          [ "  .method public hidebysig static object " <> mangle nm <> "() cil managed",
+          [ "  .method private hidebysig static object " <> mangle nm <> "() cil managed",
             "  {",
             bodyText,
             "    ret",

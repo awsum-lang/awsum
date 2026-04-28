@@ -18,7 +18,7 @@ declare {i32, i1} @llvm.ssub.with.overflow.i32(i32, i32)
 @.str.3 = private unnamed_addr constant [5 x i8] c"ok: \00"
 @.str.4 = private unnamed_addr constant [3 x i8] c", \00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -30,13 +30,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showInt32(ptr %p) {
+define internal ptr @__showInt32(ptr %p) {
   %v = load i32, ptr %p
   %buf = call ptr @malloc(i64 16)
   call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
@@ -44,7 +44,7 @@ define ptr @__showInt32(ptr %p) {
 }
 
 
-define ptr @__subInt32(ptr %pa, ptr %pb) {
+define internal ptr @__subInt32(ptr %pa, ptr %pb) {
   %a = load i32, ptr %pa
   %b = load i32, ptr %pb
   %res = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %a, i32 %b)
@@ -75,7 +75,7 @@ ok:
 }
 
 
-define ptr @v_showArithError(ptr %v_e) {
+define internal ptr @v_showArithError(ptr %v_e) {
   %t0 = getelementptr ptr, ptr %v_e, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -97,7 +97,7 @@ case.join.4:
   ret ptr %t11
 }
 
-define ptr @v_render(ptr %v_r) {
+define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -127,19 +127,19 @@ case.join.4:
   ret ptr %t19
 }
 
-define ptr @v_maxInt32() {
+define internal ptr @v_maxInt32() {
   %t0 = call ptr @malloc(i64 4)
   store i32 2147483647, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_minInt32() {
+define internal ptr @v_minInt32() {
   %t0 = call ptr @malloc(i64 4)
   store i32 -2147483648, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 4)
   store i32 100, ptr %t0
   %t1 = call ptr @malloc(i64 4)

@@ -13,18 +13,18 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.str.0 = private unnamed_addr constant [5 x i8] c"Unit\00"
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_showUnit(ptr %v__wild0) {
+define internal ptr @v_showUnit(ptr %v__wild0) {
   %t0 = getelementptr [5 x i8], ptr @.str.0, i64 0, i64 0
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

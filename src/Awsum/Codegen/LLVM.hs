@@ -231,7 +231,7 @@ runtime builtIns =
       ]
     rtConcat =
       unlines
-        [ "define ptr @__concat(ptr %a, ptr %b) {",
+        [ "define internal ptr @__concat(ptr %a, ptr %b) {",
           "  %la = call i64 @strlen(ptr %a)",
           "  %lb = call i64 @strlen(ptr %b)",
           "  %sum = add i64 %la, %lb",
@@ -244,7 +244,7 @@ runtime builtIns =
         ]
     rtPrint =
       unlines
-        [ "define ptr @__print(ptr %s) {",
+        [ "define internal ptr @__print(ptr %s) {",
           "  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)",
           "  ret ptr null",
           "}"
@@ -255,7 +255,7 @@ runtime builtIns =
     -- (enough for @-2147483648@ / @255@ plus a null terminator).
     rtShowInt32 =
       unlines
-        [ "define ptr @__showInt32(ptr %p) {",
+        [ "define internal ptr @__showInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
           "  %buf = call ptr @malloc(i64 16)",
           "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)",
@@ -264,7 +264,7 @@ runtime builtIns =
         ]
     rtShowUInt8 =
       unlines
-        [ "define ptr @__showUInt8(ptr %p) {",
+        [ "define internal ptr @__showUInt8(ptr %p) {",
           "  %b = load i8, ptr %p",
           "  %v = zext i8 %b to i32",
           "  %buf = call ptr @malloc(i64 16)",
@@ -279,7 +279,7 @@ runtime builtIns =
     --   same as user CCon emission.
     rtPredInt32 =
       unlines
-        [ "define ptr @__predInt32(ptr %p) {",
+        [ "define internal ptr @__predInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
           "  %is_min = icmp eq i32 %v, -2147483648",
           "  br i1 %is_min, label %overflow, label %ok",
@@ -311,7 +311,7 @@ runtime builtIns =
     --   underflow is impossible on this path since v >= 1.
     rtPredUInt8 =
       unlines
-        [ "define ptr @__predUInt8(ptr %p) {",
+        [ "define internal ptr @__predUInt8(ptr %p) {",
           "  %v = load i8, ptr %p",
           "  %is_zero = icmp eq i8 %v, 0",
           "  br i1 %is_zero, label %overflow, label %ok",
@@ -343,7 +343,7 @@ runtime builtIns =
     --   'rtPredInt32' with the boundary flipped and 'sub' swapped for 'add'.
     rtSuccInt32 =
       unlines
-        [ "define ptr @__succInt32(ptr %p) {",
+        [ "define internal ptr @__succInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
           "  %is_max = icmp eq i32 %v, 2147483647",
           "  br i1 %is_max, label %overflow, label %ok",
@@ -375,7 +375,7 @@ runtime builtIns =
     --   path since v <= 254.
     rtSuccUInt8 =
       unlines
-        [ "define ptr @__succUInt8(ptr %p) {",
+        [ "define internal ptr @__succUInt8(ptr %p) {",
           "  %v = load i8, ptr %p",
           "  %is_max = icmp eq i8 %v, 255",
           "  br i1 %is_max, label %overflow, label %ok",
@@ -406,7 +406,7 @@ runtime builtIns =
     -- declaration order in `type Bool = True | False`.
     rtEqInt32 =
       unlines
-        [ "define ptr @__eqInt32(ptr %a, ptr %b) {",
+        [ "define internal ptr @__eqInt32(ptr %a, ptr %b) {",
           "  %va = load i32, ptr %a",
           "  %vb = load i32, ptr %b",
           "  %eq = icmp eq i32 %va, %vb",
@@ -419,7 +419,7 @@ runtime builtIns =
         ]
     rtEqUInt8 =
       unlines
-        [ "define ptr @__eqUInt8(ptr %a, ptr %b) {",
+        [ "define internal ptr @__eqUInt8(ptr %a, ptr %b) {",
           "  %va = load i8, ptr %a",
           "  %vb = load i8, ptr %b",
           "  %eq = icmp eq i8 %va, %vb",
@@ -439,7 +439,7 @@ runtime builtIns =
     --   matches the rest of this file: tags 0/1, payload at offset 8.
     rtAddInt32 =
       unlines
-        [ "define ptr @__addInt32(ptr %pa, ptr %pb) {",
+        [ "define internal ptr @__addInt32(ptr %pa, ptr %pb) {",
           "  %a = load i32, ptr %pa",
           "  %b = load i32, ptr %pb",
           "  %res = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %a, i32 %b)",
@@ -479,7 +479,7 @@ runtime builtIns =
     --   stays inside the @a >= 0 ⇒ Overflow@ branch.
     rtSubInt32 =
       unlines
-        [ "define ptr @__subInt32(ptr %pa, ptr %pb) {",
+        [ "define internal ptr @__subInt32(ptr %pa, ptr %pb) {",
           "  %a = load i32, ptr %pa",
           "  %b = load i32, ptr %pb",
           "  %res = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %a, i32 %b)",
@@ -519,7 +519,7 @@ runtime builtIns =
     --   negative) and lands on Overflow, which matches the math.
     rtMulInt32 =
       unlines
-        [ "define ptr @__mulInt32(ptr %pa, ptr %pb) {",
+        [ "define internal ptr @__mulInt32(ptr %pa, ptr %pb) {",
           "  %a = load i32, ptr %pa",
           "  %b = load i32, ptr %pb",
           "  %res = call {i32, i1} @llvm.smul.with.overflow.i32(i32 %a, i32 %b)",
@@ -557,7 +557,7 @@ runtime builtIns =
     --   different boundary and a 'sub 0, v' for the ok path.
     rtNegInt32 =
       unlines
-        [ "define ptr @__negInt32(ptr %p) {",
+        [ "define internal ptr @__negInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
           "  %is_min = icmp eq i32 %v, -2147483648",
           "  br i1 %is_min, label %overflow, label %ok",
@@ -591,7 +591,7 @@ runtime builtIns =
     --   exactly when the comparison falls through.
     rtAddUInt8 =
       unlines
-        [ "define ptr @__addUInt8(ptr %pa, ptr %pb) {",
+        [ "define internal ptr @__addUInt8(ptr %pa, ptr %pb) {",
           "  %a = load i8, ptr %pa",
           "  %b = load i8, ptr %pb",
           "  %a32 = zext i8 %a to i32",
@@ -628,7 +628,7 @@ runtime builtIns =
     --   the product is in 0..255, so truncating to i8 is faithful.
     rtMulUInt8 =
       unlines
-        [ "define ptr @__mulUInt8(ptr %pa, ptr %pb) {",
+        [ "define internal ptr @__mulUInt8(ptr %pa, ptr %pb) {",
           "  %a = load i8, ptr %pa",
           "  %b = load i8, ptr %pb",
           "  %a32 = zext i8 %a to i32",
@@ -666,7 +666,7 @@ runtime builtIns =
     --   already in 0..255, so truncating back to i8 is faithful.
     rtSubUInt8 =
       unlines
-        [ "define ptr @__subUInt8(ptr %pa, ptr %pb) {",
+        [ "define internal ptr @__subUInt8(ptr %pa, ptr %pb) {",
           "  %a = load i8, ptr %pa",
           "  %b = load i8, ptr %pb",
           "  %a32 = zext i8 %a to i32",
@@ -708,7 +708,7 @@ runtime builtIns =
     --   (tag 0).
     rtSplitOnFirst =
       unlines
-        [ "define ptr @__splitOnFirst(ptr %sep, ptr %str) {",
+        [ "define internal ptr @__splitOnFirst(ptr %sep, ptr %str) {",
           "  %pos = call ptr @strstr(ptr %str, ptr %sep)",
           "  %is_null = icmp eq ptr %pos, null",
           "  br i1 %is_null, label %not_found, label %found",
@@ -759,7 +759,7 @@ runtime builtIns =
     --   stack traffic.
     rtParseInt32 =
       unlines
-        [ "define ptr @__parseInt32(ptr %s) {",
+        [ "define internal ptr @__parseInt32(ptr %s) {",
           "entry:",
           "  %neg_alloca = alloca i32, align 4",
           "  store i32 0, ptr %neg_alloca",
@@ -852,7 +852,7 @@ runtime builtIns =
     --   the '> 255' check fails the parse.
     rtParseUInt8 =
       unlines
-        [ "define ptr @__parseUInt8(ptr %s) {",
+        [ "define internal ptr @__parseUInt8(ptr %s) {",
           "entry:",
           "  %i_alloca = alloca i64, align 8",
           "  store i64 0, ptr %i_alloca",
@@ -998,7 +998,7 @@ emitDecl ctx = \case
     retLoaded <- freshTemp
     let llvmArgs = T.intercalate ", " (map (\a -> "ptr %" <> mangle a) args)
     pure
-      $ "define ptr @"
+      $ "define internal ptr @"
       <> mangle nm
       <> "("
       <> llvmArgs
@@ -1030,7 +1030,7 @@ emitDecl ctx = \case
         llvmArgs = T.intercalate ", " (map (\a -> "ptr %" <> mangle a) args)
     (instrs, result) <- emitExpr localCtx body
     pure
-      $ "define ptr @"
+      $ "define internal ptr @"
       <> mangle nm
       <> "("
       <> llvmArgs
@@ -1044,7 +1044,7 @@ emitDecl ctx = \case
     let localCtx = ctx {params = Set.empty}
     (instrs, result) <- emitExpr localCtx rhs
     pure
-      $ "define ptr @"
+      $ "define internal ptr @"
       <> mangle nm
       <> "() {\n"
       <> instrs

@@ -16,7 +16,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.2 = private unnamed_addr constant [5 x i8] c"ok: \00"
 @.str.3 = private unnamed_addr constant [3 x i8] c", \00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -28,13 +28,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showUInt8(ptr %p) {
+define internal ptr @__showUInt8(ptr %p) {
   %b = load i8, ptr %p
   %v = zext i8 %b to i32
   %buf = call ptr @malloc(i64 16)
@@ -43,7 +43,7 @@ define ptr @__showUInt8(ptr %p) {
 }
 
 
-define ptr @__succUInt8(ptr %p) {
+define internal ptr @__succUInt8(ptr %p) {
   %v = load i8, ptr %p
   %is_max = icmp eq i8 %v, 255
   br i1 %is_max, label %overflow, label %ok
@@ -70,12 +70,12 @@ ok:
 }
 
 
-define ptr @v_showOverflowError(ptr %v__wild0) {
+define internal ptr @v_showOverflowError(ptr %v__wild0) {
   %t0 = getelementptr [14 x i8], ptr @.str.0, i64 0, i64 0
   ret ptr %t0
 }
 
-define ptr @v_render(ptr %v_r) {
+define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -105,7 +105,7 @@ case.join.4:
   ret ptr %t19
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 1)
   store i8 255, ptr %t0
   %t1 = call ptr @__succUInt8(ptr %t0)

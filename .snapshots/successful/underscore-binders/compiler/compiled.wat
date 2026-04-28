@@ -94,26 +94,26 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_greeting (export "v_greeting") (param $v__wild0 i32) (result i32)
+  (func $v_greeting (param $v__wild0 i32) (result i32)
     (i32.const 65))
 
-  (func $v_unwrapBox (export "v_unwrapBox") (param $v_b i32) (result i32)
+  (func $v_unwrapBox (param $v_b i32) (result i32)
     (local $v___w0 i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (i32.const 68)))
 
-  (func $v_unwrapBoxNamed (export "v_unwrapBoxNamed") (param $v_b i32) (result i32)
+  (func $v_unwrapBoxNamed (param $v_b i32) (result i32)
     (local $v__v i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v__v (i32.load offset=4 (local.get $__scrut))) (i32.const 78)))
 
-  (func $v_showPair (export "v_showPair") (param $v_p i32) (result i32)
+  (func $v_showPair (param $v_p i32) (result i32)
     (local $v___w0 i32)
     (local $v___w1 i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_p)) (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (local.set $v___w1 (i32.load offset=8 (local.get $__scrut))) (i32.const 94)))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_greeting (i32.const 101)) (i32.const 103)) (call $v_unwrapBox (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 105)) (local.get $__con_0)))) (i32.const 103)) (call $v_unwrapBoxNamed (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 107)) (local.get $__con_0)))) (i32.const 103)) (call $v_showPair (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 109)) (i32.store offset=8 (local.get $__con_0) (i32.const 111)) (local.get $__con_0))))))
 

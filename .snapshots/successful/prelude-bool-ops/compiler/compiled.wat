@@ -86,26 +86,26 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_not (export "v_not") (param $v_b i32) (result i32)
+  (func $v_not (param $v_b i32) (result i32)
     (local $__con_0 i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))) (else (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))))
 
-  (func $v_and (export "v_and") (param $v_a i32) (param $v_b i32) (result i32)
+  (func $v_and (param $v_a i32) (param $v_b i32) (result i32)
     (local $__con_0 i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_a)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v_b)) (else (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))))
 
-  (func $v_or (export "v_or") (param $v_a i32) (param $v_b i32) (result i32)
+  (func $v_or (param $v_a i32) (param $v_b i32) (result i32)
     (local $__con_0 i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_a)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))) (else (local.get $v_b)))))
 
-  (func $v_showBool (export "v_showBool") (param $v_b i32) (result i32)
+  (func $v_showBool (param $v_b i32) (result i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 67)))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_showBool (call $v_not (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)))) (call $v_showBool (call $v_not (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))) (call $v_showBool (call $v_and (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))) (call $v_showBool (call $v_and (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))) (call $v_showBool (call $v_or (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))) (call $v_showBool (call $v_or (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0)))))))
 

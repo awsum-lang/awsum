@@ -4,13 +4,13 @@
 .class public AwsumMain
 .super java/lang/Object
 
-.method public <init>()V
+.method <init>()V
   aload_0
   invokespecial java/lang/Object/<init>()V
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/String
   aload_1
@@ -19,7 +19,7 @@
   areturn
 .end method
 
-.method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
@@ -27,7 +27,7 @@
   areturn
 .end method
 
-.method public static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 4
   aload_1
@@ -93,7 +93,7 @@ L_split_found:
   areturn
 .end method
 
-.method public static v_render(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_render(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -150,7 +150,7 @@ L_join:
 .end method
 
 
-.method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   ldc ","
   ldc "a,b,c"
   invokestatic AwsumMain/__splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;

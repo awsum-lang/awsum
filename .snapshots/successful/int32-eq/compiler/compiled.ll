@@ -14,7 +14,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.0 = private unnamed_addr constant [2 x i8] c"T\00"
 @.str.1 = private unnamed_addr constant [2 x i8] c"F\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -26,13 +26,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__eqInt32(ptr %a, ptr %b) {
+define internal ptr @__eqInt32(ptr %a, ptr %b) {
   %va = load i32, ptr %a
   %vb = load i32, ptr %b
   %eq = icmp eq i32 %va, %vb
@@ -44,7 +44,7 @@ define ptr @__eqInt32(ptr %a, ptr %b) {
 }
 
 
-define ptr @v_render(ptr %v_b) {
+define internal ptr @v_render(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -66,13 +66,13 @@ case.join.4:
   ret ptr %t11
 }
 
-define ptr @v_minInt32() {
+define internal ptr @v_minInt32() {
   %t0 = call ptr @malloc(i64 4)
   store i32 -2147483648, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 4)
   store i32 42, ptr %t0
   %t1 = call ptr @malloc(i64 4)

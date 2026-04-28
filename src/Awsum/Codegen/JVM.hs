@@ -101,7 +101,7 @@ classHeader =
 initMethod :: Text
 initMethod =
   unlines
-    [ ".method public <init>()V",
+    [ ".method <init>()V",
       "  aload_0",
       "  invokespecial java/lang/Object/<init>()V",
       "  return",
@@ -111,7 +111,7 @@ initMethod =
 concatMethod :: Text
 concatMethod =
   unlines
-    [ ".method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  aload_0",
       "  checkcast java/lang/String",
       "  aload_1",
@@ -124,7 +124,7 @@ concatMethod =
 printMethod :: Text
 printMethod =
   unlines
-    [ ".method public static __print(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __print(Ljava/lang/Object;)Ljava/lang/Object;",
       "  getstatic java/lang/System/out Ljava/io/PrintStream;",
       "  aload_0",
       "  invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V",
@@ -140,7 +140,7 @@ printMethod =
 predInt32Method :: Text
 predInt32Method =
   unlines
-    [ ".method public static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -198,7 +198,7 @@ predInt32Method =
 predUInt8Method :: Text
 predUInt8Method =
   unlines
-    [ ".method public static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -254,7 +254,7 @@ predUInt8Method =
 succInt32Method :: Text
 succInt32Method =
   unlines
-    [ ".method public static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -311,7 +311,7 @@ succInt32Method =
 succUInt8Method :: Text
 succUInt8Method =
   unlines
-    [ ".method public static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -368,7 +368,7 @@ succUInt8Method =
 eqMethod :: Text -> Text -> Text
 eqMethod name lbl =
   unlines
-    [ ".method public static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 2",
       "  aload_0",
@@ -406,7 +406,7 @@ eqMethod name lbl =
 addInt32Method :: Text
 addInt32Method =
   unlines
-    [ ".method public static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 6",
       "  .limit locals 3",
       "  aload_0",
@@ -495,7 +495,7 @@ addInt32Method =
 addUInt8Method :: Text
 addUInt8Method =
   unlines
-    [ ".method public static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -553,7 +553,7 @@ addUInt8Method =
 subInt32Method :: Text
 subInt32Method =
   unlines
-    [ ".method public static __subInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __subInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 6",
       "  .limit locals 3",
       "  aload_0",
@@ -646,7 +646,7 @@ subInt32Method =
 mulInt32Method :: Text
 mulInt32Method =
   unlines
-    [ ".method public static __mulInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __mulInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 6",
       "  .limit locals 4",
       "  aload_0",
@@ -743,7 +743,7 @@ mulInt32Method =
 negInt32Method :: Text
 negInt32Method =
   unlines
-    [ ".method public static __negInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __negInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -798,7 +798,7 @@ negInt32Method =
 subUInt8Method :: Text
 subUInt8Method =
   unlines
-    [ ".method public static __subUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __subUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -857,7 +857,7 @@ subUInt8Method =
 mulUInt8Method :: Text
 mulUInt8Method =
   unlines
-    [ ".method public static __mulUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __mulUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -918,7 +918,7 @@ mulUInt8Method =
 splitOnFirstMethod :: Text
 splitOnFirstMethod =
   unlines
-    [ ".method public static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 4",
       "  aload_1",
@@ -999,7 +999,7 @@ splitOnFirstMethod =
 parseInt32Method :: Text
 parseInt32Method =
   unlines
-    [ ".method public static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 8",
       "  aload_0",
@@ -1119,7 +1119,7 @@ parseInt32Method =
 parseUInt8Method :: Text
 parseUInt8Method =
   unlines
-    [ ".method public static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 4",
       "  .limit locals 6",
       "  aload_0",
@@ -1237,7 +1237,7 @@ emitDecl ctx = \case
         desc = objMethodDescText (length args)
         bodyText = emitTailText ctx paramCtx args body
      in unlines
-          [ ".method public static " <> mangle nm <> desc,
+          [ ".method static " <> mangle nm <> desc,
             "L_tco_loop:",
             bodyText,
             ".end method"
@@ -1247,7 +1247,7 @@ emitDecl ctx = \case
         desc = objMethodDescText (length args)
         bodyText = emitExprText ctx paramCtx body
      in unlines
-          [ ".method public static " <> mangle nm <> desc,
+          [ ".method static " <> mangle nm <> desc,
             bodyText,
             "  areturn",
             ".end method"
@@ -1255,7 +1255,7 @@ emitDecl ctx = \case
   CValDef nm rhs ->
     let bodyText = emitExprText ctx Map.empty rhs
      in unlines
-          [ ".method public static " <> mangle nm <> "()" <> objDesc,
+          [ ".method static " <> mangle nm <> "()" <> objDesc,
             bodyText,
             "  areturn",
             ".end method"

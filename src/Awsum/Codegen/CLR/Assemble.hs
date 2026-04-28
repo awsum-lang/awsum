@@ -633,7 +633,7 @@ mkInit = do
   si <- w16 <$> addBlob (sigInstance etVoid [])
   ps <- addParams 0
   let code = cilLdarg 0 <> cilCall (tokMR 1) <> cilRet -- MemberRef 1 = Object::.ctor
-  pure MInfo {mImplFlags = 0, mFlags = 0x1886, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x1881, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 mkConcat :: AsmM MInfo
 mkConcat = do
@@ -641,7 +641,7 @@ mkConcat = do
   si <- w16 <$> addBlob (sigStatic etObject 2)
   ps <- addParams 2
   let code = cilLdarg 0 <> cilLdarg 1 <> cilCall (tokMR 2) <> cilRet -- MemberRef 2 = String.Concat
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 mkPrint :: AsmM MInfo
 mkPrint = do
@@ -649,7 +649,7 @@ mkPrint = do
   si <- w16 <$> addBlob (sigStatic etObject 1)
   ps <- addParams 1
   let code = cilLdarg 0 <> cilCall (tokMR 3) <> cilLdnull <> cilRet -- MemberRef 3 = Console.Write
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 -- | predInt32: Int32 -> Either UnderflowError Int32.
 --   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predInt32Method'.
@@ -716,7 +716,7 @@ mkPredInt32 = do
           <> cilBneUnS branchOffset
           <> overflow
           <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | predUInt8: UInt8 -> Either UnderflowError UInt8.
 --   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predUInt8Method'.
@@ -786,7 +786,7 @@ mkPredUInt8 = do
           <> cilBneUnS branchOffset
           <> overflow
           <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | succInt32: Int32 -> Either OverflowError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.succInt32Method'. Mirror of
@@ -850,7 +850,7 @@ mkSuccInt32 = do
           <> cilBneUnS branchOffset
           <> overflow
           <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | succUInt8: UInt8 -> Either OverflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.succUInt8Method'. Same local
@@ -913,7 +913,7 @@ mkSuccUInt8 = do
           <> cilBneUnS branchOffset
           <> overflow
           <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | eqInt32 / eqUInt8: two integers of the same type → Bool.
 --   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.eqMethod'.
@@ -951,7 +951,7 @@ mkEq methodName = do
           <> cilBneUnS branchOffset
           <> equalBlock
           <> notEqualBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 -- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.addInt32Method'. Locals
@@ -1039,7 +1039,7 @@ mkAddInt32 = do
           <> overSplit
           <> overBlock
           <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.addUInt8Method'. Both
@@ -1106,7 +1106,7 @@ mkAddUInt8 = do
         preamble
           <> overBlock
           <> okBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | subInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.subInt32Method'. Same XOR
@@ -1193,7 +1193,7 @@ mkSubInt32 = do
           <> overSplit
           <> overBlock
           <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | mulInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.mulInt32Method'. Both
@@ -1289,7 +1289,7 @@ mkMulInt32 = do
           <> okBlock
           <> overBlock
           <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | negInt32: Int32 -> Either OverflowError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.negInt32Method'. Mirror of
@@ -1352,7 +1352,7 @@ mkNegInt32 = do
           <> cilBneUnS branchOffset
           <> overflow
           <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.subUInt8Method'. Both
@@ -1419,7 +1419,7 @@ mkSubUInt8 = do
         preamble
           <> okBlock
           <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.mulUInt8Method'. Same shape
@@ -1486,7 +1486,7 @@ mkMulUInt8 = do
         preamble
           <> overBlock
           <> okBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Binary equivalent of 'Awsum.Codegen.CLR.splitOnFirstMethod'. Defers
@@ -1584,7 +1584,7 @@ mkSplitOnFirst = do
           <> cilLdcI4 (-1)
           <> cilBneUnS branchOffset
       code = preamble <> nothingBlock <> foundBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | parseInt32: String -> Either ParseError Int32. Binary equivalent
 --   of 'Awsum.Codegen.CLR.parseInt32Method'. Same handrolled algorithm
@@ -1795,7 +1795,7 @@ mkParseInt32 = do
           <> cilBgt bgtPosOff
           <> blockX
           <> blockY
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | parseUInt8: String -> Either ParseError UInt8. Same shape as
 --   'mkParseInt32' minus the sign handling — UInt8 cannot represent a
@@ -1929,7 +1929,7 @@ mkParseUInt8 = do
           <> cilBr brLoopOff
           <> blockX
           <> blockY
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
@@ -1952,7 +1952,7 @@ mkMain tokMap = do
           <> cilCall vMainTok -- 16: 5 (call_main)
           <> cilPop -- 21: 1
           <> cilRet -- 22: 1
-  pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods
@@ -1992,7 +1992,7 @@ mkDecl baseCtx = \case
     ps <- addParams (length args)
     localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
     code <- emitTailBin ctx args body
-    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = maxStack}
+    pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = maxStack}
   CFunDef nm args body -> do
     let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..])}
         nLocals = exprLocalsNeeded body
@@ -2002,7 +2002,7 @@ mkDecl baseCtx = \case
     ps <- addParams (length args)
     localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
     code <- emitExpr ctx body
-    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok, mMaxStack = maxStack}
+    pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok, mMaxStack = maxStack}
   CValDef nm rhs -> do
     let ctx = baseCtx {eParams = Map.empty}
         nLocals = exprLocalsNeeded rhs
@@ -2012,7 +2012,7 @@ mkDecl baseCtx = \case
     ps <- addParams 0
     localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
     code <- emitExpr ctx rhs
-    pure MInfo {mImplFlags = 0, mFlags = 0x0096, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok, mMaxStack = maxStack}
+    pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok, mMaxStack = maxStack}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression codegen

@@ -73,7 +73,7 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (param $v_input i32) (result i32)
     (call $__print (local.get $v_input)))
 
   (func $_start (export "_start")

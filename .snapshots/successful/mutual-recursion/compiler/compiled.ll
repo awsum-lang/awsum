@@ -16,7 +16,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.2 = private unnamed_addr constant [2 x i8] c"B\00"
 @.str.3 = private unnamed_addr constant [2 x i8] c"C\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -28,13 +28,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -44,7 +44,7 @@ define ptr @v_main(ptr %v__input) {
   ret ptr %t4
 }
 
-define ptr @v__scc_handleA_handleB(ptr %v__args) {
+define internal ptr @v__scc_handleA_handleB(ptr %v__args) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -53,7 +53,7 @@ define ptr @v__scc_handleA_handleB(ptr %v__args) {
   ret ptr %t3
 }
 
-define ptr @v__cps__scc_handleA_handleB(ptr %v__args, ptr %v__k) {
+define internal ptr @v__cps__scc_handleA_handleB(ptr %v__args, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -193,7 +193,7 @@ tco.exit.1:
   ret ptr %t82
 }
 
-define ptr @v__apply__scc_handleA_handleB(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__scc_handleA_handleB(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -242,7 +242,7 @@ tco.exit.1:
   ret ptr %t27
 }
 
-define ptr @v_handleA(ptr %v_step) {
+define internal ptr @v_handleA(ptr %v_step) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

@@ -87,22 +87,22 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $v_handleA (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)))))
 
-  (func $v__scc_handleA_handleB (export "v__scc_handleA_handleB") (param $v__args i32) (result i32)
+  (func $v__scc_handleA_handleB (param $v__args i32) (result i32)
     (local $__con_0 i32)
     (call $v__cps__scc_handleA_handleB (local.get $v__args) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
 
-  (func $v__cps__scc_handleA_handleB (export "v__cps__scc_handleA_handleB") (param $v__args i32) (param $v__k i32) (result i32)
+  (func $v__cps__scc_handleA_handleB (param $v__args i32) (param $v__k i32) (result i32)
     (local $v_step i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__args)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_step (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_step)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_1))) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_step)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_step)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (call $v__apply__scc_handleA_handleB (local.get $v__k) (i32.const 64)))))))))) (else (local.set $v_step (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_step)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_step)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 2)) (local.get $__con_1))) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 3)) (local.get $__con_1))) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (call $v__apply__scc_handleA_handleB (local.get $v__k) (i32.const 64))))))))))))))
 
-  (func $v__apply__scc_handleA_handleB (export "v__apply__scc_handleA_handleB") (param $v__k i32) (param $v__x i32) (result i32)
+  (func $v__apply__scc_handleA_handleB (param $v__k i32) (param $v__x i32) (result i32)
     (local $v__pk_1 i32)
     (local $v__pk_2 i32)
     (local $v__pk_3 i32)
@@ -111,7 +111,7 @@
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (call $__concat (i32.const 65) (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v__pk_2 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_2)) (local.set $__k1 (call $__concat (i32.const 67) (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (local.set $v__pk_3 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_3)) (local.set $__k1 (call $__concat (i32.const 69) (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))))))
 
-  (func $v_handleA (export "v_handleA") (param $v_step i32) (result i32)
+  (func $v_handleA (param $v_step i32) (result i32)
     (local $__con_0 i32)
     (call $v__scc_handleA_handleB (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_step)) (local.get $__con_0))))
 

@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
+  .method private hidebysig static object __concat(object, object) cil managed
   {
     ldarg.0
     ldarg.1
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -30,7 +30,7 @@
     ret
   }
 
-  .method public hidebysig static object __mulInt32(object, object) cil managed
+  .method private hidebysig static object __mulInt32(object, object) cil managed
   {
     .maxstack 5
     .locals init (int32 V_0, int32 V_1, int64 V_2, object V_3)
@@ -112,7 +112,7 @@
     ret
   }
 
-  .method public hidebysig static object v_showArithError(object) cil managed
+  .method private hidebysig static object v_showArithError(object) cil managed
   {
     ldarg.0
     dup
@@ -133,7 +133,7 @@
   }
 
 
-  .method public hidebysig static object v_render(object) cil managed
+  .method private hidebysig static object v_render(object) cil managed
   {
     ldarg.0
     dup
@@ -168,7 +168,7 @@
   }
 
 
-  .method public hidebysig static object v_minInt32() cil managed
+  .method private hidebysig static object v_minInt32() cil managed
   {
     ldc.i4 -2147483648
     box [System.Runtime]System.Int32
@@ -176,7 +176,7 @@
   }
 
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4 6
     box [System.Runtime]System.Int32
@@ -231,7 +231,7 @@
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

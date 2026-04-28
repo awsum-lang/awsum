@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
+  .method private hidebysig static object __concat(object, object) cil managed
   {
     ldarg.0
     ldarg.1
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -30,7 +30,7 @@
     ret
   }
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldftn object AwsumMain::v_appendY(object)
     newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
@@ -46,21 +46,21 @@
   }
 
 
-  .method public hidebysig static object v_const(object, object) cil managed
+  .method private hidebysig static object v_const(object, object) cil managed
   {
     ldarg.0
     ret
   }
 
 
-  .method public hidebysig static object v_identity(object) cil managed
+  .method private hidebysig static object v_identity(object) cil managed
   {
     ldarg.0
     ret
   }
 
 
-  .method public hidebysig static object v_appendX(object) cil managed
+  .method private hidebysig static object v_appendX(object) cil managed
   {
     ldarg.0
     ldstr "x"
@@ -69,7 +69,7 @@
   }
 
 
-  .method public hidebysig static object v_appendY(object) cil managed
+  .method private hidebysig static object v_appendY(object) cil managed
   {
     ldarg.0
     ldstr "y"
@@ -78,7 +78,7 @@
   }
 
 
-  .method public hidebysig static object v_compose(object, object, object) cil managed
+  .method private hidebysig static object v_compose(object, object, object) cil managed
   {
     ldarg.0
     castclass class [System.Runtime]System.Func`2<object, object>
@@ -90,7 +90,7 @@
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

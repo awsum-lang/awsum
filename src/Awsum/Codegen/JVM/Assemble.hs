@@ -296,7 +296,7 @@ mkInit = do
   ref <- addMRef "java/lang/Object" "<init>" "()V"
   pure
     MInfo
-      { mFlags = 0x0001,
+      { mFlags = 0x0000,
         mName = ni,
         mDesc = di,
         mCode =
@@ -317,7 +317,7 @@ mkConcat = do
   concatRef <- addMRef "java/lang/String" "concat" "(Ljava/lang/String;)Ljava/lang/String;"
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode =
@@ -341,7 +341,7 @@ mkPrint = do
   printRef <- addMRef "java/io/PrintStream" "print" "(Ljava/lang/Object;)V"
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode =
@@ -445,7 +445,7 @@ mkPredInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -539,7 +539,7 @@ mkPredUInt8 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -631,7 +631,7 @@ mkSuccInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -721,7 +721,7 @@ mkSuccUInt8 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -794,7 +794,7 @@ mkEq methodName = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -932,7 +932,7 @@ mkAddInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1030,7 +1030,7 @@ mkAddUInt8 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1158,7 +1158,7 @@ mkSubInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1296,7 +1296,7 @@ mkMulInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1386,7 +1386,7 @@ mkNegInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1484,7 +1484,7 @@ mkSubUInt8 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1577,7 +1577,7 @@ mkMulUInt8 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1695,7 +1695,7 @@ mkSplitOnFirst = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -1983,7 +1983,7 @@ mkParseInt32 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -2173,7 +2173,7 @@ mkParseUInt8 = do
                    <> smtEntries
   pure
     MInfo
-      { mFlags = 0x0009,
+      { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
         mCode = code,
@@ -2419,7 +2419,7 @@ mkDecl valDefs funDefs arities = \case
               btIsJoinPoint = False
             }
     (smtCount, smtBytes) <- caseSMT ctx (tcoLoopTarget : codeMeta.cwBranchTargets) codeMeta.cwIntSlots
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = codeMeta.cwCode, mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
+    pure MInfo {mFlags = 0x0008, mName = ni, mDesc = di, mCode = codeMeta.cwCode, mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
   CFunDef nm args body -> do
     let paramMap = Map.fromList (zip args [0 ..])
         ctx =
@@ -2437,7 +2437,7 @@ mkDecl valDefs funDefs arities = \case
     di <- addUtf8 (objMethodDesc (length args))
     codeMeta <- emitExpr ctx body
     (smtCount, smtBytes) <- caseSMT ctx codeMeta.cwBranchTargets codeMeta.cwIntSlots
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = codeMeta.cwCode <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
+    pure MInfo {mFlags = 0x0008, mName = ni, mDesc = di, mCode = codeMeta.cwCode <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
   CValDef nm rhs -> do
     let ctx =
           ECtx
@@ -2454,7 +2454,7 @@ mkDecl valDefs funDefs arities = \case
     di <- addUtf8 "()Ljava/lang/Object;"
     codeMeta <- emitExpr ctx rhs
     (smtCount, smtBytes) <- caseSMT ctx codeMeta.cwBranchTargets codeMeta.cwIntSlots
-    pure MInfo {mFlags = 0x0009, mName = ni, mDesc = di, mCode = codeMeta.cwCode <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
+    pure MInfo {mFlags = 0x0008, mName = ni, mDesc = di, mCode = codeMeta.cwCode <> [0xB0], mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression codegen (bytecode bytes)

@@ -4,13 +4,13 @@
 .class public AwsumMain
 .super java/lang/Object
 
-.method public <init>()V
+.method <init>()V
   aload_0
   invokespecial java/lang/Object/<init>()V
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/String
   aload_1
@@ -19,7 +19,7 @@
   areturn
 .end method
 
-.method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
@@ -27,7 +27,7 @@
   areturn
 .end method
 
-.method public static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 3
   aload_0
@@ -75,7 +75,7 @@ L_pred_ok:
   areturn
 .end method
 
-.method public static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 2
   aload_0
@@ -104,20 +104,20 @@ L_eq_i32_ne:
   areturn
 .end method
 
-.method public static v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
   ldc "UnderflowError"
   areturn
 .end method
 
 
-.method public static v_zero()Ljava/lang/Object;
+.method static v_zero()Ljava/lang/Object;
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   iconst_1
   anewarray java/lang/Object
@@ -131,7 +131,7 @@ L_eq_i32_ne:
 .end method
 
 
-.method public static v__cps_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   invokestatic AwsumMain/v_zero()Ljava/lang/Object;
@@ -218,7 +218,7 @@ L_tco_arm_1:
 .end method
 
 
-.method public static v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -295,7 +295,7 @@ L_tco_arm_1:
 .end method
 
 
-.method public static v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -334,14 +334,14 @@ L_join:
 .end method
 
 
-.method public static v_start()Ljava/lang/Object;
+.method static v_start()Ljava/lang/Object;
   ldc 100000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_start()Ljava/lang/Object;
   invokestatic AwsumMain/v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_showResult(Ljava/lang/Object;)Ljava/lang/Object;

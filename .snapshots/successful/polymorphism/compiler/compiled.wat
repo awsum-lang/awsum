@@ -88,22 +88,22 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $v_identity (call $v_compose (i32.const 4) (i32.const 3) (call $v_const (i32.const 65) (i32.const 67))))))
 
-  (func $v_const (export "v_const") (param $v_x i32) (param $v__y i32) (result i32)
+  (func $v_const (param $v_x i32) (param $v__y i32) (result i32)
     (local.get $v_x))
 
-  (func $v_identity (export "v_identity") (param $v_x i32) (result i32)
+  (func $v_identity (param $v_x i32) (result i32)
     (local.get $v_x))
 
-  (func $v_appendX (export "v_appendX") (param $v_s i32) (result i32)
+  (func $v_appendX (param $v_s i32) (result i32)
     (call $__concat (local.get $v_s) (i32.const 69)))
 
-  (func $v_appendY (export "v_appendY") (param $v_s i32) (result i32)
+  (func $v_appendY (param $v_s i32) (result i32)
     (call $__concat (local.get $v_s) (i32.const 71)))
 
-  (func $v_compose (export "v_compose") (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
+  (func $v_compose (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
     (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)) (local.get $v_g)))
 
   (func $_start (export "_start")

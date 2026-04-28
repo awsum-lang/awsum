@@ -4,13 +4,13 @@
 .class public AwsumMain
 .super java/lang/Object
 
-.method public <init>()V
+.method <init>()V
   aload_0
   invokespecial java/lang/Object/<init>()V
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/String
   aload_1
@@ -19,7 +19,7 @@
   areturn
 .end method
 
-.method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
@@ -27,7 +27,7 @@
   areturn
 .end method
 
-.method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   ldc [MethodHandle REF_invokeStatic AwsumMain.v_appendY(Ljava/lang/Object;)Ljava/lang/Object;]
   ldc [MethodHandle REF_invokeStatic AwsumMain.v_appendX(Ljava/lang/Object;)Ljava/lang/Object;]
   ldc "a"
@@ -40,19 +40,19 @@
 .end method
 
 
-.method public static v_const(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_const(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method public static v_identity(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_identity(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method public static v_appendX(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_appendX(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   ldc "x"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -60,7 +60,7 @@
 .end method
 
 
-.method public static v_appendY(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_appendY(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   ldc "y"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -68,7 +68,7 @@
 .end method
 
 
-.method public static v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/invoke/MethodHandle
   aload_1
