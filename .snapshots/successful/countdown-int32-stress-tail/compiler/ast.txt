@@ -4,7 +4,7 @@ Program
             [ LineComment " Stress test: tail-recursive countDown from 100_000 to 0 over Int32."
             , LineComment " 100_000 frames would blow the system stack on every target without"
             , LineComment " TCO (V8 default is ~13k, JVM ~16k, stock libc threads 8k pages), so"
-            , LineComment " if this program prints "right: 0" on all six backends the compiler"
+            , LineComment " if this program prints "right: 0" on all five backends the compiler"
             , LineComment " is actually eliminating the self-tail call and turning it into a"
             , LineComment " jump. Paired with @countdown-int32-stress@ (non-tail counterpart),"
             , LineComment " which exercises the CPS + defunctionalization pass at the same depth."

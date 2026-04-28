@@ -12,7 +12,7 @@ Program
             , LineComment " The 'even-odd-stress' test exercises the two-member version of the"
             , LineComment " same trick; this one pins down that SCC merge handles arbitrary cycle"
             , LineComment " lengths correctly and that dispatch over three tags is as cheap as"
-            , LineComment " over two across all six backends."
+            , LineComment " over two across all five backends."
             , LineComment ""
             , LineComment " @stepA@ returns @Either UnderflowError Int32@ to keep @predInt32@'s"
             , LineComment " shape threaded through uniformly — the @Left@ arm is unreachable for"
