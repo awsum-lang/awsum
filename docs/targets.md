@@ -113,6 +113,52 @@ local i, j = string.find(str, sep, 1, true)
 
 Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be split inside a codepoint. UTF-8-aware splitting is a separate, future API.
 
+## Parsing decimals
+
+`parseInt32 : String -> Either ParseError Int32` and `parseUInt8 : String -> Either ParseError UInt8` follow a strict grammar that mirrors Awsum's own integer literal: optional `-` (Int32 only), one or more ASCII digits, nothing else — no `+`, no whitespace, no trailing characters. See the docstrings in [stdlib/Prelude.aww](../stdlib/Prelude.aww) for the worked example list.
+
+**Every backend hand-rolls the parser**; native parsers are not used:
+
+- JVM `Integer.parseInt` accepts a leading `+`.
+- CLR `Int32.TryParse` (with default `NumberStyles`) accepts whitespace and signs.
+- JS `Number(s)` accepts whitespace, scientific notation, and the empty string (silently → `0`).
+- Lua `tonumber` accepts hex prefixes (`0x...`), exponent form, and surrounding whitespace.
+
+Stripping these affordances reliably across six runtimes is the same amount of code as just doing the parse byte-by-byte. The hand-rolled algorithm is identical on every target:
+
+```
+parseInt32(s):
+  if len == 0: fail
+  i = 0; neg = false
+  if s[0] == '-':
+    neg = true; i = 1
+    if i == len: fail              -- lone '-'
+  acc : i64 = 0
+  while i < len:
+    c = s[i]
+    if c < '0' || c > '9': fail
+    acc = acc * 10 + (c - '0')
+    if acc > 2147483648: fail      -- early termination on magnitude overshoot
+    i += 1
+  if neg:
+    return Right (i32) (-acc)      -- acc <= 2147483648 ⇒ -acc >= minInt32
+  else:
+    if acc > 2147483647: fail
+    return Right (i32) acc
+```
+
+`parseUInt8` is the same shape with no sign branch and an i32 accumulator (the running magnitude never exceeds 2559 before the `> 255` check fails the parse).
+
+The `2147483648L` constant (= `|minInt32|`) does not fit in an i32, so each backend builds it differently:
+
+- **LLVM** — direct `2147483648` integer literal, used at i64 width.
+- **JVM** — `ldc2_w 2147483648` in the text codegen; the binary assembler does not carry a `CONSTANT_Long_info` slot, so it builds the constant with the shift trick `iconst_1; i2l; bipush 31; lshl`.
+- **CLR** — same shift trick (`ldc.i4.1; conv.i8; ldc.i4.s 31; shl`) in both text and binary, for symmetry with JVM.
+- **WASM** — `i64.shl (i64.const 1) (i64.const 31)` everywhere — there's no native i64 literal limit but the shift form keeps the source aligned with JVM/CLR.
+- **JS / Lua** — IEEE-754 double represents `2147483648` exactly, so the literal is written directly.
+
+The grammar is byte-level (ASCII digits 0x30..0x39 only); other Unicode digit forms are rejected. UTF-8-aware parsing is a separate, future API.
+
 ## Print
 
 All backends print without a trailing newline — `IO.Stdout.print` outputs exactly what it receives.
@@ -612,8 +658,6 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
 
-**~30 CIL opcodes**: The assembler uses approximately thirty CIL opcodes — `ldarg.0`–`ldarg.3`, `ldstr`, `ldc.i4` (full 32-bit form, used for integer literals outside the compact range), `call`, `callvirt`, `ret`, `pop`, `ldnull`, `ldlen`, `ldelem.ref`, `ldc.i4.0`–`ldc.i4.8`/`ldc.i4.s`, `bge.s`, `br`/`br.s`, `beq.s`, `bne.un`/`bne.un.s`, `blt.s`, `ble.s`, `ldftn`, `newobj`, `castclass`, `conv.i4`, `newarr`, `stelem.ref`, `box`, `unbox.any`, `stloc.0`–`stloc.3`, `ldloc.0`–`ldloc.3`, `add`, `xor`, `and`.
-
 ## WASM-Specific Details
 
 **Binary format**: The `.wasm` binary is generated directly in Haskell (`Awsum.Codegen.WASM.Assemble`), with no external tools — no `wat2wasm`, no WABT. Only `wasmtime` is needed to run. Uses LEB128 encoding (unlike JVM's big-endian fixed-width integers).
@@ -624,8 +668,6 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
 
-**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Two boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer) and `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). One string-manipulation: `__splitOnFirst` (handrolled byte scan because WASM has no native substring search). The remainder are honest-arithmetic primitives — `__predInt32`, `__predUInt8`, `__succInt32`, `__succUInt8`, `__eq_i32` (shared by both equality builtins since both types flow as i32 cells), `__addInt32`, `__addUInt8` — each consuming pointer arguments and returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use.
+**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Two boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer) and `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). One string-manipulation: `__splitOnFirst` (hand-rolled byte scan because WASM has no native substring search). The remainder are honest-arithmetic and parse primitives — `__predInt32`, `__predUInt8`, `__succInt32`, `__succUInt8`, `__eq_i32` (shared by both equality builtins since both types flow as i32 cells), `__addInt32`, `__addUInt8`, `__parseInt32`, `__parseUInt8` — each returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use. `__parseInt32` is the only helper that needs an i64 local (the accumulator), and the only one whose `locals` declaration uses two run-length groups (`8 i32`, then `1 i64`) instead of one.
 
 **Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
-
-**~40 opcodes**: The assembler uses approximately forty WASM opcodes — enough for string manipulation, control flow, memory access, indirect calls, and the integer arithmetic the honest-arithmetic primitives need (`i32.sub`, `i32.div_u`, `i32.rem_u`, `i32.lt_s`, `i32.lt_u`, `i32.gt_u`, `i32.ge_s`, `i32.xor`, `i32.and`, plus `i32.eq` / `i32.ne` for the byte-by-byte comparison inside `__splitOnFirst`).
