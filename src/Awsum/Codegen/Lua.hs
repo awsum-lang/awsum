@@ -96,6 +96,41 @@ header builtIns =
               else "",
             if Set.member "eqUInt8" builtIns
               then "function M.__eqUInt8(a, b) if a == b then return {0} else return {1} end end"
+              else "",
+            -- addInt32: Either ArithError Int32. Lua 5.1+ stores numbers as
+            -- double, so the 33-bit sum is exact and the range checks
+            -- evaluate before any precision loss. ArithError tags follow
+            -- declaration order: Underflow=0, Overflow=1.
+            if Set.member "addInt32" builtIns
+              then "function M.__addInt32(a, b) local s = a + b if s > 2147483647 then return {0, {1}} elseif s < -2147483648 then return {0, {0}} else return {1, s} end end"
+              else "",
+            -- addUInt8: Either OverflowError UInt8. Sum ranges 0..510, a
+            -- single '> 255' check separates the branches.
+            if Set.member "addUInt8" builtIns
+              then "function M.__addUInt8(a, b) local s = a + b if s > 255 then return {0, {0}} else return {1, s} end end"
+              else "",
+            -- splitOnFirst: 'string.find' with the plain-text flag (4th arg
+            -- = true) skips Lua-pattern interpretation. Lua 5.1's 'find'
+            -- returns nil for an empty pattern in plain mode, so the
+            -- empty-separator case is handled explicitly to match the
+            -- shared spec: empty sep ⇒ Just (Tuple2 "" str). Tags:
+            -- Maybe Nothing=0, Just=1; Tuple2 has one constructor (tag 0).
+            if Set.member "splitOnFirst" builtIns
+              then "function M.__splitOnFirst(sep, str) if sep == \"\" then return {1, {0, \"\", str}} end local i, j = string.find(str, sep, 1, true) if i == nil then return {0} end return {1, {0, string.sub(str, 1, i - 1), string.sub(str, j + 1)}} end"
+              else "",
+            -- parseInt32: anchored Lua pattern '^%-?%d+$' enforces the
+            -- strict grammar (optional '-', one or more ASCII digits, no
+            -- whitespace, no trailing chars, no '+'). After that
+            -- 'tonumber' on a pure decimal literal cannot return nil,
+            -- but the nil-guard is kept defensively. Range checked
+            -- against [minInt32, maxInt32]; Lua 5.1+ 'number' is double-
+            -- precision and represents every i32 exactly.
+            if Set.member "parseInt32" builtIns
+              then "function M.__parseInt32(s) if not string.match(s, \"^%-?%d+$\") then return {0, {0}} end local n = tonumber(s) if n == nil or n < -2147483648 or n > 2147483647 then return {0, {0}} end return {1, n} end"
+              else "",
+            -- parseUInt8: same shape, no sign accepted; range 0..255.
+            if Set.member "parseUInt8" builtIns
+              then "function M.__parseUInt8(s) if not string.match(s, \"^%d+$\") then return {0, {0}} end local n = tonumber(s) if n == nil or n > 255 then return {0, {0}} end return {1, n} end"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -292,6 +327,24 @@ emitExpr topNames = go
                   [a, b] ->
                     let fn = if name == "eqInt32" then "M.__eqInt32" else "M.__eqUInt8"
                      in fn <> "(" <> go a <> ", " <> go b <> ")"
+                  _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+          CBuiltIn name
+            | name == "addInt32" || name == "addUInt8" ->
+                case xs of
+                  [a, b] ->
+                    let fn = if name == "addInt32" then "M.__addInt32" else "M.__addUInt8"
+                     in fn <> "(" <> go a <> ", " <> go b <> ")"
+                  _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+          CBuiltIn "splitOnFirst" ->
+            case xs of
+              [a, b] -> "M.__splitOnFirst(" <> go a <> ", " <> go b <> ")"
+              _ -> error "BuiltIn.splitOnFirst: arity mismatch"
+          CBuiltIn name
+            | name == "parseInt32" || name == "parseUInt8" ->
+                case xs of
+                  [a] ->
+                    let fn = if name == "parseInt32" then "M.__parseInt32" else "M.__parseUInt8"
+                     in fn <> "(" <> go a <> ")"
                   _ -> error ("BuiltIn." <> name <> ": arity mismatch")
           CBuiltIn "concatString" ->
             case xs of

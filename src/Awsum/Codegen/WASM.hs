@@ -256,6 +256,11 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "succInt32" builtIns then rtSuccI32 else "",
             if Set.member "succUInt8" builtIns then rtSuccU8 else "",
             if any (`Set.member` builtIns) ["eqInt32", "eqUInt8"] then rtEqI32 else "",
+            if Set.member "addInt32" builtIns then rtAddI32 else "",
+            if Set.member "addUInt8" builtIns then rtAddU8 else "",
+            if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
+            if Set.member "parseInt32" builtIns then rtParseInt32 else "",
+            if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -509,6 +514,274 @@ rtSuccU8 =
       "        (local.get $cell))))"
     ]
 
+-- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Signed overflow detected with the XOR trick: '(a ^ sum) & (b ^ sum)'
+--   has its sign bit set iff signed addition overflowed. Direction is
+--   read off 'a >= 0' so a single 'i32.lt_s 0' separates positive
+--   overflow (Overflow tag = 1) from negative (Underflow tag = 0).
+--   Sum is computed in i32 and wraps modulo 2^32 — that's exactly the
+--   value the XOR check needs.
+rtAddI32 :: Text
+rtAddI32 =
+  unlines
+    [ "  (func $__addInt32 (param $pa i32) (param $pb i32) (result i32)",
+      "    (local $a i32) (local $b i32) (local $s i32)",
+      "    (local $ae i32) (local $box i32) (local $cell i32)",
+      "    (local.set $a (i32.load (local.get $pa)))",
+      "    (local.set $b (i32.load (local.get $pb)))",
+      "    (local.set $s (i32.add (local.get $a) (local.get $b)))",
+      "    (if (result i32)",
+      "      (i32.lt_s",
+      "        (i32.and",
+      "          (i32.xor (local.get $a) (local.get $s))",
+      "          (i32.xor (local.get $b) (local.get $s)))",
+      "        (i32.const 0))",
+      "      (then",
+      "        (local.set $ae (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $ae)",
+      "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
+      "            (then (i32.const 1))",
+      "            (else (i32.const 0))))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $s))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255 so an i32 add gives 0..510 and a single
+--   'i32.gt_u 255' check selects the branch — no widening needed beyond
+--   the already-i32-typed cells, no mask on the ok path.
+rtAddU8 :: Text
+rtAddU8 =
+  unlines
+    [ "  (func $__addUInt8 (param $pa i32) (param $pb i32) (result i32)",
+      "    (local $s i32) (local $oe i32) (local $box i32) (local $cell i32)",
+      "    (local.set $s (i32.add (i32.load (local.get $pa)) (i32.load (local.get $pb))))",
+      "    (if (result i32) (i32.gt_u (local.get $s) (i32.const 255))",
+      "      (then",
+      "        (local.set $oe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $s))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   WASM has no built-in substring search, so we hand-roll a byte-by-byte
+--   scan: outer 'i' loop walks `0..str_len - sep_len`, inner 'j' loop
+--   compares `sep[j]` against `str[i + j]` until either a mismatch
+--   (advance i) or full match (capture pos, break). Empty separator is
+--   handled implicitly: the inner loop runs zero times, $match stays 1,
+--   the first iteration of the outer loop returns position 0. Separator
+--   longer than `str` is also implicit: the outer loop's bound check
+--   fails on the first iteration, returning Nothing.
+--   Container layout matches the rest of this file:
+--     Maybe Nothing : 1-slot cell [tag=0]
+--     Maybe Just    : 2-slot cell [tag=1, payload]
+--     Tuple2        : 3-slot cell [tag=0, prefix, suffix]
+rtSplitOnFirst :: Text
+rtSplitOnFirst =
+  unlines
+    [ "  (func $__splitOnFirst (param $sep i32) (param $str i32) (result i32)",
+      "    (local $sep_len i32) (local $str_len i32)",
+      "    (local $i i32) (local $j i32) (local $pos i32) (local $match i32)",
+      "    (local $prefix i32) (local $suffix i32) (local $tuple i32) (local $cell i32)",
+      "    (local $suf_len i32)",
+      "    (local.set $sep_len (call $__strlen (local.get $sep)))",
+      "    (local.set $str_len (call $__strlen (local.get $str)))",
+      "    (local.set $pos (i32.const -1))",
+      "    (local.set $i (i32.const 0))",
+      "    (block $break",
+      "      (loop $loop",
+      "        ;; if i + sep_len > str_len: not found, break",
+      "        (br_if $break",
+      "          (i32.gt_u",
+      "            (i32.add (local.get $i) (local.get $sep_len))",
+      "            (local.get $str_len)))",
+      "        ;; check whether sep matches at position i",
+      "        (local.set $j (i32.const 0))",
+      "        (local.set $match (i32.const 1))",
+      "        (block $check_break",
+      "          (loop $check_loop",
+      "            (br_if $check_break (i32.eq (local.get $j) (local.get $sep_len)))",
+      "            (if (i32.ne",
+      "                  (i32.load8_u (i32.add (local.get $str) (i32.add (local.get $i) (local.get $j))))",
+      "                  (i32.load8_u (i32.add (local.get $sep) (local.get $j))))",
+      "              (then",
+      "                (local.set $match (i32.const 0))",
+      "                (br $check_break)))",
+      "            (local.set $j (i32.add (local.get $j) (i32.const 1)))",
+      "            (br $check_loop)))",
+      "        (if (local.get $match)",
+      "          (then",
+      "            (local.set $pos (local.get $i))",
+      "            (br $break)))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $loop)))",
+      "    (if (result i32) (i32.eq (local.get $pos) (i32.const -1))",
+      "      (then",
+      "        (local.set $cell (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (local.get $cell))",
+      "      (else",
+      "        ;; prefix = str[0..pos], freshly allocated, null-terminated",
+      "        (local.set $prefix (call $__alloc (i32.add (local.get $pos) (i32.const 1))))",
+      "        (call $__memcpy (local.get $prefix) (local.get $str) (local.get $pos))",
+      "        (i32.store8 (i32.add (local.get $prefix) (local.get $pos)) (i32.const 0))",
+      "        ;; suffix = str[pos + sep_len..], freshly allocated, null-terminated",
+      "        (local.set $suf_len (i32.sub (i32.sub (local.get $str_len) (local.get $pos)) (local.get $sep_len)))",
+      "        (local.set $suffix (call $__alloc (i32.add (local.get $suf_len) (i32.const 1))))",
+      "        (call $__memcpy",
+      "          (local.get $suffix)",
+      "          (i32.add (local.get $str) (i32.add (local.get $pos) (local.get $sep_len)))",
+      "          (local.get $suf_len))",
+      "        (i32.store8 (i32.add (local.get $suffix) (local.get $suf_len)) (i32.const 0))",
+      "        ;; Tuple2 cell: [tag=0, prefix, suffix]",
+      "        (local.set $tuple (call $__alloc (i32.const 12)))",
+      "        (i32.store (local.get $tuple) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $tuple) (local.get $prefix))",
+      "        (i32.store offset=8 (local.get $tuple) (local.get $suffix))",
+      "        ;; Just cell: [tag=1, tuple]",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $tuple))",
+      "        (local.get $cell))))"
+    ]
+
+-- | parseInt32 : String -> Either ParseError Int32. Handrolled byte
+--   scan; same algorithm as the LLVM, JVM, and CLR helpers — i64
+--   accumulator capped at the magnitude `|minInt32|`. The constant
+--   2147483648 is built with the shift trick `1 << 31` (avoids needing
+--   a separate i64 literal in the binary). On any failure path we set
+--   the `$failed` flag and `br $exit` out of the parsing block; result
+--   construction (Right or Left) happens after the block based on the
+--   flag.
+rtParseInt32 :: Text
+rtParseInt32 =
+  unlines
+    [ "  (func $__parseInt32 (param $s i32) (result i32)",
+      "    (local $len i32) (local $i i32) (local $neg i32)",
+      "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
+      "    (local $failed i32) (local $acc i64)",
+      "    (local.set $failed (i32.const 0))",
+      "    (local.set $acc (i64.const 0))",
+      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (block $exit",
+      "      (if (i32.eqz (local.get $len))",
+      "        (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "      (local.set $i (i32.const 0))",
+      "      (local.set $neg (i32.const 0))",
+      "      (if (i32.eq (i32.load8_u (local.get $s)) (i32.const 45))",
+      "        (then",
+      "          (local.set $neg (i32.const 1))",
+      "          (local.set $i (i32.const 1))",
+      "          (if (i32.eq (local.get $len) (i32.const 1))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))))",
+      "      (block $loop_break",
+      "        (loop $loop",
+      "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (if (i32.lt_u (local.get $c) (i32.const 48))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (if (i32.gt_u (local.get $c) (i32.const 57))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $acc",
+      "            (i64.add",
+      "              (i64.mul (local.get $acc) (i64.const 10))",
+      "              (i64.extend_i32_u (i32.sub (local.get $c) (i32.const 48)))))",
+      "          (if (i64.gt_s (local.get $acc) (i64.shl (i64.const 1) (i64.const 31)))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "          (br $loop)))",
+      "      (if (local.get $neg)",
+      "        (then (local.set $acc (i64.sub (i64.const 0) (local.get $acc))))",
+      "        (else",
+      "          (if (i64.gt_s (local.get $acc) (i64.const 2147483647))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit))))))",
+      "    (if (result i32) (local.get $failed)",
+      "      (then",
+      "        (local.set $pe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (i32.wrap_i64 (local.get $acc)))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
+-- | parseUInt8 : String -> Either ParseError UInt8. Same shape as
+--   'rtParseInt32' minus the sign handling, with an i32 accumulator
+--   (the running magnitude never exceeds 2559 before the > 255 check
+--   fails the parse).
+rtParseUInt8 :: Text
+rtParseUInt8 =
+  unlines
+    [ "  (func $__parseUInt8 (param $s i32) (result i32)",
+      "    (local $len i32) (local $i i32) (local $acc i32)",
+      "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
+      "    (local $failed i32)",
+      "    (local.set $failed (i32.const 0))",
+      "    (local.set $acc (i32.const 0))",
+      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (block $exit",
+      "      (if (i32.eqz (local.get $len))",
+      "        (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "      (local.set $i (i32.const 0))",
+      "      (block $loop_break",
+      "        (loop $loop",
+      "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (if (i32.lt_u (local.get $c) (i32.const 48))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (if (i32.gt_u (local.get $c) (i32.const 57))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $acc",
+      "            (i32.add",
+      "              (i32.mul (local.get $acc) (i32.const 10))",
+      "              (i32.sub (local.get $c) (i32.const 48))))",
+      "          (if (i32.gt_u (local.get $acc) (i32.const 255))",
+      "            (then (local.set $failed (i32.const 1)) (br $exit)))",
+      "          (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "          (br $loop))))",
+      "    (if (result i32) (local.get $failed)",
+      "      (then",
+      "        (local.set $pe (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (local.set $box (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $box) (local.get $acc))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $box))",
+      "        (local.get $cell))))"
+    ]
+
 -- | eqInt32 / eqUInt8: two boxed integers → Bool (one-slot container).
 --   Int32 and UInt8 both flow as pointers to an i32 cell; UInt8 values are
 --   stored masked to 0..255, so a plain i32.eq gives the same answer as
@@ -720,6 +993,19 @@ emitExpr ctx = \case
         | name == "eqInt32" || name == "eqUInt8",
           [a, b] <- xs ->
             "(call $__eq_i32 " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8",
+          [a, b] <- xs ->
+            let fn = if name == "addInt32" then "$__addInt32" else "$__addUInt8"
+             in "(call " <> fn <> " " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            "(call $__splitOnFirst " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8",
+          [x] <- xs ->
+            let fn = if name == "parseInt32" then "$__parseInt32" else "$__parseUInt8"
+             in "(call " <> fn <> " " <> emitExpr ctx x <> ")"
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             "(call $__concat " <> emitExpr ctx a <> " " <> emitExpr ctx b <> ")"

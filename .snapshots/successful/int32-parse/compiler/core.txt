@@ -1,0 +1,179 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CString "err"
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok:"
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CCall
+                                                                ( CBuiltIn "concatString" )
+                                                                [ CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CCall
+                                                                            ( CBuiltIn "concatString" )
+                                                                            [ CCall
+                                                                                ( CBuiltIn "concatString" )
+                                                                                [ CCall
+                                                                                    ( CBuiltIn "concatString" )
+                                                                                    [ CCall
+                                                                                        ( CBuiltIn "concatString" )
+                                                                                        [ CCall
+                                                                                            ( CBuiltIn "concatString" )
+                                                                                            [ CCall
+                                                                                                ( CBuiltIn "concatString" )
+                                                                                                [ CCall
+                                                                                                    ( CBuiltIn "concatString" )
+                                                                                                    [ CCall
+                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                        [ CCall
+                                                                                                            ( CVar "render" )
+                                                                                                            [ CCall
+                                                                                                                ( CBuiltIn "parseInt32" )
+                                                                                                                [ CString "42" ]
+                                                                                                            ]
+                                                                                                        , CString ", "
+                                                                                                        ]
+                                                                                                    , CCall
+                                                                                                        ( CVar "render" )
+                                                                                                        [ CCall
+                                                                                                            ( CBuiltIn "parseInt32" )
+                                                                                                            [ CString "-42" ]
+                                                                                                        ]
+                                                                                                    ]
+                                                                                                , CString ", "
+                                                                                                ]
+                                                                                            , CCall
+                                                                                                ( CVar "render" )
+                                                                                                [ CCall
+                                                                                                    ( CBuiltIn "parseInt32" )
+                                                                                                    [ CString "0" ]
+                                                                                                ]
+                                                                                            ]
+                                                                                        , CString ", "
+                                                                                        ]
+                                                                                    , CCall
+                                                                                        ( CVar "render" )
+                                                                                        [ CCall
+                                                                                            ( CBuiltIn "parseInt32" )
+                                                                                            [ CString "2147483647" ]
+                                                                                        ]
+                                                                                    ]
+                                                                                , CString ", "
+                                                                                ]
+                                                                            , CCall
+                                                                                ( CVar "render" )
+                                                                                [ CCall
+                                                                                    ( CBuiltIn "parseInt32" )
+                                                                                    [ CString "-2147483648" ]
+                                                                                ]
+                                                                            ]
+                                                                        , CString ", "
+                                                                        ]
+                                                                    , CCall
+                                                                        ( CVar "render" )
+                                                                        [ CCall
+                                                                            ( CBuiltIn "parseInt32" )
+                                                                            [ CString "2147483648" ]
+                                                                        ]
+                                                                    ]
+                                                                , CString ", "
+                                                                ]
+                                                            , CCall
+                                                                ( CVar "render" )
+                                                                [ CCall
+                                                                    ( CBuiltIn "parseInt32" )
+                                                                    [ CString "-2147483649" ]
+                                                                ]
+                                                            ]
+                                                        , CString ", "
+                                                        ]
+                                                    , CCall
+                                                        ( CVar "render" )
+                                                        [ CCall
+                                                            ( CBuiltIn "parseInt32" )
+                                                            [ CString "" ]
+                                                        ]
+                                                    ]
+                                                , CString ", "
+                                                ]
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "parseInt32" )
+                                                    [ CString "-" ]
+                                                ]
+                                            ]
+                                        , CString ", "
+                                        ]
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "parseInt32" )
+                                            [ CString "+42" ]
+                                        ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "parseInt32" )
+                                    [ CString " 42" ]
+                                ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "parseInt32" )
+                            [ CString "12abc" ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

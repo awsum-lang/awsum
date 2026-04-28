@@ -46,9 +46,31 @@ builtIns =
       ("eqInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty boolTy)),
       -- eqUInt8 : UInt8 -> UInt8 -> Bool
       ("eqUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty boolTy)),
+      -- addInt32 : Int32 -> Int32 -> Either ArithError Int32
+      -- `Left Underflow` if the true sum is below 'minInt32', `Left Overflow`
+      -- if above 'maxInt32', `Right (a + b)` otherwise. Both ends are
+      -- reachable from one operation, hence the two-constructor 'ArithError'.
+      ("addInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
+      -- addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
+      -- `Left OverflowError` if `a + b > 255`, `Right (a + b)` otherwise.
+      -- Underflow is unreachable for unsigned addition, so the error type
+      -- stays `OverflowError`, not `ArithError`.
+      ("addUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty))),
       -- concatString : String -> String -> String
       -- The '++' operator is parser sugar for a call to this built-in.
-      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy))
+      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy)),
+      -- splitOnFirst : String -> String -> Maybe (Tuple2 String String)
+      -- Splits 'str' at the first occurrence of 'separator'; see
+      -- 'stdlib/Prelude.aww' for the full edge-case spec.
+      ("splitOnFirst", TyArrow noSpan stringTy (TyArrow noSpan stringTy (maybeTy (tuple2Ty stringTy stringTy)))),
+      -- parseInt32 : String -> Either ParseError Int32
+      -- Strict decimal parser; grammar mirrors the language literal —
+      -- optional '-', one or more digits, nothing else. See Prelude.aww
+      -- for the full example list.
+      ("parseInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy int32Ty)),
+      -- parseUInt8 : String -> Either ParseError UInt8
+      -- Same grammar, no sign accepted (UInt8 is unsigned), range 0..255.
+      ("parseUInt8", TyArrow noSpan stringTy (eitherTy parseErrorTy uint8Ty))
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -57,7 +79,11 @@ builtIns =
     boolTy = TyCon noSpan "Bool"
     underflowErrorTy = TyCon noSpan "UnderflowError"
     overflowErrorTy = TyCon noSpan "OverflowError"
+    arithErrorTy = TyCon noSpan "ArithError"
+    parseErrorTy = TyCon noSpan "ParseError"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
+    maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
+    tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)
 
 -- | Look up a built-in by its surface name. 'Nothing' is an "unknown
 --   builtin" error — the caller is responsible for surfacing it as a

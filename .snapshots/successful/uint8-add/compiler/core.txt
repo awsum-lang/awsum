@@ -1,0 +1,91 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showOverflowError" [ "$wild0" ]
+            ( CString "OverflowError" )
+        , CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "overflow: "
+                        , CCall
+                            ( CVar "showOverflowError" )
+                            [ CVar "e" ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok: "
+                        , CCall
+                            ( CBuiltIn "showUInt8" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CVar "render" )
+                                            [ CCall
+                                                ( CBuiltIn "addUInt8" )
+                                                [ CIntLit 200 TUInt8
+                                                , CIntLit 55 TUInt8
+                                                ]
+                                            ]
+                                        , CString ", "
+                                        ]
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "addUInt8" )
+                                            [ CIntLit 200 TUInt8
+                                            , CIntLit 56 TUInt8
+                                            ]
+                                        ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "addUInt8" )
+                                    [ CIntLit 255 TUInt8
+                                    , CIntLit 255 TUInt8
+                                    ]
+                                ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "addUInt8" )
+                            [ CIntLit 0 TUInt8
+                            , CIntLit 0 TUInt8
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

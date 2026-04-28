@@ -1,0 +1,17 @@
+-- Test: `addUInt8` returns `Right (a + b)` when the sum fits in
+-- 0..255 and `Left OverflowError` when it doesn't. Covers (i) the
+-- exact boundary `200 + 55 = Right 255` (the largest non-overflow
+-- result), (ii) the smallest overflow `200 + 56 = Left OverflowError`,
+-- (iii) `255 + 255 = Left OverflowError` (the maximum-overflow case
+-- — verifies the JVM/CLR Integer-boxed value isn't sign-extended
+-- before the comparison), and (iv) `0 + 0 = Right 0` (the trivial
+-- lower edge).
+import IO.Stdout
+
+render : Either OverflowError UInt8 -> String
+render r = case r of
+  Left e -> "overflow: " ++ showOverflowError e
+  Right v -> "ok: " ++ showUInt8 v
+
+main : String -> IOUnit
+main _input = IO.Stdout.print (render (addUInt8 200 55) ++ ", " ++ render (addUInt8 200 56) ++ ", " ++ render (addUInt8 255 255) ++ ", " ++ render (addUInt8 0 0))

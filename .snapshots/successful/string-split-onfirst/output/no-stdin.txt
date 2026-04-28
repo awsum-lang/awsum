@@ -1,0 +1,1 @@
+Just(a|b,c), Just(user|42::admin), Nothing, Just(|abc), Just(|foo), Just(foo|), Just(|), Nothing

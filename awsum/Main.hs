@@ -88,7 +88,7 @@ optProgramType =
         <> OA.completeWith ["cli"]
     )
 
--- | Optional target backend selector.
+-- | Required target backend selector.
 optTarget :: OA.Parser Target
 optTarget =
   OA.option

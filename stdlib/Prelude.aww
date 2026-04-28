@@ -14,6 +14,29 @@
 (++) : String -> String -> String
 (++) = BuiltIn.concatString
 
+{- Split a string at the first occurrence of `separator`. Returns
+   `Just (Tuple2 prefix suffix)` such that
+   `prefix ++ separator ++ suffix == str`, or `Nothing` if `separator`
+   does not appear in `str`.
+
+   Examples:
+   - `splitOnFirst "," "a,b,c"`         → `Just (Tuple2 "a" "b,c")`
+   - `splitOnFirst "::" "user::42::admin"` → `Just (Tuple2 "user" "42::admin")`
+   - `splitOnFirst "x" "abc"`           → `Nothing`
+   - `splitOnFirst "" "abc"`            → `Just (Tuple2 "" "abc")`     (empty separator matches at position 0)
+   - `splitOnFirst ":" ":foo"`          → `Just (Tuple2 "" "foo")`     (separator at start)
+   - `splitOnFirst ":" "foo:"`          → `Just (Tuple2 "foo" "")`     (separator at end)
+   - `splitOnFirst "abc" "abc"`         → `Just (Tuple2 "" "")`        (separator equals string)
+   - `splitOnFirst "abcde" "ab"`        → `Nothing`                    (separator longer than string)
+
+   Strings are byte sequences and matching is byte-level, not codepoint-level.
+   For ASCII the distinction is irrelevant; for multi-byte UTF-8, a single-byte
+   separator can land inside a codepoint. UTF-8-aware splitting is a separate
+   API and not provided here. -}
+
+splitOnFirst : String -> String -> Maybe (Tuple2 String String)
+splitOnFirst = BuiltIn.splitOnFirst
+
 -- ---------------------- Unit
 
 {- Single-constructor type carrying no information. Useful as a
@@ -65,6 +88,20 @@ type Either a b = Left a | Right b
 
 type Maybe a = Nothing | Just a
 
+-- ---------------------- Tuple2
+
+{- A pair of values. Single constructor `Tuple2 a b` carrying two
+   positional fields — used wherever a function honestly produces two
+   results and there's no obvious naming for them at the type level
+   (e.g. `splitOnFirst` returning prefix and suffix). When the two
+   fields *do* have meaningful names, prefer a domain-specific
+   single-constructor sum (e.g. `type RangeI32 = RangeI32 Int32 Int32`)
+   over `Tuple2`. The numeric suffix leaves the door open for future
+   `Tuple3` / `Tuple4` without anyone wondering whether `Pair` and
+   `Triple` belong to the same family. -}
+
+type Tuple2 a b = Tuple2 a b
+
 -- ---------------------- UnderflowError
 
 {- Reported by integer primitives when a result would leave the declared
@@ -88,6 +125,35 @@ type OverflowError = OverflowError
 showOverflowError : OverflowError -> String
 showOverflowError _ = "OverflowError"
 
+-- ---------------------- ParseError
+
+{- Reported by parsing primitives (e.g. `parseInt32`) when the input
+   string does not match the expected grammar or yields a value outside
+   the target type's range. Single-constructor sum — there is nothing
+   to pattern-match on beyond the fact that parsing failed. The grammar
+   itself, and the precise list of inputs that fail, is documented on
+   each parser's own docstring. -}
+
+type ParseError = ParseError
+
+showParseError : ParseError -> String
+showParseError _ = "ParseError"
+
+-- ---------------------- ArithError
+
+{- Reported by signed integer primitives that can fail at *either* end of
+   the type's range — `addInt32` is the seed case (`maxInt32 + 1` is an
+   overflow, `minInt32 + (-1)` is an underflow, both reachable from one
+   operation). Closed nominal sum picked deliberately over an open / row-
+   polymorphic union: structural unions are a separate, future feature. -}
+
+type ArithError = Underflow | Overflow
+
+showArithError : ArithError -> String
+showArithError e = case e of
+  Underflow -> "Underflow"
+  Overflow -> "Overflow"
+
 -- ---------------------- UInt8
 
 eqUInt8 : UInt8 -> UInt8 -> Bool
@@ -102,6 +168,32 @@ predUInt8 = BuiltIn.predUInt8
 succUInt8 : UInt8 -> Either OverflowError UInt8
 succUInt8 = BuiltIn.succUInt8
 
+addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
+addUInt8 = BuiltIn.addUInt8
+
+{- Parse a `UInt8` from a decimal string. The grammar mirrors Awsum's
+   integer literal: one or more decimal digits, nothing else — no sign
+   (UInt8 cannot represent a negative number), no leading or trailing
+   whitespace, no trailing characters of any kind, no leading `+`.
+   Range is 0..255 inclusive.
+
+   Examples:
+   - `parseUInt8 "0"`   → `Right 0`
+   - `parseUInt8 "255"` → `Right 255`
+   - `parseUInt8 "256"` → `Left ParseError`   (above max)
+   - `parseUInt8 "-1"`  → `Left ParseError`   (negative)
+   - `parseUInt8 ""`    → `Left ParseError`   (empty)
+   - `parseUInt8 "abc"` → `Left ParseError`   (not digits)
+   - `parseUInt8 " 5"`  → `Left ParseError`   (whitespace)
+   - `parseUInt8 "12a"` → `Left ParseError`   (trailing garbage)
+
+   Strings are byte sequences and digits are recognised as the seven-bit
+   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
+   rejected. -}
+
+parseUInt8 : String -> Either ParseError UInt8
+parseUInt8 = BuiltIn.parseUInt8
+
 -- ---------------------- Int32
 
 eqInt32 : Int32 -> Int32 -> Bool
@@ -115,3 +207,33 @@ predInt32 = BuiltIn.predInt32
 
 succInt32 : Int32 -> Either OverflowError Int32
 succInt32 = BuiltIn.succInt32
+
+addInt32 : Int32 -> Int32 -> Either ArithError Int32
+addInt32 = BuiltIn.addInt32
+
+{- Parse an `Int32` from a decimal string. The grammar mirrors Awsum's
+   integer literal: an optional leading `-`, then one or more decimal
+   digits, nothing else — no `+`, no leading or trailing whitespace, no
+   trailing characters of any kind. Range is `minInt32..maxInt32`
+   inclusive.
+
+   Examples:
+   - `parseInt32 "42"`           → `Right 42`
+   - `parseInt32 "-42"`          → `Right -42`
+   - `parseInt32 "0"`            → `Right 0`
+   - `parseInt32 "2147483647"`   → `Right 2147483647`     (maxInt32)
+   - `parseInt32 "-2147483648"`  → `Right -2147483648`    (minInt32)
+   - `parseInt32 "2147483648"`   → `Left ParseError`      (above max)
+   - `parseInt32 "-2147483649"`  → `Left ParseError`      (below min)
+   - `parseInt32 ""`             → `Left ParseError`      (empty)
+   - `parseInt32 "-"`            → `Left ParseError`      (sign without digits)
+   - `parseInt32 "+42"`          → `Left ParseError`      (`+` is not accepted, mirroring the literal grammar)
+   - `parseInt32 " 42"`          → `Left ParseError`      (leading whitespace)
+   - `parseInt32 "12abc"`        → `Left ParseError`      (trailing garbage)
+
+   Strings are byte sequences and digits are recognised as the seven-bit
+   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
+   rejected. -}
+
+parseInt32 : String -> Either ParseError Int32
+parseInt32 = BuiltIn.parseInt32

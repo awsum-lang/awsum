@@ -118,49 +118,49 @@ brew install lua
 
 ## Usage
 
-- `awsum build FILE [-t llvm] [-o OUT]` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
-- `awsum run FILE [-t llvm] [--input TEXT | --stdin]` — compile to a temp file and execute with the system runtime, passing input to main.
-- `awsum check FILE [--json] [--strict]` — parse and typecheck; prints `OK`, warnings (yellow), or an error. With `--json`, outputs an array of diagnostics: `[{"severity":"error"|"warning","startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"...","fixes":[{"title":"…","edits":[{"startLine":…,"newText":"…"}]}]}]`. With `--strict`, any warning causes a non-zero exit code (CI-friendly).
-- `awsum format FILE [-i|--in-place]` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
+- `awsum build -t llvm|jvm|clr|wasm|js|lua [-o OUT] FILE` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
+- `awsum run -t llvm|jvm|clr|wasm|js|lua [--input TEXT | --stdin] FILE` — compile to a temp file and execute with the system runtime, passing input to main.
+- `awsum check [--json] [--strict] FILE` — parse and typecheck; prints `OK`, warnings (yellow), or an error. With `--json`, outputs an array of diagnostics: `[{"severity":"error"|"warning","startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"...","fixes":[{"title":"…","edits":[{"startLine":…,"newText":"…"}]}]}]`. With `--strict`, any warning causes a non-zero exit code (CI-friendly).
+- `awsum format [-i|--in-place] FILE` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
 - `awsum core FILE` — print elaborated/lowered Core (post type elaboration) (for debugging).
-- `awsum asm FILE [-t jvm|clr|wasm]` — print target assembly text: Jasmin-like for JVM, CIL for CLR, WAT for WASM (for debugging).
-- `awsum symbols FILE [--json]` — list top-level declarations. With `--json`, outputs an LSP-style `DocumentSymbol` array (kind, name, range, selectionRange, children) consumed by `awsum-vscode` to drive the Outline view.
+- `awsum asm -t jvm|clr|wasm FILE` — print target assembly text: Jasmin-like for JVM, CIL for CLR, WAT for WASM (for debugging).
+- `awsum symbols [--json] FILE` — list top-level declarations. With `--json`, outputs an LSP-style `DocumentSymbol` array (kind, name, range, selectionRange, children) consumed by `awsum-vscode` to drive the Outline view.
 - `awsum --version` — show version
 
 Examples:
 
 ```sh
-awsum build test/sources/successful/hello/code/Main.aww -t llvm -o out.ll  && clang out.ll -o out && ./out "world"
-awsum build test/sources/successful/hello/code/Main.aww -t jvm  -o AwsumMain.class && java AwsumMain "world"
-awsum build test/sources/successful/hello/code/Main.aww -t clr  -o AwsumMain.dll   && dotnet AwsumMain.dll "world"
-awsum build test/sources/successful/hello/code/Main.aww -t wasm -o out.wasm        && wasmtime out.wasm "world"
-awsum build test/sources/successful/hello/code/Main.aww -t js   -o out.js  && node out.js "world"
-awsum build test/sources/successful/hello/code/Main.aww -t lua  -o out.lua && lua out.lua "world"
+awsum build -t llvm -o out.ll          test/sources/successful/hello/code/Main.aww && clang out.ll -o program && ./program "world"
+awsum build -t jvm  -o AwsumMain.class test/sources/successful/hello/code/Main.aww && java AwsumMain "world"
+awsum build -t clr  -o AwsumMain.dll   test/sources/successful/hello/code/Main.aww && dotnet AwsumMain.dll "world"
+awsum build -t wasm -o out.wasm        test/sources/successful/hello/code/Main.aww && wasmtime out.wasm "world"
+awsum build -t js   -o out.js          test/sources/successful/hello/code/Main.aww && node out.js "world"
+awsum build -t lua  -o out.lua         test/sources/successful/hello/code/Main.aww && lua out.lua "world"
 
-awsum asm test/sources/successful/hello/code/Main.aww -t jvm   # Jasmin-like text (for inspection)
-awsum asm test/sources/successful/hello/code/Main.aww -t clr   # CIL text (for inspection)
-awsum asm test/sources/successful/hello/code/Main.aww -t wasm  # WAT text (for inspection)
+awsum asm -t jvm  test/sources/successful/hello/code/Main.aww   # Jasmin-like text (for inspection)
+awsum asm -t clr  test/sources/successful/hello/code/Main.aww   # CIL text (for inspection)
+awsum asm -t wasm test/sources/successful/hello/code/Main.aww   # WAT text (for inspection)
 
-awsum run test/sources/successful/hello/code/Main.aww -t llvm --input "world"
-awsum run test/sources/successful/hello/code/Main.aww -t jvm  --input "world"
-awsum run test/sources/successful/hello/code/Main.aww -t clr  --input "world"
-awsum run test/sources/successful/hello/code/Main.aww -t wasm --input "world"
-awsum run test/sources/successful/hello/code/Main.aww -t js   --input "world"
-awsum run test/sources/successful/hello/code/Main.aww -t lua  --input "world"
+awsum run -t llvm --input "world" test/sources/successful/hello/code/Main.aww
+awsum run -t jvm  --input "world" test/sources/successful/hello/code/Main.aww
+awsum run -t clr  --input "world" test/sources/successful/hello/code/Main.aww
+awsum run -t wasm --input "world" test/sources/successful/hello/code/Main.aww
+awsum run -t js   --input "world" test/sources/successful/hello/code/Main.aww
+awsum run -t lua  --input "world" test/sources/successful/hello/code/Main.aww
 
-echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t llvm --stdin
-echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t jvm  --stdin
-echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t clr  --stdin
-echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t wasm --stdin
-echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t js   --stdin
-echo "world" | awsum run test/sources/successful/hello/code/Main.aww -t lua  --stdin
+echo "world" | awsum run -t llvm --stdin test/sources/successful/hello/code/Main.aww
+echo "world" | awsum run -t jvm  --stdin test/sources/successful/hello/code/Main.aww
+echo "world" | awsum run -t clr  --stdin test/sources/successful/hello/code/Main.aww
+echo "world" | awsum run -t wasm --stdin test/sources/successful/hello/code/Main.aww
+echo "world" | awsum run -t js   --stdin test/sources/successful/hello/code/Main.aww
+echo "world" | awsum run -t lua  --stdin test/sources/successful/hello/code/Main.aww
 
-awsum check  test/sources/successful/hello/code/Main.aww
-awsum check  test/sources/successful/hello/code/Main.aww --json
-awsum format test/sources/successful/hello/code/Main.aww -i
-awsum ast    test/sources/successful/hello/code/Main.aww
-awsum core   test/sources/successful/hello/code/Main.aww
+awsum check         test/sources/successful/hello/code/Main.aww
+awsum check  --json test/sources/successful/hello/code/Main.aww
+awsum format -i     test/sources/successful/hello/code/Main.aww
+awsum ast           test/sources/successful/hello/code/Main.aww
+awsum core          test/sources/successful/hello/code/Main.aww
 awsum --version
 ```
 

@@ -85,9 +85,10 @@ op_memory_size, op_memory_grow :: Word8
 op_memory_size = 0x3F
 op_memory_grow = 0x40
 
-op_i32_eqz, op_i32_eq, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
+op_i32_eqz, op_i32_eq, op_i32_ne, op_i32_add, op_i32_mul, op_i32_and, op_i32_lt_u, op_i32_gt_u, op_i32_ge_u :: Word8
 op_i32_eqz = 0x45
 op_i32_eq = 0x46
+op_i32_ne = 0x47
 op_i32_add = 0x6A
 op_i32_mul = 0x6C
 op_i32_and = 0x71
@@ -95,15 +96,28 @@ op_i32_lt_u = 0x49
 op_i32_gt_u = 0x4B
 op_i32_ge_u = 0x4F
 
-op_i32_sub, op_i32_div_u, op_i32_rem_u, op_i32_lt_s :: Word8
+op_i32_sub, op_i32_div_u, op_i32_rem_u, op_i32_lt_s, op_i32_xor, op_i32_ge_s :: Word8
 op_i32_sub = 0x6B
 op_i32_div_u = 0x6E
 op_i32_rem_u = 0x70
 op_i32_lt_s = 0x48
+op_i32_xor = 0x73
+op_i32_ge_s = 0x4E
+
+op_i64_const, op_i64_add, op_i64_sub, op_i64_mul, op_i64_shl, op_i64_gt_s, op_i32_wrap_i64, op_i64_extend_i32_u :: Word8
+op_i64_const = 0x42
+op_i64_add = 0x7C
+op_i64_sub = 0x7D
+op_i64_mul = 0x7E
+op_i64_shl = 0x86
+op_i64_gt_s = 0x55
+op_i32_wrap_i64 = 0xA7
+op_i64_extend_i32_u = 0xAD
 
 -- WASM type encoding
-valtype_i32 :: Word8
+valtype_i32, valtype_i64 :: Word8
 valtype_i32 = 0x7F
+valtype_i64 = 0x7E
 
 blocktype_void :: Word8
 blocktype_void = 0x40
@@ -135,12 +149,13 @@ importCount = 3
 
 -- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
 -- __box_i32, __show_i32, __predInt32, __predUInt8, __succInt32, __succUInt8,
--- __eq_i32, __get_arg
+-- __eq_i32, __addInt32, __addUInt8, __splitOnFirst, __parseInt32,
+-- __parseUInt8, __get_arg
 runtimeCount :: Word32
-runtimeCount = 13
+runtimeCount = 18
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxAddI32, idxAddU8, idxSplitOnFirst, idxParseI32, idxParseU8, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -153,7 +168,12 @@ idxPredU8 = importCount + 8
 idxSuccI32 = importCount + 9
 idxSuccU8 = importCount + 10
 idxEqI32 = importCount + 11
-idxGetArg = importCount + 12
+idxAddI32 = importCount + 12
+idxAddU8 = importCount + 13
+idxSplitOnFirst = importCount + 14
+idxParseI32 = importCount + 15
+idxParseU8 = importCount + 16
+idxGetArg = importCount + 17
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -343,6 +363,11 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __succInt32
           lookupType (FuncType 1 True) typeMap, -- __succUInt8
           lookupType (FuncType 2 True) typeMap, -- __eq_i32
+          lookupType (FuncType 2 True) typeMap, -- __addInt32
+          lookupType (FuncType 2 True) typeMap, -- __addUInt8
+          lookupType (FuncType 2 True) typeMap, -- __splitOnFirst
+          lookupType (FuncType 1 True) typeMap, -- __parseInt32
+          lookupType (FuncType 1 True) typeMap, -- __parseUInt8
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
           -- User declarations
@@ -451,6 +476,11 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeSuccI32 info,
           codeSuccU8 info,
           codeEqI32 info,
+          codeAddI32 info,
+          codeAddU8 info,
+          codeSplitOnFirst info,
+          codeParseInt32 info,
+          codeParseUInt8 info,
           codeGetArg info
         ]
           -- User declarations
@@ -1166,6 +1196,972 @@ codeEqI32 _info =
         [op_end]
       ]
 
+-- __addInt32(pa: i32, pb: i32) -> i32
+-- addInt32: Int32 -> Int32 -> Either ArithError Int32. Signed-overflow
+-- detected via the XOR trick: '(a ^ s) & (b ^ s) < 0' (i32.lt_s 0)
+-- holds iff the carry into the sign bit differs from the carry out.
+-- Direction is read off 'a >= 0' (i32.ge_s 0) — same-sign overflow is
+-- positive when a >= 0, negative otherwise. ArithError tags follow
+-- Prelude.aww declaration order: Underflow=0, Overflow=1.
+-- Locals: $a(2) $b(3) $s(4) $ae(5) $box(6) $cell(7).
+codeAddI32 :: WasmInfo -> [Word8]
+codeAddI32 _info =
+  encodeBody
+    (encodeLocals 6)
+    $ concat
+      [ -- a = i32.load(pa)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 2,
+        -- b = i32.load(pb)
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 3,
+        -- s = a + b
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 4,
+        -- if (((a ^ s) & (b ^ s)) < 0)  result i32
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_xor],
+        [op_local_get],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_xor],
+        [op_i32_and],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_lt_s],
+        [op_if, blocktype_i32],
+        -- then: Left ArithError
+        -- ae = __alloc(4)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        -- i32.store(ae, (if a >= 0 then 1 else 0))
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_ge_s],
+        [op_if, blocktype_i32],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_else],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_end],
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 0 (Left); store offset=4 ae
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 7,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_else],
+        -- else: Right s
+        -- box = __alloc(4); store s
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_store, 0x02, 0x00],
+        -- cell = __alloc(8); store tag 1 (Right); store offset=4 box
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 7,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_end]
+      ]
+
+-- __addUInt8(pa: i32, pb: i32) -> i32
+-- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8. Sum is in
+-- 0..510 so a single 'i32.gt_u 255' check picks the branch — no
+-- widening, no mask on the ok path.
+-- Locals: $s(2) $oe(3) $box(4) $cell(5).
+codeAddU8 :: WasmInfo -> [Word8]
+codeAddU8 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- s = i32.load(pa) + i32.load(pb)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 2,
+        -- if (s > 255) result i32
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 255,
+        [op_i32_gt_u],
+        [op_if, blocktype_i32],
+        -- then: Left OverflowError
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_else],
+        -- else: Right s
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_end]
+      ]
+
+-- __splitOnFirst(sep: i32, str: i32) -> i32
+-- splitOnFirst: String -> String -> Maybe (Tuple2 String String). Hand-
+-- rolled byte scan since WASM has no built-in substring search. The
+-- empty-separator and "separator longer than str" cases are handled
+-- implicitly by the loop bounds — see the WAT version for the
+-- annotated structure.
+-- Locals (beyond the two params): $sep_len(2) $str_len(3) $i(4) $j(5)
+-- pos(6) $match(7) $prefix(8) $suffix(9) $tuple(10) $cell(11) $suf_len(12).
+codeSplitOnFirst :: WasmInfo -> [Word8]
+codeSplitOnFirst _info =
+  encodeBody
+    (encodeLocals 11)
+    $ concat
+      [ -- sep_len = strlen($sep)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_call],
+        encodeULEB128 idxStrlen,
+        [op_local_set],
+        encodeULEB128 2,
+        -- str_len = strlen($str)
+        [op_local_get],
+        encodeULEB128 1,
+        [op_call],
+        encodeULEB128 idxStrlen,
+        [op_local_set],
+        encodeULEB128 3,
+        -- pos = -1
+        [op_i32_const],
+        encodeSLEB128 (-1),
+        [op_local_set],
+        encodeULEB128 6,
+        -- i = 0
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 4,
+        -- block $break
+        [op_block, blocktype_void],
+        --   loop $loop
+        [op_loop, blocktype_void],
+        --     br_if $break (i + sep_len > str_len)
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_gt_u],
+        [op_br_if],
+        encodeULEB128 1, -- depth 1 = $break
+        --     $j = 0
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 5,
+        --     $match = 1
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 7,
+        --     block $check_break
+        [op_block, blocktype_void],
+        --       loop $check_loop
+        [op_loop, blocktype_void],
+        --         br_if $check_break (j == sep_len)  — full match: leave $match=1
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_eq],
+        [op_br_if],
+        encodeULEB128 1, -- depth 1 = $check_break
+        --         if (str[i+j] != sep[j])
+        [op_local_get],
+        encodeULEB128 1, -- str
+        [op_local_get],
+        encodeULEB128 4, -- i
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 5, -- j
+        [op_i32_add],
+        [op_i32_load8_u, 0x00, 0x00],
+        [op_local_get],
+        encodeULEB128 0, -- sep
+        [op_local_get],
+        encodeULEB128 5, -- j
+        [op_i32_add],
+        [op_i32_load8_u, 0x00, 0x00],
+        [op_i32_ne],
+        [op_if, blocktype_void],
+        --           $match = 0; br $check_break
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_br],
+        encodeULEB128 2, -- if=0, check_loop=1, check_break=2
+        [op_end], -- end if
+        --         $j = $j + 1
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 5,
+        --         br $check_loop
+        [op_br],
+        encodeULEB128 0,
+        [op_end], -- end loop $check_loop
+        [op_end], -- end block $check_break
+        --     if ($match)  → record pos and break out
+        [op_local_get],
+        encodeULEB128 7,
+        [op_if, blocktype_void],
+        --       $pos = $i
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_set],
+        encodeULEB128 6,
+        --       br $break  (if=0, loop=1, break=2)
+        [op_br],
+        encodeULEB128 2,
+        [op_end], -- end if
+        --     $i = $i + 1
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 4,
+        --     br $loop
+        [op_br],
+        encodeULEB128 0,
+        [op_end], -- end loop $loop
+        [op_end], -- end block $break
+        -- if ($pos == -1) Nothing else Just (Tuple2 prefix suffix)
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_const],
+        encodeSLEB128 (-1),
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        --   Nothing: cell = alloc 4; store tag 0; return cell
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 11,
+        [op_local_get],
+        encodeULEB128 11,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 11,
+        [op_else],
+        --   prefix = alloc(pos + 1); memcpy(prefix, str, pos); store8 0 at end
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 8, -- prefix
+        [op_local_get],
+        encodeULEB128 8,
+        [op_local_get],
+        encodeULEB128 1, -- str
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_call],
+        encodeULEB128 idxMemcpy,
+        [op_local_get],
+        encodeULEB128 8,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store8, 0x00, 0x00],
+        --   suf_len = str_len - pos - sep_len
+        [op_local_get],
+        encodeULEB128 3, -- str_len
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_i32_sub],
+        [op_local_get],
+        encodeULEB128 2, -- sep_len
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 12, -- suf_len
+        --   suffix = alloc(suf_len + 1); memcpy; store8 0 at end
+        [op_local_get],
+        encodeULEB128 12,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 9, -- suffix
+        [op_local_get],
+        encodeULEB128 9,
+        [op_local_get],
+        encodeULEB128 1, -- str
+        [op_local_get],
+        encodeULEB128 6, -- pos
+        [op_local_get],
+        encodeULEB128 2, -- sep_len
+        [op_i32_add],
+        [op_i32_add],
+        [op_local_get],
+        encodeULEB128 12, -- suf_len
+        [op_call],
+        encodeULEB128 idxMemcpy,
+        [op_local_get],
+        encodeULEB128 9,
+        [op_local_get],
+        encodeULEB128 12,
+        [op_i32_add],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store8, 0x00, 0x00],
+        --   tuple = alloc 12; [tag=0, prefix, suffix]
+        [op_i32_const],
+        encodeSLEB128 12,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 10, -- tuple
+        [op_local_get],
+        encodeULEB128 10,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 10,
+        [op_local_get],
+        encodeULEB128 8,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 10,
+        [op_local_get],
+        encodeULEB128 9,
+        [op_i32_store, 0x02, 0x08],
+        --   cell = alloc 8; [tag=1, tuple]
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 11, -- cell
+        [op_local_get],
+        encodeULEB128 11,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 11,
+        [op_local_get],
+        encodeULEB128 10,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 11,
+        [op_end] -- end if (cell now on stack as result)
+      ]
+
+-- __parseInt32(s: i32) -> i32
+-- parseInt32: String -> Either ParseError Int32. Hand-rolled byte
+-- scan; the int64 accumulator is capped at the magnitude `|minInt32|`
+-- using the shift trick `(1 << 31)L`. On any failure path we set
+-- `$failed = 1` and `br $exit`; the final `if` after the block builds
+-- Right or Left ParseError.
+-- Locals (beyond the param): $len(1) $i(2) $neg(3) $c(4) $box(5)
+-- cell(6) $pe(7) $failed(8) $acc(9 — i64).
+codeParseInt32 :: WasmInfo -> [Word8]
+codeParseInt32 _info =
+  let -- Two local groups: 8 i32, then 1 i64.
+      locals =
+        encodeULEB128 2
+          <> encodeULEB128 8
+          <> [valtype_i32]
+          <> encodeULEB128 1
+          <> [valtype_i64]
+   in encodeBody locals
+        $ concat
+          [ -- failed = 0
+            [op_i32_const],
+            encodeSLEB128 0,
+            [op_local_set],
+            encodeULEB128 8,
+            -- acc = 0L
+            [op_i64_const],
+            encodeSLEB128 0,
+            [op_local_set],
+            encodeULEB128 9,
+            -- len = strlen($s)
+            [op_local_get],
+            encodeULEB128 0,
+            [op_call],
+            encodeULEB128 idxStrlen,
+            [op_local_set],
+            encodeULEB128 1,
+            -- block $exit (depth 0 within)
+            [op_block, blocktype_void],
+            --   if (i32.eqz $len) { $failed = 1; br $exit }
+            [op_local_get],
+            encodeULEB128 1,
+            [op_i32_eqz],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 8,
+            [op_br],
+            encodeULEB128 1,
+            [op_end],
+            --   $i = 0
+            [op_i32_const],
+            encodeSLEB128 0,
+            [op_local_set],
+            encodeULEB128 2,
+            --   $neg = 0
+            [op_i32_const],
+            encodeSLEB128 0,
+            [op_local_set],
+            encodeULEB128 3,
+            --   if (load8_u $s == 45) { $neg = 1; $i = 1; if ($len == 1) { $failed = 1; br $exit } }
+            [op_local_get],
+            encodeULEB128 0,
+            [op_i32_load8_u, 0x00, 0x00],
+            [op_i32_const],
+            encodeSLEB128 45,
+            [op_i32_eq],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 3,
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 2,
+            [op_local_get],
+            encodeULEB128 1,
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_i32_eq],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 8,
+            [op_br],
+            encodeULEB128 2, -- inner if=0, outer if=1, $exit=2
+            [op_end],
+            [op_end],
+            --   block $loop_break (depth 0 within $loop_break)
+            [op_block, blocktype_void],
+            --     loop $loop
+            [op_loop, blocktype_void],
+            --       br_if $loop_break (i >= len)  → depth 1
+            [op_local_get],
+            encodeULEB128 2,
+            [op_local_get],
+            encodeULEB128 1,
+            [op_i32_ge_u],
+            [op_br_if],
+            encodeULEB128 1,
+            --       $c = i32.load8_u(s + i)
+            [op_local_get],
+            encodeULEB128 0,
+            [op_local_get],
+            encodeULEB128 2,
+            [op_i32_add],
+            [op_i32_load8_u, 0x00, 0x00],
+            [op_local_set],
+            encodeULEB128 4,
+            --       if (c < 48) { $failed = 1; br $exit }
+            [op_local_get],
+            encodeULEB128 4,
+            [op_i32_const],
+            encodeSLEB128 48,
+            [op_i32_lt_u],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 8,
+            [op_br],
+            encodeULEB128 3, -- if=0, $loop=1, $loop_break=2, $exit=3
+            [op_end],
+            --       if (c > 57) { $failed = 1; br $exit }
+            [op_local_get],
+            encodeULEB128 4,
+            [op_i32_const],
+            encodeSLEB128 57,
+            [op_i32_gt_u],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 8,
+            [op_br],
+            encodeULEB128 3,
+            [op_end],
+            --       $acc = $acc * 10 + extend_u(c - '0')
+            [op_local_get],
+            encodeULEB128 9,
+            [op_i64_const],
+            encodeSLEB128 10,
+            [op_i64_mul],
+            [op_local_get],
+            encodeULEB128 4,
+            [op_i32_const],
+            encodeSLEB128 48,
+            [op_i32_sub],
+            [op_i64_extend_i32_u],
+            [op_i64_add],
+            [op_local_set],
+            encodeULEB128 9,
+            --       if ($acc > (1 << 31)L) { $failed = 1; br $exit }
+            [op_local_get],
+            encodeULEB128 9,
+            [op_i64_const],
+            encodeSLEB128 1,
+            [op_i64_const],
+            encodeSLEB128 31,
+            [op_i64_shl],
+            [op_i64_gt_s],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 8,
+            [op_br],
+            encodeULEB128 3,
+            [op_end],
+            --       $i = $i + 1
+            [op_local_get],
+            encodeULEB128 2,
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_i32_add],
+            [op_local_set],
+            encodeULEB128 2,
+            --       br $loop
+            [op_br],
+            encodeULEB128 0,
+            [op_end], -- end loop
+            [op_end], -- end block $loop_break
+            --   if ($neg) { $acc = 0 - $acc } else { if ($acc > 2147483647L) fail }
+            [op_local_get],
+            encodeULEB128 3,
+            [op_if, blocktype_void],
+            [op_i64_const],
+            encodeSLEB128 0,
+            [op_local_get],
+            encodeULEB128 9,
+            [op_i64_sub],
+            [op_local_set],
+            encodeULEB128 9,
+            [op_else],
+            [op_local_get],
+            encodeULEB128 9,
+            [op_i64_const],
+            encodeSLEB128 2147483647,
+            [op_i64_gt_s],
+            [op_if, blocktype_void],
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_local_set],
+            encodeULEB128 8,
+            [op_br],
+            encodeULEB128 2, -- inner if=0, outer if-else=1, $exit=2
+            [op_end],
+            [op_end],
+            [op_end], -- end block $exit
+            -- if ($failed) Left else Right
+            [op_local_get],
+            encodeULEB128 8,
+            [op_if, blocktype_i32],
+            -- pe = alloc 4; store tag 0
+            [op_i32_const],
+            encodeSLEB128 4,
+            [op_call],
+            encodeULEB128 idxAlloc,
+            [op_local_set],
+            encodeULEB128 7,
+            [op_local_get],
+            encodeULEB128 7,
+            [op_i32_const],
+            encodeSLEB128 0,
+            [op_i32_store, 0x02, 0x00],
+            -- cell = alloc 8; tag 0; offset 4 = pe
+            [op_i32_const],
+            encodeSLEB128 8,
+            [op_call],
+            encodeULEB128 idxAlloc,
+            [op_local_set],
+            encodeULEB128 6,
+            [op_local_get],
+            encodeULEB128 6,
+            [op_i32_const],
+            encodeSLEB128 0,
+            [op_i32_store, 0x02, 0x00],
+            [op_local_get],
+            encodeULEB128 6,
+            [op_local_get],
+            encodeULEB128 7,
+            [op_i32_store, 0x02, 0x04],
+            [op_local_get],
+            encodeULEB128 6,
+            [op_else],
+            -- box = alloc 4; store wrap_i64($acc)
+            [op_i32_const],
+            encodeSLEB128 4,
+            [op_call],
+            encodeULEB128 idxAlloc,
+            [op_local_set],
+            encodeULEB128 5,
+            [op_local_get],
+            encodeULEB128 5,
+            [op_local_get],
+            encodeULEB128 9,
+            [op_i32_wrap_i64],
+            [op_i32_store, 0x02, 0x00],
+            -- cell = alloc 8; tag 1; offset 4 = box
+            [op_i32_const],
+            encodeSLEB128 8,
+            [op_call],
+            encodeULEB128 idxAlloc,
+            [op_local_set],
+            encodeULEB128 6,
+            [op_local_get],
+            encodeULEB128 6,
+            [op_i32_const],
+            encodeSLEB128 1,
+            [op_i32_store, 0x02, 0x00],
+            [op_local_get],
+            encodeULEB128 6,
+            [op_local_get],
+            encodeULEB128 5,
+            [op_i32_store, 0x02, 0x04],
+            [op_local_get],
+            encodeULEB128 6,
+            [op_end] -- end if
+          ]
+
+-- __parseUInt8(s: i32) -> i32
+-- Same shape as 'codeParseInt32' minus the sign handling, with an i32
+-- accumulator (the running magnitude never exceeds 2559 before the
+-- > 255 check fails the parse).
+-- Locals: $len(1) $i(2) $acc(3) $c(4) $box(5) $cell(6) $pe(7) $failed(8).
+codeParseUInt8 :: WasmInfo -> [Word8]
+codeParseUInt8 _info =
+  encodeBody (encodeLocals 8)
+    $ concat
+      [ -- failed = 0
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 8,
+        -- acc = 0
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 3,
+        -- len = strlen($s)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_call],
+        encodeULEB128 idxStrlen,
+        [op_local_set],
+        encodeULEB128 1,
+        -- block $exit
+        [op_block, blocktype_void],
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_eqz],
+        [op_if, blocktype_void],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 8,
+        [op_br],
+        encodeULEB128 1,
+        [op_end],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_set],
+        encodeULEB128 2,
+        --   block $loop_break
+        [op_block, blocktype_void],
+        [op_loop, blocktype_void],
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_ge_u],
+        [op_br_if],
+        encodeULEB128 1,
+        [op_local_get],
+        encodeULEB128 0,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_add],
+        [op_i32_load8_u, 0x00, 0x00],
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 48,
+        [op_i32_lt_u],
+        [op_if, blocktype_void],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 8,
+        [op_br],
+        encodeULEB128 3,
+        [op_end],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 57,
+        [op_i32_gt_u],
+        [op_if, blocktype_void],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 8,
+        [op_br],
+        encodeULEB128 3,
+        [op_end],
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 10,
+        [op_i32_mul],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 48,
+        [op_i32_sub],
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 255,
+        [op_i32_gt_u],
+        [op_if, blocktype_void],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_local_set],
+        encodeULEB128 8,
+        [op_br],
+        encodeULEB128 3,
+        [op_end],
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_add],
+        [op_local_set],
+        encodeULEB128 2,
+        [op_br],
+        encodeULEB128 0,
+        [op_end], -- end loop
+        [op_end], -- end block $loop_break
+        [op_end], -- end block $exit
+        -- if ($failed) Left else Right
+        [op_local_get],
+        encodeULEB128 8,
+        [op_if, blocktype_i32],
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 7,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 7,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 6,
+        [op_else],
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 6,
+        [op_end]
+      ]
+
 -- __box_i32(v: i32) -> i32
 -- Allocate a 4-byte cell, store v, return pointer.
 -- local $p: i32 (slot 1)
@@ -1704,6 +2700,27 @@ emitExpr ctx = \case
               <> emitExpr ctx b
               <> [op_call]
               <> encodeULEB128 idxEqI32
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8",
+          [a, b] <- xs ->
+            let idx = if name == "addInt32" then idxAddI32 else idxAddU8
+             in emitExpr ctx a
+                  <> emitExpr ctx b
+                  <> [op_call]
+                  <> encodeULEB128 idx
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            emitExpr ctx a
+              <> emitExpr ctx b
+              <> [op_call]
+              <> encodeULEB128 idxSplitOnFirst
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8",
+          [x] <- xs ->
+            let idx = if name == "parseInt32" then idxParseI32 else idxParseU8
+             in emitExpr ctx x
+                  <> [op_call]
+                  <> encodeULEB128 idx
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             emitExpr ctx a

@@ -107,6 +107,39 @@ header builtIns =
               else "",
             if Set.member "eqUInt8" builtIns
               then "function __eqUInt8(a, b){ return a === b ? [0] : [1]; }"
+              else "",
+            -- addInt32: Either ArithError Int32. JS numbers exactly represent
+            -- the 33-bit sum of two i32s, so the range checks are direct
+            -- without intermediate '|0' wrapping. ArithError tags follow
+            -- declaration order: Underflow=0, Overflow=1.
+            if Set.member "addInt32" builtIns
+              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [1]]; if (s < -2147483648) return [0, [0]]; return [1, s|0]; }"
+              else "",
+            -- addUInt8: Either OverflowError UInt8. Both inputs in 0..255,
+            -- so the unmasked sum is in 0..510 and a single '> 255' check
+            -- separates the branches.
+            if Set.member "addUInt8" builtIns
+              then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [0, [0]] : [1, s & 0xFF]; }"
+              else "",
+            -- splitOnFirst: 'indexOf("")' returns 0 in JS, so empty separator
+            -- naturally yields ["", str]. 'substring' creates fresh strings
+            -- (V8 sometimes shares storage internally — irrelevant at the
+            -- semantic level we observe). Tags: Maybe Nothing=0, Just=1;
+            -- Tuple2 has one constructor (tag 0).
+            if Set.member "splitOnFirst" builtIns
+              then "function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [0]; return [1, [0, str.substring(0, i), str.substring(i + sep.length)]]; }"
+              else "",
+            -- parseInt32: strict decimal grammar mirroring the language
+            -- literal — optional '-', one or more ASCII digits, nothing else.
+            -- Regex full-match enforces it; Number() then range-checks. JS
+            -- numbers are double-precision and represent every i32 (and the
+            -- absolute minInt32 boundary 2147483648) exactly.
+            if Set.member "parseInt32" builtIns
+              then "function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [0, [0]]; return [1, n | 0]; }"
+              else "",
+            -- parseUInt8: same shape but no sign accepted; range 0..255.
+            if Set.member "parseUInt8" builtIns
+              then "function __parseUInt8(s){ if (!/^[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n > 255) return [0, [0]]; return [1, n & 0xFF]; }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -272,10 +305,28 @@ emitExpr = \case
                 let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
                  in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8" ->
+            case xs of
+              [a, b] ->
+                let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
+                 in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn "concatString" ->
         case xs of
           [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
           _ -> error "BuiltIn.concatString: arity mismatch"
+      CBuiltIn "splitOnFirst" ->
+        case xs of
+          [a, b] -> "__splitOnFirst(" <> emitExpr a <> ", " <> emitExpr b <> ")"
+          _ -> error "BuiltIn.splitOnFirst: arity mismatch"
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8" ->
+            case xs of
+              [a] ->
+                let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+                 in fn <> "(" <> emitExpr a <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn n ->
         error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->

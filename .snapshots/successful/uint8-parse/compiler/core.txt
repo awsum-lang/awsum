@@ -1,0 +1,127 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CString "err"
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok:"
+                        , CCall
+                            ( CBuiltIn "showUInt8" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CCall
+                                                                ( CBuiltIn "concatString" )
+                                                                [ CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CCall
+                                                                            ( CVar "render" )
+                                                                            [ CCall
+                                                                                ( CBuiltIn "parseUInt8" )
+                                                                                [ CString "0" ]
+                                                                            ]
+                                                                        , CString ", "
+                                                                        ]
+                                                                    , CCall
+                                                                        ( CVar "render" )
+                                                                        [ CCall
+                                                                            ( CBuiltIn "parseUInt8" )
+                                                                            [ CString "255" ]
+                                                                        ]
+                                                                    ]
+                                                                , CString ", "
+                                                                ]
+                                                            , CCall
+                                                                ( CVar "render" )
+                                                                [ CCall
+                                                                    ( CBuiltIn "parseUInt8" )
+                                                                    [ CString "256" ]
+                                                                ]
+                                                            ]
+                                                        , CString ", "
+                                                        ]
+                                                    , CCall
+                                                        ( CVar "render" )
+                                                        [ CCall
+                                                            ( CBuiltIn "parseUInt8" )
+                                                            [ CString "-1" ]
+                                                        ]
+                                                    ]
+                                                , CString ", "
+                                                ]
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "parseUInt8" )
+                                                    [ CString "" ]
+                                                ]
+                                            ]
+                                        , CString ", "
+                                        ]
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "parseUInt8" )
+                                            [ CString "abc" ]
+                                        ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "parseUInt8" )
+                                    [ CString " 5" ]
+                                ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "parseUInt8" )
+                            [ CString "12a" ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

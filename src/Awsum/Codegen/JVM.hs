@@ -48,6 +48,16 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "L_eq_u8"),
             "",
+            gate (Set.member "addInt32" builtIns) addInt32Method,
+            "",
+            gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            "",
+            gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            "",
+            gate (Set.member "parseInt32" builtIns) parseInt32Method,
+            "",
+            gate (Set.member "parseUInt8" builtIns) parseUInt8Method,
+            "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
             mainMethod,
@@ -378,6 +388,445 @@ eqMethod name lbl =
       ".end method"
     ]
 
+-- addInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Promote both operands to long, sum, then range-check against
+--   [-2147483648, 2147483647] with `lcmp`. ArithError tags follow the
+--   declaration order in `Prelude.aww`: Underflow=0, Overflow=1; Either
+--   tags are Left=0, Right=1 as everywhere else in this file.
+addInt32Method :: Text
+addInt32Method =
+  unlines
+    [ ".method public static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ladd",
+      "  dup2",
+      "  ldc2_w 2147483647",
+      "  lcmp",
+      "  ifgt L_addi32_over",
+      "  dup2",
+      "  ldc2_w -2147483648",
+      "  lcmp",
+      "  iflt L_addi32_under",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addi32_over:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addi32_under:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255, so `iadd` produces a value in 0..510 with
+--   no JVM-level overflow; one `if_icmple` against 255 picks the branch.
+--   On the ok path the sum is already a valid UInt8 — no mask needed.
+addUInt8Method :: Text
+addUInt8Method =
+  unlines
+    [ ".method public static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  iadd",
+      "  istore_2",
+      "  iload_2",
+      "  sipush 255",
+      "  if_icmple L_addu8_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addu8_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_2",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
+--   Defers substring search to 'String.indexOf(String)', which returns -1
+--   on miss and 0 on empty 'sep' — both behaviours match the prelude
+--   contract directly. On hit, 'String.substring' allocates fresh
+--   String objects (not aliased into the input), then we wrap them in
+--   Tuple2 (Object[3], tag 0) inside Just (Object[2], tag 1). On miss
+--   we return Nothing (Object[1], tag 0).
+splitOnFirstMethod :: Text
+splitOnFirstMethod =
+  unlines
+    [ ".method public static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 4",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/indexOf(Ljava/lang/String;)I",
+      "  istore_2",
+      "  iload_2",
+      "  iconst_m1",
+      "  if_icmpne L_split_found",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      "L_split_found:",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  iconst_0",
+      "  iload_2",
+      "  invokevirtual java/lang/String/substring(II)Ljava/lang/String;",
+      "  astore_3",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  iload_2",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/length()I",
+      "  iadd",
+      "  invokevirtual java/lang/String/substring(I)Ljava/lang/String;",
+      "  astore_2",
+      "  iconst_3",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_3",
+      "  aastore",
+      "  dup",
+      "  iconst_2",
+      "  aload_2",
+      "  aastore",
+      "  astore_3",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_3",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- parseInt32: String -> Either ParseError Int32.
+--   Handrolled decimal parser; grammar mirrors Awsum's literal — optional
+--   '-', one or more ASCII digits, nothing else. The accumulator is a
+--   long, capped at the magnitude `|minInt32|` (2147483648); anything
+--   above that fails fast. After the loop, the negative path negates and
+--   passes (since `acc <= 2147483648` ⇒ `-acc >= -2147483648`); the
+--   positive path range-checks against `maxInt32` (2147483647). Slot 4
+--   carries the negative-flag during parsing and is later reused to
+--   stage the boxed `ParseError` on the L_parseInt32_fail path — JVM
+--   slot reuse is fine because the verifier tracks the type after each
+--   instruction.
+parseInt32Method :: Text
+parseInt32Method =
+  unlines
+    [ ".method public static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 8",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  astore_1",
+      "  aload_1",
+      "  invokevirtual java/lang/String/length()I",
+      "  istore_2",
+      "  iload_2",
+      "  ifeq L_parseInt32_fail",
+      "  iconst_0",
+      "  istore_3",
+      "  iconst_0",
+      "  istore 4",
+      "  aload_1",
+      "  iconst_0",
+      "  invokevirtual java/lang/String/charAt(I)C",
+      "  bipush 45",
+      "  if_icmpne L_parseInt32_init_acc",
+      "  iconst_1",
+      "  istore 4",
+      "  iconst_1",
+      "  istore_3",
+      "  iload_2",
+      "  iconst_1",
+      "  if_icmpeq L_parseInt32_fail",
+      "L_parseInt32_init_acc:",
+      "  lconst_0",
+      "  lstore 5",
+      "L_parseInt32_loop:",
+      "  iload_3",
+      "  iload_2",
+      "  if_icmpge L_parseInt32_after_loop",
+      "  aload_1",
+      "  iload_3",
+      "  invokevirtual java/lang/String/charAt(I)C",
+      "  istore 7",
+      "  iload 7",
+      "  bipush 48",
+      "  if_icmplt L_parseInt32_fail",
+      "  iload 7",
+      "  bipush 57",
+      "  if_icmpgt L_parseInt32_fail",
+      "  lload 5",
+      "  bipush 10",
+      "  i2l",
+      "  lmul",
+      "  iload 7",
+      "  bipush 48",
+      "  isub",
+      "  i2l",
+      "  ladd",
+      "  lstore 5",
+      "  lload 5",
+      "  ldc2_w 2147483648",
+      "  lcmp",
+      "  ifgt L_parseInt32_fail",
+      "  iinc 3 1",
+      "  goto L_parseInt32_loop",
+      "L_parseInt32_after_loop:",
+      "  iload 4",
+      "  ifeq L_parseInt32_pos_check",
+      "  lload 5",
+      "  lneg",
+      "  lstore 5",
+      "  goto L_parseInt32_build_right",
+      "L_parseInt32_pos_check:",
+      "  lload 5",
+      "  ldc 2147483647",
+      "  i2l",
+      "  lcmp",
+      "  ifgt L_parseInt32_fail",
+      "L_parseInt32_build_right:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  lload 5",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      "L_parseInt32_fail:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore 4",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 4",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- parseUInt8: String -> Either ParseError UInt8.
+--   Same shape as 'parseInt32Method' minus the sign handling — UInt8
+--   does not represent a negative number — and with an i32 accumulator,
+--   since the running magnitude never exceeds 2559 (255 * 10 + 9) before
+--   the `> 255` check triggers a fail.
+parseUInt8Method :: Text
+parseUInt8Method =
+  unlines
+    [ ".method public static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 4",
+      "  .limit locals 6",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  astore_1",
+      "  aload_1",
+      "  invokevirtual java/lang/String/length()I",
+      "  istore_2",
+      "  iload_2",
+      "  ifeq L_parseUInt8_fail",
+      "  iconst_0",
+      "  istore_3",
+      "  iconst_0",
+      "  istore 4",
+      "L_parseUInt8_loop:",
+      "  iload_3",
+      "  iload_2",
+      "  if_icmpge L_parseUInt8_ok",
+      "  aload_1",
+      "  iload_3",
+      "  invokevirtual java/lang/String/charAt(I)C",
+      "  istore 5",
+      "  iload 5",
+      "  bipush 48",
+      "  if_icmplt L_parseUInt8_fail",
+      "  iload 5",
+      "  bipush 57",
+      "  if_icmpgt L_parseUInt8_fail",
+      "  iload 4",
+      "  bipush 10",
+      "  imul",
+      "  iload 5",
+      "  bipush 48",
+      "  isub",
+      "  iadd",
+      "  istore 4",
+      "  iload 4",
+      "  sipush 255",
+      "  if_icmpgt L_parseUInt8_fail",
+      "  iinc 3 1",
+      "  goto L_parseUInt8_loop",
+      "L_parseUInt8_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload 4",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      "L_parseUInt8_fail:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore 4",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 4",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -577,6 +1026,16 @@ emitExprText ctx paramMap = \case
                     emitExprText ctx paramMap b,
                     "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
                   ]
+      CBuiltIn name
+        | name == "addInt32" || name == "addUInt8",
+          [a, b] <- xs ->
+            let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx paramMap a,
+                    emitExprText ctx paramMap b,
+                    "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+                  ]
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             T.intercalate
@@ -585,6 +1044,23 @@ emitExprText ctx paramMap = \case
                 emitExprText ctx paramMap b,
                 "  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
               ]
+      CBuiltIn "splitOnFirst"
+        | [a, b] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap a,
+                emitExprText ctx paramMap b,
+                "  invokestatic AwsumMain/__splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn name
+        | name == "parseInt32" || name == "parseUInt8",
+          [x] <- xs ->
+            let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx paramMap x,
+                    "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;)Ljava/lang/Object;"
+                  ]
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
