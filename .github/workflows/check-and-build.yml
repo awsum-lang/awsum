@@ -161,47 +161,6 @@ jobs:
         with:
           node-version: 22
 
-      # Pin Lua to 5.1 — the minimum version documented in README ▸ Targets
-      # ("Lua 5.1+"). Testing against the floor of the supported range proves the
-      # compatibility contract; anything newer is implicitly covered via Lua's
-      # own backward-compat guarantees. leafo/gh-actions-lua handles this
-      # uniformly on Linux/macOS; Windows has no maintained action that supports
-      # Lua 5.1, so we fetch the official LuaBinaries build directly.
-
-      - name: Set up Lua 5.1 (Linux/macOS)
-        if: runner.os != 'Windows'
-        uses: leafo/gh-actions-lua@v11
-        with:
-          luaVersion: "5.1.5"
-
-      - name: Set up Lua 5.1 (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # SourceForge serves the real archive only after following a chain of
-          # redirects and picking a mirror; Invoke-WebRequest has historically
-          # landed on the HTML "download page" instead of the zip (observable
-          # as Expand-Archive throwing `OperationStopped` on a tiny HTML file).
-          # curl.exe with -L + retries follows SF's redirects reliably.
-          $url  = "https://sourceforge.net/projects/luabinaries/files/5.1.5/Tools%20Executables/lua-5.1.5_Win64_bin.zip/download"
-          $zip  = "$env:RUNNER_TEMP\lua.zip"
-          $dest = "$env:RUNNER_TEMP\lua"
-          New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          curl.exe -fsSL --retry 3 --retry-delay 2 -o $zip $url
-          # Real zip is ~700KB; HTML interstitial is ~10KB. Fail loud if SF
-          # regresses to serving the interstitial again.
-          $size = (Get-Item $zip).Length
-          if ($size -lt 100000) {
-            throw "Downloaded file is only $size bytes — SourceForge likely served an HTML interstitial instead of the zip."
-          }
-          Expand-Archive -Path $zip -DestinationPath $dest -Force
-          # LuaBinaries ships the interpreter as `lua5.1.exe`; alias it to
-          # `lua.exe` so the test harness can call `lua` without a version suffix.
-          Copy-Item "$dest\lua5.1.exe" "$dest\lua.exe" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value $dest
-          & "$dest\lua.exe" -v
-
       - name: Set up Haskell
         uses: haskell-actions/setup@v2
         with:
