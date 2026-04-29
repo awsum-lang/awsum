@@ -43,7 +43,7 @@ show c = case c of
 
 -- before main sig
 
-main : String -> IOUnit
+main : String -> IO Unit
 
 -- between main sig and def
 

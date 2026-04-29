@@ -4,5 +4,5 @@ import IO.Stdout
 
 type Phantom _tag _tag = Phantom
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input

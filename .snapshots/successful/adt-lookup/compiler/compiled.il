@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
+  .method private hidebysig static object __concat(object, object) cil managed
   {
     ldarg.0
     ldarg.1
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -30,7 +30,7 @@
     ret
   }
 
-  .method public hidebysig static object v_unwrap(object) cil managed
+  .method private hidebysig static object v_unwrap(object) cil managed
   {
     ldarg.0
     dup
@@ -55,7 +55,7 @@
   }
 
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -84,7 +84,7 @@
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

@@ -102,6 +102,17 @@ type Maybe a = Nothing | Just a
 
 type Tuple2 a b = Tuple2 a b
 
+-- ---------------------- Tuple3
+
+{- A triple of values. Same conventions as `Tuple2` — prefer a domain-
+   specific single-constructor sum when the fields have meaningful
+   names, reach for `Tuple3` only when they honestly don't. The
+   property-test infrastructure relies on it to thread three
+   positional arguments from a single `argv[1]` (`"a:b:c"` → two
+   `splitOnFirst ":"` → `Tuple3 a b c`) into a property body. -}
+
+type Tuple3 a b c = Tuple3 a b c
+
 -- ---------------------- UnderflowError
 
 {- Reported by integer primitives when a result would leave the declared
@@ -171,6 +182,12 @@ succUInt8 = BuiltIn.succUInt8
 addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
 addUInt8 = BuiltIn.addUInt8
 
+subUInt8 : UInt8 -> UInt8 -> Either UnderflowError UInt8
+subUInt8 = BuiltIn.subUInt8
+
+mulUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
+mulUInt8 = BuiltIn.mulUInt8
+
 {- Parse a `UInt8` from a decimal string. The grammar mirrors Awsum's
    integer literal: one or more decimal digits, nothing else — no sign
    (UInt8 cannot represent a negative number), no leading or trailing
@@ -210,6 +227,15 @@ succInt32 = BuiltIn.succInt32
 
 addInt32 : Int32 -> Int32 -> Either ArithError Int32
 addInt32 = BuiltIn.addInt32
+
+subInt32 : Int32 -> Int32 -> Either ArithError Int32
+subInt32 = BuiltIn.subInt32
+
+mulInt32 : Int32 -> Int32 -> Either ArithError Int32
+mulInt32 = BuiltIn.mulInt32
+
+negInt32 : Int32 -> Either OverflowError Int32
+negInt32 = BuiltIn.negInt32
 
 {- Parse an `Int32` from a decimal string. The grammar mirrors Awsum's
    integer literal: an optional leading `-`, then one or more decimal

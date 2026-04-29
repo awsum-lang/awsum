@@ -20,9 +20,8 @@
 --         still sees @require@/@module@ via closure over the wrapper's
 --         parameters.
 --
---     No @M@-table is needed here (unlike the Lua backend, where
---     @MAXVARS = 200@ forced one): JS has no comparable per-function
---     binding ceiling, and function hoisting inside the IIFE already makes
+--     No module-table indirection is needed: JS has no per-function
+--     binding ceiling and function hoisting inside the IIFE already makes
 --     declaration order irrelevant.
 --
 --     Other program types (browser module, CommonJS module, ESM) will
@@ -115,11 +114,45 @@ header builtIns =
             if Set.member "addInt32" builtIns
               then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [1]]; if (s < -2147483648) return [0, [0]]; return [1, s|0]; }"
               else "",
+            -- subInt32: Either ArithError Int32. Same range-check shape as
+            -- __addInt32 — the i32 difference fits in a JS Number exactly,
+            -- so direct '> maxInt32' / '< minInt32' tests pick the branch.
+            if Set.member "subInt32" builtIns
+              then "function __subInt32(a, b){ const d = a - b; if (d > 2147483647) return [0, [1]]; if (d < -2147483648) return [0, [0]]; return [1, d|0]; }"
+              else "",
+            -- mulInt32: Either ArithError Int32. JS Numbers represent the
+            -- product of two i32 values exactly (it fits in 53-bit mantissa
+            -- precision, max product is ~2^62). Direct range check on the
+            -- exact product picks the branch; '|0' coerces back to i32 on
+            -- the ok path.
+            if Set.member "mulInt32" builtIns
+              then "function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [1]]; if (p < -2147483648) return [0, [0]]; return [1, p|0]; }"
+              else "",
+            -- negInt32: Either OverflowError Int32. Only INT32_MIN overflows
+            -- (negation would yield 2147483648, outside the signed range);
+            -- every other value flips sign cleanly inside JS Number precision.
+            if Set.member "negInt32" builtIns
+              then "function __negInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((-x)|0)]; }"
+              else "",
             -- addUInt8: Either OverflowError UInt8. Both inputs in 0..255,
             -- so the unmasked sum is in 0..510 and a single '> 255' check
             -- separates the branches.
             if Set.member "addUInt8" builtIns
               then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [0, [0]] : [1, s & 0xFF]; }"
+              else "",
+            -- subUInt8: Either UnderflowError UInt8. Both inputs in 0..255,
+            -- so the difference is in -255..255; a single '< 0' check picks
+            -- the underflow branch. The ok-path mask keeps parallel structure
+            -- with __addUInt8 (the difference is already in 0..255 there).
+            if Set.member "subUInt8" builtIns
+              then "function __subUInt8(a, b){ const d = a - b; return d < 0 ? [0, [0]] : [1, d & 0xFF]; }"
+              else "",
+            -- mulUInt8: Either OverflowError UInt8. Both inputs in 0..255,
+            -- so the unmasked product is in 0..65025 — well within JS Number
+            -- precision and the i32 range that '|0' would coerce to. A
+            -- single '> 255' check picks the overflow branch.
+            if Set.member "mulUInt8" builtIns
+              then "function __mulUInt8(a, b){ const p = a * b; return p > 255 ? [0, [0]] : [1, p & 0xFF]; }"
               else "",
             -- splitOnFirst: 'indexOf("")' returns 0 in JS, so empty separator
             -- naturally yields ["", str]. 'substring' creates fresh strings
@@ -165,7 +198,12 @@ cliFooter =
 --     recursing. Rewriting a self-tail-call as a jump keeps the JS engine's
 --     call stack bounded, which matters on Node/V8 because ES2015 PTC was
 --     never shipped.
---   • 'CFunDef' without 'CLoop' → plain @return <expr>;@.
+--   • 'CFunDef' without 'CLoop' → also statement form. A 'CCase' in tail
+--     position becomes a 'switch' whose arms 'return' directly, instead of
+--     an IIFE. That keeps deeply nested pattern matches (N nested 'case'
+--     expressions in tail position) inside a single stack frame; the IIFE
+--     form would burn one frame per level and overflow on platforms with
+--     small default stacks (e.g. Windows Node ≈512 KB).
 --   • 'CValDef' → 'const name = <expr>;'.
 emitDecl :: CDecl -> Text
 emitDecl = \case
@@ -185,9 +223,7 @@ emitDecl = \case
       <> "("
       <> T.intercalate ", " (map mangle args)
       <> "){\n"
-      <> "  return "
-      <> emitExpr body
-      <> ";\n"
+      <> emitStmt args body
       <> "}"
   CValDef nm rhs ->
     "const " <> mangle nm <> " = " <> emitExpr rhs <> ";"
@@ -306,12 +342,22 @@ emitExpr = \case
                  in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8" ->
+        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32" ->
             case xs of
               [a, b] ->
-                let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
+                let fn = case name of
+                      "addInt32" -> "__addInt32"
+                      "addUInt8" -> "__addUInt8"
+                      "subInt32" -> "__subInt32"
+                      "subUInt8" -> "__subUInt8"
+                      "mulInt32" -> "__mulInt32"
+                      _ -> "__mulUInt8"
                  in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn "negInt32" ->
+        case xs of
+          [x] -> "__negInt32(" <> emitExpr x <> ")"
+          _ -> error "BuiltIn.negInt32: arity mismatch"
       CBuiltIn "concatString" ->
         case xs of
           [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"

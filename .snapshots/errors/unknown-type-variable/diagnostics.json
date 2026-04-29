@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":6,"startCol":12,"endLine":6,"endCol":13,"message":"Unknown type variable: 'a' is not declared as a type parameter","fixes":[]}]

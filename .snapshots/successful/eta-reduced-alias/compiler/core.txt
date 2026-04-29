@@ -1,0 +1,14 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "say" [ "$eta0" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CVar "$eta0" ]
+            )
+        , CFunDef "main" [ "input" ]
+            ( CCall
+                ( CVar "say" )
+                [ CVar "input" ]
+            )
+        ]
+    }

@@ -4,13 +4,13 @@
 .class public AwsumMain
 .super java/lang/Object
 
-.method public <init>()V
+.method <init>()V
   aload_0
   invokespecial java/lang/Object/<init>()V
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/String
   aload_1
@@ -19,7 +19,7 @@
   areturn
 .end method
 
-.method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
@@ -27,7 +27,7 @@
   areturn
 .end method
 
-.method public static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 5
   .limit locals 3
   aload_0
@@ -75,13 +75,13 @@ L_succ_ok:
   areturn
 .end method
 
-.method public static v_showOverflowError(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_showOverflowError(Ljava/lang/Object;)Ljava/lang/Object;
   ldc "OverflowError"
   areturn
 .end method
 
 
-.method public static v_render(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_render(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -120,21 +120,21 @@ L_join:
 .end method
 
 
-.method public static v_maxInt32()Ljava/lang/Object;
+.method static v_maxInt32()Ljava/lang/Object;
   ldc 2147483647
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_ordinary()Ljava/lang/Object;
+.method static v_ordinary()Ljava/lang/Object;
   bipush 42
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_ordinary()Ljava/lang/Object;
   invokestatic AwsumMain/__succInt32(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_render(Ljava/lang/Object;)Ljava/lang/Object;

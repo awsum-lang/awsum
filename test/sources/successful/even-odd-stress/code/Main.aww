@@ -43,5 +43,5 @@ showResult r = case r of
 start : Int32
 start = 1000000
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showResult (evenInt start))

@@ -9,5 +9,5 @@ show c = case c of
   Green -> "Green"
   Blue -> "Blue"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (show Red ++ ", " ++ show Green ++ ", " ++ show Blue)

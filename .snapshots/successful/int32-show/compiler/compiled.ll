@@ -13,7 +13,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.str.0 = private unnamed_addr constant [3 x i8] c", \00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -25,13 +25,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showInt32(ptr %p) {
+define internal ptr @__showInt32(ptr %p) {
   %v = load i32, ptr %p
   %buf = call ptr @malloc(i64 16)
   call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
@@ -39,7 +39,7 @@ define ptr @__showInt32(ptr %p) {
 }
 
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_minInt32()
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
@@ -71,37 +71,37 @@ define ptr @v_main(ptr %v__input) {
   ret ptr %t27
 }
 
-define ptr @v_minInt32() {
+define internal ptr @v_minInt32() {
   %t0 = call ptr @malloc(i64 4)
   store i32 -2147483648, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_negative() {
+define internal ptr @v_negative() {
   %t0 = call ptr @malloc(i64 4)
   store i32 -42, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_zero() {
+define internal ptr @v_zero() {
   %t0 = call ptr @malloc(i64 4)
   store i32 0, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_positive() {
+define internal ptr @v_positive() {
   %t0 = call ptr @malloc(i64 4)
   store i32 7, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_manyDigits() {
+define internal ptr @v_manyDigits() {
   %t0 = call ptr @malloc(i64 4)
   store i32 1234567, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_maxInt32() {
+define internal ptr @v_maxInt32() {
   %t0 = call ptr @malloc(i64 4)
   store i32 2147483647, ptr %t0
   ret ptr %t0

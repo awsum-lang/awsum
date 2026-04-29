@@ -1,6 +1,6 @@
 # Recursion in Awsum
 
-How the compiler turns natural recursion (self, non-tail, mutual) into stack-safe code on all six backends, without asking the user to do anything differently.
+How the compiler turns natural recursion (self, non-tail, mutual) into stack-safe code on all five backends, without asking the user to do anything differently.
 
 ## Guarantee to the user
 
@@ -8,7 +8,7 @@ A well-typed Awsum program **does not overflow the system stack on any backend**
 
 Concretely:
 
-- **Tail self-recursion** becomes a loop. (`countdown-int32-stress-tail` — 100 000 iterations across LLVM, JVM, CLR, WASM, JS, Lua.)
+- **Tail self-recursion** becomes a loop. (`countdown-int32-stress-tail` — 100 000 iterations across LLVM, JVM, CLR, WASM, JS.)
 - **Non-tail self-recursion** moves its frames from the system stack into an ADT chain on the heap. (`countdown-int32-stress` — 100 000 iterations; `adt-list-map` — list `map` with the recursive call nested inside a constructor field.)
 - **Mutual recursion** gets fused into a single self-recursive function; after that the same two mechanisms take over. (`even-odd-stress` — 1 000 000 iterations.)
 
@@ -43,7 +43,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker
                                      ↓
                                    Codegen
                                      ↓
-                        LLVM / JVM / CLR / WASM / JS / Lua
+                        LLVM / JVM / CLR / WASM / JS
 ```
 
 Between Cps and Tco, [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) verifies that none of those invariants slipped — see below.
@@ -110,7 +110,7 @@ countDown n = case eqInt32 n zero of
 
 the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/compiler/core.txt) — a wrapper `countDown` that kicks off `$cps$countDown n KTop`, a tail-recursive `$cps$countDown` whose `Right m` branch emits a `CContinue` through a freshly-constructed `K_1 $k`, and a tail-recursive `$apply$countDown` that walks the K chain and reconstructs the final `Either` value.
 
-**Why not add `CLet` and do A-normal form first.** Adding a let node to Core would require teaching all six backends to emit "evaluate, bind to local, continue". The current design keeps post-call remainders as ordinary Core sub-expressions (walked recursively by `goNonTail` with a continuation-callback) and reuses the existing arm-binding machinery in `case`. Net effect: zero backend changes.
+**Why not add `CLet` and do A-normal form first.** Adding a let node to Core would require teaching all five backends to emit "evaluate, bind to local, continue". The current design keeps post-call remainders as ordinary Core sub-expressions (walked recursively by `goNonTail` with a continuation-callback) and reuses the existing arm-binding machinery in `case`. Net effect: zero backend changes.
 
 **Why not closures + trampoline (path B).** An alternative reading of CPS keeps continuations as closures with captured environments, and a driver loop (trampoline) runs them. That approach requires first-class closures in Core, which every backend then has to represent: LLVM structs with function pointers, JVM `MethodHandle` with bound args, CLR `Func<>` delegates, WASM `funcref` tables plus heap-allocated environments, and so on. The ADT-based defunctionalization in use here reduces to plain `case` dispatch, which every JIT compiles to a native switch, and the implementation lives in one Core-to-Core module. The K-chain story and the SCC-tag story also share the same primitive, which is the main reason the two passes compose so cleanly.
 
@@ -166,7 +166,7 @@ This is what the earlier design document called "applying Reynolds' defunctional
 
 | Test                                                                                                      | Shape                                             | Depth     | What it verifies                                                                                                                                                     |
 | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`countdown-int32-stress-tail`](../test/sources/successful/countdown-int32-stress-tail/code/Main.aww)     | tail self                                         | 100 000   | TCO folds `Right m -> countDown m` into a loop on all six targets.                                                                                                   |
+| [`countdown-int32-stress-tail`](../test/sources/successful/countdown-int32-stress-tail/code/Main.aww)     | tail self                                         | 100 000   | TCO folds `Right m -> countDown m` into a loop on all five targets.                                                                                                   |
 | [`countdown-int32-stress`](../test/sources/successful/countdown-int32-stress/code/Main.aww)               | non-tail self (case scrutinee)                    | 100 000   | CPS moves post-call `Left e -> Left e` / `Right v -> Right v` reconstruction into a K chain.                                                                         |
 | [`countdown-uint8-tail`](../test/sources/successful/countdown-uint8-tail/code/Main.aww)                   | tail self with accumulator                        | 255       | Same as tail stress but exercises accumulator threading through `CContinue`.                                                                                         |
 | [`countdown-uint8`](../test/sources/successful/countdown-uint8/code/Main.aww)                             | non-tail self, post-call captures outer parameter | 255       | `K_1` carries `n` from outer scope for use inside `Right (showUInt8 n ++ "," ++ s)`.                                                                                 |
@@ -178,7 +178,7 @@ This is what the earlier design document called "applying Reynolds' defunctional
 | [`mutual-three-way-stress`](../test/sources/successful/mutual-three-way-stress/code/Main.aww)             | mutual, three-way cycle, all tail                 | 1 000 000 | `stepA → stepB → stepC → stepA`: SCC handles cycles of arbitrary length; the merged function dispatches over three tags but each iteration stays on the same frame.  |
 | [`recursive-function-call`](../test/sources/successful/recursive-function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
 
-Every test in the table runs on all six backends with byte-identical stdout via `ProgramSnapshotsSpec`.
+Every test in the table runs on all five backends with byte-identical stdout via `ProgramSnapshotsSpec`.
 
 ## The role of whole-program compilation
 

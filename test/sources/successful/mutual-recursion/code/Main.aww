@@ -18,5 +18,5 @@ handleB step = case step of
   StepC -> "C" ++ handleA Done
   Done -> ""
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (handleA StepA)

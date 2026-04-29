@@ -1,0 +1,13 @@
+-- Eta-reduced (point-free) alias for a platform effect.
+-- @say@ and @print@ both have signature @String -> IO Unit@; @say@ is
+-- defined without listing its parameter and reuses @IO.Stdout.print@
+-- as its full implementation. The typechecker accepts the zero-param
+-- shape because the RHS already carries the full function type, and
+-- the lowering eta-expands @say@ into a regular first-order function.
+import IO.Stdout
+
+say : String -> IO Unit
+say = IO.Stdout.print
+
+main : String -> IO Unit
+main input = say input

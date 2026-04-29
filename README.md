@@ -19,7 +19,6 @@ A functional language where computation results are guaranteed equivalent across
 - **CLR** — .NET 9+ DLL (generated directly, no ilasm/csc)
 - **WASM** — WebAssembly via WASI (wasmtime)
 - **JS** — Node.js 22+ (LTS), browser (planned)
-- **Lua** — Lua 5.1+
 
 See [Target Implementation Details](docs/targets.md) for how each backend works under the hood.
 
@@ -111,15 +110,12 @@ brew install wabt
 
 # JS — Node.js interpreter
 # https://www.nvmnode.com/
-
-# Lua — Lua interpreter
-brew install lua
 ```
 
 ## Usage
 
-- `awsum build -t llvm|jvm|clr|wasm|js|lua [-o OUT] FILE` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
-- `awsum run -t llvm|jvm|clr|wasm|js|lua [--input TEXT | --stdin] FILE` — compile to a temp file and execute with the system runtime, passing input to main.
+- `awsum build -t llvm|jvm|clr|wasm|js [-o OUT] FILE` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
+- `awsum run -t llvm|jvm|clr|wasm|js [--input TEXT | --stdin] FILE` — compile to a temp file and execute with the system runtime, passing input to main.
 - `awsum check [--json] [--strict] FILE` — parse and typecheck; prints `OK`, warnings (yellow), or an error. With `--json`, outputs an array of diagnostics: `[{"severity":"error"|"warning","startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"...","fixes":[{"title":"…","edits":[{"startLine":…,"newText":"…"}]}]}]`. With `--strict`, any warning causes a non-zero exit code (CI-friendly).
 - `awsum format [-i|--in-place] FILE` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
@@ -136,7 +132,6 @@ awsum build -t jvm  -o AwsumMain.class test/sources/successful/hello/code/Main.a
 awsum build -t clr  -o AwsumMain.dll   test/sources/successful/hello/code/Main.aww && dotnet AwsumMain.dll "world"
 awsum build -t wasm -o out.wasm        test/sources/successful/hello/code/Main.aww && wasmtime out.wasm "world"
 awsum build -t js   -o out.js          test/sources/successful/hello/code/Main.aww && node out.js "world"
-awsum build -t lua  -o out.lua         test/sources/successful/hello/code/Main.aww && lua out.lua "world"
 
 awsum asm -t jvm  test/sources/successful/hello/code/Main.aww   # Jasmin-like text (for inspection)
 awsum asm -t clr  test/sources/successful/hello/code/Main.aww   # CIL text (for inspection)
@@ -147,14 +142,12 @@ awsum run -t jvm  --input "world" test/sources/successful/hello/code/Main.aww
 awsum run -t clr  --input "world" test/sources/successful/hello/code/Main.aww
 awsum run -t wasm --input "world" test/sources/successful/hello/code/Main.aww
 awsum run -t js   --input "world" test/sources/successful/hello/code/Main.aww
-awsum run -t lua  --input "world" test/sources/successful/hello/code/Main.aww
 
 echo "world" | awsum run -t llvm --stdin test/sources/successful/hello/code/Main.aww
 echo "world" | awsum run -t jvm  --stdin test/sources/successful/hello/code/Main.aww
 echo "world" | awsum run -t clr  --stdin test/sources/successful/hello/code/Main.aww
 echo "world" | awsum run -t wasm --stdin test/sources/successful/hello/code/Main.aww
 echo "world" | awsum run -t js   --stdin test/sources/successful/hello/code/Main.aww
-echo "world" | awsum run -t lua  --stdin test/sources/successful/hello/code/Main.aww
 
 awsum check         test/sources/successful/hello/code/Main.aww
 awsum check  --json test/sources/successful/hello/code/Main.aww
@@ -166,7 +159,7 @@ awsum --version
 
 ## Design Principles
 
-1. **Identical results on every target.** The same program produces the same stdout whether compiled for LLVM, JVM, CLR, WASM, JS, or Lua — byte-for-byte, verified by the test suite on every commit. This is a compiler invariant, not a best-effort goal; the rest of the design hangs off it.
+1. **Identical results on every target.** The same program produces the same stdout whether compiled for LLVM, JVM, CLR, WASM, or JS — byte-for-byte, verified by the test suite on every commit. This is a compiler invariant, not a best-effort goal; the rest of the design hangs off it.
 
 2. **Stack safety belongs to the compiler, not the user.** Recursion — tail, non-tail, self, mutual — is normalised at Core level into a shape that runs in bounded stack on every backend, including JVM and JS where native cross-method tail calls do not exist. No manual CPS transforms, no `tailRecM`, no hand-unrolling. Write the recursion that expresses the algorithm; the compiler makes sure it doesn't fall over.
 

@@ -10,5 +10,5 @@ render b = case b of
   True -> "T"
   False -> "F"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (eqUInt8 0 0) ++ render (eqUInt8 255 255) ++ render (eqUInt8 255 0) ++ render (eqUInt8 128 127))

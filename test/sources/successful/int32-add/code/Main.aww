@@ -20,5 +20,5 @@ maxInt32 = 2147483647
 minInt32 : Int32
 minInt32 = -2147483648
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (addInt32 100 23) ++ ", " ++ render (addInt32 100 (-50)) ++ ", " ++ render (addInt32 maxInt32 1) ++ ", " ++ render (addInt32 minInt32 (-1)) ++ ", " ++ render (addInt32 maxInt32 minInt32))

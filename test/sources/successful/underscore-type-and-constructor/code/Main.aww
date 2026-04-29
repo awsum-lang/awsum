@@ -15,5 +15,5 @@ show x = case x of
   One -> "one"
   Two -> "two"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (show One)

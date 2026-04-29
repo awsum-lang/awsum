@@ -211,7 +211,7 @@ Program
                 { spanStartLine = 12
                 , spanStartCol = 1
                 , spanEndLine = 12
-                , spanEndCol = 24
+                , spanEndCol = 25
                 }
             ) "main"
             ( TyArrow
@@ -219,7 +219,7 @@ Program
                     { spanStartLine = 12
                     , spanStartCol = 8
                     , spanEndLine = 12
-                    , spanEndCol = 24
+                    , spanEndCol = 25
                     }
                 )
                 ( TyCon
@@ -231,14 +231,32 @@ Program
                         }
                     ) "String"
                 )
-                ( TyCon
+                ( TyApp
                     ( SrcSpan
                         { spanStartLine = 12
                         , spanStartCol = 18
                         , spanEndLine = 12
-                        , spanEndCol = 24
+                        , spanEndCol = 25
                         }
-                    ) "IOUnit"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 18
+                            , spanEndLine = 12
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 21
+                            , spanEndLine = 12
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
                 )
             ) Nothing
         , FunDef

@@ -1,0 +1,24 @@
+-- Property: `eqUInt8 a b == eqUInt8 b a` for any (a, b).
+import IO.Stdout
+
+parsePair : String -> Either ParseError (Tuple2 UInt8 UInt8)
+parsePair raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just t -> case t of
+    Tuple2 aStr bStr -> case parseUInt8 aStr of
+      Left e -> Left e
+      Right a -> case parseUInt8 bStr of
+        Left e -> Left e
+        Right b -> Right (Tuple2 a b)
+
+main : String -> IO Unit
+main raw = case parsePair raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right t -> case t of
+    Tuple2 a b -> case eqUInt8 a b of
+      True -> case eqUInt8 b a of
+        True -> IO.Stdout.print "OK"
+        False -> IO.Stdout.print "FAIL: ab=true, ba=false"
+      False -> case eqUInt8 b a of
+        True -> IO.Stdout.print "FAIL: ab=false, ba=true"
+        False -> IO.Stdout.print "OK"

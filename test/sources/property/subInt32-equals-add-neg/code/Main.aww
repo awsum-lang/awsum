@@ -1,0 +1,25 @@
+import IO.Stdout
+
+parsePair : String -> Either ParseError (Tuple2 Int32 Int32)
+parsePair raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just t -> case t of
+    Tuple2 a_str b_str -> case parseInt32 a_str of
+      Left e -> Left e
+      Right a -> case parseInt32 b_str of
+        Left e -> Left e
+        Right b -> Right (Tuple2 a b)
+
+main : String -> IO Unit
+main raw = case parsePair raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right t -> case t of
+    Tuple2 a b -> case negInt32 b of
+      Left _ -> IO.Stdout.print "NEG_OVERFLOW"
+      Right negB -> case subInt32 a b of
+        Left _ -> IO.Stdout.print "SUB_OVERFLOW"
+        Right subResult -> case addInt32 a negB of
+          Left _ -> IO.Stdout.print "ADD_OVERFLOW"
+          Right addResult -> case eqInt32 subResult addResult of
+            True -> IO.Stdout.print "OK"
+            False -> IO.Stdout.print ("FAIL: " ++ showInt32 subResult ++ " /= " ++ showInt32 addResult)

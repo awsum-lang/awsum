@@ -5,13 +5,13 @@ function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }
 function __eqUInt8(a, b){ return a === b ? [0] : [1]; }
 
 function v_showUnderflowError(v__wild0){
-  return "UnderflowError";
+    return "UnderflowError";
 }
 
 const v_zero = (0 & 0xFF);
 
 function v_countDown(v_n){
-  return (v__cps_countDown)(v_n, [0]);
+    return (v__cps_countDown)(v_n, [0]);
 }
 
 function v__cps_countDown(v_n, v__k){
@@ -85,13 +85,25 @@ function v__apply_countDown(v__k, v__x){
 }
 
 function v_showResult(v_r){
-  return ((s) => { switch(s[0]) { case 0: { const v_e = s[1]; return ("left: " + (v_showUnderflowError)(v_e)); } case 1: { const v_s = s[1]; return ("right: " + v_s); } } })(v_r);
+    {
+      const __s = v_r;
+      switch (__s[0]) {
+        case 0: {
+          const v_e = __s[1];
+          return ("left: " + (v_showUnderflowError)(v_e));
+        }
+        case 1: {
+          const v_s = __s[1];
+          return ("right: " + v_s);
+        }
+      }
+    }
 }
 
 const v_start = (255 & 0xFF);
 
 function main(v__input){
-  return __print((v_showResult)((v_countDown)(v_start)));
+    return __print((v_showResult)((v_countDown)(v_start)));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

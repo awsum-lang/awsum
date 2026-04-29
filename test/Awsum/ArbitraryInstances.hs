@@ -78,7 +78,7 @@ instance Arbitrary ImportDecl where
 
 -- | Prefer producing useful types for tests:
 --   • 'TyVar' appears often (so polymorphic sigs like 'a -> b -> a' show up),
---   • 'TyCon' is biased toward known ones ("String", "IOUnit"), but can be any UIdent,
+--   • 'TyCon' is biased toward known ones ("String", "IO"), but can be any UIdent,
 --   • 'TyArrow' recurses with smaller sizes.
 instance Arbitrary Type' where
   arbitrary = sized go
@@ -107,7 +107,7 @@ instance Arbitrary Type' where
           ]
 
       genKnownTyCon :: Gen Name
-      genKnownTyCon = elements ["String", "IOUnit"]
+      genKnownTyCon = elements ["String", "IO"]
 
   shrink = \case
     TyVar _ v -> TyVar noSpan <$> shrinkIdent v

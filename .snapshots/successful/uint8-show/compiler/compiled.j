@@ -4,13 +4,13 @@
 .class public AwsumMain
 .super java/lang/Object
 
-.method public <init>()V
+.method <init>()V
   aload_0
   invokespecial java/lang/Object/<init>()V
   return
 .end method
 
-.method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/String
   aload_1
@@ -19,7 +19,7 @@
   areturn
 .end method
 
-.method public static __print(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __print(Ljava/lang/Object;)Ljava/lang/Object;
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
@@ -27,7 +27,7 @@
   areturn
 .end method
 
-.method public static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_minUInt8()Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
@@ -54,28 +54,28 @@
 .end method
 
 
-.method public static v_minUInt8()Ljava/lang/Object;
+.method static v_minUInt8()Ljava/lang/Object;
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_small()Ljava/lang/Object;
+.method static v_small()Ljava/lang/Object;
   bipush 42
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_aboveSignedByte()Ljava/lang/Object;
+.method static v_aboveSignedByte()Ljava/lang/Object;
   sipush 200
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 
 
-.method public static v_maxUInt8()Ljava/lang/Object;
+.method static v_maxUInt8()Ljava/lang/Object;
   sipush 255
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn

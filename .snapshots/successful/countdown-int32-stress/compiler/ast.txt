@@ -12,7 +12,7 @@ Program
             , LineComment ""
             , LineComment " Paired with @countdown-int32-stress-tail@ this pins down the"
             , LineComment " cross-backend stdout invariant for both recursion shapes at depth"
-            , LineComment " 100_000. Printing @right: 0@ on all six backends proves the Core pass"
+            , LineComment " 100_000. Printing @right: 0@ on all five backends proves the Core pass"
             , LineComment " hoists continuation frames off the system stack into an ADT chain and"
             , LineComment " the existing TCO pass folds the CPS'd form into a loop."
             , LineComment ""
@@ -20,7 +20,7 @@ Program
             , LineComment " superficially identity, but each reconstructs a fresh @Either@ cell on"
             , LineComment " every backend (our uniform @[tag, field, …]@ container layout), so"
             , LineComment " @clang -O2@ can't collapse the chain into a tail call via peephole."
-            , LineComment " That keeps the stress load honest across LLVM/JVM/CLR/WASM/JS/Lua."
+            , LineComment " That keeps the stress load honest across LLVM/JVM/CLR/WASM/JS."
             ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
@@ -777,7 +777,7 @@ Program
                 { spanStartLine = 43
                 , spanStartCol = 1
                 , spanEndLine = 43
-                , spanEndCol = 24
+                , spanEndCol = 25
                 }
             ) "main"
             ( TyArrow
@@ -785,7 +785,7 @@ Program
                     { spanStartLine = 43
                     , spanStartCol = 8
                     , spanEndLine = 43
-                    , spanEndCol = 24
+                    , spanEndCol = 25
                     }
                 )
                 ( TyCon
@@ -797,14 +797,32 @@ Program
                         }
                     ) "String"
                 )
-                ( TyCon
+                ( TyApp
                     ( SrcSpan
                         { spanStartLine = 43
                         , spanStartCol = 18
                         , spanEndLine = 43
-                        , spanEndCol = 24
+                        , spanEndCol = 25
                         }
-                    ) "IOUnit"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 43
+                            , spanStartCol = 18
+                            , spanEndLine = 43
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 43
+                            , spanStartCol = 21
+                            , spanEndLine = 43
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
                 )
             ) Nothing
         , FunDef

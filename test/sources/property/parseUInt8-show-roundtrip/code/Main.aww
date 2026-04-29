@@ -1,0 +1,8 @@
+-- Property: `parseUInt8 (showUInt8 x) == Right x` for any UInt8 0..255.
+-- Mirror of parseInt32-show-roundtrip on the UInt8 type.
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = case parseUInt8 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right v -> IO.Stdout.print (showUInt8 v)

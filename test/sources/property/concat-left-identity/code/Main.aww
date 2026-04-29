@@ -1,0 +1,6 @@
+-- Property: `"" ++ s == s` for every String. Mirrors
+-- `concat-right-identity` on the other side.
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = IO.Stdout.print ("" ++ raw)

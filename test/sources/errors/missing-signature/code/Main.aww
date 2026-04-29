@@ -1,5 +1,5 @@
 -- Error: function definition without type signature
 foo x = x
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = input

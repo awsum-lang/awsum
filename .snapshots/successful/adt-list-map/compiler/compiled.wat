@@ -89,11 +89,11 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_map (export "v_map") (param $v_f i32) (param $v_list i32) (result i32)
+  (func $v_map (param $v_f i32) (param $v_list i32) (result i32)
     (local $__con_0 i32)
     (call $v__cps_map (local.get $v_f) (local.get $v_list) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
 
-  (func $v__cps_map (export "v__cps_map") (param $v_f i32) (param $v_list i32) (param $v__k i32) (result i32)
+  (func $v__cps_map (param $v_f i32) (param $v_list i32) (param $v__k i32) (result i32)
     (local $__con_0 i32)
     (local $v_head i32)
     (local $v_tail i32)
@@ -103,7 +103,7 @@
     (local $__k2 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_list)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_head (i32.load offset=4 (local.get $__scrut))) (local.set $v_tail (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v_f)) (local.set $__k1 (local.get $v_tail)) (local.set $__k2 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 16))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v_f)) (i32.store offset=12 (local.get $__con_0) (local.get $v_head)) (local.get $__con_0))) (local.set $v_f (local.get $__k0)) (local.set $v_list (local.get $__k1)) (local.set $v__k (local.get $__k2)) (br $tco_top)) (else (call $v__apply_map (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))))))
 
-  (func $v__apply_map (export "v__apply_map") (param $v__k i32) (param $v__x i32) (result i32)
+  (func $v__apply_map (param $v__k i32) (param $v__x i32) (result i32)
     (local $v__pk_1 i32)
     (local $v_f i32)
     (local $v_head i32)
@@ -112,11 +112,11 @@
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $v_f (i32.load offset=8 (local.get $__scrut))) (local.set $v_head (i32.load offset=12 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (call_indirect (type $arity_1) (local.get $v_head) (local.get $v_f))) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
 
-  (func $v_show (export "v_show") (param $v_xs i32) (result i32)
+  (func $v_show (param $v_xs i32) (result i32)
     (local $__con_0 i32)
     (call $v__cps_show (local.get $v_xs) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
 
-  (func $v__cps_show (export "v__cps_show") (param $v_xs i32) (param $v__k i32) (result i32)
+  (func $v__cps_show (param $v_xs i32) (param $v__k i32) (result i32)
     (local $v_h i32)
     (local $v_t i32)
     (local $__scrut i32)
@@ -124,7 +124,7 @@
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_xs)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_h (i32.load offset=4 (local.get $__scrut))) (local.set $v_t (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v_t)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v_h)) (local.get $__con_0))) (local.set $v_xs (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (call $v__apply_show (local.get $v__k) (i32.const 64)))))))
 
-  (func $v__apply_show (export "v__apply_show") (param $v__k i32) (param $v__x i32) (result i32)
+  (func $v__apply_show (param $v__k i32) (param $v__x i32) (result i32)
     (local $v__pk_1 i32)
     (local $v_h i32)
     (local $__scrut i32)
@@ -132,10 +132,10 @@
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $v_h (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (call $__concat (call $__concat (local.get $v_h) (i32.const 65)) (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
 
-  (func $v_shout (export "v_shout") (param $v_s i32) (result i32)
+  (func $v_shout (param $v_s i32) (result i32)
     (call $__concat (local.get $v_s) (i32.const 67)))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)

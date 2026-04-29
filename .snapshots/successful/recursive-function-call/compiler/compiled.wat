@@ -74,12 +74,12 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_advanceStep (export "v_advanceStep") (param $v_x i32) (result i32)
+  (func $v_advanceStep (param $v_x i32) (result i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))) (local.set $v_x (local.get $__k0)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 2)) (local.get $__con_0))) (local.set $v_x (local.get $__k0)) (br $tco_top)) (else (i32.const 65))))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $v_advanceStep (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)))))
 

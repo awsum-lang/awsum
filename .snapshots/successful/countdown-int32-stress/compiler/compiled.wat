@@ -159,17 +159,17 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_showUnderflowError (export "v_showUnderflowError") (param $v__wild0 i32) (result i32)
+  (func $v_showUnderflowError (param $v__wild0 i32) (result i32)
     (i32.const 65))
 
-  (func $v_zero (export "v_zero") (result i32)
+  (func $v_zero (result i32)
     (call $__box_i32 (i32.const 0)))
 
-  (func $v_countDown (export "v_countDown") (param $v_n i32) (result i32)
+  (func $v_countDown (param $v_n i32) (result i32)
     (local $__con_0 i32)
     (call $v__cps_countDown (local.get $v_n) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
 
-  (func $v__cps_countDown (export "v__cps_countDown") (param $v_n i32) (param $v__k i32) (result i32)
+  (func $v__cps_countDown (param $v_n i32) (param $v__k i32) (result i32)
     (local $__con_0 i32)
     (local $v_e i32)
     (local $v_m i32)
@@ -178,7 +178,7 @@
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (call $__eq_i32 (local.get $v_n) (call $v_zero))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (call $v__apply_countDown (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (call $v_zero)) (local.get $__con_0)))) (else (block (result i32) (local.set $__scrut (call $__predInt32 (local.get $v_n))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $v__apply_countDown (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_e)) (local.get $__con_0)))) (else (local.set $v_m (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v_m)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v_n (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)))))))))
 
-  (func $v__apply_countDown (export "v__apply_countDown") (param $v__k i32) (param $v__x i32) (result i32)
+  (func $v__apply_countDown (param $v__k i32) (param $v__x i32) (result i32)
     (local $v__pk_1 i32)
     (local $v_e i32)
     (local $v_v i32)
@@ -187,16 +187,16 @@
     (local $__k1 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v__x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_e)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_v)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)))))))))
 
-  (func $v_showResult (export "v_showResult") (param $v_r i32) (result i32)
+  (func $v_showResult (param $v_r i32) (result i32)
     (local $v_e i32)
     (local $v_v i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 80) (call $v_showUnderflowError (local.get $v_e)))) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 87) (call $__show_i32 (local.get $v_v)))))))
 
-  (func $v_start (export "v_start") (result i32)
+  (func $v_start (result i32)
     (call $__box_i32 (i32.const 100000)))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $v_showResult (call $v_countDown (call $v_start)))))
 
   (func $_start (export "_start")

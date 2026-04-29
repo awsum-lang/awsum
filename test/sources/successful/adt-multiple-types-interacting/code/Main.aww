@@ -23,5 +23,5 @@ showResult r = case r of
   Ok box -> showBoxedColor box
   Err e -> e
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showBoxedColor (Box Red) ++ " " ++ showResult (Ok (Box Green)))

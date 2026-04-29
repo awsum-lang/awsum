@@ -113,21 +113,21 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_zero (export "v_zero") (result i32)
+  (func $v_zero (result i32)
     (call $__box_i32 (i32.const 0)))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $__show_i32 (call $v_parseExpr (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))))
 
-  (func $v__scc_parseBinary_parseExpr (export "v__scc_parseBinary_parseExpr") (param $v__args i32) (result i32)
+  (func $v__scc_parseBinary_parseExpr (param $v__args i32) (result i32)
     (local $v__acc i32)
     (local $v_tok i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__args)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_tok (i32.load offset=4 (local.get $__scrut))) (local.set $v__acc (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_tok)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (call $v_zero)) (else (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_1))) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (br $tco_top))))) (else (local.set $v_tok (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_tok)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (call $v_zero)) (else (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_tok)) (i32.store offset=8 (local.get $__con_0) (call $v_zero)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (br $tco_top)))))))))
 
-  (func $v_parseExpr (export "v_parseExpr") (param $v_tok i32) (result i32)
+  (func $v_parseExpr (param $v_tok i32) (result i32)
     (local $__con_0 i32)
     (call $v__scc_parseBinary_parseExpr (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_tok)) (local.get $__con_0))))
 

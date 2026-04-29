@@ -88,12 +88,12 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_unwrap (export "v_unwrap") (param $v_m i32) (result i32)
+  (func $v_unwrap (param $v_m i32) (result i32)
     (local $v_s i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_m)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 73) (local.get $v_s))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $__concat (call $__concat (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (i32.const 80)) (local.get $__con_0))) (i32.const 83)) (call $v_unwrap (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))))
 

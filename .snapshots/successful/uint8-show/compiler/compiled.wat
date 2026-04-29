@@ -125,19 +125,19 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v__input i32) (result i32)
+  (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__show_i32 (call $v_minUInt8)) (i32.const 65)) (call $__show_i32 (call $v_small))) (i32.const 65)) (call $__show_i32 (call $v_aboveSignedByte))) (i32.const 65)) (call $__show_i32 (call $v_maxUInt8)))))
 
-  (func $v_minUInt8 (export "v_minUInt8") (result i32)
+  (func $v_minUInt8 (result i32)
     (call $__box_i32 (i32.const 0)))
 
-  (func $v_small (export "v_small") (result i32)
+  (func $v_small (result i32)
     (call $__box_i32 (i32.const 42)))
 
-  (func $v_aboveSignedByte (export "v_aboveSignedByte") (result i32)
+  (func $v_aboveSignedByte (result i32)
     (call $__box_i32 (i32.const 200)))
 
-  (func $v_maxUInt8 (export "v_maxUInt8") (result i32)
+  (func $v_maxUInt8 (result i32)
     (call $__box_i32 (i32.const 255)))
 
   (func $_start (export "_start")

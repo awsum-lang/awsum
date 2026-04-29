@@ -12,13 +12,13 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.empty = private unnamed_addr constant [1 x i8] c"\00"
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showInt32(ptr %p) {
+define internal ptr @__showInt32(ptr %p) {
   %v = load i32, ptr %p
   %buf = call ptr @malloc(i64 16)
   call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
@@ -26,13 +26,13 @@ define ptr @__showInt32(ptr %p) {
 }
 
 
-define ptr @v_zero() {
+define internal ptr @v_zero() {
   %t0 = call ptr @malloc(i64 4)
   store i32 0, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -43,7 +43,7 @@ define ptr @v_main(ptr %v__input) {
   ret ptr %t5
 }
 
-define ptr @v__scc_parseBinary_parseExpr(ptr %v__args) {
+define internal ptr @v__scc_parseBinary_parseExpr(ptr %v__args) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -115,7 +115,7 @@ tco.exit.1:
   ret ptr %t44
 }
 
-define ptr @v_parseExpr(ptr %v_tok) {
+define internal ptr @v_parseExpr(ptr %v_tok) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

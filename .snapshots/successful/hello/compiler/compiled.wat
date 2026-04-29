@@ -87,13 +87,13 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (export "v_main") (param $v_input i32) (result i32)
+  (func $v_main (param $v_input i32) (result i32)
     (call $__print (call $v_addGreeting (local.get $v_input))))
 
-  (func $v_greeting (export "v_greeting") (result i32)
+  (func $v_greeting (result i32)
     (i32.const 65))
 
-  (func $v_addGreeting (export "v_addGreeting") (param $v_name i32) (result i32)
+  (func $v_addGreeting (param $v_name i32) (result i32)
     (call $__concat (call $__concat (call $__concat (call $v_greeting) (i32.const 71)) (local.get $v_name)) (i32.const 74)))
 
   (func $_start (export "_start")

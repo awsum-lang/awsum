@@ -6,5 +6,5 @@ import IO.Stdout
 
 type Bool = MyTrue | MyFalse
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print input

@@ -9,7 +9,7 @@
 --
 -- Paired with @countdown-int32-stress-tail@ this pins down the
 -- cross-backend stdout invariant for both recursion shapes at depth
--- 100_000. Printing @right: 0@ on all six backends proves the Core pass
+-- 100_000. Printing @right: 0@ on all five backends proves the Core pass
 -- hoists continuation frames off the system stack into an ADT chain and
 -- the existing TCO pass folds the CPS'd form into a loop.
 --
@@ -17,7 +17,7 @@
 -- superficially identity, but each reconstructs a fresh @Either@ cell on
 -- every backend (our uniform @[tag, field, …]@ container layout), so
 -- @clang -O2@ can't collapse the chain into a tail call via peephole.
--- That keeps the stress load honest across LLVM/JVM/CLR/WASM/JS/Lua.
+-- That keeps the stress load honest across LLVM/JVM/CLR/WASM/JS.
 import IO.Stdout
 
 zero : Int32
@@ -40,5 +40,5 @@ showResult r = case r of
 start : Int32
 start = 100000
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showResult (countDown start))

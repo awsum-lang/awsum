@@ -9,5 +9,5 @@ greeting s = "hi " ++ s
 orphan : String -> String
 orphan s = s
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print (greeting input)

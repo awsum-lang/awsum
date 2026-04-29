@@ -22,7 +22,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.8 = private unnamed_addr constant [2 x i8] c"l\00"
 @.str.9 = private unnamed_addr constant [2 x i8] c"r\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -34,18 +34,18 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_greeting(ptr %v__wild0) {
+define internal ptr @v_greeting(ptr %v__wild0) {
   %t0 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   ret ptr %t0
 }
 
-define ptr @v_unwrapBox(ptr %v_b) {
+define internal ptr @v_unwrapBox(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -64,7 +64,7 @@ case.join.4:
   ret ptr %t10
 }
 
-define ptr @v_unwrapBoxNamed(ptr %v_b) {
+define internal ptr @v_unwrapBoxNamed(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -83,7 +83,7 @@ case.join.4:
   ret ptr %t10
 }
 
-define ptr @v_showPair(ptr %v_p) {
+define internal ptr @v_showPair(ptr %v_p) {
   %t0 = getelementptr ptr, ptr %v_p, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -104,7 +104,7 @@ case.join.4:
   ret ptr %t12
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [2 x i8], ptr @.str.4, i64 0, i64 0
   %t1 = call ptr @v_greeting(ptr %t0)
   %t2 = getelementptr [2 x i8], ptr @.str.5, i64 0, i64 0

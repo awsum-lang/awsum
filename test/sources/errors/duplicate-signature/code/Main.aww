@@ -1,6 +1,6 @@
 -- Error: same type signature declared twice
-foo : String -> IOUnit
-foo : String -> IOUnit
+foo : String -> IO Unit
+foo : String -> IO Unit
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = input

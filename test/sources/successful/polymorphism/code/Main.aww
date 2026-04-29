@@ -1,7 +1,7 @@
 -- Test: polymorphic functions (identity, compose, const) with type variables
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (identity (compose appendY appendX (const "a" "b")))
 
 const : a -> b -> a

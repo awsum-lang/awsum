@@ -9,7 +9,7 @@
 -- The 'even-odd-stress' test exercises the two-member version of the
 -- same trick; this one pins down that SCC merge handles arbitrary cycle
 -- lengths correctly and that dispatch over three tags is as cheap as
--- over two across all six backends.
+-- over two across all five backends.
 --
 -- @stepA@ returns @Either UnderflowError Int32@ to keep @predInt32@'s
 -- shape threaded through uniformly — the @Left@ arm is unreachable for
@@ -50,5 +50,5 @@ showResult r = case r of
 start : Int32
 start = 1000000
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showResult (stepA start))

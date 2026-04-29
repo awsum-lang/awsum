@@ -1,0 +1,9 @@
+-- Error: 'a' in the constructor's field is not declared as a parameter
+-- of 'X', so it cannot be matched to anything when 'X' is used at a
+-- concrete type. Add 'a' to the parameter list ('type X a = X a').
+import IO.Stdout
+
+type X = X a
+
+main : String -> IO Unit
+main input = IO.Stdout.print input

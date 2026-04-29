@@ -26,7 +26,6 @@ library
       Awsum.Codegen.JVM
       Awsum.Codegen.JVM.Assemble
       Awsum.Codegen.LLVM
-      Awsum.Codegen.Lua
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
       Awsum.Core
@@ -102,6 +101,8 @@ test-suite awsum-test
       Awsum.ErrorSnapshotsSpec
       Awsum.FormattingSnapshotsSpec
       Awsum.ProgramSnapshotsSpec
+      Awsum.PropertySpec
+      Awsum.RunBackend
       Matchers
       Paths_awsum
   hs-source-dirs:

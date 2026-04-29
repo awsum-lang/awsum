@@ -15,7 +15,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.1 = private unnamed_addr constant [3 x i8] c", \00"
 @.str.2 = private unnamed_addr constant [2 x i8] c"!\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -27,24 +27,24 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_main(ptr %v_input) {
+define internal ptr @v_main(ptr %v_input) {
   %t0 = call ptr @v_addGreeting(ptr %v_input)
   %t1 = call ptr @__print(ptr %t0)
   ret ptr %t1
 }
 
-define ptr @v_greeting() {
+define internal ptr @v_greeting() {
   %t0 = getelementptr [6 x i8], ptr @.str.0, i64 0, i64 0
   ret ptr %t0
 }
 
-define ptr @v_addGreeting(ptr %v_name) {
+define internal ptr @v_addGreeting(ptr %v_name) {
   %t0 = call ptr @v_greeting()
   %t1 = getelementptr [3 x i8], ptr @.str.1, i64 0, i64 0
   %t2 = call ptr @__concat(ptr %t0, ptr %t1)

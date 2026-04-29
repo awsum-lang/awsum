@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __concat(object, object) cil managed
+  .method private hidebysig static object __concat(object, object) cil managed
   {
     ldarg.0
     ldarg.1
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -30,7 +30,7 @@
     ret
   }
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     call object AwsumMain::v_minInt32()
     callvirt instance string [System.Runtime]System.Object::ToString()
@@ -64,7 +64,7 @@
   }
 
 
-  .method public hidebysig static object v_minInt32() cil managed
+  .method private hidebysig static object v_minInt32() cil managed
   {
     ldc.i4 -2147483648
     box [System.Runtime]System.Int32
@@ -72,7 +72,7 @@
   }
 
 
-  .method public hidebysig static object v_negative() cil managed
+  .method private hidebysig static object v_negative() cil managed
   {
     ldc.i4 -42
     box [System.Runtime]System.Int32
@@ -80,7 +80,7 @@
   }
 
 
-  .method public hidebysig static object v_zero() cil managed
+  .method private hidebysig static object v_zero() cil managed
   {
     ldc.i4 0
     box [System.Runtime]System.Int32
@@ -88,7 +88,7 @@
   }
 
 
-  .method public hidebysig static object v_positive() cil managed
+  .method private hidebysig static object v_positive() cil managed
   {
     ldc.i4 7
     box [System.Runtime]System.Int32
@@ -96,7 +96,7 @@
   }
 
 
-  .method public hidebysig static object v_manyDigits() cil managed
+  .method private hidebysig static object v_manyDigits() cil managed
   {
     ldc.i4 1234567
     box [System.Runtime]System.Int32
@@ -104,14 +104,14 @@
   }
 
 
-  .method public hidebysig static object v_maxInt32() cil managed
+  .method private hidebysig static object v_maxInt32() cil managed
   {
     ldc.i4 2147483647
     box [System.Runtime]System.Int32
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

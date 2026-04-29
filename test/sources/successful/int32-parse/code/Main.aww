@@ -8,5 +8,5 @@ render r = case r of
   Left _ -> "err"
   Right v -> "ok:" ++ showInt32 v
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (parseInt32 "42") ++ ", " ++ render (parseInt32 "-42") ++ ", " ++ render (parseInt32 "0") ++ ", " ++ render (parseInt32 "2147483647") ++ ", " ++ render (parseInt32 "-2147483648") ++ ", " ++ render (parseInt32 "2147483648") ++ ", " ++ render (parseInt32 "-2147483649") ++ ", " ++ render (parseInt32 "") ++ ", " ++ render (parseInt32 "-") ++ ", " ++ render (parseInt32 "+42") ++ ", " ++ render (parseInt32 " 42") ++ ", " ++ render (parseInt32 "12abc"))

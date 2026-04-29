@@ -50,7 +50,17 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "addInt32" builtIns) addInt32Method,
             "",
+            gate (Set.member "subInt32" builtIns) subInt32Method,
+            "",
+            gate (Set.member "mulInt32" builtIns) mulInt32Method,
+            "",
+            gate (Set.member "negInt32" builtIns) negInt32Method,
+            "",
             gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            "",
+            gate (Set.member "subUInt8" builtIns) subUInt8Method,
+            "",
+            gate (Set.member "mulUInt8" builtIns) mulUInt8Method,
             "",
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
             "",
@@ -91,7 +101,7 @@ classHeader =
 initMethod :: Text
 initMethod =
   unlines
-    [ ".method public <init>()V",
+    [ ".method <init>()V",
       "  aload_0",
       "  invokespecial java/lang/Object/<init>()V",
       "  return",
@@ -101,7 +111,7 @@ initMethod =
 concatMethod :: Text
 concatMethod =
   unlines
-    [ ".method public static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  aload_0",
       "  checkcast java/lang/String",
       "  aload_1",
@@ -114,7 +124,7 @@ concatMethod =
 printMethod :: Text
 printMethod =
   unlines
-    [ ".method public static __print(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __print(Ljava/lang/Object;)Ljava/lang/Object;",
       "  getstatic java/lang/System/out Ljava/io/PrintStream;",
       "  aload_0",
       "  invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V",
@@ -130,7 +140,7 @@ printMethod =
 predInt32Method :: Text
 predInt32Method =
   unlines
-    [ ".method public static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -188,7 +198,7 @@ predInt32Method =
 predUInt8Method :: Text
 predUInt8Method =
   unlines
-    [ ".method public static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -244,7 +254,7 @@ predUInt8Method =
 succInt32Method :: Text
 succInt32Method =
   unlines
-    [ ".method public static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -301,7 +311,7 @@ succInt32Method =
 succUInt8Method :: Text
 succUInt8Method =
   unlines
-    [ ".method public static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -358,7 +368,7 @@ succUInt8Method =
 eqMethod :: Text -> Text -> Text
 eqMethod name lbl =
   unlines
-    [ ".method public static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 2",
       "  aload_0",
@@ -396,7 +406,7 @@ eqMethod name lbl =
 addInt32Method :: Text
 addInt32Method =
   unlines
-    [ ".method public static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 6",
       "  .limit locals 3",
       "  aload_0",
@@ -485,7 +495,7 @@ addInt32Method =
 addUInt8Method :: Text
 addUInt8Method =
   unlines
-    [ ".method public static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 3",
       "  aload_0",
@@ -536,6 +546,368 @@ addUInt8Method =
       ".end method"
     ]
 
+-- subInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Promote both operands to long, subtract, then range-check the result.
+--   ArithError tags follow declaration order: Underflow=0, Overflow=1.
+--   Mirrors 'addInt32Method' with 'lsub' replacing 'ladd'.
+subInt32Method :: Text
+subInt32Method =
+  unlines
+    [ ".method static __subInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  lsub",
+      "  dup2",
+      "  ldc2_w 2147483647",
+      "  lcmp",
+      "  ifgt L_subi32_over",
+      "  dup2",
+      "  ldc2_w -2147483648",
+      "  lcmp",
+      "  iflt L_subi32_under",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_subi32_over:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_subi32_under:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- mulInt32: Int32 -> Int32 -> Either ArithError Int32.
+--   Promote both operands to long, multiply at long width, then range-
+--   check the result against [-2147483648, 2147483647] with 'lcmp'.
+--   Direction (over vs under): same-sign overflow is positive, opposite-
+--   sign is negative — read off `(a ^ b) >= 0`. Slot 2 holds @a@ for
+--   the direction split on the err path; slot 3 holds the boxed result
+--   on the ok path / boxed AE on the err paths. Mirrors 'addInt32Method'
+--   with 'lmul' (0x69) replacing 'ladd'.
+mulInt32Method :: Text
+mulInt32Method =
+  unlines
+    [ ".method static __mulInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 4",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_2",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_3",
+      "  iload_2",
+      "  i2l",
+      "  iload_3",
+      "  i2l",
+      "  lmul",
+      "  dup2",
+      "  ldc2_w 2147483647",
+      "  lcmp",
+      "  ifgt L_muli32_split",
+      "  dup2",
+      "  ldc2_w -2147483648",
+      "  lcmp",
+      "  ifge L_muli32_ok",
+      "L_muli32_split:",
+      "  pop2",
+      "  iload_2",
+      "  iload_3",
+      "  ixor",
+      "  iflt L_muli32_under",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_muli32_under:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_muli32_ok:",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- negInt32: Int32 -> Either OverflowError Int32.
+--   Mirrors 'succInt32Method' with INT32_MIN as the boundary and 'ineg'
+--   for the non-overflow branch. OverflowError is single-constructor,
+--   so its tag is 0 — Left-branch encoding is identical to 'predInt32'.
+negInt32Method :: Text
+negInt32Method =
+  unlines
+    [ ".method static __negInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  ldc -2147483648",
+      "  if_icmpne L_neg_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_neg_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  ineg",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
+--   Both operands are 0..255 so 'isub' produces a value in -255..255 with
+--   no JVM-level overflow; one 'iflt' picks the underflow branch. On the
+--   ok path the result is already a valid UInt8 — no mask needed.
+subUInt8Method :: Text
+subUInt8Method =
+  unlines
+    [ ".method static __subUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  isub",
+      "  istore_2",
+      "  iload_2",
+      "  iflt L_subu8_under",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_2",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      "L_subu8_under:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
+--   Both operands are 0..255 so 'imul' produces a value in 0..65025 with
+--   no JVM-level overflow (i32 fits the full range). One 'if_icmple'
+--   against 255 picks the branch — same shape as 'addUInt8Method' with
+--   'imul' replacing 'iadd'. No mask on the ok path since the product
+--   is already a valid UInt8 by construction.
+mulUInt8Method :: Text
+mulUInt8Method =
+  unlines
+    [ ".method static __mulUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  imul",
+      "  istore_2",
+      "  iload_2",
+      "  sipush 255",
+      "  if_icmple L_mulu8_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_mulu8_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_2",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Defers substring search to 'String.indexOf(String)', which returns -1
 --   on miss and 0 on empty 'sep' — both behaviours match the prelude
@@ -546,7 +918,7 @@ addUInt8Method =
 splitOnFirstMethod :: Text
 splitOnFirstMethod =
   unlines
-    [ ".method public static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 4",
       "  aload_1",
@@ -627,7 +999,7 @@ splitOnFirstMethod =
 parseInt32Method :: Text
 parseInt32Method =
   unlines
-    [ ".method public static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 5",
       "  .limit locals 8",
       "  aload_0",
@@ -747,7 +1119,7 @@ parseInt32Method =
 parseUInt8Method :: Text
 parseUInt8Method =
   unlines
-    [ ".method public static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 4",
       "  .limit locals 6",
       "  aload_0",
@@ -865,7 +1237,7 @@ emitDecl ctx = \case
         desc = objMethodDescText (length args)
         bodyText = emitTailText ctx paramCtx args body
      in unlines
-          [ ".method public static " <> mangle nm <> desc,
+          [ ".method static " <> mangle nm <> desc,
             "L_tco_loop:",
             bodyText,
             ".end method"
@@ -875,7 +1247,7 @@ emitDecl ctx = \case
         desc = objMethodDescText (length args)
         bodyText = emitExprText ctx paramCtx body
      in unlines
-          [ ".method public static " <> mangle nm <> desc,
+          [ ".method static " <> mangle nm <> desc,
             bodyText,
             "  areturn",
             ".end method"
@@ -883,7 +1255,7 @@ emitDecl ctx = \case
   CValDef nm rhs ->
     let bodyText = emitExprText ctx Map.empty rhs
      in unlines
-          [ ".method public static " <> mangle nm <> "()" <> objDesc,
+          [ ".method static " <> mangle nm <> "()" <> objDesc,
             bodyText,
             "  areturn",
             ".end method"
@@ -1027,15 +1399,28 @@ emitExprText ctx paramMap = \case
                     "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
                   ]
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8",
+        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
           [a, b] <- xs ->
-            let fn = if name == "addInt32" then "__addInt32" else "__addUInt8"
+            let fn = case name of
+                  "addInt32" -> "__addInt32"
+                  "addUInt8" -> "__addUInt8"
+                  "subInt32" -> "__subInt32"
+                  "subUInt8" -> "__subUInt8"
+                  "mulInt32" -> "__mulInt32"
+                  _ -> "__mulUInt8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap a,
                     emitExprText ctx paramMap b,
                     "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
                   ]
+      CBuiltIn "negInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__negInt32(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             T.intercalate

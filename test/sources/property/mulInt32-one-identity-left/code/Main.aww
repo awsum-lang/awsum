@@ -1,0 +1,12 @@
+-- Property: `mulInt32 1 a == Right a`. Left-identity of one under
+-- mulInt32. Holds for every Int32 — `1 * a` is always in range.
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right a -> case mulInt32 1 a of
+    Left _ -> IO.Stdout.print "OVERFLOW"
+    Right res -> case eqInt32 res a of
+      True -> IO.Stdout.print "OK"
+      False -> IO.Stdout.print ("FAIL: " ++ showInt32 res ++ " /= " ++ showInt32 a)

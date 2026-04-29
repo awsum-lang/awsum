@@ -7,5 +7,5 @@ showPair : Pair String String -> String
 showPair pair = case pair of
   Pair first second -> "(" ++ first ++ ", " ++ second ++ ")"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showPair (Pair "hello" "world"))

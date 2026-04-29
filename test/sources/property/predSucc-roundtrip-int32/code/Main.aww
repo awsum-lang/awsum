@@ -1,0 +1,16 @@
+-- Property: `predInt32 (succInt32 x) == Right x` for any Int32 with
+-- `x /= maxInt32`. Mirror of succPred-roundtrip-int32 in the opposite
+-- direction. The Haskell-side generator excludes maxInt32, so neither
+-- succ nor pred should fail on a well-formed input.
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right x -> case succInt32 x of
+    Left _ -> IO.Stdout.print "OVERFLOW"
+    Right s -> case predInt32 s of
+      Left _ -> IO.Stdout.print "UNDERFLOW"
+      Right p -> case eqInt32 p x of
+        True -> IO.Stdout.print "OK"
+        False -> IO.Stdout.print ("FAIL: " ++ showInt32 p ++ " /= " ++ showInt32 x)

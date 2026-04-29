@@ -1,0 +1,17 @@
+-- Property: `predInt32 x` fails iff `x == minInt32`. Symmetric to
+-- `succInt32-fails-iff-max`.
+import IO.Stdout
+
+minInt32 : Int32
+minInt32 = -2147483648
+
+main : String -> IO Unit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right x -> case eqInt32 x minInt32 of
+    True -> case predInt32 x of
+      Left _ -> IO.Stdout.print "OK"
+      Right _ -> IO.Stdout.print "FAIL: pred at min should fail"
+    False -> case predInt32 x of
+      Left _ -> IO.Stdout.print "FAIL: pred above min should succeed"
+      Right _ -> IO.Stdout.print "OK"

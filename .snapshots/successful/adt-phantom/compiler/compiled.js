@@ -3,11 +3,18 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_show(v_p){
-  return ((s) => { switch(s[0]) { case 0: { return "Phantom"; } } })(v_p);
+    {
+      const __s = v_p;
+      switch (__s[0]) {
+        case 0: {
+          return "Phantom";
+        }
+      }
+    }
 }
 
 function main(v__input){
-  return __print((v_show)([0]));
+    return __print((v_show)([0]));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

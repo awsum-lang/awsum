@@ -7,7 +7,7 @@
 -- real-world depths.
 --
 -- Keeping this in the suite ensures the heterogeneous merge stays
--- correct across all six backends, and locks in the cross-backend
+-- correct across all five backends, and locks in the cross-backend
 -- stdout invariant so regressions are caught automatically. The stress
 -- variant (@mutual-different-arity-stress@) exercises the same shape at
 -- depth 100 000 to prove the stack-safety property.
@@ -28,5 +28,5 @@ parseBinary tok _acc = case tok of
   IDone -> zero
   IStep -> parseExpr IDone
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showInt32 (parseExpr IStep))

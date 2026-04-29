@@ -1,0 +1,16 @@
+-- Property: `succUInt8 x` fails iff `x == 255` (the UInt8 max).
+import IO.Stdout
+
+maxUInt8 : UInt8
+maxUInt8 = 255
+
+main : String -> IO Unit
+main raw = case parseUInt8 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right x -> case eqUInt8 x maxUInt8 of
+    True -> case succUInt8 x of
+      Left _ -> IO.Stdout.print "OK"
+      Right _ -> IO.Stdout.print "FAIL: succ at 255 should fail"
+    False -> case succUInt8 x of
+      Left _ -> IO.Stdout.print "FAIL: succ below 255 should succeed"
+      Right _ -> IO.Stdout.print "OK"

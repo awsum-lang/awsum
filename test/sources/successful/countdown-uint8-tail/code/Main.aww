@@ -33,5 +33,5 @@ showResult r = case r of
 start : UInt8
 start = 255
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showResult (countDown start ""))

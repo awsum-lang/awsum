@@ -1,0 +1,12 @@
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right x -> case negInt32 x of
+    Left _ -> IO.Stdout.print "NEG_OVERFLOW"
+    Right negX -> case addInt32 negX x of
+      Left _ -> IO.Stdout.print "ADD_OVERFLOW"
+      Right s -> case eqInt32 s 0 of
+        True -> IO.Stdout.print "OK"
+        False -> IO.Stdout.print ("FAIL: " ++ showInt32 s ++ " /= 0")

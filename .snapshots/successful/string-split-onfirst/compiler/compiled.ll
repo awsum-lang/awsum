@@ -31,7 +31,7 @@ declare ptr @memcpy(ptr, ptr, i64)
 @.str.15 = private unnamed_addr constant [6 x i8] c"abcde\00"
 @.str.16 = private unnamed_addr constant [3 x i8] c"ab\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -43,13 +43,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__splitOnFirst(ptr %sep, ptr %str) {
+define internal ptr @__splitOnFirst(ptr %sep, ptr %str) {
   %pos = call ptr @strstr(ptr %str, ptr %sep)
   %is_null = icmp eq ptr %pos, null
   br i1 %is_null, label %not_found, label %found
@@ -91,7 +91,7 @@ found:
 }
 
 
-define ptr @v_render(ptr %v_r) {
+define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -137,7 +137,7 @@ case.join.4:
   ret ptr %t31
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [2 x i8], ptr @.str.4, i64 0, i64 0
   %t1 = getelementptr [6 x i8], ptr @.str.5, i64 0, i64 0
   %t2 = call ptr @__splitOnFirst(ptr %t0, ptr %t1)

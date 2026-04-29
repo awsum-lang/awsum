@@ -10,5 +10,5 @@ show x = case x of
   _B -> "b"
   C -> "c"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main input = IO.Stdout.print (show C)

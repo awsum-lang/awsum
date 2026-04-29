@@ -3,11 +3,23 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_unwrap(v_r){
-  return ((s) => { switch(s[0]) { case 0: { const v_value = s[1]; return v_value; } case 1: { const v_value = s[1]; return v_value; } } })(v_r);
+    {
+      const __s = v_r;
+      switch (__s[0]) {
+        case 0: {
+          const v_value = __s[1];
+          return v_value;
+        }
+        case 1: {
+          const v_value = __s[1];
+          return v_value;
+        }
+      }
+    }
 }
 
 function main(v__input){
-  return __print((((v_unwrap)([0, "1"]) + ",") + (v_unwrap)([1, "2"])));
+    return __print((((v_unwrap)([0, "1"]) + ",") + (v_unwrap)([1, "2"])));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

@@ -1,0 +1,13 @@
+-- Property: `addInt32 a 0 == Right a`. Right-identity of zero under
+-- addInt32; complements `addInt32-zero-identity-left`. Adding zero
+-- never overflows, so OVERFLOW is never expected.
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = case parseInt32 raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right a -> case addInt32 a 0 of
+    Left _ -> IO.Stdout.print "OVERFLOW"
+    Right res -> case eqInt32 res a of
+      True -> IO.Stdout.print "OK"
+      False -> IO.Stdout.print ("FAIL: " ++ showInt32 res ++ " /= " ++ showInt32 a)

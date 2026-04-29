@@ -18,5 +18,5 @@ apply f x = f x
 compose : (b -> c) -> (a -> b) -> a -> c
 compose f g x = f (g x)
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (apply (compose unwrap wrap) "chain")

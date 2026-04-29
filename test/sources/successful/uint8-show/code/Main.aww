@@ -5,7 +5,7 @@
 -- exercising explicitly.
 import IO.Stdout
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showUInt8 minUInt8 ++ ", " ++ showUInt8 small ++ ", " ++ showUInt8 aboveSignedByte ++ ", " ++ showUInt8 maxUInt8)
 
 minUInt8 : UInt8

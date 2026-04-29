@@ -15,7 +15,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.1 = private unnamed_addr constant [7 x i8] c"left: \00"
 @.str.2 = private unnamed_addr constant [8 x i8] c"right: \00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -27,13 +27,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showInt32(ptr %p) {
+define internal ptr @__showInt32(ptr %p) {
   %v = load i32, ptr %p
   %buf = call ptr @malloc(i64 16)
   call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
@@ -41,7 +41,7 @@ define ptr @__showInt32(ptr %p) {
 }
 
 
-define ptr @__predInt32(ptr %p) {
+define internal ptr @__predInt32(ptr %p) {
   %v = load i32, ptr %p
   %is_min = icmp eq i32 %v, -2147483648
   br i1 %is_min, label %overflow, label %ok
@@ -68,7 +68,7 @@ ok:
 }
 
 
-define ptr @__eqInt32(ptr %a, ptr %b) {
+define internal ptr @__eqInt32(ptr %a, ptr %b) {
   %va = load i32, ptr %a
   %vb = load i32, ptr %b
   %eq = icmp eq i32 %va, %vb
@@ -80,18 +80,18 @@ define ptr @__eqInt32(ptr %a, ptr %b) {
 }
 
 
-define ptr @v_showUnderflowError(ptr %v__wild0) {
+define internal ptr @v_showUnderflowError(ptr %v__wild0) {
   %t0 = getelementptr [15 x i8], ptr @.str.0, i64 0, i64 0
   ret ptr %t0
 }
 
-define ptr @v_zero() {
+define internal ptr @v_zero() {
   %t0 = call ptr @malloc(i64 4)
   store i32 0, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_countDown(ptr %v_n) {
+define internal ptr @v_countDown(ptr %v_n) {
 entry:
   %t3 = alloca ptr
   store ptr %v_n, ptr %t3
@@ -146,7 +146,7 @@ tco.exit.1:
   ret ptr %t33
 }
 
-define ptr @v_showResult(ptr %v_r) {
+define internal ptr @v_showResult(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -176,13 +176,13 @@ case.join.4:
   ret ptr %t19
 }
 
-define ptr @v_start() {
+define internal ptr @v_start() {
   %t0 = call ptr @malloc(i64 4)
   store i32 100000, ptr %t0
   ret ptr %t0
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_start()
   %t1 = call ptr @v_countDown(ptr %t0)
   %t2 = call ptr @v_showResult(ptr %t1)

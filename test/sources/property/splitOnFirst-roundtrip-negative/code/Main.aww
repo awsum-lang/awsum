@@ -1,0 +1,13 @@
+-- Property: `splitOnFirst sep s == Nothing` whenever `sep` is not a
+-- substring of `s`. The Haskell-side generator picks `sep` from
+-- `[A-Z]+` and `s` from `[a-z]*` — disjoint alphabets guarantee
+-- non-occurrence by construction.
+import IO.Stdout
+
+main : String -> IO Unit
+main raw = case splitOnFirst ":" raw of
+  Nothing -> IO.Stdout.print "PARSE_ERROR"
+  Just t -> case t of
+    Tuple2 sep s -> case splitOnFirst sep s of
+      Nothing -> IO.Stdout.print "OK"
+      Just _ -> IO.Stdout.print "FAIL: split should not match"

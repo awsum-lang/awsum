@@ -3,11 +3,35 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_unwrap(v_b){
-  return ((s) => { switch(s[0]) { case 0: { const v_b2 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v_b3 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v_value = s[1]; return v_value; } } })(v_b3); } } })(v_b2); } } })(v_b);
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 0: {
+          const v_b2 = __s[1];
+          {
+            const __s = v_b2;
+            switch (__s[0]) {
+              case 0: {
+                const v_b3 = __s[1];
+                {
+                  const __s = v_b3;
+                  switch (__s[0]) {
+                    case 0: {
+                      const v_value = __s[1];
+                      return v_value;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 }
 
 function main(v__input){
-  return __print((v_unwrap)([0, [0, [0, "hello"]]]));
+    return __print((v_unwrap)([0, [0, [0, "hello"]]]));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

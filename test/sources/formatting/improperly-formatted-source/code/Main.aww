@@ -33,6 +33,6 @@ show   c  =  case c of
 --   Blue -> "Blue"
 
  -- before main sig
-main :  String  ->  IOUnit
+main :  String  ->  IO Unit
    -- between main sig and def
 main  input  =  IO.Stdout.print    (   show  Red   ++   ", "   ++  show   Green   ++   ", "   ++   show   Blue  )

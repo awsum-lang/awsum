@@ -7,5 +7,5 @@ showTriple : Triple String String String -> String
 showTriple t = case t of
   Triple a b c -> a ++ " " ++ b ++ " " ++ c
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (showTriple (Triple "one" "two" "three"))

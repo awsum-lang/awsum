@@ -10,7 +10,7 @@ Program
             , LineComment " real-world depths."
             , LineComment ""
             , LineComment " Keeping this in the suite ensures the heterogeneous merge stays"
-            , LineComment " correct across all six backends, and locks in the cross-backend"
+            , LineComment " correct across all five backends, and locks in the cross-backend"
             , LineComment " stdout invariant so regressions are caught automatically. The stress"
             , LineComment " variant (@mutual-different-arity-stress@) exercises the same shape at"
             , LineComment " depth 100 000 to prove the stack-safety property."
@@ -390,7 +390,7 @@ Program
                 { spanStartLine = 31
                 , spanStartCol = 1
                 , spanEndLine = 31
-                , spanEndCol = 24
+                , spanEndCol = 25
                 }
             ) "main"
             ( TyArrow
@@ -398,7 +398,7 @@ Program
                     { spanStartLine = 31
                     , spanStartCol = 8
                     , spanEndLine = 31
-                    , spanEndCol = 24
+                    , spanEndCol = 25
                     }
                 )
                 ( TyCon
@@ -410,14 +410,32 @@ Program
                         }
                     ) "String"
                 )
-                ( TyCon
+                ( TyApp
                     ( SrcSpan
                         { spanStartLine = 31
                         , spanStartCol = 18
                         , spanEndLine = 31
-                        , spanEndCol = 24
+                        , spanEndCol = 25
                         }
-                    ) "IOUnit"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 31
+                            , spanStartCol = 18
+                            , spanEndLine = 31
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 31
+                            , spanStartCol = 21
+                            , spanEndLine = 31
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
                 )
             ) Nothing
         , FunDef

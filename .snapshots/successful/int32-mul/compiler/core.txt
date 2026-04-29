@@ -1,0 +1,141 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showArithError" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 0
+                    , []
+                    , CString "Underflow"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "Overflow"
+                    )
+                ]
+            )
+        , CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "err: "
+                        , CCall
+                            ( CVar "showArithError" )
+                            [ CVar "e" ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok: "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CCall
+                                                            ( CVar "render" )
+                                                            [ CCall
+                                                                ( CBuiltIn "mulInt32" )
+                                                                [ CIntLit 6 TInt32
+                                                                , CIntLit 7 TInt32
+                                                                ]
+                                                            ]
+                                                        , CString ", "
+                                                        ]
+                                                    , CCall
+                                                        ( CVar "render" )
+                                                        [ CCall
+                                                            ( CBuiltIn "mulInt32" )
+                                                            [ CIntLit
+                                                                ( -6 ) TInt32
+                                                            , CIntLit 7 TInt32
+                                                            ]
+                                                        ]
+                                                    ]
+                                                , CString ", "
+                                                ]
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "mulInt32" )
+                                                    [ CIntLit 100000 TInt32
+                                                    , CIntLit 100000 TInt32
+                                                    ]
+                                                ]
+                                            ]
+                                        , CString ", "
+                                        ]
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "mulInt32" )
+                                            [ CIntLit
+                                                ( -100000 ) TInt32
+                                            , CIntLit 100000 TInt32
+                                            ]
+                                        ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "mulInt32" )
+                                    [ CVar "minInt32"
+                                    , CIntLit
+                                        ( -1 ) TInt32
+                                    ]
+                                ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "mulInt32" )
+                            [ CVar "minInt32"
+                            , CIntLit 1 TInt32
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

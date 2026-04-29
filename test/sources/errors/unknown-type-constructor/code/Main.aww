@@ -1,5 +1,5 @@
 -- Error: undefined type constructor X in signature
 import IO.Stdout
 
-main : X -> IOUnit
+main : X -> IO Unit
 main x = IO.Stdout.print x

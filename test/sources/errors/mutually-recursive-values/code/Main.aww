@@ -12,5 +12,5 @@ foo = bar
 bar : String
 bar = foo
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print foo

@@ -12,7 +12,7 @@ Program
             , LineComment " The 'even-odd-stress' test exercises the two-member version of the"
             , LineComment " same trick; this one pins down that SCC merge handles arbitrary cycle"
             , LineComment " lengths correctly and that dispatch over three tags is as cheap as"
-            , LineComment " over two across all six backends."
+            , LineComment " over two across all five backends."
             , LineComment ""
             , LineComment " @stepA@ returns @Either UnderflowError Int32@ to keep @predInt32@'s"
             , LineComment " shape threaded through uniformly — the @Left@ arm is unreachable for"
@@ -1330,7 +1330,7 @@ Program
                 { spanStartLine = 53
                 , spanStartCol = 1
                 , spanEndLine = 53
-                , spanEndCol = 24
+                , spanEndCol = 25
                 }
             ) "main"
             ( TyArrow
@@ -1338,7 +1338,7 @@ Program
                     { spanStartLine = 53
                     , spanStartCol = 8
                     , spanEndLine = 53
-                    , spanEndCol = 24
+                    , spanEndCol = 25
                     }
                 )
                 ( TyCon
@@ -1350,14 +1350,32 @@ Program
                         }
                     ) "String"
                 )
-                ( TyCon
+                ( TyApp
                     ( SrcSpan
                         { spanStartLine = 53
                         , spanStartCol = 18
                         , spanEndLine = 53
-                        , spanEndCol = 24
+                        , spanEndCol = 25
                         }
-                    ) "IOUnit"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 53
+                            , spanStartCol = 18
+                            , spanEndLine = 53
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 53
+                            , spanStartCol = 21
+                            , spanEndLine = 53
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
                 )
             ) Nothing
         , FunDef

@@ -9,5 +9,5 @@ advanceStep x = case x of
   Step2 -> advanceStep Step3
   Step3 -> "Done!"
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (advanceStep Step1)

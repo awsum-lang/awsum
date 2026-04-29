@@ -7,14 +7,14 @@
 
 .class public auto ansi AwsumMain extends [System.Runtime]System.Object
 {
-  .method public hidebysig specialname rtspecialname instance void .ctor() cil managed
+  .method private hidebysig specialname rtspecialname instance void .ctor() cil managed
   {
     ldarg.0
     call instance void [System.Runtime]System.Object::.ctor()
     ret
   }
 
-  .method public hidebysig static object __print(object) cil managed
+  .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
     call void [System.Console]System.Console::Write(object)
@@ -22,7 +22,7 @@
     ret
   }
 
-  .method public hidebysig static object v_wrap(object) cil managed
+  .method private hidebysig static object v_wrap(object) cil managed
   {
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -39,7 +39,7 @@
   }
 
 
-  .method public hidebysig static object v_unwrap(object) cil managed
+  .method private hidebysig static object v_unwrap(object) cil managed
   {
     ldarg.0
     dup
@@ -60,7 +60,7 @@
   }
 
 
-  .method public hidebysig static object v_apply(object, object) cil managed
+  .method private hidebysig static object v_apply(object, object) cil managed
   {
     ldarg.0
     castclass class [System.Runtime]System.Func`2<object, object>
@@ -70,7 +70,7 @@
   }
 
 
-  .method public hidebysig static object v_compose(object, object, object) cil managed
+  .method private hidebysig static object v_compose(object, object, object) cil managed
   {
     ldarg.0
     castclass class [System.Runtime]System.Func`2<object, object>
@@ -83,7 +83,7 @@
   }
 
 
-  .method public hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldftn object AwsumMain::v__pap_0(object)
     newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
@@ -94,7 +94,7 @@
   }
 
 
-  .method public hidebysig static object v__pap_0(object) cil managed
+  .method private hidebysig static object v__pap_0(object) cil managed
   {
     ldftn object AwsumMain::v_unwrap(object)
     newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
@@ -105,7 +105,7 @@
     ret
   }
 
-  .method public hidebysig static void Main(string[]) cil managed
+  .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
     ldarg.0

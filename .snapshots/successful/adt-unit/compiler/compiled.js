@@ -3,11 +3,18 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_show(v_u){
-  return ((s) => { switch(s[0]) { case 0: { return "CustomUnit"; } } })(v_u);
+    {
+      const __s = v_u;
+      switch (__s[0]) {
+        case 0: {
+          return "CustomUnit";
+        }
+      }
+    }
 }
 
 function main(v__input){
-  return __print((v_show)([0]));
+    return __print((v_show)([0]));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

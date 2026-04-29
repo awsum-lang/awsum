@@ -15,5 +15,5 @@ minInt32 = -2147483648
 ordinary : Int32
 ordinary = 42
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (render (predInt32 ordinary) ++ ", " ++ render (predInt32 minInt32))

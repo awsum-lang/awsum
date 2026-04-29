@@ -13,13 +13,13 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.str.0 = private unnamed_addr constant [6 x i8] c"Done!\00"
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_advanceStep(ptr %v_x) {
+define internal ptr @v_advanceStep(ptr %v_x) {
 entry:
   %t3 = alloca ptr
   store ptr %v_x, ptr %t3
@@ -56,7 +56,7 @@ tco.exit.1:
   ret ptr %t19
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0

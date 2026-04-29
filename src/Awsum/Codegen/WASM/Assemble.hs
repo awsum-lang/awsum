@@ -104,14 +104,16 @@ op_i32_lt_s = 0x48
 op_i32_xor = 0x73
 op_i32_ge_s = 0x4E
 
-op_i64_const, op_i64_add, op_i64_sub, op_i64_mul, op_i64_shl, op_i64_gt_s, op_i32_wrap_i64, op_i64_extend_i32_u :: Word8
+op_i64_const, op_i64_add, op_i64_sub, op_i64_mul, op_i64_shl, op_i64_lt_s, op_i64_gt_s, op_i32_wrap_i64, op_i64_extend_i32_s, op_i64_extend_i32_u :: Word8
 op_i64_const = 0x42
 op_i64_add = 0x7C
 op_i64_sub = 0x7D
 op_i64_mul = 0x7E
 op_i64_shl = 0x86
+op_i64_lt_s = 0x53
 op_i64_gt_s = 0x55
 op_i32_wrap_i64 = 0xA7
+op_i64_extend_i32_s = 0xAC
 op_i64_extend_i32_u = 0xAD
 
 -- WASM type encoding
@@ -149,13 +151,13 @@ importCount = 3
 
 -- Runtime helper count: __strlen, __alloc, __memcpy, __concat, __print,
 -- __box_i32, __show_i32, __predInt32, __predUInt8, __succInt32, __succUInt8,
--- __eq_i32, __addInt32, __addUInt8, __splitOnFirst, __parseInt32,
--- __parseUInt8, __get_arg
+-- __eq_i32, __addInt32, __subInt32, __mulInt32, __negInt32, __addUInt8,
+-- __subUInt8, __mulUInt8, __splitOnFirst, __parseInt32, __parseUInt8, __get_arg
 runtimeCount :: Word32
-runtimeCount = 18
+runtimeCount = 23
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxAddI32, idxAddU8, idxSplitOnFirst, idxParseI32, idxParseU8, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxPredI32, idxPredU8, idxSuccI32, idxSuccU8, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxSplitOnFirst, idxParseI32, idxParseU8, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -169,11 +171,16 @@ idxSuccI32 = importCount + 9
 idxSuccU8 = importCount + 10
 idxEqI32 = importCount + 11
 idxAddI32 = importCount + 12
-idxAddU8 = importCount + 13
-idxSplitOnFirst = importCount + 14
-idxParseI32 = importCount + 15
-idxParseU8 = importCount + 16
-idxGetArg = importCount + 17
+idxSubI32 = importCount + 13
+idxMulI32 = importCount + 14
+idxNegI32 = importCount + 15
+idxAddU8 = importCount + 16
+idxSubU8 = importCount + 17
+idxMulU8 = importCount + 18
+idxSplitOnFirst = importCount + 19
+idxParseI32 = importCount + 20
+idxParseU8 = importCount + 21
+idxGetArg = importCount + 22
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -364,7 +371,12 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __succUInt8
           lookupType (FuncType 2 True) typeMap, -- __eq_i32
           lookupType (FuncType 2 True) typeMap, -- __addInt32
+          lookupType (FuncType 2 True) typeMap, -- __subInt32
+          lookupType (FuncType 2 True) typeMap, -- __mulInt32
+          lookupType (FuncType 1 True) typeMap, -- __negInt32
           lookupType (FuncType 2 True) typeMap, -- __addUInt8
+          lookupType (FuncType 2 True) typeMap, -- __subUInt8
+          lookupType (FuncType 2 True) typeMap, -- __mulUInt8
           lookupType (FuncType 2 True) typeMap, -- __splitOnFirst
           lookupType (FuncType 1 True) typeMap, -- __parseInt32
           lookupType (FuncType 1 True) typeMap, -- __parseUInt8
@@ -477,7 +489,12 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeSuccU8 info,
           codeEqI32 info,
           codeAddI32 info,
+          codeSubI32 info,
+          codeMulI32 info,
+          codeNegI32 info,
           codeAddU8 info,
+          codeSubU8 info,
+          codeMulU8 info,
           codeSplitOnFirst info,
           codeParseInt32 info,
           codeParseUInt8 info,
@@ -1383,6 +1400,540 @@ codeAddU8 _info =
         encodeULEB128 5,
         [op_else],
         -- else: Right s
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_end]
+      ]
+
+-- __subInt32(pa: i32, pb: i32) -> i32
+-- subInt32: Int32 -> Int32 -> Either ArithError Int32. Same XOR-based
+-- signed-overflow detection as 'codeAddI32', with i32.sub replacing
+-- i32.add and the second XOR comparing 'a' vs 'diff' (the standard
+-- subtraction overflow check). Direction (over vs under) is read off
+-- 'a >= 0', identical to 'codeAddI32'.
+-- Locals: $a(2) $b(3) $d(4) $ae(5) $box(6) $cell(7).
+codeSubI32 :: WasmInfo -> [Word8]
+codeSubI32 _info =
+  encodeBody
+    (encodeLocals 6)
+    $ concat
+      [ -- a = i32.load(pa)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 2,
+        -- b = i32.load(pb)
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 3,
+        -- d = a - b
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 4,
+        -- if (((a ^ b) & (a ^ d)) < 0)  result i32
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_xor],
+        [op_local_get],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_xor],
+        [op_i32_and],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_lt_s],
+        [op_if, blocktype_i32],
+        -- then: Left ArithError
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_ge_s],
+        [op_if, blocktype_i32],
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_else],
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_end],
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 7,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_else],
+        -- else: Right d
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 7,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_local_get],
+        encodeULEB128 6,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 7,
+        [op_end]
+      ]
+
+-- __mulInt32(pa: i32, pb: i32) -> i32
+-- mulInt32: Int32 -> Int32 -> Either ArithError Int32. Both operands
+-- are sign-extended to i64, multiplied at long width, and the result
+-- range-checked against [INT32_MIN, INT32_MAX] via 'i64.gt_s' and
+-- 'i64.lt_s'. Direction: i64.gt_s → Overflow (tag 1), i64.lt_s →
+-- Underflow (tag 0). On the ok path, 'i32.wrap_i64' truncates back
+-- to i32 — faithful when the result is in i32 range by the comparison.
+-- Locals (after the two i32 params): $p (i64, slot 2),
+
+-- $ae(i32, slot 3), $box(i32, slot 4), $cell(i32, slot 5).
+
+codeMulI32 :: WasmInfo -> [Word8]
+codeMulI32 _info =
+  encodeBody
+    -- 1 i64 local + 3 i32 locals — must be encoded as two separate
+    -- (count, valtype) pairs in the WASM locals declaration.
+    (encodeVec [encodeULEB128 1 <> [valtype_i64], encodeULEB128 3 <> [valtype_i32]])
+    $ concat
+      [ -- p = i64.extend_i32_s(load(pa)) * i64.extend_i32_s(load(pb))
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_i64_extend_i32_s],
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_i64_extend_i32_s],
+        [op_i64_mul],
+        [op_local_set],
+        encodeULEB128 2,
+        -- if (p > maxInt32 as i64)
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i64_const],
+        encodeSLEB128 2147483647,
+        [op_i64_gt_s],
+        [op_if, blocktype_i32],
+        -- then: Left Overflow (tag 1)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_else],
+        -- if (p < minInt32 as i64)
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i64_const],
+        encodeSLEB128 (-2147483648),
+        [op_i64_lt_s],
+        [op_if, blocktype_i32],
+        -- then: Left Underflow (tag 0)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_else],
+        -- ok: Right (i32.wrap_i64 p)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_wrap_i64],
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_end], -- end inner if
+        [op_end] -- end outer if
+      ]
+
+-- __negInt32(p: i32) -> i32
+-- negInt32: Int32 -> Either OverflowError Int32. Mirror of 'codeSuccI32'
+-- with INT32_MIN as the boundary and 'i32.sub 0 v' for the ok branch.
+-- Locals: $v(1) $oe(2) $box(3) $cell(4).
+codeNegI32 :: WasmInfo -> [Word8]
+codeNegI32 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- v = i32.load(p)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_set],
+        encodeULEB128 1,
+        -- if (v == INT32_MIN) result i32
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_const],
+        encodeSLEB128 (-2147483648),
+        [op_i32_eq],
+        [op_if, blocktype_i32],
+        -- then: Left OverflowError
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 2,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_else],
+        -- else: Right (-v)
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_sub],
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 4,
+        [op_end]
+      ]
+
+-- __subUInt8(pa: i32, pb: i32) -> i32
+-- subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8. The i32
+-- difference is in -255..255; one 'i32.lt_s 0' check picks the underflow
+-- branch — no widening or mask needed.
+-- Locals: $d(2) $ue(3) $box(4) $cell(5).
+codeSubU8 :: WasmInfo -> [Word8]
+codeSubU8 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- d = i32.load(pa) - i32.load(pb)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_i32_sub],
+        [op_local_set],
+        encodeULEB128 2,
+        -- if (d < 0) result i32
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_lt_s],
+        [op_if, blocktype_i32],
+        -- then: Left UnderflowError
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_else],
+        -- else: Right d
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 1,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 4,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_end]
+      ]
+
+-- __mulUInt8(pa: i32, pb: i32) -> i32
+-- mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8. Inputs in
+-- 0..255 give an i32 product in 0..65025 — well within i32 range. A
+-- single 'i32.gt_u 255' check picks the branch.
+-- Locals: $p(2) $oe(3) $box(4) $cell(5).
+codeMulU8 :: WasmInfo -> [Word8]
+codeMulU8 _info =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- p = i32.load(pa) * i32.load(pb)
+        [op_local_get],
+        encodeULEB128 0,
+        [op_i32_load, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 1,
+        [op_i32_load, 0x02, 0x00],
+        [op_i32_mul],
+        [op_local_set],
+        encodeULEB128 2,
+        -- if (p > 255) result i32
+        [op_local_get],
+        encodeULEB128 2,
+        [op_i32_const],
+        encodeSLEB128 255,
+        [op_i32_gt_u],
+        [op_if, blocktype_i32],
+        -- then: Left OverflowError
+        [op_i32_const],
+        encodeSLEB128 4,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 3,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_i32_const],
+        encodeSLEB128 8,
+        [op_call],
+        encodeULEB128 idxAlloc,
+        [op_local_set],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 5,
+        [op_i32_const],
+        encodeSLEB128 0,
+        [op_i32_store, 0x02, 0x00],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_local_get],
+        encodeULEB128 3,
+        [op_i32_store, 0x02, 0x04],
+        [op_local_get],
+        encodeULEB128 5,
+        [op_else],
+        -- else: Right p
         [op_i32_const],
         encodeSLEB128 4,
         [op_call],
@@ -2701,13 +3252,24 @@ emitExpr ctx = \case
               <> [op_call]
               <> encodeULEB128 idxEqI32
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8",
+        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
           [a, b] <- xs ->
-            let idx = if name == "addInt32" then idxAddI32 else idxAddU8
+            let idx = case name of
+                  "addInt32" -> idxAddI32
+                  "addUInt8" -> idxAddU8
+                  "subInt32" -> idxSubI32
+                  "subUInt8" -> idxSubU8
+                  "mulInt32" -> idxMulI32
+                  _ -> idxMulU8
              in emitExpr ctx a
                   <> emitExpr ctx b
                   <> [op_call]
                   <> encodeULEB128 idx
+      CBuiltIn "negInt32"
+        | [x] <- xs ->
+            emitExpr ctx x
+              <> [op_call]
+              <> encodeULEB128 idxNegI32
       CBuiltIn "splitOnFirst"
         | [a, b] <- xs ->
             emitExpr ctx a

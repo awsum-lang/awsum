@@ -27,7 +27,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.13 = private unnamed_addr constant [4 x i8] c" 42\00"
 @.str.14 = private unnamed_addr constant [6 x i8] c"12abc\00"
 
-define ptr @__concat(ptr %a, ptr %b) {
+define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
   %lb = call i64 @strlen(ptr %b)
   %sum = add i64 %la, %lb
@@ -39,13 +39,13 @@ define ptr @__concat(ptr %a, ptr %b) {
 }
 
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @__showInt32(ptr %p) {
+define internal ptr @__showInt32(ptr %p) {
   %v = load i32, ptr %p
   %buf = call ptr @malloc(i64 16)
   call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)
@@ -53,7 +53,7 @@ define ptr @__showInt32(ptr %p) {
 }
 
 
-define ptr @__parseInt32(ptr %s) {
+define internal ptr @__parseInt32(ptr %s) {
 entry:
   %neg_alloca = alloca i32, align 4
   store i32 0, ptr %neg_alloca
@@ -140,7 +140,7 @@ fail:
 }
 
 
-define ptr @v_render(ptr %v_r) {
+define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -168,7 +168,7 @@ case.join.4:
   ret ptr %t17
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [3 x i8], ptr @.str.2, i64 0, i64 0
   %t1 = call ptr @__parseInt32(ptr %t0)
   %t2 = call ptr @v_render(ptr %t1)

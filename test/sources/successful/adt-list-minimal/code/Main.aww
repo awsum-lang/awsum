@@ -11,5 +11,5 @@ show xs = case xs of
 exampleList : List String
 exampleList = Cons "a" (Cons "b" (Cons "c" Nil))
 
-main : String -> IOUnit
+main : String -> IO Unit
 main _input = IO.Stdout.print (show exampleList)

@@ -13,18 +13,18 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.str.0 = private unnamed_addr constant [8 x i8] c"wrapped\00"
 
-define ptr @__print(ptr %s) {
+define internal ptr @__print(ptr %s) {
   call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
   ret ptr null
 }
 
 
-define ptr @v_wrap(ptr %v_f, ptr %v_x) {
+define internal ptr @v_wrap(ptr %v_f, ptr %v_x) {
   %t0 = call ptr %v_f(ptr %v_x)
   ret ptr %t0
 }
 
-define ptr @v_unwrap(ptr %v_b) {
+define internal ptr @v_unwrap(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -42,7 +42,7 @@ case.join.4:
   ret ptr %t9
 }
 
-define ptr @v_main(ptr %v__input) {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [8 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = call ptr @v_wrap(ptr @v__con_Box, ptr %t0)
   %t2 = call ptr @v_unwrap(ptr %t1)
@@ -50,7 +50,7 @@ define ptr @v_main(ptr %v__input) {
   ret ptr %t3
 }
 
-define ptr @v__con_Box(ptr %v__x0) {
+define internal ptr @v__con_Box(ptr %v__x0) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
