@@ -429,7 +429,7 @@ main : String -> IO Unit
 main _input = IO.Stdout.print (whatsThat (Just True))
 ```
 
-> **Caveat.** Implicit injection happens at the _construction site_. A value built in a non-row context (`Just True : Maybe Bool` bound as a top-level constant) cannot today flow into a row-expecting position later — the runtime representations differ. Construct directly where the row is expected, or use a small lift wrapper (`liftToRow x = case x of Nothing -> Nothing; Just b -> Just b`) whose return type is the row-typed `Maybe (Bool | Unit)` so the wrapping happens at lowering time. Cross-boundary normalisation is tracked as future work.
+Cross-boundary normalisation works for values built in a non-row context too. A top-level constant `defaultJust : Maybe Bool` flows into a slot expecting `Maybe (Bool | Unit)` without any user-written wrapper: the lowering synthesises a per-shape helper that walks the value and rebuilds it with row tags injected at every row-vs-non-row mismatch under common nominal heads. The helper is memoised by `(source, target)` so recursive types like `Lst Bool → Lst (Bool | Unit)` get one self-recursive `$lift$N` instead of an infinite expansion, and nested coercions reuse helpers their parents already emitted. The cost is one O(n) traversal of the value at the boundary site — visible in the compiled IR as `CCall ($lift$N) [v]` rather than hidden in the runtime.
 
 ---
 

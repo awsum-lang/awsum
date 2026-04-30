@@ -1,0 +1,311 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showUnit" [ "$wild0" ]
+            ( CString "Unit" )
+        , CValDef "defaultJust"
+            ( CCon 1
+                [ CCon 0 [] ]
+            )
+        , CValDef "defaultBools"
+            ( CCon 1
+                [ CCon 0 []
+                , CCon 1
+                    [ CCon 1 []
+                    , CCon 0 []
+                    ]
+                ]
+            )
+        , CValDef "defaultRight"
+            ( CCon 1
+                [ CCon 1
+                    [ CCon 1 [] ]
+                ]
+            )
+        , CFunDef "dispatchInner" [ "x" ]
+            ( CRowCase
+                ( CVar "x" )
+                [
+                    ( 796142685
+                    , "b"
+                    , CCase
+                        ( CVar "b" )
+                        [
+                            ( 0
+                            , []
+                            , CString "T"
+                            )
+                        ,
+                            ( 1
+                            , []
+                            , CString "F"
+                            )
+                        ]
+                    )
+                ,
+                    ( 1759602215
+                    , "u"
+                    , CCall
+                        ( CVar "showUnit" )
+                        [ CVar "u" ]
+                    )
+                ]
+            )
+        , CFunDef "describeMaybe" [ "m" ]
+            ( CCase
+                ( CVar "m" )
+                [
+                    ( 0
+                    , []
+                    , CString "N"
+                    )
+                ,
+                    ( 1
+                    , [ "inner" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "J"
+                        , CCall
+                            ( CVar "dispatchInner" )
+                            [ CVar "inner" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "describeLst" [ "xs" ]
+            ( CCall
+                ( CVar "$cps$describeLst" )
+                [ CVar "xs"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$describeLst"
+            [ "xs"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "xs" )
+                    [
+                        ( 0
+                        , []
+                        , CCall
+                            ( CVar "$apply$describeLst" )
+                            [ CVar "$k"
+                            , CString ""
+                            ]
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "h"
+                            , "t"
+                            ]
+                        , CContinue
+                            [ CVar "t"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "h"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$describeLst"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "h"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CVar "dispatchInner" )
+                                    [ CVar "h" ]
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "describeEither" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "_e" ]
+                    , CString "ErrA"
+                    )
+                ,
+                    ( 1
+                    , [ "m" ]
+                    , CCall
+                        ( CVar "describeMaybe" )
+                        [ CVar "m" ]
+                    )
+                ]
+            )
+        , CValDef "summary"
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CVar "describeMaybe" )
+                                [ CCall
+                                    ( CVar "$lift$0" )
+                                    [ CVar "defaultJust" ]
+                                ]
+                            , CString " / "
+                            ]
+                        , CCall
+                            ( CVar "describeLst" )
+                            [ CCall
+                                ( CVar "$lift$1" )
+                                [ CVar "defaultBools" ]
+                            ]
+                        ]
+                    , CString " / "
+                    ]
+                , CCall
+                    ( CVar "describeEither" )
+                    [ CCall
+                        ( CVar "$lift$2" )
+                        [ CVar "defaultRight" ]
+                    ]
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CVar "summary" ]
+            )
+        , CFunDef "$lift$0" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 0
+                    , []
+                    , CCon 0 []
+                    )
+                ,
+                    ( 1
+                    , [ "__f0" ]
+                    , CCon 1
+                        [ CRow 796142685
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$lift$1" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$1" )
+                [ CVar "__input"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$lift$1"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 0
+                        , []
+                        , CCall
+                            ( CVar "$apply$$lift$1" )
+                            [ CVar "$k"
+                            , CCon 0 []
+                            ]
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CContinue
+                            [ CVar "__f1"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "__f0"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$1"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "__f0"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCon 1
+                                [ CRow 796142685
+                                    ( CVar "__f0" )
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$lift$2" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 0
+                    , [ "__f0" ]
+                    , CCon 0
+                        [ CVar "__f0" ]
+                    )
+                ,
+                    ( 1
+                    , [ "__f0" ]
+                    , CCon 1
+                        [ CCall
+                            ( CVar "$lift$0" )
+                            [ CVar "__f0" ]
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

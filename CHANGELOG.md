@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cross-boundary row normalisation.** A value built in a non-row context (e.g. a top-level `defaultJust : Maybe Bool`) now flows into a slot expecting a row-typed equivalent (`Maybe (Bool | Unit)`) without a hand-written lift wrapper. The runtime shapes genuinely differ (`CCon Just [CCon True []]` vs `CCon Just [CRow (rowTag Bool) (CCon True [])]`), so the lowering synthesises a fresh `$lift$N` helper that destructures the source and reconstructs in the target shape, with row tags injected at every row-vs-non-row mismatch under common nominal heads. Helpers are memoised by `(canonicalLabel src, canonicalLabel tgt)` so recursive types like `Lst Bool → Lst (Bool | Unit)` get a single self-recursive helper, and deep nestings (`Either ErrA (Maybe Bool) → Either ErrA (Maybe (Bool | Unit))`) reuse helpers their parents already emitted. The typechecker's `EApp` synth path now falls back to `rowSubsume` when `unify` rejects a row-shape mismatch, so the new shape also flows through `++` chains and other synth contexts (previously only the bidirectional `checkExpr` path accepted it). New fixture: [test/sources/successful/structural-sum-cross-boundary/](test/sources/successful/structural-sum-cross-boundary/) covering all three shapes (direct, recursive, deeply nested) with cross-backend stdout.
+
 ### Fixed
 
 - **Bidirectional check propagates through polymorphic application.** A bare integer literal at a polymorphic call site like `inc42 = apply (\n -> n) 42 : Int32` now picks up its type from the enclosing return: the typechecker walks the application's spine, unifies the function's result type with the expected type to learn substitutions, and threads them through arg checks (lambda bodies contribute their own substitutions back). Lowering does the same for the `LInt → CIntLit` step, so the literal reaches codegen with `Int32` resolved instead of failing as "integer literal without a known numeric type". Test source [test/sources/successful/lambda-lifting/](test/sources/successful/lambda-lifting/) was updated to use the direct form.

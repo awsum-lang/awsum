@@ -1177,22 +1177,23 @@ typeOfExpr conEnv tcm env = \case
           EParens _ EDo {} -> checkExpr conEnv tcm env a x $> b
           _ -> do
             tx <- typeOfExpr conEnv tcm env x
-            -- D.1: when the parameter type is a structural sum, an
-            -- argument whose synthesised type fits via row subsumption
-            -- (recursive on TyApp / TyArrow) is accepted as implicit
-            -- injection. The 'rowSubsume' predicate handles both the
-            -- direct-label case (@ErrA ⊆ (ErrA | ErrB)@) and the
-            -- distributive-head case (@Maybe Bool ⊆ Maybe (Bool | Unit)@
-            -- inside an outer row) without producing a substitution —
-            -- the row alternatives are concrete here.
-            let isRowInjection = case a of
-                  TyOr {} -> rowSubsume a tx
-                  _ -> False
-            if isRowInjection
-              then Right b
-              else case unify a tx of
-                Right s -> Right (applySubst s b)
-                Left _ -> Left (TypeMismatch a tx x)
+            -- Prefer 'unify' so any tyvar-binding substitution flows
+            -- into the result type ('applySubst s b'); fall back to
+            -- 'rowSubsume' when 'unify' fails on row-shape mismatches
+            -- the typechecker has decided are still subsumable. The
+            -- fallback covers two cases: direct row injection
+            -- (@ErrA ⊆ (ErrA | ErrB)@), and cross-boundary injection
+            -- through a nominal head (@Maybe Bool ⊆ Maybe (Bool | Unit)@)
+            -- — including nested in EApp synth, so a synthesised
+            -- @describeMaybe defaultJust@ inside a @++@ chain gets
+            -- accepted alongside the 'checkExpr' path that already
+            -- handles the standalone form.
+            case unify a tx of
+              Right s -> Right (applySubst s b)
+              Left _ ->
+                if rowSubsume a tx
+                  then Right b
+                  else Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
   -- String concatenation is only defined for (String, String) → String.
   EInfix sp OpConcat l r -> do

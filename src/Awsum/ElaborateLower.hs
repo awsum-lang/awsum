@@ -99,10 +99,17 @@ conWrapperName :: Name -> Name
 conWrapperName name = "$con$" <> name
 
 -- | State threaded through the lowering of a single program: a fresh
---   counter for synthetic names (lifted lambdas), the accumulator of
---   those lifted helpers, and the row-tag table that powers the
---   /row tag collision check/. Helpers are produced in reverse order;
---   the pipeline reverses on read.
+--   counter for synthetic names (lifted lambdas, cross-boundary row
+--   coercion helpers), the accumulator of those lifted helpers, the
+--   row-tag table that powers the /row tag collision check/, and a
+--   memo of already-synthesised cross-boundary coercion helpers keyed
+--   by @(canonicalSource, canonicalTarget)@ so a given @T1 → T2@
+--   coercion gets one shared @$lift$N@ regardless of how many sites
+--   trigger it (and so recursive types like @List a@ have a stable
+--   helper to recurse through).
+--
+--   Helpers are produced in reverse order; the pipeline reverses on
+--   read.
 --
 --   The row-tag table maps each 'Word32' tag minted via 'recordRowTag'
 --   to the set of canonical labels (keyed by 'canonicalLabel' text)
@@ -113,7 +120,8 @@ conWrapperName name = "$con$" <> name
 data LowerState = LowerState
   { lsFresh :: !Int,
     lsHelpers :: ![CDecl],
-    lsRowTags :: !(M.Map Word32 (M.Map Text Type'))
+    lsRowTags :: !(M.Map Word32 (M.Map Text Type')),
+    lsLifters :: !(M.Map (Text, Text) Name)
   }
 
 -- | Lowering monad — lambda-lift state on top of the existing
@@ -126,6 +134,18 @@ freshLamName = do
   s <- get
   put s {lsFresh = lsFresh s + 1}
   pure ("$lam$" <> show (lsFresh s))
+
+-- | Mint a fresh cross-boundary coercion helper name '$lift$N' and
+--   bump the counter. Used by 'synthCoerce' when a value of nominal
+--   type @Maybe Bool@ has to flow into a slot expecting
+--   @Maybe (Bool | Unit)@: the helper destructures the source-shaped
+--   value and reconstructs it with row tags injected at every
+--   row-vs-non-row mismatch under the common nominal head.
+freshLiftName :: LowerM Name
+freshLiftName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$lift$" <> show (lsFresh s))
 
 -- | Append a lifted helper definition to the program.
 emitHelper :: CDecl -> LowerM ()
@@ -266,7 +286,7 @@ genConWrappers conInfo =
 --   to the user-decl list in the program pipeline).
 runLowerM :: LowerM a -> Either TypeError (a, [CDecl], M.Map Word32 (M.Map Text Type'))
 runLowerM m = do
-  (a, st) <- runStateT m (LowerState 0 [] M.empty)
+  (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
 elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], CoreProgram)
@@ -812,10 +832,18 @@ applyTyParams n tvs = foldl' (\acc tv -> TyApp noSpan acc (TyVar noSpan tv)) (Ty
 -- | Lower an argument expression, wrapping with 'CRow' when the
 --   parameter type is a structural sum and the argument's actual type
 --   matches one of the row's labels (implicit injection reified at
---   lowering time so the runtime sees a tagged value).
+--   lowering time so the runtime sees a tagged value), or generating
+--   a cross-boundary coercion helper when the source value was built
+--   in a context whose runtime shape differs from the target's
+--   (e.g. @Maybe Bool@ flowing into @Maybe (Bool | Unit)@ — the inner
+--   @Bool@ has a positional constructor tag at construction site but
+--   needs a row-hash tag at the use site).
 --
---   For non-row parameter types this is just 'lowerExpr'; the wrap
---   logic kicks in only when 'TyOr' appears.
+--   For non-row parameter types this is just 'lowerExpr', except
+--   when the source synthesised type is structurally compatible with
+--   the target via cross-boundary coercion, in which case 'synthCoerce'
+--   emits a @$lift$N@ helper that walks the value and rebuilds it in
+--   the target shape.
 lowerArgWithRowInjectionM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
 lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
   Just expected@(TyOr {}) ->
@@ -837,8 +865,161 @@ lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
               v <- lowerExprM env locals (Just lbl) x
               tag <- recordRowTag lbl
               pure (CRow tag v)
+            -- Cross-boundary into a TyOr: source isn't an exact label,
+            -- but matches one of them under coercion (e.g. source
+            -- @Maybe Bool@, target row has @Maybe (Bool | Unit)@ as a
+            -- label). Synthesise a coercion to the matching label and
+            -- then wrap with that label's row tag.
+            Just src
+              | Just lbl <- findCoercibleLabel src labels -> do
+                  v <- lowerExprM env locals (Just src) x
+                  wrap <- synthCoerce (leConInfo env) src lbl
+                  v' <- wrap v
+                  tag <- recordRowTag lbl
+                  pure (CRow tag v')
             _ -> lowerExprM env locals mExpected x
-  _ -> lowerExprM env locals mExpected x
+  -- Non-row expected: cross-boundary coercion when source and target
+  -- share a nominal head but differ in row positions inside it.
+  Just expected -> case synthLabelType env x of
+    Just src
+      | not (typeEq src expected),
+        coercible src expected -> do
+          v <- lowerExprM env locals (Just src) x
+          wrap <- synthCoerce (leConInfo env) src expected
+          wrap v
+    _ -> lowerExprM env locals mExpected x
+  Nothing -> lowerExprM env locals mExpected x
+
+-- | Structural equality on types (ignoring spans).
+typeEq :: Type' -> Type' -> Bool
+typeEq a b = canonicalLabel a == canonicalLabel b
+
+-- | Cheap pre-check: is there a coercion @src → tgt@ that 'synthCoerce'
+--   could synthesise? Used to gate the 'synthCoerce' call so we don't
+--   emit helpers (or fail) on unrelated types where the typechecker
+--   has already validated equality. The actual building work happens
+--   in 'synthCoerce'.
+coercible :: Type' -> Type' -> Bool
+coercible src tgt
+  | typeEq src tgt = True
+  | TyVar {} <- tgt = True
+  | TyVar {} <- src = True
+  | TyOr {} <- tgt = any (coercible src) (flattenRow tgt)
+  -- Source is a row but target isn't: would lose alternatives.
+  | TyOr {} <- src = False
+  | TyApp _ f1 x1 <- src,
+    TyApp _ f2 x2 <- tgt =
+      typeEq f1 f2 && coercible x1 x2
+  | otherwise = False
+
+-- | Find a label in the target row that 'src' can be coerced to.
+--   Prefers exact matches (handled by caller before this is reached);
+--   falls back to recursive 'coercible' check.
+findCoercibleLabel :: Type' -> [Type'] -> Maybe Type'
+findCoercibleLabel src = find (coercible src)
+
+-- | Synthesise a CExpr-level coercion from @src@ to @tgt@. The
+--   returned function wraps a CExpr of source type into one of target
+--   type — identity when types agree, a 'CRow' wrap when target is a
+--   row and source is one of its labels, or an emitted '$lift$N'
+--   helper that destructures a nominal-headed value and reconstructs
+--   it with row tags injected per-field.
+--
+--   Helpers are memoised by @(canonicalLabel src, canonicalLabel tgt)@
+--   so recursive types like @List a@ get a single self-recursive
+--   helper rather than an infinite expansion.
+synthCoerce :: ConInfoEnv -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
+synthCoerce _ src tgt
+  | typeEq src tgt = pure pure
+synthCoerce _ (TyVar _ _) _ = pure pure
+synthCoerce _ _ (TyVar _ _) = pure pure
+synthCoerce conInfo src tgt@(TyOr {}) =
+  case findCoercibleLabel src (flattenRow tgt) of
+    Just lbl -> do
+      inner <- synthCoerce conInfo src lbl
+      tag <- recordRowTag lbl
+      pure (\v -> do v' <- inner v; pure (CRow tag v'))
+    Nothing ->
+      liftEither
+        $ Left
+          ( TELowering
+              ( "synthCoerce: no row label in "
+                  <> canonicalLabel tgt
+                  <> " accepts "
+                  <> canonicalLabel src
+              )
+          )
+synthCoerce conInfo src tgt
+  | Just headName <- tyConHead src,
+    Just headName' <- tyConHead tgt,
+    headName == headName' =
+      synthNominalHeadCoerce conInfo headName src tgt
+synthCoerce _ src tgt =
+  liftEither
+    $ Left
+      ( TELowering
+          ( "synthCoerce: incompatible shapes "
+              <> canonicalLabel src
+              <> " ≁ "
+              <> canonicalLabel tgt
+          )
+      )
+
+-- | Coerce two type-applications sharing a common nominal head.
+--   Generates (or reuses, via the @lsLifters@ memo) a top-level
+--   helper @$lift$N : src -> tgt@ that destructures via @case@ on
+--   each constructor of the head's owning type and reconstructs with
+--   per-field coercions in target shape. The memo entry is registered
+--   /before/ the body is generated, so recursive types reach a
+--   self-recursive call instead of looping.
+synthNominalHeadCoerce :: ConInfoEnv -> Name -> Type' -> Type' -> LowerM (CExpr -> LowerM CExpr)
+synthNominalHeadCoerce conInfo tyName src tgt = do
+  let key = (canonicalLabel src, canonicalLabel tgt)
+  st <- get
+  case M.lookup key (lsLifters st) of
+    Just helper -> pure (\v -> pure (CCall (CVar helper) [v]))
+    Nothing -> do
+      helper <- freshLiftName
+      modify (\s -> s {lsLifters = M.insert key helper (lsLifters s)})
+      let cons = constructorsOfType conInfo tyName
+          srcParams = maybe [] ciTypeParams (M.lookup (firstConName cons) conInfo)
+          srcSubst =
+            fromRight mempty
+              $ unify (applyTyParams tyName srcParams) src
+          tgtSubst =
+            fromRight mempty
+              $ unify (applyTyParams tyName srcParams) tgt
+      arms <-
+        forM cons $ \(_cName, ci) -> do
+          let tag = ciTag ci
+              fieldNames = ["__f" <> show i | i <- [(0 :: Int) .. ciArity ci - 1]]
+              srcFields = map (applySubst srcSubst) (ciFieldTypes ci)
+              tgtFields = map (applySubst tgtSubst) (ciFieldTypes ci)
+          coercedFields <-
+            forM (zip3 fieldNames srcFields tgtFields) $ \(fn, sTy, tTy) -> do
+              wrap <- synthCoerce conInfo sTy tTy
+              wrap (CVar fn)
+          pure (tag, fieldNames, CCon tag coercedFields)
+      let body = CCase (CVar "__input") arms
+      emitHelper (CFunDef helper ["__input"] body)
+      pure (\v -> pure (CCall (CVar helper) [v]))
+
+-- | All constructors of a given user-defined type, sorted by tag.
+--   Used by 'synthNominalHeadCoerce' to walk the constructors of the
+--   shared head when building the destructure-and-rebuild helper.
+constructorsOfType :: ConInfoEnv -> Name -> [(Name, ConInfo)]
+constructorsOfType conInfo tyName =
+  sortOn
+    (ciTag . snd)
+    [(cn, ci) | (cn, ci) <- M.toList conInfo, ciTypeName ci == tyName]
+
+-- | First constructor name from a 'constructorsOfType' result; used
+--   only to fetch the owning type's type-parameter list (every
+--   constructor of the same type carries the same parameters, so any
+--   one will do; we take the first for determinism).
+firstConName :: [(Name, ConInfo)] -> Name
+firstConName ((n, _) : _) = n
+firstConName [] = "" -- empty type: no constructors, body never runs
 
 -- | Best-effort synthesis of an expression's type, used at lowering
 --   time to pick the right row label for implicit injection.
