@@ -100,7 +100,7 @@ digit               = '0'…'9' ;
 any                 = U+0000…U+10FFFF ;
 
 (* Semantic rules layered on top of the grammar
-   (enforced by the typechecker, not the parser) *)
+   (enforced by the parser or typechecker, as noted) *)
 
 (* 1. The "_" prefix marks a binding as intentionally unused.
       Referencing any identifier whose name begins with "_" is a
@@ -120,4 +120,11 @@ any                 = U+0000…U+10FFFF ;
 
    4. No shadowing, ever. A fresh binder must not reuse any name
       already visible in its scope. Applies to every binding form
-      (function params, pattern vars, top-level defs, type params). *)
+      (function params, pattern vars, top-level defs, type params).
+
+   5. Reserved words (parser). The identifiers `import`, `type`,
+      `case`, `of`, `do`, and `let` are reserved by the grammar and
+      cannot be used as `LIdent` (function name, parameter, pattern
+      variable, type variable). They appear as literals in `Import`,
+      `TypeDecl`, `CaseExpr`, `DoBlock`, and `DoStmt`; the parser
+      rejects them in any other position with a parse error. *)
