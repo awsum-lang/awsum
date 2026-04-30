@@ -1338,6 +1338,10 @@ emitExprText ctx varMap = \case
           $ [emitLdcI4 nSlots, "    newarr [System.Runtime]System.Object"]
           <> storeTag
           <> storeFields
+  -- Row injection / dispatch: delegate to CCon / CCase emit.
+  CRow tag v -> emitExprText ctx varMap (CCon (fromIntegral tag) [v])
+  CRowCase scrut alts ->
+    emitExprText ctx varMap (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts ->
     let sorted = sortWith (\(t, _, _) -> t) alts
         scrutText = emitExprText ctx varMap scrut

@@ -174,6 +174,8 @@ rewriteCrossCalls memberSet mergedName memberOrder = go
       CCall c args -> CCall (go c) (map go args)
       CCon t fs -> CCon t (map go fs)
       CCase s alts -> CCase (go s) [(t, vs, go b) | (t, vs, b) <- alts]
+      CRow t v -> CRow t (go v)
+      CRowCase s alts -> CRowCase (go s) [(t, v, go b) | (t, v, b) <- alts]
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
       e@(CVar _) -> e

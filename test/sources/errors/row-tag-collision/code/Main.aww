@@ -1,0 +1,20 @@
+-- Error: the row labels 'Puk9' and 'AFB4F' have the same 32-bit
+-- FNV-1a hash, so the runtime cannot tell them apart in row-case
+-- dispatch. The compiler's row tag collision check rejects the
+-- program at lowering time before any backend sees it.
+--
+-- The two specific names are an engineered hash collision; in
+-- handwritten code the chance of hitting one is vanishingly small,
+-- but the check is a hard guard against adversarially-built names.
+import IO.Stdout
+
+type Puk9 = MkPuk9
+type AFB4F = MkAFB4F
+
+_f : (Puk9 | AFB4F) -> String
+_f x = case x of
+  (_ : Puk9) -> "p"
+  (_ : AFB4F) -> "a"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

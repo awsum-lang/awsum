@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":9,"startCol":3,"endLine":9,"endCol":14,"message":"Pattern ascribes type Bool, which is not one of the alternatives of the scrutinee row Int32 | String","fixes":[]}]

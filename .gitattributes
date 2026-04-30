@@ -1,6 +1,6 @@
 # core.autocrlf=true on Windows would rewrite text files to CRLF on checkout,
 # which breaks both the parser's column tracker (counts `\r` as a column
-# increment) and the golden-snapshot matcher (byte-for-byte text compare).
+# increment) and the golden-snapshot matcher (identical-text compare).
 # Force LF everywhere.
 * text=auto eol=lf
 

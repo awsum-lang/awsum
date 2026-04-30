@@ -178,7 +178,7 @@ This is what the earlier design document called "applying Reynolds' defunctional
 | [`mutual-three-way-stress`](../test/sources/successful/mutual-three-way-stress/code/Main.aww)             | mutual, three-way cycle, all tail                 | 1 000 000 | `stepA → stepB → stepC → stepA`: SCC handles cycles of arbitrary length; the merged function dispatches over three tags but each iteration stays on the same frame.  |
 | [`recursive-function-call`](../test/sources/successful/recursive-function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
 
-Every test in the table runs on all five backends with byte-identical stdout via `ProgramSnapshotsSpec`.
+Every test in the table runs on all five backends with identical stdout via `ProgramSnapshotsSpec`.
 
 ## The role of whole-program compilation
 

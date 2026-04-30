@@ -1,0 +1,135 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "bindEither"
+            [ "x"
+            , "k"
+            ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCon 0
+                        [ CVar "e" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "k" )
+                        [ CVar "a" ]
+                    )
+                ]
+            )
+        , CFunDef "opA" [ "n" ]
+            ( CCon 1
+                [ CVar "n" ]
+            )
+        , CFunDef "opB" [ "_n" ]
+            ( CCon 0
+                [ CCon 0 [] ]
+            )
+        , CFunDef "liftA" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCon 0
+                        [ CRow 2252990199
+                            ( CVar "e" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCon 1
+                        [ CVar "n" ]
+                    )
+                ]
+            )
+        , CFunDef "liftB" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCon 0
+                        [ CRow 2269767818
+                            ( CVar "e" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCon 1
+                        [ CVar "n" ]
+                    )
+                ]
+            )
+        , CFunDef "opBLifted" [ "n" ]
+            ( CCall
+                ( CVar "liftB" )
+                [ CCall
+                    ( CVar "opB" )
+                    [ CVar "n" ]
+                ]
+            )
+        , CFunDef "run" [ "x" ]
+            ( CCall
+                ( CVar "bindEither" )
+                [ CCall
+                    ( CVar "liftA" )
+                    [ CCall
+                        ( CVar "opA" )
+                        [ CVar "x" ]
+                    ]
+                , CVar "opBLifted"
+                ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 2252990199
+                            , "_a"
+                            , CString "ErrA"
+                            )
+                        ,
+                            ( 2269767818
+                            , "_b"
+                            , CString "ErrB"
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "describe" )
+                    [ CCall
+                        ( CVar "run" )
+                        [ CIntLit 5 TInt32 ]
+                    ]
+                ]
+            )
+        ]
+    }

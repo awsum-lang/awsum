@@ -1,11 +1,9 @@
--- Test: polymorphic functions (identity, compose, const) with type variables
+-- Test: polymorphic functions (identity, compose) with type variables.
+-- 'const' lives in the prelude.
 import IO.Stdout
 
 main : String -> IO Unit
 main _input = IO.Stdout.print (identity (compose appendY appendX (const "a" "b")))
-
-const : a -> b -> a
-const x _y = x
 
 identity : a -> a
 identity x = x

@@ -61,6 +61,8 @@ buildCallGraph (CoreProgram ds) =
       CCall c args -> calls c <> foldMap calls args
       CCon _ fs -> foldMap calls fs
       CCase s alts -> calls s <> foldMap (\(_, _, b) -> calls b) alts
+      CRow _ v -> calls v
+      CRowCase s alts -> calls s <> foldMap (\(_, _, b) -> calls b) alts
       CVar n -> Set.singleton n
       CLoop b -> calls b
       CContinue xs -> foldMap calls xs
@@ -88,6 +90,8 @@ hasNonTailSelfCall f = inTail
       CCall (CVar n) args | n == f -> any inNonTail args
       CCall callee args -> inNonTail callee || any inNonTail args
       CCase scrut alts -> inNonTail scrut || any (\(_, _, b) -> inTail b) alts
+      CRow _ v -> inNonTail v
+      CRowCase scrut alts -> inNonTail scrut || any (\(_, _, b) -> inTail b) alts
       CCon _ fs -> any inNonTail fs
       CLoop b -> inTail b
       CContinue xs -> any inNonTail xs
@@ -100,6 +104,8 @@ hasNonTailSelfCall f = inTail
       CCall (CVar n) _ | n == f -> True
       CCall callee args -> inNonTail callee || any inNonTail args
       CCase scrut alts -> inNonTail scrut || any (\(_, _, b) -> inNonTail b) alts
+      CRow _ v -> inNonTail v
+      CRowCase scrut alts -> inNonTail scrut || any (\(_, _, b) -> inNonTail b) alts
       CCon _ fs -> any inNonTail fs
       CLoop b -> inNonTail b
       CContinue xs -> any inNonTail xs
@@ -114,6 +120,8 @@ containsSelfCall f = go
       CCall (CVar n) _ | n == f -> True
       CCall callee args -> go callee || any go args
       CCase scrut alts -> go scrut || any (\(_, _, b) -> go b) alts
+      CRow _ v -> go v
+      CRowCase scrut alts -> go scrut || any (\(_, _, b) -> go b) alts
       CCon _ fs -> any go fs
       CLoop b -> go b
       CContinue xs -> any go xs

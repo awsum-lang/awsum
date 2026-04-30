@@ -1,6 +1,6 @@
 -- Property: `and a b == and b a`. Output is `boolToStr (and a b) ++
 -- boolToStr (and b a)` — both halves should match Haskell's
--- independently computed `(a && b)` byte-for-byte.
+-- independently computed `(a && b)`.
 import IO.Stdout
 
 intToBool : UInt8 -> Bool

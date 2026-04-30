@@ -30,6 +30,13 @@
     ret
   }
 
+  .method private hidebysig static object v_const(object, object) cil managed
+  {
+    ldarg.0
+    ret
+  }
+
+
   .method private hidebysig static object v_main(object) cil managed
   {
     ldftn object AwsumMain::v_appendY(object)
@@ -42,13 +49,6 @@
     call object AwsumMain::v_compose(object, object, object)
     call object AwsumMain::v_identity(object)
     call object AwsumMain::__print(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v_const(object, object) cil managed
-  {
-    ldarg.0
     ret
   }
 

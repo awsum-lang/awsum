@@ -61,5 +61,11 @@ normalizeExpr = \case
   ECon sp n -> ECon sp n
   EBuiltIn sp n -> EBuiltIn sp n
   ECase sp scrut alts cs -> ECase sp (normalizeExpr scrut) (fmap normalizeAlt alts) cs
+  ELam sp params body -> ELam sp params (normalizeExpr body)
+  EDo sp stmts -> EDo sp (map normalizeDoStmt stmts)
   where
     normalizeAlt (CaseAlt lc pat body mc) = CaseAlt lc pat (normalizeExpr body) mc
+    normalizeDoStmt = \case
+      DoBind sp pat e -> DoBind sp pat (normalizeExpr e)
+      DoLet sp n e -> DoLet sp n (normalizeExpr e)
+      DoExpr sp e -> DoExpr sp (normalizeExpr e)

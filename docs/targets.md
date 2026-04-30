@@ -547,7 +547,7 @@ This section is about the last step — how each backend maps `CLoop` + `CContin
 
 **JavaScript** — `while (true) { … }` wrapper; `CContinue` computes new values into `__t0`, `__t1`, … `const`s, assigns them to the parameter `let`s, and `continue`s. The two-step is deliberate: computing new args can still reference the old parameter values, which the `const` temps preserve.
 
-Mutual recursion and non-tail recursion never reach the backend — by the time the codegen runs, the Core IR has only self-recursion, and only in tail position. The test matrix in [`docs/recursion.md`](recursion.md#stack-safety-test-matrix) runs the stress programs on all five backends at depths up to 1 000 000 with byte-identical stdout.
+Mutual recursion and non-tail recursion never reach the backend — by the time the codegen runs, the Core IR has only self-recursion, and only in tail position. The test matrix in [`docs/recursion.md`](recursion.md#stack-safety-test-matrix) runs the stress programs on all five backends at depths up to 1 000 000 with identical stdout.
 
 ## LLVM-Specific Details
 

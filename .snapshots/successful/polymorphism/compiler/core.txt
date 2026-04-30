@@ -1,6 +1,11 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "_input" ]
+        [ CFunDef "const"
+            [ "x"
+            , "_y"
+            ]
+            ( CVar "x" )
+        , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
@@ -18,11 +23,6 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "const"
-            [ "x"
-            , "_y"
-            ]
-            ( CVar "x" )
         , CFunDef "identity" [ "x" ]
             ( CVar "x" )
         , CFunDef "appendX" [ "s" ]

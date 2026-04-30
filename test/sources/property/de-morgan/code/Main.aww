@@ -1,6 +1,6 @@
 -- Property: `not (and a b) == or (not a) (not b)`. Output is
 -- `boolToStr (not (and a b)) ++ boolToStr (or (not a) (not b))` —
--- both halves should equal Haskell's `not (a && b)` byte-for-byte.
+-- both halves should equal Haskell's `not (a && b)`.
 import IO.Stdout
 
 intToBool : UInt8 -> Bool

@@ -1,0 +1,11 @@
+-- Error: only the Int32 alternative of '(Int32 | String)' is matched.
+-- The String alternative has no covering arm, so the case is non-
+-- exhaustive on the row.
+import IO.Stdout
+
+_f : (Int32 | String) -> String
+_f x = case x of
+  (n : Int32) -> showInt32 n
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

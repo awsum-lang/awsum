@@ -1,0 +1,50 @@
+-- End-to-end test for lambda lifting at lowering time. Two shapes:
+--
+--   * 'inc42' uses a closed lambda '(\n -> n)' as the first argument
+--     of a polymorphic 'apply'. The lambda has no captures; lowering
+--     lifts it to '$lam$0 n = n' and replaces the call site with a
+--     bare reference to the helper. Cross-backend stdout asserts the
+--     same lifted shape on every target.
+--
+--   * 'g' is a 'do'-block where the second '<-' uses the previous
+--     bind, which the desugarer can no longer eliminate via η or
+--     'const'. The desugarer leaves a real 'ELam' for the lowering
+--     pass: the lambda's only free variable is its own parameter, so
+--     the lifted helper has no capture and the call site is a
+--     plain reference.
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+answer : Int32
+answer = 42
+
+inc42 : Int32
+inc42 = apply (\n -> n) answer
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+op1 : Either ErrA Int32
+op1 = Right 1
+
+op2WithA : Int32 -> Either ErrB Int32
+op2WithA n = Right n
+
+g : Either (ErrA | ErrB) Int32
+g = do
+  a <- op1
+  b <- op2WithA a
+  pureEither b
+
+describe : Either (ErrA | ErrB) Int32 -> String
+describe r = case r of
+  Left e -> case e of
+    (_a : ErrA) -> "ErrA"
+    (_b : ErrB) -> "ErrB"
+  Right n -> "Ok " ++ showInt32 n
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 inc42 ++ " / " ++ describe g)

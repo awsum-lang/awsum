@@ -1,0 +1,123 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "bindEither"
+            [ "x"
+            , "k"
+            ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCon 0
+                        [ CVar "e" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "k" )
+                        [ CVar "a" ]
+                    )
+                ]
+            )
+        , CFunDef "pureEither" [ "x" ]
+            ( CCon 1
+                [ CVar "x" ]
+            )
+        , CFunDef "const"
+            [ "x"
+            , "_y"
+            ]
+            ( CVar "x" )
+        , CValDef "op1"
+            ( CCon 1
+                [ CIntLit 1 TInt32 ]
+            )
+        , CValDef "op2"
+            ( CCon 0
+                [ CRow 435006518
+                    ( CCon 0 [] )
+                ]
+            )
+        , CValDef "op3"
+            ( CCon 1
+                [ CIntLit 3 TInt32 ]
+            )
+        , CValDef "f"
+            ( CCall
+                ( CVar "bindEither" )
+                [ CVar "op1"
+                , CVar "$pap$1"
+                ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 401451280
+                            , "_a"
+                            , CString "ErrorA"
+                            )
+                        ,
+                            ( 435006518
+                            , "_c"
+                            , CString "ErrorC"
+                            )
+                        ,
+                            ( 451784137
+                            , "_b"
+                            , CString "ErrorB"
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "describe" )
+                    [ CVar "f" ]
+                ]
+            )
+        , CFunDef "$pap$0" [ "$eta0" ]
+            ( CCall
+                ( CVar "const" )
+                [ CCall
+                    ( CVar "bindEither" )
+                    [ CVar "op3"
+                    , CVar "pureEither"
+                    ]
+                , CVar "$eta0"
+                ]
+            )
+        , CFunDef "$pap$1" [ "$eta0" ]
+            ( CCall
+                ( CVar "const" )
+                [ CCall
+                    ( CVar "bindEither" )
+                    [ CVar "op2"
+                    , CVar "$pap$0"
+                    ]
+                , CVar "$eta0"
+                ]
+            )
+        ]
+    }

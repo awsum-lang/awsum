@@ -118,6 +118,8 @@ stringsInExpr = \case
   CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
+  CRow _ v -> stringsInExpr v
+  CRowCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
@@ -673,7 +675,7 @@ rtMulI32 =
 -- | negInt32: Int32 -> Either OverflowError Int32.
 --   Mirrors 'rtSuccI32' but checks against INT32_MIN and uses
 --   '(0 - v)' for the ok branch. OverflowError is single-constructor,
---   so its inner-box tag is 0 — Left-branch encoding is byte-identical
+--   so its inner-box tag is 0 — Left-branch encoding is identical
 --   to predInt32.
 rtNegI32 :: Text
 rtNegI32 =
@@ -1078,6 +1080,13 @@ emitTailWat ctx0 params = go ctx0
               <> ") "
               <> buildTailChain ctx sorted
               <> ")"
+      -- 'CRow' / 'CRowCase' share the runtime layout with one-field
+      -- 'CCon' / 'CCase' (tag at offset 0, value at offset 4) so we
+      -- can lower them through the same emit machinery; the tag width
+      -- is 32 bits in both cases, just hash- vs. position-derived.
+      CRow tag v -> go ctx (CCon (fromIntegral tag) [v])
+      CRowCase scrut alts ->
+        go ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
       other -> emitExpr ctx other
 
     buildTailChain :: WasmCtx -> [(Int, [Text], CExpr)] -> Text
@@ -1129,6 +1138,12 @@ emitExpr ctx = \case
           | (fld, i) <- zip fields [1 :: Int ..]
           ]
      in "(block (result i32) " <> T.intercalate " " (storeTag : storeFields <> ["(local.get " <> conLocal <> ")"]) <> ")"
+  -- 'CRow' / 'CRowCase' share the runtime layout with one-field
+  -- 'CCon' / 'CCase' (tag at offset 0, value at offset 4) so we can
+  -- lower them through the same emit machinery.
+  CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
+  CRowCase scrut alts ->
+    emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts ->
     emitCaseExpr ctx scrut alts
   CCall f xs ->
@@ -1278,6 +1293,10 @@ caseBoundVars = \case
   CCase s alts ->
     caseBoundVars s
       <> foldMap (\(_, vs, b) -> Set.fromList vs <> caseBoundVars b) alts
+  CRowCase s alts ->
+    caseBoundVars s
+      <> foldMap (\(_, v, b) -> Set.singleton v <> caseBoundVars b) alts
+  CRow _ v -> caseBoundVars v
   CCall f xs -> caseBoundVars f <> foldMap caseBoundVars xs
   CCon _ fs -> foldMap caseBoundVars fs
   CLoop b -> caseBoundVars b
@@ -1288,13 +1307,16 @@ caseBoundVars = \case
 maxConDepth :: CExpr -> Int
 maxConDepth = \case
   CCon _ fields -> 1 + foldl' max 0 (map maxConDepth fields)
+  CRow _ v -> 1 + maxConDepth v
   CCase s alts -> max (maxConDepth s) (foldl' max 0 [maxConDepth b | (_, _, b) <- alts])
+  CRowCase s alts -> max (maxConDepth s) (foldl' max 0 [maxConDepth b | (_, _, b) <- alts])
   CCall f xs -> foldl' max (maxConDepth f) (map maxConDepth xs)
   _ -> 0
 
 hasCCase :: CExpr -> Bool
 hasCCase = \case
   CCase {} -> True
+  CRowCase {} -> True
   CCall f xs -> hasCCase f || any hasCCase xs
   _ -> False
 

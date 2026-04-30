@@ -34,6 +34,10 @@ define internal ptr @__print(ptr %s) {
 }
 
 
+define internal ptr @v_const(ptr %v_x, ptr %v__y) {
+  ret ptr %v_x
+}
+
 define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [2 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = getelementptr [2 x i8], ptr @.str.1, i64 0, i64 0
@@ -42,10 +46,6 @@ define internal ptr @v_main(ptr %v__input) {
   %t4 = call ptr @v_identity(ptr %t3)
   %t5 = call ptr @__print(ptr %t4)
   ret ptr %t5
-}
-
-define internal ptr @v_const(ptr %v_x, ptr %v__y) {
-  ret ptr %v_x
 }
 
 define internal ptr @v_identity(ptr %v_x) {

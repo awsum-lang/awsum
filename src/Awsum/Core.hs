@@ -75,6 +75,23 @@ data CExpr
     CCon Int [CExpr]
   | -- | Case expression: scrutinee + alternatives @[(tag, bound-var names, body)]@.
     CCase CExpr [(Int, [Name], CExpr)]
+  | -- | Row-tagged value: a 32-bit hash that identifies the row label
+    --   plus the underlying value of the alternative type. Produced at
+    --   lowering time when an expression is implicitly injected into a
+    --   structural-sum position — e.g. the call @f "hi"@ with
+    --   @f : (Int32 | String) -> …@ wraps @"hi"@ in
+    --   @CRow (rowTag String) "hi"@. Distinct from 'CCon' so backends
+    --   can pick a representation appropriate for hash-based dispatch
+    --   (typically an inline @{tag, value}@ box) without conflating it
+    --   with positional nominal constructors.
+    CRow Word32 CExpr
+  | -- | Row case: scrutinee + alternatives keyed by the same 32-bit
+    --   hash that 'CRow' used at injection time. Each arm binds the
+    --   row's underlying value to a single name (the inner pattern of
+    --   a 'PAscribe' arm in the surface). Dispatch is by exact hash
+    --   equality; the typechecker has already proved exhaustiveness
+    --   over the closed row.
+    CRowCase CExpr [(Word32, Name, CExpr)]
   | -- | Reference to a compiler-provided built-in. The 'Name' is either
     --   an unqualified prelude built-in (e.g. @showInt32@) looked up in
     --   'Awsum.BuiltIn', or a dotted qualified name (e.g.
@@ -123,6 +140,8 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
       CCall f xs -> exprBuiltIns f <> foldMap exprBuiltIns xs
       CCon _ fs -> foldMap exprBuiltIns fs
       CCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
+      CRow _ v -> exprBuiltIns v
+      CRowCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
       CLoop b -> exprBuiltIns b
       CContinue xs -> foldMap exprBuiltIns xs
 
@@ -142,5 +161,7 @@ usesIntLit (CoreProgram ds) = any declHasInt ds
       CCall f xs -> exprHasInt f || any exprHasInt xs
       CCon _ fs -> any exprHasInt fs
       CCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
+      CRow _ v -> exprHasInt v
+      CRowCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
       CLoop b -> exprHasInt b
       CContinue xs -> any exprHasInt xs

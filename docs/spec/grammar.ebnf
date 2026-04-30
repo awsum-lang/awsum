@@ -1,5 +1,5 @@
 (* Awsum surface grammar — EBNF.
-   Applies-to: Awsum 0.0.1
+   Applies-to: Awsum 0.0.3
 *)
 
 Program             = { Import }, { TopItem , Terminator }, [ Terminator ] ;
@@ -9,7 +9,7 @@ ModulePath          = UIdent , { "." , UIdent } ;
 
 TopItem             = TopComment | TypeDecl | Sig | FunDef ;
 
-TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , ConDef } ] ;
+TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , ConDef } ] , [ TrailingLineComment ] ;
 ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = DeclName , ":" , Type , [ TrailingLineComment ] ;
@@ -30,15 +30,29 @@ LineComment         = "--" , LineText ;
 BlockComment        = "{-" , BlockText , "-}" ;
 TrailingLineComment = "--" , LineText ;
 
-(* Types: right-associative arrow *)
-Type                = TypeAtom , { "->" , Type } ;
-TypeAtom            = UIdent , { TypeAtom } | LIdent | "(" , Type , ")" ;
+(* Types: '|' < '->' < TypeApp < TypeAtom (precedence increases left
+   to right). '|' is right-associative; '->' is right-associative;
+   TypeApp is left-associative. So 'A | B -> C' parses as
+   'A | (B -> C)' and 'A B C' parses as '(A B) C'. To put a union on
+   the LHS of an arrow, write '(A | B) -> C' with explicit parens. *)
+Type                = TypeArrow , { "|" , Type } ;
+TypeArrow           = TypeApp , [ "->" , TypeArrow ] ;
+TypeApp             = TypeAtom , { TypeAtom } ;
+TypeAtom            = UIdent | LIdent | "(" , Type , ")" ;
 
-(* Expressions: ++ < application < atoms (both left-associative) *)
-Expr                = Concat ;
+(* Expressions: lambda / do / case / ++ chain / application / atoms.
+   The lambda and do-block forms are kept at the lowest precedence
+   (same level as 'case') so their bodies extend as far right as
+   possible. *)
+Expr                = Lambda | DoBlock | CaseExpr | Concat ;
+Lambda              = "\\" , LIdent , { LIdent } , "->" , Expr ;
+DoBlock             = "do" , NEWLINE , DoStmt , { Terminator , DoStmt } ;
+DoStmt              = Pattern , "<-" , Expr
+                    | "let" , LIdent , "=" , Expr
+                    | Expr ;
 Concat              = App , { "++" , App } ;
 App                 = Atom , { Atom } ;
-Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String | Int ;
+Atom                = QName | UIdent | "(" , Expr , ")" | String | Int ;
 (* Case: arms at reference indent (set by first arm).
    Comments accepted at any column > 1 — lenient so misaligned comments
    don't break compilation; the formatter normalizes.
@@ -46,8 +60,8 @@ Atom                = CaseExpr | QName | ConName | "(" , Expr , ")" | String | I
 CaseExpr            = "case" , Expr , "of" , NEWLINE , { CaseItem } ;
 CaseItem            = ( LineComment | BlockComment ) , Terminator
                     | Pattern , "->" , Expr , [ TrailingLineComment ] , Terminator ;
-Pattern             = UIdent , { PatternAtom } | LIdent ;
-PatternAtom         = LIdent | UIdent | "(" , Pattern , ")" ;
+Pattern             = UIdent , { PatternAtom } | LIdent | "(" , Pattern , ":" , Type , ")" ;
+PatternAtom         = LIdent | UIdent | "(" , Pattern , ")" | "(" , Pattern , ":" , Type , ")" ;
 
 QName               = { UIdent , "." } , LIdent ;
 

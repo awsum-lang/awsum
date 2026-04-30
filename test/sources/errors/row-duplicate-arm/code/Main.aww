@@ -1,0 +1,12 @@
+-- Error: the same row alternative ('Int32') is matched by two arms.
+-- Second arm is unreachable.
+import IO.Stdout
+
+_f : (Int32 | String) -> String
+_f x = case x of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+  (other : Int32) -> showInt32 other
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

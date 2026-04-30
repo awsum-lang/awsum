@@ -1,0 +1,14 @@
+-- End-to-end: a closed structural-sum '(Int32 | String)' is legal in
+-- a signature, the function dispatches by row label via '(x : T)'
+-- arms, and a value of one of the labels is implicitly injected at
+-- the call site. All five backends should produce identical stdout
+-- via tag-by-name (FNV-1a 32-bit hash of the label's canonical text).
+import IO.Stdout
+
+describe : (Int32 | String) -> String
+describe x = case x of
+  (n : Int32) -> "Int32 " ++ showInt32 n
+  (s : String) -> "String " ++ s
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe "hello")

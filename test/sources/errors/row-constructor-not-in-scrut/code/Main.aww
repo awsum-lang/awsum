@@ -1,0 +1,15 @@
+-- Error: a constructor pattern in a row case names a constructor whose
+-- owning type is not one of the scrutinee row's labels. Mixed
+-- PCon + PAscribe arms accept 'Nothing' / 'Just _' on a row containing
+-- 'Maybe …', but reject 'True' / 'False' on a row that has no 'Bool'
+-- alternative.
+import IO.Stdout
+
+_f : (Int32 | String) -> String
+_f x = case x of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+  True -> "true"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

@@ -1,0 +1,42 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "firstZero" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , []
+                    , CIntLit 0 TInt32
+                    )
+                ,
+                    ( 1
+                    , [ "__p0" ]
+                    , CCase
+                        ( CVar "__p0" )
+                        [
+                            ( 0
+                            , []
+                            , CIntLit 0 TInt32
+                            )
+                        ,
+                            ( 1
+                            , [ "n" ]
+                            , CVar "n"
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "firstZero" )
+                        [ CCon 0 [] ]
+                    ]
+                ]
+            )
+        ]
+    }

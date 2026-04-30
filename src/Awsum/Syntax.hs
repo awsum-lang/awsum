@@ -18,6 +18,7 @@ module Awsum.Syntax
     Op' (..),
     Literal (..),
     Expr (..),
+    DoStmt (..),
     CaseAlt (..),
     Pattern (..),
     Comment (..),
@@ -68,6 +69,8 @@ exprSpan = \case
   ECon sp _ -> sp
   ECase sp _ _ _ -> sp
   EBuiltIn sp _ -> sp
+  ELam sp _ _ -> sp
+  EDo sp _ -> sp
 
 -- | Lexical identifier (kept as 'Text' for simplicity).
 --   The parser is responsible for validating case/style rules.
@@ -148,6 +151,13 @@ data Type'
     TyApp SrcSpan Type' Type'
   | -- | Arrow type @a -> b@ (right-associative by convention).
     TyArrow SrcSpan Type' Type'
+  | -- | Structural sum type @T1 | T2@ — the syntactic form of an
+    --   anonymous union of two alternatives. Right-associative as
+    --   stored, but treated set-associatively (commutative, idempotent)
+    --   by the unifier. Precedence: lower than @->@, so @(A | B) -> C@
+    --   requires parens around the union to keep it on the LHS of the
+    --   arrow.
+    TyOr SrcSpan Type' Type'
   deriving stock (Show, Eq, Ord)
 
 -- | Extract the source span of a type.
@@ -157,6 +167,7 @@ typeSpan = \case
   TyCon sp _ -> sp
   TyApp sp _ _ -> sp
   TyArrow sp _ _ -> sp
+  TyOr sp _ _ -> sp
 
 -- | Qualified value name: module path (possibly empty) + base name.
 --   Examples:
@@ -206,6 +217,40 @@ data Expr
     --   to forward surface functions (e.g. @showInt32 = BuiltIn.showInt32@)
     --   to their per-target implementations.
     EBuiltIn SrcSpan Name
+  | -- | Lambda abstraction: @\\x y -> body@. Always at least one
+    --   parameter; the parser forbids the zero-arg form.
+    --
+    --   Lambdas have no synthesis form — they only typecheck against an
+    --   expected arrow type from surrounding context (a function-arg
+    --   position, a top-level signature's return shape, etc.). At
+    --   lowering time they are lifted to fresh top-level helpers with
+    --   captured free variables added as explicit parameters; the
+    --   surface expression itself becomes a partial application of the
+    --   helper to the captures.
+    ELam SrcSpan [Param] Expr
+  | -- | @do@ block: a sequence of statements desugared at the next
+    --   pass into a chain of 'bindEither' calls whose trailing
+    --   expression is the user's verbatim (typically a 'pureEither'
+    --   application). Hardcoded to the @Either@ monad shape in this
+    --   iteration — there is no type-class dispatch yet.
+    EDo SrcSpan [DoStmt]
+  deriving stock (Show, Eq)
+
+-- | A single statement inside a 'EDo' block. Each statement maps to
+--   one node in the desugared chain:
+--
+--   * @DoBind p e@ — @p <- e@. The continuation runs with the bound
+--     pattern in scope; desugar to @bindEither e (\\p -> rest)@.
+--   * @DoLet n e@ — @let n = e@. Currently parsed only as a
+--     forwarding shape (no parser support yet); reserved for the
+--     future.
+--   * @DoExpr e@ — a bare expression. As the last statement it is the
+--     block's result; in earlier positions the typechecker rejects it
+--     since we have no @>>@ analogue without a unit type at the row.
+data DoStmt
+  = DoBind SrcSpan Pattern Expr
+  | DoLet SrcSpan Name Expr
+  | DoExpr SrcSpan Expr
   deriving stock (Show, Eq)
 
 -- | A single alternative in a @case@ expression.
@@ -227,6 +272,18 @@ data Pattern
     PCon SrcSpan Name [Pattern]
   | -- | Variable binding (future). Span covers just the identifier.
     PVar SrcSpan Name
-  | -- | Wildcard @_@ (future).
-    PWild
+  | -- | Wildcard @_@. Span covers the underscore so diagnostics
+    --   targeting the wildcard (e.g. 'RowCatchAllPattern') can point
+    --   at it precisely instead of at the surrounding case arm.
+    PWild SrcSpan
+  | -- | Type-ascribed pattern @(p : T)@: an inner pattern with an
+    --   explicit type annotation. Used to discriminate alternatives of
+    --   a structural sum at the pattern level — e.g. given a scrutinee
+    --   of type @(Int32 | String)@, the pattern @(n : Int32)@ binds @n@
+    --   to the @Int32@ alternative. Parens are part of the surface
+    --   syntax (not just a parser detail) — without them the @':'@ would
+    --   collide with the case-arrow @\'->\'@ in the surface grammar.
+    --   The 'SrcSpan' covers the whole parenthesised pattern so editor
+    --   tooling can highlight the ascription as a unit.
+    PAscribe SrcSpan Pattern Type'
   deriving stock (Show, Eq)

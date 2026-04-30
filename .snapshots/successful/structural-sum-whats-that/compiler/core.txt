@@ -1,0 +1,92 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showUnit" [ "$wild0" ]
+            ( CString "Unit" )
+        , CFunDef "whatsThat" [ "x" ]
+            ( CRowCase
+                ( CVar "x" )
+                [
+                    ( 1454647603
+                    , "__rw"
+                    , CCase
+                        ( CVar "__rw" )
+                        [
+                            ( 0
+                            , []
+                            , CString "Nothing"
+                            )
+                        ,
+                            ( 1
+                            , [ "__pa0" ]
+                            , CRowCase
+                                ( CVar "__pa0" )
+                                [
+                                    ( 796142685
+                                    , "b"
+                                    , CCase
+                                        ( CVar "b" )
+                                        [
+                                            ( 0
+                                            , []
+                                            , CString "Just True"
+                                            )
+                                        ,
+                                            ( 1
+                                            , []
+                                            , CString "Just False"
+                                            )
+                                        ]
+                                    )
+                                ,
+                                    ( 1759602215
+                                    , "u"
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "Just "
+                                        , CCall
+                                            ( CVar "showUnit" )
+                                            [ CVar "u" ]
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 1615808600
+                    , "s"
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "String "
+                        , CVar "s"
+                        ]
+                    )
+                ,
+                    ( 2711245919
+                    , "n"
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Int32 "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "whatsThat" )
+                    [ CRow 1454647603
+                        ( CCon 1
+                            [ CRow 796142685
+                                ( CCon 0 [] )
+                            ]
+                        )
+                    ]
+                ]
+            )
+        ]
+    }

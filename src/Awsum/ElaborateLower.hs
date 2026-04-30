@@ -22,13 +22,16 @@ module Awsum.ElaborateLower (elaborateLowerProgram) where
 import Awsum.BuiltIn (lookupBuiltIn)
 import Awsum.Core
 import Awsum.Cps (cpsProgram)
+import Awsum.Desugar (desugarProgram)
+import Awsum.Desugar qualified as Desugar
+import Awsum.HM (applySubst, canonicalLabel, flattenRow, rowTag, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Scc (sccMergeProgram)
 import Awsum.StackSafety (verifyStackSafety)
 import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
 import Awsum.Tco (tcoProgram)
-import Awsum.Typing (TypeError (..), Warning, isBareBuiltIn, splitArrow, typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, intTypeRange, isBareBuiltIn, splitArrow, typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -51,19 +54,42 @@ data LowerEnv = LowerEnv
     --   resolve qualified names against the right platform table.
     leProgramType :: ProgramType,
     leTypeOf :: QName -> Maybe Type',
-    leConInfo :: ConInfoEnv
+    leConInfo :: ConInfoEnv,
+    -- | Source spans of every user @type T = …@ declaration, keyed
+    --   by the type's name. Consumed by the row tag collision check
+    --   to point its diagnostic at the @type@ declaration of one of
+    --   the colliding labels (what the user would rename) rather
+    --   than at the case-arm pattern that triggered the detection.
+    leTypeDeclSpans :: M.Map Name SrcSpan
   }
 
--- | Constructor info: maps constructor name → (tag, arity).
-type ConInfoEnv = M.Map Name (Int, Int)
+-- | Constructor info as seen by the lowerer: tag, arity, owning type
+--   name, type-parameter names, and field types in the un-substituted
+--   form they came in from the @type@ declaration. The type-name and
+--   field-type details support implicit injection of constructor
+--   arguments through nominal heads — when @Left x@ is lowered with
+--   expected outer type @Either (ErrA | ErrB) Int32@, the field-type
+--   @a@ unifies with @(ErrA | ErrB)@ so the inner call can wrap a
+--   bare @ErrA@ as @CRow (rowTag ErrA) (CCon …)@.
+data ConInfo = ConInfo
+  { ciTag :: Int,
+    ciArity :: Int,
+    ciTypeName :: Name,
+    ciTypeParams :: [Name],
+    ciFieldTypes :: [Type']
+  }
+  deriving stock (Show)
 
--- | Build constructor info from @type@ declarations.
---   Each constructor gets a 0-based tag and its arity (number of fields).
+type ConInfoEnv = M.Map Name ConInfo
+
+-- | Build constructor info from @type@ declarations. Each constructor
+--   gets a 0-based tag, its arity, the owning type's name, the
+--   declared type-parameter names of that type, and its field types.
 buildConInfo :: [Decl] -> ConInfoEnv
 buildConInfo ds =
   M.fromList
-    [ (cName, (idx, length cFields))
-    | TypeDecl _sp _ _ cs _ <- ds,
+    [ (cName, ConInfo idx (length cFields) tName [n | Param _ n <- ps] cFields)
+    | TypeDecl _sp tName ps cs _ <- ds,
       (ConDef _ cName cFields, idx) <- zip cs [0 ..]
     ]
 
@@ -72,30 +98,214 @@ buildConInfo ds =
 conWrapperName :: Name -> Name
 conWrapperName name = "$con$" <> name
 
+-- | State threaded through the lowering of a single program: a fresh
+--   counter for synthetic names (lifted lambdas), the accumulator of
+--   those lifted helpers, and the row-tag table that powers the
+--   /row tag collision check/. Helpers are produced in reverse order;
+--   the pipeline reverses on read.
+--
+--   The row-tag table maps each 'Word32' tag minted via 'recordRowTag'
+--   to the set of canonical labels (keyed by 'canonicalLabel' text)
+--   that produced it, with one representative 'Type'' per canonical
+--   label kept around for the diagnostic. After lowering completes,
+--   any tag mapped to two or more distinct canonical labels is a
+--   collision and the program is rejected with 'RowTagCollision'.
+data LowerState = LowerState
+  { lsFresh :: !Int,
+    lsHelpers :: ![CDecl],
+    lsRowTags :: !(M.Map Word32 (M.Map Text Type'))
+  }
+
+-- | Lowering monad — lambda-lift state on top of the existing
+--   'Either TypeError' result channel.
+type LowerM = StateT LowerState (Either TypeError)
+
+-- | Mint a fresh helper name '$lam$N' and bump the counter.
+freshLamName :: LowerM Name
+freshLamName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$lam$" <> show (lsFresh s))
+
+-- | Append a lifted helper definition to the program.
+emitHelper :: CDecl -> LowerM ()
+emitHelper d = modify (\s -> s {lsHelpers = d : lsHelpers s})
+
+-- | Compute a row label's tag and register the (label, tag) pair in
+--   the row-tag table consulted by the post-lowering /row tag
+--   collision check/. Always replaces the inline 'rowTag' call inside
+--   lowering so every label-derived tag gets recorded; calling
+--   'rowTag' directly here would silently bypass collision detection.
+recordRowTag :: Type' -> LowerM Word32
+recordRowTag lbl = do
+  let tag = rowTag lbl
+      key = canonicalLabel lbl
+  modify
+    ( \s ->
+        s
+          { lsRowTags =
+              M.insertWith
+                (M.unionWith const)
+                tag
+                (M.singleton key lbl)
+                (lsRowTags s)
+          }
+    )
+  pure tag
+
+-- | Inspect the row-tag table for collisions: any 32-bit tag that two
+--   or more distinct canonical labels hashed to is a 'RowTagCollision'.
+--   Returns 'Right ()' when every tag has exactly one canonical label
+--   behind it (or zero — the program might not use row sums at all).
+--   The 'M.Map Name SrcSpan' resolves a label's head 'TyCon' name to
+--   the source span of its @type@ declaration, baked into the
+--   diagnostic so it points at what the user would actually rename.
+checkRowTagCollisions :: M.Map Name SrcSpan -> M.Map Word32 (M.Map Text Type') -> Either TypeError ()
+checkRowTagCollisions declSpans tbl =
+  case mapMaybe asCollision (M.toList tbl) of
+    [] -> Right ()
+    (err : _) -> Left err
+  where
+    asCollision (tag, labels) = case M.elems labels of
+      (l1 : l2 : _) -> Just (RowTagCollision l1 l2 tag (tyConDeclSpan declSpans l2))
+      _ -> Nothing
+
+-- | Resolve a row label to the source span of its head 'TyCon's @type@
+--   declaration, when the label is rooted at a nominal type the user
+--   has declared. Used by the row tag collision check to point at the
+--   declaration line rather than the usage site.
+--
+--   Walks 'TyApp' chains to the head — so @Maybe (Bool | Unit)@ resolves
+--   to @type Maybe …@. 'TyVar' / 'TyArrow' / 'TyOr' have no nominal
+--   head and yield 'Nothing'.
+tyConDeclSpan :: M.Map Name SrcSpan -> Type' -> Maybe SrcSpan
+tyConDeclSpan declSpans = go
+  where
+    go (TyCon _ n) = M.lookup n declSpans
+    go (TyApp _ f _) = go f
+    go _ = Nothing
+
+-- | Lift an 'Either TypeError' computation into 'LowerM'.
+liftEither :: Either TypeError a -> LowerM a
+liftEither = lift
+
+-- | Locally-bound names visible to lambda-capture analysis: function
+--   parameters, outer lambda parameters, and case-arm pattern
+--   binders. Top-level definitions are /not/ in this set; they are
+--   resolved by name at runtime and never need to be captured.
+type Locals = Set Name
+
+-- | Names referenced by the expression that are not bound by any
+--   enclosing 'ELam' parameter, 'case' arm pattern, or 'do' bind.
+--   Used to compute lambda captures at lifting time: the captures of
+--   a lambda are this set intersected with the surrounding 'Locals'.
+freeReferences :: Expr -> Set Name
+freeReferences = go
+  where
+    go = \case
+      EVar _ (QName [] n) -> Set.singleton n
+      EVar _ _ -> Set.empty
+      EApp _ f x -> go f <> go x
+      EInfix _ _ l r -> go l <> go r
+      EParens _ e -> go e
+      ELit _ _ -> Set.empty
+      ECon _ _ -> Set.empty
+      EBuiltIn _ _ -> Set.empty
+      ECase _ scrut alts _ ->
+        go scrut
+          <> foldMap
+            ( \(CaseAlt _ pat body _) ->
+                go body `Set.difference` patternBoundNames pat
+            )
+            (toList alts)
+      ELam _ params body ->
+        go body `Set.difference` Set.fromList (map paramName params)
+      EDo _ stmts -> goDoStmts stmts
+
+    goDoStmts [] = Set.empty
+    goDoStmts (s : rest) = case s of
+      DoBind _ pat e ->
+        go e <> (goDoStmts rest `Set.difference` patternBoundNames pat)
+      DoLet _ n e -> go e <> Set.delete n (goDoStmts rest)
+      DoExpr _ e -> go e <> goDoStmts rest
+
+    patternBoundNames p = case p of
+      PVar _ n -> Set.singleton n
+      PWild _ -> Set.empty
+      PCon _ _ ps -> foldMap patternBoundNames ps
+      PAscribe _ inner _ -> patternBoundNames inner
+
+-- | Map a 'DesugarError' from the surface-AST do-notation rewrite
+--   into the 'TypeError' channel that the rest of the pipeline
+--   speaks.
+desugarErrorToTypeError :: Desugar.DesugarError -> TypeError
+desugarErrorToTypeError = \case
+  Desugar.DesugarUnsupportedBindPattern sp ->
+    DoBindNonEither sp (TyCon sp "<unsupported-pattern>")
+  Desugar.DesugarUnsupportedLet sp ->
+    DoBlockMissingResult sp
+  Desugar.DesugarBindNameStillUsed sp _n ->
+    DoInSynthesisPosition sp
+
 -- | Generate wrapper 'CFunDef's for every non-nullary constructor.
 --   E.g. @type Box a = Box a@ produces:
 --     @CFunDef "$con$Box" ["$x0"] (CCon 0 [CVar "$x0"])@
 genConWrappers :: ConInfoEnv -> [CDecl]
 genConWrappers conInfo =
-  [ CFunDef (conWrapperName name) params (CCon tag (map CVar params))
-  | (name, (tag, arity)) <- M.toList conInfo,
-    arity > 0,
-    let params = ["$x" <> show i | i <- [0 .. arity - 1]]
+  [ CFunDef (conWrapperName name) params (CCon (ciTag ci) (map CVar params))
+  | (name, ci) <- M.toList conInfo,
+    ciArity ci > 0,
+    let params = ["$x" <> show i | i <- [0 .. ciArity ci - 1]]
   ]
 
 -- | Check the surface program (types) and lower it to Core IR.
 --   On success we return @(warnings, core)@: the Core program for codegen
 --   plus any non-fatal warnings the typechecker collected.
+-- | Run a 'LowerM' computation, returning its result and the
+--   accumulated lifted helpers (in source order — they're appended
+--   to the user-decl list in the program pipeline).
+runLowerM :: LowerM a -> Either TypeError (a, [CDecl], M.Map Word32 (M.Map Text Type'))
+runLowerM m = do
+  (a, st) <- runStateT m (LowerState 0 [] M.empty)
+  pure (a, reverse (lsHelpers st), lsRowTags st)
+
 elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], CoreProgram)
-elaborateLowerProgram progType prog = do
+elaborateLowerProgram progType progIn = do
+  -- 0) Pre-typecheck desugar: rewrite 'do' blocks into nested
+  --    'bindEither' calls with 'ELam' continuations. Lambdas
+  --    themselves are kept as 'ELam' nodes — the typechecker handles
+  --    them bidirectionally; lambda-lifting happens during lowering,
+  --    where the type context is available.
+  prog <- first desugarErrorToTypeError (desugarProgram progIn)
   -- 1) Elaboration step: just typecheck; no evidence/dictionaries yet.
   warnings <- typecheckProgram progType prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let ds = toList (decls prog)
       conInfo = buildConInfo ds
       sigMap = M.fromList [(n, t) | Sig _sp n t _ <- ds]
-      env = mkLowerEnv progType conInfo sigMap
-  mds <- traverse (lowerDecl env sigMap) ds
+      -- Narrow each TypeDecl span to just the type's name (the
+      -- formatter guarantees the leading 'type ' prefix is exactly
+      -- five chars), so the row tag collision diagnostic underlines
+      -- 'AFB4F' rather than the whole 'type AFB4F = MkAFB4F' line.
+      -- Same heuristic 'Awsum.Typing.typeNameSubSpan' uses for
+      -- 'DuplicateTypeDef' / 'UnnamedType' diagnostics.
+      typeDeclSpans = M.fromList [(n, narrowToName sp n) | TypeDecl sp n _ _ _ <- ds]
+      narrowToName sp n =
+        let nameStartCol = spanStartCol sp + T.length "type "
+         in SrcSpan
+              (spanStartLine sp)
+              nameStartCol
+              (spanStartLine sp)
+              (nameStartCol + T.length n)
+      env = mkLowerEnv progType conInfo sigMap typeDeclSpans
+  (mds, liftedHelpers, rowTags) <- runLowerM (traverse (lowerDeclM env sigMap) ds)
+  -- Row tag collision check: reject programs in which two distinct
+  -- structural-sum labels canonicalise to the same FNV-1a 32-bit hash.
+  -- The hash space is 2^32 wide, so a collision in a hand-written
+  -- program is vanishingly unlikely, but the check is a hard guard
+  -- against adversarial label names where the runtime would otherwise
+  -- silently confuse one alternative for another at row-case dispatch.
+  checkRowTagCollisions typeDeclSpans rowTags
   -- 3) Tree-shake: drop Core declarations unreachable from 'main'.
   --    Covers both user functions that no one calls and prelude
   --    helpers the user program does not touch (e.g.
@@ -105,7 +315,7 @@ elaborateLowerProgram progType prog = do
   --    present in the surviving code.
   let userDecls = catMaybes mds
       allWrappers = genConWrappers conInfo
-      allDecls = userDecls <> allWrappers
+      allDecls = userDecls <> liftedHelpers <> allWrappers
       callGraph = M.fromList [(declName' d, declFreeVars d) | d <- allDecls]
       reachableFromMain = reachableCore "main" callGraph
       live = filter (\d -> Set.member (declName' d) reachableFromMain) allDecls
@@ -169,6 +379,7 @@ toTypeError sigMap = \case
       Just (TyCon sp _) -> Just sp
       Just (TyApp sp _ _) -> Just sp
       Just (TyArrow sp _ _) -> Just sp
+      Just (TyOr sp _ _) -> Just sp
       Nothing -> Nothing
 
 -- | Reachability over the Core call graph starting from @root@.
@@ -209,11 +420,16 @@ declFreeVars = \case
 --   types down to integer literals. Combines user signatures, the current
 --   program type's platform-effect table, and (as a future hook)
 --   constructor types.
-mkLowerEnv :: ProgramType -> ConInfoEnv -> M.Map Name Type' -> LowerEnv
-mkLowerEnv progType conInfo sigMap =
+mkLowerEnv :: ProgramType -> ConInfoEnv -> M.Map Name Type' -> M.Map Name SrcSpan -> LowerEnv
+mkLowerEnv progType conInfo sigMap typeDeclSpans =
   let userSigs = M.fromList [(QName [] n, t) | (n, t) <- M.toList sigMap]
       lookupName q = M.lookup q (userSigs <> platformTable progType)
-   in LowerEnv {leProgramType = progType, leTypeOf = lookupName, leConInfo = conInfo}
+   in LowerEnv
+        { leProgramType = progType,
+          leTypeOf = lookupName,
+          leConInfo = conInfo,
+          leTypeDeclSpans = typeDeclSpans
+        }
 
 -- | Saturate under-applied direct calls by lambda-lifting.
 --
@@ -252,6 +468,9 @@ saturateExpr am locals = go
       e@(CBuiltIn _) -> pure e
       CCon tag fs -> CCon tag <$> traverse go fs
       CCase s alts -> CCase <$> go s <*> traverse goAlt alts
+      CRow tag v -> CRow tag <$> go v
+      CRowCase s alts ->
+        CRowCase <$> go s <*> traverse goRowAlt alts
       CCall callee args -> do
         callee' <- go callee
         args' <- traverse go args
@@ -269,6 +488,10 @@ saturateExpr am locals = go
     goAlt (tag, vars, body) = do
       body' <- saturateExpr am (locals <> fromList vars) body
       pure (tag, vars, body')
+
+    goRowAlt (tag, var, body) = do
+      body' <- saturateExpr am (Set.insert var locals) body
+      pure (tag, var, body')
 
     liftPap f args ar = do
       let missing = ar - length args
@@ -300,6 +523,10 @@ freeVars = \case
   CCase s alts ->
     freeVars s
       <> foldMap (\(_, vs, b) -> freeVars b `Set.difference` fromList vs) alts
+  CRow _ v -> freeVars v
+  CRowCase s alts ->
+    freeVars s
+      <> foldMap (\(_, v, b) -> freeVars b `Set.difference` Set.singleton v) alts
   CCall f xs -> freeVars f <> foldMap freeVars xs
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
@@ -310,28 +537,20 @@ freeVars = \case
 --   • The signature, when present, gives the expected result type — used by
 --     'lowerExpr' to resolve the type of any 'LInt' literal appearing in the
 --     body (surface integer literals are untyped).
-lowerDecl :: LowerEnv -> M.Map Name Type' -> Decl -> Either TypeError (Maybe CDecl)
-lowerDecl env sigMap = \case
-  Sig {} -> Right Nothing
-  CommentDecl _ -> Right Nothing
-  TypeDecl {} -> Right Nothing
-  -- Alias declaration @foo = BuiltIn.bar@: no Core def is emitted.
-  -- User references to @foo@ are routed to 'CBuiltIn' at 'lowerVar',
-  -- so there is no function body to carry — the builtin itself is the
-  -- implementation, and every backend knows how to emit it in place.
-  FunDef _sp _n [] body _ | isBareBuiltIn body -> Right Nothing
-  -- Generalised alias form @foo = expr@ where the signature has arrow
-  -- shape and the RHS is not a bare @BuiltIn.bar@: eta-expand to a
-  -- regular first-order function. The body becomes a fully-applied call
-  -- of the RHS to fresh @$eta_i@ parameters, which keeps the invariant
-  -- that 'CBuiltIn' only ever appears in callee position of 'CCall' (the
-  -- RHS may be a platform effect like @IO.Stdout.print@) and lets every
-  -- backend treat @foo@ as a normal top-level function.
+-- | Lower a top-level declaration. The function's parameters become
+--   the initial 'Locals' set so that any 'ELam' inside the body
+--   knows which names it can capture.
+lowerDeclM :: LowerEnv -> M.Map Name Type' -> Decl -> LowerM (Maybe CDecl)
+lowerDeclM env sigMap = \case
+  Sig {} -> pure Nothing
+  CommentDecl _ -> pure Nothing
+  TypeDecl {} -> pure Nothing
+  FunDef _sp _n [] body _ | isBareBuiltIn body -> pure Nothing
   FunDef _sp n [] body _
     | Just ty <- M.lookup n sigMap,
       let (argTys, _) = splitArrow ty,
       not (null argTys) -> do
-        body' <- lowerExpr env Nothing body
+        body' <- lowerExprM env Set.empty Nothing body
         let etas = ["$eta" <> show (i :: Int) | i <- [0 .. length argTys - 1]]
             call = CCall body' (map CVar etas)
         pure $ Just $ CFunDef n etas call
@@ -339,16 +558,13 @@ lowerDecl env sigMap = \case
     let (argTys, resultTy) = case M.lookup n sigMap of
           Just t -> splitArrowN (length args) t
           Nothing -> ([], Nothing)
-        -- Extend env with the function's parameters so 'lowerExpr' can
-        -- resolve their types at use sites (currently only matters if a
-        -- parameter's type is propagated into a literal, but keeps the
-        -- lookup uniform).
         paramEntries =
           [ (QName [] (paramName p), ty)
           | (p, Just ty) <- zip args (map Just argTys <> repeat Nothing)
           ]
         env' = extendLowerEnv env paramEntries
-    body' <- lowerExpr env' resultTy body
+        locals = Set.fromList (map paramName args)
+    body' <- lowerExprM env' locals resultTy body
     let args' = freshenWildcardArgs (map paramName args)
     pure $ Just $ case args' of
       [] -> CValDef n body' -- zero-arg def ⇒ constant
@@ -396,67 +612,434 @@ freshenWildcardArgs = go (0 :: Int)
 -- from context (e.g. the signature's return type, or the argument slot of a
 -- call). It is only consulted for 'LInt' literals — every other expression
 -- ignores it.
-lowerExpr :: LowerEnv -> Maybe Type' -> Expr -> Either TypeError CExpr
-lowerExpr env expected = \case
-  EParens _sp e -> lowerExpr env expected e
-  EVar _sp qn -> lowerVar env qn
-  ELit _sp (LString t) -> Right (CString t)
+-- | Lower an expression — threads 'LowerM' state so 'ELam' nodes can
+--   emit lifted top-level helpers, plus a 'Locals' set tracking which
+--   names are in-scope local bindings (for capture analysis).
+lowerExprM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
+lowerExprM env locals expected = \case
+  EParens _sp e -> lowerExprM env locals expected e
+  EVar _sp qn -> liftEither (lowerVar env qn)
+  ELit _sp (LString t) -> pure (CString t)
   ELit sp (LInt n) -> case expected of
-    Just (TyCon _ "Int32") -> Right (CIntLit n TInt32)
-    Just (TyCon _ "UInt8") -> Right (CIntLit n TUInt8)
-    -- The typechecker runs first and raises 'AmbiguousIntLiteral' /
-    -- 'IntLiteralOutOfRange' / 'TypeMismatch' for every offending literal,
-    -- so reaching here means lowering failed to thread the expected type.
-    -- Surface that as a lowering bug rather than silently discarding the value.
-    _ -> Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
+    Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
+    Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
+    _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
     let strExpected = Just (TyCon noSpan "String")
-     in CCall (CBuiltIn "concatString")
-          <$> sequenceA [lowerExpr env strExpected l, lowerExpr env strExpected r]
+     in do
+          l' <- lowerExprM env locals strExpected l
+          r' <- lowerExprM env locals strExpected r
+          pure (CCall (CBuiltIn "concatString") [l', r'])
   ECon _sp name -> case M.lookup name (leConInfo env) of
-    Just (tag, 0) -> Right (CCon tag [])
-    Just (_tag, _arity) -> Right (CVar (conWrapperName name))
-    Nothing -> Left (TELowering ("unknown constructor: " <> name))
-  EBuiltIn _sp name -> Right (CBuiltIn name)
+    Just ci
+      | ciArity ci == 0 -> do
+          let bare = CCon (ciTag ci) []
+              tyName = ciTypeName ci
+          case expected of
+            Just expRow@(TyOr {})
+              | Just lbl <- find (\l -> tyConHead l == Just tyName) (flattenRow expRow) -> do
+                  tag <- recordRowTag lbl
+                  pure (CRow tag bare)
+            _ -> pure bare
+      | otherwise -> pure (CVar (conWrapperName name))
+    Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
+  EBuiltIn _sp name -> pure (CBuiltIn name)
+  ELam sp params body -> liftLambda env locals expected sp params body
+  EDo _sp _ -> liftEither $ Left (TELowering "do-block not desugared before lowering — internal pipeline error")
   ECase _sp scrut alts _ -> do
-    scrut' <- lowerExpr env Nothing scrut
-    alts' <- traverse (lowerAlt env expected) (toList alts)
-    merged <- mergeAlts alts'
-    Right (CCase scrut' merged)
+    scrut' <- lowerExprM env locals Nothing scrut
+    let mScrutTy = synthLabelType env scrut
+    case mScrutTy of
+      Just scrutRowTy@(TyOr {}) -> do
+        rowAlts <- buildRowAltsM env locals expected scrutRowTy (toList alts)
+        pure (CRowCase scrut' rowAlts)
+      _ -> do
+        alts' <- traverse (lowerAltM env locals mScrutTy expected) (toList alts)
+        merged <- liftEither (mergeAlts alts')
+        pure (CCase scrut' merged)
   EApp _sp f x -> do
     let (f0, xs) = collectApps f [x]
     case f0 of
       ECon _sp' name -> case M.lookup name (leConInfo env) of
-        Just (tag, _arity) -> do
-          xs' <- traverse (lowerExpr env Nothing) xs
-          Right (CCon tag xs')
-        Nothing -> Left (TELowering ("unknown constructor: " <> name))
+        Just ci -> do
+          let (effectiveOuter, mWrapLabel) = case expected of
+                Just outer@(TyOr {})
+                  | Just lbl <- find (\l -> tyConHead l == Just (ciTypeName ci)) (flattenRow outer) ->
+                      (Just lbl, Just lbl)
+                Just outer -> (Just outer, Nothing)
+                Nothing -> (Nothing, Nothing)
+              argExpected = constructorArgExpected ci effectiveOuter
+          mWrapTag <- traverse recordRowTag mWrapLabel
+          xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+          let bare = CCon (ciTag ci) xs'
+          pure $ case mWrapTag of
+            Just t -> CRow t bare
+            Nothing -> bare
+        Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
+      EDo _ _ -> liftEither $ Left (TELowering "do-block not desugared before lowering — internal pipeline error")
       _ -> do
-        -- Recover argument types from the head's declared type so integer
-        -- literals in argument position get their IntType.
         let argTys = case f0 of
               EVar _ qn -> case leTypeOf env qn of
                 Just t -> fst (splitArrowN (length xs) t)
                 Nothing -> []
               _ -> []
             argExpected = map Just argTys <> repeat Nothing
-        f0' <- lowerExpr env Nothing f0
-        xs' <- zipWithM (lowerExpr env) argExpected xs
-        Right (CCall f0' xs')
+        f0' <- lowerExprM env locals Nothing f0
+        xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
+        pure (CCall f0' xs')
+
+-- | Lift an 'ELam' to a fresh top-level helper. The lambda's
+--   parameter types come from the expected outer arrow; its
+--   captures come from the names referenced inside the body that
+--   intersect the surrounding 'Locals' (function parameters and
+--   outer lambda parameters). Returns a partial application of the
+--   helper to the captured names — the lambda's own parameters
+--   remain unsupplied, so saturate / TCO see the resulting CCall as
+--   an under-applied call to a known top-level function.
+liftLambda :: LowerEnv -> Locals -> Maybe Type' -> SrcSpan -> [Param] -> Expr -> LowerM CExpr
+liftLambda env locals mExpected _sp params body = do
+  -- Split the expected arrow type into per-parameter types and the
+  -- result type. The typechecker has already validated the lambda
+  -- against this expected type; if 'mExpected' is 'Nothing' or has
+  -- the wrong shape, that's an internal lowering bug.
+  (paramTys, resultTy) <- case mExpected of
+    Just t -> case splitArrowN (length params) t of
+      (pTys, Just r) | length pTys == length params -> pure (pTys, Just r)
+      _ -> liftEither $ Left (TELowering "lambda's expected type doesn't match its arity at lowering")
+    Nothing -> liftEither $ Left (TELowering "lambda has no expected type at lowering")
+  let paramNames = map paramName params
+      lamParamSet = Set.fromList paramNames
+  -- Captures: free references in body restricted to in-scope locals,
+  -- minus the lambda's own parameters (which shadow outer names of
+  -- the same name — but the no-shadowing rule has already ruled this
+  -- out at typecheck time).
+  let captures = Set.toAscList ((freeReferences body `Set.intersection` locals) `Set.difference` lamParamSet)
+      captureTypes =
+        [ fromMaybe (TyVar noSpan "_capture") (leTypeOf env (QName [] c))
+        | c <- captures
+        ]
+  -- Recursively lower the body with the lambda's params added to
+  -- both env and locals. Capture types are already in env (they
+  -- come from the enclosing definition).
+  let env' =
+        extendLowerEnv
+          env
+          ( [(QName [] (paramName p), pTy) | (p, pTy) <- zip params paramTys]
+              <> [(QName [] c, ty) | (c, ty) <- zip captures captureTypes]
+          )
+      locals' = Set.union lamParamSet locals
+  body' <- lowerExprM env' locals' resultTy body
+  helperName <- freshLamName
+  let allParams = captures <> paramNames
+  emitHelper (CFunDef helperName (freshenWildcardArgs allParams) body')
+  pure $ case captures of
+    [] -> CVar helperName
+    _ -> CCall (CVar helperName) (map CVar captures)
+
+-- | Per-argument expected types for a constructor application.
+--
+--   Given the constructor's 'ConInfo' and the outer expected type
+--   pushed in by the surrounding context, return @Just t@ for each
+--   field where @t@ is the field type with the constructor's type
+--   parameters bound to the concrete arguments matched out of the
+--   outer expected type, and @Nothing@ where the binding cannot be
+--   determined (no outer expected, or shape mismatch). Implicit
+--   injection through nominal heads relies on these expected types
+--   reaching 'lowerArgWithRowInjection'.
+constructorArgExpected :: ConInfo -> Maybe Type' -> [Maybe Type']
+constructorArgExpected ci mOuter =
+  case mOuter of
+    Just outerTy ->
+      let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
+       in case unify genericRet outerTy of
+            Right s -> map (Just . applySubst s) (ciFieldTypes ci)
+            Left _ -> map (const Nothing) (ciFieldTypes ci)
+    Nothing -> map (const Nothing) (ciFieldTypes ci)
+
+-- | Build the un-substituted result type for a constructor: e.g.
+--   @applyTyParams "Either" ["a", "b"] = TyApp (TyApp (TyCon "Either") (TyVar "a")) (TyVar "b")@.
+--   Mirrors 'Awsum.Typing.conReturnType' but is local to lowering so
+--   we don't depend on the typechecker's conEnv.
+applyTyParams :: Name -> [Name] -> Type'
+applyTyParams n [] = TyCon noSpan n
+applyTyParams n tvs = foldl' (\acc tv -> TyApp noSpan acc (TyVar noSpan tv)) (TyCon noSpan n) tvs
+
+-- | Lower an argument expression, wrapping with 'CRow' when the
+--   parameter type is a structural sum and the argument's actual type
+--   matches one of the row's labels (implicit injection reified at
+--   lowering time so the runtime sees a tagged value).
+--
+--   For non-row parameter types this is just 'lowerExpr'; the wrap
+--   logic kicks in only when 'TyOr' appears.
+lowerArgWithRowInjectionM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
+lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
+  Just expected@(TyOr {}) ->
+    let labels = flattenRow expected
+        intLabels = [TyCon noSpan n | TyCon _ n <- labels, isJust (intTypeRange n)]
+     in case x of
+          ELit _ (LInt _) -> case intLabels of
+            [intLabel] -> do
+              v <- lowerExprM env locals (Just intLabel) x
+              tag <- recordRowTag intLabel
+              pure (CRow tag v)
+            _ -> liftEither $ Left (TELowering "lowering: integer literal in row position has no unique int label")
+          EParens _ inner -> lowerArgWithRowInjectionM env locals mExpected inner
+          _ -> case synthLabelType env x of
+            Just lbl@(TyVar _ _)
+              | lbl `elem` labels ->
+                  lowerExprM env locals (Just lbl) x
+            Just lbl | lbl `elem` labels -> do
+              v <- lowerExprM env locals (Just lbl) x
+              tag <- recordRowTag lbl
+              pure (CRow tag v)
+            _ -> lowerExprM env locals mExpected x
+  _ -> lowerExprM env locals mExpected x
+
+-- | Best-effort synthesis of an expression's type, used at lowering
+--   time to pick the right row label for implicit injection.
+--   Intentionally partial — only the shapes that can flow into a row
+--   position in user-facing programs.
+synthLabelType :: LowerEnv -> Expr -> Maybe Type'
+synthLabelType env = \case
+  EVar _ qn -> leTypeOf env qn
+  EBuiltIn _ n -> lookupBuiltIn n
+  ELit _ (LString _) -> Just (TyCon noSpan "String")
+  ELit _ (LInt _) -> Nothing -- caller resolves via row's int label
+  EParens _ inner -> synthLabelType env inner
+  EInfix {} -> Just (TyCon noSpan "String") -- the only infix op is ++ : String -> String -> String
+  EApp _ f _ -> case synthLabelType env (collectAppHead f) of
+    Just t -> Just (snd (splitArrow t))
+    Nothing -> Nothing
+  ECon _ name -> case M.lookup name (leConInfo env) of
+    Just ci | ciArity ci == 0 -> Just (TyCon noSpan (ciTypeName ci))
+    _ -> Nothing -- non-nullary constructor types are polymorphic in field types
+  ECase {} -> Nothing
+  ELam {} -> Nothing -- lambdas need an expected type from context
+  EDo {} -> Nothing -- 'do' blocks similarly need an expected type
+
+-- | Strip nested 'EApp' to expose the head expression (the function
+--   reference). Used by 'synthLabelType' when synthesising the type of
+--   an applied call.
+collectAppHead :: Expr -> Expr
+collectAppHead = \case
+  EApp _ f _ -> collectAppHead f
+  e -> e
 
 -- | Lower a single case alternative: look up the constructor tag,
 --   desugar nested patterns into nested CCase, and lower the body.
---   The 'Maybe Type'' is the expected type of the whole case expression
---   and is propagated to each arm body so integer literals inside arms get
---   their 'IntType'.
-lowerAlt :: LowerEnv -> Maybe Type' -> CaseAlt -> Either TypeError (Int, [Name], CExpr)
-lowerAlt env expected (CaseAlt _ (PCon _ cName pats) body _) = do
-  (tag, _arity) <- maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
-  body' <- lowerExpr env expected body
+--
+--   * @mScrutTy@ is the synthesised type of the scrutinee, when known.
+--     When the constructor's owning type matches, it lets us
+--     compute per-field types after substituting the type-parameters,
+--     which then feed into 'extendLowerEnv' so binders referenced in
+--     the arm body (e.g. nested @case e of …@ on a row-typed @e@)
+--     resolve their types correctly. Without this, lowering would
+--     not know the type of @e@ in @Left e -> case e of …@.
+--   * @expected@ is the expected type of the whole case expression
+--     and is propagated to each arm body so integer literals inside
+--     arms get their @IntType@.
+lowerAltM :: LowerEnv -> Locals -> Maybe Type' -> Maybe Type' -> CaseAlt -> LowerM (Int, [Name], CExpr)
+lowerAltM env locals mScrutTy expected (CaseAlt _ (PCon _ cName pats) body _) = do
+  ci <- liftEither $ maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
+  let tag = ciTag ci
+      patBinders = collectPatternBindings (leConInfo env) ci mScrutTy pats
+      env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- patBinders]
+      locals' = Set.union (Set.fromList (map fst patBinders)) locals
+  body' <- lowerExprM env' locals' expected body
   let (topVars, wrappedBody) = desugarPats (leConInfo env) "__" 0 pats body'
-  Right (tag, topVars, wrappedBody)
-lowerAlt _ _ CaseAlt {} =
-  Left (TELowering "only constructor patterns are supported in case")
+  pure (tag, topVars, wrappedBody)
+lowerAltM _ _ _ _ CaseAlt {} =
+  liftEither $ Left (TELowering "only constructor patterns are supported in case")
+
+-- | Walk a pattern list under a known constructor and return
+--   @[(binder, type)]@ entries for each 'PVar' binder reached. The
+--   substitution of the constructor's type parameters is taken from
+--   unifying the constructor's generic return type against the
+--   scrutinee's type (when known); otherwise binders default to the
+--   raw field types from the @type@ declaration.
+collectPatternBindings :: ConInfoEnv -> ConInfo -> Maybe Type' -> [Pattern] -> [(Name, Type')]
+collectPatternBindings conInfo ci mScrutTy pats =
+  let subst = case mScrutTy of
+        Just outerTy ->
+          let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
+           in fromRight mempty (unify genericRet outerTy)
+        Nothing -> mempty
+      fieldTys = map (applySubst subst) (ciFieldTypes ci)
+   in concatMap (uncurry (gather conInfo)) (zip pats fieldTys)
+  where
+    gather _ (PVar _ n) ty = [(n, ty)]
+    gather _ (PWild _) _ = []
+    -- 'PAscribe' overrides the field's type with the ascribed one for
+    -- the inner binder — mirrors 'Awsum.Typing.patternBindings'. This
+    -- makes @b@ in @Just (b : Bool)@ resolvable as 'Bool' at lowering
+    -- time, so a nested @case b of …@ goes through the nominal
+    -- 'CCase' path, not 'CRowCase'.
+    gather conInfo' (PAscribe _ inner ascrTy) _ty = gather conInfo' inner ascrTy
+    gather conInfo' (PCon _ innerCon innerPats) ty =
+      case M.lookup innerCon conInfo' of
+        Just innerCi ->
+          let innerSubst =
+                fromRight mempty
+                  $ unify (applyTyParams (ciTypeName innerCi) (ciTypeParams innerCi)) ty
+              innerFieldTys = map (applySubst innerSubst) (ciFieldTypes innerCi)
+           in concatMap (uncurry (gather conInfo')) (zip innerPats innerFieldTys)
+        Nothing -> []
+
+-- | Lower the arms of a row-case scrutinee into a list of
+--   @(rowTag, binder, body)@ tuples (the shape consumed by
+--   'CRowCase'). A row case may combine 'PAscribe' arms (one per row
+--   label) and 'PCon' arms (whose owning type matches one of the
+--   row's nominal labels). Constructor arms targeting the same row
+--   label are merged into a single CRow arm whose body is a 'CCase'
+--   over the constructors of that label — mirroring how 'mergeAlts'
+--   handles repeated outer constructors in nominal-case lowering.
+buildRowAltsM :: LowerEnv -> Locals -> Maybe Type' -> Type' -> [CaseAlt] -> LowerM [(Word32, Name, CExpr)]
+buildRowAltsM env locals expected scrutTy alts = do
+  rawArms <- traverse (lowerRowArmM env locals expected scrutTy) alts
+  let grouped =
+        groupBy
+          (\(t1, _, _) (t2, _, _) -> t1 == t2)
+          (sortWith fstOf3 rawArms)
+  traverse buildOne grouped
+  where
+    fstOf3 (a, _, _) = a
+
+    -- Within one tag-equal group, the legitimate cases are: a single
+    -- 'AscribeShape', or one-or-more 'ConShape's that all targeted
+    -- the same row label. Anything else means two structurally
+    -- distinct labels canonicalised to the same FNV-1a tag — caught
+    -- here as 'RowTagCollision' rather than the global
+    -- 'checkRowTagCollisions' post-pass, because lowering would
+    -- otherwise bail out with a less helpful 'TELowering' before
+    -- the post-pass gets to run.
+    buildOne :: [(Word32, Type', RowArmShape)] -> LowerM (Word32, Name, CExpr)
+    buildOne [] = liftEither $ Left (TELowering "buildRowAlts: empty group (unreachable)")
+    buildOne grouped =
+      case findCollidingLabels grouped of
+        Just (l1, l2, tag) ->
+          liftEither
+            $ Left (RowTagCollision l1 l2 tag (tyConDeclSpan (leTypeDeclSpans env) l2))
+        Nothing -> case grouped of
+          [(tag, _, AscribeShape var body)] -> pure (tag, var, body)
+          ((tag, _, ConShape {}) : _) -> do
+            let conAlts = [(t, vs, b) | (_, _, ConShape t vs b) <- grouped]
+            merged <- liftEither (mergeAlts conAlts)
+            let var :: Name
+                var = "__rw"
+            pure (tag, var, CCase (CVar var) merged)
+          ((_, _, AscribeShape _ _) : _ : _) ->
+            -- Same canonical label appearing twice as a PAscribe arm:
+            -- the typechecker's 'DuplicateRowArm' check should have
+            -- ruled this out before lowering, so reaching here is a
+            -- compiler-internal pipeline error.
+            liftEither
+              $ Left
+                ( TELowering
+                    "row case has duplicate PAscribe arms for the same label (typechecker should have rejected this as DuplicateRowArm)"
+                )
+
+    -- Look at the labels of a tag-equal group: if two of them have
+    -- different canonical forms, the FNV-1a hash collided across
+    -- distinct labels — return the first such pair plus the shared
+    -- tag. All labels equal under 'canonicalLabel' is the legitimate
+    -- "multiple PCon arms for the same row label" case.
+    findCollidingLabels :: [(Word32, Type', RowArmShape)] -> Maybe (Type', Type', Word32)
+    findCollidingLabels [] = Nothing
+    findCollidingLabels ((tag, l0, _) : rest) =
+      case find (\(_, l, _) -> canonicalLabel l /= canonicalLabel l0) rest of
+        Just (_, l1, _) -> Just (l0, l1, tag)
+        Nothing -> Nothing
+
+-- | Per-arm intermediate value used by 'buildRowAlts'. 'AscribeShape'
+--   carries the binder name and lowered body for a @(x : T) -> body@
+--   arm; 'ConShape' carries the constructor's tag, the de-sugared
+--   top-level variable list, and the lowered body wrapped in any
+--   nested CCase that 'desugarPats' produced for inner patterns.
+data RowArmShape
+  = AscribeShape Name CExpr
+  | ConShape Int [Name] CExpr
+
+-- | Lower a single user-written row-case arm, returning its row tag
+--   and an intermediate shape. PAscribe arms produce 'AscribeShape';
+--   PCon arms find the row label whose head 'TyCon' matches the
+--   constructor's owning type, substitute the row label into the
+--   constructor's generic field types, extend the lowering env with
+--   the resulting pattern bindings, and produce 'ConShape'.
+lowerRowArmM :: LowerEnv -> Locals -> Maybe Type' -> Type' -> CaseAlt -> LowerM (Word32, Type', RowArmShape)
+lowerRowArmM env locals expected _scrutTy (CaseAlt _ (PAscribe _ inner ascrTy) body _) = do
+  let var = case inner of
+        PVar _ n -> n
+        _ -> "__rw"
+      env' = extendLowerEnv env [(QName [] var, ascrTy)]
+      locals' = Set.insert var locals
+  body' <- lowerExprM env' locals' expected body
+  tag <- recordRowTag ascrTy
+  pure (tag, ascrTy, AscribeShape var body')
+lowerRowArmM env locals expected scrutTy (CaseAlt _ (PCon _ cName innerPats) body _) = do
+  ci <-
+    liftEither
+      $ maybeToRight
+        (TELowering ("unknown constructor in row pattern: " <> cName))
+        (M.lookup cName (leConInfo env))
+  let cTyName = ciTypeName ci
+      labels = flattenRow scrutTy
+      mLabel = find (\l -> tyConHead l == Just cTyName) labels
+  rowLabel <-
+    liftEither
+      $ maybeToRight
+        ( TELowering
+            ( "row label for constructor '"
+                <> cName
+                <> "' not in scrutinee row (typechecker should have rejected this)"
+            )
+        )
+        mLabel
+  let bindings = collectPatternBindings (leConInfo env) ci (Just rowLabel) innerPats
+      env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- bindings]
+      locals' = Set.union (Set.fromList (map fst bindings)) locals
+  body' <- lowerExprM env' locals' expected body
+  (topVars, wrappedBody) <- lowerRowConInnerPatsM innerPats body'
+  tag <- recordRowTag rowLabel
+  pure (tag, rowLabel, ConShape (ciTag ci) topVars wrappedBody)
+lowerRowArmM _ _ _ _ CaseAlt {} =
+  liftEither $ Left (TELowering "row case arms must be (x : T) or constructor patterns")
+
+-- | Translate the inner-pattern list of a 'PCon' arm in a row case.
+--   For each pattern position, return the top-level binder name
+--   (consumed by 'CCase' arm) and a wrapper that injects any
+--   ascription-driven 'CRowCase' destructuring around the body. The
+--   wrappers compose left-to-right by 'foldr'.
+--
+--   Monadic so that the tags minted for ascription-pattern row-cases
+--   feed into the row-tag table consulted by the post-lowering
+--   /row tag collision check/ (see 'recordRowTag').
+lowerRowConInnerPatsM :: [Pattern] -> CExpr -> LowerM ([Name], CExpr)
+lowerRowConInnerPatsM pats body0 = do
+  entries <- zipWithM perPat [0 :: Int ..] pats
+  let topVars = map fst entries
+      wrapped = foldr (\(_, w) acc -> w acc) body0 entries
+  pure (topVars, wrapped)
+  where
+    perPat _ (PVar _ n) = pure (n, id)
+    perPat idx (PWild _) = pure ("__pw" <> show idx, id)
+    perPat idx (PAscribe _ inner ascrTy) = do
+      let topVar = "__pa" <> show idx
+          innerName = case inner of
+            PVar _ n -> n
+            _ -> "__rw"
+      tag <- recordRowTag ascrTy
+      pure
+        ( topVar,
+          \b -> CRowCase (CVar topVar) [(tag, innerName, b)]
+        )
+    perPat idx _ = pure ("__pother" <> show idx, id) -- typechecker rules out other shapes
+
+-- | Extract the head 'TyCon' name from a type, peeling 'TyApp' chains.
+--   Returns 'Nothing' for 'TyVar', 'TyArrow', 'TyOr'.
+tyConHead :: Type' -> Maybe Name
+tyConHead (TyCon _ n) = Just n
+tyConHead (TyApp _ f _) = tyConHead f
+tyConHead _ = Nothing
 
 -- | Merge case alternatives that have the same outer tag.
 --   When multiple alts match the same constructor with nested patterns,
@@ -473,18 +1056,21 @@ mergeAlts alts =
     mergeGroup [alt] = Right [alt]
     mergeGroup ((tag, vars, body) : rest) = do
       -- Check if all alts in this group have the same structure
-      -- (same number of vars, all bodies are CCase on the first var)
+      -- (same number of vars, all bodies are CCase or CRowCase on
+      -- the first var). The 'CRowCase' branch covers row-case arms
+      -- whose outer constructor is the same and whose ascription-
+      -- driven inner 'CRowCase' wrappers (introduced by
+      -- 'lowerRowConInnerPats') need to be unioned into a single
+      -- multi-arm 'CRowCase'.
       case (body, map (\(_, vs, b) -> (vs, b)) rest) of
         (CCase (CVar scrutVar) innerAlts, otherBodies) -> do
-          -- Check if all other bodies are also CCase on their first var
           allInnerAlts <- foldM collectInnerAlts innerAlts otherBodies
-          -- Recursively merge the collected inner alternatives
           mergedInnerAlts <- mergeAlts allInnerAlts
-          -- Use a consistent variable name (take from first alt)
           Right [(tag, vars, CCase (CVar scrutVar) mergedInnerAlts)]
+        (CRowCase (CVar scrutVar) innerAlts, otherBodies) -> do
+          allInnerAlts <- foldM collectInnerRowAlts innerAlts otherBodies
+          Right [(tag, vars, CRowCase (CVar scrutVar) allInnerAlts)]
         _ ->
-          -- Not all bodies are CCase, or they don't match - this is an error
-          -- (patterns with same outer constructor but different nesting structure)
           Left (TELowering $ "conflicting pattern shapes for constructor tag " <> show tag)
 
     collectInnerAlts :: [(Int, [Name], CExpr)] -> ([Name], CExpr) -> Either TypeError [(Int, [Name], CExpr)]
@@ -493,21 +1079,35 @@ mergeAlts alts =
     collectInnerAlts _ _ =
       Left (TELowering "conflicting pattern shapes in merge")
 
+    collectInnerRowAlts ::
+      [(Word32, Name, CExpr)] ->
+      ([Name], CExpr) ->
+      Either TypeError [(Word32, Name, CExpr)]
+    collectInnerRowAlts acc (_vars, CRowCase (CVar _scrutVar) innerAlts) =
+      Right (acc <> innerAlts)
+    collectInnerRowAlts _ _ =
+      Left (TELowering "conflicting row-case shapes in merge")
+
 -- | Desugar a list of sub-patterns into flat variable bindings,
 --   wrapping the body in nested CCase for any nested constructor patterns.
 --   Uses path-based naming (e.g. @__p0@, @__p0_p0@) for fresh variables.
 desugarPats :: ConInfoEnv -> Text -> Int -> [Pattern] -> CExpr -> ([Name], CExpr)
 desugarPats _ _ _ [] body = ([], body)
+-- 'PAscribe' is type-only — at the surface it tells the typechecker
+-- which alternative of a structural sum to take; at runtime it has no
+-- shape and lowers to whatever its inner pattern lowers to.
+desugarPats conInfo prefix idx (PAscribe _ inner _ : ps) body =
+  desugarPats conInfo prefix idx (inner : ps) body
 desugarPats conInfo prefix idx (p : ps) body =
   let (restVars, restBody) = desugarPats conInfo prefix (idx + 1) ps body
    in case p of
         PVar _ n -> (n : restVars, restBody)
-        PWild ->
+        PWild _ ->
           let fresh = prefix <> "w" <> show idx
            in (fresh : restVars, restBody)
         PCon _ innerCon innerPats ->
           let fresh = prefix <> "p" <> show idx
-              innerTag = maybe 0 fst (M.lookup innerCon conInfo)
+              innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
               innerPrefix = fresh <> "_"
               (innerVars, innerBody) = desugarPats conInfo innerPrefix 0 innerPats restBody
            in (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])

@@ -121,7 +121,16 @@ Program
                             , spanEndLine = 8
                             , spanEndCol = 7
                             }
-                        ) "Left" [ PWild ]
+                        ) "Left"
+                        [ PWild
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 8
+                                , spanEndLine = 8
+                                , spanEndCol = 9
+                                }
+                            )
+                        ]
                     )
                     ( ELit
                         ( SrcSpan

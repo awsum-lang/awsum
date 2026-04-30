@@ -79,6 +79,56 @@ or a b = case a of
 
 type Either a b = Left a | Right b
 
+{- `bindEither` chains two Either-returning operations and unions their
+   error rows: the first step's error type `e1` and the second step's
+   `e2` combine into the structural sum `(e1 | e2)` in the result. The
+   set-semantic union collapses duplicates (`(ErrA | ErrA) ~ ErrA`) and
+   ignores order, which is what makes `do`-style chaining add new
+   labels per `<-` without the user writing intermediate combined-error
+   types. The desugaring of the `do` form goes through this function. -}
+
+bindEither : Either e1 a -> (a -> Either e2 b) -> Either (e1 | e2) b
+bindEither x k = case x of
+  Left e -> Left e
+  Right a -> k a
+
+{- `pureEither` lifts a value into `Either` on the `Right` side. The
+   error row stays a free row variable `e`; at use site it gets pinned
+   by the surrounding context. Used by hand at the tail of a `do`
+   block — there is no `pure` soft keyword in this iteration. -}
+
+pureEither : a -> Either e a
+pureEither x = Right x
+
+{- `const` returns its first argument and ignores the second. Used by
+   the `do`-notation desugarer to express continuations whose bound
+   variable is unused: a chain like `do { a <- e1; e2 }` desugars to
+   `bindEither e1 (const e2)` when `a` does not appear in `e2`,
+   avoiding the need to introduce a lambda the compiler cannot yet
+   lift. -}
+
+const : a -> b -> a
+const x _y = x
+
+{- `mapRight` rebuilds an `Either` with `f` applied to the success value
+   and the error left untouched. Same shape as `Functor.fmap` but
+   specialised to `Either`'s success side; we don't have type classes,
+   so this stays a plain function. -}
+
+mapRight : Either e a -> (a -> b) -> Either e b
+mapRight x mapRightF = case x of
+  Left e -> Left e
+  Right a -> Right (mapRightF a)
+
+{- `mapLeft` rebuilds an `Either` with `f` applied to the error value
+   and the success left untouched. Used to widen / narrow / rename a
+   nominal error type without touching the success side. -}
+
+mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a
+mapLeft x mapLeftF = case x of
+  Left e -> Left (mapLeftF e)
+  Right a -> Right a
+
 -- ---------------------- Maybe
 
 {- Optional value: `Just x` carries a payload, `Nothing` doesn't. For
