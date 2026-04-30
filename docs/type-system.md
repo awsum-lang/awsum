@@ -160,7 +160,14 @@ hi : String
 hi = identity "hello"         -- ok: a different 'identity' use, 'a' fixed to 'String'
 ```
 
-A bare integer literal as the argument (`identity 42`) does **not** typecheck today. Polymorphic application instantiates `identity`'s parameter type to a fresh type variable; the literal has no concrete type to validate against, and Awsum does not default it. Pass through a typed binding (as in `answer` above) or pin the type with a wrapper that fixes `a`.
+A bare integer literal as the argument (`identity 42`) typechecks when the enclosing context pins the result. The bidirectional check walks the application's spine, unifies the function's generic result with the expected type to learn the binding for `a`, and pushes that substitution down to each argument position — so
+
+```awsum
+ten : Int32
+ten = identity 10              -- ok: 'a' pins to 'Int32' via the return type
+```
+
+works without a typed-binding indirection. Lambda arguments contribute their own substitutions back through their bodies: `apply (\n -> n) 42 : Int32` typechecks because the lambda body's `n : a` unifies with the expected result type `Int32`, pinning `a := Int32` before the literal `42` is checked against `a`. Without a pinning context (a top-level signature, a constructor field type, an outer call's argument slot) the literal still has no type and the call is rejected — the rule is "no defaulting", not "no propagation".
 
 ### Variables only mean what the signature says
 
@@ -201,9 +208,11 @@ Anonymous function literals parse as `\x y -> body`. The typechecker checks them
 
 ```awsum
 -- ok: '(\n -> n)' lifts to '$lam$0 n = n', and the call site
--- becomes 'apply $lam$0 answer'.
+-- becomes 'apply $lam$0 42'. The literal '42' picks up its
+-- 'Int32' type by propagation through the polymorphic call —
+-- see "Polymorphic type variables" above.
 inc42 : Int32
-inc42 = apply (\n -> n) answer
+inc42 = apply (\n -> n) 42
 ```
 
 Awsum has **no synthesis form for lambdas** — they only typecheck where the surrounding context fixes their type. A lambda at top level with no expected type is rejected:

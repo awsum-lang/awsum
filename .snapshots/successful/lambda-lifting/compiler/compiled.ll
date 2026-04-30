@@ -88,14 +88,9 @@ define internal ptr @v_apply(ptr %v_f, ptr %v_x) {
   ret ptr %t0
 }
 
-define internal ptr @v_answer() {
+define internal ptr @v_inc42() {
   %t0 = call ptr @malloc(i64 4)
   store i32 42, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_inc42() {
-  %t0 = call ptr @v_answer()
   %t1 = call ptr @v_apply(ptr @v__lam_0, ptr %t0)
   ret ptr %t1
 }

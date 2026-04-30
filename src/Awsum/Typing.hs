@@ -1020,6 +1020,30 @@ checkExpr conEnv tcm env expected = \case
             actual <- typeOfExpr conEnv tcm env e
             unless (rowSubsume expected actual)
               $ Left (TypeMismatch expected actual e)
+  -- Non-constructor application: prefer the existing synth-and-
+  -- subsume path; on failure, fall back to a bidirectional spine-
+  -- based check that pushes @expected@ into the argument positions.
+  -- The fallback is what lets a bare integer literal flow through a
+  -- polymorphic call site like @apply (\n -> n) 42 : Int32@ — the
+  -- forward unify from the result type pins @apply@'s @a@ tyvar to
+  -- @Int32@, which the bare literal would otherwise be checked
+  -- against an unresolved tyvar and rejected. Cases the forward
+  -- path already accepts (most polymorphic uses with named arguments)
+  -- continue to take that branch unchanged.
+  e@(EApp {}) ->
+    case typeOfExpr conEnv tcm env e of
+      Right actual | rowSubsume expected actual -> Right ()
+      _ -> do
+        let (appHead, spineArgs) = appSpine e
+        tHead <- typeOfExpr conEnv tcm env appHead
+        case zipParamsToArrow tHead (length spineArgs) of
+          Just (argTys, resultTy) -> do
+            s0 <- unifyOrSubsume expected resultTy e
+            foldM_ (checkArgStep conEnv tcm env) s0 (zip argTys spineArgs)
+          Nothing -> do
+            actual <- typeOfExpr conEnv tcm env e
+            unless (rowSubsume expected actual)
+              $ Left (TypeMismatch expected actual e)
   e -> do
     actual <- typeOfExpr conEnv tcm env e
     -- Boundary acceptance: equality is too strict once 'TyOr' enters
@@ -1045,6 +1069,60 @@ checkExpr conEnv tcm env expected = \case
       case [(n, lo, hi) | TyCon _ n <- flattenRow ty, Just (lo, hi) <- [intTypeRange n]] of
         [single] -> Just single
         _ -> Nothing
+
+    -- Spine of an application: peel parens and left-associated 'EApp's
+    -- to recover @(head, [arg1, arg2, …])@. Used by the bidirectional
+    -- 'EApp' clause above so a multi-argument call is checked against
+    -- the head's full arrow chain in one step.
+    appSpine :: Expr -> (Expr, [Expr])
+    appSpine = go []
+      where
+        go acc (EApp _ f x) = go (x : acc) f
+        go acc (EParens _ inner) = go acc inner
+        go acc h = (h, acc)
+
+    unifyOrSubsume expectedTy actualTy origExpr =
+      case unify expectedTy actualTy of
+        Right s -> Right s
+        Left _ ->
+          if rowSubsume expectedTy actualTy
+            then Right mempty
+            else Left (TypeMismatch expectedTy actualTy origExpr)
+
+    -- Check one argument against its (possibly substituted) expected
+    -- type, accumulate any new substitution learned from it, and
+    -- compose it onto the running 'Subst' that subsequent arguments
+    -- will see. Composition order is "new after old" so the latest
+    -- bindings shadow stale ones.
+    checkArgStep cEnv tcm' env' subst (argTy, arg) = do
+      let argTy' = applySubst subst argTy
+      sArg <- checkArgSubst cEnv tcm' env' argTy' arg
+      pure (sArg <> subst)
+
+    -- Variant of 'checkExpr' that also reports the substitution
+    -- gleaned from this argument — needed so binders introduced by a
+    -- polymorphic call ('a' in @apply : (a -> b) -> a -> b@) get
+    -- pinned by the lambda body's identity before the next argument is
+    -- checked. Lambdas recurse through their bodies; everything else
+    -- goes through 'checkExpr' for validation and uses 'unify' on the
+    -- synthesised type when one is available.
+    checkArgSubst cEnv tcm' env' argExpected = \case
+      EParens _ inner -> checkArgSubst cEnv tcm' env' argExpected inner
+      ELam sp params body -> do
+        (paramTypes, resultTy) <- case zipParamsToArrow argExpected (length params) of
+          Just split -> Right split
+          Nothing -> Left (LambdaShapeMismatch sp argExpected (length params))
+        checkNoShadow env' [(s, n) | Param s n <- params]
+        let paramBindings = zip (map paramName params) paramTypes
+            envInner = M.union (M.fromList [(qLocal n, t) | (n, t) <- paramBindings]) env'
+        checkArgSubst cEnv tcm' envInner resultTy body
+      arg -> do
+        checkExpr cEnv tcm' env' argExpected arg
+        case typeOfExpr cEnv tcm' env' arg of
+          Right actual -> case unify argExpected actual of
+            Right s -> Right s
+            Left _ -> Right mempty
+          Left _ -> Right mempty
 
 -- | Infer/check the type of an expression under the given environment.
 --   This function /checks/ consistency; it does not invent polymorphism.

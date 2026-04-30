@@ -106,7 +106,7 @@ isBinderStart c = Char.isLower c || c == '_'
 
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
-reserved = ["import", "type", "case", "of"]
+reserved = ["import", "type", "case", "of", "do", "let"]
 
 -- | Recognize a reserved word /without/ swallowing identifier tails.
 --   e.g. parsing \"import\" will fail on \"importX\".

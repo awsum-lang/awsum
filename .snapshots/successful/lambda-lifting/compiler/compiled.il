@@ -99,19 +99,12 @@
   }
 
 
-  .method private hidebysig static object v_answer() cil managed
-  {
-    ldc.i4 42
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
   .method private hidebysig static object v_inc42() cil managed
   {
     ldftn object AwsumMain::v__lam_0(object)
     newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    call object AwsumMain::v_answer()
+    ldc.i4 42
+    box [System.Runtime]System.Int32
     call object AwsumMain::v_apply(object, object)
     ret
   }

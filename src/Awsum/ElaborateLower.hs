@@ -24,7 +24,7 @@ import Awsum.Core
 import Awsum.Cps (cpsProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
-import Awsum.HM (applySubst, canonicalLabel, flattenRow, rowTag, unify)
+import Awsum.HM (Subst, applySubst, canonicalLabel, flattenRow, rowTag, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Scc (sccMergeProgram)
 import Awsum.StackSafety (verifyStackSafety)
@@ -678,15 +678,60 @@ lowerExprM env locals expected = \case
         Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
       EDo _ _ -> liftEither $ Left (TELowering "do-block not desugared before lowering — internal pipeline error")
       _ -> do
-        let argTys = case f0 of
+        let (argTys, mResultTy) = case f0 of
               EVar _ qn -> case leTypeOf env qn of
-                Just t -> fst (splitArrowN (length xs) t)
-                Nothing -> []
-              _ -> []
-            argExpected = map Just argTys <> repeat Nothing
+                Just t -> splitArrowN (length xs) t
+                Nothing -> ([], Nothing)
+              _ -> ([], Nothing)
+            -- Mirror the typechecker's bidirectional EApp clause: when
+            -- the surrounding context fixes the result type and the
+            -- function's signature is polymorphic, unifying the
+            -- generic result with the outer expected pins the type
+            -- variables that appear in the argument slots. We also
+            -- collect substitutions from individual arguments —
+            -- specifically, a lambda whose body is a 'EVar' contributes
+            -- the body's binding to the lambda's expected result type
+            -- — so a bare integer literal under a polymorphic call
+            -- like @apply (\n -> n) 42 : Int32@ reaches its 'CIntLit'
+            -- conversion with @Int32@ in hand instead of an unresolved
+            -- @a@ tyvar.
+            sResult = case (expected, mResultTy) of
+              (Just outer, Just rty) -> fromRight mempty (unify rty outer)
+              _ -> mempty
+            sArgs = foldMap (uncurry (argSubst env)) [(applySubst sResult t, x') | (t, x') <- zip argTys xs]
+            sFinal = sArgs <> sResult
+            argTys' = map (applySubst sFinal) argTys
+            argExpected = map Just argTys' <> repeat Nothing
         f0' <- lowerExprM env locals Nothing f0
         xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
         pure (CCall f0' xs')
+
+-- | Best-effort substitution that an argument expression contributes
+--   given a (possibly tyvar-laden) expected type. Used by 'lowerExprM'
+--   on non-constructor 'EApp' to refine the argument-type slots that
+--   depend on type variables shared with the function's polymorphic
+--   signature — e.g. the @a@ in @apply : (a -> b) -> a -> b@ that the
+--   lambda body's type @n : a@ pins to @Int32@ when checked against
+--   the lambda's expected result. Mirrors what the typechecker's
+--   bidirectional 'EApp' clause learns; needed here because lowering
+--   propagates expected types per-argument independently and would
+--   otherwise reach a bare integer literal with @a@ unresolved.
+argSubst :: LowerEnv -> Type' -> Expr -> Subst
+argSubst env expected = \case
+  EParens _ inner -> argSubst env expected inner
+  EVar _ qn -> case leTypeOf env qn of
+    Just t -> fromRight mempty (unify expected t)
+    Nothing -> mempty
+  ELam _ params body -> case splitArrowN (length params) expected of
+    (paramTys, Just resTy)
+      | length paramTys == length params ->
+          let env' =
+                extendLowerEnv
+                  env
+                  [(QName [] (paramName p), pTy) | (p, pTy) <- zip params paramTys]
+           in argSubst env' resTy body
+    _ -> mempty
+  _ -> mempty
 
 -- | Lift an 'ELam' to a fresh top-level helper. The lambda's
 --   parameter types come from the expected outer arrow; its

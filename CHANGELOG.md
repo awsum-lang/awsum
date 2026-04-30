@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Bidirectional check propagates through polymorphic application.** A bare integer literal at a polymorphic call site like `inc42 = apply (\n -> n) 42 : Int32` now picks up its type from the enclosing return: the typechecker walks the application's spine, unifies the function's result type with the expected type to learn substitutions, and threads them through arg checks (lambda bodies contribute their own substitutions back). Lowering does the same for the `LInt → CIntLit` step, so the literal reaches codegen with `Int32` resolved instead of failing as "integer literal without a known numeric type". Test source [test/sources/successful/lambda-lifting/](test/sources/successful/lambda-lifting/) was updated to use the direct form.
+
+- **`do` and `let` are reserved at the parser level.** Previously they were treated as keywords by the expression grammar but not by the identifier parser, so an `EVar` whose name happened to be `do` or `let` would render to source the parser refused to read back — caught by the `parse . render == id for Program` property test on Linux aarch64 after a shrink stumbled onto the `do` form. Both are now in the parser's `reserved` list and the `ArbitraryInstances` generator's exclusion set.
+
 ### Added
 
 - **Row tag collision check.** Lowering now records every row label whose tag it mints (via `Awsum.HM.rowTag`, FNV-1a 32-bit on the canonical label text) and rejects the program if two structurally distinct labels hash to the same `Word32`. The diagnostic names both colliding labels and the shared tag (`Row tag collision: labels X and Y both hash to 0x…`). Two paths catch the collision: a per-`case` check inside `buildRowAltsM` (replacing the old unhelpful `TELowering "typechecker should have rejected this as DuplicateRowArm"`), and a global post-lowering pass over the row-tag table (catches collisions that span different `case` expressions). 32-bit hash space makes a hand-written collision vanishingly improbable; the check is a hard guard against adversarially-constructed names. New error fixture: [test/sources/errors/row-tag-collision/](test/sources/errors/row-tag-collision/) (engineered FNV-1a collision on two short type-cons names). User-facing description in [docs/type-system.md](docs/type-system.md).

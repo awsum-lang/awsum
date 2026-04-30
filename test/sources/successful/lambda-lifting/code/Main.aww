@@ -17,11 +17,8 @@ import IO.Stdout
 apply : (a -> b) -> a -> b
 apply f x = f x
 
-answer : Int32
-answer = 42
-
 inc42 : Int32
-inc42 = apply (\n -> n) answer
+inc42 = apply (\n -> n) 42
 
 type ErrA = ErrA
 

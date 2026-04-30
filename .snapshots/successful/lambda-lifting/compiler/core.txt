@@ -33,13 +33,11 @@ CoreProgram
                 ( CVar "f" )
                 [ CVar "x" ]
             )
-        , CValDef "answer"
-            ( CIntLit 42 TInt32 )
         , CValDef "inc42"
             ( CCall
                 ( CVar "apply" )
                 [ CVar "$lam$0"
-                , CVar "answer"
+                , CIntLit 42 TInt32
                 ]
             )
         , CValDef "op1"

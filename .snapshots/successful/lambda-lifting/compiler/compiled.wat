@@ -142,11 +142,8 @@
   (func $v_apply (param $v_f i32) (param $v_x i32) (result i32)
     (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)))
 
-  (func $v_answer (result i32)
-    (call $__box_i32 (i32.const 42)))
-
   (func $v_inc42 (result i32)
-    (call $v_apply (i32.const 6) (call $v_answer)))
+    (call $v_apply (i32.const 6) (call $__box_i32 (i32.const 42))))
 
   (func $v_op1 (result i32)
     (local $__con_0 i32)

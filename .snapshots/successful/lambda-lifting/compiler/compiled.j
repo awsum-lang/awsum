@@ -97,16 +97,10 @@ L_join:
 .end method
 
 
-.method static v_answer()Ljava/lang/Object;
-  bipush 42
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
 .method static v_inc42()Ljava/lang/Object;
   ldc [MethodHandle REF_invokeStatic AwsumMain.v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;]
-  invokestatic AwsumMain/v_answer()Ljava/lang/Object;
+  bipush 42
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/v_apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method

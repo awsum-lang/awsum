@@ -26,9 +26,7 @@ function v_apply(v_f, v_x){
     return (v_f)(v_x);
 }
 
-const v_answer = (42|0);
-
-const v_inc42 = (v_apply)(v__lam_0, v_answer);
+const v_inc42 = (v_apply)(v__lam_0, (42|0));
 
 const v_op1 = [1, (1|0)];
 

@@ -22,6 +22,7 @@ reserved =
     "type",
     "case",
     "of",
+    "do",
     "class",
     "instance",
     "where",
