@@ -1330,11 +1330,35 @@ typeOfExpr conEnv tcm env = \case
           )
           firstTy
           restTys
-  -- Lambdas have no synthesis form — they only typecheck when an
-  -- expected arrow type is in scope ('checkExpr ELam'). Reaching this
-  -- clause means a lambda was used in a position that requires
-  -- synthesis (e.g. as the head of an application).
-  ELam sp _ _ -> Left (LambdaInSynthesisPosition sp)
+  -- Lambdas in synthesis position get fresh tyvars per parameter,
+  -- suffixed by the lambda's source span so two distinct lambdas
+  -- never share a tyvar name (mirrors the @"$check"@ / @"$scrut"@
+  -- suffixing pattern 'freshenType' uses elsewhere). The body is
+  -- synthesised in the extended env; the result type is the curried
+  -- arrow chain.
+  --
+  -- Why this is sound without let-generalisation. Each downstream
+  -- 'EVar' lookup of the let-bound name returns the stored arrow
+  -- type unchanged, and each 'EApp' runs its 'unify' locally without
+  -- propagating the resulting substitution back into 'env'. So two
+  -- uses of the same let-bound lambda at different concrete types
+  -- ('id 5' and 'id "hello"') do not interact: each one binds the
+  -- shared tyvar locally, returns its result, and discards the
+  -- substitution. We therefore get operationally-correct
+  -- polymorphism for closed lambdas without the full HM-monad
+  -- threading. See "Synthesis для замкнутых лямбд" in the strategy
+  -- doc for the rationale.
+  ELam sp params body -> do
+    checkNoShadow env S.empty [(s, n) | Param s n <- params]
+    let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
+        paramTys =
+          [ TyVar pSp (n <> suffix)
+          | Param pSp n <- params
+          ]
+        bindings = zip (map paramName params) paramTys
+        env' = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
+    bodyTy <- typeOfExpr conEnv tcm env' body
+    Right (foldr (TyArrow noSpan) bodyTy paramTys)
   -- 'let n = e in body' (or 'let n : T = e in body'): if the user
   -- provided an annotation, check @e@ against it and bind @n@ at
   -- @T@; otherwise synthesise @e@'s type and bind @n@ at the

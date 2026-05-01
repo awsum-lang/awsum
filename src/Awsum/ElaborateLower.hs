@@ -741,11 +741,24 @@ lowerExprM env locals expected = \case
         Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
       EDo _ _ -> liftEither $ Left (TELowering "do-block not desugared before lowering — internal pipeline error")
       _ -> do
-        let (argTys, mResultTy) = case f0 of
-              EVar _ qn -> case leTypeOf env qn of
-                Just t -> splitArrowN (length xs) t
-                Nothing -> ([], Nothing)
-              _ -> ([], Nothing)
+        -- A lambda head ('(\x -> x) 5'-shape) doesn't live in 'leTypeOf',
+        -- but 'synthLabelType' synthesises an arrow type for it (with
+        -- span-unique fresh tyvars in parameter slots). Treating that
+        -- synthesised type the same way as a 'leTypeOf' lookup gives
+        -- the bidirectional unify below something to chew on, so a
+        -- bare integer literal as an argument gets pinned through the
+        -- outer expected result type.
+        let isLamHead = \case
+              ELam {} -> True
+              EParens _ inner -> isLamHead inner
+              _ -> False
+            mHeadTy = case f0 of
+              EVar _ qn -> leTypeOf env qn
+              _ | isLamHead f0 -> synthLabelType env f0
+              _ -> Nothing
+            (argTys, mResultTy) = case mHeadTy of
+              Just t -> splitArrowN (length xs) t
+              Nothing -> ([], Nothing)
             -- Mirror the typechecker's bidirectional EApp clause: when
             -- the surrounding context fixes the result type and the
             -- function's signature is polymorphic, unifying the
@@ -765,7 +778,15 @@ lowerExprM env locals expected = \case
             sFinal = sArgs <> sResult
             argTys' = map (applySubst sFinal) argTys
             argExpected = map Just argTys' <> repeat Nothing
-        f0' <- lowerExprM env locals Nothing f0
+        -- For lambda heads ('(\x -> x) 5'-shape calls), pass the
+        -- synthesised arrow type as expected so 'liftLambda' can
+        -- split it into per-parameter and result types — same path
+        -- it already takes when the lambda flows into a HOF
+        -- argument slot. For non-lambda heads we keep 'Nothing'
+        -- (their type comes from a top-level signature or local
+        -- binding).
+        let f0Expected = if isLamHead f0 then mHeadTy else Nothing
+        f0' <- lowerExprM env locals f0Expected f0
         xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
         pure (CCall f0' xs')
 
@@ -1170,7 +1191,21 @@ synthLabelType env = \case
     Just ci | ciArity ci == 0 -> Just (TyCon noSpan (ciTypeName ci))
     _ -> Nothing -- non-nullary constructor types are polymorphic in field types
   ECase {} -> Nothing
-  ELam {} -> Nothing -- lambdas need an expected type from context
+  -- Closed lambdas synthesise an arrow type using fresh, span-unique
+  -- tyvar names for parameters — same suffix scheme as
+  -- 'Awsum.Typing'\''s synthesis-form 'typeOfExpr ELam' so a
+  -- bare 'let id = \\x -> x in body' has a coherent binder type at
+  -- lowering time without forcing the user to write 'let id : a -> a'.
+  -- Returns 'Nothing' only when the body itself cannot be synthesised
+  -- — that case still falls back to the '_letBind' placeholder in
+  -- 'lowerLet'.
+  ELam sp params body ->
+    let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
+        paramTys = [TyVar pSp (n <> suffix) | Param pSp n <- params]
+        paramEntries =
+          [(QName [] (paramName p), pTy) | (p, pTy) <- zip params paramTys]
+        env' = extendLowerEnv env paramEntries
+     in foldr (TyArrow noSpan) <$> synthLabelType env' body <*> pure paramTys
   EDo {} -> Nothing -- 'do' blocks similarly need an expected type
   ELet _ pat mAnnot e body ->
     -- Prefer the user-supplied ascription as the binder's type

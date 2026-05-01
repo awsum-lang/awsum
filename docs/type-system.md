@@ -205,19 +205,23 @@ The parens are required — without them `f Tuple3 a b c = …` would mean four 
 
 ### Lambda expressions
 
-Anonymous function literals parse as `\x y -> body` and typecheck bidirectionally against an expected arrow type from context.
+Anonymous function literals parse as `\x y -> body` and typecheck bidirectionally against an expected arrow type from context (e.g. flowing into a HOF parameter):
 
 ```awsum
 inc42 : Int32
 inc42 = apply (\n -> n) 42
 ```
 
-Awsum has **no synthesis form for lambdas** — they only typecheck where the surrounding context fixes their type:
+Without a top-down type, parameters get fresh tyvars and the body is inferred against the extended environment. A bare `let id = \x -> x in body` then works at multiple types — each use unifies the shared variable independently:
 
 ```awsum
--- error: a lambda with no surrounding type cannot be checked.
--- noContext = \n -> n
+both : Int32 -> String -> String
+both n s =
+  let id = \x -> x
+   in showInt32 (id n) ++ " / " ++ id s
 ```
+
+The same path covers a lambda as the head of an application (`(\x -> x) 5`). Top-level definitions still need an explicit signature — `noContext = \n -> n` is rejected for the missing signature, not the lambda.
 
 **Closures.** A lambda may close over an outer-function parameter; the captured value follows the lambda wherever it flows.
 

@@ -1,0 +1,26 @@
+CoreProgram
+    { cdecls =
+        [ CValDef "runMe"
+            ( CCall
+                ( CVar "$lam$0" )
+                [ CIntLit 5 TInt32 ]
+            )
+        , CValDef "doubled"
+            ( CCall
+                ( CVar "$lam$1" )
+                [ CVar "runMe" ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CVar "doubled" ]
+                ]
+            )
+        , CFunDef "$lam$0" [ "x" ]
+            ( CVar "x" )
+        , CFunDef "$lam$1" [ "n" ]
+            ( CVar "n" )
+        ]
+    }
