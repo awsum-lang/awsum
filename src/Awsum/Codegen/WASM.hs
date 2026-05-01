@@ -13,7 +13,8 @@
 module Awsum.Codegen.WASM (codegenWASM) where
 
 import Awsum.Core
-import Awsum.Syntax (Name)
+import Awsum.HM (rowTag)
+import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -521,19 +522,31 @@ rtSuccU8 =
       "        (local.get $cell))))"
     ]
 
--- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Signed overflow detected with the XOR trick: '(a ^ sum) & (b ^ sum)'
 --   has its sign bit set iff signed addition overflowed. Direction is
---   read off 'a >= 0' so a single 'i32.lt_s 0' separates positive
---   overflow (Overflow tag = 1) from negative (Underflow tag = 0).
---   Sum is computed in i32 and wraps modulo 2^32 — that's exactly the
---   value the XOR check needs.
+--   read off 'a >= 0' so a single 'i32.ge_s 0' picks 'OverflowError'
+--   (positive overflow) vs 'UnderflowError' (negative). Sum is computed
+--   in i32 and wraps modulo 2^32 — that's exactly the value the XOR
+--   check needs. Three boxes on the err path: inner @CCon@ (UE / OE
+--   single ctor, tag 0), row wrap (tag = FNV-1a of label name), Either
+--   @Left@ wrap (tag 0). Mirrors what surface @Left UnderflowError@
+--   would lower to.
+-- | FNV-1a 32-bit row tags for the prelude's nominal labels used by
+--   the Int32 arithmetic builtins. Computed via 'rowTag' so the
+--   runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'.
+underflowTag :: Text
+underflowTag = show (rowTag (TyCon noSpan "UnderflowError"))
+
+overflowTag :: Text
+overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
+
 rtAddI32 :: Text
 rtAddI32 =
   unlines
     [ "  (func $__addInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $a i32) (local $b i32) (local $s i32)",
-      "    (local $ae i32) (local $box i32) (local $cell i32)",
+      "    (local $inner i32) (local $row i32) (local $box i32) (local $cell i32)",
       "    (local.set $a (i32.load (local.get $pa)))",
       "    (local.set $b (i32.load (local.get $pb)))",
       "    (local.set $s (i32.add (local.get $a) (local.get $b)))",
@@ -544,14 +557,17 @@ rtAddI32 =
       "          (i32.xor (local.get $b) (local.get $s)))",
       "        (i32.const 0))",
       "      (then",
-      "        (local.set $ae (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ae)",
+      "        (local.set $inner (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (local.set $row (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $row)",
       "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
-      "            (then (i32.const 1))",
-      "            (else (i32.const 0))))",
+      "            (then (i32.const " <> overflowTag <> "))",
+      "            (else (i32.const " <> underflowTag <> "))))",
+      "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $cell) (i32.const 0))",
-      "        (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
@@ -589,19 +605,19 @@ rtAddU8 =
       "        (local.get $cell))))"
     ]
 
--- | subInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Signed-subtraction overflow detected with the XOR trick:
 --   '(a ^ b) & (a ^ diff) < 0' holds iff signed subtraction overflowed.
 --   Direction is read off 'a >= 0' (when subtraction overflows the signs
 --   of @a@ and @b@ must differ, so @a >= 0@ implies @b < 0@ which implies
---   positive overflow). Same shape as 'rtAddI32' with 'i32.sub' replacing
---   'i32.add'.
+--   positive overflow → OverflowError). Same row-tagged error encoding
+--   as 'rtAddI32'.
 rtSubI32 :: Text
 rtSubI32 =
   unlines
     [ "  (func $__subInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $a i32) (local $b i32) (local $d i32)",
-      "    (local $ae i32) (local $box i32) (local $cell i32)",
+      "    (local $inner i32) (local $row i32) (local $box i32) (local $cell i32)",
       "    (local.set $a (i32.load (local.get $pa)))",
       "    (local.set $b (i32.load (local.get $pb)))",
       "    (local.set $d (i32.sub (local.get $a) (local.get $b)))",
@@ -612,14 +628,17 @@ rtSubI32 =
       "          (i32.xor (local.get $a) (local.get $d)))",
       "        (i32.const 0))",
       "      (then",
-      "        (local.set $ae (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ae)",
+      "        (local.set $inner (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (local.set $row (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $row)",
       "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
-      "            (then (i32.const 1))",
-      "            (else (i32.const 0))))",
+      "            (then (i32.const " <> overflowTag <> "))",
+      "            (else (i32.const " <> underflowTag <> "))))",
+      "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $cell) (i32.const 0))",
-      "        (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
@@ -630,38 +649,45 @@ rtSubI32 =
       "        (local.get $cell))))"
     ]
 
--- | mulInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | mulInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Promote both operands to i64, multiply at 64-bit width, range-check
 --   the result against [INT32_MIN, INT32_MAX]. Direction (over vs under)
---   is read off the lcmp result — i64.gt_s → Overflow, i64.lt_s →
---   Underflow. The truncated i32 product is the correct ok-path value
---   when the comparison falls through.
+--   is read off the lcmp result — i64.gt_s → OverflowError, i64.lt_s →
+--   UnderflowError. The truncated i32 product is the correct ok-path
+--   value when the comparison falls through. Same row-tagged error
+--   encoding as 'rtAddI32'.
 rtMulI32 :: Text
 rtMulI32 =
   unlines
     [ "  (func $__mulInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $p i64)",
-      "    (local $ae i32) (local $box i32) (local $cell i32)",
+      "    (local $inner i32) (local $row i32) (local $box i32) (local $cell i32)",
       "    (local.set $p",
       "      (i64.mul",
       "        (i64.extend_i32_s (i32.load (local.get $pa)))",
       "        (i64.extend_i32_s (i32.load (local.get $pb)))))",
       "    (if (result i32) (i64.gt_s (local.get $p) (i64.const 2147483647))",
       "      (then",
-      "        (local.set $ae (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ae) (i32.const 1))",
+      "        (local.set $inner (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (local.set $row (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $row) (i32.const " <> overflowTag <> "))",
+      "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $cell) (i32.const 0))",
-      "        (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (if (result i32) (i64.lt_s (local.get $p) (i64.const -2147483648))",
       "          (then",
-      "            (local.set $ae (call $__alloc (i32.const 4)))",
-      "            (i32.store (local.get $ae) (i32.const 0))",
+      "            (local.set $inner (call $__alloc (i32.const 4)))",
+      "            (i32.store (local.get $inner) (i32.const 0))",
+      "            (local.set $row (call $__alloc (i32.const 8)))",
+      "            (i32.store (local.get $row) (i32.const " <> underflowTag <> "))",
+      "            (i32.store offset=4 (local.get $row) (local.get $inner))",
       "            (local.set $cell (call $__alloc (i32.const 8)))",
       "            (i32.store (local.get $cell) (i32.const 0))",
-      "            (i32.store offset=4 (local.get $cell) (local.get $ae))",
+      "            (i32.store offset=4 (local.get $cell) (local.get $row))",
       "            (local.get $cell))",
       "          (else",
       "            (local.set $box (call $__alloc (i32.const 4)))",

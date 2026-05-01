@@ -215,7 +215,7 @@ Program
                                     { spanStartLine = 21
                                     , spanStartCol = 17
                                     , spanEndLine = 21
-                                    , spanEndCol = 19
+                                    , spanEndCol = 18
                                     }
                                 ) "n"
                             ]
@@ -829,7 +829,7 @@ Program
                             { spanStartLine = 41
                             , spanStartCol = 13
                             , spanEndLine = 43
-                            , spanEndCol = 26
+                            , spanEndCol = 25
                             }
                         )
                         ( EVar
@@ -848,24 +848,24 @@ Program
                                     { spanStartLine = 42
                                     , spanStartCol = 5
                                     , spanEndLine = 42
-                                    , spanEndCol = 17
+                                    , spanEndCol = 16
                                     }
                                 )
-                                ( PVar
+                                ( PWild
                                     ( SrcSpan
                                         { spanStartLine = 42
                                         , spanStartCol = 6
                                         , spanEndLine = 42
-                                        , spanEndCol = 8
+                                        , spanEndCol = 7
                                         }
-                                    ) "_a"
+                                    )
                                 )
                                 ( TyCon
                                     ( SrcSpan
                                         { spanStartLine = 42
-                                        , spanStartCol = 11
+                                        , spanStartCol = 10
                                         , spanEndLine = 42
-                                        , spanEndCol = 15
+                                        , spanEndCol = 14
                                         }
                                     ) "ErrA"
                                 )
@@ -873,9 +873,9 @@ Program
                             ( ELit
                                 ( SrcSpan
                                     { spanStartLine = 42
-                                    , spanStartCol = 20
+                                    , spanStartCol = 19
                                     , spanEndLine = 42
-                                    , spanEndCol = 26
+                                    , spanEndCol = 25
                                     }
                                 )
                                 ( LString "ErrA" )
@@ -886,24 +886,24 @@ Program
                                         { spanStartLine = 43
                                         , spanStartCol = 5
                                         , spanEndLine = 43
-                                        , spanEndCol = 17
+                                        , spanEndCol = 16
                                         }
                                     )
-                                    ( PVar
+                                    ( PWild
                                         ( SrcSpan
                                             { spanStartLine = 43
                                             , spanStartCol = 6
                                             , spanEndLine = 43
-                                            , spanEndCol = 8
+                                            , spanEndCol = 7
                                             }
-                                        ) "_b"
+                                        )
                                     )
                                     ( TyCon
                                         ( SrcSpan
                                             { spanStartLine = 43
-                                            , spanStartCol = 11
+                                            , spanStartCol = 10
                                             , spanEndLine = 43
-                                            , spanEndCol = 15
+                                            , spanEndCol = 14
                                             }
                                         ) "ErrB"
                                     )
@@ -911,9 +911,9 @@ Program
                                 ( ELit
                                     ( SrcSpan
                                         { spanStartLine = 43
-                                        , spanStartCol = 20
+                                        , spanStartCol = 19
                                         , spanEndLine = 43
-                                        , spanEndCol = 26
+                                        , spanEndCol = 25
                                         }
                                     )
                                     ( LString "ErrB" )

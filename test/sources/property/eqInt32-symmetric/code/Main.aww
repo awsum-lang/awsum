@@ -1,28 +1,30 @@
 -- Property: `eqInt32 a b == eqInt32 b a` for any (a, b). Both sides
--- must agree, regardless of whether a == b or not. The four cases of
--- (eq a b, eq b a) are decomposed manually since Awsum has no eqBool
--- builtin yet — only the (true, true) and (false, false) corners are
--- success outcomes.
+-- must agree, even when `a /= b`. Input format: "a:b". The property
+-- has no failable inner ops, so the only error path is a parse
+-- failure.
 import IO.Stdout
 
-parsePair : String -> Either ParseError (Tuple2 Int32 Int32)
-parsePair raw = case splitOnFirst ":" raw of
+parseInput : String -> Either ParseError (Tuple2 Int32 Int32)
+parseInput raw = case splitOnFirst ":" raw of
   Nothing -> Left ParseError
-  Just t -> case t of
-    Tuple2 aStr bStr -> case parseInt32 aStr of
-      Left e -> Left e
-      Right a -> case parseInt32 bStr of
-        Left e -> Left e
-        Right b -> Right (Tuple2 a b)
+  Just (Tuple2 aStr bStr) -> do
+    a <- parseInt32 aStr
+    b <- parseInt32 bStr
+    pureEither (Tuple2 a b)
+
+property : Int32 -> Int32 -> Bool
+property a b = case eqInt32 a b of
+  True -> eqInt32 b a
+  False -> case eqInt32 b a of
+    True -> False
+    False -> True
 
 main : String -> IO Unit
-main raw = case parsePair raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right t -> case t of
-    Tuple2 a b -> case eqInt32 a b of
-      True -> case eqInt32 b a of
-        True -> IO.Stdout.print "OK"
-        False -> IO.Stdout.print "FAIL: ab=true, ba=false"
-      False -> case eqInt32 b a of
-        True -> IO.Stdout.print "FAIL: ab=false, ba=true"
-        False -> IO.Stdout.print "OK"
+main raw =
+  let res : Either ParseError Bool = do
+        Tuple2 a b <- parseInput raw
+        pureEither (property a b)
+   in case res of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

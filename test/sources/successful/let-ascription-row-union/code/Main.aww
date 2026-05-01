@@ -1,0 +1,37 @@
+-- End-to-end test for `let n : T = e in body`: the type
+-- ascription on a let-binding lets the typechecker push the
+-- expected row-union down through a do-block whose `<-` steps
+-- return `Either` with different error labels. Without the
+-- annotation, the same do-block would fail with
+-- `MissingLetAnnotation` (see `errors/let-ambiguous-do-row-union/`).
+--
+-- Runtime: this exercises the success path — both `opA` and `opB`
+-- return `Right`, so `res` is `Right 2` and the case dispatches
+-- to the `Right n` arm. The error labels (`ErrA`, `ErrB`,
+-- `ParseError`) appear only in the type and in the `Left e` arm
+-- of the case; their FNV-1a tags are recorded by the lowering's
+-- row-tag table when the value flows through the row-typed slot.
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+opA : Either ErrA Int32
+opA = Right 1
+
+opB : Either ErrB Int32
+opB = Right 2
+
+main : String -> IO Unit
+main _ =
+  let res : Either (ParseError | ErrA | ErrB) Int32 = do
+        a <- opA
+        b <- opB
+        pureEither b
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : ErrA) -> IO.Stdout.print "ERR_A"
+          (_ : ErrB) -> IO.Stdout.print "ERR_B"
+        Right n -> IO.Stdout.print (showInt32 n)

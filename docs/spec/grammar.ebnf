@@ -13,7 +13,16 @@ TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , Co
 ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = DeclName , ":" , Type , [ TrailingLineComment ] ;
-FunDef              = DeclName , { LIdent } , "=" , Expr , [ TrailingLineComment ] ;
+FunDef              = DeclName , { ParamBinder } , "=" , Expr , [ TrailingLineComment ] ;
+(* Function parameters: either a simple name, or a parens-wrapped
+   destructuring pattern (single-constructor types pass
+   exhaustiveness trivially; refutable patterns from
+   multi-constructor types raise NonExhaustiveCase). The parens
+   around a pattern are syntactically required to distinguish a
+   destructuring parameter from a sequence of bare-name
+   parameters — `f Tuple3 a b c` is four parameters, not one
+   pattern with three fields. *)
+ParamBinder         = LIdent | "(" , Pattern , ")" ;
 
 (* Name of a top-level declaration. The parenthesised "++" form is how the
    bundled prelude spells the concatenation operator itself
@@ -40,16 +49,43 @@ TypeArrow           = TypeApp , [ "->" , TypeArrow ] ;
 TypeApp             = TypeAtom , { TypeAtom } ;
 TypeAtom            = UIdent | LIdent | "(" , Type , ")" ;
 
-(* Expressions: lambda / do / case / ++ chain / application / atoms.
-   The lambda and do-block forms are kept at the lowest precedence
-   (same level as 'case') so their bodies extend as far right as
+(* Expressions: lambda / let / do / case / ++ chain / application / atoms.
+   Lambda, let, do-block and case forms are kept at the lowest
+   precedence (same level) so their bodies extend as far right as
    possible. *)
-Expr                = Lambda | DoBlock | CaseExpr | Concat ;
+Expr                = Lambda | LetIn | DoBlock | CaseExpr | Concat ;
 Lambda              = "\\" , LIdent , { LIdent } , "->" , Expr ;
+(* Two surface shapes are accepted for 'let':
+   - Inline single binding:  let n = e in body
+   - Layout multi-binding:   let n1 = e1 (NEWLINE  ni = ei)*
+                             (NEWLINE)? in body
+   In the layout form, all 'ni' must align at the column where 'n1'
+   started; 'in' must appear at a column strictly less than that
+   bindings column ('in' is dedented relative to the bindings,
+   Haskell-style). Both shapes parse to a chain of nested 'ELet'
+   nodes — the renderer collapses chains visually but the AST is
+   single-binding throughout. *)
+LetIn               = "let" , LetBinding , { NEWLINE , LetBinding } ,
+                      [ NEWLINE ] , "in" , Expr ;
+(* The let-binding's LHS is a pattern, so destructuring forms
+   like `let (Tuple3 a b c) = e` work alongside the simple
+   `let n = e` shape. The optional ":" Type ascription only
+   applies to single-name (`PVar`) binders — ascribing a
+   destructuring pattern as a whole is rejected with
+   `PatternLetAscription`; the user should ascribe the
+   right-hand side instead. Without an ascription the
+   typechecker tries to synthesise the right-hand side; on
+   synthesis failure (e.g. a do-block whose `<-` steps return
+   Either with different error labels and the row-union can't
+   be reconciled bottom-up) it reports `MissingLetAnnotation`,
+   requiring the user to spell out the expected type. The
+   same rules apply to the LetBindingDoStmt form below. *)
+LetBinding          = Pattern , [ ":" , Type ] , "=" , Expr ;
 DoBlock             = "do" , NEWLINE , DoStmt , { Terminator , DoStmt } ;
 DoStmt              = Pattern , "<-" , Expr
-                    | "let" , LIdent , "=" , Expr
+                    | "let" , LetBindingDoStmt
                     | Expr ;
+LetBindingDoStmt    = Pattern , [ ":" , Type ] , "=" , Expr ;
 Concat              = App , { "++" , App } ;
 App                 = Atom , { Atom } ;
 Atom                = QName | UIdent | "(" , Expr , ")" | String | Int ;
@@ -123,8 +159,9 @@ any                 = U+0000…U+10FFFF ;
       (function params, pattern vars, top-level defs, type params).
 
    5. Reserved words (parser). The identifiers `import`, `type`,
-      `case`, `of`, `do`, and `let` are reserved by the grammar and
-      cannot be used as `LIdent` (function name, parameter, pattern
-      variable, type variable). They appear as literals in `Import`,
-      `TypeDecl`, `CaseExpr`, `DoBlock`, and `DoStmt`; the parser
-      rejects them in any other position with a parse error. *)
+      `case`, `of`, `do`, `let`, and `in` are reserved by the
+      grammar and cannot be used as `LIdent` (function name,
+      parameter, pattern variable, type variable). They appear as
+      literals in `Import`, `TypeDecl`, `CaseExpr`, `DoBlock`,
+      `DoStmt`, and `LetIn`; the parser rejects them in any other
+      position with a parse error. *)

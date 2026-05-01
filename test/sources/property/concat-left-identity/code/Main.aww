@@ -1,6 +1,11 @@
 -- Property: `"" ++ s == s` for every String. Mirrors
--- `concat-right-identity` on the other side.
+-- `concat-right-identity` on the other side. There's nothing to
+-- parse and nothing that can fail, so the property runs over
+-- 'main raw' directly — Haskell expects the input back.
 import IO.Stdout
 
+property : String -> String
+property s = "" ++ s
+
 main : String -> IO Unit
-main raw = IO.Stdout.print ("" ++ raw)
+main raw = IO.Stdout.print (property raw)

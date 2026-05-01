@@ -1,0 +1,162 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "sumTriple" [ "$arg_21_11" ]
+            ( CCase
+                ( CVar "$arg_21_11" )
+                [
+                    ( 0
+                    ,
+                        [ "a"
+                        , "b"
+                        , "c"
+                        ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "addInt32" )
+                            [ CVar "a"
+                            , CVar "b"
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "__w0" ]
+                            , CIntLit 0 TInt32
+                            )
+                        ,
+                            ( 1
+                            , [ "ab" ]
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "addInt32" )
+                                    [ CVar "ab"
+                                    , CVar "c"
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "__w0" ]
+                                    , CIntLit 0 TInt32
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "abc" ]
+                                    , CVar "abc"
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "apply"
+            [ "f"
+            , "t"
+            ]
+            ( CCall
+                ( CVar "f" )
+                [ CVar "t" ]
+            )
+        , CFunDef "sumPair" [ "$arg_31_9" ]
+            ( CCase
+                ( CVar "$arg_31_9" )
+                [
+                    ( 0
+                    ,
+                        [ "a"
+                        , "b"
+                        ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "addInt32" )
+                            [ CVar "a"
+                            , CVar "b"
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "__w0" ]
+                            , CIntLit 0 TInt32
+                            )
+                        ,
+                            ( 1
+                            , [ "s" ]
+                            , CVar "s"
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CValDef "triple"
+            ( CCon 0
+                [ CIntLit 10 TInt32
+                , CIntLit 20 TInt32
+                , CIntLit 30 TInt32
+                ]
+            )
+        , CValDef "pair"
+            ( CCon 0
+                [ CIntLit 100 TInt32
+                , CIntLit 200 TInt32
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CVar "$let$2" )
+                [ CCall
+                    ( CVar "sumTriple" )
+                    [ CVar "triple" ]
+                ]
+            )
+        , CFunDef "$lam$0" [ "$arg_44_19" ]
+            ( CCase
+                ( CVar "$arg_44_19" )
+                [
+                    ( 0
+                    ,
+                        [ "a"
+                        , "b"
+                        ]
+                    , CCall
+                        ( CVar "sumPair" )
+                        [ CCon 0
+                            [ CVar "a"
+                            , CVar "b"
+                            ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$let$1"
+            [ "n"
+            , "m"
+            ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        , CString " / "
+                        ]
+                    , CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CVar "m" ]
+                    ]
+                ]
+            )
+        , CFunDef "$let$2" [ "n" ]
+            ( CCall
+                ( CVar "$let$1" )
+                [ CVar "n"
+                , CCall
+                    ( CVar "apply" )
+                    [ CVar "$lam$0"
+                    , CVar "pair"
+                    ]
+                ]
+            )
+        ]
+    }

@@ -11,6 +11,8 @@
 module Awsum.Codegen.CLR.Assemble (assembleCLR) where
 
 import Awsum.Core
+import Awsum.HM (rowTag)
+import Awsum.Syntax (Type' (..), noSpan)
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
@@ -469,6 +471,18 @@ cilLdcI4 n
   | n == -1 = [0x15] -- ldc.i4.m1
   | n >= -128 && n <= 127 = [0x1F, fromIntegral n] -- ldc.i4.s
   | otherwise = 0x20 : w32le (fromIntegral n) -- ldc.i4
+
+-- | FNV-1a 32-bit row tags for the prelude's nominal labels used by
+--   the Int32 arithmetic builtins. Computed via 'rowTag' so the
+--   runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'.
+--   Cast to 'Int' (signed) so the bit pattern fits 'cilLdcI4' which
+--   takes 'Int' — at the CIL level @ldc.i4@ stores the lower 32 bits
+--   bit-for-bit, which is what user-side dispatch compares against.
+underflowRowTagInt :: Int
+underflowRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "UnderflowError")) :: Int32)
+
+overflowRowTagInt :: Int
+overflowRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "OverflowError")) :: Int32)
 
 cilStloc :: Int -> [Word8]
 cilStloc n
@@ -965,12 +979,15 @@ mkEq methodName = do
           <> notEqualBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
--- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.addInt32Method'. Locals
 --   layout: V_0/V_1 = unboxed int operands, V_2 = wrapping sum,
---   V_3 = boxed ArithError between Left construction and Object[2]
---   wrap. Overflow detection uses the XOR trick — same logic as the
---   JVM 'mkAddInt32', single-block, no try/catch needed.
+--   V_3 = inner @CCon@ Object[1], V_4 = row Object[2]. Overflow
+--   detection uses the XOR trick — same logic as the JVM 'mkAddInt32',
+--   single-block, no try/catch. The error side wraps three nested
+--   Object[]s: inner (single-ctor tag 0), row (FNV-1a tag of label),
+--   outer Left (tag 0). Mirrors what surface @Left UnderflowError@
+--   would lower to.
 mkAddInt32 :: AsmM MInfo
 mkAddInt32 = do
   ni <- w16 <$> addStr "__addInt32"
@@ -978,19 +995,34 @@ mkAddInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3
-  localTok <- addLocalSigBytes [0x07, 0x04, 0x08, 0x08, 0x08, 0x1C]
+  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3, object V_4
+  localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x08, 0x1C, 0x1C]
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      makeLeft tagBytes =
+      makeLeft rowTagBytes =
+        -- inner = Object[1] = [Integer(0)]; V_3 = inner
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> tagBytes
+          <> cilLdcI4 0 -- inner CCon tag = 0
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 3
+          -- row = Object[2] = [Integer(rowTag), inner]; V_4 = row
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> rowTagBytes
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> cilStelemRef
+          <> cilStloc 4
+          -- left = Object[2] = [Integer(0), row]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
@@ -1000,11 +1032,11 @@ mkAddInt32 = do
           <> cilStelemRef
           <> cilDup
           <> cilLdcI4 1
-          <> cilLdloc 3
+          <> cilLdloc 4
           <> cilStelemRef
           <> cilRet
-      overBlock = makeLeft (cilLdcI4 1) -- ArithError Overflow = 1
-      underBlock = makeLeft (cilLdcI4 0) -- ArithError Underflow = 0
+      overBlock = makeLeft (cilLdcI4 overflowRowTagInt)
+      underBlock = makeLeft (cilLdcI4 underflowRowTagInt)
       okBlock =
         cilLdcI4 2
           <> newarrObj
@@ -1120,11 +1152,10 @@ mkAddUInt8 = do
           <> okBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
--- | subInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.subInt32Method'. Same XOR
 --   overflow trick as 'mkAddInt32', with 'cilSub' replacing 'cilAdd' in
---   the preamble — kept structurally parallel to make the two methods
---   easy to read together.
+--   the preamble. Same row-tagged error encoding.
 mkSubInt32 :: AsmM MInfo
 mkSubInt32 = do
   ni <- w16 <$> addStr "__subInt32"
@@ -1132,19 +1163,31 @@ mkSubInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3
-  localTok <- addLocalSigBytes [0x07, 0x04, 0x08, 0x08, 0x08, 0x1C]
+  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3, object V_4
+  localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x08, 0x1C, 0x1C]
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      makeLeft tagBytes =
+      makeLeft rowTagBytes =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> tagBytes
+          <> cilLdcI4 0
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 3
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> rowTagBytes
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> cilStelemRef
+          <> cilStloc 4
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
@@ -1154,11 +1197,11 @@ mkSubInt32 = do
           <> cilStelemRef
           <> cilDup
           <> cilLdcI4 1
-          <> cilLdloc 3
+          <> cilLdloc 4
           <> cilStelemRef
           <> cilRet
-      overBlock = makeLeft (cilLdcI4 1) -- ArithError Overflow = 1
-      underBlock = makeLeft (cilLdcI4 0) -- ArithError Underflow = 0
+      overBlock = makeLeft (cilLdcI4 overflowRowTagInt)
+      underBlock = makeLeft (cilLdcI4 underflowRowTagInt)
       okBlock =
         cilLdcI4 2
           <> newarrObj
@@ -1207,13 +1250,13 @@ mkSubInt32 = do
           <> underBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
--- | mulInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | mulInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.mulInt32Method'. Both
 --   operands are widened to int64, multiplied at long width, and the
 --   result range-checked against [INT32_MIN, INT32_MAX]. Direction is
---   read off the comparison result — bgt → Overflow, blt → Underflow.
+--   read off the comparison result — bgt → OverflowError, blt → UnderflowError.
 --   Locals: V_0/V_1 = unboxed int operands, V_2 = int64 product,
---   V_3 = boxed ArithError staged before the Object[2] wrap.
+--   V_3 = inner @CCon@ Object[1], V_4 = row Object[2].
 mkMulInt32 :: AsmM MInfo
 mkMulInt32 = do
   ni <- w16 <$> addStr "__mulInt32"
@@ -1221,20 +1264,32 @@ mkMulInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0, int32 V_1, int64 V_2, object V_3
+  -- locals: int32 V_0, int32 V_1, int64 V_2, object V_3, object V_4
   -- ELEMENT_TYPE_I4 = 0x08, ELEMENT_TYPE_I8 = 0x0A, ELEMENT_TYPE_OBJECT = 0x1C
-  localTok <- addLocalSigBytes [0x07, 0x04, 0x08, 0x08, 0x0A, 0x1C]
+  localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x0A, 0x1C, 0x1C]
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      makeLeft tagBytes =
+      makeLeft rowTagBytes =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> tagBytes
+          <> cilLdcI4 0
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 3
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> rowTagBytes
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> cilStelemRef
+          <> cilStloc 4
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
@@ -1244,11 +1299,11 @@ mkMulInt32 = do
           <> cilStelemRef
           <> cilDup
           <> cilLdcI4 1
-          <> cilLdloc 3
+          <> cilLdloc 4
           <> cilStelemRef
           <> cilRet
-      overBlock = makeLeft (cilLdcI4 1) -- Overflow = 1
-      underBlock = makeLeft (cilLdcI4 0) -- Underflow = 0
+      overBlock = makeLeft (cilLdcI4 overflowRowTagInt)
+      underBlock = makeLeft (cilLdcI4 underflowRowTagInt)
       okBlock =
         cilLdcI4 2
           <> newarrObj

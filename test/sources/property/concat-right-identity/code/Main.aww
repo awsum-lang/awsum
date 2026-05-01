@@ -1,8 +1,13 @@
 -- Property: `s ++ "" == s` for every String. The Haskell side hands
 -- back the input unchanged as the expected output, so this is an
--- expectedOutput-style property (Awsum prints the computed value,
--- Haskell expects the input back).
+-- expectedOutput-style property (the property prints the computed
+-- value, Haskell expects the input back). There's nothing to parse
+-- and nothing that can fail, so the property runs over 'main raw'
+-- directly.
 import IO.Stdout
 
+property : String -> String
+property s = s ++ ""
+
 main : String -> IO Unit
-main raw = IO.Stdout.print (raw ++ "")
+main raw = IO.Stdout.print (property raw)

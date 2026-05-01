@@ -76,11 +76,11 @@ function v_describe(v_r){
             const __s = v_e;
             switch (__s[0]) {
               case 2252990199: {
-                const v__a = __s[1];
+                const v___rw = __s[1];
                 return "ErrA";
               }
               case 2269767818: {
-                const v__b = __s[1];
+                const v___rw = __s[1];
                 return "ErrB";
               }
             }

@@ -1,1 +1,1 @@
-ok: 42, ok: -42, err: Overflow, err: Underflow, err: Overflow, ok: -2147483648
+ok: 42, ok: -42, err: OverflowError, err: UnderflowError, err: OverflowError, ok: -2147483648

@@ -16,7 +16,8 @@
 module Awsum.Codegen.LLVM (codegenLLVM) where
 
 import Awsum.Core
-import Awsum.Syntax (Name)
+import Awsum.HM (rowTag)
+import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -209,6 +210,14 @@ runtime :: Set Name -> Text
 runtime builtIns =
   T.intercalate "\n\n" (filter (not . T.null) parts) <> "\n"
   where
+    -- FNV-1a 32-bit row tags for the prelude's nominal labels used by
+    -- the Int32 arithmetic builtins. Computed via 'rowTag' so the
+    -- runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'
+    -- without hard-coded magic numbers.
+    underflowTag :: Text
+    underflowTag = show (rowTag (TyCon noSpan "UnderflowError"))
+    overflowTag :: Text
+    overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
     parts =
       [ if Set.member "concatString" builtIns then rtConcat else "",
         if Set.member "IO.Stdout.print" builtIns then rtPrint else "",
@@ -432,13 +441,17 @@ runtime builtIns =
           "  ret ptr %box",
           "}"
         ]
-    -- addInt32 : Int32 -> Int32 -> Either ArithError Int32.
+    -- addInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
     --   Uses 'llvm.sadd.with.overflow' to detect signed overflow in one
     --   instruction. On overflow, signs of @a@ and @b@ must agree (else
     --   the sum stays in range), so a single @icmp sge i32 %a, 0@ separates
-    --   positive overflow (Overflow, ArithError tag=1) from negative
-    --   overflow (Underflow, ArithError tag=0). The Left/Right encoding
-    --   matches the rest of this file: tags 0/1, payload at offset 8.
+    --   positive overflow (OverflowError) from negative overflow
+    --   (UnderflowError). The error side is a structural sum: the inner
+    --   @CCon@ is the (single, 0-arg) constructor of UnderflowError or
+    --   OverflowError, wrapped in a @CRow@ box keyed by the FNV-1a tag of
+    --   the chosen label, then wrapped in a @Left@ Either box. Three
+    --   nested boxes match what user-written @Left UnderflowError@ would
+    --   lower to.
     rtAddInt32 =
       unlines
         [ "define internal ptr @__addInt32(ptr %pa, ptr %pb) {",
@@ -450,15 +463,20 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %is_pos = icmp sge i32 %a, 0",
-          "  %ae_tag_idx = select i1 %is_pos, i64 1, i64 0",
-          "  %ae = call ptr @malloc(i64 8)",
-          "  %ae_tag = inttoptr i64 %ae_tag_idx to ptr",
-          "  store ptr %ae_tag, ptr %ae",
+          "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowTag <> ", i64 " <> underflowTag,
+          "  %inner = call ptr @malloc(i64 8)",
+          "  %inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %inner_tag, ptr %inner",
+          "  %row = call ptr @malloc(i64 16)",
+          "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
+          "  store ptr %row_tag, ptr %row",
+          "  %row_f = getelementptr ptr, ptr %row, i32 1",
+          "  store ptr %inner, ptr %row_f",
           "  %left = call ptr @malloc(i64 16)",
           "  %left_tag = inttoptr i64 0 to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
-          "  store ptr %ae, ptr %left_f",
+          "  store ptr %row, ptr %left_f",
           "  ret ptr %left",
           "ok:",
           "  %box = call ptr @malloc(i64 4)",
@@ -471,14 +489,15 @@ runtime builtIns =
           "  ret ptr %right",
           "}"
         ]
-    -- subInt32 : Int32 -> Int32 -> Either ArithError Int32.
+    -- subInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
     --   Uses 'llvm.ssub.with.overflow' to detect signed overflow in one
     --   instruction. On overflow, signs of @a@ and @b@ must differ
     --   (otherwise the difference stays in range), so @icmp sge i32 %a, 0@
-    --   separates positive overflow (@a >= 0, b < 0@ ⇒ Overflow, ArithError
-    --   tag = 1) from negative (@a < 0, b > 0@ ⇒ Underflow, tag = 0). The
-    --   special case `b == minInt32` only overflows when `a >= 0`, which
-    --   stays inside the @a >= 0 ⇒ Overflow@ branch.
+    --   separates positive overflow (@a >= 0, b < 0@ ⇒ OverflowError) from
+    --   negative (@a < 0, b > 0@ ⇒ UnderflowError). The special case
+    --   `b == minInt32` only overflows when `a >= 0`, which stays inside
+    --   the @a >= 0 ⇒ OverflowError@ branch. Same row-tagged error
+    --   encoding as 'rtAddInt32'.
     rtSubInt32 =
       unlines
         [ "define internal ptr @__subInt32(ptr %pa, ptr %pb) {",
@@ -490,15 +509,20 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %is_pos = icmp sge i32 %a, 0",
-          "  %ae_tag_idx = select i1 %is_pos, i64 1, i64 0",
-          "  %ae = call ptr @malloc(i64 8)",
-          "  %ae_tag = inttoptr i64 %ae_tag_idx to ptr",
-          "  store ptr %ae_tag, ptr %ae",
+          "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowTag <> ", i64 " <> underflowTag,
+          "  %inner = call ptr @malloc(i64 8)",
+          "  %inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %inner_tag, ptr %inner",
+          "  %row = call ptr @malloc(i64 16)",
+          "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
+          "  store ptr %row_tag, ptr %row",
+          "  %row_f = getelementptr ptr, ptr %row, i32 1",
+          "  store ptr %inner, ptr %row_f",
           "  %left = call ptr @malloc(i64 16)",
           "  %left_tag = inttoptr i64 0 to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
-          "  store ptr %ae, ptr %left_f",
+          "  store ptr %row, ptr %left_f",
           "  ret ptr %left",
           "ok:",
           "  %box = call ptr @malloc(i64 4)",
@@ -511,14 +535,15 @@ runtime builtIns =
           "  ret ptr %right",
           "}"
         ]
-    -- mulInt32 : Int32 -> Int32 -> Either ArithError Int32.
+    -- mulInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
     --   Uses @llvm.smul.with.overflow.i32@ to detect signed overflow.
-    --   Direction: same-sign overflow is Overflow, opposite-sign is
-    --   Underflow. We read sign agreement off @icmp sge i32 (a xor b), 0@:
+    --   Direction: same-sign overflow is OverflowError, opposite-sign is
+    --   UnderflowError. We read sign agreement off @icmp sge i32 (a xor b), 0@:
     --   the xor's sign bit is 0 iff @a@ and @b@ have the same sign, so
-    --   overflow on same-sign means positive overflow → Overflow (tag 1).
-    --   The special case @minInt32 * -1@ = 2147483648 has same signs (both
-    --   negative) and lands on Overflow, which matches the math.
+    --   overflow on same-sign means positive overflow → OverflowError. The
+    --   special case @minInt32 * -1@ = 2147483648 has same signs (both
+    --   negative) and lands on OverflowError, which matches the math.
+    --   Same row-tagged error encoding as 'rtAddInt32'.
     rtMulInt32 =
       unlines
         [ "define internal ptr @__mulInt32(ptr %pa, ptr %pb) {",
@@ -531,15 +556,20 @@ runtime builtIns =
           "err:",
           "  %xor_ab = xor i32 %a, %b",
           "  %same_sign = icmp sge i32 %xor_ab, 0",
-          "  %ae_tag_idx = select i1 %same_sign, i64 1, i64 0",
-          "  %ae = call ptr @malloc(i64 8)",
-          "  %ae_tag = inttoptr i64 %ae_tag_idx to ptr",
-          "  store ptr %ae_tag, ptr %ae",
+          "  %row_tag_idx = select i1 %same_sign, i64 " <> overflowTag <> ", i64 " <> underflowTag,
+          "  %inner = call ptr @malloc(i64 8)",
+          "  %inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %inner_tag, ptr %inner",
+          "  %row = call ptr @malloc(i64 16)",
+          "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
+          "  store ptr %row_tag, ptr %row",
+          "  %row_f = getelementptr ptr, ptr %row, i32 1",
+          "  store ptr %inner, ptr %row_f",
           "  %left = call ptr @malloc(i64 16)",
           "  %left_tag = inttoptr i64 0 to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
-          "  store ptr %ae, ptr %left_f",
+          "  store ptr %row, ptr %left_f",
           "  ret ptr %left",
           "ok:",
           "  %box = call ptr @malloc(i64 4)",

@@ -1,25 +1,34 @@
+-- Property: `subInt32 a b == addInt32 a (negInt32 b)` whenever every
+-- intermediate value (negB, subResult, addResult) stays in Int32
+-- range. Input format: "a:b". The Haskell-side generator picks
+-- pairs constructively, so neither UNDERFLOW nor OVERFLOW is
+-- expected to fire.
 import IO.Stdout
 
-parsePair : String -> Either ParseError (Tuple2 Int32 Int32)
-parsePair raw = case splitOnFirst ":" raw of
+parseInput : String -> Either ParseError (Tuple2 Int32 Int32)
+parseInput raw = case splitOnFirst ":" raw of
   Nothing -> Left ParseError
-  Just t -> case t of
-    Tuple2 a_str b_str -> case parseInt32 a_str of
-      Left e -> Left e
-      Right a -> case parseInt32 b_str of
-        Left e -> Left e
-        Right b -> Right (Tuple2 a b)
+  Just (Tuple2 aStr bStr) -> do
+    a <- parseInt32 aStr
+    b <- parseInt32 bStr
+    pureEither (Tuple2 a b)
+
+property : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Bool
+property a b = do
+  negB <- negInt32 b
+  subResult <- subInt32 a b
+  addResult <- addInt32 a negB
+  pureEither (eqInt32 subResult addResult)
 
 main : String -> IO Unit
-main raw = case parsePair raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right t -> case t of
-    Tuple2 a b -> case negInt32 b of
-      Left _ -> IO.Stdout.print "NEG_OVERFLOW"
-      Right negB -> case subInt32 a b of
-        Left _ -> IO.Stdout.print "SUB_OVERFLOW"
-        Right subResult -> case addInt32 a negB of
-          Left _ -> IO.Stdout.print "ADD_OVERFLOW"
-          Right addResult -> case eqInt32 subResult addResult of
-            True -> IO.Stdout.print "OK"
-            False -> IO.Stdout.print ("FAIL: " ++ showInt32 subResult ++ " /= " ++ showInt32 addResult)
+main raw =
+  let res : Either (ParseError | UnderflowError | OverflowError) Bool = do
+        Tuple2 a b <- parseInput raw
+        property a b
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

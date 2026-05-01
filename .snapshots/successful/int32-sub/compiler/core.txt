@@ -1,32 +1,39 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "showArithError" [ "e" ]
-            ( CCase
-                ( CVar "e" )
-                [
-                    ( 0
-                    , []
-                    , CString "Underflow"
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CString "Overflow"
-                    )
-                ]
-            )
+        [ CFunDef "showUnderflowError" [ "$wild0" ]
+            ( CString "UnderflowError" )
+        , CFunDef "showOverflowError" [ "$wild0" ]
+            ( CString "OverflowError" )
         , CFunDef "render" [ "r" ]
             ( CCase
                 ( CVar "r" )
                 [
                     ( 0
                     , [ "e" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "err: "
-                        , CCall
-                            ( CVar "showArithError" )
-                            [ CVar "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 882564211
+                            , "o"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "err: "
+                                , CCall
+                                    ( CVar "showOverflowError" )
+                                    [ CVar "o" ]
+                                ]
+                            )
+                        ,
+                            ( 3768445577
+                            , "u"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "err: "
+                                , CCall
+                                    ( CVar "showUnderflowError" )
+                                    [ CVar "u" ]
+                                ]
+                            )
                         ]
                     )
                 ,

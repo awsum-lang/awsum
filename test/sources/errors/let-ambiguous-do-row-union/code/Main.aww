@@ -1,0 +1,28 @@
+-- Error: `let res = do { ... }` where the `<-` steps return
+-- `Either` with different error labels. The row-union of those
+-- errors can't be inferred bottom-up — the typechecker emits
+-- `MissingLetAnnotation`, telling the user to write `let res :
+-- <type> = …`. This is the standard fix-by-annotation case;
+-- compare to `AmbiguousIntLiteral` which fires for the same
+-- reason on bare integer literals.
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+opA : Either ErrA Int32
+opA = Right 1
+
+opB : Either ErrB Int32
+opB = Right 2
+
+main : String -> IO Unit
+main _raw =
+  let res = do
+        a <- opA
+        b <- opB
+        pureEither b
+   in case res of
+        Left _ -> IO.Stdout.print "err"
+        Right n -> IO.Stdout.print (showInt32 n)

@@ -1,8 +1,15 @@
 -- Property: `parseUInt8 (showUInt8 x) == Right x` for any UInt8 0..255.
--- Mirror of parseInt32-show-roundtrip on the UInt8 type.
+-- Mirror of `parseInt32-show-roundtrip` for the unsigned 8-bit type.
 import IO.Stdout
 
+property : UInt8 -> String
+property v = showUInt8 v
+
 main : String -> IO Unit
-main raw = case parseUInt8 raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right v -> IO.Stdout.print (showUInt8 v)
+main raw =
+  let res : Either ParseError String = do
+        v <- parseUInt8 raw
+        pureEither (property v)
+   in case res of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right s -> IO.Stdout.print s

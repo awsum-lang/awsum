@@ -1,16 +1,24 @@
 -- Property: `succInt32 (predInt32 x) == Right x` for every Int32 with
--- `x /= minInt32`. Input: a single decimal Int32. The Haskell-side
--- generator excludes minInt32, so neither pred nor succ should fail
--- on a well-formed input.
+-- `x /= minInt32`. Mirror of `predSucc-roundtrip-int32` in the
+-- opposite direction. The Haskell-side generator excludes minInt32,
+-- so neither pred nor succ should fail on a well-formed input.
 import IO.Stdout
 
+property : Int32 -> Either (UnderflowError | OverflowError) Bool
+property x = do
+  p <- predInt32 x
+  s <- succInt32 p
+  pureEither (eqInt32 s x)
+
 main : String -> IO Unit
-main raw = case parseInt32 raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right x -> case predInt32 x of
-    Left _ -> IO.Stdout.print "UNDERFLOW"
-    Right p -> case succInt32 p of
-      Left _ -> IO.Stdout.print "OVERFLOW"
-      Right s -> case eqInt32 s x of
-        True -> IO.Stdout.print "OK"
-        False -> IO.Stdout.print ("FAIL: " ++ showInt32 s ++ " /= " ++ showInt32 x)
+main raw =
+  let res : Either (ParseError | UnderflowError | OverflowError) Bool = do
+        x <- parseInt32 raw
+        property x
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

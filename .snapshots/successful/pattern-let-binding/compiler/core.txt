@@ -1,0 +1,74 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "threeAndDouble" [ "n" ]
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "mulInt32" )
+                    [ CVar "n"
+                    , CIntLit 2 TInt32
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCon 0
+                        [ CVar "n"
+                        , CVar "n"
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "d" ]
+                    , CCon 0
+                        [ CVar "n"
+                        , CVar "d"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "show" [ "pair" ]
+            ( CCase
+                ( CVar "pair" )
+                [
+                    ( 0
+                    ,
+                        [ "a"
+                        , "b"
+                        ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CString "["
+                                    , CCall
+                                        ( CBuiltIn "showInt32" )
+                                        [ CVar "a" ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CBuiltIn "showInt32" )
+                                [ CVar "b" ]
+                            ]
+                        , CString "]"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "show" )
+                    [ CCall
+                        ( CVar "threeAndDouble" )
+                        [ CIntLit 5 TInt32 ]
+                    ]
+                ]
+            )
+        ]
+    }

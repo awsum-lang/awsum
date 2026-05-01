@@ -1,12 +1,24 @@
+-- Property: `negInt32 x + x == 0` for every Int32 except `minInt32`
+-- (which can't be negated in two's complement). Single Int32 input.
+-- The Haskell-side generator (`NonMinInt32`) excludes `minInt32`,
+-- so neither error branch is expected to fire.
 import IO.Stdout
 
+property : Int32 -> Either (UnderflowError | OverflowError) Bool
+property x = do
+  negX <- negInt32 x
+  s <- addInt32 negX x
+  pureEither (eqInt32 s 0)
+
 main : String -> IO Unit
-main raw = case parseInt32 raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right x -> case negInt32 x of
-    Left _ -> IO.Stdout.print "NEG_OVERFLOW"
-    Right negX -> case addInt32 negX x of
-      Left _ -> IO.Stdout.print "ADD_OVERFLOW"
-      Right s -> case eqInt32 s 0 of
-        True -> IO.Stdout.print "OK"
-        False -> IO.Stdout.print ("FAIL: " ++ showInt32 s ++ " /= 0")
+main raw =
+  let res : Either (ParseError | UnderflowError | OverflowError) Bool = do
+        x <- parseInt32 raw
+        property x
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

@@ -44,6 +44,7 @@ module Awsum.HM
 where
 
 import Awsum.Syntax (Name, Type' (..), noSpan)
+import Data.List (partition)
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
 import Data.Text qualified as T
@@ -269,9 +270,85 @@ unifyRows lhs rhs =
   let ls = flattenRow lhs
       rs = flattenRow rhs
       mismatch = Left (CannotUnify lhs rhs)
-   in if length ls /= length rs
+   in if length ls == length rs
+        then goMatch mismatch ls rs mempty
+        else absorbAndMatch lhs rhs ls rs mismatch
+
+-- | Length-mismatch path of 'unifyRows'. The two flattened, deduped
+--   row sides have different cardinalities — set-equality is then
+--   only achievable if the longer side has enough free row-tyvars to
+--   absorb the asymmetry. Each unmatched concrete label on one side
+--   forces one tyvar on the opposite side to bind to it; after the
+--   substitution and a re-flatten, both sides should collapse to the
+--   same set.
+--
+--   Pure tyvars left over after that absorption are /redundant/: they
+--   collapse onto any concrete label still present (set-semantic
+--   dedup folds the duplicates), or onto each other when no concrete
+--   label is around. Only fires when 'goMatch' on the equal-cardinality
+--   path would have failed by length, so the reflexive case
+--   @t ~ t@ never reaches here and never produces spurious bindings.
+absorbAndMatch ::
+  Type' ->
+  Type' ->
+  [Type'] ->
+  [Type'] ->
+  Either UnifyError Subst ->
+  Either UnifyError Subst
+absorbAndMatch lhs rhs ls rs mismatch =
+  let (lConc, lTv) = partition (not . isRowTyVar) ls
+      (rConc, rTv) = partition (not . isRowTyVar) rs
+      lConcSet = S.fromList lConc
+      rConcSet = S.fromList rConc
+      extraL = filter (`S.notMember` rConcSet) lConc
+      extraR = filter (`S.notMember` lConcSet) rConc
+      sharedConc = filter (`S.member` rConcSet) lConc
+   in if length extraL > length rTv || length extraR > length lTv
         then mismatch
-        else goMatch mismatch ls rs mempty
+        else do
+          let absorbingInL = take (length extraR) lTv
+              absorbingInR = take (length extraL) rTv
+              substAbsorbL = mconcat (zipWith bindRowVar absorbingInL extraR)
+              substAbsorbR = mconcat (zipWith bindRowVar absorbingInR extraL)
+              subst1 = substAbsorbL <> substAbsorbR
+              remTvL = drop (length extraR) lTv
+              remTvR = drop (length extraL) rTv
+              allConcrete = sharedConc ++ extraL ++ extraR
+          subst2 <- case allConcrete of
+            (defaultLbl : _) ->
+              Right
+                $ mconcat
+                $ map (`bindRowVar` defaultLbl) (remTvL <> remTvR)
+            [] ->
+              case (remTvL, remTvR) of
+                ([], []) -> Right mempty
+                ([], v0 : _) ->
+                  Right $ mconcat (map (`bindRowVar` v0) remTvR)
+                (v0 : _, []) ->
+                  Right $ mconcat (map (`bindRowVar` v0) remTvL)
+                (_, anchor : _) ->
+                  let pairLen = min (length remTvL) (length remTvR)
+                      paired = mconcat (zipWith bindRowVar (take pairLen remTvL) (take pairLen remTvR))
+                      extras =
+                        mconcat (map (`bindRowVar` anchor) (drop pairLen remTvL))
+                          <> mconcat (map (`bindRowVar` anchor) (drop pairLen remTvR))
+                   in Right (paired <> extras)
+          let combined = subst1 <> subst2
+              lsDone = ordNub (map (applySubst combined) ls)
+              rsDone = ordNub (map (applySubst combined) rs)
+          if length lsDone /= length rsDone
+            then Left (CannotUnify lhs rhs)
+            else goMatch (Left (CannotUnify lhs rhs)) lsDone rsDone combined
+
+isRowTyVar :: Type' -> Bool
+isRowTyVar (TyVar _ _) = True
+isRowTyVar _ = False
+
+-- | Bind a 'TyVar'-shaped row element to a target type. No-op when the
+--   element isn't actually a tyvar — defensive against caller mistakes.
+bindRowVar :: Type' -> Type' -> Subst
+bindRowVar (TyVar _ n) t = singletonSubst n t
+bindRowVar _ _ = mempty
 
 -- | Helper: pair every element of the first list with /some/ element of
 --   the second, accumulating substitutions. Greedy from the left.

@@ -108,26 +108,14 @@ L_addi32_under:
   areturn
 .end method
 
-.method static v_showArithError(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  dup
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
-  pop
-  ldc "Underflow"
-  goto L_join
-L_arm_1:
-  pop
-  ldc "Overflow"
-  goto L_join
-L_join:
+.method static v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
+  ldc "UnderflowError"
+  areturn
+.end method
+
+
+.method static v_showOverflowError(Ljava/lang/Object;)Ljava/lang/Object;
+  ldc "OverflowError"
   areturn
 .end method
 
@@ -149,10 +137,39 @@ L_arm_0:
   aaload
   astore_1
   pop
-  ldc "err: "
   aload_1
-  invokestatic AwsumMain/v_showArithError(Ljava/lang/Object;)Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    882564211: L_arm_882564211
+    3768445577: L_arm_3768445577
+    default: L_arm_882564211
+L_arm_882564211:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  ldc "err: "
+  aload_2
+  invokestatic AwsumMain/v_showOverflowError(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_arm_3768445577:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  ldc "err: "
+  aload_2
+  invokestatic AwsumMain/v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_join:
   goto L_join
 L_arm_1:
   dup

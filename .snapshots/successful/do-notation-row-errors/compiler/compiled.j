@@ -27,51 +27,6 @@
   areturn
 .end method
 
-.method static v_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  dup
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
-  dup
-  iconst_1
-  aaload
-  astore_2
-  pop
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_2
-  aastore
-  goto L_join
-L_arm_1:
-  dup
-  iconst_1
-  aaload
-  astore_2
-  pop
-  aload_1
-  checkcast java/lang/invoke/MethodHandle
-  aload_2
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
-  goto L_join
-L_join:
-  areturn
-.end method
-
-
 .method static v_pureEither(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_2
   anewarray java/lang/Object
@@ -84,12 +39,6 @@ L_join:
   iconst_1
   aload_0
   aastore
-  areturn
-.end method
-
-
-.method static v_const(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
   areturn
 .end method
 
@@ -162,8 +111,135 @@ L_join:
 
 .method static v_f()Ljava/lang/Object;
   invokestatic AwsumMain/v_op1()Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v__pap_1(Ljava/lang/Object;)Ljava/lang/Object;]
-  invokestatic AwsumMain/v_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_0
+  pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  sipush 401451280
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_0
+  aastore
+  aastore
+  goto L_join
+L_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_0
+  pop
+  invokestatic AwsumMain/v_op2()Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  goto L_join
+L_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  invokestatic AwsumMain/v_op3()Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  sipush 451784137
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_2
+  aastore
+  aastore
+  goto L_join
+L_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  aload_2
+  invokestatic AwsumMain/v_pureEither(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_join:
+  goto L_join
+L_join:
+  goto L_join
+L_join:
   areturn
 .end method
 
@@ -243,26 +319,6 @@ L_join:
   invokestatic AwsumMain/v_f()Ljava/lang/Object;
   invokestatic AwsumMain/v_describe(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v__pap_0(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_op3()Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_pureEither(Ljava/lang/Object;)Ljava/lang/Object;]
-  invokestatic AwsumMain/v_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  invokestatic AwsumMain/v_const(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v__pap_1(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_op2()Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v__pap_0(Ljava/lang/Object;)Ljava/lang/Object;]
-  invokestatic AwsumMain/v_bindEither(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  invokestatic AwsumMain/v_const(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

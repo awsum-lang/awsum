@@ -97,12 +97,12 @@ CoreProgram
                         ( CVar "e" )
                         [
                             ( 2252990199
-                            , "_a"
+                            , "__rw"
                             , CString "ErrA"
                             )
                         ,
                             ( 2269767818
-                            , "_b"
+                            , "__rw"
                             , CString "ErrB"
                             )
                         ]

@@ -71,6 +71,7 @@ exprSpan = \case
   EBuiltIn sp _ -> sp
   ELam sp _ _ -> sp
   EDo sp _ -> sp
+  ELet sp _ _ _ _ -> sp
 
 -- | Lexical identifier (kept as 'Text' for simplicity).
 --   The parser is responsible for validating case/style rules.
@@ -104,16 +105,43 @@ data Comment
 -- | A bound function parameter, with the source span of the identifier.
 --   Spans let downstream tooling (warnings, quick-fixes) point at exactly
 --   the offending parameter rather than the whole definition.
-data Param = Param SrcSpan Name
+--
+--   The two constructors mirror the two surface shapes:
+--
+--     * @Param sp n@ — a plain name (@f x = …@). The common case;
+--       the typechecker and lowering only ever see this variant.
+--     * @ParamPat sp pat@ — a destructuring pattern
+--       (@f (Tuple3 a b c) = …@). The 'Awsum.Desugar' pass
+--       rewrites every 'ParamPat' to a fresh 'Param' plus a
+--       single-arm 'ECase' wrapping the body, so by the time the
+--       AST reaches typecheck only 'Param' remains. Keeping
+--       'ParamPat' in the AST (rather than desugaring at parse
+--       time) lets the renderer round-trip the original source
+--       shape.
+data Param
+  = Param SrcSpan Name
+  | ParamPat SrcSpan Pattern
   deriving stock (Show, Eq)
 
--- | Extract the textual name of a parameter.
+-- | Extract the textual name of a parameter. For 'ParamPat' returns
+--   the leading binder name extracted from the pattern (a defensive
+--   value used by error messages; the desugarer normally rewrites
+--   'ParamPat' away before any code looks at the name).
 paramName :: Param -> Name
 paramName (Param _ n) = n
+paramName (ParamPat _ pat) = patternLeadName pat
+  where
+    patternLeadName = \case
+      PVar _ n -> n
+      PWild _ -> "_"
+      PCon _ c _ -> c
+      PAscribe _ inner _ -> patternLeadName inner
 
--- | Extract the source span of a parameter (the identifier itself).
+-- | Extract the source span of a parameter (the identifier or
+--   pattern itself).
 paramSpan :: Param -> SrcSpan
 paramSpan (Param sp _) = sp
+paramSpan (ParamPat sp _) = sp
 
 -- | Top-level declaration.
 data Decl
@@ -234,6 +262,26 @@ data Expr
     --   application). Hardcoded to the @Either@ monad shape in this
     --   iteration — there is no type-class dispatch yet.
     EDo SrcSpan [DoStmt]
+  | -- | Let-binding: @let n = e in body@ or @let n : T = e in body@.
+    --   Binds @n@ to the value of @e@ in scope of @body@. The
+    --   optional 'Type' is the user-written ascription on the
+    --   binder; when present, @e@ is checked against it (which
+    --   lets the typechecker push an expected type down through
+    --   shapes whose result row would otherwise be ambiguous,
+    --   e.g. a @do@-block whose @<-@ steps return @Either@ with
+    --   different error labels).
+    --
+    --   Lowering synthesises a fresh top-level helper
+    --   @$let$N captures n = body'@ and emits a saturated call
+    --   @$let$N captures e@ — same machinery as 'ELam' lifting but
+    --   the application is fully applied at the call site, so
+    --   saturate sees a direct call and no PAP / closure runtime
+    --   is needed.
+    --
+    --   @do@-blocks containing @let@ desugar to nested 'ELet's
+    --   wrapping the rest of the block (one 'ELet' per @let@
+    --   statement); see 'Awsum.Desugar'.
+    ELet SrcSpan Pattern (Maybe Type') Expr Expr
   deriving stock (Show, Eq)
 
 -- | A single statement inside a 'EDo' block. Each statement maps to
@@ -241,15 +289,19 @@ data Expr
 --
 --   * @DoBind p e@ — @p <- e@. The continuation runs with the bound
 --     pattern in scope; desugar to @bindEither e (\\p -> rest)@.
---   * @DoLet n e@ — @let n = e@. Currently parsed only as a
---     forwarding shape (no parser support yet); reserved for the
---     future.
+--   * @DoLet n e@ — @let n = e@ (or @let n : T = e@). Binds @n@ to
+--     the value of @e@ for the rest of the block. The optional
+--     'Type' is the user-written ascription, used when the
+--     synthesised RHS type would otherwise be ambiguous (same role
+--     as on standalone 'ELet'). Desugars to an 'ELet' wrapping the
+--     remaining statements (the body of which is the trailing
+--     'DoExpr').
 --   * @DoExpr e@ — a bare expression. As the last statement it is the
 --     block's result; in earlier positions the typechecker rejects it
 --     since we have no @>>@ analogue without a unit type at the row.
 data DoStmt
   = DoBind SrcSpan Pattern Expr
-  | DoLet SrcSpan Name Expr
+  | DoLet SrcSpan Pattern (Maybe Type') Expr
   | DoExpr SrcSpan Expr
   deriving stock (Show, Eq)
 

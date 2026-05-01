@@ -24,7 +24,8 @@ import Awsum.Core
 import Awsum.Cps (cpsProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
-import Awsum.HM (Subst, applySubst, canonicalLabel, flattenRow, rowTag, unify)
+import Awsum.HM (Subst, applySubst, canonicalLabel, flattenRow, rowTag, singletonSubst, unify)
+import Awsum.Prelude (preludeDefNames)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Scc (sccMergeProgram)
 import Awsum.StackSafety (verifyStackSafety)
@@ -147,6 +148,16 @@ freshLiftName = do
   put s {lsFresh = lsFresh s + 1}
   pure ("$lift$" <> show (lsFresh s))
 
+-- | Mint a fresh helper name '$let$N' for a lifted let-binding body
+--   and bump the counter. The shared @lsFresh@ counter keeps every
+--   synthesised helper name unique across the program regardless of
+--   whether it came from a lambda lift, a coercion, or a let.
+freshLetName :: LowerM Name
+freshLetName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$let$" <> show (lsFresh s))
+
 -- | Append a lifted helper definition to the program.
 emitHelper :: CDecl -> LowerM ()
 emitHelper d = modify (\s -> s {lsHelpers = d : lsHelpers s})
@@ -241,12 +252,13 @@ freeReferences = go
       ELam _ params body ->
         go body `Set.difference` Set.fromList (map paramName params)
       EDo _ stmts -> goDoStmts stmts
+      ELet _ pat _ e body -> go e <> (go body `Set.difference` patternBoundNames pat)
 
     goDoStmts [] = Set.empty
     goDoStmts (s : rest) = case s of
       DoBind _ pat e ->
         go e <> (goDoStmts rest `Set.difference` patternBoundNames pat)
-      DoLet _ n e -> go e <> Set.delete n (goDoStmts rest)
+      DoLet _ pat _ e -> go e <> (goDoStmts rest `Set.difference` patternBoundNames pat)
       DoExpr _ e -> go e <> goDoStmts rest
 
     patternBoundNames p = case p of
@@ -260,12 +272,10 @@ freeReferences = go
 --   speaks.
 desugarErrorToTypeError :: Desugar.DesugarError -> TypeError
 desugarErrorToTypeError = \case
-  Desugar.DesugarUnsupportedBindPattern sp ->
-    DoBindNonEither sp (TyCon sp "<unsupported-pattern>")
-  Desugar.DesugarUnsupportedLet sp ->
-    DoBlockMissingResult sp
   Desugar.DesugarBindNameStillUsed sp _n ->
     DoInSynthesisPosition sp
+  Desugar.DesugarPatternLetAscription sp ->
+    PatternLetAscription sp
 
 -- | Generate wrapper 'CFunDef's for every non-nullary constructor.
 --   E.g. @type Box a = Box a@ produces:
@@ -298,7 +308,7 @@ elaborateLowerProgram progType progIn = do
   --    where the type context is available.
   prog <- first desugarErrorToTypeError (desugarProgram progIn)
   -- 1) Elaboration step: just typecheck; no evidence/dictionaries yet.
-  warnings <- typecheckProgram progType prog
+  warnings <- typecheckProgram progType preludeDefNames prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let ds = toList (decls prog)
       conInfo = buildConInfo ds
@@ -665,6 +675,17 @@ lowerExprM env locals expected = \case
     Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
   EBuiltIn _sp name -> pure (CBuiltIn name)
   ELam sp params body -> liftLambda env locals expected sp params body
+  -- After 'Awsum.Desugar', any non-'PVar' / non-'PWild' let-binding
+  -- has been rewritten to 'ECase'. The lowering only sees simple
+  -- name (or wildcard) bindings here; 'PWild' uses the same
+  -- '$let_w_<sp>' synthetic-name path that 'lowerLet' applies for
+  -- 'PVar' under the hood.
+  ELet sp pat mAnnot e body -> case pat of
+    PVar _ n -> lowerLet env locals expected sp n mAnnot e body
+    PWild psp ->
+      let n = "$let_w_" <> show (spanStartLine psp) <> "_" <> show (spanStartCol psp)
+       in lowerLet env locals expected sp n mAnnot e body
+    _ -> liftEither $ Left (TELowering "non-PVar let-binding should have been desugared by Awsum.Desugar")
   EDo _sp _ -> liftEither $ Left (TELowering "do-block not desugared before lowering — internal pipeline error")
   ECase _sp scrut alts _ -> do
     scrut' <- lowerExprM env locals Nothing scrut
@@ -800,6 +821,71 @@ liftLambda env locals mExpected _sp params body = do
   pure $ case captures of
     [] -> CVar helperName
     _ -> CCall (CVar helperName) (map CVar captures)
+
+-- | Lower @let n = e in body@ by lifting the body into a fresh
+--   top-level helper @$let$N captures n = body'@ and emitting a
+--   /saturated/ call @$let$N captures e@. The helper takes the
+--   let-binder as its last formal parameter; captures from the
+--   enclosing scope are prepended so the helper itself is a closed
+--   first-order function — exactly the shape every backend already
+--   handles.
+--
+--   This shares the lift mechanism with 'liftLambda', but the call
+--   is fully applied at the call site, so 'saturate' sees a direct
+--   call to a known top-level function rather than a partial
+--   application. No closure / PAP runtime is needed; @e@ is
+--   evaluated exactly once regardless of how many times @n@ appears
+--   in @body@.
+--
+--   The let-binder's type is best-effort synthesised via
+--   'synthLabelType'; if synthesis can't pin it down (e.g. the RHS
+--   is a polymorphic application whose result depends on the outer
+--   expected type and we don't have it here), we fall back to a
+--   tyvar — the same conservative answer 'liftLambda' uses for
+--   unknown capture types. The let-binder is then in scope for
+--   nested lookups in @body@ even when the precise type is unknown.
+lowerLet ::
+  LowerEnv ->
+  Locals ->
+  Maybe Type' ->
+  SrcSpan ->
+  Name ->
+  Maybe Type' ->
+  Expr ->
+  Expr ->
+  LowerM CExpr
+lowerLet env locals expected _sp n mAnnot e body = do
+  -- Prefer the user-written ascription as @n@'s type when present —
+  -- it's the same type the typechecker pushed into 'checkExpr' for
+  -- @e@, so 'body' lookups (e.g., row-tag resolution on a binder
+  -- whose type is row-shaped) see it correctly. Without an
+  -- ascription, fall back to best-effort 'synthLabelType' on @e@,
+  -- mirroring the lambda-lift capture-type policy.
+  let nTy = case mAnnot of
+        Just t -> t
+        Nothing -> fromMaybe (TyVar noSpan "_letBind") (synthLabelType env e)
+      bodyFree = freeReferences body
+      -- Captures: every local visible at the let site that 'body'
+      -- references, minus the let-binder itself (which is supplied
+      -- by the call, not captured).
+      captures = Set.toAscList ((bodyFree `Set.intersection` locals) `Set.difference` Set.singleton n)
+      captureTypes =
+        [ fromMaybe (TyVar noSpan "_capture") (leTypeOf env (QName [] c))
+        | c <- captures
+        ]
+      env' =
+        extendLowerEnv
+          env
+          ( (QName [] n, nTy)
+              : [(QName [] c, ty) | (c, ty) <- zip captures captureTypes]
+          )
+      locals' = Set.insert n locals
+  body' <- lowerExprM env' locals' expected body
+  e' <- lowerExprM env locals (Just nTy) e
+  helperName <- freshLetName
+  let allParams = captures <> [n]
+  emitHelper (CFunDef helperName (freshenWildcardArgs allParams) body')
+  pure (CCall (CVar helperName) (map CVar captures <> [e']))
 
 -- | Per-argument expected types for a constructor application.
 --
@@ -983,18 +1069,27 @@ synthNominalHeadCoerce conInfo tyName src tgt = do
       modify (\s -> s {lsLifters = M.insert key helper (lsLifters s)})
       let cons = constructorsOfType conInfo tyName
           srcParams = maybe [] ciTypeParams (M.lookup (firstConName cons) conInfo)
-          srcSubst =
-            fromRight mempty
-              $ unify (applyTyParams tyName srcParams) src
-          tgtSubst =
-            fromRight mempty
-              $ unify (applyTyParams tyName srcParams) tgt
+          -- Freshen the generic-head's parameters (and the per-field
+          -- types that mention them) before unifying. Without this,
+          -- an input type whose tyvar happens to share a name with
+          -- one of the type's own parameters — e.g. @Either PE a@,
+          -- where @a@ also names @Either@'s second parameter — would
+          -- cross-bind during 'unify' and corrupt the per-field
+          -- substitution. The "$ctor" suffix is just a marker; the
+          -- exact name doesn't matter as long as it doesn't collide
+          -- with any tyvar in @src@ or @tgt@.
+          freshSubst =
+            mconcat [singletonSubst p (TyVar noSpan (p <> "$ctor")) | p <- srcParams]
+          freshGeneric = applySubst freshSubst (applyTyParams tyName srcParams)
+          srcSubst = fromRight mempty $ unify freshGeneric src
+          tgtSubst = fromRight mempty $ unify freshGeneric tgt
       arms <-
         forM cons $ \(_cName, ci) -> do
           let tag = ciTag ci
               fieldNames = ["__f" <> show i | i <- [(0 :: Int) .. ciArity ci - 1]]
-              srcFields = map (applySubst srcSubst) (ciFieldTypes ci)
-              tgtFields = map (applySubst tgtSubst) (ciFieldTypes ci)
+              fields = map (applySubst freshSubst) (ciFieldTypes ci)
+              srcFields = map (applySubst srcSubst) fields
+              tgtFields = map (applySubst tgtSubst) fields
           coercedFields <-
             forM (zip3 fieldNames srcFields tgtFields) $ \(fn, sTy, tTy) -> do
               wrap <- synthCoerce conInfo sTy tTy
@@ -1033,8 +1128,21 @@ synthLabelType env = \case
   ELit _ (LInt _) -> Nothing -- caller resolves via row's int label
   EParens _ inner -> synthLabelType env inner
   EInfix {} -> Just (TyCon noSpan "String") -- the only infix op is ++ : String -> String -> String
-  EApp _ f _ -> case synthLabelType env (collectAppHead f) of
-    Just t -> Just (snd (splitArrow t))
+  e@(EApp _ f _) -> case synthLabelType env (collectAppHead f) of
+    Just t ->
+      let (params, ret) = splitArrow t
+          appliedArgs = countAppArgs e
+       in -- Only the /saturated/ shape is honest here: an under-applied
+          -- call returns a residual function type ('a -> b' rather than
+          -- 'b'), and the simple @snd . splitArrow@ shortcut would
+          -- silently misrepresent it as the final result type. Return
+          -- 'Nothing' for partial applications so the caller falls
+          -- through to the no-info path instead of coercing against a
+          -- wrong shape — same conservative answer we already give for
+          -- 'ELam' / 'EDo'.
+          if appliedArgs == length params
+            then Just ret
+            else Nothing
     Nothing -> Nothing
   ECon _ name -> case M.lookup name (leConInfo env) of
     Just ci | ciArity ci == 0 -> Just (TyCon noSpan (ciTypeName ci))
@@ -1042,6 +1150,32 @@ synthLabelType env = \case
   ECase {} -> Nothing
   ELam {} -> Nothing -- lambdas need an expected type from context
   EDo {} -> Nothing -- 'do' blocks similarly need an expected type
+  ELet _ pat mAnnot e body ->
+    -- Prefer the user-supplied ascription as the binder's type
+    -- (only valid for 'PVar' patterns — non-'PVar' lets are
+    -- rewritten to 'ECase' before this path is reached, so a
+    -- 'Just' ascription here implies a 'PVar' LHS). Without an
+    -- ascription, fall back to best-effort 'synthLabelType' on
+    -- @e@. Either way extend the env for nested label lookups in
+    -- @body@; if neither path pins the type down, use a tyvar
+    -- placeholder so the recursion still terminates and the caller
+    -- treats 'Nothing' as "no info" anyway.
+    let nTy = case mAnnot of
+          Just t -> t
+          Nothing -> fromMaybe (TyVar noSpan "_letBind") (synthLabelType env e)
+        names = case pat of
+          PVar _ n -> [n]
+          PWild _ -> []
+          _ -> [] -- shouldn't reach here; rewritten to ECase
+        env' = extendLowerEnv env [(QName [] n, nTy) | n <- names]
+     in synthLabelType env' body
+  where
+    countAppArgs :: Expr -> Int
+    countAppArgs = go (0 :: Int)
+      where
+        go acc (EApp _ inner _) = go (acc + 1) inner
+        go acc (EParens _ inner) = go acc inner
+        go acc _ = acc
 
 -- | Strip nested 'EApp' to expose the head expression (the function
 --   reference). Used by 'synthLabelType' when synthesising the type of
@@ -1071,8 +1205,17 @@ lowerAltM env locals mScrutTy expected (CaseAlt _ (PCon _ cName pats) body _) = 
       patBinders = collectPatternBindings (leConInfo env) ci mScrutTy pats
       env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- patBinders]
       locals' = Set.union (Set.fromList (map fst patBinders)) locals
+      -- Per-field substituted types — feed into 'desugarPatsM' so a
+      -- 'PAscribe' targeting a row-typed field emits the right
+      -- 'CRowCase' wrapper instead of being silently stripped.
+      subst = case mScrutTy of
+        Just outerTy ->
+          let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
+           in fromRight mempty (unify genericRet outerTy)
+        Nothing -> mempty
+      fieldTys = map (Just . applySubst subst) (ciFieldTypes ci)
   body' <- lowerExprM env' locals' expected body
-  let (topVars, wrappedBody) = desugarPats (leConInfo env) "__" 0 pats body'
+  (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" 0 (zip pats fieldTys) body'
   pure (tag, topVars, wrappedBody)
 lowerAltM _ _ _ _ CaseAlt {} =
   liftEither $ Left (TELowering "only constructor patterns are supported in case")
@@ -1315,28 +1458,86 @@ mergeAlts alts =
       Left (TELowering "conflicting row-case shapes in merge")
 
 -- | Desugar a list of sub-patterns into flat variable bindings,
---   wrapping the body in nested CCase for any nested constructor patterns.
---   Uses path-based naming (e.g. @__p0@, @__p0_p0@) for fresh variables.
-desugarPats :: ConInfoEnv -> Text -> Int -> [Pattern] -> CExpr -> ([Name], CExpr)
-desugarPats _ _ _ [] body = ([], body)
--- 'PAscribe' is type-only — at the surface it tells the typechecker
--- which alternative of a structural sum to take; at runtime it has no
--- shape and lowers to whatever its inner pattern lowers to.
-desugarPats conInfo prefix idx (PAscribe _ inner _ : ps) body =
-  desugarPats conInfo prefix idx (inner : ps) body
-desugarPats conInfo prefix idx (p : ps) body =
-  let (restVars, restBody) = desugarPats conInfo prefix (idx + 1) ps body
-   in case p of
-        PVar _ n -> (n : restVars, restBody)
-        PWild _ ->
-          let fresh = prefix <> "w" <> show idx
-           in (fresh : restVars, restBody)
-        PCon _ innerCon innerPats ->
-          let fresh = prefix <> "p" <> show idx
-              innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
-              innerPrefix = fresh <> "_"
-              (innerVars, innerBody) = desugarPats conInfo innerPrefix 0 innerPats restBody
-           in (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
+--   wrapping the body with the right Core dispatchers:
+--
+--   * @PVar n@ binds the field directly under that name (no wrap).
+--   * @PWild@ binds a deterministic placeholder (@__w<idx>@).
+--   * @PCon@ wraps the body in a nested @CCase@ over the field, with
+--     the inner constructor's pattern recursively desugared.
+--   * @PAscribe inner T@ wraps the body in a @CRowCase@ keyed by
+--     @rowTag T@ — needed when the field's type is a structural sum
+--     and the arm matches one of its labels. The /generated/ outer
+--     binder name is deterministic (@__pa<idx>@), so two @Just (… : T1)@
+--     and @Just (… : T2)@ arms on the same outer constructor share a
+--     binder and 'mergeAlts' can merge their @CRowCase@ bodies into a
+--     single multi-label dispatch instead of bailing with
+--     "conflicting pattern shapes in merge". Without this, lowering a
+--     non-row-headed scrutinee whose constructor field happens to be
+--     row-typed would lose the row-tag lookup the typechecker just
+--     validated.
+--
+--   Each pattern position carries its substituted field type
+--   (@'Maybe' Type'@) so nested 'PCon' inside 'PAscribe' (or vice
+--   versa) can compute the right inner field types for the next
+--   recursion level.
+--
+--   Monadic so the row-tag table seen by the post-lowering /row tag
+--   collision check/ records every tag this lowerer mints.
+desugarPatsM ::
+  ConInfoEnv -> Text -> Int -> [(Pattern, Maybe Type')] -> CExpr -> LowerM ([Name], CExpr)
+desugarPatsM _ _ _ [] body = pure ([], body)
+desugarPatsM conInfo prefix idx ((p, mFieldTy) : ps) body = do
+  (restVars, restBody) <- desugarPatsM conInfo prefix (idx + 1) ps body
+  case p of
+    PVar _ n -> pure (n : restVars, restBody)
+    PWild _ ->
+      let fresh = prefix <> "w" <> show idx
+       in pure (fresh : restVars, restBody)
+    PCon _ innerCon innerPats -> do
+      let fresh = prefix <> "p" <> show idx
+          innerTag = maybe 0 ciTag (M.lookup innerCon conInfo)
+          innerPrefix = fresh <> "_"
+          innerFieldTys = innerFieldTypes conInfo innerCon mFieldTy (length innerPats)
+      (innerVars, innerBody) <-
+        desugarPatsM conInfo innerPrefix 0 (zip innerPats innerFieldTys) restBody
+      pure (fresh : restVars, CCase (CVar fresh) [(innerTag, innerVars, innerBody)])
+    PAscribe _ inner ascrTy -> do
+      let topVar = prefix <> "pa" <> show idx
+      tag <- recordRowTag ascrTy
+      (innerName, innerBody) <- ascribeInner conInfo prefix idx inner restBody
+      pure (topVar : restVars, CRowCase (CVar topVar) [(tag, innerName, innerBody)])
+
+-- | Lower the inner pattern of a 'PAscribe'. For the common shapes
+--   ('PVar', 'PWild') this is just a name; for nested patterns
+--   ('PCon' or another 'PAscribe') we delegate to 'desugarPatsM' to
+--   build the right wrapping around the body.
+ascribeInner ::
+  ConInfoEnv -> Text -> Int -> Pattern -> CExpr -> LowerM (Name, CExpr)
+ascribeInner _ _ _ (PVar _ n) body = pure (n, body)
+ascribeInner _ prefix idx (PWild _) body = pure (prefix <> "paw" <> show idx, body)
+ascribeInner conInfo prefix idx other body = do
+  let innerPrefix = prefix <> "pa" <> show idx <> "_"
+  (vars, wrappedBody) <- desugarPatsM conInfo innerPrefix 0 [(other, Nothing)] body
+  case vars of
+    [v] -> pure (v, wrappedBody)
+    _ -> liftEither $ Left (TELowering "ascribeInner: nested pattern produced unexpected binders")
+
+-- | Substituted field types of an inner constructor application,
+--   given the outer field's known type. Falls back to 'Nothing's when
+--   the outer field type is unknown or doesn't unify with the inner
+--   constructor's owning type — the recursion still runs, just
+--   without per-field type info that 'PAscribe' would have needed.
+innerFieldTypes :: ConInfoEnv -> Name -> Maybe Type' -> Int -> [Maybe Type']
+innerFieldTypes conInfo innerCon mFieldTy arity =
+  case M.lookup innerCon conInfo of
+    Just innerCi ->
+      let innerSubst = case mFieldTy of
+            Just fieldTy ->
+              fromRight mempty
+                $ unify (applyTyParams (ciTypeName innerCi) (ciTypeParams innerCi)) fieldTy
+            Nothing -> mempty
+       in map (Just . applySubst innerSubst) (ciFieldTypes innerCi)
+    Nothing -> replicate arity Nothing
 
 -- | Collect a chain of applications into (head, args) in left-to-right order.
 --   Example:

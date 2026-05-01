@@ -38,8 +38,8 @@ run x = bindEither (liftA (opA x)) opBLifted
 describe : Either (ErrA | ErrB) Int32 -> String
 describe r = case r of
   Left e -> case e of
-    (_a : ErrA) -> "ErrA"
-    (_b : ErrB) -> "ErrB"
+    (_ : ErrA) -> "ErrA"
+    (_ : ErrB) -> "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
 main : String -> IO Unit

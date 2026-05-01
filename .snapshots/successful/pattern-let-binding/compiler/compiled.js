@@ -1,0 +1,44 @@
+"use strict";
+(function () {
+function __print(s){ process.stdout.write(String(s)); return undefined; }
+function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [882564211, [0]]]; if (p < -2147483648) return [0, [3768445577, [0]]]; return [1, p|0]; }
+
+function v_threeAndDouble(v_n){
+    {
+      const __s = __mulInt32(v_n, (2|0));
+      switch (__s[0]) {
+        case 0: {
+          const v___w0 = __s[1];
+          return [0, v_n, v_n];
+        }
+        case 1: {
+          const v_d = __s[1];
+          return [0, v_n, v_d];
+        }
+      }
+    }
+}
+
+function v_show(v_pair){
+    {
+      const __s = v_pair;
+      switch (__s[0]) {
+        case 0: {
+          const v_a = __s[1];
+          const v_b = __s[2];
+          return (((("[" + String(v_a)) + ", ") + String(v_b)) + "]");
+        }
+      }
+    }
+}
+
+function main(v__input){
+    return __print((v_show)((v_threeAndDouble)((5|0))));
+}
+
+if (typeof require !== 'undefined' && require.main === module) {
+  const arg = process.argv[2] ?? "";
+  if (typeof main === 'function') main(arg);
+}
+
+})();

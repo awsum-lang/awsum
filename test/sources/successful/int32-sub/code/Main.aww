@@ -1,19 +1,22 @@
 -- Test: `subInt32` returns `Right (a - b)` when the true difference stays
--- in [minInt32, maxInt32] and `Left ArithError` otherwise — with
--- `Left Overflow` for results above maxInt32 and `Left Underflow` for
--- results below minInt32. Covers all five cases:
+-- in [minInt32, maxInt32] and `Left (UnderflowError | OverflowError)`
+-- otherwise — `Left OverflowError` for results above maxInt32 and
+-- `Left UnderflowError` for results below minInt32. Covers all five
+-- cases:
 --   (i)   ordinary positive difference                → `Right`,
 --   (ii)  ordinary mixed-sign difference              → `Right` (no overflow possible
 --                                                              when signs of a, b agree),
---   (iii) `maxInt32 - (-1)`                            → `Left Overflow`,
---   (iv)  `minInt32 - 1`                               → `Left Underflow`,
---   (v)   `0 - minInt32`                               → `Left Overflow` (negation of
+--   (iii) `maxInt32 - (-1)`                            → `Left OverflowError`,
+--   (iv)  `minInt32 - 1`                               → `Left UnderflowError`,
+--   (v)   `0 - minInt32`                               → `Left OverflowError` (negation of
 --                                                              minInt32 doesn't fit).
 import IO.Stdout
 
-render : Either ArithError Int32 -> String
+render : Either (UnderflowError | OverflowError) Int32 -> String
 render r = case r of
-  Left e -> "err: " ++ showArithError e
+  Left e -> case e of
+    (u : UnderflowError) -> "err: " ++ showUnderflowError u
+    (o : OverflowError) -> "err: " ++ showOverflowError o
   Right v -> "ok: " ++ showInt32 v
 
 maxInt32 : Int32

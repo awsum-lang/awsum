@@ -1,19 +1,21 @@
 -- Test: `mulInt32` returns `Right (a * b)` when the true product stays
--- in [minInt32, maxInt32] and `Left ArithError` otherwise — `Left Overflow`
--- for results above maxInt32, `Left Underflow` for below minInt32. Covers
--- six cases:
+-- in [minInt32, maxInt32] and `Left (UnderflowError | OverflowError)`
+-- otherwise — `Left OverflowError` for results above maxInt32,
+-- `Left UnderflowError` for below minInt32. Covers six cases:
 --   (i)   ordinary positive product            `6 * 7`              → `Right`,
 --   (ii)  ordinary mixed-sign product          `(-6) * 7`           → `Right`,
---   (iii) positive overflow                    `100000 * 100000`    → `Left Overflow`,
---   (iv)  negative overflow                    `(-100000) * 100000` → `Left Underflow`,
---   (v)   special: minInt32 * (-1)             → `Left Overflow` (math result
+--   (iii) positive overflow                    `100000 * 100000`    → `Left OverflowError`,
+--   (iv)  negative overflow                    `(-100000) * 100000` → `Left UnderflowError`,
+--   (v)   special: minInt32 * (-1)             → `Left OverflowError` (math result
 --                                                 is 2147483648, doesn't fit),
 --   (vi)  identity-on-minInt32                 `minInt32 * 1`       → `Right minInt32`.
 import IO.Stdout
 
-render : Either ArithError Int32 -> String
+render : Either (UnderflowError | OverflowError) Int32 -> String
 render r = case r of
-  Left e -> "err: " ++ showArithError e
+  Left e -> case e of
+    (u : UnderflowError) -> "err: " ++ showUnderflowError u
+    (o : OverflowError) -> "err: " ++ showOverflowError o
   Right v -> "ok: " ++ showInt32 v
 
 minInt32 : Int32
