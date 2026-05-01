@@ -1,27 +1,6 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "bindEither"
-            [ "x"
-            , "k"
-            ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 0
-                    , [ "e" ]
-                    , CCon 0
-                        [ CVar "e" ]
-                    )
-                ,
-                    ( 1
-                    , [ "a" ]
-                    , CCall
-                        ( CVar "k" )
-                        [ CVar "a" ]
-                    )
-                ]
-            )
-        , CFunDef "opA" [ "n" ]
+        [ CFunDef "opA" [ "n" ]
             ( CCon 1
                 [ CVar "n" ]
             )
@@ -77,14 +56,13 @@ CoreProgram
             )
         , CFunDef "run" [ "x" ]
             ( CCall
-                ( CVar "bindEither" )
+                ( CVar "$df$bindEither$0" )
                 [ CCall
                     ( CVar "liftA" )
                     [ CCall
                         ( CVar "opA" )
                         [ CVar "x" ]
                     ]
-                , CVar "opBLifted"
                 ]
             )
         , CFunDef "describe" [ "r" ]
@@ -129,6 +107,24 @@ CoreProgram
                         ( CVar "run" )
                         [ CIntLit 5 TInt32 ]
                     ]
+                ]
+            )
+        , CFunDef "$df$bindEither$0" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCon 0
+                        [ CVar "e" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "opBLifted" )
+                        [ CVar "a" ]
+                    )
                 ]
             )
         ]

@@ -18,15 +18,6 @@
   areturn
 .end method
 
-.method static v_wrap(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  checkcast java/lang/invoke/MethodHandle
-  aload_1
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
 .method static v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
@@ -51,9 +42,8 @@ L_join:
 
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v__con_Box(Ljava/lang/Object;)Ljava/lang/Object;]
   ldc "wrapped"
-  invokestatic AwsumMain/v_wrap(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df_wrap_0(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
@@ -72,6 +62,13 @@ L_join:
   iconst_1
   aload_0
   aastore
+  areturn
+.end method
+
+
+.method static v__df_wrap_0(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  invokestatic AwsumMain/v__con_Box(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

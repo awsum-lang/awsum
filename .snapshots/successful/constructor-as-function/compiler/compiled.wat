@@ -11,8 +11,8 @@
   (data (i32.const 64) "\00")
   (data (i32.const 65) "wrapped\00")
   (table 4 funcref)
-  (elem (i32.const 0) $v_wrap $v_unwrap $v_main $v__con_Box)
-  (type $arity_1 (func (param i32) (result i32)))
+  (elem (i32.const 0) $v_unwrap $v_main $v__con_Box $v__df_wrap_0)
+
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
     (local.set $len (i32.const 0))
@@ -74,20 +74,20 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_wrap (param $v_f i32) (param $v_x i32) (result i32)
-    (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)))
-
   (func $v_unwrap (param $v_b i32) (result i32)
     (local $v_value i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v_unwrap (call $v_wrap (i32.const 3) (i32.const 65)))))
+    (call $__print (call $v_unwrap (call $v__df_wrap_0 (i32.const 65)))))
 
   (func $v__con_Box (param $v__x0 i32) (result i32)
     (local $__con_0 i32)
     (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
+
+  (func $v__df_wrap_0 (param $v_x i32) (result i32)
+    (call $v__con_Box (local.get $v_x)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

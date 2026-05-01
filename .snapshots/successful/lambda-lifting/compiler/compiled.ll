@@ -52,15 +52,10 @@ define internal ptr @v_pureEither(ptr %v_x) {
   ret ptr %t0
 }
 
-define internal ptr @v_apply(ptr %v_f, ptr %v_x) {
-  %t0 = call ptr %v_f(ptr %v_x)
-  ret ptr %t0
-}
-
 define internal ptr @v_inc42() {
   %t0 = call ptr @malloc(i64 4)
   store i32 42, ptr %t0
-  %t1 = call ptr @v_apply(ptr @v__lam_0, ptr %t0)
+  %t1 = call ptr @v__df_apply_0(ptr %t0)
   ret ptr %t1
 }
 
@@ -220,6 +215,11 @@ define internal ptr @v_main(ptr %v__input) {
 
 define internal ptr @v__lam_0(ptr %v_n) {
   ret ptr %v_n
+}
+
+define internal ptr @v__df_apply_0(ptr %v_x) {
+  %t0 = call ptr @v__lam_0(ptr %v_x)
+  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

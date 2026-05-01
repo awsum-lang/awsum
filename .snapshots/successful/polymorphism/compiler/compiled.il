@@ -39,14 +39,10 @@
 
   .method private hidebysig static object v_main(object) cil managed
   {
-    ldftn object AwsumMain::v_appendY(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    ldftn object AwsumMain::v_appendX(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
     ldstr "a"
     ldstr "b"
     call object AwsumMain::v_const(object, object)
-    call object AwsumMain::v_compose(object, object, object)
+    call object AwsumMain::v__df_compose_0(object)
     call object AwsumMain::v_identity(object)
     call object AwsumMain::__print(object)
     ret
@@ -78,15 +74,11 @@
   }
 
 
-  .method private hidebysig static object v_compose(object, object, object) cil managed
+  .method private hidebysig static object v__df_compose_0(object) cil managed
   {
     ldarg.0
-    castclass class [System.Runtime]System.Func`2<object, object>
-    ldarg.1
-    castclass class [System.Runtime]System.Func`2<object, object>
-    ldarg.2
-    callvirt instance object class [System.Runtime]System.Func`2<object, object>::Invoke(object)
-    callvirt instance object class [System.Runtime]System.Func`2<object, object>::Invoke(object)
+    call object AwsumMain::v_appendX(object)
+    call object AwsumMain::v_appendY(object)
     ret
   }
 

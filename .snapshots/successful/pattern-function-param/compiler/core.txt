@@ -48,14 +48,6 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "apply"
-            [ "f"
-            , "t"
-            ]
-            ( CCall
-                ( CVar "f" )
-                [ CVar "t" ]
-            )
         , CFunDef "sumPair" [ "$arg_31_9" ]
             ( CCase
                 ( CVar "$arg_31_9" )
@@ -152,11 +144,14 @@ CoreProgram
                 ( CVar "$let$1" )
                 [ CVar "n"
                 , CCall
-                    ( CVar "apply" )
-                    [ CVar "$lam$0"
-                    , CVar "pair"
-                    ]
+                    ( CVar "$df$apply$0" )
+                    [ CVar "pair" ]
                 ]
+            )
+        , CFunDef "$df$apply$0" [ "t" ]
+            ( CCall
+                ( CVar "$lam$0" )
+                [ CVar "t" ]
             )
         ]
     }

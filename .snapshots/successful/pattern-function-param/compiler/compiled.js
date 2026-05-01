@@ -41,10 +41,6 @@ function v_sumTriple(v__arg_21_11){
     }
 }
 
-function v_apply(v_f, v_t){
-    return (v_f)(v_t);
-}
-
 function v_sumPair(v__arg_31_9){
     {
       const __s = v__arg_31_9;
@@ -96,7 +92,11 @@ function v__let_1(v_n, v_m){
 }
 
 function v__let_2(v_n){
-    return (v__let_1)(v_n, (v_apply)(v__lam_0, v_pair));
+    return (v__let_1)(v_n, (v__df_apply_0)(v_pair));
+}
+
+function v__df_apply_0(v_t){
+    return (v__lam_0)(v_t);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

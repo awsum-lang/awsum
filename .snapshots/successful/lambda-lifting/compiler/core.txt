@@ -4,20 +4,10 @@ CoreProgram
             ( CCon 1
                 [ CVar "x" ]
             )
-        , CFunDef "apply"
-            [ "f"
-            , "x"
-            ]
-            ( CCall
-                ( CVar "f" )
-                [ CVar "x" ]
-            )
         , CValDef "inc42"
             ( CCall
-                ( CVar "apply" )
-                [ CVar "$lam$0"
-                , CIntLit 42 TInt32
-                ]
+                ( CVar "$df$apply$0" )
+                [ CIntLit 42 TInt32 ]
             )
         , CValDef "op1"
             ( CCon 1
@@ -118,5 +108,10 @@ CoreProgram
             )
         , CFunDef "$lam$0" [ "n" ]
             ( CVar "n" )
+        , CFunDef "$df$apply$0" [ "x" ]
+            ( CCall
+                ( CVar "$lam$0" )
+                [ CVar "x" ]
+            )
         ]
     }

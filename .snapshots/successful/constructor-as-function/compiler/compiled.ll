@@ -19,11 +19,6 @@ define internal ptr @__print(ptr %s) {
 }
 
 
-define internal ptr @v_wrap(ptr %v_f, ptr %v_x) {
-  %t0 = call ptr %v_f(ptr %v_x)
-  ret ptr %t0
-}
-
 define internal ptr @v_unwrap(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
@@ -44,7 +39,7 @@ case.join.4:
 
 define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [8 x i8], ptr @.str.0, i64 0, i64 0
-  %t1 = call ptr @v_wrap(ptr @v__con_Box, ptr %t0)
+  %t1 = call ptr @v__df_wrap_0(ptr %t0)
   %t2 = call ptr @v_unwrap(ptr %t1)
   %t3 = call ptr @__print(ptr %t2)
   ret ptr %t3
@@ -57,6 +52,11 @@ define internal ptr @v__con_Box(ptr %v__x0) {
   store ptr %t1, ptr %t2
   %t3 = getelementptr ptr, ptr %t0, i32 1
   store ptr %v__x0, ptr %t3
+  ret ptr %t0
+}
+
+define internal ptr @v__df_wrap_0(ptr %v_x) {
+  %t0 = call ptr @v__con_Box(ptr %v_x)
   ret ptr %t0
 }
 

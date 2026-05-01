@@ -43,20 +43,10 @@
 .end method
 
 
-.method static v_apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  checkcast java/lang/invoke/MethodHandle
-  aload_1
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
 .method static v_inc42()Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;]
   bipush 42
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v_apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df_apply_0(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -272,6 +262,13 @@ L_join:
 
 .method static v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
+  areturn
+.end method
+
+
+.method static v__df_apply_0(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  invokestatic AwsumMain/v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

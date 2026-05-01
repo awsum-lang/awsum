@@ -6,11 +6,7 @@ function v_pureEither(v_x){
     return [1, v_x];
 }
 
-function v_apply(v_f, v_x){
-    return (v_f)(v_x);
-}
-
-const v_inc42 = (v_apply)(v__lam_0, (42|0));
+const v_inc42 = (v__df_apply_0)((42|0));
 
 const v_op1 = [1, (1|0)];
 
@@ -54,6 +50,10 @@ function main(v__input){
 
 function v__lam_0(v_n){
     return v_n;
+}
+
+function v__df_apply_0(v_x){
+    return (v__lam_0)(v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

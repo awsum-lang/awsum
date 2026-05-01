@@ -30,6 +30,7 @@ library
       Awsum.Codegen.WASM.Assemble
       Awsum.Core
       Awsum.Cps
+      Awsum.Defunctionalize
       Awsum.Desugar
       Awsum.Diagnostic
       Awsum.ElaborateLower

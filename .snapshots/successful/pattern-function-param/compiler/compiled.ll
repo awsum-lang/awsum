@@ -144,11 +144,6 @@ case.join.4:
   ret ptr %t45
 }
 
-define internal ptr @v_apply(ptr %v_f, ptr %v_t) {
-  %t0 = call ptr %v_f(ptr %v_t)
-  ret ptr %t0
-}
-
 define internal ptr @v_sumPair(ptr %v__arg_31_9) {
   %t0 = getelementptr ptr, ptr %v__arg_31_9, i32 0
   %t1 = load ptr, ptr %t0
@@ -276,9 +271,14 @@ define internal ptr @v__let_1(ptr %v_n, ptr %v_m) {
 
 define internal ptr @v__let_2(ptr %v_n) {
   %t0 = call ptr @v_pair()
-  %t1 = call ptr @v_apply(ptr @v__lam_0, ptr %t0)
+  %t1 = call ptr @v__df_apply_0(ptr %t0)
   %t2 = call ptr @v__let_1(ptr %v_n, ptr %t1)
   ret ptr %t2
+}
+
+define internal ptr @v__df_apply_0(ptr %v_t) {
+  %t0 = call ptr @v__lam_0(ptr %v_t)
+  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

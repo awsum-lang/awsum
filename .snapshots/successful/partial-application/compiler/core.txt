@@ -14,14 +14,6 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "apply"
-            [ "f"
-            , "x"
-            ]
-            ( CCall
-                ( CVar "f" )
-                [ CVar "x" ]
-            )
         , CFunDef "compose"
             [ "f"
             , "g"
@@ -38,18 +30,23 @@ CoreProgram
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
-                    ( CVar "apply" )
-                    [ CVar "$pap$0"
-                    , CString "chain"
+                    ( CVar "$df$apply$0" )
+                    [ CString "chain"
+                    , CVar "unwrap"
+                    , CVar "wrap"
                     ]
                 ]
             )
-        , CFunDef "$pap$0" [ "$eta0" ]
+        , CFunDef "$df$apply$0"
+            [ "x"
+            , "$df$apply$0$cap0$0"
+            , "$df$apply$0$cap0$1"
+            ]
             ( CCall
                 ( CVar "compose" )
-                [ CVar "unwrap"
-                , CVar "wrap"
-                , CVar "$eta0"
+                [ CVar "$df$apply$0$cap0$0"
+                , CVar "$df$apply$0$cap0$1"
+                , CVar "x"
                 ]
             )
         ]

@@ -14,8 +14,8 @@
   (data (i32.const 75) "Ok \00")
   (data (i32.const 79) " / \00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_pureEither $v_apply $v_op2WithA $v_describe $v_main $v__lam_0)
-  (type $arity_1 (func (param i32) (result i32)))
+  (elem (i32.const 0) $v_pureEither $v_op2WithA $v_describe $v_main $v__lam_0 $v__df_apply_0)
+
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
     (local.set $len (i32.const 0))
@@ -132,11 +132,8 @@
     (local $__con_0 i32)
     (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_x)) (local.get $__con_0)))
 
-  (func $v_apply (param $v_f i32) (param $v_x i32) (result i32)
-    (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)))
-
   (func $v_inc42 (result i32)
-    (call $v_apply (i32.const 5) (call $__box_i32 (i32.const 42))))
+    (call $v__df_apply_0 (call $__box_i32 (i32.const 42))))
 
   (func $v_op1 (result i32)
     (local $__con_0 i32)
@@ -168,6 +165,9 @@
 
   (func $v__lam_0 (param $v_n i32) (result i32)
     (local.get $v_n))
+
+  (func $v__df_apply_0 (param $v_x i32) (result i32)
+    (call $v__lam_0 (local.get $v_x)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

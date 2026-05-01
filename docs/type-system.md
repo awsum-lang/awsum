@@ -17,7 +17,7 @@ User-facing description of Awsum's type system — concepts and examples of prog
 | Type-ascription patterns `(x : T)`   | done                                                          |
 | Implicit injection into a row        | done                                                          |
 | `do`-notation for `Either`           | done                                                          |
-| Lambda expressions `\x -> e`         | closed lambdas and `do`-block continuations; outer-parameter capture hits a `saturate` restriction |
+| Lambda expressions `\x -> e`         | done — closed lambdas, `do`-block continuations, and closures over outer parameters |
 | Open-row `(A \| r) ~ (A \| B \| r')` | partial — singleton tyvar / row only                          |
 | Row-typed `let`-generalisation       | not yet — every top-level def needs a signature               |
 | Type classes / dispatch              | not yet — `do` is hard-coded to `Either`                      |
@@ -219,15 +219,15 @@ Awsum has **no synthesis form for lambdas** — they only typecheck where the su
 -- noContext = \n -> n
 ```
 
-**Today's restriction.** A lambda that closes over an outer-function parameter is rejected by the saturation pass with `partial application with local captures is not supported`. Restructure so the captured value flows through a parameter of a top-level helper:
+**Closures.** A lambda may close over an outer-function parameter; the captured value follows the lambda wherever it flows.
 
 ```awsum
--- error in this iteration: 'k' is captured from outside the lambda.
--- captureFn : Int32 -> Int32
--- captureFn k = apply (\n -> k) answer
+-- ok: 'k' is captured from outside the lambda.
+captureFn : Int32 -> Int32
+captureFn k = apply (\n -> k) answer
 ```
 
-`do`-notation bypasses this — the desugar inlines bind into a nested `case`, so multi-bind blocks with later-step references compile without first-class closures. Free-standing closures-with-captures are tracked as future work.
+There is no closure runtime in any backend. The compiler /defunctionalises/ each higher-order-function call site at lowering time: the static closure flowing into a fn-typed slot is replaced with a specialised first-order copy of the HOF whose parameter list adds the closure's captures up front. After this pass no first-class function value remains in any reachable position — every backend sees ordinary first-order calls. Polymorphic HOFs become a family of monomorphic specialisations, one per distinct closure shape across call sites; pass-through HOFs (`applyTwice f x = applyOnce f (applyOnce f x)`) cascade naturally because each inner call resolves the same closure and reuses the memoised specialisation.
 
 ---
 

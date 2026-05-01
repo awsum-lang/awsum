@@ -34,12 +34,10 @@
 
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_appendY(Ljava/lang/Object;)Ljava/lang/Object;]
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_appendX(Ljava/lang/Object;)Ljava/lang/Object;]
   ldc "a"
   ldc "b"
   invokestatic AwsumMain/v_const(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df_compose_0(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_identity(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
@@ -68,14 +66,10 @@
 .end method
 
 
-.method static v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__df_compose_0(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  checkcast java/lang/invoke/MethodHandle
-  aload_1
-  checkcast java/lang/invoke/MethodHandle
-  aload_2
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_appendX(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_appendY(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

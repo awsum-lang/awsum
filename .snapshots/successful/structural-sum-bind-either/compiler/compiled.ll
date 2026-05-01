@@ -41,37 +41,6 @@ define internal ptr @__showInt32(ptr %p) {
 }
 
 
-define internal ptr @v_bindEither(ptr %v_x, ptr %v_k) {
-  %t0 = getelementptr ptr, ptr %v_x, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.13 ]
-case.arm.0.5:
-  %t7 = getelementptr ptr, ptr %v_x, i32 1
-  %t8 = load ptr, ptr %t7
-  %t9 = call ptr @malloc(i64 16)
-  %t10 = inttoptr i64 0 to ptr
-  %t11 = getelementptr ptr, ptr %t9, i32 0
-  store ptr %t10, ptr %t11
-  %t12 = getelementptr ptr, ptr %t9, i32 1
-  store ptr %t8, ptr %t12
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.13:
-  %t15 = getelementptr ptr, ptr %v_x, i32 1
-  %t16 = load ptr, ptr %t15
-  %t17 = call ptr %v_k(ptr %t16)
-  br label %case.end.1.14
-case.end.1.14:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t18 = phi ptr [%t9, %case.end.0.6], [%t17, %case.end.1.14]
-  ret ptr %t18
-}
-
 define internal ptr @v_opA(ptr %v_n) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 1 to ptr
@@ -189,7 +158,7 @@ define internal ptr @v_opBLifted(ptr %v_n) {
 define internal ptr @v_run(ptr %v_x) {
   %t0 = call ptr @v_opA(ptr %v_x)
   %t1 = call ptr @v_liftA(ptr %t0)
-  %t2 = call ptr @v_bindEither(ptr %t1, ptr @v_opBLifted)
+  %t2 = call ptr @v__df_bindEither_0(ptr %t1)
   ret ptr %t2
 }
 
@@ -249,6 +218,37 @@ define internal ptr @v_main(ptr %v__input) {
   %t2 = call ptr @v_describe(ptr %t1)
   %t3 = call ptr @__print(ptr %t2)
   ret ptr %t3
+}
+
+define internal ptr @v__df_bindEither_0(ptr %v_x) {
+  %t0 = getelementptr ptr, ptr %v_x, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.13 ]
+case.arm.0.5:
+  %t7 = getelementptr ptr, ptr %v_x, i32 1
+  %t8 = load ptr, ptr %t7
+  %t9 = call ptr @malloc(i64 16)
+  %t10 = inttoptr i64 0 to ptr
+  %t11 = getelementptr ptr, ptr %t9, i32 0
+  store ptr %t10, ptr %t11
+  %t12 = getelementptr ptr, ptr %t9, i32 1
+  store ptr %t8, ptr %t12
+  br label %case.end.0.6
+case.end.0.6:
+  br label %case.join.4
+case.arm.1.13:
+  %t15 = getelementptr ptr, ptr %v_x, i32 1
+  %t16 = load ptr, ptr %t15
+  %t17 = call ptr @v_opBLifted(ptr %t16)
+  br label %case.end.1.14
+case.end.1.14:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t18 = phi ptr [%t9, %case.end.0.6], [%t17, %case.end.1.14]
+  ret ptr %t18
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

@@ -1,0 +1,18 @@
+{- Pass-through HOF: a function-typed parameter flows through one HOF
+   into another. Defunctionalisation specialises both HOFs for the
+   same closure shape — `applyTwice` becomes a fully first-order
+   function whose body inlines two specialised calls to the inner
+   `apply` HOF. Cross-backend stdout asserts the result is identical. -}
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+applyTwice : (a -> a) -> a -> a
+applyTwice f x = apply f (apply f x)
+
+incr : Int32 -> Int32
+incr n = n
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 (applyTwice incr 7))

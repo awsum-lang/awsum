@@ -57,15 +57,6 @@ L_join:
 .end method
 
 
-.method static v_apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  checkcast java/lang/invoke/MethodHandle
-  aload_1
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
 .method static v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   checkcast java/lang/invoke/MethodHandle
@@ -79,17 +70,18 @@ L_join:
 
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v__pap_0(Ljava/lang/Object;)Ljava/lang/Object;]
   ldc "chain"
-  invokestatic AwsumMain/v_apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  ldc [MethodHandle REF_invokeStatic AwsumMain.v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;]
+  ldc [MethodHandle REF_invokeStatic AwsumMain.v_wrap(Ljava/lang/Object;)Ljava/lang/Object;]
+  invokestatic AwsumMain/v__df_apply_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__pap_0(Ljava/lang/Object;)Ljava/lang/Object;
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;]
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_wrap(Ljava/lang/Object;)Ljava/lang/Object;]
+.method static v__df_apply_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aload_1
+  aload_2
   aload_0
   invokestatic AwsumMain/v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn

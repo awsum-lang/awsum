@@ -22,6 +22,7 @@ module Awsum.ElaborateLower (elaborateLowerProgram) where
 import Awsum.BuiltIn (lookupBuiltIn)
 import Awsum.Core
 import Awsum.Cps (cpsProgram)
+import Awsum.Defunctionalize (defunctionalizeProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
 import Awsum.HM (Subst, applySubst, canonicalLabel, flattenRow, rowTag, singletonSubst, unify)
@@ -350,9 +351,22 @@ elaborateLowerProgram progType progIn = do
       reachableFromMain = reachableCore "main" callGraph
       live = filter (\d -> Set.member (declName' d) reachableFromMain) allDecls
       core = CoreProgram live
-  -- 4) Saturate under-applied direct calls via lambda-lifting.
-  core' <- saturateProgram core
-  -- 5) SCC-merge for mutual recursion. Every strongly-connected
+  -- 4) Defunctionalise: specialise each higher-order-function call
+  --    site for the closure statically flowing in. After this pass
+  --    no first-class function value remains in any reachable
+  --    position; HOFs and their callers are fully first-order so
+  --    every backend handles them without a closure runtime. See
+  --    'Awsum.Defunctionalize' for the structural rules.
+  --
+  --    Specialisations leave the original polymorphic HOFs (and any
+  --    lifted lambdas with captures) in place; tree-shaking from
+  --    'main' immediately afterwards drops them, since every
+  --    reachable call site has been replaced by a call to a
+  --    specialisation.
+  core' <- treeShakeFromMain <$> defunctionalizeProgram core
+  -- 5) Saturate under-applied direct calls via lambda-lifting.
+  core'' <- saturateProgram core'
+  -- 6) SCC-merge for mutual recursion. Every strongly-connected
   --    component with more than one function is fused into a single
   --    self-recursive '$scc$' function tagged by "which member is
   --    active"; each original public name becomes a one-line wrapper.
@@ -365,15 +379,15 @@ elaborateLowerProgram progType progIn = do
   --    members that were only called from inside the SCC become dead.
   --    Re-run reachability from 'main' to prune them (and anything
   --    else that fell out of scope through the rewrite).
-  let sccMerged = treeShakeFromMain (sccMergeProgram core')
-  -- 6) CPS + defunctionalization for non-tail self-recursion. For each
+  let sccMerged = treeShakeFromMain (sccMergeProgram core'')
+  -- 7) CPS + defunctionalization for non-tail self-recursion. For each
   --    function with a non-tail self-call, emit a (wrapper, '$cps$f',
   --    '$apply$f') trio; the continuation chain now lives as an ADT on
   --    the heap instead of as frames on the system stack, and '$cps$f'
   --    and '$apply$f' are both self-tail-recursive so the following TCO
   --    pass folds them into loops. See 'Awsum.Cps' and docs/recursion.md.
   let cpsed = cpsProgram sccMerged
-  -- 7) Stack-safety verifier. After SCC merge and CPS there must be
+  -- 8) Stack-safety verifier. After SCC merge and CPS there must be
   --    no non-trivial call-graph cycle and no CFunDef with a non-tail
   --    self-call — both mean a recursion shape that would silently
   --    overflow the system stack at depth on some backend. Any
@@ -383,7 +397,7 @@ elaborateLowerProgram progType progIn = do
   case verifyStackSafety cpsed of
     [] -> pass
     (issue : _) -> Left (toTypeError sigMap issue)
-  -- 8) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
+  -- 9) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
   --    wrap affected function bodies in 'CLoop'. Backends compile the
   --    wrapped form into a loop + jump rather than a recursive call,
   --    guaranteeing stack safety for tail recursion across all targets.
@@ -527,12 +541,20 @@ saturateExpr am locals = go
       let missing = ar - length args
           etas = ["$eta" <> show i | i <- [0 .. missing - 1]]
           freeInArgs = foldMap freeVars args `Set.intersection` locals
+      -- Defunctionalisation runs before saturate and rewrites every
+      -- reachable closure (top-level partial application with captured
+      -- locals) into a fully-applied call to a specialised first-order
+      -- helper. A surviving capture here would generate a '$pap$N' that
+      -- references names not in scope at top level — a hard codegen
+      -- error rather than something the user can act on. We keep the
+      -- branch as an internal-invariant assertion.
       if not (Set.null freeInArgs)
         then
           lift
             $ Left
             $ TELowering
-            $ "partial application with local captures is not supported: captured "
+            $ "internal: saturate observed a partial application with "
+            <> "local captures after defunctionalisation — captured "
             <> T.intercalate ", " (toList freeInArgs)
         else do
           extras <- get

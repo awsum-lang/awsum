@@ -14,8 +14,8 @@
   (data (i32.const 69) "x\00")
   (data (i32.const 71) "y\00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_const $v_main $v_identity $v_appendX $v_appendY $v_compose)
-  (type $arity_1 (func (param i32) (result i32)))
+  (elem (i32.const 0) $v_const $v_main $v_identity $v_appendX $v_appendY $v__df_compose_0)
+
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
     (local.set $len (i32.const 0))
@@ -92,7 +92,7 @@
     (local.get $v_x))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v_identity (call $v_compose (i32.const 4) (i32.const 3) (call $v_const (i32.const 65) (i32.const 67))))))
+    (call $__print (call $v_identity (call $v__df_compose_0 (call $v_const (i32.const 65) (i32.const 67))))))
 
   (func $v_identity (param $v_x i32) (result i32)
     (local.get $v_x))
@@ -103,8 +103,8 @@
   (func $v_appendY (param $v_s i32) (result i32)
     (call $__concat (local.get $v_s) (i32.const 71)))
 
-  (func $v_compose (param $v_g i32) (param $v_f i32) (param $v_x i32) (result i32)
-    (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)) (local.get $v_g)))
+  (func $v__df_compose_0 (param $v_x i32) (result i32)
+    (call $v_appendY (call $v_appendX (local.get $v_x))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))
