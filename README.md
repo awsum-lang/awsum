@@ -159,7 +159,7 @@ awsum --version
 
 ## Design Principles
 
-1. **Identical results on every target.** The same program produces the same stdout whether compiled for LLVM, JVM, CLR, WASM, or JS — byte-for-byte, verified by the test suite on every commit. This is a compiler invariant, not a best-effort goal; the rest of the design hangs off it.
+1. **Identical results on every target.** The same program produces the same stdout whether compiled for LLVM, JVM, CLR, WASM, or JS — identical, verified by the test suite on every commit. This is a compiler invariant, not a best-effort goal; the rest of the design hangs off it.
 
 2. **Stack safety belongs to the compiler, not the user.** Recursion — tail, non-tail, self, mutual — is normalised at Core level into a shape that runs in bounded stack on every backend, including JVM and JS where native cross-method tail calls do not exist. No manual CPS transforms, no `tailRecM`, no hand-unrolling. Write the recursion that expresses the algorithm; the compiler makes sure it doesn't fall over.
 
@@ -178,6 +178,7 @@ awsum --version
 
 ## Design documents
 
+- [Type system](docs/type-system.md) — what the type system can express, with examples of programs that compile and programs that get rejected. Aimed at users; minimal implementation detail.
 - [Prelude and built-in functions](docs/prelude.md) — how types and functions written in Awsum coexist with per-target compiler implementations.
 - [Recursion](docs/recursion.md) — the three-pass pipeline (SCC merge, CPS defunctionalization, TCO) that turns any recursion shape into stack-safe code on every backend.
 - [Target implementation details](docs/targets.md) — how each backend maps the same program to its native shape.

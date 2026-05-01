@@ -1,7 +1,7 @@
 -- | Property-based tests across all five runtimes. Compiles each
 -- property's Awsum source once, then feeds N constructively-generated
--- inputs through every backend, compares stdout byte-for-byte against
--- a value the Haskell side computes independently.
+-- inputs through every backend, asserting that stdout is identical
+-- to a value the Haskell side computes independently.
 --
 -- Two interaction styles are supported by the same framework:
 --   * `OK` / `FAIL` — Awsum verifies the property internally and prints
@@ -10,11 +10,13 @@
 --     equality on its own.
 --   * round-trip / direct compute — Awsum computes a value and prints
 --     it; `propExpectedOutput` recomputes the same value Haskell-side
---     and asserts byte-for-byte equality. Used for string properties
---     where Awsum has no `eqString` builtin yet.
+--     and asserts the two stdouts are identical. Used for string
+--     properties where Awsum has no `eqString` builtin yet.
 --
--- See `awsum-management/prop-based-tests.md` for the full design and
--- generator rationale (constructive no-overflow / disjoint alphabets).
+-- The generators are constructive (no-overflow on integer ops,
+-- disjoint alphabets where uniqueness matters) so the inputs that
+-- reach each backend are valid for the property under test by
+-- construction.
 module Awsum.PropertySpec (spec) where
 
 import Awsum.RunBackend (Backend, CompiledArtifacts, compileFromFile, runOnAll)
@@ -39,7 +41,8 @@ data Property a = Property
     -- | Render the generated value as the @argv[1]@ Awsum will receive.
     propEncode :: a -> Text,
     -- | Compute, on the Haskell side, the stdout the Awsum program is
-    --   expected to produce for this exact input. Equality is byte-for-byte.
+    --   expected to produce for this exact input. The comparison
+    --   requires the two strings to be identical.
     propExpectedOutput :: a -> Text
   }
 
@@ -387,8 +390,8 @@ boolEncodeBit :: Bool -> Text
 boolEncodeBit True = "1"
 boolEncodeBit False = "0"
 
--- | Awsum prints booleans back as "T" / "F" for byte-for-byte
---   comparison with this Haskell-side rendering.
+-- | Awsum prints booleans back as "T" / "F" so the comparison
+--   with this Haskell-side rendering is on identical strings.
 boolPrint :: Bool -> Text
 boolPrint True = "T"
 boolPrint False = "F"

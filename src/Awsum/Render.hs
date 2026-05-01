@@ -106,19 +106,30 @@ renderType :: Type' -> Text
 renderType = renderTypePrec 0
 
 -- | @ctx@ is the precedence context we are printing into:
---   0 (top) < 1 (->) < 2 (app) < 3 (atom).
+--   0 (top) < 1 (|) < 2 (->) < 3 (app) < 4 (atom).
 --   We parenthesize when the inner precedence is strictly lower than the context.
 renderTypePrec :: Int -> Type' -> Text
 renderTypePrec ctx = \case
   TyVar _ n -> n
   TyCon _ n -> n
   TyApp _ f x ->
-    let s = renderTypePrec 2 f <> " " <> renderTypePrec 3 x
-     in if 2 < ctx then parens s else s
+    let s = renderTypePrec 3 f <> " " <> renderTypePrec 4 x
+     in if 3 < ctx then parens s else s
   TyArrow _ t1 t2 ->
+    let l = renderTypePrec 3 t1
+        r = renderTypePrec 2 t2
+        s = l <> " -> " <> r
+     in if 2 < ctx then parens s else s
+  TyOr _ t1 t2 ->
+    -- @|@ is lower precedence than @->@, so a 'TyOr' on the LHS of an
+    -- arrow needs parens (caller's @ctx@ pushes us above 1) and our own
+    -- branches render at arrow-level (2): an arrow inside @T1 | T2@
+    -- prints unparenthesised (`A -> B | C` re-parses to `(A -> B) | C`,
+    -- the original AST), but a nested 'TyOr' on the LHS does need parens
+    -- to preserve grouping when re-parsed.
     let l = renderTypePrec 2 t1
         r = renderTypePrec 1 t2
-        s = l <> " -> " <> r
+        s = l <> " | " <> r
      in if 1 < ctx then parens s else s
 
 -- ── Expressions ─────────────────────────────────────────────────────────────
@@ -142,6 +153,17 @@ renderExprPrec ctx indent e =
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
       let s = "case " <> renderExprPrec 0 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
+       in if 0 < ctx then parens s else s
+    ELam _sp params body ->
+      -- Lambda body extends as far right as possible — same precedence
+      -- as 'case', so nested usage adds parens.
+      let paramsText = T.intercalate " " (map paramName params)
+          s = "\\" <> paramsText <> " -> " <> renderExprPrec 0 indent body
+       in if 0 < ctx then parens s else s
+    EDo _sp stmts ->
+      let stmtLines = map (renderDoStmt (indent + 2)) stmts
+          inner = T.intercalate ("\n" <> T.replicate (indent + 2) " ") stmtLines
+          s = "do\n" <> T.replicate (indent + 2) " " <> inner
        in if 0 < ctx then parens s else s
     _ ->
       let (prec, s) = case e of
@@ -190,14 +212,24 @@ renderCaseAlts indent alts trailingComments =
     renderIndentedComment c = pad <> renderComment c
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
+-- | Render a single 'do' statement with the given indentation.
+renderDoStmt :: Int -> DoStmt -> Text
+renderDoStmt indent = \case
+  DoBind _ pat e -> renderPattern pat <> " <- " <> renderExprPrec 0 indent e
+  DoLet _ n e -> "let " <> n <> " = " <> renderExprPrec 0 indent e
+  DoExpr _ e -> renderExprPrec 0 indent e
+
 renderPattern :: Pattern -> Text
 renderPattern = \case
   PCon _ n [] -> n
   PCon _ n ps -> n <> " " <> T.intercalate " " (map renderPatternAtom ps)
   PVar _ n -> n
-  PWild -> "_"
+  PWild _ -> "_"
+  PAscribe _ p ty -> "(" <> renderPattern p <> " : " <> renderType ty <> ")"
 
 -- | Render an atomic pattern, parenthesizing nested constructor applications.
+--   'PAscribe' is already self-parenthesised by 'renderPattern' so it's
+--   already an atom; no extra parens are needed here.
 renderPatternAtom :: Pattern -> Text
 renderPatternAtom p@(PCon _ _ (_ : _)) = "(" <> renderPattern p <> ")"
 renderPatternAtom p = renderPattern p

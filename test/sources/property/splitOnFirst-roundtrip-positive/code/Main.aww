@@ -3,7 +3,7 @@
 -- contains only chars disjoint from s's alphabet, but s itself has
 -- been constructed Haskell-side as `a ++ sep ++ b` so the split is
 -- guaranteed to find a match. Output: the round-tripped string —
--- Haskell compares byte-for-byte against `s`.
+-- Haskell expects `s` back.
 import IO.Stdout
 
 main : String -> IO Unit

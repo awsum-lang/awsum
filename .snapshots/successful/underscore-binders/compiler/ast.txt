@@ -252,7 +252,16 @@ Program
                             , spanEndLine = 17
                             , spanEndCol = 6
                             }
-                        ) "Box" [ PWild ]
+                        ) "Box"
+                        [ PWild
+                            ( SrcSpan
+                                { spanStartLine = 17
+                                , spanStartCol = 7
+                                , spanEndLine = 17
+                                , spanEndCol = 8
+                                }
+                            )
+                        ]
                     )
                     ( ELit
                         ( SrcSpan
@@ -501,7 +510,21 @@ Program
                             }
                         ) "Pair"
                         [ PWild
+                            ( SrcSpan
+                                { spanStartLine = 25
+                                , spanStartCol = 8
+                                , spanEndLine = 25
+                                , spanEndCol = 9
+                                }
+                            )
                         , PWild
+                            ( SrcSpan
+                                { spanStartLine = 25
+                                , spanStartCol = 10
+                                , spanEndLine = 25
+                                , spanEndCol = 11
+                                }
+                            )
                         ]
                     )
                     ( ELit

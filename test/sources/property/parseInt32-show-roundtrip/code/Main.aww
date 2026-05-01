@@ -1,6 +1,6 @@
 -- Property: `parseInt32 (showInt32 x) == Right x` for any Int32. Tests
--- that the show / parse pair round-trips byte-for-byte. Awsum reads the
--- input, parses, re-shows; Haskell expects the same input back. If the
+-- that the show / parse pair round-trips. Awsum reads the input,
+-- parses, re-shows; Haskell expects the same input back. If the
 -- generator picks a value Awsum can't parse or print correctly, the
 -- discrepancy shows up immediately on the failing backend.
 import IO.Stdout

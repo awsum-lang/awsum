@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":12,"startCol":6,"endLine":12,"endCol":11,"message":"Row tag collision: labels Puk9 and AFB4F both hash to 0x3f8e5232. Rename one of them so the runtime can tell row alternatives apart.","fixes":[]}]

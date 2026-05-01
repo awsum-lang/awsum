@@ -552,7 +552,7 @@ mkPredUInt8 = do
 -- | succInt32: Int32 -> Either OverflowError Int32.
 --   Mirror of 'mkPredInt32' with boundary INT32_MAX and 'iadd' (0x60)
 --   instead of 'isub' (0x64). OverflowError is single-constructor, so
---   its boxed-tag is 0 — the Left-branch encoding is byte-identical to
+--   its boxed-tag is 0 — the Left-branch encoding is identical to
 --   the UnderflowError case.
 mkSuccInt32 :: AsmM MInfo
 mkSuccInt32 = do
@@ -1312,7 +1312,7 @@ mkMulInt32 = do
 --   (its absolute value is one above maxInt32 in two's complement);
 --   every other input flips sign exactly. OverflowError is single-
 --   constructor, so its boxed-tag is 0 and the Left-branch encoding
---   is byte-identical to predInt32.
+--   is identical to predInt32.
 mkNegInt32 :: AsmM MInfo
 mkNegInt32 = do
   ni <- addUtf8 "__negInt32"
@@ -2282,6 +2282,13 @@ exprMaxLocals = \case
     let thisLevel = 2 + foldl' max 0 [length vs | (_, vs, _) <- alts]
         armMax = foldl' max 0 [exprMaxLocals b | (_, _, b) <- alts]
      in thisLevel + armMax
+  CRowCase _ alts ->
+    -- Same shape as a 'CCase' with one binder per arm (the row's
+    -- value), so two slots (scrutinee + unboxed tag) plus the binding.
+    let thisLevel = 3 :: Int
+        armMax = foldl' max 0 [exprMaxLocals b | (_, _, b) <- alts]
+     in thisLevel + armMax
+  CRow _ v -> exprMaxLocals v
   CCall f xs -> foldl' max 0 (exprMaxLocals f : map exprMaxLocals xs)
   CCon _ fields -> foldl' max 0 (map exprMaxLocals fields)
   CLoop b -> exprMaxLocals b
@@ -2314,6 +2321,14 @@ exprMaxStack = \case
     -- Scrutinee leaves +1, then dup+iconst+aaload+ checkcast +invokevirtual peaks at ~3,
     -- arms emit independently after astore drops to 0.
     foldl' max 3 (exprMaxStack scrut : [exprMaxStack b | (_, _, b) <- alts])
+  CRowCase scrut alts ->
+    -- Same emission shape as 'CCase' (delegated to it in 'emitExpr');
+    -- mirror the bound here.
+    foldl' max 3 (exprMaxStack scrut : [exprMaxStack b | (_, _, b) <- alts])
+  CRow _ v ->
+    -- Same shape as a one-field 'CCon': dup + tag store peaks at 4 and
+    -- one field push.
+    max 4 (3 + exprMaxStack v)
   CCall f xs ->
     -- Conservative bound: assume the first-class shape, where the
     -- callee occupies one stack slot across the evaluation of every
@@ -2728,6 +2743,11 @@ emitExpr ctx = \case
             allTargets = fMeta.cwBranchTargets ++ concatMap cwBranchTargets argMetas
             allIntSlots = fMeta.cwIntSlots ++ concatMap cwIntSlots argMetas
         pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+  -- Row injection / dispatch share the runtime layout with one-field
+  -- 'CCon' / 'CCase', so delegate.
+  CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
+  CRowCase scrut alts ->
+    emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CLoop _ -> error "JVM Assemble: CLoop reached emitExpr (non-tail position)"
   CContinue _ -> error "JVM Assemble: CContinue reached emitExpr (non-tail position)"
 
@@ -2747,6 +2767,9 @@ emitTailBin ctx0 params = goTop ctx0
     goTop ctx offset = \case
       CContinue newArgs -> emitContinue ctx offset newArgs
       CCase scrut alts -> emitTailCase ctx offset scrut alts
+      -- Row dispatch in tail position: same shape as 'CCase'.
+      CRowCase scrut alts ->
+        emitTailCase ctx offset scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
       other -> emitTailValue ctx other
 
     emitContinue :: ECtx -> Int -> [CExpr] -> AsmM CodeWithMeta

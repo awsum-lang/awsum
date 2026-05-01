@@ -259,6 +259,12 @@ emitStmt params = go
           <> ";\n      switch (__s[0]) {\n"
           <> T.concat (map emitStmtAlt alts)
           <> "      }\n    }\n"
+      CRowCase scrut alts ->
+        "    {\n      const __s = "
+          <> emitExpr scrut
+          <> ";\n      switch (__s[0]) {\n"
+          <> T.concat (map emitStmtRowAlt alts)
+          <> "      }\n    }\n"
       e ->
         "    return " <> emitExpr e <> ";\n"
 
@@ -275,6 +281,17 @@ emitStmt params = go
             <> bindings
             <> reindentStmt (emitStmt params body)
             <> "        }\n"
+
+    emitStmtRowAlt :: (Word32, Name, CExpr) -> Text
+    emitStmtRowAlt (tag, var, body) =
+      "        case "
+        <> show tag
+        <> ": {\n"
+        <> "          const "
+        <> mangle var
+        <> " = __s[1];\n"
+        <> reindentStmt (emitStmt params body)
+        <> "        }\n"
 
     -- 'emitStmt' produces lines indented for @while (true)@ depth (4 spaces).
     -- Inside a @case@ we want them two levels deeper (10 spaces), so bump
@@ -301,9 +318,22 @@ emitExpr = \case
   CBuiltIn n -> "/*<builtin " <> n <> ">*/" -- invariant: not a standalone term
   CCon tag fields ->
     "[" <> T.intercalate ", " (show tag : map emitExpr fields) <> "]"
+  -- Row-tagged value: same `[tag, value]` array layout as a one-field
+  -- 'CCon', so a single 'switch (s[0])' shape serves both kinds of
+  -- dispatch. Hash tags are 32-bit while constructor tags are small
+  -- non-negative integers, so the two namespaces don't collide in
+  -- practice.
+  CRow tag v ->
+    "[" <> show tag <> ", " <> emitExpr v <> "]"
   CCase scrut alts ->
     "((s) => { switch(s[0]) { "
       <> T.intercalate " " (map emitAlt alts)
+      <> " } })("
+      <> emitExpr scrut
+      <> ")"
+  CRowCase scrut alts ->
+    "((s) => { switch(s[0]) { "
+      <> T.intercalate " " (map emitRowAlt alts)
       <> " } })("
       <> emitExpr scrut
       <> ")"
@@ -385,6 +415,10 @@ emitExpr = \case
     emitAlt (tag, vars, body) =
       let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]
        in "case " <> show tag <> ": {" <> bindings <> " return " <> emitExpr body <> "; }"
+
+    emitRowAlt :: (Word32, Name, CExpr) -> Text
+    emitRowAlt (tag, var, body) =
+      "case " <> show tag <> ": { const " <> mangle var <> " = s[1]; return " <> emitExpr body <> "; }"
 
 -- | Encode a Haskell 'Text' as a JavaScript string literal with escapes.
 --   Supported escapes mirror the parser/renderer: \n \t \r \" \\ \0

@@ -1,8 +1,8 @@
 -- Property: `not (not b) == b` for every Bool. Bool is encoded as a
 -- decimal "0" / "1" string on the way in (Awsum has no String→Bool
 -- builtin and no eqString), and Awsum prints back "T" / "F" so
--- Haskell can compare byte-for-byte against its own boolToText of
--- the original input.
+-- Haskell can compare against its own boolToText of the original
+-- input.
 import IO.Stdout
 
 intToBool : UInt8 -> Bool

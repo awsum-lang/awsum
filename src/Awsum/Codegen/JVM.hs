@@ -1305,6 +1305,10 @@ emitExprText ctx paramMap = \case
           $ [emitIconst nSlots, "  anewarray java/lang/Object"]
           <> storeTag
           <> storeFields
+  -- Row injection / dispatch: delegate to CCon / CCase.
+  CRow tag v -> emitExprText ctx paramMap (CCon (fromIntegral tag) [v])
+  CRowCase scrut alts ->
+    emitExprText ctx paramMap (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts ->
     let sorted = sortWith (\(t, _, _) -> t) alts
         scrutText = emitExprText ctx paramMap scrut

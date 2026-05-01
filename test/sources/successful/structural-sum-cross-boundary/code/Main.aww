@@ -1,0 +1,64 @@
+-- End-to-end: cross-boundary row normalisation. A value built in a
+-- non-row context (`defaultJust : Maybe Bool`) flows into a slot
+-- expecting a row-typed equivalent (`Maybe (Bool | Unit)`) and the
+-- consumer's row-case dispatches correctly.
+--
+-- Without the fix the value's runtime shape was `CCon Just [CCon True []]`
+-- (positional tags), but the consumer's `(b : Bool)` arm reads the
+-- inner via row-tag dispatch — different protocol, silent wrong
+-- answer. Lowering now synthesises a `$lift$N` helper that
+-- destructures the source and reconstructs in the target shape
+-- (`CCon Just [CRow (rowTag Bool) (CCon True [])]`) so the consumer
+-- finds the row tag it expects.
+--
+-- Three shapes exercised in one program:
+--   * direct nominal-head wrap: `Maybe Bool → Maybe (Bool | Unit)`,
+--     the canonical caveat case;
+--   * recursive types: `Lst Bool → Lst (Bool | Unit)` — the lift
+--     helper memoises by `(src, tgt)` so it self-recurses through
+--     the `Cons` field instead of expanding infinitely;
+--   * deep nesting: `Either ErrA (Maybe Bool) → Either ErrA (Maybe (Bool | Unit))`,
+--     where the coercion descends through `Right`'s payload and
+--     reuses the `Maybe Bool → Maybe (Bool | Unit)` helper.
+import IO.Stdout
+
+type ErrA = ErrA
+
+type Lst a = Nil | Cons a (Lst a)
+
+defaultJust : Maybe Bool
+defaultJust = Just True
+
+defaultBools : Lst Bool
+defaultBools = Cons True (Cons False Nil)
+
+defaultRight : Either ErrA (Maybe Bool)
+defaultRight = Right (Just False)
+
+dispatchInner : (Bool | Unit) -> String
+dispatchInner x = case x of
+  (b : Bool) -> case b of
+    True -> "T"
+    False -> "F"
+  (u : Unit) -> showUnit u
+
+describeMaybe : Maybe (Bool | Unit) -> String
+describeMaybe m = case m of
+  Nothing -> "N"
+  Just inner -> "J" ++ dispatchInner inner
+
+describeLst : Lst (Bool | Unit) -> String
+describeLst xs = case xs of
+  Nil -> ""
+  Cons h t -> dispatchInner h ++ describeLst t
+
+describeEither : Either ErrA (Maybe (Bool | Unit)) -> String
+describeEither r = case r of
+  Left _e -> "ErrA"
+  Right m -> describeMaybe m
+
+summary : String
+summary = describeMaybe defaultJust ++ " / " ++ describeLst defaultBools ++ " / " ++ describeEither defaultRight
+
+main : String -> IO Unit
+main _input = IO.Stdout.print summary

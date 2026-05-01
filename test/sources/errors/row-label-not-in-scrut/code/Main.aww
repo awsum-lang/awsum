@@ -1,0 +1,12 @@
+-- Error: the ascription claims an alternative ('Bool') that is not in
+-- the scrutinee's row '(Int32 | String)'. The pattern can never match.
+import IO.Stdout
+
+_f : (Int32 | String) -> String
+_f x = case x of
+  (n : Int32) -> showInt32 n
+  (s : String) -> s
+  (b : Bool) -> "extra"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

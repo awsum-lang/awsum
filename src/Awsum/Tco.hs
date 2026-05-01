@@ -50,6 +50,11 @@ rewriteTail fn = go
             alts' = [(tag, vs, body') | (tag, vs, (body', _)) <- results]
             anyChanged = any (\(_, _, (_, c)) -> c) results
          in (CCase scrut alts', anyChanged)
+      CRowCase scrut alts ->
+        let results = [(tag, v, go body) | (tag, v, body) <- alts]
+            alts' = [(tag, v, body') | (tag, v, (body', _)) <- results]
+            anyChanged = any (\(_, _, (_, c)) -> c) results
+         in (CRowCase scrut alts', anyChanged)
       other -> (other, False)
 
 -- | Inverse of 'tcoProgram': rewrites every 'CLoop' wrapper away and
@@ -80,6 +85,9 @@ untcoDecl = \case
           CContinue args -> CCall (CVar fn) (map go args)
           CCase scrut alts ->
             CCase (go scrut) [(tag, vs, go body) | (tag, vs, body) <- alts]
+          CRowCase scrut alts ->
+            CRowCase (go scrut) [(tag, v, go body) | (tag, v, body) <- alts]
+          CRow tag v -> CRow tag (go v)
           CCall f xs -> CCall (go f) (map go xs)
           CCon tag fs -> CCon tag (map go fs)
           CLoop b -> CLoop (go b)

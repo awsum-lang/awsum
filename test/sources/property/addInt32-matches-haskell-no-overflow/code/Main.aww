@@ -1,6 +1,6 @@
 -- Property: when (a, b) is a no-overflow pair, `addInt32 a b ==
--- Right (a + b)` with the result agreeing byte-for-byte with what
--- Haskell's i32 addition produces. Stronger than commutativity:
+-- Right (a + b)` with the result matching what Haskell's i32
+-- addition produces. Stronger than commutativity:
 -- closes the "all backends agree but every backend agrees on the
 -- wrong value" gap. Awsum prints the computed sum as a decimal
 -- string; Haskell expects `show (a + b)`.

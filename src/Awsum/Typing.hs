@@ -37,10 +37,12 @@ module Awsum.Typing
     warningMessage,
     isBareBuiltIn,
     splitArrow,
+    intTypeRange,
   )
 where
 
 import Awsum.BuiltIn (lookupBuiltIn)
+import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, rowSubsume, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
@@ -48,6 +50,7 @@ import Data.Graph qualified as G
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
 import Data.Text qualified as T
+import Numeric (showHex)
 import Relude
 
 -- | User-facing typing errors.
@@ -165,7 +168,81 @@ data TypeError
     --   lower them safely. Span points at the first member whose
     --   source location we can recover.
     StackUnsafeRecursion SrcSpan [Name]
+  | -- | A @case@ arm ascribes a pattern to a type that is not one of
+    --   the row's labels — e.g. @(n : Bool)@ inside a @case x of …@
+    --   where @x : (Int32 | String)@. The first 'Type'' is the
+    --   ascribed type (the user's claim), the second is the scrutinee
+    --   row (the universe of valid labels).
+    RowLabelNotInScrut SrcSpan Type' Type'
+  | -- | A @case@ on a structural-sum scrutinee does not exhaust every
+    --   alternative of the row. Carries the labels that have no
+    --   covering arm; the row itself sets the universe so the user can
+    --   tell what was expected. Mirrors 'NonExhaustiveCase' for nominal
+    --   sums.
+    NonExhaustiveRow SrcSpan [Type'] Type'
+  | -- | A wildcard (@_@) or variable pattern was used at the top of a
+    --   @case@ arm whose scrutinee is a structural sum. Catch-all
+    --   patterns on rows are forbidden by design — exhaustiveness on
+    --   structural sums is a load-bearing invariant of the language.
+    RowCatchAllPattern SrcSpan
+  | -- | The same row label has more than one covering @case@ arm,
+    --   making the second arm unreachable. Carries the duplicated
+    --   label so the diagnostic can name it. Mirrors 'UnreachableCase'
+    --   for nominal sums.
+    DuplicateRowArm SrcSpan Type'
+  | -- | A constructor pattern in a row-case names a constructor whose
+    --   owning type is not one of the scrutinee row's labels. Carries
+    --   the constructor's source span, the constructor name, and the
+    --   scrutinee row so the diagnostic can show which labels were on
+    --   the table. Distinct from 'RowLabelNotInScrut' (the PAscribe
+    --   analogue).
+    RowLabelNotForConstructor SrcSpan Name Type'
+  | -- | A lambda was used in a synthesis position — i.e. one where
+    --   surrounding context does not provide an expected arrow type.
+    --   The expected-type-driven check in 'checkExpr' is the only
+    --   place that can give a lambda a type.
+    LambdaInSynthesisPosition SrcSpan
+  | -- | A 'do' block was used in a synthesis position. Like lambdas,
+    --   'do' has no synthesis form — it desugars through 'bindEither'
+    --   against the surrounding expected type.
+    DoInSynthesisPosition SrcSpan
+  | -- | The scrutinee of a 'do' bind statement (the right-hand side of
+    --   @x <- e@) does not have an 'Either' type. The current
+    --   desugaring is hardcoded to 'bindEither', so any other shape
+    --   means the user wrote a 'do' block in a context the compiler
+    --   does not know how to translate.
+    DoBindNonEither SrcSpan Type'
+  | -- | A 'do' block does not end with an expression — its last
+    --   statement is a bind or a let, leaving the block without a
+    --   well-typed result.
+    DoBlockMissingResult SrcSpan
+  | -- | A lambda has more parameters than the expected arrow type
+    --   provides. Carries the lambda's span, the expected type, and
+    --   the lambda's parameter count.
+    LambdaShapeMismatch SrcSpan Type' Int
+  | -- | The /row tag collision check/: two distinct row labels in this
+    --   program canonicalise to the same 32-bit FNV-1a hash, so the
+    --   runtime would silently confuse one for the other on row-case
+    --   dispatch. Carries the two colliding labels, the shared
+    --   'Word32' tag, and (when resolvable from the head 'TyCon' name)
+    --   the 'SrcSpan' of the second label's @type@ declaration —
+    --   that's what the user would actually rename to fix the
+    --   collision, so 'typeErrorSpan' prefers it over the labels'
+    --   usage spans. The message names both labels regardless.
+    RowTagCollision Type' Type' Word32 (Maybe SrcSpan)
   deriving stock (Show, Eq)
+
+-- | If @e@ is a fully-applied constructor expression
+--   @ECon name `EApp` arg1 `EApp` arg2 …@, return the constructor
+--   name and its argument list. Walks left-associated 'EApp' chains
+--   and peels 'EParens'. Returns 'Nothing' for any other shape.
+collectConApp :: Expr -> Maybe (Name, [Expr])
+collectConApp = go []
+  where
+    go acc (EApp _ f x) = go (x : acc) f
+    go acc (EParens _ inner) = go acc inner
+    go acc (ECon _ n) = Just (n, acc)
+    go _ _ = Nothing
 
 -- | Extract the source span from a TypeError, if available.
 typeErrorSpan :: TypeError -> Maybe SrcSpan
@@ -205,6 +282,45 @@ typeErrorSpan = \case
   BuiltInTypeMismatch sp _ _ _ _ -> Just sp
   MutuallyRecursiveValues sp _ -> Just sp
   StackUnsafeRecursion sp _ -> Just sp
+  RowLabelNotInScrut sp _ _ -> Just sp
+  NonExhaustiveRow sp _ _ -> Just sp
+  RowCatchAllPattern sp -> Just sp
+  DuplicateRowArm sp _ -> Just sp
+  RowLabelNotForConstructor sp _ _ -> Just sp
+  LambdaInSynthesisPosition sp -> Just sp
+  DoInSynthesisPosition sp -> Just sp
+  DoBindNonEither sp _ -> Just sp
+  DoBlockMissingResult sp -> Just sp
+  LambdaShapeMismatch sp _ _ -> Just sp
+  RowTagCollision l1 l2 _ mDeclSp ->
+    -- Span priority: the second label's @type@ declaration (what the
+    -- user would actually rename) → the second label's usage site →
+    -- the first label's usage site → 'Nothing'. The decl-span lookup
+    -- happens at error-construction time in 'Awsum.ElaborateLower'
+    -- where the program-level type-name table is in scope; here we
+    -- just pick the best available span. The labels arrive in
+    -- pattern-order from 'buildRowAltsM', so the second label is the
+    -- later-introduced one — that's the one to point at when we have
+    -- to fall back from a missing decl span.
+    --
+    -- 'Eq SrcSpan' is uniformly @True@ to keep AST equality
+    -- position-blind, so the @noSpan@ test compares underlying ints.
+    let realSp sp =
+          if spanStartLine sp
+            == 0
+            && spanStartCol sp
+            == 0
+            && spanEndLine sp
+            == 0
+            && spanEndCol sp
+            == 0
+            then Nothing
+            else Just sp
+     in case mDeclSp of
+          Just sp -> Just sp
+          Nothing -> case realSp (typeSpan l2) of
+            Just sp -> Just sp
+            Nothing -> realSp (typeSpan l1)
 
 prettyPrintTypeError :: TypeError -> Text
 prettyPrintTypeError = \case
@@ -268,6 +384,65 @@ prettyPrintTypeError = \case
       <> " uses a shape the compiler does not currently transform to a "
       <> "stack-safe form. If you believe this is a bug, please open an "
       <> "issue on GitHub with a minimal example."
+  RowLabelNotInScrut _ ascr scrut ->
+    "Pattern ascribes type "
+      <> showType ascr
+      <> ", which is not one of the alternatives of the scrutinee row "
+      <> showType scrut
+  NonExhaustiveRow _ missing scrut ->
+    "Non-exhaustive case on structural sum "
+      <> showType scrut
+      <> ": missing alternative"
+      <> (if length missing > 1 then "s " else " ")
+      <> T.intercalate ", " (map showType missing)
+  RowCatchAllPattern _ ->
+    "Wildcard / variable patterns are not allowed at the top of a "
+      <> "case arm whose scrutinee is a structural sum. Each alternative "
+      <> "must be matched explicitly with '(x : T)' for the corresponding "
+      <> "label — exhaustiveness without catch-all is a load-bearing "
+      <> "invariant of the language."
+  DuplicateRowArm _ ty ->
+    "Duplicate case arm: alternative "
+      <> showType ty
+      <> " is already covered by an earlier arm in this case."
+  RowLabelNotForConstructor _ cName scrut ->
+    "Constructor '"
+      <> cName
+      <> "' is not in any alternative of the structural sum "
+      <> showType scrut
+      <> "."
+  LambdaInSynthesisPosition _ ->
+    "A lambda expression needs an expected arrow type from the "
+      <> "surrounding context. Use it as an argument to a function "
+      <> "whose parameter is a function type, or in another position "
+      <> "where its type is fixed."
+  DoInSynthesisPosition _ ->
+    "A 'do' block needs an expected type from the surrounding context. "
+      <> "Use it as the body of a definition with an explicit signature, "
+      <> "or as an argument whose expected type is known."
+  DoBindNonEither _ ty ->
+    "The right-hand side of '<-' in a 'do' block must produce an "
+      <> "'Either e a' value, but its type is "
+      <> showType ty
+      <> "."
+  DoBlockMissingResult _ ->
+    "A 'do' block must end with an expression that produces the "
+      <> "result; the final statement here is a bind ('<-') or 'let'."
+  LambdaShapeMismatch _ expected nParams ->
+    "Lambda with "
+      <> show nParams
+      <> " parameter(s) cannot be checked against expected type "
+      <> showType expected
+      <> "."
+  RowTagCollision lbl1 lbl2 tag _ ->
+    "Row tag collision: labels "
+      <> showType lbl1
+      <> " and "
+      <> showType lbl2
+      <> " both hash to 0x"
+      <> toText (showHex32 tag)
+      <> ". Rename one of them so the runtime can tell row "
+      <> "alternatives apart."
   where
     showType :: Type' -> Text
     showType = \case
@@ -275,15 +450,22 @@ prettyPrintTypeError = \case
       TyCon _ n -> n
       TyApp _ f x -> showType f <> " " <> showTypeAtom x
       TyArrow _ a b -> showType a <> " -> " <> showType b
+      TyOr _ a b -> showType a <> " | " <> showType b
     showTypeAtom :: Type' -> Text
     showTypeAtom t@TyApp {} = "(" <> showType t <> ")"
     showTypeAtom t@TyArrow {} = "(" <> showType t <> ")"
+    showTypeAtom t@TyOr {} = "(" <> showType t <> ")"
     showTypeAtom t = showType t
 
     rangeText :: Name -> Text
     rangeText n = case intTypeRange n of
       Just (lo, hi) -> show lo <> ".." <> show hi
       Nothing -> "?"
+
+    showHex32 :: Word32 -> String
+    showHex32 w =
+      let s = showHex w ""
+       in replicate (8 - length s) '0' <> s
 
 -- | Inclusive (min, max) range for a numeric built-in type.
 --   Returns 'Nothing' for types that are not known integer types.
@@ -358,51 +540,7 @@ wellFormedTypeWith userTypes = \case
     | otherwise -> Left (UnknownTypeCon sp n)
   TyApp _ f x -> wellFormedTypeWith userTypes f >> wellFormedTypeWith userTypes x
   TyArrow _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
-
-type Subst = M.Map Name Type'
-
-applySubst :: Subst -> Type' -> Type'
-applySubst s = \case
-  TyVar sp v -> fromMaybe (TyVar sp v) (M.lookup v s)
-  TyCon sp c -> TyCon sp c
-  TyApp sp f x -> TyApp sp (applySubst s f) (applySubst s x)
-  TyArrow sp a b -> TyArrow sp (applySubst s a) (applySubst s b)
-
-compose :: Subst -> Subst -> Subst
-compose s2 s1 = (applySubst s2 <$> s1) `M.union` s2
-
-match :: Type' -> Type' -> Maybe Subst
-match = go
-  where
-    go (TyVar _ v) t = Just (M.singleton v t)
-    go t (TyVar _ v) = Just (M.singleton v t)
-    go (TyCon _ c1) (TyCon _ c2)
-      | c1 == c2 = Just M.empty
-      | otherwise = Nothing
-    go (TyApp _ f1 x1) (TyApp _ f2 x2) = do
-      s1 <- go f1 f2
-      s2 <- go (applySubst s1 x1) (applySubst s1 x2)
-      pure (compose s2 s1)
-    go (TyArrow _ a1 b1) (TyArrow _ a2 b2) = do
-      s1 <- go a1 a2
-      s2 <- go (applySubst s1 b1) (applySubst s1 b2)
-      pure (compose s2 s1)
-    go _ _ = Nothing
-
--- | Freshen type variables in a type by adding a suffix.
---   Used to avoid name collisions when matching generic types against concrete types.
-freshenType :: Text -> Type' -> Type'
-freshenType suffix ty = applySubst subst ty
-  where
-    vars = collectTypeVars ty
-    subst = M.fromList [(v, TyVar noSpan (v <> suffix)) | v <- toList vars]
-
--- | Collect all type variables in a type.
-collectTypeVars :: Type' -> S.Set Name
-collectTypeVars (TyVar _ n) = S.singleton n
-collectTypeVars (TyCon _ _) = S.empty
-collectTypeVars (TyApp _ f x) = collectTypeVars f <> collectTypeVars x
-collectTypeVars (TyArrow _ a b) = collectTypeVars a <> collectTypeVars b
+  TyOr _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
 
 -- | Build the return type of a constructor given the type name and type parameters.
 --   @conReturnType "Color" []@    → @TyCon "Color"@
@@ -523,6 +661,7 @@ validateTypeParams _declSp params cons = do
       TyCon _ _ -> Right ()
       TyApp _ f x -> checkNoIgnoredTyVar f >> checkNoIgnoredTyVar x
       TyArrow _ a b -> checkNoIgnoredTyVar a >> checkNoIgnoredTyVar b
+      TyOr _ a b -> checkNoIgnoredTyVar a >> checkNoIgnoredTyVar b
 
     -- The '_'-prefixed case is already rejected by checkNoIgnoredTyVar
     -- above with a more specific error; skip it here to avoid masking
@@ -535,6 +674,7 @@ validateTypeParams _declSp params cons = do
       TyCon _ _ -> Right ()
       TyApp _ f x -> checkDeclaredTyVar declared f >> checkDeclaredTyVar declared x
       TyArrow _ a b -> checkDeclaredTyVar declared a >> checkDeclaredTyVar declared b
+      TyOr _ a b -> checkDeclaredTyVar declared a >> checkDeclaredTyVar declared b
 
 -- | A non-fatal observation about a program. Surfaced to editors as
 --   yellow squigglies and to CI via @--strict@.
@@ -769,20 +909,220 @@ checkNoShadow = foldM_ addOne
 -- body of a top-level definition checked against its declared return type.
 -- This is where 'LInt' literals get their type: they have no synthesis form
 -- (no defaulting), so they must appear in a context that fixes the type.
+-- | Split @TyArrow a (TyArrow b … (TyArrow z r))@ into
+--   @([a, b, …, z], r)@, taking the first @n@ argument types. Returns
+--   'Nothing' if the type does not have at least @n@ arrows.
+zipParamsToArrow :: Type' -> Int -> Maybe ([Type'], Type')
+zipParamsToArrow t 0 = Just ([], t)
+zipParamsToArrow (TyArrow _ a b) n = do
+  (rest, r) <- zipParamsToArrow b (n - 1)
+  Just (a : rest, r)
+zipParamsToArrow _ _ = Nothing
+
+-- | Typecheck a 'do'-block against an expected type. The desugaring
+--   target is 'bindEither', so the block's overall type must be
+--   'Either e a'. Each @x <- e@ runs 'e' under the
+--   environment built so far, requires its type to be 'Either e' a''
+--   for some 'e'' (subsumable into the overall row), and binds 'x' at
+--   'a''. The terminal expression is checked against the overall
+--   expected type.
+checkDoBlock :: ConEnv -> TypeConsMap -> Env -> SrcSpan -> Type' -> [DoStmt] -> Either TypeError ()
+checkDoBlock conEnv tcm env sp expected = goStmts env
+  where
+    goStmts _ [] = Left (DoBlockMissingResult sp)
+    goStmts envCur [DoExpr _ e] = checkExpr conEnv tcm envCur expected e
+    goStmts envCur (DoBind bsp pat e : rest) = do
+      tx <- typeOfExpr conEnv tcm envCur e
+      payload <- case tx of
+        TyApp _ (TyApp _ (TyCon _ "Either") _err) ok -> Right ok
+        _ -> Left (DoBindNonEither bsp tx)
+      checkNoShadow envCur (collectPatternVars [pat])
+      let bindings = patternBindings conEnv [pat] [payload]
+          envNext = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envCur
+      goStmts envNext rest
+    goStmts envCur (DoLet lsp n e : rest) = do
+      ty <- typeOfExpr conEnv tcm envCur e
+      checkNoShadow envCur [(lsp, n)]
+      let envNext = M.insert (qLocal n) ty envCur
+      goStmts envNext rest
+    -- Bare expression in a non-final position: with the hardcoded-
+    -- Either desugar there is no analogue to '>>' (would need a Unit
+    -- in the row), so reject up front.
+    goStmts _ (DoExpr esp _ : _ : _) = Left (DoBlockMissingResult esp)
+
 checkExpr :: ConEnv -> TypeConsMap -> Env -> Type' -> Expr -> Either TypeError ()
 checkExpr conEnv tcm env expected = \case
+  -- Lambda: split @expected@ into @arg → result@ pairs, bind each
+  -- parameter at the corresponding argument type, then check the
+  -- body against the residual result type. The body may itself be
+  -- another lambda — we walk the arrow chain rather than handling
+  -- one parameter at a time, so multi-parameter lambdas like
+  -- @\\a b -> e@ split correctly against @A -> B -> R@.
+  ELam sp params body -> do
+    (paramTypes, resultTy) <- case zipParamsToArrow expected (length params) of
+      Just split -> Right split
+      Nothing -> Left (LambdaShapeMismatch sp expected (length params))
+    -- Reject parameters that shadow existing bindings.
+    checkNoShadow env [(s, n) | Param s n <- params]
+    let bindings = zip (map paramName params) paramTypes
+        env' = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
+    checkExpr conEnv tcm env' resultTy body
+  -- 'do'-blocks desugar to a chain of 'bindEither' calls whose
+  -- trailing expression is the user's verbatim (typically a
+  -- 'pureEither' application); we typecheck them by recursing on
+  -- the desugared form and then erasing the EDo node by overwriting
+  -- the body in 'lowerExpr' (the desugar is also done there). Here
+  -- we just check the statements one by one, threading bindings
+  -- into scope.
+  EDo sp stmts -> checkDoBlock conEnv tcm env sp expected stmts
   ELit sp (LInt n) ->
     case expected of
       TyCon _ tyName
-        | Just (lo, hi) <- intTypeRange tyName ->
-            if n >= lo && n <= hi
-              then Right ()
-              else Left (IntLiteralOutOfRange sp n tyName)
+        | Just (lo, hi) <- intTypeRange tyName -> checkIntRange sp n tyName lo hi
+      -- D.1: implicit injection — a bare integer literal in a row
+      -- position resolves to the row's unique integer-typed alternative.
+      -- If the row has zero or several integer labels we can't pick a
+      -- type, and 'AmbiguousIntLiteral' / 'TypeMismatch' fire.
+      TyOr {} -> case rowIntLabel expected of
+        Just (tyName, lo, hi) -> checkIntRange sp n tyName lo hi
+        Nothing -> Left (TypeMismatch expected (TyCon noSpan "<integer literal>") (ELit sp (LInt n)))
       _ -> Left (TypeMismatch expected (TyCon noSpan "<integer literal>") (ELit sp (LInt n)))
   EParens _sp e -> checkExpr conEnv tcm env expected e
+  -- Bidirectional check on @case@ scrutinees: push the expected type
+  -- into each arm body, so e.g. an @Int32@-result function can write
+  -- a literal @0@ in a case arm and have it pinned to @Int32@
+  -- without a separate @zero : Int32@ binding. Without this clause
+  -- the case would fall through to synthesis and the literal would
+  -- be reported as 'AmbiguousIntLiteral'.
+  ECase sp scrut alts _ -> do
+    void
+      $ caseArms conEnv tcm env sp scrut alts
+      $ \envArm body -> checkExpr conEnv tcm envArm expected body
+  -- Bidirectional check at constructor applications: when the
+  -- enclosing context fixes a concrete return type, match it against
+  -- the constructor's generic return shape and propagate the
+  -- resulting substitution into each field's check. Without this,
+  -- @Right 1 : Either ErrorA Int32@ can't typecheck — the integer
+  -- literal would be checked against a freshened tyvar @b$N@ instead
+  -- of @Int32@.
+  e@(EApp {})
+    | Just (cName, args) <- collectConApp e,
+      Just ci <- M.lookup cName conEnv,
+      length args == length (ciFieldTypes ci) -> do
+        let genericRetTy = conReturnType (ciTypeName ci) (ciTypeParams ci)
+            freshGenericRetTy = freshenType "$check" genericRetTy
+            freshFieldTys = map (freshenType "$check") (ciFieldTypes ci)
+        case unify freshGenericRetTy expected of
+          Right s ->
+            let fieldExpected = map (applySubst s) freshFieldTys
+             in zipWithM_ (checkExpr conEnv tcm env) fieldExpected args
+          Left _ -> do
+            actual <- typeOfExpr conEnv tcm env e
+            unless (rowSubsume expected actual)
+              $ Left (TypeMismatch expected actual e)
+  -- Non-constructor application: prefer the existing synth-and-
+  -- subsume path; on failure, fall back to a bidirectional spine-
+  -- based check that pushes @expected@ into the argument positions.
+  -- The fallback is what lets a bare integer literal flow through a
+  -- polymorphic call site like @apply (\n -> n) 42 : Int32@ — the
+  -- forward unify from the result type pins @apply@'s @a@ tyvar to
+  -- @Int32@, which the bare literal would otherwise be checked
+  -- against an unresolved tyvar and rejected. Cases the forward
+  -- path already accepts (most polymorphic uses with named arguments)
+  -- continue to take that branch unchanged.
+  e@(EApp {}) ->
+    case typeOfExpr conEnv tcm env e of
+      Right actual | rowSubsume expected actual -> Right ()
+      _ -> do
+        let (appHead, spineArgs) = appSpine e
+        tHead <- typeOfExpr conEnv tcm env appHead
+        case zipParamsToArrow tHead (length spineArgs) of
+          Just (argTys, resultTy) -> do
+            s0 <- unifyOrSubsume expected resultTy e
+            foldM_ (checkArgStep conEnv tcm env) s0 (zip argTys spineArgs)
+          Nothing -> do
+            actual <- typeOfExpr conEnv tcm env e
+            unless (rowSubsume expected actual)
+              $ Left (TypeMismatch expected actual e)
   e -> do
     actual <- typeOfExpr conEnv tcm env e
-    unless (actual == expected) $ Left (TypeMismatch expected actual e)
+    -- Boundary acceptance: equality is too strict once 'TyOr' enters
+    -- the picture. 'rowSubsume' is the asymmetric relation — implicit
+    -- injection extended through nominal heads — that lets
+    -- @Left ErrA : Either ErrA r@ flow into @Either (ErrA | ErrB) Int32@
+    -- without explicit wrapping. For non-row expected types it falls
+    -- back to structural equality (free tyvars on either side accept
+    -- anything, which preserves the prior behaviour for polymorphic
+    -- constructor instantiation).
+    unless (rowSubsume expected actual)
+      $ Left (TypeMismatch expected actual e)
+  where
+    checkIntRange sp n tyName lo hi
+      | n >= lo && n <= hi = Right ()
+      | otherwise = Left (IntLiteralOutOfRange sp n tyName)
+
+    -- Find the unique integer-typed label of a row, if there is one.
+    -- Used by 'checkExpr ELit' to resolve a bare integer literal in a
+    -- structural-sum position.
+    rowIntLabel :: Type' -> Maybe (Name, Integer, Integer)
+    rowIntLabel ty =
+      case [(n, lo, hi) | TyCon _ n <- flattenRow ty, Just (lo, hi) <- [intTypeRange n]] of
+        [single] -> Just single
+        _ -> Nothing
+
+    -- Spine of an application: peel parens and left-associated 'EApp's
+    -- to recover @(head, [arg1, arg2, …])@. Used by the bidirectional
+    -- 'EApp' clause above so a multi-argument call is checked against
+    -- the head's full arrow chain in one step.
+    appSpine :: Expr -> (Expr, [Expr])
+    appSpine = go []
+      where
+        go acc (EApp _ f x) = go (x : acc) f
+        go acc (EParens _ inner) = go acc inner
+        go acc h = (h, acc)
+
+    unifyOrSubsume expectedTy actualTy origExpr =
+      case unify expectedTy actualTy of
+        Right s -> Right s
+        Left _ ->
+          if rowSubsume expectedTy actualTy
+            then Right mempty
+            else Left (TypeMismatch expectedTy actualTy origExpr)
+
+    -- Check one argument against its (possibly substituted) expected
+    -- type, accumulate any new substitution learned from it, and
+    -- compose it onto the running 'Subst' that subsequent arguments
+    -- will see. Composition order is "new after old" so the latest
+    -- bindings shadow stale ones.
+    checkArgStep cEnv tcm' env' subst (argTy, arg) = do
+      let argTy' = applySubst subst argTy
+      sArg <- checkArgSubst cEnv tcm' env' argTy' arg
+      pure (sArg <> subst)
+
+    -- Variant of 'checkExpr' that also reports the substitution
+    -- gleaned from this argument — needed so binders introduced by a
+    -- polymorphic call ('a' in @apply : (a -> b) -> a -> b@) get
+    -- pinned by the lambda body's identity before the next argument is
+    -- checked. Lambdas recurse through their bodies; everything else
+    -- goes through 'checkExpr' for validation and uses 'unify' on the
+    -- synthesised type when one is available.
+    checkArgSubst cEnv tcm' env' argExpected = \case
+      EParens _ inner -> checkArgSubst cEnv tcm' env' argExpected inner
+      ELam sp params body -> do
+        (paramTypes, resultTy) <- case zipParamsToArrow argExpected (length params) of
+          Just split -> Right split
+          Nothing -> Left (LambdaShapeMismatch sp argExpected (length params))
+        checkNoShadow env' [(s, n) | Param s n <- params]
+        let paramBindings = zip (map paramName params) paramTypes
+            envInner = M.union (M.fromList [(qLocal n, t) | (n, t) <- paramBindings]) env'
+        checkArgSubst cEnv tcm' envInner resultTy body
+      arg -> do
+        checkExpr cEnv tcm' env' argExpected arg
+        case typeOfExpr cEnv tcm' env' arg of
+          Right actual -> case unify argExpected actual of
+            Right s -> Right s
+            Left _ -> Right mempty
+          Left _ -> Right mempty
 
 -- | Infer/check the type of an expression under the given environment.
 --   This function /checks/ consistency; it does not invent polymorphism.
@@ -829,11 +1169,31 @@ typeOfExpr conEnv tcm env = \case
         case x of
           ELit _ (LInt _) -> checkExpr conEnv tcm env a x $> b
           EParens _ (ELit _ (LInt _)) -> checkExpr conEnv tcm env a x $> b
+          -- Lambdas and 'do' blocks have no synthesis form; they
+          -- typecheck only against the expected argument type.
+          ELam {} -> checkExpr conEnv tcm env a x $> b
+          EParens _ ELam {} -> checkExpr conEnv tcm env a x $> b
+          EDo {} -> checkExpr conEnv tcm env a x $> b
+          EParens _ EDo {} -> checkExpr conEnv tcm env a x $> b
           _ -> do
             tx <- typeOfExpr conEnv tcm env x
-            case match a tx of
-              Just s -> Right (applySubst s b)
-              Nothing -> Left (TypeMismatch a tx x)
+            -- Prefer 'unify' so any tyvar-binding substitution flows
+            -- into the result type ('applySubst s b'); fall back to
+            -- 'rowSubsume' when 'unify' fails on row-shape mismatches
+            -- the typechecker has decided are still subsumable. The
+            -- fallback covers two cases: direct row injection
+            -- (@ErrA ⊆ (ErrA | ErrB)@), and cross-boundary injection
+            -- through a nominal head (@Maybe Bool ⊆ Maybe (Bool | Unit)@)
+            -- — including nested in EApp synth, so a synthesised
+            -- @describeMaybe defaultJust@ inside a @++@ chain gets
+            -- accepted alongside the 'checkExpr' path that already
+            -- handles the standalone form.
+            case unify a tx of
+              Right s -> Right (applySubst s b)
+              Left _ ->
+                if rowSubsume a tx
+                  then Right b
+                  else Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
   -- String concatenation is only defined for (String, String) → String.
   EInfix sp OpConcat l r -> do
@@ -846,44 +1206,89 @@ typeOfExpr conEnv tcm env = \case
         let blame = if tl /= TyCon noSpan "String" then tl else tr
          in Left (TypeMismatch (TyCon noSpan "String") blame (EInfix sp OpConcat l r))
   ECase sp scrut alts _ -> do
-    scrutTy <- typeOfExpr conEnv tcm env scrut
-    -- Scrutinee must be a user-defined sum type.
-    tyName <- case extractTyCon scrutTy of
-      Just n | M.member n tcm -> Right n
-      _ -> Left (CaseOnNonSumType sp scrutTy)
-    let allCons = fromMaybe [] (M.lookup tyName tcm)
-    -- Compute substitution from type parameters to concrete types.
-    -- E.g. for Lookup String: match (Lookup a) against (Lookup String) → {a → String}
-    -- Freshen generic type variables to avoid name collisions with scrutinee type variables.
-    let scrutSubst = case anyConInfo tyName conEnv of
-          Just ci ->
-            let genericRetTy = conReturnType tyName (ciTypeParams ci)
-                freshGenericRetTy = freshenType "$scrut" genericRetTy
-             in fromMaybe M.empty (match freshGenericRetTy scrutTy)
-          Nothing -> M.empty
-    -- Type-check each arm; collect arm types and covered patterns.
-    -- We track full patterns (not just constructor names) to handle nested patterns correctly.
-    (armTypes, coveredPatterns) <- foldM (checkArm sp env scrutSubst) ([], []) (toList alts)
-    -- Exhaustiveness: every inhabited constructor must appear at least once.
-    -- For simple patterns (no nesting), each constructor should appear exactly once.
-    -- For nested patterns, we just check that all top-level constructors are covered.
-    let topLevelCons = [cName | (cName, _) <- coveredPatterns]
-        missing = filter (`notElem` topLevelCons) allCons
-        inhabitedMissing = filter (isConInhabited conEnv tcm S.empty scrutSubst) missing
-    unless (null inhabitedMissing) $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
+    armTypes <- caseArms conEnv tcm env sp scrut alts (typeOfExpr conEnv tcm)
     -- All arms must agree on the result type (via unification, not equality).
     case armTypes of
-      [] -> Left (NonExhaustiveCase sp tyName allCons)
+      [] -> Left (TELowering "case expression with no arms (unreachable: NonEmpty CaseAlt)")
       (firstTy : restTys) ->
         foldM
-          ( \acc ty -> case match acc ty of
-              Just s -> Right (applySubst s acc)
-              Nothing -> Left (CaseBranchTypeMismatch acc ty scrut)
+          ( \acc ty -> case unify acc ty of
+              Right s -> Right (applySubst s acc)
+              Left _ -> Left (CaseBranchTypeMismatch acc ty scrut)
           )
           firstTy
           restTys
+  -- Lambdas have no synthesis form — they only typecheck when an
+  -- expected arrow type is in scope ('checkExpr ELam'). Reaching this
+  -- clause means a lambda was used in a position that requires
+  -- synthesis (e.g. as the head of an application).
+  ELam sp _ _ -> Left (LambdaInSynthesisPosition sp)
+  -- 'do'-blocks also need an expected type — the desugaring goes
+  -- through 'bindEither' whose return rows accumulate only when the
+  -- surrounding context constrains them.
+  EDo sp _ -> Left (DoInSynthesisPosition sp)
+
+-- | Shared case-analysis: validate the scrutinee, type-check every arm
+--   with the supplied body action, and verify exhaustiveness.
+--
+--   The body action decides how to type-check each arm body — currently
+--   only 'typeOfExpr' (synthesise) is wired in by the inference path,
+--   but the parameterisation lets a future bidirectional 'checkExpr'
+--   clause push an expected type into each arm without duplicating the
+--   scrutinee / pattern / exhaustiveness machinery. Wiring that
+--   check-mode clause is intentionally deferred until 'checkExpr'
+--   itself uses 'Awsum.HM.unify' in its catch-all fallback — pushing
+--   into arms with the current equality-based fallback would reject
+--   programs whose arm bodies build polymorphic constructors (e.g.
+--   @Left e -> Left e@), since their synthesised types carry freshened
+--   tyvars that 'unify' resolves inter-arm but @('==')@ does not.
+caseArms ::
+  ConEnv ->
+  TypeConsMap ->
+  Env ->
+  SrcSpan ->
+  Expr ->
+  NonEmpty CaseAlt ->
+  (Env -> Expr -> Either TypeError a) ->
+  Either TypeError [a]
+caseArms conEnv tcm env sp scrut alts runBody = do
+  scrutTy <- typeOfExpr conEnv tcm env scrut
+  case scrutTy of
+    -- Structural-sum scrutinee: rows have a different exhaustiveness
+    -- model (PAscribe arms covering each label) and forbid catch-all
+    -- patterns; dispatch to a dedicated helper.
+    TyOr {} -> caseArmsRow conEnv env sp scrutTy alts runBody
+    -- Nominal-sum scrutinee: existing path.
+    _ -> caseArmsNominal scrutTy
   where
-    checkArm caseSp envLocal scrutSubst (tys, patterns) (CaseAlt _ (PCon patSp cName pats) body _) = do
+    caseArmsNominal scrutTy = do
+      -- Scrutinee must be a user-defined sum type.
+      tyName <- case extractTyCon scrutTy of
+        Just n | M.member n tcm -> Right n
+        _ -> Left (CaseOnNonSumType sp scrutTy)
+      let allCons = fromMaybe [] (M.lookup tyName tcm)
+      -- Compute substitution from type parameters to concrete types.
+      -- E.g. for Lookup String: unify (Lookup a) with (Lookup String) → {a → String}
+      -- Freshen generic type variables to avoid name collisions with scrutinee type variables.
+      let scrutSubst = case anyConInfo tyName conEnv of
+            Just ci ->
+              let genericRetTy = conReturnType tyName (ciTypeParams ci)
+                  freshGenericRetTy = freshenType "$scrut" genericRetTy
+               in fromRight mempty (unify freshGenericRetTy scrutTy)
+            Nothing -> mempty
+      -- Type-check each arm; collect arm results and covered patterns.
+      -- We track full patterns (not just constructor names) to handle nested patterns correctly.
+      (armResults, coveredPatterns) <- foldM (handleArm sp env scrutSubst) ([], []) (toList alts)
+      -- Exhaustiveness: every inhabited constructor must appear at least once.
+      -- For simple patterns (no nesting), each constructor should appear exactly once.
+      -- For nested patterns, we just check that all top-level constructors are covered.
+      let topLevelCons = [cName | (cName, _) <- coveredPatterns]
+          missing = filter (`notElem` topLevelCons) allCons
+          inhabitedMissing = filter (isConInhabited conEnv tcm S.empty scrutSubst) missing
+      unless (null inhabitedMissing) $ Left (NonExhaustiveCase sp tyName inhabitedMissing)
+      pure armResults
+
+    handleArm caseSp envLocal scrutSubst (results, patterns) (CaseAlt _ (PCon patSp cName pats) body _) = do
       -- Reject @_X@ constructor references at any depth in the pattern.
       mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats)
       -- Verify the constructor belongs to the scrutinee type.
@@ -908,10 +1313,172 @@ typeOfExpr conEnv tcm env = \case
       -- Bind pattern variables from constructor fields.
       let bindings = patternBindings conEnv pats fieldTys
           envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
-      bodyTy <- typeOfExpr conEnv tcm envWithBindings body
-      pure (tys <> [bodyTy], patterns <> [currentPattern])
-    checkArm _ _ _ _ CaseAlt {} =
+      result <- runBody envWithBindings body
+      pure (results <> [result], patterns <> [currentPattern])
+    handleArm _ _ _ _ CaseAlt {} =
       Left (TELowering "only constructor patterns are supported")
+
+-- | Specialised case-arm handling for structural-sum scrutinees. A row
+--   case accepts 'PAscribe' arms (one per row label, exhaustive) and
+--   'PCon' arms whose owning type is one of the row's nominal labels;
+--   'PVar' and 'PWild' on a row scrutinee are rejected with dedicated
+--   errors. The user matches each alternative as @(x : T)@ and may then
+--   destructure inside the arm body.
+--
+--   The membership check (the ascribed type is a label of the
+--   scrutinee row) and the exhaustiveness check (every label has a
+--   covering arm) live here; the underlying pattern-binding mechanics
+--   reuse 'patternBindings' so nested constructor patterns inside the
+--   inner of 'PAscribe' work the same as in nominal arms.
+caseArmsRow ::
+  ConEnv ->
+  Env ->
+  SrcSpan ->
+  Type' ->
+  NonEmpty CaseAlt ->
+  (Env -> Expr -> Either TypeError a) ->
+  Either TypeError [a]
+caseArmsRow conEnv env sp scrutTy alts runBody = do
+  (results, ascribed, perLabelConArms) <-
+    foldM handleRowArm ([], [], M.empty) (toList alts)
+  let missing = filter (`notExhaust` (ascribed, perLabelConArms)) labels
+  unless (null missing) $ Left (NonExhaustiveRow sp missing scrutTy)
+  -- Recursive inner-pattern coverage: for each label covered by 'PCon'
+  -- arms, every constructor of the nominal type must appear, and the
+  -- merged inner-pattern lists must in turn cover the substituted
+  -- field types.
+  forM_ (M.toList perLabelConArms) $ uncurry checkLabelConCoverage
+  pure results
+  where
+    labels = flattenRow scrutTy
+
+    notExhaust label (ascribedSet, perLabelConArms) = case label of
+      TyVar _ _ -> False -- open row tail, no obligation
+      _ ->
+        notElem label ascribedSet
+          && not (label `M.member` perLabelConArms)
+
+    -- Locate the row label whose head 'TyCon' matches @tyName@.
+    findLabel tyName =
+      find (\l -> extractTyCon l == Just tyName) labels
+
+    handleRowArm (results, ascribed, perCon) (CaseAlt _ pat body _) = case pat of
+      PAscribe patSp inner ascrTy -> do
+        unless (ascrTy `elem` labels)
+          $ Left (RowLabelNotInScrut patSp ascrTy scrutTy)
+        when (ascrTy `elem` ascribed)
+          $ Left (DuplicateRowArm patSp ascrTy)
+        when (ascrTy `M.member` perCon)
+          $ Left (DuplicateRowArm patSp ascrTy)
+        rejectIgnoredConstructor conEnv inner
+        checkNoShadow env (collectPatternVars [inner])
+        -- Bind the inner pattern with the ascribed type — that is the
+        -- key semantic difference from a nominal arm: 'n' in
+        -- @case x of (n : Int32) -> …@ is bound at type 'Int32', not
+        -- at the scrutinee's union type.
+        let bindings = patternBindings conEnv [inner] [ascrTy]
+            envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
+        result <- runBody envWithBindings body
+        pure (results <> [result], ascribed <> [ascrTy], perCon)
+      PCon patSp cName innerPats -> do
+        ci <- maybeToRight (UnknownConstructor patSp cName) (M.lookup cName conEnv)
+        let cTyName = ciTypeName ci
+        label <-
+          maybeToRight (RowLabelNotForConstructor patSp cName scrutTy) (findLabel cTyName)
+        when (label `elem` ascribed)
+          $ Left (DuplicateRowArm patSp label)
+        rejectIgnoredConstructor conEnv (PCon patSp cName innerPats)
+        checkNoShadow env (collectPatternVars innerPats)
+        -- Substitute the constructor's generic field types using the
+        -- row label as the concrete return type — this gives the same
+        -- per-arm field types that 'caseArmsNominal' computes for
+        -- nested patterns.
+        let genericRetTy = conReturnType cTyName (ciTypeParams ci)
+            freshGenericRetTy = freshenType "$rowscrut" genericRetTy
+            scrutSubst = fromRight mempty (unify freshGenericRetTy label)
+            freshFieldTys = map (freshenType "$rowscrut") (ciFieldTypes ci)
+            fieldTys = map (applySubst scrutSubst) freshFieldTys
+            bindings = patternBindings conEnv innerPats fieldTys
+            envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) env
+        result <- runBody envWithBindings body
+        let perCon' =
+              M.insertWith (M.unionWith (<>)) label (M.singleton cName [(innerPats, fieldTys, patSp)]) perCon
+        pure (results <> [result], ascribed, perCon')
+      PVar patSp _ ->
+        Left (RowCatchAllPattern patSp)
+      PWild patSp ->
+        Left (RowCatchAllPattern patSp)
+
+    -- Verify that the nominal label's constructors are all covered by
+    -- the @PCon@ arms gathered for that label, and that for every
+    -- constructor the merged inner-pattern columns exhaust their field
+    -- types.
+    checkLabelConCoverage label byCon = do
+      tyName <-
+        maybeToRight (CaseOnNonSumType sp label) (extractTyCon label)
+      ci <-
+        maybeToRight (CaseOnNonSumType sp label)
+          $ find (\c -> ciTypeName c == tyName) (M.elems conEnv)
+      let allCons = ciSiblings ci
+          present = M.keys byCon
+          missingCons = filter (`notElem` present) allCons
+      unless (null missingCons)
+        $ Left (NonExhaustiveCase sp tyName missingCons)
+      -- For each present constructor, verify the inner patterns column-
+      -- wise cover the substituted field types.
+      forM_ (M.toList byCon) $ \(_cName, armsForCon) -> case armsForCon of
+        [] -> pass
+        ((_, fieldTys0, _) : _) ->
+          let columns = transpose [pats | (pats, _, _) <- armsForCon]
+           in zipWithM_ (checkPatternColumnCovers sp conEnv) fieldTys0 columns
+
+-- | Verify that a column of patterns (one per arm, all at the same
+--   field position of a constructor) exhausts @ty@. Used by
+--   'caseArmsRow' to validate that, e.g., @Just (b : Bool)@ /
+--   @Just (u : Unit)@ together cover the @(Bool | Unit)@ field of
+--   @Just@. Recursive: a 'PCon' inner pattern descends into its own
+--   constructor's fields.
+checkPatternColumnCovers :: SrcSpan -> ConEnv -> Type' -> [Pattern] -> Either TypeError ()
+checkPatternColumnCovers sp conEnv ty pats
+  | any isWildcardPat pats = Right () -- a single 'PVar'/'PWild' covers everything
+  | otherwise = case ty of
+      TyVar _ _ -> Right () -- open tail
+      TyOr {} -> do
+        let labels = flattenRow ty
+            ascribed = [ascr | PAscribe _ _ ascr <- pats]
+            perCon =
+              M.fromListWith
+                (<>)
+                [ (cName, [(innerPats, ())])
+                | PCon _ cName innerPats <- pats
+                ]
+            covered l =
+              l
+                `elem` ascribed
+                || maybe False (`M.member` perCon) (extractTyCon l)
+            missing = filter (\l -> not (isOpenLabel l) && not (covered l)) labels
+        unless (null missing) $ Left (NonExhaustiveRow sp missing ty)
+      _ -> case extractTyCon ty of
+        Just tyName -> do
+          let perCon =
+                M.fromListWith
+                  (<>)
+                  [ (cName, [innerPats])
+                  | PCon _ cName innerPats <- pats
+                  ]
+          ci <-
+            maybeToRight (CaseOnNonSumType sp ty)
+              $ find (\c -> ciTypeName c == tyName) (M.elems conEnv)
+          let allCons = ciSiblings ci
+              missingCons = filter (`notElem` M.keys perCon) allCons
+          unless (null missingCons) $ Left (NonExhaustiveCase sp tyName missingCons)
+        Nothing -> Right ()
+  where
+    isWildcardPat (PVar _ _) = True
+    isWildcardPat (PWild _) = True
+    isWildcardPat _ = False
+    isOpenLabel (TyVar _ _) = True
+    isOpenLabel _ = False
 
 -- | Reject any @_X@-named constructor anywhere in a pattern. The error
 --   carries both the pattern's own span and the span of the constructor
@@ -924,7 +1491,8 @@ rejectIgnoredConstructor conEnv = \case
          in Left (ReferencingIgnoredConstructor patSp declSp cName)
     | otherwise -> mapM_ (rejectIgnoredConstructor conEnv) inner
   PVar _ _ -> Right ()
-  PWild -> Right ()
+  PWild _ -> Right ()
+  PAscribe _ inner _ -> rejectIgnoredConstructor conEnv inner
 
 -- | Collect all variable binders from a list of (possibly nested) patterns,
 --   in left-to-right order, paired with the span of each binder.
@@ -932,8 +1500,9 @@ collectPatternVars :: [Pattern] -> [(SrcSpan, Name)]
 collectPatternVars = concatMap go
   where
     go (PVar sp n) = [(sp, n)]
-    go PWild = []
+    go (PWild _) = []
     go (PCon _ _ inner) = concatMap go inner
+    go (PAscribe _ inner _) = go inner
 
 -- | Extract variable bindings from patterns and their corresponding types.
 --   Recurses into nested constructor patterns to bind deeply nested variables.
@@ -941,7 +1510,7 @@ patternBindings :: ConEnv -> [Pattern] -> [Type'] -> [(Name, Type')]
 patternBindings conEnv pats tys = concatMap go (zip pats tys)
   where
     go (PVar _ n, t) = [(n, t)]
-    go (PWild, _) = []
+    go (PWild _, _) = []
     go (PCon _ cName innerPats, ty) =
       case M.lookup cName conEnv of
         Nothing -> []
@@ -950,9 +1519,16 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
               -- Freshen generic type variables to avoid collisions with scrutinee type variables.
               freshGenericRetTy = freshenType "$inner" genericRetTy
               freshFieldTys = map (freshenType "$inner") (ciFieldTypes ci)
-              innerSubst = fromMaybe M.empty (match freshGenericRetTy ty)
+              innerSubst = fromRight mempty (unify freshGenericRetTy ty)
               fieldTys = map (applySubst innerSubst) freshFieldTys
            in patternBindings conEnv innerPats fieldTys
+    -- 'PAscribe' overrides the scrutinee's type with the ascribed one
+    -- for the purpose of binding the inner pattern's variables: in
+    -- @case x of (n : Int32) -> …@ where @x : (Int32 | String)@, the
+    -- variable @n@ is bound with type @Int32@, not the whole sum.
+    -- The membership check (the ascribed type really is a label of the
+    -- scrutinee's row) lives in the caseArms helper.
+    go (PAscribe _ inner ty, _) = patternBindings conEnv [inner] [ty]
 
 -- | Extract the type constructor name from a type (peeling off TyApp).
 extractTyCon :: Type' -> Maybe Name
@@ -1004,8 +1580,8 @@ isTypeInhabited' conEnv tcm visited ty
                   Just ci ->
                     let genericRetTy = conReturnType n (ciTypeParams ci)
                         freshGenericRetTy = freshenType "$scrut" genericRetTy
-                     in fromMaybe M.empty (match freshGenericRetTy ty)
-                  Nothing -> M.empty
+                     in fromRight mempty (unify freshGenericRetTy ty)
+                  Nothing -> mempty
              in any (isConInhabited conEnv tcm visited' subst) cons
         Nothing -> True
 
@@ -1022,9 +1598,9 @@ patternMatches _conEnv (cName, pats) = any (\(coveredName, coveredPats) -> cName
 
     patternEqual :: Pattern -> Pattern -> Bool
     patternEqual (PVar _ _) (PVar _ _) = True -- all variables match
-    patternEqual PWild PWild = True
-    patternEqual PWild (PVar _ _) = True -- wildcard matches variable
-    patternEqual (PVar _ _) PWild = True -- variable matches wildcard
+    patternEqual (PWild _) (PWild _) = True
+    patternEqual (PWild _) (PVar _ _) = True -- wildcard matches variable
+    patternEqual (PVar _ _) (PWild _) = True -- variable matches wildcard
     patternEqual (PCon _ c1 ps1) (PCon _ c2 ps2) =
       c1 == c2 && patternsEqual ps1 ps2
     patternEqual _ _ = False
@@ -1047,6 +1623,20 @@ freeNames = go
       EBuiltIn _ _ -> S.empty
       ECase _ scrut alts _ ->
         go scrut <> foldMap (\(CaseAlt _ _ body _) -> go body) (toList alts)
+      ELam _ params body ->
+        go body `S.difference` S.fromList (map paramName params)
+      EDo _ stmts -> goDoStmts stmts
+    goDoStmts [] = S.empty
+    goDoStmts (s : rest) = case s of
+      DoBind _ pat e ->
+        go e <> (goDoStmts rest `S.difference` patternBoundNames pat)
+      DoLet _ n e -> go e <> S.delete n (goDoStmts rest)
+      DoExpr _ e -> go e <> goDoStmts rest
+    patternBoundNames p = case p of
+      PVar _ n -> S.singleton n
+      PWild _ -> S.empty
+      PCon _ _ ps -> foldMap patternBoundNames ps
+      PAscribe _ inner _ -> patternBoundNames inner
 
 -- | Transitive set of names reachable from @root@ through the reference
 --   graph. Used to decide which top-level definitions are unused: anything

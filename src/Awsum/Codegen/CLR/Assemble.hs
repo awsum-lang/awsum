@@ -261,6 +261,11 @@ exprLocalsNeeded = \case
     let thisLevel = 1 + foldl' max 0 [length vs | (_, vs, _) <- alts]
         armMax = foldl' max 0 [exprLocalsNeeded b | (_, _, b) <- alts]
      in thisLevel + armMax
+  CRowCase _ alts ->
+    let thisLevel = 2 :: Int -- scrutinee slot + 1 binding
+        armMax = foldl' max 0 [exprLocalsNeeded b | (_, _, b) <- alts]
+     in thisLevel + armMax
+  CRow _ v -> 1 + exprLocalsNeeded v
   CCall f xs -> foldl' max 0 (exprLocalsNeeded f : map exprLocalsNeeded xs)
   CCon _ fields -> 1 + foldl' max 0 (map exprLocalsNeeded fields)
   CLoop b -> exprLocalsNeeded b
@@ -291,6 +296,13 @@ exprStackDepth = \case
     let scrutD = exprStackDepth scrut
         armMax = foldl' max 0 [exprStackDepth b | (_, _, b) <- alts]
      in foldl' max 0 [scrutD, 3, armMax]
+  -- Row dispatch: same emission shape as 'CCase'; mirror the bound.
+  CRowCase scrut alts ->
+    let scrutD = exprStackDepth scrut
+        armMax = foldl' max 0 [exprStackDepth b | (_, _, b) <- alts]
+     in foldl' max 0 [scrutD, 3, armMax]
+  -- Row injection: same emission as a one-field 'CCon'.
+  CRow _ v -> max 3 (2 + exprStackDepth v)
   -- Args emitted sequentially. A first-class CCall additionally
   -- pushes the callee before evaluating args, hence the +1 for
   -- the non-builtin / non-direct path. The result occupies one slot.
@@ -792,7 +804,7 @@ mkPredUInt8 = do
 --   Binary equivalent of 'Awsum.Codegen.CLR.succInt32Method'. Mirror of
 --   'mkPredInt32' with INT32_MAX as the boundary and 'cilAdd' for the
 --   non-overflow branch. OverflowError shares UnderflowError's tag (0),
---   so the Left-branch encoding is byte-identical.
+--   so the Left-branch encoding is identical.
 mkSuccInt32 :: AsmM MInfo
 mkSuccInt32 = do
   ni <- w16 <$> addStr "__succInt32"
@@ -1295,7 +1307,7 @@ mkMulInt32 = do
 --   Binary equivalent of 'Awsum.Codegen.CLR.negInt32Method'. Mirror of
 --   'mkSuccInt32' with INT32_MIN as the boundary and 'cilNeg' for the
 --   ok branch. OverflowError shares the single-constructor tag (0), so
---   the Left-branch encoding is byte-identical to 'mkSuccInt32'.
+--   the Left-branch encoding is identical to 'mkSuccInt32'.
 mkNegInt32 :: AsmM MInfo
 mkNegInt32 = do
   ni <- w16 <$> addStr "__negInt32"
@@ -2074,6 +2086,10 @@ emitExpr ctx = \case
       fldCode <- emitExpr ctx' fld
       pure (cilLdloc tmpSlot <> cilLdcI4 i <> fldCode <> cilStelemRef)
     pure (allocAndStash <> storeTag <> concat fieldCodes <> cilLdloc tmpSlot)
+  -- Row injection / dispatch: delegate to CCon / CCase emit.
+  CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
+  CRowCase scrut alts ->
+    emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts -> do
     trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
     scrutCode <- emitExpr ctx scrut
@@ -2231,6 +2247,8 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
     goTop ctx offset = \case
       CContinue newArgs -> emitContinue ctx offset newArgs
       CCase scrut alts -> emitTailCase ctx offset scrut alts
+      CRowCase scrut alts ->
+        emitTailCase ctx offset scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
       other -> emitTailValue ctx offset other
 
     emitContinue :: ECtx -> Int -> [CExpr] -> AsmM ([Word8], Int)
@@ -2379,9 +2397,7 @@ funcTokens arity = do
 -- carries an explicit @MaxStack@; we emit the per-method value passed
 -- in @maxStack@. Hardcoding @MaxStack = 16@ here, as this code did
 -- before, was the root cause of @System.InvalidProgramException@ when
--- a single method's stack peaked above 16 — see
--- ECMA-335 §II.25.4.3 and the design note in
--- @awsum-management/clr-maxstack-and-ccon-stack-depth.md@.
+-- a single method's stack peaked above 16 — see ECMA-335 §II.25.4.3.
 encodeBody :: Word32 -> Word16 -> [Word8] -> [Word8]
 encodeBody localSigTok maxStack code
   | len < 64 && localSigTok == 0 && maxStack <= 8 = fromIntegral ((len `shiftL` 2) .|. 0x02) : code -- tiny

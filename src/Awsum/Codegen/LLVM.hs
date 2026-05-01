@@ -116,6 +116,8 @@ stringsInExpr = \case
   CBuiltIn _ -> []
   CCon _ fields -> concatMap stringsInExpr fields
   CCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
+  CRow _ v -> stringsInExpr v
+  CRowCase scrut alts -> stringsInExpr scrut <> concatMap (\(_, _, body) -> stringsInExpr body) alts
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
@@ -1147,6 +1149,9 @@ emitTail ctx expr = case ctx.loopCtx of
           <> switchInstr
           <> armsEmitted
           <> defBlock
+      -- Row dispatch shares 'CCase''s ptr-tagged layout — delegate.
+      CRowCase scrut alts ->
+        emitTail ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
       other -> do
         (instrs, result) <- emitExpr ctx other
         pure
@@ -1262,6 +1267,12 @@ emitExpr ctx = \case
       ( allocInstr <> tagInstr <> T.concat fieldInstrs,
         arrTmp
       )
+  -- Row injection / row dispatch: delegate to the same CCon / CCase
+  -- emit machinery; the runtime layout (tag at offset 0, value at
+  -- offset 1) is identical for one-field constructors.
+  CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
+  CRowCase scrut alts ->
+    emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts -> do
     (instrS, resS) <- emitExpr ctx scrut
     -- Extract tag from container[0]

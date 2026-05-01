@@ -106,7 +106,7 @@ isBinderStart c = Char.isLower c || c == '_'
 
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
-reserved = ["import", "type", "case", "of"]
+reserved = ["import", "type", "case", "of", "do", "let"]
 
 -- | Recognize a reserved word /without/ swallowing identifier tails.
 --   e.g. parsing \"import\" will fail on \"importX\".
@@ -422,14 +422,31 @@ endLineOrEOF = void C.eol <|> P.eof
 
 -- | Types with a space consumer that does not skip line comments.
 --   Grammar: Type = TypeApp , { "->" , Type } ;
+-- | Top-level type expression: a chain of @|@-separated arrow types.
+--   @|@ has lower precedence than @->@, so @(A | B) -> C@ requires
+--   explicit parens around the union to keep it on the LHS of the arrow
+--   (without parens, @A | B -> C@ parses as @A | (B -> C)@). Right-
+--   associative as parsed; the unifier later treats @|@ set-associatively.
 pTypeNoLineComments :: Parser Type'
 pTypeNoLineComments = do
+  t1 <- pTypeArrowNoLineComments
+  P.option
+    t1
+    ( do
+        _ <- symNoLine "|"
+        t2 <- pTypeNoLineComments
+        pure (TyOr (spanBetween (typeSpan t1) (typeSpan t2)) t1 t2)
+    )
+
+-- | Arrow-type layer: @a -> b@, right-associative.
+pTypeArrowNoLineComments :: Parser Type'
+pTypeArrowNoLineComments = do
   t1 <- pTypeAppNoLineComments
   P.option
     t1
     ( do
         _ <- symNoLine "->"
-        t2 <- pTypeNoLineComments
+        t2 <- pTypeArrowNoLineComments
         pure (TyArrow (spanBetween (typeSpan t1) (typeSpan t2)) t1 t2)
     )
 
@@ -486,12 +503,35 @@ pTypeAtomNoLineComments =
       TyCon _ n -> TyCon sp n
       TyApp _ f x -> TyApp sp f x
       TyArrow _ a b -> TyArrow sp a b
+      TyOr _ a b -> TyOr sp a b
 
 -- Expressions ───────────────────────────────────────────────────────────────
 
--- | Lowest precedence layer: @case@ (multi-line) or @++@ chain.
+-- | Lowest precedence layer: @\\x -> …@, @do …@, @case@ (multi-line),
+--   or @++@ chain.
 pExprNoLineComments :: Parser Expr
-pExprNoLineComments = pCaseNoLineComments <|> pConcatNoLineComments
+pExprNoLineComments =
+  pLambdaNoLineComments
+    <|> pDoNoLineComments
+    <|> pCaseNoLineComments
+    <|> pConcatNoLineComments
+
+-- | Lambda abstraction: @\\x y -> body@. At least one parameter; the
+--   body extends as far right as possible (same precedence as 'case').
+pLambdaNoLineComments :: Parser Expr
+pLambdaNoLineComments = do
+  start <- P.getSourcePos
+  _ <- symNoLine "\\"
+  params <-
+    P.some
+      ( do
+          (sp, n) <- withSpan lidentNoLine
+          pure (Param sp n)
+      )
+  _ <- symNoLine "->"
+  body <- pExprNoLineComments
+  end <- P.getSourcePos
+  pure (ELam (toSrcSpan start end) params body)
 
 -- Left-associative chain of @App@ separated by @++@.
 pConcatNoLineComments :: Parser Expr
@@ -605,6 +645,77 @@ pQualifiedNameExprNoLineComments = do
     ["BuiltIn"] -> pure (EBuiltIn sp name)
     _ -> pure (EVar sp (QName mods name))
 
+-- Do-notation ──────────────────────────────────────────────────────────────
+
+-- | Parse a single 'do'-block statement.
+--
+--   * @x <- expr@ binds a value and feeds the continuation
+--     ('DoBind').
+--   * @let n = expr@ introduces a non-monadic binding ('DoLet').
+--   * Bare @expr@ is the block's result when last, or a side-effect-
+--     only step otherwise ('DoExpr'); the typechecker rejects
+--     non-final 'DoExpr' in a hardcoded-Either world.
+pDoStmtNoLineComments :: Parser DoStmt
+pDoStmtNoLineComments =
+  P.choice
+    [ try pDoBind,
+      try pDoLet,
+      pDoExpr
+    ]
+  where
+    pDoBind = do
+      start <- P.getSourcePos
+      pat <- pPatternNoLineComments
+      _ <- symNoLine "<-"
+      e <- pExprNoLineComments
+      end <- P.getSourcePos
+      pure (DoBind (toSrcSpan start end) pat e)
+    pDoLet = do
+      start <- P.getSourcePos
+      rwordNoLine "let"
+      n <- lidentNoLine
+      _ <- symNoLine "="
+      e <- pExprNoLineComments
+      end <- P.getSourcePos
+      pure (DoLet (toSrcSpan start end) n e)
+    pDoExpr = do
+      start <- P.getSourcePos
+      e <- pExprNoLineComments
+      end <- P.getSourcePos
+      pure (DoExpr (toSrcSpan start end) e)
+
+-- | @do@ followed by indentation-aligned statements.
+--   The first statement establishes the reference indentation; later
+--   statements must align at the same column. Comments inside the
+--   block are not parsed in this iteration — keep the block tight.
+--
+--   A trailing line comment on the @do@ line itself (@f = do -- note@)
+--   is swallowed before the newline so it doesn't break the parse;
+--   the comment text is currently discarded (re-attaching it to the
+--   AST is left for a future iteration that also handles inline
+--   comments between statements).
+pDoNoLineComments :: Parser Expr
+pDoNoLineComments = do
+  start <- P.getSourcePos
+  rwordNoLine "do"
+  void pTrailingLineCommentMaybe
+  void C.eol
+  skipBlankLinesNoComments
+  hspaceNoComments
+  ref <- L.indentLevel
+  firstStmt <- pDoStmtNoLineComments
+  restStmts <-
+    P.many
+      ( try $ do
+          void C.eol
+          hspaceNoComments
+          lvl <- L.indentLevel
+          guard (lvl == ref)
+          pDoStmtNoLineComments
+      )
+  end <- P.getSourcePos
+  pure (EDo (toSrcSpan start end) (firstStmt : restStmts))
+
 -- Case expressions ─────────────────────────────────────────────────────────
 
 -- | Flat item inside a @case … of@ block: either a comment or an arm.
@@ -696,6 +807,7 @@ pPatternNoLineComments :: Parser Pattern
 pPatternNoLineComments =
   pConPattern
     <|> pPVar
+    <|> pParenOrAscribePattern
 
 -- | Constructor pattern with possible sub-patterns.
 pConPattern :: Parser Pattern
@@ -704,19 +816,45 @@ pConPattern = do
   pats <- P.many pPatternAtomNoLineComments
   pure (PCon sp name pats)
 
--- | Atomic pattern: a variable, a nullary constructor, or a parenthesized pattern.
+-- | Atomic pattern: a variable, a nullary constructor, or a parenthesized
+--   pattern (optionally with a trailing @':' type@ ascription —
+--   @(x : Int32)@). Parens are part of the ascription syntax: without
+--   them the @':'@ would collide with the case-arrow @'->'@.
 pPatternAtomNoLineComments :: Parser Pattern
 pPatternAtomNoLineComments =
   pPVar
     <|> ((\(sp, n) -> PCon sp n []) <$> pConHead)
-    <|> P.between (symNoLine "(") (symNoLine ")") pPatternNoLineComments
+    <|> pParenOrAscribePattern
+
+-- | Parenthesised pattern with an optional type ascription.
+--   @(p)@      → @p@ as-is (no AST change beyond span).
+--   @(p : T)@  → @PAscribe sp p T@ where @sp@ covers the whole @(...)@.
+pParenOrAscribePattern :: Parser Pattern
+pParenOrAscribePattern = do
+  start <- P.getSourcePos
+  _ <- symNoLine "("
+  inner <- pPatternNoLineComments
+  ascription <- P.optional $ do
+    _ <- symNoLine ":"
+    pTypeNoLineComments
+  _ <- symNoLine ")"
+  end <- P.getSourcePos
+  pure $ case ascription of
+    Just ty -> PAscribe (toSrcSpan start end) inner ty
+    Nothing -> inner
 
 -- | Parse a constructor name and its source span (covers only the name,
---   not trailing whitespace).
+--   not trailing whitespace). 'uidentBody' also accepts a bare @_@ (for
+--   error reporting on @type _ = …@ etc.); in pattern position the bare
+--   underscore is the wildcard, so we explicitly reject it here so the
+--   alternative 'pPVar' branch picks it up as 'PWild'.
 pConHead :: Parser (SrcSpan, Name)
 pConHead = do
   start <- P.getSourcePos
-  name <- try uidentBody
+  name <- try $ do
+    n <- uidentBody
+    guard (n /= "_")
+    pure n
   end <- P.getSourcePos
   scNoLineComments
   pure (toSrcSpan start end, name)
@@ -731,4 +869,5 @@ pPVar = do
   name <- binderName
   end <- P.getSourcePos
   scNoLineComments
-  pure $ if name == "_" then PWild else PVar (toSrcSpan start end) name
+  let sp = toSrcSpan start end
+  pure $ if name == "_" then PWild sp else PVar sp name

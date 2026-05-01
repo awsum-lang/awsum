@@ -91,10 +91,13 @@ freeVars = \case
   CCall c xs -> freeVars c <> foldMap freeVars xs
   CCon _ fs -> foldMap freeVars fs
   CCase s alts -> freeVars s <> foldMap armFv alts
+  CRow _ v -> freeVars v
+  CRowCase s alts -> freeVars s <> foldMap rowArmFv alts
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
   where
     armFv (_, bound, body) = freeVars body `Set.difference` Set.fromList bound
+    rowArmFv (_, bound, body) = freeVars body `Set.difference` Set.singleton bound
 
 -- | One defunctionalized continuation.
 data KCon = KCon
@@ -272,6 +275,12 @@ goNonTail env expr kont = case expr of
   CCon tag fields ->
     goArgs env fields $ \fieldVals ->
       kont (CCon tag fieldVals)
+  -- Row-tagged value: same shape as a one-field 'CCon' from this
+  -- pass's perspective — the inner value is the only sub-expression
+  -- that might harbour self-calls.
+  CRow tag v ->
+    goNonTail env v $ \vVal ->
+      kont (CRow tag vVal)
   -- Non-tail case: scrut non-tail; each arm body non-tail feeds kont.
   -- @kont@ is structurally duplicated across arms, but each invocation
   -- builds its own Core expression — if one arm's kont emits a K, the
@@ -283,6 +292,12 @@ goNonTail env expr kont = case expr of
         b' <- goNonTail env b kont
         pure (t, vs, b')
       pure (CCase scrutVal alts')
+  CRowCase scrut alts ->
+    goNonTail env scrut $ \scrutVal -> do
+      alts' <- forM alts $ \(t, v, b) -> do
+        b' <- goNonTail env b kont
+        pure (t, v, b')
+      pure (CRowCase scrutVal alts')
   -- 'CLoop' / 'CContinue' are produced by 'Awsum.Tco' /after/ this
   -- pass, so seeing them here would be a pipeline bug.
   CLoop _ ->
@@ -339,9 +354,15 @@ alphaRename from to = go
       CCall c xs -> CCall (go c) (map go xs)
       CCon t fs -> CCon t (map go fs)
       CCase s alts -> CCase (go s) (map goAlt alts)
+      CRow t v -> CRow t (go v)
+      CRowCase s alts -> CRowCase (go s) (map goRowAlt alts)
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
 
     goAlt (t, vs, b)
       | from `elem` vs = (t, vs, b) -- shadowed; don't rename further in
       | otherwise = (t, vs, go b)
+
+    goRowAlt (t, v, b)
+      | v == from = (t, v, b) -- shadowed
+      | otherwise = (t, v, go b)

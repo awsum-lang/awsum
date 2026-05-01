@@ -1,0 +1,121 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "bindEither"
+            [ "x"
+            , "k"
+            ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCon 0
+                        [ CVar "e" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "k" )
+                        [ CVar "a" ]
+                    )
+                ]
+            )
+        , CFunDef "pureEither" [ "x" ]
+            ( CCon 1
+                [ CVar "x" ]
+            )
+        , CFunDef "apply"
+            [ "f"
+            , "x"
+            ]
+            ( CCall
+                ( CVar "f" )
+                [ CVar "x" ]
+            )
+        , CValDef "inc42"
+            ( CCall
+                ( CVar "apply" )
+                [ CVar "$lam$0"
+                , CIntLit 42 TInt32
+                ]
+            )
+        , CValDef "op1"
+            ( CCon 1
+                [ CIntLit 1 TInt32 ]
+            )
+        , CFunDef "op2WithA" [ "n" ]
+            ( CCon 1
+                [ CVar "n" ]
+            )
+        , CValDef "g"
+            ( CCall
+                ( CVar "bindEither" )
+                [ CVar "op1"
+                , CVar "$lam$1"
+                ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 2252990199
+                            , "_a"
+                            , CString "ErrA"
+                            )
+                        ,
+                            ( 2269767818
+                            , "_b"
+                            , CString "ErrB"
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "inc42" ]
+                        , CString " / "
+                        ]
+                    , CCall
+                        ( CVar "describe" )
+                        [ CVar "g" ]
+                    ]
+                ]
+            )
+        , CFunDef "$lam$0" [ "n" ]
+            ( CVar "n" )
+        , CFunDef "$lam$1" [ "a" ]
+            ( CCall
+                ( CVar "bindEither" )
+                [ CCall
+                    ( CVar "op2WithA" )
+                    [ CVar "a" ]
+                , CVar "pureEither"
+                ]
+            )
+        ]
+    }

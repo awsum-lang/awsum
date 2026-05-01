@@ -14,7 +14,7 @@
   (data (i32.const 69) "x\00")
   (data (i32.const 71) "y\00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_main $v_const $v_identity $v_appendX $v_appendY $v_compose)
+  (elem (i32.const 0) $v_const $v_main $v_identity $v_appendX $v_appendY $v_compose)
   (type $arity_1 (func (param i32) (result i32)))
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -88,11 +88,11 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v_identity (call $v_compose (i32.const 4) (i32.const 3) (call $v_const (i32.const 65) (i32.const 67))))))
-
   (func $v_const (param $v_x i32) (param $v__y i32) (result i32)
     (local.get $v_x))
+
+  (func $v_main (param $v__input i32) (result i32)
+    (call $__print (call $v_identity (call $v_compose (i32.const 4) (i32.const 3) (call $v_const (i32.const 65) (i32.const 67))))))
 
   (func $v_identity (param $v_x i32) (result i32)
     (local.get $v_x))

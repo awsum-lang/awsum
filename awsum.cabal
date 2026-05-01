@@ -30,9 +30,11 @@ library
       Awsum.Codegen.WASM.Assemble
       Awsum.Core
       Awsum.Cps
+      Awsum.Desugar
       Awsum.Diagnostic
       Awsum.ElaborateLower
       Awsum.Format
+      Awsum.HM
       Awsum.Normalize
       Awsum.Parser
       Awsum.Prelude
@@ -100,6 +102,7 @@ test-suite awsum-test
       Awsum.ArbitraryInstances
       Awsum.ErrorSnapshotsSpec
       Awsum.FormattingSnapshotsSpec
+      Awsum.HMSpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec
       Awsum.RunBackend

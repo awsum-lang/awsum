@@ -79,6 +79,7 @@ test/sources/
 .snapshots/
 ├── successful/       # Golden outputs for successful programs
 └── errors/           # Golden diagnostics for error programs
+docs/type-system.md             # Type system from a user's perspective: concepts + examples (passes / fails)
 docs/prelude.md                 # Prelude + BuiltIn architecture (design doc)
 docs/recursion.md               # Stack-safe recursion pipeline: Scc + Cps + Tco passes
 docs/targets.md                 # Target implementation details
@@ -105,7 +106,9 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLo
 
 ## Language Features
 
-- Types: `String`, `IO a`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), `Either a b` and `UnderflowError` (prelude-visible), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`)
+For the user-facing description of the type system — concepts and examples of programs that pass / fail typechecking — see [docs/type-system.md](docs/type-system.md). The bullets below are the implementation-side index.
+
+- Types: `String`, `IO a`, `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), `Either a b` and `UnderflowError` (prelude-visible), polymorphic type variables, sum types (`type Bool = True | False`), parametric sum types (`type Lookup a = Found a | NotFound`), empty types (`type Never`), structural sums `(A | B)` with type-ascription patterns and row-tag-based runtime dispatch, `do`-notation hard-coded to `Either`
 - No defaulting, ever: the compiler never picks a type for the user — not for integer literals, not for a monadic context, not for anything else added later. Ambiguous = compile error, fix with an explicit annotation.
 - No shadowing, ever: a fresh binder must not reuse any name already visible in its scope at any level (function params, pattern binders, and every future binding form we add). Shadowing is a compile error, not a warning.
 - Underscore convention: a leading `_` marks a binding as intentionally unused. Applies to values (`_foo`), top-level defs (`_foo`), type params (`_a`), type names (`_A`) and constructors (`_C`). Referencing any `_`-prefixed name anywhere is a compile error. Bare `_` is a wildcard in pattern / function-param position (no binding); forbidden as a nameable declaration (top-level, type, constructor, type-param).
@@ -121,9 +124,9 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLo
 
 Two complementary layers:
 
-**Snapshot tests** (default `just test`). Hspec + golden files. Each program in `test/sources/successful/<name>/code/Main.aww` generates snapshots for AST, Core IR, formatted source, per-backend codegen text (LLVM `.ll`, JVM `.j`, CLR `.il`, WASM `.wat`, JS), plus runtime stdout per stdin file. Cross-backend assertions guarantee LLVM/JVM/CLR/WASM/JS all produce **byte-identical** stdout for the same input. To regenerate snapshots, delete the `.snapshots/` directory and re-run.
+**Snapshot tests** (default `just test`). Hspec + golden files. Each program in `test/sources/successful/<name>/code/Main.aww` generates snapshots for AST, Core IR, formatted source, per-backend codegen text (LLVM `.ll`, JVM `.j`, CLR `.il`, WASM `.wat`, JS), plus runtime stdout per stdin file. Cross-backend assertions guarantee LLVM/JVM/CLR/WASM/JS all produce **identical** stdout for the same input. To regenerate snapshots, delete the `.snapshots/` directory and re-run.
 
-**Property tests** (`just test-property`). Same five backends, but instead of one fixed input per program, QuickCheck generates N constructively-valid inputs, each fed through every backend, with the resulting stdout compared byte-for-byte against a value computed independently in Haskell. Catches "all backends agree but the answer is wrong" — the failure mode snapshot tests cannot see by construction. Lives in [test/sources/property/](test/sources/property/) (Awsum sources) and [test/Awsum/PropertySpec.hs](test/Awsum/PropertySpec.hs) (generators + expected-output functions). Slow (~40s for the current 8-property catalogue spawning 5 processes per case), so it's gated out of `just test` and runs as its own target. Found and fixed two pre-existing JVM-codegen bugs on first execution; design doc at `awsum-management/prop-based-tests.md`.
+**Property tests** (`just test-property`). Same five backends, but instead of one fixed input per program, QuickCheck generates N constructively-valid inputs, each fed through every backend, with the resulting stdout asserted identical to a value computed independently in Haskell. Catches "all backends agree but the answer is wrong" — the failure mode snapshot tests cannot see by construction. Lives in [test/sources/property/](test/sources/property/) (Awsum sources) and [test/Awsum/PropertySpec.hs](test/Awsum/PropertySpec.hs) (generators + expected-output functions). Slow (~40s for the current 8-property catalogue spawning 5 processes per case), so it's gated out of `just test` and runs as its own target. Found and fixed two pre-existing JVM-codegen bugs on first execution.
 
 Both layers share compile + run primitives via [test/Awsum/RunBackend.hs](test/Awsum/RunBackend.hs) (`Backend`, `CompiledArtifacts`, `compileFromText`/`compileFromFile`, `runOn`, `runOnAll`).
 
