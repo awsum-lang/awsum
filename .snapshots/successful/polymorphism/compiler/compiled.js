@@ -7,7 +7,7 @@ function v_const(v_x, v__y){
 }
 
 function main(v__input){
-    return __print((v_identity)((v_compose)(v_appendY, v_appendX, (v_const)("a", "b"))));
+    return __print((v_identity)((v__df_compose_0)((v_const)("a", "b"))));
 }
 
 function v_identity(v_x){
@@ -22,8 +22,8 @@ function v_appendY(v_s){
     return (v_s + "y");
 }
 
-function v_compose(v_g, v_f, v_x){
-    return (v_g)((v_f)(v_x));
+function v__df_compose_0(v_x){
+    return (v_appendY)((v_appendX)(v_x));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

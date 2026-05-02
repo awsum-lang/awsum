@@ -8,7 +8,7 @@ import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.HMSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
-import Awsum.Prelude (preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
+import Awsum.Prelude (preludeDefNames, preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.Program (ProgramType (..))
 import Awsum.ProgramSnapshotsSpec qualified
 import Awsum.PropertySpec qualified
@@ -54,7 +54,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
         -- 'stripPreludeWarnings' drops the expected \"showInt32 is unused\"
         -- warning that arises because this user program never calls into
         -- the prelude — same filter as the CLI / snapshot specs apply.
-        fmap stripPreludeWarnings (typecheckProgram ProgramCli combined) `shouldBe` Right []
+        fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames combined) `shouldBe` Right []
         requireMain combined `shouldBe` Right ()
 
   it "withPrelude prepends prelude decls ahead of user decls" $ do
@@ -329,7 +329,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p)) `shouldBe` Right []
+        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
 
     it "typechecks: print (input ++ input)" $ do
       let src =
@@ -341,7 +341,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p)) `shouldBe` Right []
+        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
 
     it "typechecks a function with a structural-sum signature and PAscribe arms" $ do
       -- A closed structural sum '(Int32 | String)' is legal in a
@@ -359,7 +359,7 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p ->
-          fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p))
+          fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
             `shouldBe` Right []
 
     it "rejects a structural-sum case missing a label" $ do
@@ -373,7 +373,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> case typecheckProgram ProgramCli (withPrelude p) of
+        Right p -> case typecheckProgram ProgramCli preludeDefNames (withPrelude p) of
           Left (NonExhaustiveRow {}) -> pass
           other -> expectationFailure ("expected NonExhaustiveRow, got: " <> show other)
 
@@ -396,7 +396,7 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p ->
-          fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p))
+          fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
             `shouldBe` Right []
 
     it "implicitly injects an integer literal into a structural-sum with a unique int label" $ do
@@ -416,7 +416,7 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p ->
-          fmap stripPreludeWarnings (typecheckProgram ProgramCli (withPrelude p))
+          fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
             `shouldBe` Right []
 
     it "rejects a wildcard arm on a structural-sum scrutinee" $ do
@@ -430,7 +430,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> case typecheckProgram ProgramCli (withPrelude p) of
+        Right p -> case typecheckProgram ProgramCli preludeDefNames (withPrelude p) of
           Left (RowCatchAllPattern _) -> pass
           other -> expectationFailure ("expected RowCatchAllPattern, got: " <> show other)
 
@@ -442,7 +442,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram ProgramCli p `shouldBe` Right []
+        Right p -> typecheckProgram ProgramCli mempty p `shouldBe` Right []
 
   describe "Typing.requireMain" $ do
     it "rejects a module without 'main'" $ do

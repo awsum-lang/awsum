@@ -408,12 +408,14 @@ eqMethod name lbl =
       "  }"
     ]
 
--- addInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Signed overflow detected with the XOR trick: '(a ^ sum) & (b ^ sum)'
 --   has its sign bit set iff the carry into the sign bit differs from
 --   the carry out (= signed overflow). Direction is read off 'a >= 0'
---   so a single 'blt' separates Overflow (AE tag 1) from Underflow
---   (AE tag 0). Avoids 'add.ovf' / try-catch — keeps the method
+--   so a single 'blt' separates OverflowError (positive overflow) from
+--   UnderflowError (negative). Error side wraps three nested Object[]s:
+--   inner @CCon@ (single-ctor tag 0), row (FNV-1a tag of label name),
+--   outer Left. Avoids 'add.ovf' / try-catch — keeps the method
 --   single-block and verifiable.
 addInt32Method :: Text
 addInt32Method =

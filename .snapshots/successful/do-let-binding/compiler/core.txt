@@ -1,0 +1,133 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "pureEither" [ "x" ]
+            ( CCon 1
+                [ CVar "x" ]
+            )
+        , CFunDef "step1" [ "n" ]
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "addInt32" )
+                    [ CVar "n"
+                    , CIntLit 10 TInt32
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "_e" ]
+                    , CCon 0
+                        [ CString "overflow" ]
+                    )
+                ,
+                    ( 1
+                    , [ "m" ]
+                    , CCon 1
+                        [ CVar "m" ]
+                    )
+                ]
+            )
+        , CFunDef "step2" [ "n" ]
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "mulInt32" )
+                    [ CVar "n"
+                    , CIntLit 2 TInt32
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "_e" ]
+                    , CCon 0
+                        [ CString "overflow" ]
+                    )
+                ,
+                    ( 1
+                    , [ "m" ]
+                    , CCon 1
+                        [ CVar "m" ]
+                    )
+                ]
+            )
+        , CFunDef "run" [ "start" ]
+            ( CCase
+                ( CCall
+                    ( CVar "step1" )
+                    [ CVar "start" ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_35_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_35_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "$let$0" )
+                        [ CVar "a"
+                        , CString "answer="
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCase
+                ( CCall
+                    ( CVar "run" )
+                    [ CIntLit 5 TInt32 ]
+                )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "err: "
+                            , CVar "e"
+                            ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
+                ]
+            )
+        , CFunDef "$let$0"
+            [ "a"
+            , "prefix"
+            ]
+            ( CCase
+                ( CCall
+                    ( CVar "step2" )
+                    [ CVar "a" ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_37_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_37_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "b" ]
+                    , CCall
+                        ( CVar "pureEither" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "prefix"
+                            , CCall
+                                ( CBuiltIn "showInt32" )
+                                [ CVar "b" ]
+                            ]
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

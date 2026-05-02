@@ -46,24 +46,28 @@ builtIns =
       ("eqInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty boolTy)),
       -- eqUInt8 : UInt8 -> UInt8 -> Bool
       ("eqUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty boolTy)),
-      -- addInt32 : Int32 -> Int32 -> Either ArithError Int32
-      -- `Left Underflow` if the true sum is below 'minInt32', `Left Overflow`
-      -- if above 'maxInt32', `Right (a + b)` otherwise. Both ends are
-      -- reachable from one operation, hence the two-constructor 'ArithError'.
-      ("addInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
-      -- subInt32 : Int32 -> Int32 -> Either ArithError Int32
-      -- `Left Overflow` if `a - b > maxInt32`, `Left Underflow` if
-      -- `a - b < minInt32`, `Right (a - b)` otherwise. Both ends are
+      -- addInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+      -- `Left UnderflowError` if the true sum is below 'minInt32',
+      -- `Left OverflowError` if above 'maxInt32', `Right (a + b)`
+      -- otherwise. Both ends are reachable from one operation, so the
+      -- error side is a structural sum of the two existing
+      -- single-constructor error types — the row carries an FNV-1a tag
+      -- per label so user-side @case e of (u : UnderflowError) -> …@
+      -- dispatches the right way.
+      ("addInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithRowTy int32Ty))),
+      -- subInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+      -- `Left OverflowError` if `a - b > maxInt32`, `Left UnderflowError`
+      -- if `a - b < minInt32`, `Right (a - b)` otherwise. Both ends are
       -- reachable (e.g. `maxInt32 - (-1)` overflows positively,
-      -- `minInt32 - 1` underflows), so the error type is the two-
-      -- constructor 'ArithError', mirroring 'addInt32'.
-      ("subInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
-      -- mulInt32 : Int32 -> Int32 -> Either ArithError Int32
-      -- `Left Overflow` if `a * b > maxInt32`, `Left Underflow` if
-      -- `a * b < minInt32`, `Right (a * b)` otherwise. Both ends are
-      -- reachable (e.g. `maxInt32 * 2`, `minInt32 * 2`), hence the
-      -- two-constructor 'ArithError'.
-      ("mulInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithErrorTy int32Ty))),
+      -- `minInt32 - 1` underflows), so the error side mirrors
+      -- 'addInt32'.
+      ("subInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithRowTy int32Ty))),
+      -- mulInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
+      -- `Left OverflowError` if `a * b > maxInt32`, `Left UnderflowError`
+      -- if `a * b < minInt32`, `Right (a * b)` otherwise. Both ends are
+      -- reachable (e.g. `maxInt32 * 2`, `minInt32 * 2`), so the error
+      -- side matches the additive operations.
+      ("mulInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty (eitherTy arithRowTy int32Ty))),
       -- negInt32 : Int32 -> Either OverflowError Int32
       -- `Left OverflowError` on 'minInt32' (negation would yield 2147483648,
       -- which doesn't fit in Int32), `Right (-x)` otherwise. Single-error
@@ -109,7 +113,9 @@ builtIns =
     boolTy = TyCon noSpan "Bool"
     underflowErrorTy = TyCon noSpan "UnderflowError"
     overflowErrorTy = TyCon noSpan "OverflowError"
-    arithErrorTy = TyCon noSpan "ArithError"
+    -- Structural row of the two single-constructor error labels — the
+    -- error side of the signed-integer arithmetic builtins.
+    arithRowTy = TyOr noSpan underflowErrorTy overflowErrorTy
     parseErrorTy = TyCon noSpan "ParseError"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")

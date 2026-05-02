@@ -11,10 +11,8 @@ CoreProgram
                 [ CCall
                     ( CVar "identity" )
                     [ CCall
-                        ( CVar "compose" )
-                        [ CVar "appendY"
-                        , CVar "appendX"
-                        , CCall
+                        ( CVar "$df$compose$0" )
+                        [ CCall
                             ( CVar "const" )
                             [ CString "a"
                             , CString "b"
@@ -39,15 +37,11 @@ CoreProgram
                 , CString "y"
                 ]
             )
-        , CFunDef "compose"
-            [ "g"
-            , "f"
-            , "x"
-            ]
+        , CFunDef "$df$compose$0" [ "x" ]
             ( CCall
-                ( CVar "g" )
+                ( CVar "appendY" )
                 [ CCall
-                    ( CVar "f" )
+                    ( CVar "appendX" )
                     [ CVar "x" ]
                 ]
             )

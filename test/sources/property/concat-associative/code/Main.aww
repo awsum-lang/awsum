@@ -1,20 +1,25 @@
 -- Property: `(a ++ b) ++ c == a ++ (b ++ c)` for every triple of
--- Strings (over an alphabet that excludes ':'). Input: "a:b:c". Output:
--- both groupings separated by ':' so Haskell can verify each half
--- against an independently computed concatenation.
+-- Strings (over an alphabet that excludes ':'). Input: "a:b:c".
+-- The property emits both groupings separated by ':' so Haskell
+-- can verify each half against an independently computed
+-- concatenation.
 import IO.Stdout
 
-unwrap3 : String -> Maybe (Tuple3 String String String)
-unwrap3 raw = case splitOnFirst ":" raw of
-  Nothing -> Nothing
-  Just t1 -> case t1 of
-    Tuple2 a rest -> case splitOnFirst ":" rest of
-      Nothing -> Nothing
-      Just t2 -> case t2 of
-        Tuple2 b c -> Just (Tuple3 a b c)
+parseInput : String -> Either ParseError (Tuple3 String String String)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 a rest) -> case splitOnFirst ":" rest of
+    Nothing -> Left ParseError
+    Just (Tuple2 b c) -> Right (Tuple3 a b c)
+
+property : String -> String -> String -> String
+property a b c = ((a ++ b) ++ c) ++ ":" ++ (a ++ (b ++ c))
 
 main : String -> IO Unit
-main raw = case unwrap3 raw of
-  Nothing -> IO.Stdout.print "PARSE_ERROR"
-  Just t -> case t of
-    Tuple3 a b c -> IO.Stdout.print (((a ++ b) ++ c) ++ ":" ++ (a ++ (b ++ c)))
+main raw =
+  let res : Either ParseError String = do
+        Tuple3 a b c <- parseInput raw
+        pureEither (property a b c)
+   in case res of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right s -> IO.Stdout.print s

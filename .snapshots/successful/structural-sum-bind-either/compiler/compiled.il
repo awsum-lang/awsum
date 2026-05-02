@@ -30,48 +30,6 @@
     ret
   }
 
-  .method private hidebysig static object v_bindEither(object, object) cil managed
-  {
-    ldarg.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.0
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
-    ldloc.0
-    stelem.ref
-    br.s IL_join
-  IL_arm_1:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldarg.1
-    castclass class [System.Runtime]System.Func`2<object, object>
-    ldloc.0
-    callvirt instance object class [System.Runtime]System.Func`2<object, object>::Invoke(object)
-    br.s IL_join
-  IL_join:
-    ret
-  }
-
-
   .method private hidebysig static object v_opA(object) cil managed
   {
     ldc.i4.2
@@ -244,9 +202,7 @@
     ldarg.0
     call object AwsumMain::v_opA(object)
     call object AwsumMain::v_liftA(object)
-    ldftn object AwsumMain::v_opBLifted(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    call object AwsumMain::v_bindEither(object, object)
+    call object AwsumMain::v__df_bindEither_0(object)
     ret
   }
 
@@ -312,6 +268,46 @@
     call object AwsumMain::v_run(object)
     call object AwsumMain::v_describe(object)
     call object AwsumMain::__print(object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__df_bindEither_0(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    call object AwsumMain::v_opBLifted(object)
+    br.s IL_join
+  IL_join:
     ret
   }
 

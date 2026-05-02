@@ -1,0 +1,14 @@
+-- Exhaustiveness must recurse into nested constructor patterns:
+-- here the top-level `Right` / `Left` are both covered, but the
+-- `Right`-arm's inner column has only `Just _` and so leaves
+-- `Right Nothing` uncovered. Expected diagnostic is
+-- `NonExhaustiveCase` on `Maybe`, naming `Nothing` as missing.
+import IO.Stdout
+
+opMaybe : String -> Either ParseError (Maybe Int32)
+opMaybe _ = Right Nothing
+
+main : String -> IO Unit
+main raw = case opMaybe raw of
+  Left _ -> IO.Stdout.print "PARSE_ERROR"
+  Right (Just x) -> IO.Stdout.print (showInt32 x)

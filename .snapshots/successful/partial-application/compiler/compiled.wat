@@ -10,8 +10,8 @@
   (global $heap (mut i32) (i32.const 71))
   (data (i32.const 64) "\00")
   (data (i32.const 65) "chain\00")
-  (table 6 funcref)
-  (elem (i32.const 0) $v_wrap $v_unwrap $v_apply $v_compose $v_main $v__pap_0)
+  (table 5 funcref)
+  (elem (i32.const 0) $v_wrap $v_unwrap $v_compose $v_main $v__df_apply_0)
   (type $arity_1 (func (param i32) (result i32)))
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -83,17 +83,14 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)))
 
-  (func $v_apply (param $v_f i32) (param $v_x i32) (result i32)
-    (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_f)))
-
   (func $v_compose (param $v_f i32) (param $v_g i32) (param $v_x i32) (result i32)
     (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_g)) (local.get $v_f)))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v_apply (i32.const 5) (i32.const 65))))
+    (call $__print (call $v__df_apply_0 (i32.const 65) (i32.const 1) (i32.const 0))))
 
-  (func $v__pap_0 (param $v__eta0 i32) (result i32)
-    (call $v_compose (i32.const 1) (i32.const 0) (local.get $v__eta0)))
+  (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (param $v__df_apply_0_cap0_1 i32) (result i32)
+    (call $v_compose (local.get $v__df_apply_0_cap0_0) (local.get $v__df_apply_0_cap0_1) (local.get $v_x)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

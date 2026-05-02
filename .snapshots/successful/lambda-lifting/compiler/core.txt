@@ -1,44 +1,13 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "bindEither"
-            [ "x"
-            , "k"
-            ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 0
-                    , [ "e" ]
-                    , CCon 0
-                        [ CVar "e" ]
-                    )
-                ,
-                    ( 1
-                    , [ "a" ]
-                    , CCall
-                        ( CVar "k" )
-                        [ CVar "a" ]
-                    )
-                ]
-            )
-        , CFunDef "pureEither" [ "x" ]
+        [ CFunDef "pureEither" [ "x" ]
             ( CCon 1
-                [ CVar "x" ]
-            )
-        , CFunDef "apply"
-            [ "f"
-            , "x"
-            ]
-            ( CCall
-                ( CVar "f" )
                 [ CVar "x" ]
             )
         , CValDef "inc42"
             ( CCall
-                ( CVar "apply" )
-                [ CVar "$lam$0"
-                , CIntLit 42 TInt32
-                ]
+                ( CVar "$df$apply$0" )
+                [ CIntLit 42 TInt32 ]
             )
         , CValDef "op1"
             ( CCon 1
@@ -49,10 +18,41 @@ CoreProgram
                 [ CVar "n" ]
             )
         , CValDef "g"
-            ( CCall
-                ( CVar "bindEither" )
-                [ CVar "op1"
-                , CVar "$lam$1"
+            ( CCase
+                ( CVar "op1" )
+                [
+                    ( 0
+                    , [ "$do_e_35_3" ]
+                    , CCon 0
+                        [ CRow 2252990199
+                            ( CVar "$do_e_35_3" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCase
+                        ( CCall
+                            ( CVar "op2WithA" )
+                            [ CVar "a" ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_36_3" ]
+                            , CCon 0
+                                [ CRow 2269767818
+                                    ( CVar "$do_e_36_3" )
+                                ]
+                            )
+                        ,
+                            ( 1
+                            , [ "b" ]
+                            , CCall
+                                ( CVar "pureEither" )
+                                [ CVar "b" ]
+                            )
+                        ]
+                    )
                 ]
             )
         , CFunDef "describe" [ "r" ]
@@ -65,12 +65,12 @@ CoreProgram
                         ( CVar "e" )
                         [
                             ( 2252990199
-                            , "_a"
+                            , "__rw"
                             , CString "ErrA"
                             )
                         ,
                             ( 2269767818
-                            , "_b"
+                            , "__rw"
                             , CString "ErrB"
                             )
                         ]
@@ -108,14 +108,10 @@ CoreProgram
             )
         , CFunDef "$lam$0" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$lam$1" [ "a" ]
+        , CFunDef "$df$apply$0" [ "x" ]
             ( CCall
-                ( CVar "bindEither" )
-                [ CCall
-                    ( CVar "op2WithA" )
-                    [ CVar "a" ]
-                , CVar "pureEither"
-                ]
+                ( CVar "$lam$0" )
+                [ CVar "x" ]
             )
         ]
     }

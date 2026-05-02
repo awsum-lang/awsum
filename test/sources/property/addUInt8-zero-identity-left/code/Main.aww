@@ -1,12 +1,21 @@
 -- Property: `addUInt8 0 a == Right a`. Left-identity of zero under
--- addUInt8.
+-- addition. Single UInt8 input. Adding 0 is always in range, so
+-- OVERFLOW cannot fire on a well-formed input.
 import IO.Stdout
 
+property : UInt8 -> Either OverflowError Bool
+property a = do
+  r <- addUInt8 0 a
+  pureEither (eqUInt8 r a)
+
 main : String -> IO Unit
-main raw = case parseUInt8 raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right a -> case addUInt8 0 a of
-    Left _ -> IO.Stdout.print "OVERFLOW"
-    Right res -> case eqUInt8 res a of
-      True -> IO.Stdout.print "OK"
-      False -> IO.Stdout.print ("FAIL: " ++ showUInt8 res ++ " /= " ++ showUInt8 a)
+main raw =
+  let res : Either (ParseError | OverflowError) Bool = do
+        a <- parseUInt8 raw
+        property a
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

@@ -1,8 +1,7 @@
 -- Property: `not (not b) == b` for every Bool. Bool is encoded as a
--- decimal "0" / "1" string on the way in (Awsum has no String→Bool
--- builtin and no eqString), and Awsum prints back "T" / "F" so
--- Haskell can compare against its own boolToText of the original
--- input.
+-- decimal "0" / "1" string on the way in (Awsum has no String->Bool
+-- builtin and no eqString); the property emits "T" / "F" so Haskell
+-- can compare against its own boolPrint of the original input.
 import IO.Stdout
 
 intToBool : UInt8 -> Bool
@@ -15,7 +14,14 @@ boolToStr b = case b of
   True -> "T"
   False -> "F"
 
+property : UInt8 -> String
+property n = boolToStr (not (not (intToBool n)))
+
 main : String -> IO Unit
-main raw = case parseUInt8 raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right n -> IO.Stdout.print (boolToStr (not (not (intToBool n))))
+main raw =
+  let res : Either ParseError String = do
+        n <- parseUInt8 raw
+        pureEither (property n)
+   in case res of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right s -> IO.Stdout.print s

@@ -31,8 +31,9 @@
 module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.Core
+import Awsum.HM (rowTag)
 import Awsum.Program (ProgramType (..))
-import Awsum.Syntax (Name)
+import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.Char qualified as Char
 import Data.Set qualified as Set
 import Data.Text qualified as T
@@ -68,7 +69,15 @@ emitCliScript prog@(CoreProgram decls) =
 --   doesn't need a helper; @String(x)@ is inlined at each show call site.
 header :: Set Name -> Text
 header builtIns =
-  let lns =
+  let -- FNV-1a 32-bit row tags for the prelude's nominal labels used
+      -- by the Int32 arithmetic builtins. Hard-wiring them via
+      -- 'rowTag' here (instead of a magic number) keeps the encoding
+      -- in lockstep with 'Awsum.HM.canonicalLabel' / 'Awsum.HM.fnv1a32'
+      -- if either ever changes — the runtime helpers and the
+      -- user-side row dispatch agree by construction, not by accident.
+      underflowTag = rowTag (TyCon noSpan "UnderflowError")
+      overflowTag = rowTag (TyCon noSpan "OverflowError")
+      lns =
         filter
           (not . T.null)
           [ if Set.member "IO.Stdout.print" builtIns
@@ -107,26 +116,34 @@ header builtIns =
             if Set.member "eqUInt8" builtIns
               then "function __eqUInt8(a, b){ return a === b ? [0] : [1]; }"
               else "",
-            -- addInt32: Either ArithError Int32. JS numbers exactly represent
-            -- the 33-bit sum of two i32s, so the range checks are direct
-            -- without intermediate '|0' wrapping. ArithError tags follow
-            -- declaration order: Underflow=0, Overflow=1.
+            -- addInt32: Either (UnderflowError | OverflowError) Int32. JS
+            -- numbers exactly represent the 33-bit sum of two i32s, so the
+            -- range checks are direct without intermediate '|0' wrapping.
+            -- The error side is a structural sum dispatched at runtime by
+            -- FNV-1a row tags; the encoded shape is
+            --   Left UnderflowError = [0, [tagU, [0]]]
+            --   Left OverflowError  = [0, [tagO, [0]]]
+            -- where the inner '[0]' is the nullary CCon for the
+            -- single-constructor type and 'tagU' / 'tagO' are
+            -- 'rowTag (TyCon "UnderflowError")' / 'rowTag (TyCon "OverflowError")'.
             if Set.member "addInt32" builtIns
-              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [1]]; if (s < -2147483648) return [0, [0]]; return [1, s|0]; }"
+              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [" <> show overflowTag <> ", [0]]]; if (s < -2147483648) return [0, [" <> show underflowTag <> ", [0]]]; return [1, s|0]; }"
               else "",
-            -- subInt32: Either ArithError Int32. Same range-check shape as
-            -- __addInt32 — the i32 difference fits in a JS Number exactly,
-            -- so direct '> maxInt32' / '< minInt32' tests pick the branch.
+            -- subInt32: Either (UnderflowError | OverflowError) Int32. Same
+            -- range-check shape as __addInt32 — the i32 difference fits in
+            -- a JS Number exactly, so direct '> maxInt32' / '< minInt32'
+            -- tests pick the branch. Same row-tagged error encoding.
             if Set.member "subInt32" builtIns
-              then "function __subInt32(a, b){ const d = a - b; if (d > 2147483647) return [0, [1]]; if (d < -2147483648) return [0, [0]]; return [1, d|0]; }"
+              then "function __subInt32(a, b){ const d = a - b; if (d > 2147483647) return [0, [" <> show overflowTag <> ", [0]]]; if (d < -2147483648) return [0, [" <> show underflowTag <> ", [0]]]; return [1, d|0]; }"
               else "",
-            -- mulInt32: Either ArithError Int32. JS Numbers represent the
-            -- product of two i32 values exactly (it fits in 53-bit mantissa
-            -- precision, max product is ~2^62). Direct range check on the
-            -- exact product picks the branch; '|0' coerces back to i32 on
-            -- the ok path.
+            -- mulInt32: Either (UnderflowError | OverflowError) Int32. JS
+            -- Numbers represent the product of two i32 values exactly (it
+            -- fits in 53-bit mantissa precision, max product is ~2^62).
+            -- Direct range check on the exact product picks the branch;
+            -- '|0' coerces back to i32 on the ok path. Same row-tagged
+            -- error encoding as add/sub.
             if Set.member "mulInt32" builtIns
-              then "function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [1]]; if (p < -2147483648) return [0, [0]]; return [1, p|0]; }"
+              then "function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [" <> show overflowTag <> ", [0]]]; if (p < -2147483648) return [0, [" <> show underflowTag <> ", [0]]]; return [1, p|0]; }"
               else "",
             -- negInt32: Either OverflowError Int32. Only INT32_MIN overflows
             -- (negation would yield 2147483648, outside the signed range);

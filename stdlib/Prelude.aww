@@ -116,17 +116,17 @@ const x _y = x
    so this stays a plain function. -}
 
 mapRight : Either e a -> (a -> b) -> Either e b
-mapRight x mapRightF = case x of
+mapRight x f = case x of
   Left e -> Left e
-  Right a -> Right (mapRightF a)
+  Right a -> Right (f a)
 
 {- `mapLeft` rebuilds an `Either` with `f` applied to the error value
    and the success left untouched. Used to widen / narrow / rename a
    nominal error type without touching the success side. -}
 
 mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a
-mapLeft x mapLeftF = case x of
-  Left e -> Left (mapLeftF e)
+mapLeft x f = case x of
+  Left e -> Left (f e)
   Right a -> Right a
 
 -- ---------------------- Maybe
@@ -200,21 +200,6 @@ type ParseError = ParseError
 showParseError : ParseError -> String
 showParseError _ = "ParseError"
 
--- ---------------------- ArithError
-
-{- Reported by signed integer primitives that can fail at *either* end of
-   the type's range — `addInt32` is the seed case (`maxInt32 + 1` is an
-   overflow, `minInt32 + (-1)` is an underflow, both reachable from one
-   operation). Closed nominal sum picked deliberately over an open / row-
-   polymorphic union: structural unions are a separate, future feature. -}
-
-type ArithError = Underflow | Overflow
-
-showArithError : ArithError -> String
-showArithError e = case e of
-  Underflow -> "Underflow"
-  Overflow -> "Overflow"
-
 -- ---------------------- UInt8
 
 eqUInt8 : UInt8 -> UInt8 -> Bool
@@ -275,13 +260,13 @@ predInt32 = BuiltIn.predInt32
 succInt32 : Int32 -> Either OverflowError Int32
 succInt32 = BuiltIn.succInt32
 
-addInt32 : Int32 -> Int32 -> Either ArithError Int32
+addInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
 addInt32 = BuiltIn.addInt32
 
-subInt32 : Int32 -> Int32 -> Either ArithError Int32
+subInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
 subInt32 = BuiltIn.subInt32
 
-mulInt32 : Int32 -> Int32 -> Either ArithError Int32
+mulInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
 mulInt32 = BuiltIn.mulInt32
 
 negInt32 : Int32 -> Either OverflowError Int32

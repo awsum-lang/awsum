@@ -30,48 +30,6 @@
     ret
   }
 
-  .method private hidebysig static object v_bindEither(object, object) cil managed
-  {
-    ldarg.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.0
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
-    ldloc.0
-    stelem.ref
-    br.s IL_join
-  IL_arm_1:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldarg.1
-    castclass class [System.Runtime]System.Func`2<object, object>
-    ldloc.0
-    callvirt instance object class [System.Runtime]System.Func`2<object, object>::Invoke(object)
-    br.s IL_join
-  IL_join:
-    ret
-  }
-
-
   .method private hidebysig static object v_pureEither(object) cil managed
   {
     ldc.i4.2
@@ -85,13 +43,6 @@
     ldc.i4.1
     ldarg.0
     stelem.ref
-    ret
-  }
-
-
-  .method private hidebysig static object v_const(object, object) cil managed
-  {
-    ldarg.0
     ret
   }
 
@@ -168,9 +119,123 @@
   .method private hidebysig static object v_f() cil managed
   {
     call object AwsumMain::v_op1()
-    ldftn object AwsumMain::v__pap_1(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    call object AwsumMain::v_bindEither(object, object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 401451280
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    stelem.ref
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    call object AwsumMain::v_op2()
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    call object AwsumMain::v_op3()
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 451784137
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.2
+    stelem.ref
+    stelem.ref
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldloc.2
+    call object AwsumMain::v_pureEither(object)
+    br.s IL_join
+  IL_join:
+    br.s IL_join
+  IL_join:
+    br.s IL_join
+  IL_join:
     ret
   }
 
@@ -242,30 +307,6 @@
     call object AwsumMain::v_f()
     call object AwsumMain::v_describe(object)
     call object AwsumMain::__print(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__pap_0(object) cil managed
-  {
-    call object AwsumMain::v_op3()
-    ldftn object AwsumMain::v_pureEither(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    call object AwsumMain::v_bindEither(object, object)
-    ldarg.0
-    call object AwsumMain::v_const(object, object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__pap_1(object) cil managed
-  {
-    call object AwsumMain::v_op2()
-    ldftn object AwsumMain::v__pap_0(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    call object AwsumMain::v_bindEither(object, object)
-    ldarg.0
-    call object AwsumMain::v_const(object, object)
     ret
   }
 

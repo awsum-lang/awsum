@@ -7,6 +7,8 @@
 module Awsum.Codegen.WASM.Assemble (assembleWASM) where
 
 import Awsum.Core
+import Awsum.HM (rowTag)
+import Awsum.Syntax (Type' (..), noSpan)
 import Data.Bits (shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
@@ -1223,10 +1225,23 @@ codeEqI32 _info =
 -- positive when a >= 0, negative otherwise. ArithError tags follow
 -- Prelude.aww declaration order: Underflow=0, Overflow=1.
 -- Locals: $a(2) $b(3) $s(4) $ae(5) $box(6) $cell(7).
+
+-- | FNV-1a 32-bit row tags for the prelude's nominal labels used by
+--   the Int32 arithmetic builtins. Computed via 'rowTag' so the
+--   runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'
+--   without hard-coded magic numbers. Cast to 'Int32' so they fit the
+--   'encodeSLEB128' input type — the bit pattern is preserved across
+--   the cast and matches what the user-side 'CRowCase' compares against.
+underflowRowTag :: Int32
+underflowRowTag = fromIntegral (rowTag (TyCon noSpan "UnderflowError"))
+
+overflowRowTag :: Int32
+overflowRowTag = fromIntegral (rowTag (TyCon noSpan "OverflowError"))
+
 codeAddI32 :: WasmInfo -> [Word8]
 codeAddI32 _info =
   encodeBody
-    (encodeLocals 6)
+    (encodeLocals 7)
     $ concat
       [ -- a = i32.load(pa)
         [opLocalGet],
@@ -1264,17 +1279,29 @@ codeAddI32 _info =
         encodeSLEB128 0,
         [opI32LtS],
         [opIf, blocktypeI32],
-        -- then: Left ArithError
-        -- ae = __alloc(4)
+        -- then: Left (CRow rowTag (CCon 0 [])).
+        -- inner = __alloc(4); store 0  (CCon UnderflowError/OverflowError, tag 0)
         [opI32Const],
         encodeSLEB128 4,
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
         encodeULEB128 5,
-        -- i32.store(ae, (if a >= 0 then 1 else 0))
         [opLocalGet],
         encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        -- row = __alloc(8); store rowTag(if a >= 0 then OverflowError else UnderflowError);
+        --                   store inner at offset=4
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
         [opLocalGet],
         encodeULEB128 2,
         [opI32Const],
@@ -1282,31 +1309,36 @@ codeAddI32 _info =
         [opI32GeS],
         [opIf, blocktypeI32],
         [opI32Const],
-        encodeSLEB128 1,
+        encodeSLEB128 overflowRowTag,
         [opElse],
         [opI32Const],
-        encodeSLEB128 0,
+        encodeSLEB128 underflowRowTag,
         [opEnd],
         [opI32Store, 0x02, 0x00],
-        -- cell = __alloc(8); store tag 0 (Left); store offset=4 ae
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Store, 0x02, 0x04],
+        -- cell = __alloc(8); store tag 0 (Left); store row at offset=4
         [opI32Const],
         encodeSLEB128 8,
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opI32Const],
         encodeSLEB128 0,
         [opI32Store, 0x02, 0x00],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 5,
+        encodeULEB128 6,
         [opI32Store, 0x02, 0x04],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opElse],
         -- else: Right s
         -- box = __alloc(4); store s
@@ -1315,9 +1347,9 @@ codeAddI32 _info =
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 6,
+        encodeULEB128 7,
         [opLocalGet],
-        encodeULEB128 6,
+        encodeULEB128 7,
         [opLocalGet],
         encodeULEB128 4,
         [opI32Store, 0x02, 0x00],
@@ -1327,19 +1359,19 @@ codeAddI32 _info =
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opI32Const],
         encodeSLEB128 1,
         [opI32Store, 0x02, 0x00],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 6,
+        encodeULEB128 7,
         [opI32Store, 0x02, 0x04],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opEnd]
       ]
 
@@ -1444,7 +1476,7 @@ codeAddU8 _info =
 codeSubI32 :: WasmInfo -> [Word8]
 codeSubI32 _info =
   encodeBody
-    (encodeLocals 6)
+    (encodeLocals 7)
     $ concat
       [ -- a = i32.load(pa)
         [opLocalGet],
@@ -1482,7 +1514,8 @@ codeSubI32 _info =
         encodeSLEB128 0,
         [opI32LtS],
         [opIf, blocktypeI32],
-        -- then: Left ArithError
+        -- then: Left (CRow rowTag (CCon 0 [])).
+        -- inner = __alloc(4); store 0
         [opI32Const],
         encodeSLEB128 4,
         [opCall],
@@ -1491,6 +1524,19 @@ codeSubI32 _info =
         encodeULEB128 5,
         [opLocalGet],
         encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        -- row = __alloc(8); store rowTag(if a >= 0 then OverflowError else UnderflowError);
+        --                   store inner at offset=4
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
         [opLocalGet],
         encodeULEB128 2,
         [opI32Const],
@@ -1498,30 +1544,36 @@ codeSubI32 _info =
         [opI32GeS],
         [opIf, blocktypeI32],
         [opI32Const],
-        encodeSLEB128 1,
+        encodeSLEB128 overflowRowTag,
         [opElse],
         [opI32Const],
-        encodeSLEB128 0,
+        encodeSLEB128 underflowRowTag,
         [opEnd],
         [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Store, 0x02, 0x04],
+        -- cell = __alloc(8); store tag 0 (Left); store row at offset=4
         [opI32Const],
         encodeSLEB128 8,
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opI32Const],
         encodeSLEB128 0,
         [opI32Store, 0x02, 0x00],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 5,
+        encodeULEB128 6,
         [opI32Store, 0x02, 0x04],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opElse],
         -- else: Right d
         [opI32Const],
@@ -1529,9 +1581,9 @@ codeSubI32 _info =
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 6,
+        encodeULEB128 7,
         [opLocalGet],
-        encodeULEB128 6,
+        encodeULEB128 7,
         [opLocalGet],
         encodeULEB128 4,
         [opI32Store, 0x02, 0x00],
@@ -1540,19 +1592,19 @@ codeSubI32 _info =
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opI32Const],
         encodeSLEB128 1,
         [opI32Store, 0x02, 0x00],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opLocalGet],
-        encodeULEB128 6,
+        encodeULEB128 7,
         [opI32Store, 0x02, 0x04],
         [opLocalGet],
-        encodeULEB128 7,
+        encodeULEB128 8,
         [opEnd]
       ]
 
@@ -1570,9 +1622,12 @@ codeSubI32 _info =
 codeMulI32 :: WasmInfo -> [Word8]
 codeMulI32 _info =
   encodeBody
-    -- 1 i64 local + 3 i32 locals — must be encoded as two separate
-    -- (count, valtype) pairs in the WASM locals declaration.
-    (encodeVec [encodeULEB128 1 <> [valtypeI64], encodeULEB128 3 <> [valtypeI32]])
+    -- 1 i64 local + 4 i32 locals — must be encoded as two separate
+    -- (count, valtype) pairs in the WASM locals declaration. The
+    -- extra i32 slot vs the old (Either ArithError Int32) shape holds
+    -- the row-wrap box that sits between the inner @CCon@ and the
+    -- outer @Left@.
+    (encodeVec [encodeULEB128 1 <> [valtypeI64], encodeULEB128 4 <> [valtypeI32]])
     $ concat
       [ -- p = i64.extend_i32_s(load(pa)) * i64.extend_i32_s(load(pb))
         [opLocalGet],
@@ -1593,7 +1648,8 @@ codeMulI32 _info =
         encodeSLEB128 2147483647,
         [opI64GtS],
         [opIf, blocktypeI32],
-        -- then: Left Overflow (tag 1)
+        -- then: Left (CRow rowTag(OverflowError) (CCon 0 [])).
+        -- inner = __alloc(4); store 0
         [opI32Const],
         encodeSLEB128 4,
         [opCall],
@@ -1603,8 +1659,26 @@ codeMulI32 _info =
         [opLocalGet],
         encodeULEB128 3,
         [opI32Const],
-        encodeSLEB128 1,
+        encodeSLEB128 0,
         [opI32Store, 0x02, 0x00],
+        -- row = __alloc(8); store rowTag(OverflowError); store inner@offset=4
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 overflowRowTag,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Store, 0x02, 0x04],
+        -- cell = __alloc(8); store 0 (Left); store row@offset=4
         [opI32Const],
         encodeSLEB128 8,
         [opCall],
@@ -1619,7 +1693,7 @@ codeMulI32 _info =
         [opLocalGet],
         encodeULEB128 5,
         [opLocalGet],
-        encodeULEB128 3,
+        encodeULEB128 6,
         [opI32Store, 0x02, 0x04],
         [opLocalGet],
         encodeULEB128 5,
@@ -1631,7 +1705,8 @@ codeMulI32 _info =
         encodeSLEB128 (-2147483648),
         [opI64LtS],
         [opIf, blocktypeI32],
-        -- then: Left Underflow (tag 0)
+        -- then: Left (CRow rowTag(UnderflowError) (CCon 0 [])).
+        -- inner = __alloc(4); store 0
         [opI32Const],
         encodeSLEB128 4,
         [opCall],
@@ -1643,6 +1718,24 @@ codeMulI32 _info =
         [opI32Const],
         encodeSLEB128 0,
         [opI32Store, 0x02, 0x00],
+        -- row = __alloc(8); store rowTag(UnderflowError); store inner@offset=4
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 underflowRowTag,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Store, 0x02, 0x04],
+        -- cell = __alloc(8); store 0 (Left); store row@offset=4
         [opI32Const],
         encodeSLEB128 8,
         [opCall],
@@ -1657,7 +1750,7 @@ codeMulI32 _info =
         [opLocalGet],
         encodeULEB128 5,
         [opLocalGet],
-        encodeULEB128 3,
+        encodeULEB128 6,
         [opI32Store, 0x02, 0x04],
         [opLocalGet],
         encodeULEB128 5,

@@ -37,9 +37,9 @@ f = do
 describe : Either (ErrorA | ErrorB | ErrorC) Int32 -> String
 describe r = case r of
   Left e -> case e of
-    (_a : ErrorA) -> "ErrorA"
-    (_b : ErrorB) -> "ErrorB"
-    (_c : ErrorC) -> "ErrorC"
+    (_ : ErrorA) -> "ErrorA"
+    (_ : ErrorB) -> "ErrorB"
+    (_ : ErrorC) -> "ErrorC"
   Right n -> "Ok " ++ showInt32 n
 
 main : String -> IO Unit

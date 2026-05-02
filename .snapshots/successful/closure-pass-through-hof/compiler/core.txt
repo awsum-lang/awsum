@@ -1,0 +1,30 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "incr" [ "n" ]
+            ( CVar "n" )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "$df$applyTwice$0" )
+                        [ CIntLit 7 TInt32 ]
+                    ]
+                ]
+            )
+        , CFunDef "$df$apply$1" [ "x" ]
+            ( CCall
+                ( CVar "incr" )
+                [ CVar "x" ]
+            )
+        , CFunDef "$df$applyTwice$0" [ "x" ]
+            ( CCall
+                ( CVar "$df$apply$1" )
+                [ CCall
+                    ( CVar "$df$apply$1" )
+                    [ CVar "x" ]
+                ]
+            )
+        ]
+    }

@@ -18,20 +18,16 @@ function v_unwrap(v_b){
     }
 }
 
-function v_apply(v_f, v_x){
-    return (v_f)(v_x);
-}
-
 function v_compose(v_f, v_g, v_x){
     return (v_f)((v_g)(v_x));
 }
 
 function main(v__input){
-    return __print((v_apply)(v__pap_0, "chain"));
+    return __print((v__df_apply_0)("chain", v_unwrap, v_wrap));
 }
 
-function v__pap_0(v__eta0){
-    return (v_compose)(v_unwrap, v_wrap, v__eta0);
+function v__df_apply_0(v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1){
+    return (v_compose)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

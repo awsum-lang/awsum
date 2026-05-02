@@ -42,7 +42,7 @@ define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [2 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = getelementptr [2 x i8], ptr @.str.1, i64 0, i64 0
   %t2 = call ptr @v_const(ptr %t0, ptr %t1)
-  %t3 = call ptr @v_compose(ptr @v_appendY, ptr @v_appendX, ptr %t2)
+  %t3 = call ptr @v__df_compose_0(ptr %t2)
   %t4 = call ptr @v_identity(ptr %t3)
   %t5 = call ptr @__print(ptr %t4)
   ret ptr %t5
@@ -64,9 +64,9 @@ define internal ptr @v_appendY(ptr %v_s) {
   ret ptr %t1
 }
 
-define internal ptr @v_compose(ptr %v_g, ptr %v_f, ptr %v_x) {
-  %t0 = call ptr %v_f(ptr %v_x)
-  %t1 = call ptr %v_g(ptr %t0)
+define internal ptr @v__df_compose_0(ptr %v_x) {
+  %t0 = call ptr @v_appendX(ptr %v_x)
+  %t1 = call ptr @v_appendY(ptr %t0)
   ret ptr %t1
 }
 

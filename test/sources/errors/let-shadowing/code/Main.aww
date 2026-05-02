@@ -1,0 +1,10 @@
+-- Error: the inner 'let x = ...' shadows the outer function
+-- parameter 'x'. No-shadowing applies to 'let' the same way it does
+-- to function parameters and case-pattern binders.
+import IO.Stdout
+
+f : String -> String
+f x = let x = "shadow" in x
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (f "hi")

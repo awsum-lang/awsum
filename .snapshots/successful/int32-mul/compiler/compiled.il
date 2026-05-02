@@ -112,23 +112,16 @@
     ret
   }
 
-  .method private hidebysig static object v_showArithError(object) cil managed
+  .method private hidebysig static object v_showUnderflowError(object) cil managed
   {
-    ldarg.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    pop
-    ldstr "Underflow"
-    br.s IL_join
-  IL_arm_1:
-    pop
-    ldstr "Overflow"
-    br.s IL_join
-  IL_join:
+    ldstr "UnderflowError"
+    ret
+  }
+
+
+  .method private hidebysig static object v_showOverflowError(object) cil managed
+  {
+    ldstr "OverflowError"
     ret
   }
 
@@ -147,10 +140,35 @@
     ldelem.ref
     stloc.0
     pop
-    ldstr "err: "
     ldloc.0
-    call object AwsumMain::v_showArithError(object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_882564211, IL_arm_3768445577)
+  IL_arm_882564211:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldstr "err: "
+    ldloc.1
+    call object AwsumMain::v_showOverflowError(object)
     call object AwsumMain::__concat(object, object)
+    br.s IL_join
+  IL_arm_3768445577:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldstr "err: "
+    ldloc.1
+    call object AwsumMain::v_showUnderflowError(object)
+    call object AwsumMain::__concat(object, object)
+    br.s IL_join
+  IL_join:
     br.s IL_join
   IL_arm_1:
     dup

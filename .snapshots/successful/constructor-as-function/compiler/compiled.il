@@ -22,16 +22,6 @@
     ret
   }
 
-  .method private hidebysig static object v_wrap(object, object) cil managed
-  {
-    ldarg.0
-    castclass class [System.Runtime]System.Func`2<object, object>
-    ldarg.1
-    callvirt instance object class [System.Runtime]System.Func`2<object, object>::Invoke(object)
-    ret
-  }
-
-
   .method private hidebysig static object v_unwrap(object) cil managed
   {
     ldarg.0
@@ -55,10 +45,8 @@
 
   .method private hidebysig static object v_main(object) cil managed
   {
-    ldftn object AwsumMain::v__con_Box(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
     ldstr "wrapped"
-    call object AwsumMain::v_wrap(object, object)
+    call object AwsumMain::v__df_wrap_0(object)
     call object AwsumMain::v_unwrap(object)
     call object AwsumMain::__print(object)
     ret
@@ -78,6 +66,14 @@
     ldc.i4.1
     ldarg.0
     stelem.ref
+    ret
+  }
+
+
+  .method private hidebysig static object v__df_wrap_0(object) cil managed
+  {
+    ldarg.0
+    call object AwsumMain::v__con_Box(object)
     ret
   }
 

@@ -1,14 +1,6 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "wrap"
-            [ "f"
-            , "x"
-            ]
-            ( CCall
-                ( CVar "f" )
-                [ CVar "x" ]
-            )
-        , CFunDef "unwrap" [ "b" ]
+        [ CFunDef "unwrap" [ "b" ]
             ( CCase
                 ( CVar "b" )
                 [
@@ -24,16 +16,19 @@ CoreProgram
                 [ CCall
                     ( CVar "unwrap" )
                     [ CCall
-                        ( CVar "wrap" )
-                        [ CVar "$con$Box"
-                        , CString "wrapped"
-                        ]
+                        ( CVar "$df$wrap$0" )
+                        [ CString "wrapped" ]
                     ]
                 ]
             )
         , CFunDef "$con$Box" [ "$x0" ]
             ( CCon 0
                 [ CVar "$x0" ]
+            )
+        , CFunDef "$df$wrap$0" [ "x" ]
+            ( CCall
+                ( CVar "$con$Box" )
+                [ CVar "x" ]
             )
         ]
     }

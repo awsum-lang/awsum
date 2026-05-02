@@ -1,0 +1,27 @@
+{- Polymorphic let-bound lambda — no annotation needed.
+
+   Before this iteration, `let id = \x -> x in body` failed with
+   `MissingLetAnnotation` because lambdas had no synthesis form. After
+   the change, the lambda is synthesised with span-unique fresh tyvars
+   (`\x -> x` becomes `x$L_C -> x$L_C`), and the resulting type is
+   stored in the env as if the user had written
+   `let id : a -> a = \x -> x` — with the same per-call-site unify
+   behaviour that already gave annotated polymorphic let-binders the
+   ability to flow at multiple types within one body. -}
+import IO.Stdout
+
+type Tri = TA | TB | TC
+
+showTri : Tri -> String
+showTri t = case t of
+  TA -> "A"
+  TB -> "B"
+  TC -> "C"
+
+threeTypes : Int32 -> String -> Tri -> String
+threeTypes n s b =
+  let id = \x -> x
+   in showInt32 (id n) ++ "/" ++ id s ++ "/" ++ showTri (id b)
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (threeTypes 42 "hello" TA)

@@ -36,111 +36,6 @@ define internal ptr @__print(ptr %s) {
 }
 
 
-define internal ptr @v_map(ptr %v_f, ptr %v_list) {
-  %t0 = call ptr @malloc(i64 8)
-  %t1 = inttoptr i64 0 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps_map(ptr %v_f, ptr %v_list, ptr %t0)
-  ret ptr %t3
-}
-
-define internal ptr @v__cps_map(ptr %v_f, ptr %v_list, ptr %v__k) {
-entry:
-  %t3 = alloca ptr
-  store ptr %v_f, ptr %t3
-  %t4 = alloca ptr
-  store ptr %v_list, ptr %t4
-  %t5 = alloca ptr
-  store ptr %v__k, ptr %t5
-  %t2 = alloca ptr
-  br label %tco.loop.0
-tco.loop.0:
-  %t6 = load ptr, ptr %t3
-  %t7 = load ptr, ptr %t4
-  %t8 = load ptr, ptr %t5
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  %t10 = load ptr, ptr %t9
-  %t11 = ptrtoint ptr %t10 to i64
-  switch i64 %t11, label %tco.case.default.12 [ i64 0, label %tco.case.arm.0.13 i64 1, label %tco.case.arm.1.24 ]
-tco.case.arm.0.13:
-  %t14 = getelementptr ptr, ptr %t7, i32 1
-  %t15 = load ptr, ptr %t14
-  %t16 = getelementptr ptr, ptr %t7, i32 2
-  %t17 = load ptr, ptr %t16
-  %t18 = call ptr @malloc(i64 32)
-  %t19 = inttoptr i64 1 to ptr
-  %t20 = getelementptr ptr, ptr %t18, i32 0
-  store ptr %t19, ptr %t20
-  %t21 = getelementptr ptr, ptr %t18, i32 1
-  store ptr %t8, ptr %t21
-  %t22 = getelementptr ptr, ptr %t18, i32 2
-  store ptr %t6, ptr %t22
-  %t23 = getelementptr ptr, ptr %t18, i32 3
-  store ptr %t15, ptr %t23
-  store ptr %t6, ptr %t3
-  store ptr %t17, ptr %t4
-  store ptr %t18, ptr %t5
-  br label %tco.loop.0
-tco.case.arm.1.24:
-  %t25 = call ptr @malloc(i64 8)
-  %t26 = inttoptr i64 1 to ptr
-  %t27 = getelementptr ptr, ptr %t25, i32 0
-  store ptr %t26, ptr %t27
-  %t28 = call ptr @v__apply_map(ptr %t8, ptr %t25)
-  store ptr %t28, ptr %t2
-  br label %tco.exit.1
-tco.case.default.12:
-  unreachable
-tco.exit.1:
-  %t29 = load ptr, ptr %t2
-  ret ptr %t29
-}
-
-define internal ptr @v__apply_map(ptr %v__k, ptr %v__x) {
-entry:
-  %t3 = alloca ptr
-  store ptr %v__k, ptr %t3
-  %t4 = alloca ptr
-  store ptr %v__x, ptr %t4
-  %t2 = alloca ptr
-  br label %tco.loop.0
-tco.loop.0:
-  %t5 = load ptr, ptr %t3
-  %t6 = load ptr, ptr %t4
-  %t7 = getelementptr ptr, ptr %t5, i32 0
-  %t8 = load ptr, ptr %t7
-  %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %tco.case.default.10 [ i64 0, label %tco.case.arm.0.11 i64 1, label %tco.case.arm.1.12 ]
-tco.case.arm.0.11:
-  store ptr %t6, ptr %t2
-  br label %tco.exit.1
-tco.case.arm.1.12:
-  %t13 = getelementptr ptr, ptr %t5, i32 1
-  %t14 = load ptr, ptr %t13
-  %t15 = getelementptr ptr, ptr %t5, i32 2
-  %t16 = load ptr, ptr %t15
-  %t17 = getelementptr ptr, ptr %t5, i32 3
-  %t18 = load ptr, ptr %t17
-  %t19 = call ptr @malloc(i64 24)
-  %t20 = inttoptr i64 0 to ptr
-  %t21 = getelementptr ptr, ptr %t19, i32 0
-  store ptr %t20, ptr %t21
-  %t22 = call ptr %t16(ptr %t18)
-  %t23 = getelementptr ptr, ptr %t19, i32 1
-  store ptr %t22, ptr %t23
-  %t24 = getelementptr ptr, ptr %t19, i32 2
-  store ptr %t6, ptr %t24
-  store ptr %t14, ptr %t3
-  store ptr %t19, ptr %t4
-  br label %tco.loop.0
-tco.case.default.10:
-  unreachable
-tco.exit.1:
-  %t25 = load ptr, ptr %t2
-  ret ptr %t25
-}
-
 define internal ptr @v_show(ptr %v_xs) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
@@ -267,9 +162,106 @@ define internal ptr @v_main(ptr %v__input) {
   store ptr %t10, ptr %t19
   %t20 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t5, ptr %t20
-  %t21 = call ptr @v_map(ptr @v_shout, ptr %t0)
+  %t21 = call ptr @v__df_map_0(ptr %t0)
   %t22 = call ptr @v_show(ptr %t21)
   %t23 = call ptr @__print(ptr %t22)
+  ret ptr %t23
+}
+
+define internal ptr @v__df_map_0(ptr %v_list) {
+  %t0 = call ptr @malloc(i64 8)
+  %t1 = inttoptr i64 0 to ptr
+  %t2 = getelementptr ptr, ptr %t0, i32 0
+  store ptr %t1, ptr %t2
+  %t3 = call ptr @v__cps__df_map_0(ptr %v_list, ptr %t0)
+  ret ptr %t3
+}
+
+define internal ptr @v__cps__df_map_0(ptr %v_list, ptr %v__k) {
+entry:
+  %t3 = alloca ptr
+  store ptr %v_list, ptr %t3
+  %t4 = alloca ptr
+  store ptr %v__k, ptr %t4
+  %t2 = alloca ptr
+  br label %tco.loop.0
+tco.loop.0:
+  %t5 = load ptr, ptr %t3
+  %t6 = load ptr, ptr %t4
+  %t7 = getelementptr ptr, ptr %t5, i32 0
+  %t8 = load ptr, ptr %t7
+  %t9 = ptrtoint ptr %t8 to i64
+  switch i64 %t9, label %tco.case.default.10 [ i64 0, label %tco.case.arm.0.11 i64 1, label %tco.case.arm.1.21 ]
+tco.case.arm.0.11:
+  %t12 = getelementptr ptr, ptr %t5, i32 1
+  %t13 = load ptr, ptr %t12
+  %t14 = getelementptr ptr, ptr %t5, i32 2
+  %t15 = load ptr, ptr %t14
+  %t16 = call ptr @malloc(i64 24)
+  %t17 = inttoptr i64 1 to ptr
+  %t18 = getelementptr ptr, ptr %t16, i32 0
+  store ptr %t17, ptr %t18
+  %t19 = getelementptr ptr, ptr %t16, i32 1
+  store ptr %t6, ptr %t19
+  %t20 = getelementptr ptr, ptr %t16, i32 2
+  store ptr %t13, ptr %t20
+  store ptr %t15, ptr %t3
+  store ptr %t16, ptr %t4
+  br label %tco.loop.0
+tco.case.arm.1.21:
+  %t22 = call ptr @malloc(i64 8)
+  %t23 = inttoptr i64 1 to ptr
+  %t24 = getelementptr ptr, ptr %t22, i32 0
+  store ptr %t23, ptr %t24
+  %t25 = call ptr @v__apply__df_map_0(ptr %t6, ptr %t22)
+  store ptr %t25, ptr %t2
+  br label %tco.exit.1
+tco.case.default.10:
+  unreachable
+tco.exit.1:
+  %t26 = load ptr, ptr %t2
+  ret ptr %t26
+}
+
+define internal ptr @v__apply__df_map_0(ptr %v__k, ptr %v__x) {
+entry:
+  %t3 = alloca ptr
+  store ptr %v__k, ptr %t3
+  %t4 = alloca ptr
+  store ptr %v__x, ptr %t4
+  %t2 = alloca ptr
+  br label %tco.loop.0
+tco.loop.0:
+  %t5 = load ptr, ptr %t3
+  %t6 = load ptr, ptr %t4
+  %t7 = getelementptr ptr, ptr %t5, i32 0
+  %t8 = load ptr, ptr %t7
+  %t9 = ptrtoint ptr %t8 to i64
+  switch i64 %t9, label %tco.case.default.10 [ i64 0, label %tco.case.arm.0.11 i64 1, label %tco.case.arm.1.12 ]
+tco.case.arm.0.11:
+  store ptr %t6, ptr %t2
+  br label %tco.exit.1
+tco.case.arm.1.12:
+  %t13 = getelementptr ptr, ptr %t5, i32 1
+  %t14 = load ptr, ptr %t13
+  %t15 = getelementptr ptr, ptr %t5, i32 2
+  %t16 = load ptr, ptr %t15
+  %t17 = call ptr @malloc(i64 24)
+  %t18 = inttoptr i64 0 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = call ptr @v_shout(ptr %t16)
+  %t21 = getelementptr ptr, ptr %t17, i32 1
+  store ptr %t20, ptr %t21
+  %t22 = getelementptr ptr, ptr %t17, i32 2
+  store ptr %t6, ptr %t22
+  store ptr %t14, ptr %t3
+  store ptr %t17, ptr %t4
+  br label %tco.loop.0
+tco.case.default.10:
+  unreachable
+tco.exit.1:
+  %t23 = load ptr, ptr %t2
   ret ptr %t23
 }
 

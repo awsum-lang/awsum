@@ -44,6 +44,7 @@ src/Awsum/
 ├── Parser.hs         # Megaparsec parser
 ├── Typing.hs         # Type checker
 ├── ElaborateLower.hs # Surface → Core lowering (incl. unused-conWrapper tree-shake)
+├── Defunctionalize.hs# Eliminate first-class function values via per-call-site HOF specialisation
 ├── Core.hs           # Core IR
 ├── Prelude.hs        # Bundles stdlib/Prelude.aww (file-embed); withPrelude; warning filter
 ├── BuiltIn.hs        # Registered prelude built-ins: surface name → surface type (see docs/prelude.md)
@@ -92,7 +93,7 @@ docs/spec/grammar.ebnf          # Formal grammar
 ```
 Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLower → Core → Codegen → LLVM/JVM/CLR/WASM/JS
                                     ↑                ↑               ↓
-                         stdlib/Prelude.aww   Awsum.Program   tree-shake → saturate → Scc → Cps → Tco
+                         stdlib/Prelude.aww   Awsum.Program   tree-shake → defunctionalise → saturate → Scc → Cps → Tco
                          (embedded, implicit)   .platformTable        (see docs/recursion.md for the recursion passes)
                                                 (CLI/Browser/…)
 ```

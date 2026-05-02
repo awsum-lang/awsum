@@ -1,26 +1,31 @@
 -- Property: `addUInt8 a b == addUInt8 b a` whenever the sum stays in
--- 0..255. Input: "a:b" with a, b decimal UInt8 literals. The
--- Haskell-side generator picks no-overflow pairs constructively.
+-- range. Input format: "a:b". The Haskell-side generator picks pairs
+-- constructively from the no-overflow region, so OVERFLOW is never
+-- expected to fire on a well-formed input.
 import IO.Stdout
 
-parsePair : String -> Either ParseError (Tuple2 UInt8 UInt8)
-parsePair raw = case splitOnFirst ":" raw of
+parseInput : String -> Either ParseError (Tuple2 UInt8 UInt8)
+parseInput raw = case splitOnFirst ":" raw of
   Nothing -> Left ParseError
-  Just t -> case t of
-    Tuple2 aStr bStr -> case parseUInt8 aStr of
-      Left e -> Left e
-      Right a -> case parseUInt8 bStr of
-        Left e -> Left e
-        Right b -> Right (Tuple2 a b)
+  Just (Tuple2 aStr bStr) -> do
+    a <- parseUInt8 aStr
+    b <- parseUInt8 bStr
+    pureEither (Tuple2 a b)
+
+property : UInt8 -> UInt8 -> Either OverflowError Bool
+property a b = do
+  ab <- addUInt8 a b
+  ba <- addUInt8 b a
+  pureEither (eqUInt8 ab ba)
 
 main : String -> IO Unit
-main raw = case parsePair raw of
-  Left _ -> IO.Stdout.print "PARSE_ERROR"
-  Right t -> case t of
-    Tuple2 a b -> case addUInt8 a b of
-      Left _ -> IO.Stdout.print "OVERFLOW"
-      Right ab -> case addUInt8 b a of
-        Left _ -> IO.Stdout.print "OVERFLOW"
-        Right ba -> case eqUInt8 ab ba of
-          True -> IO.Stdout.print "OK"
-          False -> IO.Stdout.print ("FAIL: " ++ showUInt8 ab ++ " /= " ++ showUInt8 ba)
+main raw =
+  let res : Either (ParseError | OverflowError) Bool = do
+        Tuple2 a b <- parseInput raw
+        property a b
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

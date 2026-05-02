@@ -13,7 +13,7 @@
   (data (i32.const 70) "ErrB\00")
   (data (i32.const 75) "Ok \00")
   (table 9 funcref)
-  (elem (i32.const 0) $v_bindEither $v_opA $v_opB $v_liftA $v_liftB $v_opBLifted $v_run $v_describe $v_main)
+  (elem (i32.const 0) $v_opA $v_opB $v_liftA $v_liftB $v_opBLifted $v_run $v_describe $v_main $v__df_bindEither_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -127,13 +127,6 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_bindEither (param $v_x i32) (param $v_k i32) (result i32)
-    (local $__con_0 i32)
-    (local $v_a i32)
-    (local $v_e i32)
-    (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_e)) (local.get $__con_0))) (else (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (call_indirect (type $arity_1) (local.get $v_a) (local.get $v_k))))))
-
   (func $v_opA (param $v_n i32) (result i32)
     (local $__con_0 i32)
     (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_n)) (local.get $__con_0)))
@@ -163,18 +156,24 @@
     (call $v_liftB (call $v_opB (local.get $v_n))))
 
   (func $v_run (param $v_x i32) (result i32)
-    (call $v_bindEither (call $v_liftA (call $v_opA (local.get $v_x))) (i32.const 5)))
+    (call $v__df_bindEither_0 (call $v_liftA (call $v_opA (local.get $v_x)))))
 
   (func $v_describe (param $v_r i32) (result i32)
-    (local $v__a i32)
-    (local $v__b i32)
+    (local $v___rw i32)
     (local $v_e i32)
     (local $v_n i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_e)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2252990199)) (then (local.set $v__a (i32.load offset=4 (local.get $__scrut))) (i32.const 65)) (else (local.set $v__b (i32.load offset=4 (local.get $__scrut))) (i32.const 70))))) (else (local.set $v_n (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 75) (call $__show_i32 (local.get $v_n)))))))
+    (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_e)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2252990199)) (then (local.set $v___rw (i32.load offset=4 (local.get $__scrut))) (i32.const 65)) (else (local.set $v___rw (i32.load offset=4 (local.get $__scrut))) (i32.const 70))))) (else (local.set $v_n (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 75) (call $__show_i32 (local.get $v_n)))))))
 
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $v_describe (call $v_run (call $__box_i32 (i32.const 5))))))
+
+  (func $v__df_bindEither_0 (param $v_x i32) (result i32)
+    (local $__con_0 i32)
+    (local $v_a i32)
+    (local $v_e i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_e)) (local.get $__con_0))) (else (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (call $v_opBLifted (local.get $v_a))))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

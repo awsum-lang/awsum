@@ -60,16 +60,6 @@
   }
 
 
-  .method private hidebysig static object v_apply(object, object) cil managed
-  {
-    ldarg.0
-    castclass class [System.Runtime]System.Func`2<object, object>
-    ldarg.1
-    callvirt instance object class [System.Runtime]System.Func`2<object, object>::Invoke(object)
-    ret
-  }
-
-
   .method private hidebysig static object v_compose(object, object, object) cil managed
   {
     ldarg.0
@@ -85,21 +75,21 @@
 
   .method private hidebysig static object v_main(object) cil managed
   {
-    ldftn object AwsumMain::v__pap_0(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
     ldstr "chain"
-    call object AwsumMain::v_apply(object, object)
+    ldftn object AwsumMain::v_unwrap(object)
+    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
+    ldftn object AwsumMain::v_wrap(object)
+    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
+    call object AwsumMain::v__df_apply_0(object, object, object)
     call object AwsumMain::__print(object)
     ret
   }
 
 
-  .method private hidebysig static object v__pap_0(object) cil managed
+  .method private hidebysig static object v__df_apply_0(object, object, object) cil managed
   {
-    ldftn object AwsumMain::v_unwrap(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
-    ldftn object AwsumMain::v_wrap(object)
-    newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
+    ldarg.1
+    ldarg.2
     ldarg.0
     call object AwsumMain::v_compose(object, object, object)
     ret

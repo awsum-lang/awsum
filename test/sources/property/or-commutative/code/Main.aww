@@ -1,4 +1,8 @@
 -- Property: `or a b == or b a`. Same shape as `and-commutative`.
+-- The property emits `boolToStr (or a b) ++ boolToStr (or b a)`
+-- — both halves should match Haskell's independently computed
+-- `(a || b)`. Input format: "a:b" with a, b as "0" / "1" decimal
+-- strings.
 import IO.Stdout
 
 intToBool : UInt8 -> Bool
@@ -11,12 +15,25 @@ boolToStr b = case b of
   True -> "T"
   False -> "F"
 
+parseInput : String -> Either ParseError (Tuple2 UInt8 UInt8)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 sa sb) -> do
+    na <- parseUInt8 sa
+    nb <- parseUInt8 sb
+    pureEither (Tuple2 na nb)
+
+property : UInt8 -> UInt8 -> String
+property na nb =
+  let a = intToBool na
+      b = intToBool nb
+   in boolToStr (or a b) ++ boolToStr (or b a)
+
 main : String -> IO Unit
-main raw = case splitOnFirst ":" raw of
-  Nothing -> IO.Stdout.print "PARSE_ERROR"
-  Just t -> case t of
-    Tuple2 sa sb -> case parseUInt8 sa of
-      Left _ -> IO.Stdout.print "PARSE_ERROR"
-      Right na -> case parseUInt8 sb of
+main raw =
+  let res : Either ParseError String = do
+        Tuple2 na nb <- parseInput raw
+        pureEither (property na nb)
+   in case res of
         Left _ -> IO.Stdout.print "PARSE_ERROR"
-        Right nb -> IO.Stdout.print (boolToStr (or (intToBool na) (intToBool nb)) ++ boolToStr (or (intToBool nb) (intToBool na)))
+        Right s -> IO.Stdout.print s

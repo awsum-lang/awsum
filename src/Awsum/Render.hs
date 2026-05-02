@@ -63,11 +63,20 @@ renderDecl = \case
   Sig _sp name ty mc ->
     renderDeclName name <> " : " <> renderType ty <> renderTrailingComment mc
   FunDef _sp name args e mc ->
-    ( case args of
-        [] -> renderDeclName name <> " = " <> renderExpr e
-        _ -> renderDeclName name <> " " <> T.intercalate " " (map paramName args) <> " = " <> renderExpr e
-    )
-      <> renderTrailingComment mc
+    let header = case args of
+          [] -> renderDeclName name
+          _ -> renderDeclName name <> " " <> T.intercalate " " (map renderParam args)
+        body = case e of
+          -- 'let' bodies are always multi-line: break the '=' to a
+          -- new line and render the let block at indent 2 so the
+          -- bindings, the dedented 'in', and the body-after-'in'
+          -- all align with predictable columns. Same shape Haskell
+          -- uses for top-of-function 'let'.
+          ELet {} ->
+            let (binds, finalBody) = collectLetChain e
+             in " =\n  " <> renderLetBlock 2 binds finalBody
+          _ -> " = " <> renderExpr e
+     in header <> body <> renderTrailingComment mc
   TypeDecl _sp name tvars cons mc ->
     "type "
       <> name
@@ -157,13 +166,25 @@ renderExprPrec ctx indent e =
     ELam _sp params body ->
       -- Lambda body extends as far right as possible — same precedence
       -- as 'case', so nested usage adds parens.
-      let paramsText = T.intercalate " " (map paramName params)
+      let paramsText = T.intercalate " " (map renderParam params)
           s = "\\" <> paramsText <> " -> " <> renderExprPrec 0 indent body
        in if 0 < ctx then parens s else s
     EDo _sp stmts ->
       let stmtLines = map (renderDoStmt (indent + 2)) stmts
           inner = T.intercalate ("\n" <> T.replicate (indent + 2) " ") stmtLines
           s = "do\n" <> T.replicate (indent + 2) " " <> inner
+       in if 0 < ctx then parens s else s
+    ELet {} ->
+      -- Nested 'let' (i.e., not the function-body position handled
+      -- in 'renderDecl FunDef'). Single-binding renders as a 2-line
+      -- block; a chain of nested 'ELet's collapses to an inline
+      -- chain so it stays compact when embedded inside arguments
+      -- or other expressions ('print (let a = e1 in let b = e2 in
+      -- body)' stays on one line modulo the body itself).
+      let (binds, finalBody) = collectLetChain e
+          s = case binds of
+            [single] -> renderLetBlock indent [single] finalBody
+            _ -> renderLetInlineChain indent binds finalBody
        in if 0 < ctx then parens s else s
     _ ->
       let (prec, s) = case e of
@@ -216,8 +237,76 @@ renderCaseAlts indent alts trailingComments =
 renderDoStmt :: Int -> DoStmt -> Text
 renderDoStmt indent = \case
   DoBind _ pat e -> renderPattern pat <> " <- " <> renderExprPrec 0 indent e
-  DoLet _ n e -> "let " <> n <> " = " <> renderExprPrec 0 indent e
+  DoLet _ pat mAnnot e ->
+    let annot = maybe "" (\t -> " : " <> renderType t) mAnnot
+     in "let " <> renderPatternAtom pat <> annot <> " = " <> renderExprPrec 0 indent e
   DoExpr _ e -> renderExprPrec 0 indent e
+
+-- ── Let-block helpers ───────────────────────────────────────────────────────
+
+-- | Walk a chain of nested 'ELet's and return the bindings in source
+--   order plus the eventual non-'ELet' body. Each binding carries
+--   its optional type ascription. A single 'ELet a Nothing e body'
+--   where @body@ is not itself an 'ELet' returns
+--   @([(_, a, Nothing, e)], body)@.
+collectLetChain :: Expr -> ([(SrcSpan, Pattern, Maybe Type', Expr)], Expr)
+collectLetChain = \case
+  ELet sp pat mAnnot rhs body ->
+    let (rest, finalBody) = collectLetChain body
+     in ((sp, pat, mAnnot, rhs) : rest, finalBody)
+  other -> ([], other)
+
+-- | Render a let-block in Haskell-style layout. The @indent@
+--   parameter is the column at which the @let@ keyword itself
+--   begins (so caller is responsible for placing whatever comes
+--   before @let@ on the current line).
+--
+--   Layout (indices in 0-based offsets):
+--
+-- @
+--     <indent>    let n1 = e1
+--     <indent+4>      n2 = e2
+--     <indent+1>   in body
+-- @
+--
+--   Single-binding still gets the 2-line shape — the user opted in
+--   to "split into 2 lines" for every let, not just multi-binding
+--   ones — so a one-binding let is rendered as:
+--
+-- @
+--     <indent>    let n = e
+--     <indent+1>   in body
+-- @
+renderLetBlock :: Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Text
+renderLetBlock indent binds finalBody =
+  let bindCol = indent + 4 -- column of the binding name (after "let ")
+      inCol = indent + 1 -- column of "in" — one space indented past "let"
+      bodyCol = inCol + 3 -- column of the body that follows "in "
+      pad k = T.replicate k " "
+      annotText = maybe "" (\t -> " : " <> renderType t)
+      bindText (_, pat, mAnnot, rhs) = renderPatternAtom pat <> annotText mAnnot <> " = " <> renderExprPrec 0 bindCol rhs
+      firstBind = case binds of
+        (b : _) -> b
+        [] -> error "renderLetBlock called with no bindings"
+      restBinds = drop 1 binds
+      firstLine = "let " <> bindText firstBind
+      restLines = map (\b -> pad bindCol <> bindText b) restBinds
+      inLine = pad inCol <> "in " <> renderExprPrec 0 bodyCol finalBody
+   in T.intercalate "\n" (firstLine : restLines ++ [inLine])
+
+-- | Render a chain of 'ELet's as a single inline string @let n1 = e1
+--   in let n2 = e2 in body@. Used when the chain appears in a nested
+--   position (function argument, infix operand, etc.) where the
+--   layout form would be hard to align without column tracking.
+renderLetInlineChain :: Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Text
+renderLetInlineChain indent binds finalBody =
+  T.concat
+    [ "let " <> renderPatternAtom pat <> annotText mAnnot <> " = " <> renderExprPrec 0 indent rhs <> " in "
+    | (_, pat, mAnnot, rhs) <- binds
+    ]
+    <> renderExprPrec 0 indent finalBody
+  where
+    annotText = maybe "" (\t -> " : " <> renderType t)
 
 renderPattern :: Pattern -> Text
 renderPattern = \case
@@ -233,6 +322,17 @@ renderPattern = \case
 renderPatternAtom :: Pattern -> Text
 renderPatternAtom p@(PCon _ _ (_ : _)) = "(" <> renderPattern p <> ")"
 renderPatternAtom p = renderPattern p
+
+-- | Render a function parameter. 'Param' (the common
+--   simple-name case) prints as the bare identifier. 'ParamPat'
+--   (destructuring patterns introduced via 'paramBinder')
+--   always rounds-trips inside parentheses — the parens are
+--   syntactically required at the param-binder level so the
+--   pattern can be distinguished from a sequence of bare-name
+--   parameters.
+renderParam :: Param -> Text
+renderParam (Param _ n) = n
+renderParam (ParamPat _ pat) = "(" <> renderPattern pat <> ")"
 
 -- | Utility: surround text with parentheses.
 parens :: Text -> Text

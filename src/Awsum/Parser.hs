@@ -106,7 +106,7 @@ isBinderStart c = Char.isLower c || c == '_'
 
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
-reserved = ["import", "type", "case", "of", "do", "let"]
+reserved = ["import", "type", "case", "of", "do", "let", "in"]
 
 -- | Recognize a reserved word /without/ swallowing identifier tails.
 --   e.g. parsing \"import\" will fail on \"importX\".
@@ -208,15 +208,11 @@ binderName = try $ do
 --   only the identifier itself, not trailing whitespace), so quick-fixes
 --   that target a single parameter have the right edit range.
 paramBinder :: Parser Param
-paramBinder = do
-  start <- P.getSourcePos
-  name <- binderName
-  end <- P.getSourcePos
-  sc
-  pure (Param (toSrcSpan start end) name)
+paramBinder = paramBinderG sc
 
--- | Variant of 'paramBinder' for contexts (type declarations) that must
---   not swallow trailing @--@ line comments.
+-- | Variant of 'paramBinder' for contexts (type declarations) that
+--   must not swallow trailing @--@ line comments. Always a simple
+--   name — type parameters can't be destructuring patterns.
 paramBinderNoLine :: Parser Param
 paramBinderNoLine = do
   start <- P.getSourcePos
@@ -224,6 +220,34 @@ paramBinderNoLine = do
   end <- P.getSourcePos
   scNoLineComments
   pure (Param (toSrcSpan start end) name)
+
+-- | Generic parameter parser. A function parameter is either a
+--   simple binder name (the common case: @f x y = …@) or a
+--   parens-wrapped destructuring pattern (@f (Tuple3 a b c) = …@).
+--   The parens are mandatory for destructuring — without them,
+--   @f Tuple3 a b c = …@ would be ambiguous between «one
+--   pattern with three fields» and «four bare-name parameters».
+--
+--   When the parens-wrapped pattern collapses to a 'PVar' (i.e.
+--   the user wrote @(x)@ instead of @x@), we still produce a
+--   'Param' rather than 'ParamPat': the round-trip will lose
+--   the redundant parens, which the formatter's overall stance
+--   («canonical layout, no decorative parens») already does
+--   for 'EParens' elsewhere.
+paramBinderG :: Parser () -> Parser Param
+paramBinderG spaceConsumer = do
+  start <- P.getSourcePos
+  pat <- patternBinder <|> nameBinder
+  end <- P.getSourcePos
+  spaceConsumer
+  let sp = toSrcSpan start end
+  pure $ case pat of
+    Left n -> Param sp n
+    Right (PVar _ n) -> Param sp n
+    Right p -> ParamPat sp p
+  where
+    nameBinder = Left <$> binderName
+    patternBinder = Right <$> P.try pParenOrAscribePattern
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- Entry point
@@ -395,12 +419,28 @@ pFunDefWithEnd = do
   name <- declName
   args <- P.many paramBinder
   _ <- sym "="
+  -- Allow the body to start on the following indented line — the
+  -- formatter emits this shape for any 'let' body so the
+  -- 'let'/'in' columns line up predictably; a '_' optional newline
+  -- here keeps the rule permissive enough that hand-written
+  -- 'name args =\n  body' parses too. The expression parser
+  -- handles its own further layout from there.
+  _ <- P.optional $ try $ do
+    void C.eol
+    skipBlankLinesNoComments
+    hspaceNoComments
   e <- pExprNoLineComments
   case e of
     ECase {} -> do
       end <- P.getSourcePos
       -- Multi-line case expression already consumed trailing newlines.
       -- We may be at the start of the next content line or EOF.
+      pure (FunDef (toSrcSpan start end) name args e Nothing)
+    ELet {} -> do
+      -- Same as 'ECase': a 'let' block may span multiple lines, so
+      -- 'endLineOrEOF' below would mis-fire. The let parser has
+      -- already consumed through the trailing body expression.
+      end <- P.getSourcePos
       pure (FunDef (toSrcSpan start end) name args e Nothing)
     _ -> do
       tcom <- pTrailingLineCommentMaybe
@@ -512,9 +552,73 @@ pTypeAtomNoLineComments =
 pExprNoLineComments :: Parser Expr
 pExprNoLineComments =
   pLambdaNoLineComments
+    <|> pLetNoLineComments
     <|> pDoNoLineComments
     <|> pCaseNoLineComments
     <|> pConcatNoLineComments
+
+-- | Let-binding. Two surface shapes are accepted, both producing a
+--   chain of nested 'ELet's:
+--
+--     * Inline single binding:  @let n = e in body@
+--     * Layout multi-binding:   @let n1 = e1@ on the first line,
+--       additional @ni = ei@ aligned on subsequent lines at the
+--       same column as @n1@, and @in body@ on a line whose
+--       indentation is /strictly less/ than the bindings column
+--       (Haskell convention: @in@ is dedented relative to the
+--       bindings).
+--
+--   The body extends as far right as possible (same precedence as
+--   'case' / lambda). The bound name is a regular lower-case
+--   identifier; pattern bindings on the LHS of @=@ are not
+--   supported yet.
+pLetNoLineComments :: Parser Expr
+pLetNoLineComments = do
+  rwordNoLine "let"
+  -- The column where the first binding's name starts is the
+  -- reference for any continuation bindings.
+  refCol <- L.indentLevel
+  firstBind <- pLetBinding
+  restBinds <- P.many $ try $ do
+    void C.eol
+    hspaceNoComments
+    lvl <- L.indentLevel
+    guard (lvl == refCol)
+    pLetBinding
+  -- 'in' is either inline after the last binding's RHS, or on a
+  -- new line at any column strictly less than the bindings column.
+  let pInDedented = try $ do
+        void C.eol
+        hspaceNoComments
+        lvl <- L.indentLevel
+        guard (lvl < refCol)
+        rwordNoLine "in"
+  pInDedented <|> rwordNoLine "in"
+  body <- pExprNoLineComments
+  let buildChain = foldr (\(bsp, n, mAnnot, e) acc -> ELet bsp n mAnnot e acc) body
+  pure (buildChain (firstBind : restBinds))
+  where
+    -- A let-binding's LHS is a pattern, so destructuring forms
+    -- like @let (Tuple3 a b c) = e@ work alongside the simple
+    -- @let n = e@ shape. The ascription path is the same:
+    -- @let pat : T = e@ — but the typechecker rejects an
+    -- ascription on a non-'PVar' pattern (the ascription
+    -- belongs on the right-hand side, not the destructured
+    -- binder). Without an ascription, 'PVar'-let synthesises
+    -- the RHS as before; non-'PVar'-let desugars to a
+    -- single-arm 'ECase' which the standard exhaustiveness
+    -- check then validates.
+    pLetBinding :: Parser (SrcSpan, Pattern, Maybe Type', Expr)
+    pLetBinding = do
+      bspS <- P.getSourcePos
+      pat <- pPatternNoLineComments
+      mAnnot <- P.optional $ try $ do
+        _ <- symNoLine ":"
+        pTypeNoLineComments
+      _ <- symNoLine "="
+      e <- pExprNoLineComments
+      bspE <- P.getSourcePos
+      pure (toSrcSpan bspS bspE, pat, mAnnot, e)
 
 -- | Lambda abstraction: @\\x y -> body@. At least one parameter; the
 --   body extends as far right as possible (same precedence as 'case').
@@ -523,11 +627,7 @@ pLambdaNoLineComments = do
   start <- P.getSourcePos
   _ <- symNoLine "\\"
   params <-
-    P.some
-      ( do
-          (sp, n) <- withSpan lidentNoLine
-          pure (Param sp n)
-      )
+    P.some (paramBinderG scNoLineComments)
   _ <- symNoLine "->"
   body <- pExprNoLineComments
   end <- P.getSourcePos
@@ -673,11 +773,14 @@ pDoStmtNoLineComments =
     pDoLet = do
       start <- P.getSourcePos
       rwordNoLine "let"
-      n <- lidentNoLine
+      pat <- pPatternNoLineComments
+      mAnnot <- P.optional $ try $ do
+        _ <- symNoLine ":"
+        pTypeNoLineComments
       _ <- symNoLine "="
       e <- pExprNoLineComments
       end <- P.getSourcePos
-      pure (DoLet (toSrcSpan start end) n e)
+      pure (DoLet (toSrcSpan start end) pat mAnnot e)
     pDoExpr = do
       start <- P.getSourcePos
       e <- pExprNoLineComments

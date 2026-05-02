@@ -50,7 +50,7 @@ preludeProgram = case parseProgram preludeSource of
 --   check result is independent of the program type — we still take
 --   one for uniform plumbing with 'typecheckProgram'.
 verifyPrelude :: ProgramType -> Either TypeError [Warning]
-verifyPrelude progType = typecheckProgram progType preludeProgram
+verifyPrelude progType = typecheckProgram progType S.empty preludeProgram
 
 -- | Prepend the bundled prelude's imports and declarations to a user
 --   program. This is how the \"implicit @import Prelude@\" is realised:

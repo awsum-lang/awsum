@@ -9,6 +9,8 @@
 module Awsum.Codegen.JVM.Assemble (assembleJVM) where
 
 import Awsum.Core
+import Awsum.HM (rowTag)
+import Awsum.Syntax (Type' (..), noSpan)
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
 import Data.Char qualified as Char
@@ -209,6 +211,18 @@ bcGoto :: Int -> [Word8]
 bcGoto delta =
   let w = fromIntegral delta :: Word16
    in [0xA7, hi8 w, lo8 w]
+
+-- | FNV-1a 32-bit row tags for the prelude's nominal labels used by
+--   the Int32 arithmetic builtins. Computed via 'rowTag' so the
+--   runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'.
+--   Cast to 'Int32' so 'bcLoadInt32' / 'addInt' accept them — the bit
+--   pattern survives the cast and matches what the user-side
+--   'CRowCase' compares against.
+underflowRowTag :: Int32
+underflowRowTag = fromIntegral (rowTag (TyCon noSpan "UnderflowError"))
+
+overflowRowTag :: Int32
+overflowRowTag = fromIntegral (rowTag (TyCon noSpan "OverflowError"))
 
 -- | Push an arbitrary signed 32-bit integer on the stack.
 --   Uses iconst/bipush/sipush for values that fit in a short, otherwise
@@ -804,15 +818,15 @@ mkEq methodName = do
         mMaxLocals = 256
       }
 
--- | addInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   The signed-overflow check is done with the classical XOR trick — sum
 --   wraps modulo 2^32, then `((a ^ sum) & (b ^ sum)) < 0` is true iff
 --   the carry into the sign bit differs from the carry out, which is
 --   exactly when signed overflow happens. Direction (over vs under) is
---   read off `a >= 0`: same-sign overflow is positive when `a >= 0`,
---   negative otherwise. Containers are 'Object[]' with boxed Integer
---   tags as everywhere else; ArithError tags follow declaration order
---   in `Prelude.aww`: Underflow=0, Overflow=1.
+--   read off `a >= 0`: same-sign overflow is positive when `a >= 0`
+--   (→ OverflowError), negative otherwise (→ UnderflowError). Error-
+--   side encoding is three nested Object[]s: inner @CCon@ (single-ctor
+--   tag 0), row wrap (FNV-1a tag of label name), outer @Left@.
 mkAddInt32 :: AsmM MInfo
 mkAddInt32 = do
   ni <- addUtf8 "__addInt32"
@@ -822,6 +836,8 @@ mkAddInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ldcOver <- bcLoadInt32 overflowRowTag
+  ldcUnder <- bcLoadInt32 underflowRowTag
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
           <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
@@ -872,16 +888,31 @@ mkAddInt32 = do
         [0x1C] -- iload_2 (a)
         -- iflt L_under (placeholder, patched below)
       iflt2At = overAt + length overSplit
-      arithBox tag =
-        -- Object[1] = [Integer(tag)]
+      -- Inner CCon: Object[1] = [Integer(0)]. The single-ctor tag is
+      -- always 0; the choice of label is encoded in the row wrap.
+      innerBox =
         [0x04] -- iconst_1 (length)
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [tag] -- iconst_<tag>
+          <> [0x03] -- iconst_0 (CCon tag = 0)
           <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
           <> [0x53] -- aastore
-          <> [0x3A, 0x05] -- astore 5
+          <> [0x3A, 0x05] -- astore 5  (slot 5 = inner)
+          -- Row wrap: Object[2] = [Integer(rowTag), inner].
+      rowBox ldcRowTag =
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> ldcRowTag
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1
+          <> [0x19, 0x05] -- aload 5 (inner)
+          <> [0x53] -- aastore
+          <> [0x3A, 0x05] -- astore 5  (slot 5 = row)
       leftWrap =
         -- Left: Object[2] = [Integer(0), Object @ slot 5]
         [0x05]
@@ -893,14 +924,14 @@ mkAddInt32 = do
           <> [0x53]
           <> [0x59]
           <> [0x04]
-          <> [0x19, 0x05] -- aload 5
+          <> [0x19, 0x05] -- aload 5 (row)
           <> [0x53]
           <> [0xB0]
-      overBlock = arithBox 0x04 <> leftWrap -- AE tag 1 = Overflow
+      overBlock = innerBox <> rowBox ldcOver <> leftWrap
       underAt = iflt2At + 3 + length overBlock
       iflt2Rel = underAt - iflt2At
       iflt2Bytes = [0x9B, hi8 (fromIntegral iflt2Rel), lo8 (fromIntegral iflt2Rel)]
-      underBlock = arithBox 0x03 <> leftWrap -- AE tag 0 = Underflow
+      underBlock = innerBox <> rowBox ldcUnder <> leftWrap
       code =
         preamble
           <> iflt1Bytes
@@ -1040,14 +1071,13 @@ mkAddUInt8 = do
         mMaxLocals = 256
       }
 
--- | subInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Detects signed-subtraction overflow with the XOR trick:
 --   '((a ^ b) & (a ^ diff)) < 0' is true iff signed overflow occurred.
 --   Direction is read off 'a >= 0' (when subtraction overflows the signs
 --   of @a@ and @b@ must differ, so @a >= 0@ implies @b < 0@ which implies
---   positive overflow). ArithError tags follow declaration order:
---   Underflow=0, Overflow=1. Same single-block, no try/catch shape as
---   'mkAddInt32' — keeping the methods structurally parallel.
+--   positive overflow → OverflowError). Same row-tagged error encoding
+--   as 'mkAddInt32'.
 mkSubInt32 :: AsmM MInfo
 mkSubInt32 = do
   ni <- addUtf8 "__subInt32"
@@ -1057,6 +1087,8 @@ mkSubInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ldcOver <- bcLoadInt32 overflowRowTag
+  ldcUnder <- bcLoadInt32 underflowRowTag
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1103,15 +1135,28 @@ mkSubInt32 = do
         [0x1C] -- iload_2 (a)
         -- iflt L_under (placeholder, patched below)
       iflt2At = overAt + length overSplit
-      arithBox tag =
+      innerBox =
         [0x04]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [tag]
+          <> [0x03] -- iconst_0 (CCon tag = 0)
           <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
           <> [0x53]
-          <> [0x3A, 0x05] -- astore 5
+          <> [0x3A, 0x05] -- astore 5  (slot 5 = inner)
+      rowBox ldcRowTag =
+        [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> ldcRowTag
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x19, 0x05] -- aload 5 (inner)
+          <> [0x53]
+          <> [0x3A, 0x05] -- astore 5  (slot 5 = row)
       leftWrap =
         [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
@@ -1122,14 +1167,14 @@ mkSubInt32 = do
           <> [0x53]
           <> [0x59]
           <> [0x04]
-          <> [0x19, 0x05] -- aload 5
+          <> [0x19, 0x05] -- aload 5 (row)
           <> [0x53]
           <> [0xB0]
-      overBlock = arithBox 0x04 <> leftWrap -- AE tag 1 = Overflow
+      overBlock = innerBox <> rowBox ldcOver <> leftWrap
       underAt = iflt2At + 3 + length overBlock
       iflt2Rel = underAt - iflt2At
       iflt2Bytes = [0x9B, hi8 (fromIntegral iflt2Rel), lo8 (fromIntegral iflt2Rel)]
-      underBlock = arithBox 0x03 <> leftWrap -- AE tag 0 = Underflow
+      underBlock = innerBox <> rowBox ldcUnder <> leftWrap
       code =
         preamble
           <> iflt1Bytes
@@ -1168,18 +1213,15 @@ mkSubInt32 = do
         mMaxLocals = 256
       }
 
--- | mulInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- | mulInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Promote both operands to long, multiply at long width, range-check
 --   the result against [INT32_MIN, INT32_MAX]. The binary assembler has
 --   no CPLong slot (the constant pool only holds CPInteger), so the
 --   long bounds are materialised via @ldc N; i2l@ rather than @ldc2_w@.
 --   Direction is read off lcmp's result: ifgt → positive overflow
---   (Overflow tag = 1), iflt → negative overflow (Underflow tag = 0).
---   Two stack-map frames at the over / under labels; both points have
---   the long-product still live on the operand stack (consumed by the
---   leading @pop2@), and locals unchanged from entry — encoded as
---   @same_locals_1_stack_item_frame@ (or its extended form) carrying
---   one ITEM_Long on the stack.
+--   (OverflowError), iflt → negative overflow (UnderflowError). Same
+--   row-tagged error encoding as 'mkAddInt32': inner @CCon@ (tag 0),
+--   row wrap (FNV-1a tag of label name), outer @Left@.
 mkMulInt32 :: AsmM MInfo
 mkMulInt32 = do
   ni <- addUtf8 "__mulInt32"
@@ -1191,6 +1233,8 @@ mkMulInt32 = do
   smtNameIdx <- addUtf8 "StackMapTable"
   ldcMax <- bcLoadInt32 2147483647
   ldcMin <- bcLoadInt32 (-2147483648)
+  ldcOver <- bcLoadInt32 overflowRowTag
+  ldcUnder <- bcLoadInt32 underflowRowTag
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1231,16 +1275,34 @@ mkMulInt32 = do
           <> [0x53] -- aastore
           <> [0xB0] -- areturn
       overAt = ifltAt + 3 + length ok
-      arithLeft tag =
+      -- Build Left (CRow rowTag (CCon 0 [])): inner Object[1] = [Integer(0)],
+      -- row Object[2] = [Integer(rowTag), inner], left Object[2] = [Integer(0), row].
+      -- @astore_2@ is reused across stages: first holds inner, then row.
+      leftRow ldcRowTag =
         [0x58] -- pop2 (drop the dup'd long product)
+        -- inner = Object[1] = [Integer(0)]
           <> [0x04] -- iconst_1
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [tag]
+          <> [0x03] -- iconst_0 (CCon tag = 0)
           <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
           <> [0x53] -- aastore
-          <> [0x4D] -- astore_2
+          <> [0x4D] -- astore_2 (slot 2 = inner)
+          -- row = Object[2] = [Integer(rowTag), inner]
+          <> [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> ldcRowTag
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1
+          <> [0x2C] -- aload_2 (inner)
+          <> [0x53] -- aastore
+          <> [0x4D] -- astore_2 (slot 2 = row)
+          -- left = Object[2] = [Integer(0), row]
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
@@ -1250,12 +1312,12 @@ mkMulInt32 = do
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
-          <> [0x2C] -- aload_2
+          <> [0x2C] -- aload_2 (row)
           <> [0x53] -- aastore
           <> [0xB0]
-      overBlock = arithLeft 0x04 -- AE Overflow = 1
+      overBlock = leftRow ldcOver
       underAt = overAt + length overBlock
-      underBlock = arithLeft 0x03 -- AE Underflow = 0
+      underBlock = leftRow ldcUnder
       ifgtRel = overAt - ifgtAt
       ifltRel = underAt - ifltAt
       ifgtBytes = [0x9D, fromIntegral (ifgtRel `div` 256), fromIntegral (ifgtRel `mod` 256)]
@@ -2513,11 +2575,16 @@ emitExpr ctx = \case
     let nSlots = 1 + length fields
     intRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
     objCls <- addClass "java/lang/Object"
+    -- Constructor tags are small ints (positional within the type), but
+    -- 'CRow' lowers to a 'CCon' whose tag is the FNV-1a row hash —
+    -- a 32-bit value that overflows 'bcIconst's sipush fallback. Use
+    -- 'bcLoadInt32' so the full bit pattern survives.
+    tagPush <- bcLoadInt32 (fromIntegral tag)
     let allocCode = bcIconst nSlots <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray
         storeTag =
           [0x59] -- dup
             <> bcIconst 0
-            <> bcIconst tag
+            <> tagPush
             <> bcInvokeStatic intRef
             <> [0x53] -- aastore
     fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
@@ -2543,6 +2610,13 @@ emitExpr ctx = \case
         tagSlot = arrSlot + 1
         bindSlotStart = tagSlot + 1
         loadArr = bcAload arrSlot
+    -- Pre-compute the per-arm tag-push sequences. 'bcIconst' truncates
+    -- to a signed 16-bit immediate (sipush) and silently corrupts row
+    -- tags whose canonical-label hashes exceed @|2^15|@; 'bcLoadInt32'
+    -- escalates to a 'CPInteger' / @ldc@ when needed, so a tag like
+    -- @rowTag (TyCon "UnderflowError")@ = 3768445577 reaches the
+    -- compare with the same bit pattern the runtime helpers store.
+    tagPushes <- forM sorted $ \(t, _, _) -> bcLoadInt32 (fromIntegral t)
     -- Emit arm bodies with bound variables
     let maxBindingsCount = foldl' max 0 [length vars | (_, vars, _) <- sorted]
     armMetasWithLocals <- forM sorted $ \(_, vars, body) -> do
@@ -2592,7 +2666,6 @@ emitExpr ctx = \case
     let armMetasWithBindLen = map fst armMetasWithLocals
         armMetas = map fst armMetasWithBindLen
         bindLens = map snd armMetasWithBindLen
-        tags = [t | (t, _, _) <- sorted]
         loadTag = bcIload tagSlot
         extractAndStore =
           bcCheckCast arrCls
@@ -2605,16 +2678,20 @@ emitExpr ctx = \case
             <> bcIstore tagSlot
         preambleLen = length scrutMeta.cwCode + length extractAndStore
 
-        -- Build chain and collect branch targets
-        buildChainWithTargets :: Int -> [(Int, CodeWithMeta, Int)] -> ([Word8], [BranchTarget])
+        -- Build chain and collect branch targets. Each entry of the
+        -- input carries the pre-computed tag-push bytecode alongside
+        -- the arm body and bind length, so the size of the push is
+        -- accurate for offsets even when 'bcLoadInt32' picks @ldc@
+        -- (5 bytes via @ldc_w@) over a short @bipush@.
+        buildChainWithTargets :: Int -> [([Word8], CodeWithMeta, Int)] -> ([Word8], [BranchTarget])
         buildChainWithTargets _ [] = ([0x01], [])
         buildChainWithTargets offset [(_, armMeta, bindLen)] =
           -- Single arm: adjust nested targets to account for offset + bindCode
           let adjustedTargets = map (\bt -> bt {btOffset = bt.btOffset + offset + bindLen}) armMeta.cwBranchTargets
            in (armMeta.cwCode, adjustedTargets)
-        buildChainWithTargets offset ((tag', armMeta, bindLen) : rest) =
+        buildChainWithTargets offset ((tagPush, armMeta, bindLen) : rest) =
           let loadLen = length loadTag
-              iconLen = length (bcIconst tag')
+              iconLen = length tagPush
               bodyLen = length armMeta.cwCode
               gotoLen :: Int
               gotoLen = 3
@@ -2624,7 +2701,7 @@ emitExpr ctx = \case
               (restCode, restTargets) = buildChainWithTargets nextBranchOffset rest
               restLen = length restCode
               gotoOffset = restLen + gotoLen
-              cmpCode = loadTag <> bcIconst tag' <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
+              cmpCode = loadTag <> tagPush <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
               gotoCode = [0xA7, fromIntegral (gotoOffset `div` 256), fromIntegral (gotoOffset `mod` 256)]
               myTarget = BranchTarget nextBranchOffset bindSlotStart arrSlot tagSlot False -- if_icmpne target
               -- Adjust nested branch target offsets: body starts after cmpCode + bindCode
@@ -2633,7 +2710,7 @@ emitExpr ctx = \case
               combinedTargets = myTarget : adjustedArmTargets ++ restTargets
            in (cmpCode <> armMeta.cwCode <> gotoCode <> restCode, combinedTargets)
 
-        (chainCode, branchTargets) = buildChainWithTargets preambleLen (zip3 tags armMetas bindLens)
+        (chainCode, branchTargets) = buildChainWithTargets preambleLen (zip3 tagPushes armMetas bindLens)
         -- Add join point for multi-arm cases (where goto jumps)
         -- For nested cases this is needed; for top-level it points past the end but won't be used
         hasMultipleArms = length sorted > 1
@@ -2873,7 +2950,10 @@ emitTailBin ctx0 params = goTop ctx0
             bodyMeta <- goTop ctx' bodyStart armBody
             pure (prefix <> bodyMeta.cwCode, bodyMeta.cwBranchTargets, bodyMeta.cwIntSlots)
           goArms armOffset ((tag, vars, armBody) : rest) = do
-            let cmpPrefixBytes = loadTag <> bcIconst tag
+            -- Use 'bcLoadInt32' so row tags > 2^15 (FNV-1a hashes from
+            -- 'rowTag') survive without sipush truncation.
+            tagPush <- bcLoadInt32 (fromIntegral tag)
+            let cmpPrefixBytes = loadTag <> tagPush
                 cmpPrefixLen = length cmpPrefixBytes
                 icmpneLen :: Int
                 icmpneLen = 3
@@ -3021,24 +3101,21 @@ caseSMT _ctx targets intSlots
         buildLocalsTypes :: [(Int, Int)] -> BranchTarget -> [Word8]
         buildLocalsTypes allArrTagPairs bt =
           let n = bt.btLocals
-           in if n <= 1
-                then concat (replicate n [0x07, hi8 objClsIdx, lo8 objClsIdx])
-                else
-                  -- Build types for each slot, checking all arr/tag pairs
-                  let slotTypes = [slotType i | i <- [0 .. n - 1]]
-                      slotType i
-                        | i == 0 = [0x07, hi8 objClsIdx, lo8 objClsIdx] -- param
-                        | any (\(arr, _) -> arr == i) allArrTagPairs = [0x07, hi8 arrClsIdx, lo8 arrClsIdx] -- array
-                        | any (\(_, tag) -> tag == i) allArrTagPairs = [0x01] -- int tag
-                        -- 'intSlotSet' captures tagSlots from cases that
-                        -- never produced a 'BranchTarget' (single-arm
-                        -- cases). Without this, the verifier sees @int@
-                        -- in such slots along paths through the inner
-                        -- arm body but the SMT here would say @Object@,
-                        -- which is unmergeable with @int@.
-                        | i `Set.member` intSlotSet = [0x01]
-                        | otherwise = [0x07, hi8 objClsIdx, lo8 objClsIdx] -- binding
-                   in concat slotTypes
+              -- Resolve each slot's verifier type. Order of checks
+              -- matters: arr/tag/intSlot are determined by the case
+              -- shape and override any positional default. The
+              -- positional default is /Object/ (used for params and
+              -- ordinary pattern bindings). For 'CValDef' the
+              -- scrutinee array can land on slot 0 — same lookup
+              -- still picks @Object[]@ because @arr == 0@ matches
+              -- the @allArrTagPairs@ entry.
+              slotType i
+                | any (\(arr, _) -> arr == i) allArrTagPairs =
+                    [0x07, hi8 arrClsIdx, lo8 arrClsIdx]
+                | any (\(_, tag) -> tag == i) allArrTagPairs = [0x01]
+                | i `Set.member` intSlotSet = [0x01]
+                | otherwise = [0x07, hi8 objClsIdx, lo8 objClsIdx]
+           in concat [slotType i | i <- [0 .. n - 1]]
 
         encodeDelta :: Int -> [Word8]
         encodeDelta d = [fromIntegral (d `div` 256), fromIntegral (d `mod` 256)]

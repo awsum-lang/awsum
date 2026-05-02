@@ -42,37 +42,6 @@ define internal ptr @__showInt32(ptr %p) {
 }
 
 
-define internal ptr @v_bindEither(ptr %v_x, ptr %v_k) {
-  %t0 = getelementptr ptr, ptr %v_x, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.13 ]
-case.arm.0.5:
-  %t7 = getelementptr ptr, ptr %v_x, i32 1
-  %t8 = load ptr, ptr %t7
-  %t9 = call ptr @malloc(i64 16)
-  %t10 = inttoptr i64 0 to ptr
-  %t11 = getelementptr ptr, ptr %t9, i32 0
-  store ptr %t10, ptr %t11
-  %t12 = getelementptr ptr, ptr %t9, i32 1
-  store ptr %t8, ptr %t12
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.13:
-  %t15 = getelementptr ptr, ptr %v_x, i32 1
-  %t16 = load ptr, ptr %t15
-  %t17 = call ptr %v_k(ptr %t16)
-  br label %case.end.1.14
-case.end.1.14:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t18 = phi ptr [%t9, %case.end.0.6], [%t17, %case.end.1.14]
-  ret ptr %t18
-}
-
 define internal ptr @v_pureEither(ptr %v_x) {
   %t0 = call ptr @malloc(i64 16)
   %t1 = inttoptr i64 1 to ptr
@@ -81,10 +50,6 @@ define internal ptr @v_pureEither(ptr %v_x) {
   %t3 = getelementptr ptr, ptr %t0, i32 1
   store ptr %v_x, ptr %t3
   ret ptr %t0
-}
-
-define internal ptr @v_const(ptr %v_x, ptr %v__y) {
-  ret ptr %v_x
 }
 
 define internal ptr @v_op1() {
@@ -133,8 +98,100 @@ define internal ptr @v_op3() {
 
 define internal ptr @v_f() {
   %t0 = call ptr @v_op1()
-  %t1 = call ptr @v_bindEither(ptr %t0, ptr @v__pap_1)
-  ret ptr %t1
+  %t1 = getelementptr ptr, ptr %t0, i32 0
+  %t2 = load ptr, ptr %t1
+  %t3 = ptrtoint ptr %t2 to i64
+  switch i64 %t3, label %case.default.4 [ i64 0, label %case.arm.0.6 i64 1, label %case.arm.1.18 ]
+case.arm.0.6:
+  %t8 = getelementptr ptr, ptr %t0, i32 1
+  %t9 = load ptr, ptr %t8
+  %t10 = call ptr @malloc(i64 16)
+  %t11 = inttoptr i64 0 to ptr
+  %t12 = getelementptr ptr, ptr %t10, i32 0
+  store ptr %t11, ptr %t12
+  %t13 = call ptr @malloc(i64 16)
+  %t14 = inttoptr i64 401451280 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = getelementptr ptr, ptr %t13, i32 1
+  store ptr %t9, ptr %t16
+  %t17 = getelementptr ptr, ptr %t10, i32 1
+  store ptr %t13, ptr %t17
+  br label %case.end.0.7
+case.end.0.7:
+  br label %case.join.5
+case.arm.1.18:
+  %t20 = getelementptr ptr, ptr %t0, i32 1
+  %t21 = load ptr, ptr %t20
+  %t22 = call ptr @v_op2()
+  %t23 = getelementptr ptr, ptr %t22, i32 0
+  %t24 = load ptr, ptr %t23
+  %t25 = ptrtoint ptr %t24 to i64
+  switch i64 %t25, label %case.default.26 [ i64 0, label %case.arm.0.28 i64 1, label %case.arm.1.36 ]
+case.arm.0.28:
+  %t30 = getelementptr ptr, ptr %t22, i32 1
+  %t31 = load ptr, ptr %t30
+  %t32 = call ptr @malloc(i64 16)
+  %t33 = inttoptr i64 0 to ptr
+  %t34 = getelementptr ptr, ptr %t32, i32 0
+  store ptr %t33, ptr %t34
+  %t35 = getelementptr ptr, ptr %t32, i32 1
+  store ptr %t31, ptr %t35
+  br label %case.end.0.29
+case.end.0.29:
+  br label %case.join.27
+case.arm.1.36:
+  %t38 = getelementptr ptr, ptr %t22, i32 1
+  %t39 = load ptr, ptr %t38
+  %t40 = call ptr @v_op3()
+  %t41 = getelementptr ptr, ptr %t40, i32 0
+  %t42 = load ptr, ptr %t41
+  %t43 = ptrtoint ptr %t42 to i64
+  switch i64 %t43, label %case.default.44 [ i64 0, label %case.arm.0.46 i64 1, label %case.arm.1.58 ]
+case.arm.0.46:
+  %t48 = getelementptr ptr, ptr %t40, i32 1
+  %t49 = load ptr, ptr %t48
+  %t50 = call ptr @malloc(i64 16)
+  %t51 = inttoptr i64 0 to ptr
+  %t52 = getelementptr ptr, ptr %t50, i32 0
+  store ptr %t51, ptr %t52
+  %t53 = call ptr @malloc(i64 16)
+  %t54 = inttoptr i64 451784137 to ptr
+  %t55 = getelementptr ptr, ptr %t53, i32 0
+  store ptr %t54, ptr %t55
+  %t56 = getelementptr ptr, ptr %t53, i32 1
+  store ptr %t49, ptr %t56
+  %t57 = getelementptr ptr, ptr %t50, i32 1
+  store ptr %t53, ptr %t57
+  br label %case.end.0.47
+case.end.0.47:
+  br label %case.join.45
+case.arm.1.58:
+  %t60 = getelementptr ptr, ptr %t40, i32 1
+  %t61 = load ptr, ptr %t60
+  %t62 = call ptr @v_pureEither(ptr %t61)
+  br label %case.end.1.59
+case.end.1.59:
+  br label %case.join.45
+case.default.44:
+  unreachable
+case.join.45:
+  %t63 = phi ptr [%t50, %case.end.0.47], [%t62, %case.end.1.59]
+  br label %case.end.1.37
+case.end.1.37:
+  br label %case.join.27
+case.default.26:
+  unreachable
+case.join.27:
+  %t64 = phi ptr [%t32, %case.end.0.29], [%t63, %case.end.1.37]
+  br label %case.end.1.19
+case.end.1.19:
+  br label %case.join.5
+case.default.4:
+  unreachable
+case.join.5:
+  %t65 = phi ptr [%t10, %case.end.0.7], [%t64, %case.end.1.19]
+  ret ptr %t65
 }
 
 define internal ptr @v_describe(ptr %v_r) {
@@ -197,20 +254,6 @@ define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_f()
   %t1 = call ptr @v_describe(ptr %t0)
   %t2 = call ptr @__print(ptr %t1)
-  ret ptr %t2
-}
-
-define internal ptr @v__pap_0(ptr %v__eta0) {
-  %t0 = call ptr @v_op3()
-  %t1 = call ptr @v_bindEither(ptr %t0, ptr @v_pureEither)
-  %t2 = call ptr @v_const(ptr %t1, ptr %v__eta0)
-  ret ptr %t2
-}
-
-define internal ptr @v__pap_1(ptr %v__eta0) {
-  %t0 = call ptr @v_op2()
-  %t1 = call ptr @v_bindEither(ptr %t0, ptr @v__pap_0)
-  %t2 = call ptr @v_const(ptr %t1, ptr %v__eta0)
   ret ptr %t2
 }
 

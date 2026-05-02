@@ -1,85 +1,6 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "map"
-            [ "f"
-            , "list"
-            ]
-            ( CCall
-                ( CVar "$cps$map" )
-                [ CVar "f"
-                , CVar "list"
-                , CCon 0 []
-                ]
-            )
-        , CFunDef "$cps$map"
-            [ "f"
-            , "list"
-            , "$k"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "list" )
-                    [
-                        ( 0
-                        ,
-                            [ "head"
-                            , "tail"
-                            ]
-                        , CContinue
-                            [ CVar "f"
-                            , CVar "tail"
-                            , CCon 1
-                                [ CVar "$k"
-                                , CVar "f"
-                                , CVar "head"
-                                ]
-                            ]
-                        )
-                    ,
-                        ( 1
-                        , []
-                        , CCall
-                            ( CVar "$apply$map" )
-                            [ CVar "$k"
-                            , CCon 1 []
-                            ]
-                        )
-                    ]
-                )
-            )
-        , CFunDef "$apply$map"
-            [ "$k"
-            , "$x"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "$k" )
-                    [
-                        ( 0
-                        , []
-                        , CVar "$x"
-                        )
-                    ,
-                        ( 1
-                        ,
-                            [ "$pk_1"
-                            , "f"
-                            , "head"
-                            ]
-                        , CContinue
-                            [ CVar "$pk_1"
-                            , CCon 0
-                                [ CCall
-                                    ( CVar "f" )
-                                    [ CVar "head" ]
-                                , CVar "$x"
-                                ]
-                            ]
-                        )
-                    ]
-                )
-            )
-        , CFunDef "show" [ "xs" ]
+        [ CFunDef "show" [ "xs" ]
             ( CCall
                 ( CVar "$cps$show" )
                 [ CVar "xs"
@@ -166,9 +87,8 @@ CoreProgram
                 [ CCall
                     ( CVar "show" )
                     [ CCall
-                        ( CVar "map" )
-                        [ CVar "shout"
-                        , CCon 0
+                        ( CVar "$df$map$0" )
+                        [ CCon 0
                             [ CString "a"
                             , CCon 0
                                 [ CString "b"
@@ -181,6 +101,77 @@ CoreProgram
                         ]
                     ]
                 ]
+            )
+        , CFunDef "$df$map$0" [ "list" ]
+            ( CCall
+                ( CVar "$cps$$df$map$0" )
+                [ CVar "list"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$df$map$0"
+            [ "list"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "list" )
+                    [
+                        ( 0
+                        ,
+                            [ "head"
+                            , "tail"
+                            ]
+                        , CContinue
+                            [ CVar "tail"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "head"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , []
+                        , CCall
+                            ( CVar "$apply$$df$map$0" )
+                            [ CVar "$k"
+                            , CCon 1 []
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$map$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "head"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCon 0
+                                [ CCall
+                                    ( CVar "shout" )
+                                    [ CVar "head" ]
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
             )
         ]
     }

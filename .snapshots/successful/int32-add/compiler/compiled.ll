@@ -12,8 +12,8 @@ declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant [1 x i8] c"\00"
 
-@.str.0 = private unnamed_addr constant [10 x i8] c"Underflow\00"
-@.str.1 = private unnamed_addr constant [9 x i8] c"Overflow\00"
+@.str.0 = private unnamed_addr constant [15 x i8] c"UnderflowError\00"
+@.str.1 = private unnamed_addr constant [14 x i8] c"OverflowError\00"
 @.str.2 = private unnamed_addr constant [6 x i8] c"err: \00"
 @.str.3 = private unnamed_addr constant [5 x i8] c"ok: \00"
 @.str.4 = private unnamed_addr constant [3 x i8] c", \00"
@@ -53,15 +53,20 @@ define internal ptr @__addInt32(ptr %pa, ptr %pb) {
   br i1 %ovf, label %err, label %ok
 err:
   %is_pos = icmp sge i32 %a, 0
-  %ae_tag_idx = select i1 %is_pos, i64 1, i64 0
-  %ae = call ptr @malloc(i64 8)
-  %ae_tag = inttoptr i64 %ae_tag_idx to ptr
-  store ptr %ae_tag, ptr %ae
+  %row_tag_idx = select i1 %is_pos, i64 882564211, i64 3768445577
+  %inner = call ptr @malloc(i64 8)
+  %inner_tag = inttoptr i64 0 to ptr
+  store ptr %inner_tag, ptr %inner
+  %row = call ptr @malloc(i64 16)
+  %row_tag = inttoptr i64 %row_tag_idx to ptr
+  store ptr %row_tag, ptr %row
+  %row_f = getelementptr ptr, ptr %row, i32 1
+  store ptr %inner, ptr %row_f
   %left = call ptr @malloc(i64 16)
   %left_tag = inttoptr i64 0 to ptr
   store ptr %left_tag, ptr %left
   %left_f = getelementptr ptr, ptr %left, i32 1
-  store ptr %ae, ptr %left_f
+  store ptr %row, ptr %left_f
   ret ptr %left
 ok:
   %box = call ptr @malloc(i64 4)
@@ -75,56 +80,67 @@ ok:
 }
 
 
-define internal ptr @v_showArithError(ptr %v_e) {
-  %t0 = getelementptr ptr, ptr %v_e, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.8 ]
-case.arm.0.5:
-  %t7 = getelementptr [10 x i8], ptr @.str.0, i64 0, i64 0
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.8:
-  %t10 = getelementptr [9 x i8], ptr @.str.1, i64 0, i64 0
-  br label %case.end.1.9
-case.end.1.9:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t11 = phi ptr [%t7, %case.end.0.6], [%t10, %case.end.1.9]
-  ret ptr %t11
+define internal ptr @v_showUnderflowError(ptr %v__wild0) {
+  %t0 = getelementptr [15 x i8], ptr @.str.0, i64 0, i64 0
+  ret ptr %t0
+}
+
+define internal ptr @v_showOverflowError(ptr %v__wild0) {
+  %t0 = getelementptr [14 x i8], ptr @.str.1, i64 0, i64 0
+  ret ptr %t0
 }
 
 define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.12 ]
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.29 ]
 case.arm.0.5:
   %t7 = getelementptr ptr, ptr %v_r, i32 1
   %t8 = load ptr, ptr %t7
-  %t9 = getelementptr [6 x i8], ptr @.str.2, i64 0, i64 0
-  %t10 = call ptr @v_showArithError(ptr %t8)
-  %t11 = call ptr @__concat(ptr %t9, ptr %t10)
+  %t9 = getelementptr ptr, ptr %t8, i32 0
+  %t10 = load ptr, ptr %t9
+  %t11 = ptrtoint ptr %t10 to i64
+  switch i64 %t11, label %case.default.12 [ i64 882564211, label %case.arm.882564211.14 i64 3768445577, label %case.arm.3768445577.21 ]
+case.arm.882564211.14:
+  %t16 = getelementptr ptr, ptr %t8, i32 1
+  %t17 = load ptr, ptr %t16
+  %t18 = getelementptr [6 x i8], ptr @.str.2, i64 0, i64 0
+  %t19 = call ptr @v_showOverflowError(ptr %t17)
+  %t20 = call ptr @__concat(ptr %t18, ptr %t19)
+  br label %case.end.882564211.15
+case.end.882564211.15:
+  br label %case.join.13
+case.arm.3768445577.21:
+  %t23 = getelementptr ptr, ptr %t8, i32 1
+  %t24 = load ptr, ptr %t23
+  %t25 = getelementptr [6 x i8], ptr @.str.2, i64 0, i64 0
+  %t26 = call ptr @v_showUnderflowError(ptr %t24)
+  %t27 = call ptr @__concat(ptr %t25, ptr %t26)
+  br label %case.end.3768445577.22
+case.end.3768445577.22:
+  br label %case.join.13
+case.default.12:
+  unreachable
+case.join.13:
+  %t28 = phi ptr [%t20, %case.end.882564211.15], [%t27, %case.end.3768445577.22]
   br label %case.end.0.6
 case.end.0.6:
   br label %case.join.4
-case.arm.1.12:
-  %t14 = getelementptr ptr, ptr %v_r, i32 1
-  %t15 = load ptr, ptr %t14
-  %t16 = getelementptr [5 x i8], ptr @.str.3, i64 0, i64 0
-  %t17 = call ptr @__showInt32(ptr %t15)
-  %t18 = call ptr @__concat(ptr %t16, ptr %t17)
-  br label %case.end.1.13
-case.end.1.13:
+case.arm.1.29:
+  %t31 = getelementptr ptr, ptr %v_r, i32 1
+  %t32 = load ptr, ptr %t31
+  %t33 = getelementptr [5 x i8], ptr @.str.3, i64 0, i64 0
+  %t34 = call ptr @__showInt32(ptr %t32)
+  %t35 = call ptr @__concat(ptr %t33, ptr %t34)
+  br label %case.end.1.30
+case.end.1.30:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t19 = phi ptr [%t11, %case.end.0.6], [%t18, %case.end.1.13]
-  ret ptr %t19
+  %t36 = phi ptr [%t28, %case.end.0.6], [%t35, %case.end.1.30]
+  ret ptr %t36
 }
 
 define internal ptr @v_maxInt32() {

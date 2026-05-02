@@ -47,11 +47,6 @@ case.join.4:
   ret ptr %t9
 }
 
-define internal ptr @v_apply(ptr %v_f, ptr %v_x) {
-  %t0 = call ptr %v_f(ptr %v_x)
-  ret ptr %t0
-}
-
 define internal ptr @v_compose(ptr %v_f, ptr %v_g, ptr %v_x) {
   %t0 = call ptr %v_g(ptr %v_x)
   %t1 = call ptr %v_f(ptr %t0)
@@ -60,13 +55,13 @@ define internal ptr @v_compose(ptr %v_f, ptr %v_g, ptr %v_x) {
 
 define internal ptr @v_main(ptr %v__input) {
   %t0 = getelementptr [6 x i8], ptr @.str.0, i64 0, i64 0
-  %t1 = call ptr @v_apply(ptr @v__pap_0, ptr %t0)
+  %t1 = call ptr @v__df_apply_0(ptr %t0, ptr @v_unwrap, ptr @v_wrap)
   %t2 = call ptr @__print(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__pap_0(ptr %v__eta0) {
-  %t0 = call ptr @v_compose(ptr @v_unwrap, ptr @v_wrap, ptr %v__eta0)
+define internal ptr @v__df_apply_0(ptr %v_x, ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1) {
+  %t0 = call ptr @v_compose(ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1, ptr %v_x)
   ret ptr %t0
 }
 
