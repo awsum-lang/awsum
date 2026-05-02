@@ -54,6 +54,9 @@ encodeName t =
 -- WASM opcodes
 -- ════════════════════════════════════════════════════════════════════════════
 
+opUnreachable :: Word8
+opUnreachable = 0x00
+
 opBlock, opLoop, opIf, opElse, opEnd :: Word8
 opBlock = 0x02
 opLoop = 0x03
@@ -601,7 +604,11 @@ codeAlloc =
         -- Grow loop: while heap > memory.size * 65536, grow by 1 page.
         -- A single grow is not enough when one allocation (or one CPS
         -- non-tail unwind) overshoots memory by more than one page;
-        -- keep growing until the heap fits. Falls through when it does.
+        -- keep growing until the heap fits. Trap on grow failure
+        -- (memory.grow returns -1 at the wasm32 4 GiB cap or any
+        -- engine memory limit) so OOM surfaces as an immediate wasm
+        -- trap instead of an infinite loop in the allocator. Falls
+        -- through when the heap fits.
         [opLoop, blocktypeVoid],
         [opGlobalGet],
         encodeULEB128 0, -- heap
@@ -614,10 +621,15 @@ codeAlloc =
         [opI32Const],
         encodeSLEB128 1, -- 1 page
         [opMemoryGrow, 0x00], -- grows memory, pushes old size or -1
-        [opDrop], -- discard result
+        [opI32Const],
+        encodeSLEB128 (-1),
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        [opUnreachable],
+        [opEnd], -- end inner if (trap branch)
         [opBr], -- br $grow_loop (restart the outer loop)
-        encodeULEB128 1, -- 1 level up: past the 'if', back to the loop
-        [opEnd], -- end if
+        encodeULEB128 1, -- 1 level up: past the outer 'if', back to the loop
+        [opEnd], -- end outer if
         [opEnd], -- end loop
         -- return ptr
         [opLocalGet],

@@ -33,13 +33,17 @@
     ;; Grow until the heap fits. A single 'memory.grow 1' is not
     ;; enough when a single allocation (or the cumulative demand
     ;; of a CPS-defunc'd non-tail recursion) overshoots by more
-    ;; than one page.
+    ;; than one page. Trap on grow failure (memory.grow returns -1
+    ;; at the wasm32 4 GiB cap or any engine memory limit) — OOM
+    ;; surfaces as an immediate wasm trap instead of an infinite
+    ;; loop in the allocator.
     (block $grow_done
       (loop $grow_loop
         (br_if $grow_done
           (i32.le_u (global.get $heap)
                     (i32.mul (memory.size) (i32.const 65536))))
-        (drop (memory.grow (i32.const 1)))
+        (if (i32.eq (memory.grow (i32.const 1)) (i32.const -1))
+          (then (unreachable)))
         (br $grow_loop)))
     (local.get $ptr))
 
