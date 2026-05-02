@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: block and line comments preserved through parsing and formatting" ]
+            [ BlockComment " Block and line comments preserved through parsing and formatting. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = CommentDecl

@@ -1,4 +1,4 @@
--- Test: recursive ADT (List) with recursive function and recursive data construction
+{- Recursive ADT (List) with recursive show. -}
 import IO.Stdout
 
 type List a = Cons a (List a) | Nil
@@ -8,8 +8,5 @@ show xs = case xs of
   Cons h t -> h ++ "," ++ (show t)
   Nil -> ""
 
-exampleList : List String
-exampleList = Cons "a" (Cons "b" (Cons "c" Nil))
-
 main : String -> IO Unit
-main _input = IO.Stdout.print (show exampleList)
+main _input = IO.Stdout.print (show (Cons "a" (Cons "b" (Cons "c" Nil))))

@@ -1,5 +1,4 @@
-{- Tests: ADT mixing constructors with data (Word, Number) and
-   without data (Comma, EOF) in a single type. -}
+{- Single ADT mixing data-bearing and nullary constructors. -}
 import IO.Stdout
 
 type Token = Word String | Number String | Comma | EOF

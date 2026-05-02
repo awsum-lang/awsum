@@ -1,20 +1,4 @@
--- Pattern on the LHS of a let-binding: `let (Tuple3 a b c) =
--- expr in body` destructures in place. Awsum.Desugar rewrites
--- non-PVar lets to a single-arm `case` before typecheck:
---
---     let (Tuple3 a b c) = expr in body
---   ⇝ case expr of Tuple3 a b c -> body
---
--- Standard exhaustiveness validates the rewrite — single-
--- constructor types pass, refutable patterns raise
--- `NonExhaustiveCase`. Type ascription on a destructuring let
--- (`let (Tuple3 ...) : T = e`) is rejected at desugar time with
--- `PatternLetAscription` — the ascription belongs on the
--- right-hand side instead.
---
--- Both standalone `let-in` and `do { let pat = e; rest }` go
--- through the same rewrite, so the pattern syntax works
--- uniformly in either context.
+{- Pattern on the LHS of a `let`: `let (Tuple2 a b) = e in …`. -}
 import IO.Stdout
 
 threeAndDouble : Int32 -> Tuple2 Int32 Int32

@@ -1,4 +1,4 @@
--- Test: phantom type parameter (unused in constructor) compiles and runs correctly
+{- Phantom type parameter (unused in any constructor). -}
 import IO.Stdout
 
 type Phantom _tag = Phantom

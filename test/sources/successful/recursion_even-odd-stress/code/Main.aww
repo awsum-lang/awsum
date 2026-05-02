@@ -1,30 +1,16 @@
--- Stress test: mutual tail recursion between @evenInt@ and @oddInt@ at
--- depth 1 000 000 on Int32. The compiler must fuse the SCC into one
--- self-recursive function (Awsum.Scc), at which point the
--- cross-calls become tail self-calls and existing TCO folds the body
--- into a loop. Without SCC merge every cross-call would park a stack
--- frame on every target; 1 000 000 frames blows past every default
--- limit (JVM ~16k, V8 ~13k, libc threads 8k pages).
---
--- @evenInt@ and @oddInt@ return an @Either UnderflowError Bool@ to keep
--- the usual honest-arithmetic shape threaded through: the @Left@ arm
--- is unreachable for any non-negative input (we hit zero before
--- @predInt32@ could ever see @minInt32@), but it's still pattern-
--- matched so the type system is happy without unsafe casts.
+{- Two-way mutual tail recursion at depth 1_000_000 on Int32; SCC must fuse
+   the cluster into a single self-recursive function before TCO folds it. -}
 import IO.Stdout
 
-zero : Int32
-zero = 0
-
 evenInt : Int32 -> Either UnderflowError Bool
-evenInt n = case eqInt32 n zero of
+evenInt n = case eqInt32 n 0 of
   True -> Right True
   False -> case predInt32 n of
     Left e -> Left e
     Right m -> oddInt m
 
 oddInt : Int32 -> Either UnderflowError Bool
-oddInt n = case eqInt32 n zero of
+oddInt n = case eqInt32 n 0 of
   True -> Right False
   False -> case predInt32 n of
     Left e -> Left e
@@ -40,8 +26,5 @@ showResult r = case r of
   Left e -> "left: " ++ showUnderflowError e
   Right b -> "right: " ++ showBool b
 
-start : Int32
-start = 1000000
-
 main : String -> IO Unit
-main _input = IO.Stdout.print (showResult (evenInt start))
+main _input = IO.Stdout.print (showResult (evenInt 1000000))

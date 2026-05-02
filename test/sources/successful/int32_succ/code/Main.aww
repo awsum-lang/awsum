@@ -1,8 +1,4 @@
--- Test: `succInt32` returns `Right (x + 1)` on ordinary values and
--- `Left OverflowError` on `maxInt32`. Mirror of `int32-pred` at the
--- opposite boundary — the case-of unwraps both arms to `String` so
--- the result can be printed through the same `IO.Stdout.print` path
--- on every backend.
+{- `succInt32`: ordinary `Right (x+1)`; `Left OverflowError` at `maxInt32`. -}
 import IO.Stdout
 
 render : Either OverflowError Int32 -> String
@@ -10,11 +6,5 @@ render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showInt32 v
 
-maxInt32 : Int32
-maxInt32 = 2147483647
-
-ordinary : Int32
-ordinary = 42
-
 main : String -> IO Unit
-main _input = IO.Stdout.print (render (succInt32 ordinary) ++ ", " ++ render (succInt32 maxInt32))
+main _input = IO.Stdout.print (render (succInt32 42) ++ ", " ++ render (succInt32 maxInt32))

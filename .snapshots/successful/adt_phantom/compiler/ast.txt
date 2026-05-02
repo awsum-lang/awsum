@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: phantom type parameter (unused in constructor) compiles and runs correctly" ]
+            [ BlockComment " Phantom type parameter (unused in any constructor). " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

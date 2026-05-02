@@ -30,49 +30,9 @@
     ret
   }
 
-  .method private hidebysig static object v_main(object) cil managed
-  {
-    call object AwsumMain::v_minUInt8()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_small()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_aboveSignedByte()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_maxUInt8()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::__print(object)
-    ret
-  }
-
-
   .method private hidebysig static object v_minUInt8() cil managed
   {
     ldc.i4 0
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_small() cil managed
-  {
-    ldc.i4 42
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_aboveSignedByte() cil managed
-  {
-    ldc.i4 200
     box [System.Runtime]System.Int32
     ret
   }
@@ -82,6 +42,32 @@
   {
     ldc.i4 255
     box [System.Runtime]System.Int32
+    ret
+  }
+
+
+  .method private hidebysig static object v_main(object) cil managed
+  {
+    call object AwsumMain::v_minUInt8()
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    ldc.i4 42
+    box [System.Runtime]System.Int32
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    ldc.i4 200
+    box [System.Runtime]System.Int32
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    call object AwsumMain::v_maxUInt8()
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    call object AwsumMain::__print(object)
     ret
   }
 

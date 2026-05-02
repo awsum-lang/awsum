@@ -129,7 +129,7 @@ L_tco_arm_1:
 .end method
 
 
-.method static v_exampleList()Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_3
   anewarray java/lang/Object
   dup
@@ -179,12 +179,6 @@ L_tco_arm_1:
   aastore
   aastore
   aastore
-  areturn
-.end method
-
-
-.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_exampleList()Ljava/lang/Object;
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
   areturn

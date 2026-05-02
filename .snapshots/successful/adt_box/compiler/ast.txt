@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: parametric single-constructor type (Box a) with pattern matching" ]
+            [ BlockComment " Parametric single-constructor type; pattern match unwraps. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

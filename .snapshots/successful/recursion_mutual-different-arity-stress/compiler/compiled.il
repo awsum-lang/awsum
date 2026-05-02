@@ -112,14 +112,6 @@
   }
 
 
-  .method private hidebysig static object v_zero() cil managed
-  {
-    ldc.i4 0
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
   .method private hidebysig static object v_showResult(object) cil managed
   {
     ldarg.0
@@ -155,17 +147,10 @@
   }
 
 
-  .method private hidebysig static object v_start() cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4 100000
     box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_main(object) cil managed
-  {
-    call object AwsumMain::v_start()
     call object AwsumMain::v_pingOne(object)
     call object AwsumMain::v_showResult(object)
     call object AwsumMain::__print(object)
@@ -189,7 +174,8 @@
     stloc.0
     pop
     ldloc.0
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     call object AwsumMain::__eqInt32(object, object)
     dup
     ldc.i4.0
@@ -207,7 +193,8 @@
     stelem.ref
     dup
     ldc.i4.1
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     stelem.ref
     ret
   IL_tco_arm_1:
@@ -256,7 +243,8 @@
     stelem.ref
     dup
     ldc.i4.2
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     stelem.ref
     starg.s 0
     br IL_tco_loop
@@ -271,7 +259,8 @@
     stloc.1
     pop
     ldloc.0
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     call object AwsumMain::__eqInt32(object, object)
     dup
     ldc.i4.0
@@ -289,7 +278,8 @@
     stelem.ref
     dup
     ldc.i4.1
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     stelem.ref
     ret
   IL_tco_arm_1:

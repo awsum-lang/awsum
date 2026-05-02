@@ -40,17 +40,31 @@ define internal ptr @__showUInt8(ptr %p) {
 }
 
 
+define internal ptr @v_minUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 0, ptr %t0
+  ret ptr %t0
+}
+
+define internal ptr @v_maxUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 255, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_minUInt8()
   %t1 = call ptr @__showUInt8(ptr %t0)
   %t2 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   %t3 = call ptr @__concat(ptr %t1, ptr %t2)
-  %t4 = call ptr @v_small()
+  %t4 = call ptr @malloc(i64 1)
+  store i8 42, ptr %t4
   %t5 = call ptr @__showUInt8(ptr %t4)
   %t6 = call ptr @__concat(ptr %t3, ptr %t5)
   %t7 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   %t8 = call ptr @__concat(ptr %t6, ptr %t7)
-  %t9 = call ptr @v_aboveSignedByte()
+  %t9 = call ptr @malloc(i64 1)
+  store i8 200, ptr %t9
   %t10 = call ptr @__showUInt8(ptr %t9)
   %t11 = call ptr @__concat(ptr %t8, ptr %t10)
   %t12 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
@@ -60,30 +74,6 @@ define internal ptr @v_main(ptr %v__input) {
   %t16 = call ptr @__concat(ptr %t13, ptr %t15)
   %t17 = call ptr @__print(ptr %t16)
   ret ptr %t17
-}
-
-define internal ptr @v_minUInt8() {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_small() {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 42, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_aboveSignedByte() {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 200, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_maxUInt8() {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t0
-  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

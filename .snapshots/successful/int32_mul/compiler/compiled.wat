@@ -178,6 +178,9 @@
   (func $v_showOverflowError (param $v__wild0 i32) (result i32)
     (i32.const 80))
 
+  (func $v_minInt32 (result i32)
+    (call $__box_i32 (i32.const -2147483648)))
+
   (func $v_render (param $v_r i32) (result i32)
     (local $v_e i32)
     (local $v_o i32)
@@ -185,9 +188,6 @@
     (local $v_v i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_e)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 882564211)) (then (local.set $v_o (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 94) (call $v_showOverflowError (local.get $v_o)))) (else (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 94) (call $v_showUnderflowError (local.get $v_u))))))) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 100) (call $__show_i32 (local.get $v_v)))))))
-
-  (func $v_minInt32 (result i32)
-    (call $__box_i32 (i32.const -2147483648)))
 
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_render (call $__mulInt32 (call $__box_i32 (i32.const 6)) (call $__box_i32 (i32.const 7)))) (i32.const 105)) (call $v_render (call $__mulInt32 (call $__box_i32 (i32.const -6)) (call $__box_i32 (i32.const 7))))) (i32.const 105)) (call $v_render (call $__mulInt32 (call $__box_i32 (i32.const 100000)) (call $__box_i32 (i32.const 100000))))) (i32.const 105)) (call $v_render (call $__mulInt32 (call $__box_i32 (i32.const -100000)) (call $__box_i32 (i32.const 100000))))) (i32.const 105)) (call $v_render (call $__mulInt32 (call $v_minInt32) (call $__box_i32 (i32.const -1))))) (i32.const 105)) (call $v_render (call $__mulInt32 (call $v_minInt32) (call $__box_i32 (i32.const 1)))))))

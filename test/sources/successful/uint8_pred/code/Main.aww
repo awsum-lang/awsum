@@ -1,10 +1,4 @@
--- Test: `predUInt8` returns `Right (x - 1)` on ordinary values and
--- `Left UnderflowError` on `0` (the UInt8 minimum). Covers the zero
--- boundary (`predUInt8 0`), the lowest non-underflowing value
--- (`predUInt8 1 = Right 0`), and the upper boundary (`predUInt8 255 =
--- Right 254`) — the last one is the strongest check that the JVM
--- backend carries unsigned width correctly, since a naive signed byte
--- round-trip would have clipped 255 to -1.
+{- `predUInt8`: `Left UnderflowError` at 0; `predUInt8 255` traps signed-byte clipping on JVM. -}
 import IO.Stdout
 
 render : Either UnderflowError UInt8 -> String
@@ -13,4 +7,4 @@ render r = case r of
   Right v -> "ok: " ++ showUInt8 v
 
 main : String -> IO Unit
-main _input = IO.Stdout.print (render (predUInt8 0) ++ ", " ++ render (predUInt8 1) ++ ", " ++ render (predUInt8 255))
+main _input = IO.Stdout.print (render (predUInt8 minUInt8) ++ ", " ++ render (predUInt8 1) ++ ", " ++ render (predUInt8 maxUInt8))

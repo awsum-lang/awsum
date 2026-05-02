@@ -79,6 +79,18 @@ define internal ptr @v_showOverflowError(ptr %v__wild0) {
   ret ptr %t0
 }
 
+define internal ptr @v_minUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 0, ptr %t0
+  ret ptr %t0
+}
+
+define internal ptr @v_maxUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 255, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
@@ -127,19 +139,15 @@ define internal ptr @v_main(ptr %v__input) {
   %t10 = call ptr @__concat(ptr %t5, ptr %t9)
   %t11 = getelementptr [3 x i8], ptr @.str.3, i64 0, i64 0
   %t12 = call ptr @__concat(ptr %t10, ptr %t11)
-  %t13 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t13
-  %t14 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t14
+  %t13 = call ptr @v_maxUInt8()
+  %t14 = call ptr @v_maxUInt8()
   %t15 = call ptr @__addUInt8(ptr %t13, ptr %t14)
   %t16 = call ptr @v_render(ptr %t15)
   %t17 = call ptr @__concat(ptr %t12, ptr %t16)
   %t18 = getelementptr [3 x i8], ptr @.str.3, i64 0, i64 0
   %t19 = call ptr @__concat(ptr %t17, ptr %t18)
-  %t20 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t20
-  %t21 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t21
+  %t20 = call ptr @v_minUInt8()
+  %t21 = call ptr @v_minUInt8()
   %t22 = call ptr @__addUInt8(ptr %t20, ptr %t21)
   %t23 = call ptr @v_render(ptr %t22)
   %t24 = call ptr @__concat(ptr %t19, ptr %t23)

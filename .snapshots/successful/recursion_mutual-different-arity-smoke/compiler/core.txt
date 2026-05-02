@@ -1,8 +1,6 @@
 CoreProgram
     { cdecls =
-        [ CValDef "zero"
-            ( CIntLit 0 TInt32 )
-        , CFunDef "main" [ "_input" ]
+        [ CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
@@ -28,7 +26,7 @@ CoreProgram
                             [
                                 ( 0
                                 , []
-                                , CVar "zero"
+                                , CIntLit 0 TInt32
                                 )
                             ,
                                 ( 1
@@ -48,7 +46,7 @@ CoreProgram
                             [
                                 ( 0
                                 , []
-                                , CVar "zero"
+                                , CIntLit 0 TInt32
                                 )
                             ,
                                 ( 1
@@ -56,7 +54,7 @@ CoreProgram
                                 , CContinue
                                     [ CCon 0
                                         [ CVar "tok"
-                                        , CVar "zero"
+                                        , CIntLit 0 TInt32
                                         ]
                                     ]
                                 )

@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: deeply nested uninhabited type (Box (Box (Box Never))) still recognized as empty" ]
+            [ BlockComment " Uninhabited type detected through deep nesting. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

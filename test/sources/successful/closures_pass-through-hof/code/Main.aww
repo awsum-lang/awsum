@@ -1,8 +1,4 @@
-{- Pass-through HOF: a function-typed parameter flows through one HOF
-   into another. Defunctionalisation specialises both HOFs for the
-   same closure shape — `applyTwice` becomes a fully first-order
-   function whose body inlines two specialised calls to the inner
-   `apply` HOF. Cross-backend stdout asserts the result is identical. -}
+{- Function-typed parameter flows through one HOF into another. -}
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

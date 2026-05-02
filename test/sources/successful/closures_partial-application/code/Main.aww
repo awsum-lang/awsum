@@ -1,6 +1,5 @@
-{- Test: partial application creates a first-class function value.
-   `compose unwrap wrap` supplies 2 of 3 args to compose; the result must
-   behave as a 1-arg function that `apply` can invoke with the final arg. -}
+{- Partial application produces a first-class function value
+   that another HOF (`apply`) can then invoke. -}
 import IO.Stdout
 
 type Box a = Box a

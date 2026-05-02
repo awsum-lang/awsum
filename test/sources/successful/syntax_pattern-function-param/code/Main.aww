@@ -1,20 +1,4 @@
--- Pattern on a function parameter: `f (Tuple3 a b c) = body`
--- destructures the argument in the parameter binding itself.
--- Awsum.Desugar rewrites every `ParamPat` parameter to a fresh
--- 'Param' plus a single-arm `case` wrapping the body:
---
---     f (Tuple3 a b c) = body
---   ⇝ f $arg_<sp> = case $arg_<sp> of Tuple3 a b c -> body
---
--- Same rewrite for lambda parameters: `\(Just x) -> e` becomes
--- `\$arg -> case $arg of Just x -> e`. The synthetic name uses
--- the parameter's source span so multiple destructuring params
--- in the same function don't collide.
---
--- Parens are syntactically required at the parameter position to
--- distinguish a destructuring pattern from a sequence of bare
--- names — `f Tuple3 a b c` would mean four parameters, not one
--- pattern with three fields.
+{- Pattern on a function (and lambda) parameter: `f (Tuple3 a b c) = …`. -}
 import IO.Stdout
 
 sumTriple : Tuple3 Int32 Int32 Int32 -> Int32

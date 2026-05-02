@@ -56,6 +56,20 @@ L_eq_u8_ne:
   areturn
 .end method
 
+.method static v_minUInt8()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
+.method static v_maxUInt8()Ljava/lang/Object;
+  sipush 255
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
 .method static v_render(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
@@ -81,23 +95,17 @@ L_join:
 
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  invokestatic AwsumMain/v_minUInt8()Ljava/lang/Object;
+  invokestatic AwsumMain/v_minUInt8()Ljava/lang/Object;
   invokestatic AwsumMain/__eqUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_render(Ljava/lang/Object;)Ljava/lang/Object;
-  sipush 255
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  sipush 255
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  invokestatic AwsumMain/v_maxUInt8()Ljava/lang/Object;
+  invokestatic AwsumMain/v_maxUInt8()Ljava/lang/Object;
   invokestatic AwsumMain/__eqUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_render(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  sipush 255
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  invokestatic AwsumMain/v_maxUInt8()Ljava/lang/Object;
+  invokestatic AwsumMain/v_minUInt8()Ljava/lang/Object;
   invokestatic AwsumMain/__eqUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_render(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;

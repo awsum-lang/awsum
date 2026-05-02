@@ -8,8 +8,6 @@ function v_showUnderflowError(v__wild0){
     return "UnderflowError";
 }
 
-const v_zero = (0|0);
-
 function v_showBool(v_b){
     {
       const __s = v_b;
@@ -40,10 +38,8 @@ function v_showResult(v_r){
     }
 }
 
-const v_start = (1000000|0);
-
 function main(v__input){
-    return __print((v_showResult)((v_evenInt)(v_start)));
+    return __print((v_showResult)((v_evenInt)((1000000|0))));
 }
 
 function v__scc_evenInt_oddInt(v__args){
@@ -54,7 +50,7 @@ function v__scc_evenInt_oddInt(v__args){
         case 0: {
           const v_n = __s[1];
           {
-            const __s = __eqInt32(v_n, v_zero);
+            const __s = __eqInt32(v_n, (0|0));
             switch (__s[0]) {
               case 0: {
                 return [1, [0]];
@@ -82,7 +78,7 @@ function v__scc_evenInt_oddInt(v__args){
         case 1: {
           const v_n = __s[1];
           {
-            const __s = __eqInt32(v_n, v_zero);
+            const __s = __eqInt32(v_n, (0|0));
             switch (__s[0]) {
               case 0: {
                 return [1, [1]];

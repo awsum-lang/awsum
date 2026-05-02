@@ -1,6 +1,10 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "render" [ "b" ]
+        [ CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CFunDef "render" [ "b" ]
             ( CCase
                 ( CVar "b" )
                 [
@@ -14,10 +18,6 @@ CoreProgram
                     , CString "F"
                     )
                 ]
-            )
-        , CValDef "minInt32"
-            ( CIntLit
-                ( -2147483648 ) TInt32
             )
         , CFunDef "main" [ "_input" ]
             ( CCall

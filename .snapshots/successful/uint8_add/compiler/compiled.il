@@ -86,6 +86,22 @@
   }
 
 
+  .method private hidebysig static object v_minUInt8() cil managed
+  {
+    ldc.i4 0
+    box [System.Runtime]System.Int32
+    ret
+  }
+
+
+  .method private hidebysig static object v_maxUInt8() cil managed
+  {
+    ldc.i4 255
+    box [System.Runtime]System.Int32
+    ret
+  }
+
+
   .method private hidebysig static object v_render(object) cil managed
   {
     ldarg.0
@@ -140,19 +156,15 @@
     call object AwsumMain::__concat(object, object)
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    ldc.i4 255
-    box [System.Runtime]System.Int32
-    ldc.i4 255
-    box [System.Runtime]System.Int32
+    call object AwsumMain::v_maxUInt8()
+    call object AwsumMain::v_maxUInt8()
     call object AwsumMain::__addUInt8(object, object)
     call object AwsumMain::v_render(object)
     call object AwsumMain::__concat(object, object)
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    ldc.i4 0
-    box [System.Runtime]System.Int32
-    ldc.i4 0
-    box [System.Runtime]System.Int32
+    call object AwsumMain::v_minUInt8()
+    call object AwsumMain::v_minUInt8()
     call object AwsumMain::__addUInt8(object, object)
     call object AwsumMain::v_render(object)
     call object AwsumMain::__concat(object, object)

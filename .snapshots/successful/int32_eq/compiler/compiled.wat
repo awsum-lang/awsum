@@ -109,12 +109,12 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
+  (func $v_minInt32 (result i32)
+    (call $__box_i32 (i32.const -2147483648)))
+
   (func $v_render (param $v_b i32) (result i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 67)))))
-
-  (func $v_minInt32 (result i32)
-    (call $__box_i32 (i32.const -2147483648)))
 
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__concat (call $v_render (call $__eq_i32 (call $__box_i32 (i32.const 42)) (call $__box_i32 (i32.const 42)))) (call $v_render (call $__eq_i32 (call $__box_i32 (i32.const 42)) (call $__box_i32 (i32.const 7))))) (call $v_render (call $__eq_i32 (call $v_minInt32) (call $v_minInt32)))) (call $v_render (call $__eq_i32 (call $__box_i32 (i32.const 0)) (call $__box_i32 (i32.const 1)))))))

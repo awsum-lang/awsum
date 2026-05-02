@@ -26,12 +26,6 @@ define internal ptr @__showInt32(ptr %p) {
 }
 
 
-define internal ptr @v_zero() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 0, ptr %t0
-  ret ptr %t0
-}
-
 define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 1 to ptr
@@ -65,7 +59,8 @@ tco.case.arm.0.9:
   %t16 = ptrtoint ptr %t15 to i64
   switch i64 %t16, label %tco.case.default.17 [ i64 0, label %tco.case.arm.0.18 i64 1, label %tco.case.arm.1.20 ]
 tco.case.arm.0.18:
-  %t19 = call ptr @v_zero()
+  %t19 = call ptr @malloc(i64 4)
+  store i32 0, ptr %t19
   store ptr %t19, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.20:
@@ -91,7 +86,8 @@ tco.case.arm.1.28:
   %t33 = ptrtoint ptr %t32 to i64
   switch i64 %t33, label %tco.case.default.34 [ i64 0, label %tco.case.arm.0.35 i64 1, label %tco.case.arm.1.37 ]
 tco.case.arm.0.35:
-  %t36 = call ptr @v_zero()
+  %t36 = call ptr @malloc(i64 4)
+  store i32 0, ptr %t36
   store ptr %t36, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.37:
@@ -101,7 +97,8 @@ tco.case.arm.1.37:
   store ptr %t39, ptr %t40
   %t41 = getelementptr ptr, ptr %t38, i32 1
   store ptr %t30, ptr %t41
-  %t42 = call ptr @v_zero()
+  %t42 = call ptr @malloc(i64 4)
+  store i32 0, ptr %t42
   %t43 = getelementptr ptr, ptr %t38, i32 2
   store ptr %t42, ptr %t43
   store ptr %t38, ptr %t3

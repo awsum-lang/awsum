@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: triple-nested polymorphic Result with sequential case expressions (8 branches)" ]
+            [ BlockComment " Triple-nested polymorphic Result; sequential case-of (no nested patterns). " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: nested Box with sequential case expressions instead of inline patterns" ]
+            [ BlockComment " Nested ADT unwrapped via sequential case-of (not nested patterns). " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

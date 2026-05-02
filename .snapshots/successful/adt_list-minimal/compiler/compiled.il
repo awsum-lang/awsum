@@ -127,7 +127,7 @@
   }
 
 
-  .method private hidebysig static object v_exampleList() cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4.3
     newarr [System.Runtime]System.Object
@@ -178,13 +178,6 @@
     stelem.ref
     stelem.ref
     stelem.ref
-    ret
-  }
-
-
-  .method private hidebysig static object v_main(object) cil managed
-  {
-    call object AwsumMain::v_exampleList()
     call object AwsumMain::v_show(object)
     call object AwsumMain::__print(object)
     ret

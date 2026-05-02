@@ -85,6 +85,14 @@
   }
 
 
+  .method private hidebysig static object v_minInt32() cil managed
+  {
+    ldc.i4 -2147483648
+    box [System.Runtime]System.Int32
+    ret
+  }
+
+
   .method private hidebysig static object v_render(object) cil managed
   {
     ldarg.0
@@ -120,25 +128,10 @@
   }
 
 
-  .method private hidebysig static object v_minInt32() cil managed
-  {
-    ldc.i4 -2147483648
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_ordinary() cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4 42
     box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_main(object) cil managed
-  {
-    call object AwsumMain::v_ordinary()
     call object AwsumMain::__predInt32(object)
     call object AwsumMain::v_render(object)
     ldstr ", "

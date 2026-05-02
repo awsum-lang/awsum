@@ -11,6 +11,8 @@ function v_showOverflowError(v__wild0){
     return "OverflowError";
 }
 
+const v_minInt32 = (-2147483648|0);
+
 function v_render(v_r){
     {
       const __s = v_r;
@@ -38,8 +40,6 @@ function v_render(v_r){
       }
     }
 }
-
-const v_minInt32 = (-2147483648|0);
 
 function main(v__input){
     return __print((((((((((((v_render)(__mulInt32((6|0), (7|0))) + ", ") + (v_render)(__mulInt32((-6|0), (7|0)))) + ", ") + (v_render)(__mulInt32((100000|0), (100000|0)))) + ", ") + (v_render)(__mulInt32((-100000|0), (100000|0)))) + ", ") + (v_render)(__mulInt32(v_minInt32, (-1|0)))) + ", ") + (v_render)(__mulInt32(v_minInt32, (1|0)))));

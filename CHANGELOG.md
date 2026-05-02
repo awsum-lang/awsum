@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lambda syntax `\x -> body`** as a surface form; lifted at lowering.
 - **Eta-reduced top-level definitions** — `f = g` works for any RHS whose type matches the signature.
 - **Property-based tests across all backends** (`just test-property`); 40 starter properties covering integer arithmetic (commutativity / associativity / identities / no-overflow agreement / distributivity), succ/pred (round-trip + boundary), equality, parse/show round-trip, string monoid laws, splitOnFirst, boolean laws.
-- **Prelude** — `Tuple2`, `Tuple3`, `parseInt32`, `parseUInt8`, `splitOnFirst`, `addInt32`, `addUInt8`, `subInt32`, `subUInt8`, `negInt32`, `mulInt32`, `mulUInt8`; new types `ParseError`, `UnderflowError`, `OverflowError`.
+- **Prelude** — `Tuple2`, `Tuple3`, `parseInt32`, `parseUInt8`, `splitOnFirst`, `addInt32`, `addUInt8`, `subInt32`, `subUInt8`, `negInt32`, `mulInt32`, `mulUInt8`, range constants `minInt32` / `maxInt32` / `minUInt8` / `maxUInt8`; new types `ParseError`, `UnderflowError`, `OverflowError`.
 
 ### Changed
 

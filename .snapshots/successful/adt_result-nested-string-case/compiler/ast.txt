@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: nested monomorphic Result with sequential case expressions (not flat)" ]
+            [ BlockComment " Nested monomorphic Result; sequential case-of (no nested patterns). " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

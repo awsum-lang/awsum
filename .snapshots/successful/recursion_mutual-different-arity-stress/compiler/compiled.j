@@ -110,13 +110,6 @@ L_eq_i32_ne:
 .end method
 
 
-.method static v_zero()Ljava/lang/Object;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
 .method static v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
@@ -156,15 +149,9 @@ L_join:
 .end method
 
 
-.method static v_start()Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   ldc 100000
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_start()Ljava/lang/Object;
   invokestatic AwsumMain/v_pingOne(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
@@ -191,7 +178,8 @@ L_tco_arm_0:
   astore_1
   pop
   aload_1
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/__eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -213,7 +201,8 @@ L_tco_arm_0:
   aastore
   dup
   iconst_1
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   areturn
 L_tco_arm_1:
@@ -266,7 +255,8 @@ L_tco_arm_1:
   aastore
   dup
   iconst_2
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_0
   goto L_tco_loop
@@ -281,7 +271,8 @@ L_tco_arm_1:
   astore_2
   pop
   aload_1
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/__eqInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -303,7 +294,8 @@ L_tco_arm_0:
   aastore
   dup
   iconst_1
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   areturn
 L_tco_arm_1:

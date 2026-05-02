@@ -22,7 +22,7 @@ CoreProgram
             )
         , CFunDef "$lam$0"
             [ "k"
-            , "n"
+            , "_n"
             ]
             ( CVar "k" )
         , CFunDef "$df$apply$0"

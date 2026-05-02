@@ -202,6 +202,15 @@ showParseError _ = "ParseError"
 
 -- ---------------------- UInt8
 
+{- Lower and upper bounds of `UInt8` (0..255). Useful for boundary
+   checks without spelling out the literal at every call site. -}
+
+minUInt8 : UInt8
+minUInt8 = 0
+
+maxUInt8 : UInt8
+maxUInt8 = 255
+
 eqUInt8 : UInt8 -> UInt8 -> Bool
 eqUInt8 = BuiltIn.eqUInt8
 
@@ -247,6 +256,15 @@ parseUInt8 : String -> Either ParseError UInt8
 parseUInt8 = BuiltIn.parseUInt8
 
 -- ---------------------- Int32
+
+{- Lower and upper bounds of `Int32` (-2147483648..2147483647). Useful
+   for boundary checks without spelling out the literal at every call site. -}
+
+minInt32 : Int32
+minInt32 = -2147483648
+
+maxInt32 : Int32
+maxInt32 = 2147483647
 
 eqInt32 : Int32 -> Int32 -> Bool
 eqInt32 = BuiltIn.eqInt32

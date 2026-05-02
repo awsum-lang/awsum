@@ -3,6 +3,10 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 function __eqUInt8(a, b){ return a === b ? [0] : [1]; }
 
+const v_minUInt8 = (0 & 0xFF);
+
+const v_maxUInt8 = (255 & 0xFF);
+
 function v_render(v_b){
     {
       const __s = v_b;
@@ -18,7 +22,7 @@ function v_render(v_b){
 }
 
 function main(v__input){
-    return __print(((((v_render)(__eqUInt8((0 & 0xFF), (0 & 0xFF))) + (v_render)(__eqUInt8((255 & 0xFF), (255 & 0xFF)))) + (v_render)(__eqUInt8((255 & 0xFF), (0 & 0xFF)))) + (v_render)(__eqUInt8((128 & 0xFF), (127 & 0xFF)))));
+    return __print(((((v_render)(__eqUInt8(v_minUInt8, v_minUInt8)) + (v_render)(__eqUInt8(v_maxUInt8, v_maxUInt8))) + (v_render)(__eqUInt8(v_maxUInt8, v_minUInt8))) + (v_render)(__eqUInt8((128 & 0xFF), (127 & 0xFF)))));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

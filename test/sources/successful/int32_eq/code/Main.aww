@@ -1,17 +1,10 @@
--- Test: `eqInt32` returns the `True` constructor when two Int32 values
--- match and `False` otherwise. The case-of over the returned `Bool`
--- flattens to a `String` so the cross-backend stdout stays identical.
--- Covered cases: equal positives, different values, and the negative
--- boundary `minInt32` compared against itself.
+{- `eqInt32`: returns prelude `Bool`. -}
 import IO.Stdout
 
 render : Bool -> String
 render b = case b of
   True -> "T"
   False -> "F"
-
-minInt32 : Int32
-minInt32 = -2147483648
 
 main : String -> IO Unit
 main _input = IO.Stdout.print (render (eqInt32 42 42) ++ render (eqInt32 42 7) ++ render (eqInt32 minInt32 minInt32) ++ render (eqInt32 0 1))

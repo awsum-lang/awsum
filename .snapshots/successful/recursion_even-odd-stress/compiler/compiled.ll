@@ -79,12 +79,6 @@ define internal ptr @v_showUnderflowError(ptr %v__wild0) {
   ret ptr %t0
 }
 
-define internal ptr @v_zero() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 0, ptr %t0
-  ret ptr %t0
-}
-
 define internal ptr @v_showBool(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
@@ -137,14 +131,9 @@ case.join.4:
   ret ptr %t19
 }
 
-define internal ptr @v_start() {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 4)
   store i32 1000000, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_main(ptr %v__input) {
-  %t0 = call ptr @v_start()
   %t1 = call ptr @v_evenInt(ptr %t0)
   %t2 = call ptr @v_showResult(ptr %t1)
   %t3 = call ptr @__print(ptr %t2)
@@ -166,7 +155,8 @@ tco.loop.0:
 tco.case.arm.0.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
-  %t12 = call ptr @v_zero()
+  %t12 = call ptr @malloc(i64 4)
+  store i32 0, ptr %t12
   %t13 = call ptr @__eqInt32(ptr %t11, ptr %t12)
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
@@ -220,7 +210,8 @@ tco.case.default.17:
 tco.case.arm.1.46:
   %t47 = getelementptr ptr, ptr %t4, i32 1
   %t48 = load ptr, ptr %t47
-  %t49 = call ptr @v_zero()
+  %t49 = call ptr @malloc(i64 4)
+  store i32 0, ptr %t49
   %t50 = call ptr @__eqInt32(ptr %t48, ptr %t49)
   %t51 = getelementptr ptr, ptr %t50, i32 0
   %t52 = load ptr, ptr %t51

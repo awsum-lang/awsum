@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: single nullary constructor (CustomUnit type) with pattern matching" ]
+            [ BlockComment " Single nullary constructor; pattern match. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

@@ -1,41 +1,40 @@
 Program
     { imports =
         [ ImportDecl
-            [ BlockComment " Test: partial application creates a first-class function value.
-               `compose unwrap wrap` supplies 2 of 3 args to compose; the result must
-               behave as a 1-arg function that `apply` can invoke with the final arg. " ]
+            [ BlockComment " Partial application produces a first-class function value
+               that another HOF (`apply`) can then invoke. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl
         ( SrcSpan
-            { spanStartLine = 6
+            { spanStartLine = 5
             , spanStartCol = 1
-            , spanEndLine = 6
+            , spanEndLine = 5
             , spanEndCol = 19
             }
         ) "Box"
         [ Param
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 5
                 , spanStartCol = 10
-                , spanEndLine = 6
+                , spanEndLine = 5
                 , spanEndCol = 11
                 }
             ) "a"
         ]
         [ ConDef
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 5
                 , spanStartCol = 14
-                , spanEndLine = 6
+                , spanEndLine = 5
                 , spanEndCol = 17
                 }
             ) "Box"
             [ TyVar
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 5
                     , spanStartCol = 18
-                    , spanEndLine = 6
+                    , spanEndLine = 5
                     , spanEndCol = 19
                     }
                 ) "a"
@@ -43,51 +42,51 @@ Program
         ] Nothing :|
         [ Sig
             ( SrcSpan
-                { spanStartLine = 8
+                { spanStartLine = 7
                 , spanStartCol = 1
-                , spanEndLine = 8
+                , spanEndLine = 7
                 , spanEndCol = 28
                 }
             ) "wrap"
             ( TyArrow
                 ( SrcSpan
-                    { spanStartLine = 8
+                    { spanStartLine = 7
                     , spanStartCol = 8
-                    , spanEndLine = 8
+                    , spanEndLine = 7
                     , spanEndCol = 28
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 8
+                        { spanStartLine = 7
                         , spanStartCol = 8
-                        , spanEndLine = 8
+                        , spanEndLine = 7
                         , spanEndCol = 14
                         }
                     ) "String"
                 )
                 ( TyApp
                     ( SrcSpan
-                        { spanStartLine = 8
+                        { spanStartLine = 7
                         , spanStartCol = 18
-                        , spanEndLine = 8
+                        , spanEndLine = 7
                         , spanEndCol = 28
                         }
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 8
+                            { spanStartLine = 7
                             , spanStartCol = 18
-                            , spanEndLine = 8
+                            , spanEndLine = 7
                             , spanEndCol = 21
                             }
                         ) "Box"
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 8
+                            { spanStartLine = 7
                             , spanStartCol = 22
-                            , spanEndLine = 8
+                            , spanEndLine = 7
                             , spanEndCol = 28
                             }
                         ) "String"
@@ -96,43 +95,43 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 9
+                { spanStartLine = 8
                 , spanStartCol = 1
-                , spanEndLine = 9
+                , spanEndLine = 8
                 , spanEndCol = 15
                 }
             ) "wrap"
             [ Param
                 ( SrcSpan
-                    { spanStartLine = 9
+                    { spanStartLine = 8
                     , spanStartCol = 6
-                    , spanEndLine = 9
+                    , spanEndLine = 8
                     , spanEndCol = 7
                     }
                 ) "s"
             ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 9
+                    { spanStartLine = 8
                     , spanStartCol = 10
-                    , spanEndLine = 9
+                    , spanEndLine = 8
                     , spanEndCol = 15
                     }
                 )
                 ( ECon
                     ( SrcSpan
-                        { spanStartLine = 9
+                        { spanStartLine = 8
                         , spanStartCol = 10
-                        , spanEndLine = 9
+                        , spanEndLine = 8
                         , spanEndCol = 14
                         }
                     ) "Box"
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 9
+                        { spanStartLine = 8
                         , spanStartCol = 14
-                        , spanEndLine = 9
+                        , spanEndLine = 8
                         , spanEndCol = 15
                         }
                     )
@@ -141,42 +140,42 @@ Program
             ) Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 11
+                { spanStartLine = 10
                 , spanStartCol = 1
-                , spanEndLine = 11
+                , spanEndLine = 10
                 , spanEndCol = 30
                 }
             ) "unwrap"
             ( TyArrow
                 ( SrcSpan
-                    { spanStartLine = 11
+                    { spanStartLine = 10
                     , spanStartCol = 10
-                    , spanEndLine = 11
+                    , spanEndLine = 10
                     , spanEndCol = 30
                     }
                 )
                 ( TyApp
                     ( SrcSpan
-                        { spanStartLine = 11
+                        { spanStartLine = 10
                         , spanStartCol = 10
-                        , spanEndLine = 11
+                        , spanEndLine = 10
                         , spanEndCol = 20
                         }
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 11
+                            { spanStartLine = 10
                             , spanStartCol = 10
-                            , spanEndLine = 11
+                            , spanEndLine = 10
                             , spanEndCol = 13
                             }
                         ) "Box"
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 11
+                            { spanStartLine = 10
                             , spanStartCol = 14
-                            , spanEndLine = 11
+                            , spanEndLine = 10
                             , spanEndCol = 20
                             }
                         ) "String"
@@ -184,9 +183,9 @@ Program
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 11
+                        { spanStartLine = 10
                         , spanStartCol = 24
-                        , spanEndLine = 11
+                        , spanEndLine = 10
                         , spanEndCol = 30
                         }
                     ) "String"
@@ -194,34 +193,34 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 12
+                { spanStartLine = 11
                 , spanStartCol = 1
-                , spanEndLine = 13
+                , spanEndLine = 12
                 , spanEndCol = 21
                 }
             ) "unwrap"
             [ Param
                 ( SrcSpan
-                    { spanStartLine = 12
+                    { spanStartLine = 11
                     , spanStartCol = 8
-                    , spanEndLine = 12
+                    , spanEndLine = 11
                     , spanEndCol = 9
                     }
                 ) "b"
             ]
             ( ECase
                 ( SrcSpan
-                    { spanStartLine = 12
+                    { spanStartLine = 11
                     , spanStartCol = 12
-                    , spanEndLine = 13
+                    , spanEndLine = 12
                     , spanEndCol = 21
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 12
+                        { spanStartLine = 11
                         , spanStartCol = 17
-                        , spanEndLine = 12
+                        , spanEndLine = 11
                         , spanEndCol = 19
                         }
                     )
@@ -230,17 +229,17 @@ Program
                 ( CaseAlt []
                     ( PCon
                         ( SrcSpan
-                            { spanStartLine = 13
+                            { spanStartLine = 12
                             , spanStartCol = 3
-                            , spanEndLine = 13
+                            , spanEndLine = 12
                             , spanEndCol = 6
                             }
                         ) "Box"
                         [ PVar
                             ( SrcSpan
-                                { spanStartLine = 13
+                                { spanStartLine = 12
                                 , spanStartCol = 7
-                                , spanEndLine = 13
+                                , spanEndLine = 12
                                 , spanEndCol = 12
                                 }
                             ) "value"
@@ -248,9 +247,9 @@ Program
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 13
+                            { spanStartLine = 12
                             , spanStartCol = 16
-                            , spanEndLine = 13
+                            , spanEndLine = 12
                             , spanEndCol = 21
                             }
                         )
@@ -260,42 +259,42 @@ Program
             ) Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 15
+                { spanStartLine = 14
                 , spanStartCol = 1
-                , spanEndLine = 15
+                , spanEndLine = 14
                 , spanEndCol = 27
                 }
             ) "apply"
             ( TyArrow
                 ( SrcSpan
-                    { spanStartLine = 15
+                    { spanStartLine = 14
                     , spanStartCol = 9
-                    , spanEndLine = 15
+                    , spanEndLine = 14
                     , spanEndCol = 27
                     }
                 )
                 ( TyArrow
                     ( SrcSpan
-                        { spanStartLine = 15
+                        { spanStartLine = 14
                         , spanStartCol = 9
-                        , spanEndLine = 15
+                        , spanEndLine = 14
                         , spanEndCol = 18
                         }
                     )
                     ( TyVar
                         ( SrcSpan
-                            { spanStartLine = 15
+                            { spanStartLine = 14
                             , spanStartCol = 10
-                            , spanEndLine = 15
+                            , spanEndLine = 14
                             , spanEndCol = 11
                             }
                         ) "a"
                     )
                     ( TyVar
                         ( SrcSpan
-                            { spanStartLine = 15
+                            { spanStartLine = 14
                             , spanStartCol = 15
-                            , spanEndLine = 15
+                            , spanEndLine = 14
                             , spanEndCol = 16
                             }
                         ) "b"
@@ -303,26 +302,26 @@ Program
                 )
                 ( TyArrow
                     ( SrcSpan
-                        { spanStartLine = 15
+                        { spanStartLine = 14
                         , spanStartCol = 21
-                        , spanEndLine = 15
+                        , spanEndLine = 14
                         , spanEndCol = 27
                         }
                     )
                     ( TyVar
                         ( SrcSpan
-                            { spanStartLine = 15
+                            { spanStartLine = 14
                             , spanStartCol = 21
-                            , spanEndLine = 15
+                            , spanEndLine = 14
                             , spanEndCol = 22
                             }
                         ) "a"
                     )
                     ( TyVar
                         ( SrcSpan
-                            { spanStartLine = 15
+                            { spanStartLine = 14
                             , spanStartCol = 26
-                            , spanEndLine = 15
+                            , spanEndLine = 14
                             , spanEndCol = 27
                             }
                         ) "b"
@@ -331,42 +330,42 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 16
+                { spanStartLine = 15
                 , spanStartCol = 1
-                , spanEndLine = 16
+                , spanEndLine = 15
                 , spanEndCol = 16
                 }
             ) "apply"
             [ Param
                 ( SrcSpan
-                    { spanStartLine = 16
+                    { spanStartLine = 15
                     , spanStartCol = 7
-                    , spanEndLine = 16
+                    , spanEndLine = 15
                     , spanEndCol = 8
                     }
                 ) "f"
             , Param
                 ( SrcSpan
-                    { spanStartLine = 16
+                    { spanStartLine = 15
                     , spanStartCol = 9
-                    , spanEndLine = 16
+                    , spanEndLine = 15
                     , spanEndCol = 10
                     }
                 ) "x"
             ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 16
+                    { spanStartLine = 15
                     , spanStartCol = 13
-                    , spanEndLine = 16
+                    , spanEndLine = 15
                     , spanEndCol = 16
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 16
+                        { spanStartLine = 15
                         , spanStartCol = 13
-                        , spanEndLine = 16
+                        , spanEndLine = 15
                         , spanEndCol = 15
                         }
                     )
@@ -374,9 +373,9 @@ Program
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 16
+                        { spanStartLine = 15
                         , spanStartCol = 15
-                        , spanEndLine = 16
+                        , spanEndLine = 15
                         , spanEndCol = 16
                         }
                     )
@@ -385,42 +384,42 @@ Program
             ) Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 18
+                { spanStartLine = 17
                 , spanStartCol = 1
-                , spanEndLine = 18
+                , spanEndLine = 17
                 , spanEndCol = 41
                 }
             ) "compose"
             ( TyArrow
                 ( SrcSpan
-                    { spanStartLine = 18
+                    { spanStartLine = 17
                     , spanStartCol = 11
-                    , spanEndLine = 18
+                    , spanEndLine = 17
                     , spanEndCol = 41
                     }
                 )
                 ( TyArrow
                     ( SrcSpan
-                        { spanStartLine = 18
+                        { spanStartLine = 17
                         , spanStartCol = 11
-                        , spanEndLine = 18
+                        , spanEndLine = 17
                         , spanEndCol = 20
                         }
                     )
                     ( TyVar
                         ( SrcSpan
-                            { spanStartLine = 18
+                            { spanStartLine = 17
                             , spanStartCol = 12
-                            , spanEndLine = 18
+                            , spanEndLine = 17
                             , spanEndCol = 13
                             }
                         ) "b"
                     )
                     ( TyVar
                         ( SrcSpan
-                            { spanStartLine = 18
+                            { spanStartLine = 17
                             , spanStartCol = 17
-                            , spanEndLine = 18
+                            , spanEndLine = 17
                             , spanEndCol = 18
                             }
                         ) "c"
@@ -428,34 +427,34 @@ Program
                 )
                 ( TyArrow
                     ( SrcSpan
-                        { spanStartLine = 18
+                        { spanStartLine = 17
                         , spanStartCol = 23
-                        , spanEndLine = 18
+                        , spanEndLine = 17
                         , spanEndCol = 41
                         }
                     )
                     ( TyArrow
                         ( SrcSpan
-                            { spanStartLine = 18
+                            { spanStartLine = 17
                             , spanStartCol = 23
-                            , spanEndLine = 18
+                            , spanEndLine = 17
                             , spanEndCol = 32
                             }
                         )
                         ( TyVar
                             ( SrcSpan
-                                { spanStartLine = 18
+                                { spanStartLine = 17
                                 , spanStartCol = 24
-                                , spanEndLine = 18
+                                , spanEndLine = 17
                                 , spanEndCol = 25
                                 }
                             ) "a"
                         )
                         ( TyVar
                             ( SrcSpan
-                                { spanStartLine = 18
+                                { spanStartLine = 17
                                 , spanStartCol = 29
-                                , spanEndLine = 18
+                                , spanEndLine = 17
                                 , spanEndCol = 30
                                 }
                             ) "b"
@@ -463,26 +462,26 @@ Program
                     )
                     ( TyArrow
                         ( SrcSpan
-                            { spanStartLine = 18
+                            { spanStartLine = 17
                             , spanStartCol = 35
-                            , spanEndLine = 18
+                            , spanEndLine = 17
                             , spanEndCol = 41
                             }
                         )
                         ( TyVar
                             ( SrcSpan
-                                { spanStartLine = 18
+                                { spanStartLine = 17
                                 , spanStartCol = 35
-                                , spanEndLine = 18
+                                , spanEndLine = 17
                                 , spanEndCol = 36
                                 }
                             ) "a"
                         )
                         ( TyVar
                             ( SrcSpan
-                                { spanStartLine = 18
+                                { spanStartLine = 17
                                 , spanStartCol = 40
-                                , spanEndLine = 18
+                                , spanEndLine = 17
                                 , spanEndCol = 41
                                 }
                             ) "c"
@@ -492,50 +491,50 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 19
+                { spanStartLine = 18
                 , spanStartCol = 1
-                , spanEndLine = 19
+                , spanEndLine = 18
                 , spanEndCol = 24
                 }
             ) "compose"
             [ Param
                 ( SrcSpan
-                    { spanStartLine = 19
+                    { spanStartLine = 18
                     , spanStartCol = 9
-                    , spanEndLine = 19
+                    , spanEndLine = 18
                     , spanEndCol = 10
                     }
                 ) "f"
             , Param
                 ( SrcSpan
-                    { spanStartLine = 19
+                    { spanStartLine = 18
                     , spanStartCol = 11
-                    , spanEndLine = 19
+                    , spanEndLine = 18
                     , spanEndCol = 12
                     }
                 ) "g"
             , Param
                 ( SrcSpan
-                    { spanStartLine = 19
+                    { spanStartLine = 18
                     , spanStartCol = 13
-                    , spanEndLine = 19
+                    , spanEndLine = 18
                     , spanEndCol = 14
                     }
                 ) "x"
             ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 19
+                    { spanStartLine = 18
                     , spanStartCol = 17
-                    , spanEndLine = 19
+                    , spanEndLine = 18
                     , spanEndCol = 24
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 19
+                        { spanStartLine = 18
                         , spanStartCol = 17
-                        , spanEndLine = 19
+                        , spanEndLine = 18
                         , spanEndCol = 19
                         }
                     )
@@ -543,25 +542,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 19
+                        { spanStartLine = 18
                         , spanStartCol = 19
-                        , spanEndLine = 19
+                        , spanEndLine = 18
                         , spanEndCol = 24
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 19
+                            { spanStartLine = 18
                             , spanStartCol = 20
-                            , spanEndLine = 19
+                            , spanEndLine = 18
                             , spanEndCol = 23
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 19
+                                { spanStartLine = 18
                                 , spanStartCol = 20
-                                , spanEndLine = 19
+                                , spanEndLine = 18
                                 , spanEndCol = 22
                                 }
                             )
@@ -569,9 +568,9 @@ Program
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 19
+                                { spanStartLine = 18
                                 , spanStartCol = 22
-                                , spanEndLine = 19
+                                , spanEndLine = 18
                                 , spanEndCol = 23
                                 }
                             )
@@ -582,51 +581,51 @@ Program
             ) Nothing
         , Sig
             ( SrcSpan
-                { spanStartLine = 21
+                { spanStartLine = 20
                 , spanStartCol = 1
-                , spanEndLine = 21
+                , spanEndLine = 20
                 , spanEndCol = 25
                 }
             ) "main"
             ( TyArrow
                 ( SrcSpan
-                    { spanStartLine = 21
+                    { spanStartLine = 20
                     , spanStartCol = 8
-                    , spanEndLine = 21
+                    , spanEndLine = 20
                     , spanEndCol = 25
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 21
+                        { spanStartLine = 20
                         , spanStartCol = 8
-                        , spanEndLine = 21
+                        , spanEndLine = 20
                         , spanEndCol = 14
                         }
                     ) "String"
                 )
                 ( TyApp
                     ( SrcSpan
-                        { spanStartLine = 21
+                        { spanStartLine = 20
                         , spanStartCol = 18
-                        , spanEndLine = 21
+                        , spanEndLine = 20
                         , spanEndCol = 25
                         }
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 21
+                            { spanStartLine = 20
                             , spanStartCol = 18
-                            , spanEndLine = 21
+                            , spanEndLine = 20
                             , spanEndCol = 20
                             }
                         ) "IO"
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 21
+                            { spanStartLine = 20
                             , spanStartCol = 21
-                            , spanEndLine = 21
+                            , spanEndLine = 20
                             , spanEndCol = 25
                             }
                         ) "Unit"
@@ -635,34 +634,34 @@ Program
             ) Nothing
         , FunDef
             ( SrcSpan
-                { spanStartLine = 22
+                { spanStartLine = 21
                 , spanStartCol = 1
-                , spanEndLine = 22
+                , spanEndLine = 21
                 , spanEndCol = 68
                 }
             ) "main"
             [ Param
                 ( SrcSpan
-                    { spanStartLine = 22
+                    { spanStartLine = 21
                     , spanStartCol = 6
-                    , spanEndLine = 22
+                    , spanEndLine = 21
                     , spanEndCol = 12
                     }
                 ) "_input"
             ]
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 22
+                    { spanStartLine = 21
                     , spanStartCol = 15
-                    , spanEndLine = 22
+                    , spanEndLine = 21
                     , spanEndCol = 68
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 22
+                        { spanStartLine = 21
                         , spanStartCol = 15
-                        , spanEndLine = 22
+                        , spanEndLine = 21
                         , spanEndCol = 31
                         }
                     )
@@ -674,33 +673,33 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 22
+                        { spanStartLine = 21
                         , spanStartCol = 31
-                        , spanEndLine = 22
+                        , spanEndLine = 21
                         , spanEndCol = 68
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 22
+                            { spanStartLine = 21
                             , spanStartCol = 32
-                            , spanEndLine = 22
+                            , spanEndLine = 21
                             , spanEndCol = 67
                             }
                         )
                         ( EApp
                             ( SrcSpan
-                                { spanStartLine = 22
+                                { spanStartLine = 21
                                 , spanStartCol = 32
-                                , spanEndLine = 22
+                                , spanEndLine = 21
                                 , spanEndCol = 60
                                 }
                             )
                             ( EVar
                                 ( SrcSpan
-                                    { spanStartLine = 22
+                                    { spanStartLine = 21
                                     , spanStartCol = 32
-                                    , spanEndLine = 22
+                                    , spanEndLine = 21
                                     , spanEndCol = 38
                                     }
                                 )
@@ -708,33 +707,33 @@ Program
                             )
                             ( EParens
                                 ( SrcSpan
-                                    { spanStartLine = 22
+                                    { spanStartLine = 21
                                     , spanStartCol = 38
-                                    , spanEndLine = 22
+                                    , spanEndLine = 21
                                     , spanEndCol = 60
                                     }
                                 )
                                 ( EApp
                                     ( SrcSpan
-                                        { spanStartLine = 22
+                                        { spanStartLine = 21
                                         , spanStartCol = 39
-                                        , spanEndLine = 22
+                                        , spanEndLine = 21
                                         , spanEndCol = 58
                                         }
                                     )
                                     ( EApp
                                         ( SrcSpan
-                                            { spanStartLine = 22
+                                            { spanStartLine = 21
                                             , spanStartCol = 39
-                                            , spanEndLine = 22
+                                            , spanEndLine = 21
                                             , spanEndCol = 54
                                             }
                                         )
                                         ( EVar
                                             ( SrcSpan
-                                                { spanStartLine = 22
+                                                { spanStartLine = 21
                                                 , spanStartCol = 39
-                                                , spanEndLine = 22
+                                                , spanEndLine = 21
                                                 , spanEndCol = 47
                                                 }
                                             )
@@ -742,9 +741,9 @@ Program
                                         )
                                         ( EVar
                                             ( SrcSpan
-                                                { spanStartLine = 22
+                                                { spanStartLine = 21
                                                 , spanStartCol = 47
-                                                , spanEndLine = 22
+                                                , spanEndLine = 21
                                                 , spanEndCol = 54
                                                 }
                                             )
@@ -753,9 +752,9 @@ Program
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 22
+                                            { spanStartLine = 21
                                             , spanStartCol = 54
-                                            , spanEndLine = 22
+                                            , spanEndLine = 21
                                             , spanEndCol = 58
                                             }
                                         )
@@ -766,9 +765,9 @@ Program
                         )
                         ( ELit
                             ( SrcSpan
-                                { spanStartLine = 22
+                                { spanStartLine = 21
                                 , spanStartCol = 60
-                                , spanEndLine = 22
+                                , spanEndLine = 21
                                 , spanEndCol = 67
                                 }
                             )

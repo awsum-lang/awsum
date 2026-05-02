@@ -1,6 +1,4 @@
-{- Tests: one polymorphic function (unwrap) applied to two different
-   type instantiations (Box String and Box (Result String String))
-   within the same program. -}
+{- One polymorphic function applied to two different type instantiations. -}
 import IO.Stdout
 
 type Box a = Box a

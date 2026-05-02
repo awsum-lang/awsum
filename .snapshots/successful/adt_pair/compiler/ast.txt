@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ BlockComment " Tests: constructor with 2 independent fields and pattern matching that binds both. " ]
+            [ BlockComment " Constructor with 2 fields; pattern match binds both. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

@@ -1,5 +1,4 @@
-{- Tests: three user-defined ADTs (Color, Box a, Result a e) used together
-   in a single program with nested pattern matching across types. -}
+{- Three ADTs interacting; pattern matches threaded across them. -}
 import IO.Stdout
 
 type Color = Red | Green | Blue

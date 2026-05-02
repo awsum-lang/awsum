@@ -19,10 +19,10 @@ CoreProgram
                     ( CVar "opA" )
                     [
                         ( 0
-                        , [ "$do_e_29_9" ]
+                        , [ "$do_e_18_9" ]
                         , CCon 0
                             [ CRow 2252990199
-                                ( CVar "$do_e_29_9" )
+                                ( CVar "$do_e_18_9" )
                             ]
                         )
                     ,
@@ -32,10 +32,10 @@ CoreProgram
                             ( CVar "opB" )
                             [
                                 ( 0
-                                , [ "$do_e_30_9" ]
+                                , [ "$do_e_19_9" ]
                                 , CCon 0
                                     [ CRow 2269767818
-                                        ( CVar "$do_e_30_9" )
+                                        ( CVar "$do_e_19_9" )
                                     ]
                                 )
                             ,

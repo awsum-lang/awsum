@@ -2,8 +2,6 @@ CoreProgram
     { cdecls =
         [ CFunDef "showUnderflowError" [ "$wild0" ]
             ( CString "UnderflowError" )
-        , CValDef "zero"
-            ( CIntLit 0 TInt32 )
         , CFunDef "showResult" [ "r" ]
             ( CCase
                 ( CVar "r" )
@@ -31,8 +29,6 @@ CoreProgram
                     )
                 ]
             )
-        , CValDef "start"
-            ( CIntLit 1000000 TInt32 )
         , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
@@ -40,7 +36,7 @@ CoreProgram
                     ( CVar "showResult" )
                     [ CCall
                         ( CVar "stepA" )
-                        [ CVar "start" ]
+                        [ CIntLit 1000000 TInt32 ]
                     ]
                 ]
             )
@@ -55,14 +51,14 @@ CoreProgram
                             ( CCall
                                 ( CBuiltIn "eqInt32" )
                                 [ CVar "n"
-                                , CVar "zero"
+                                , CIntLit 0 TInt32
                                 ]
                             )
                             [
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CVar "zero" ]
+                                    [ CIntLit 0 TInt32 ]
                                 )
                             ,
                                 ( 1
@@ -97,14 +93,14 @@ CoreProgram
                             ( CCall
                                 ( CBuiltIn "eqInt32" )
                                 [ CVar "n"
-                                , CVar "zero"
+                                , CIntLit 0 TInt32
                                 ]
                             )
                             [
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CVar "zero" ]
+                                    [ CIntLit 0 TInt32 ]
                                 )
                             ,
                                 ( 1
@@ -139,14 +135,14 @@ CoreProgram
                             ( CCall
                                 ( CBuiltIn "eqInt32" )
                                 [ CVar "n"
-                                , CVar "zero"
+                                , CIntLit 0 TInt32
                                 ]
                             )
                             [
                                 ( 0
                                 , []
                                 , CCon 1
-                                    [ CVar "zero" ]
+                                    [ CIntLit 0 TInt32 ]
                                 )
                             ,
                                 ( 1

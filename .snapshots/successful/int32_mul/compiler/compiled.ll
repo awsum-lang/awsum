@@ -91,6 +91,12 @@ define internal ptr @v_showOverflowError(ptr %v__wild0) {
   ret ptr %t0
 }
 
+define internal ptr @v_minInt32() {
+  %t0 = call ptr @malloc(i64 4)
+  store i32 -2147483648, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
@@ -142,12 +148,6 @@ case.default.3:
 case.join.4:
   %t36 = phi ptr [%t28, %case.end.0.6], [%t35, %case.end.1.30]
   ret ptr %t36
-}
-
-define internal ptr @v_minInt32() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 -2147483648, ptr %t0
-  ret ptr %t0
 }
 
 define internal ptr @v_main(ptr %v__input) {

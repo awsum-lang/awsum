@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: uninhabited type (Never) as error branch; exhaustiveness skips empty constructors" ]
+            [ BlockComment " Uninhabited type as `Err` branch; exhaustiveness skips empty constructors. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

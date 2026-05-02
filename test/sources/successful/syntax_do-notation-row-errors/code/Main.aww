@@ -1,15 +1,5 @@
--- A 'do' block whose three '<-' steps each return 'Either' with a
--- different error label, and whose overall error type is the row-
--- semantic union of all three. The trailing 'pureEither c' produces
--- a 'Right' carrying the last bind's value.
---
--- Runtime: this test exercises the failure path (op2 fails with
--- 'ErrorC'). The result short-circuits at the first 'Left' and
--- bubbles up through the desugared 'bindEither' chain. The dispatch
--- on the row error uses the same FNV-1a tag-by-name protocol that
--- powers the rest of the structural-sums runtime, so the consumer
--- ('describe') routes to the correct arm by hash regardless of
--- which alternative the value was originally constructed under.
+{- `do` over three `Either`-returning steps with distinct error labels;
+   overall error is the row union, dispatched by row-tag. -}
 import IO.Stdout
 
 type ErrorA = ErrorA

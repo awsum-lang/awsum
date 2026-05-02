@@ -46,23 +46,31 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "opBLifted" [ "n" ]
-            ( CCall
-                ( CVar "liftB" )
-                [ CCall
-                    ( CVar "opB" )
-                    [ CVar "n" ]
-                ]
-            )
         , CFunDef "run" [ "x" ]
-            ( CCall
-                ( CVar "$df$bindEither$0" )
-                [ CCall
+            ( CCase
+                ( CCall
                     ( CVar "liftA" )
                     [ CCall
                         ( CVar "opA" )
                         [ CVar "x" ]
                     ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_28_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_28_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "liftB" )
+                        [ CCall
+                            ( CVar "opB" )
+                            [ CVar "a" ]
+                        ]
+                    )
                 ]
             )
         , CFunDef "describe" [ "r" ]
@@ -107,24 +115,6 @@ CoreProgram
                         ( CVar "run" )
                         [ CIntLit 5 TInt32 ]
                     ]
-                ]
-            )
-        , CFunDef "$df$bindEither$0" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 0
-                    , [ "e" ]
-                    , CCon 0
-                        [ CVar "e" ]
-                    )
-                ,
-                    ( 1
-                    , [ "a" ]
-                    , CCall
-                        ( CVar "opBLifted" )
-                        [ CVar "a" ]
-                    )
                 ]
             )
         ]

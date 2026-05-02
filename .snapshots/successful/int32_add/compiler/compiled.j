@@ -120,6 +120,20 @@ L_addi32_under:
 .end method
 
 
+.method static v_minInt32()Ljava/lang/Object;
+  ldc -2147483648
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
+.method static v_maxInt32()Ljava/lang/Object;
+  ldc 2147483647
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
 .method static v_render(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
@@ -184,20 +198,6 @@ L_arm_1:
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   goto L_join
 L_join:
-  areturn
-.end method
-
-
-.method static v_maxInt32()Ljava/lang/Object;
-  ldc 2147483647
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_minInt32()Ljava/lang/Object;
-  ldc -2147483648
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 

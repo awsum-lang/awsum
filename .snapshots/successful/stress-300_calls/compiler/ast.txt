@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Stress test: chain of 300 non-recursive function calls, each appending its index to the accumulator." ]
+            [ BlockComment " Chain of 300 non-recursive function calls. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig

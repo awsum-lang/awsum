@@ -87,12 +87,6 @@ define internal ptr @v_showUnderflowError(ptr %v__wild0) {
   ret ptr %t0
 }
 
-define internal ptr @v_zero() {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t0
-  ret ptr %t0
-}
-
 define internal ptr @v_countDown(ptr %v_n) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
@@ -113,7 +107,8 @@ entry:
 tco.loop.0:
   %t5 = load ptr, ptr %t3
   %t6 = load ptr, ptr %t4
-  %t7 = call ptr @v_zero()
+  %t7 = call ptr @malloc(i64 1)
+  store i8 0, ptr %t7
   %t8 = call ptr @__eqUInt8(ptr %t5, ptr %t7)
   %t9 = getelementptr ptr, ptr %t8, i32 0
   %t10 = load ptr, ptr %t9
@@ -264,14 +259,9 @@ case.join.4:
   ret ptr %t18
 }
 
-define internal ptr @v_start() {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 1)
   store i8 255, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_main(ptr %v__input) {
-  %t0 = call ptr @v_start()
   %t1 = call ptr @v_countDown(ptr %t0)
   %t2 = call ptr @v_showResult(ptr %t1)
   %t3 = call ptr @__print(ptr %t2)

@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: higher-order map over recursive list; case branches return parametric ADT" ]
+            [ BlockComment " HOF over recursive ADT; case branches reconstruct the parametric type. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

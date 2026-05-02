@@ -47,7 +47,7 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t3
 }
 
-define internal ptr @v__lam_0(ptr %v_k, ptr %v_n) {
+define internal ptr @v__lam_0(ptr %v_k, ptr %v__n) {
   ret ptr %v_k
 }
 

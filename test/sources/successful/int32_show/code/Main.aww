@@ -1,26 +1,5 @@
--- Test: showInt32 across the full range — min, small negative, zero, small
--- positive, a multi-digit value, and max — rendered as a comma-separated list
--- so each backend exercises sign handling, zero, and multi-digit formatting
--- in a single program.
+{- `showInt32`: full range (sign, zero, multi-digit, boundaries). -}
 import IO.Stdout
 
 main : String -> IO Unit
-main _input = IO.Stdout.print (showInt32 minInt32 ++ ", " ++ showInt32 negative ++ ", " ++ showInt32 zero ++ ", " ++ showInt32 positive ++ ", " ++ showInt32 manyDigits ++ ", " ++ showInt32 maxInt32)
-
-minInt32 : Int32
-minInt32 = -2147483648
-
-negative : Int32
-negative = -42
-
-zero : Int32
-zero = 0
-
-positive : Int32
-positive = 7
-
-manyDigits : Int32
-manyDigits = 1234567
-
-maxInt32 : Int32
-maxInt32 = 2147483647
+main _input = IO.Stdout.print (showInt32 minInt32 ++ ", " ++ showInt32 (-42) ++ ", " ++ showInt32 0 ++ ", " ++ showInt32 7 ++ ", " ++ showInt32 1234567 ++ ", " ++ showInt32 maxInt32)

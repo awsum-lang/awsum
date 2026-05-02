@@ -1,6 +1,12 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "_input" ]
+        [ CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CValDef "maxInt32"
+            ( CIntLit 2147483647 TInt32 )
+        , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
@@ -30,25 +36,27 @@ CoreProgram
                                                         ]
                                                     , CCall
                                                         ( CBuiltIn "showInt32" )
-                                                        [ CVar "negative" ]
+                                                        [ CIntLit
+                                                            ( -42 ) TInt32
+                                                        ]
                                                     ]
                                                 , CString ", "
                                                 ]
                                             , CCall
                                                 ( CBuiltIn "showInt32" )
-                                                [ CVar "zero" ]
+                                                [ CIntLit 0 TInt32 ]
                                             ]
                                         , CString ", "
                                         ]
                                     , CCall
                                         ( CBuiltIn "showInt32" )
-                                        [ CVar "positive" ]
+                                        [ CIntLit 7 TInt32 ]
                                     ]
                                 , CString ", "
                                 ]
                             , CCall
                                 ( CBuiltIn "showInt32" )
-                                [ CVar "manyDigits" ]
+                                [ CIntLit 1234567 TInt32 ]
                             ]
                         , CString ", "
                         ]
@@ -58,21 +66,5 @@ CoreProgram
                     ]
                 ]
             )
-        , CValDef "minInt32"
-            ( CIntLit
-                ( -2147483648 ) TInt32
-            )
-        , CValDef "negative"
-            ( CIntLit
-                ( -42 ) TInt32
-            )
-        , CValDef "zero"
-            ( CIntLit 0 TInt32 )
-        , CValDef "positive"
-            ( CIntLit 7 TInt32 )
-        , CValDef "manyDigits"
-            ( CIntLit 1234567 TInt32 )
-        , CValDef "maxInt32"
-            ( CIntLit 2147483647 TInt32 )
         ]
     }

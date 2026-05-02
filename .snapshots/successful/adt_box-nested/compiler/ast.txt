@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: nested Box with inline nested pattern matching (Box (Box (Box value)))" ]
+            [ BlockComment " Nested ADT with inline nested pattern (single arm). " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

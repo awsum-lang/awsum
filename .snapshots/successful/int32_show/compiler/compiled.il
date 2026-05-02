@@ -30,75 +30,9 @@
     ret
   }
 
-  .method private hidebysig static object v_main(object) cil managed
-  {
-    call object AwsumMain::v_minInt32()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_negative()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_zero()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_positive()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_manyDigits()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    ldstr ", "
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v_maxInt32()
-    callvirt instance string [System.Runtime]System.Object::ToString()
-    call object AwsumMain::__concat(object, object)
-    call object AwsumMain::__print(object)
-    ret
-  }
-
-
   .method private hidebysig static object v_minInt32() cil managed
   {
     ldc.i4 -2147483648
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_negative() cil managed
-  {
-    ldc.i4 -42
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_zero() cil managed
-  {
-    ldc.i4 0
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_positive() cil managed
-  {
-    ldc.i4 7
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_manyDigits() cil managed
-  {
-    ldc.i4 1234567
     box [System.Runtime]System.Int32
     ret
   }
@@ -108,6 +42,44 @@
   {
     ldc.i4 2147483647
     box [System.Runtime]System.Int32
+    ret
+  }
+
+
+  .method private hidebysig static object v_main(object) cil managed
+  {
+    call object AwsumMain::v_minInt32()
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    ldc.i4 -42
+    box [System.Runtime]System.Int32
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    ldc.i4 0
+    box [System.Runtime]System.Int32
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    ldc.i4 7
+    box [System.Runtime]System.Int32
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    ldc.i4 1234567
+    box [System.Runtime]System.Int32
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    ldstr ", "
+    call object AwsumMain::__concat(object, object)
+    call object AwsumMain::v_maxInt32()
+    callvirt instance string [System.Runtime]System.Object::ToString()
+    call object AwsumMain::__concat(object, object)
+    call object AwsumMain::__print(object)
     ret
   }
 

@@ -1,4 +1,4 @@
--- Test: uninhabited type (Never) as error branch; exhaustiveness skips empty constructors
+{- Uninhabited type as `Err` branch; exhaustiveness skips empty constructors. -}
 import IO.Stdout
 
 type Never

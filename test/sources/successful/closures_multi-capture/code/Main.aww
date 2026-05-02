@@ -1,8 +1,4 @@
-{- Closure capturing two distinct outer parameters. The lambda body
-   references `a` and `b` (both `Int32` parameters of the enclosing
-   function); after lifting, the helper takes both captures up front
-   and the call site passes them as runtime arguments to the
-   specialised `apply`. -}
+{- Closure capturing two outer parameters at once. -}
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

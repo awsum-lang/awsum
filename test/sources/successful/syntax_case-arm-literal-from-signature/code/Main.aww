@@ -1,9 +1,5 @@
--- A literal in a case-arm body picks up its type from the enclosing
--- function's signature: 'firstZero' returns 'Int32', so the bare '0'
--- in the 'Just Nothing' and 'Nothing' arms is pinned to 'Int32'
--- without a separate 'zero : Int32' binding. This exercises the
--- bidirectional 'checkExpr ECase' clause that pushes the function's
--- expected return type into each arm body.
+{- Bidirectional check: bare literal in a case-arm picks up its type
+   from the enclosing function's return signature. -}
 import IO.Stdout
 
 firstZero : Maybe (Maybe Int32) -> Int32

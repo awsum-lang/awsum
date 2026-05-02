@@ -7,6 +7,8 @@ function v_showUnderflowError(v__wild0){
     return "UnderflowError";
 }
 
+const v_minInt32 = (-2147483648|0);
+
 function v_render(v_r){
     {
       const __s = v_r;
@@ -23,12 +25,8 @@ function v_render(v_r){
     }
 }
 
-const v_minInt32 = (-2147483648|0);
-
-const v_ordinary = (42|0);
-
 function main(v__input){
-    return __print((((v_render)(__predInt32(v_ordinary)) + ", ") + (v_render)(__predInt32(v_minInt32))));
+    return __print((((v_render)(__predInt32((42|0))) + ", ") + (v_render)(__predInt32(v_minInt32))));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

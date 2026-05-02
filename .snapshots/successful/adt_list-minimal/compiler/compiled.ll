@@ -123,7 +123,7 @@ tco.exit.1:
   ret ptr %t20
 }
 
-define internal ptr @v_exampleList() {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 24)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -155,14 +155,9 @@ define internal ptr @v_exampleList() {
   store ptr %t10, ptr %t19
   %t20 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t5, ptr %t20
-  ret ptr %t0
-}
-
-define internal ptr @v_main(ptr %v__input) {
-  %t0 = call ptr @v_exampleList()
-  %t1 = call ptr @v_show(ptr %t0)
-  %t2 = call ptr @__print(ptr %t1)
-  ret ptr %t2
+  %t21 = call ptr @v_show(ptr %t0)
+  %t22 = call ptr @__print(ptr %t21)
+  ret ptr %t22
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

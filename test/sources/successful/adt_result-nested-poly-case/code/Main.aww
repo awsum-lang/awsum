@@ -1,4 +1,4 @@
--- Test: nested polymorphic Result with sequential case expressions (not flat)
+{- Nested polymorphic Result; sequential case-of (no nested patterns). -}
 import IO.Stdout
 
 type Result a e = Ok a | Err e

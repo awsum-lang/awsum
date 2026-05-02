@@ -3,9 +3,6 @@
 -- towards 0 to make the boundary case appear in 100-test runs.
 import IO.Stdout
 
-minUInt8 : UInt8
-minUInt8 = 0
-
 property : UInt8 -> Bool
 property x = case predUInt8 x of
   Left _ -> eqUInt8 x minUInt8

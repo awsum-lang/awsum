@@ -7,6 +7,10 @@ function v_showOverflowError(v__wild0){
     return "OverflowError";
 }
 
+const v_minUInt8 = (0 & 0xFF);
+
+const v_maxUInt8 = (255 & 0xFF);
+
 function v_render(v_r){
     {
       const __s = v_r;
@@ -24,7 +28,7 @@ function v_render(v_r){
 }
 
 function main(v__input){
-    return __print((((((((v_render)(__addUInt8((200 & 0xFF), (55 & 0xFF))) + ", ") + (v_render)(__addUInt8((200 & 0xFF), (56 & 0xFF)))) + ", ") + (v_render)(__addUInt8((255 & 0xFF), (255 & 0xFF)))) + ", ") + (v_render)(__addUInt8((0 & 0xFF), (0 & 0xFF)))));
+    return __print((((((((v_render)(__addUInt8((200 & 0xFF), (55 & 0xFF))) + ", ") + (v_render)(__addUInt8((200 & 0xFF), (56 & 0xFF)))) + ", ") + (v_render)(__addUInt8(v_maxUInt8, v_maxUInt8))) + ", ") + (v_render)(__addUInt8(v_minUInt8, v_minUInt8))));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

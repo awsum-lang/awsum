@@ -7,6 +7,10 @@ function v_showOverflowError(v__wild0){
     return "OverflowError";
 }
 
+const v_minInt32 = (-2147483648|0);
+
+const v_maxInt32 = (2147483647|0);
+
 function v_render(v_r){
     {
       const __s = v_r;
@@ -22,10 +26,6 @@ function v_render(v_r){
       }
     }
 }
-
-const v_maxInt32 = (2147483647|0);
-
-const v_minInt32 = (-2147483648|0);
 
 function main(v__input){
     return __print((((((((((v_render)(__negInt32((5|0))) + ", ") + (v_render)(__negInt32((-5|0)))) + ", ") + (v_render)(__negInt32((0|0)))) + ", ") + (v_render)(__negInt32(v_maxInt32))) + ", ") + (v_render)(__negInt32(v_minInt32))));

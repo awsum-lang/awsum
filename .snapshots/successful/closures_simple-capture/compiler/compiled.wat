@@ -126,7 +126,7 @@
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__show_i32 (call $v_captureFn (call $__box_i32 (i32.const 7))))))
 
-  (func $v__lam_0 (param $v_k i32) (param $v_n i32) (result i32)
+  (func $v__lam_0 (param $v_k i32) (param $v__n i32) (result i32)
     (local.get $v_k))
 
   (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (result i32)

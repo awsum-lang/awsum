@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Stress test: 300 top-level String constants joined by ","." ]
+            [ BlockComment " 300 top-level String constants joined by `,`. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig

@@ -1,6 +1,4 @@
-{- Tests: polymorphic function (identity) applied to a parametric ADT
-   value (Box "one"), then pattern matched. Verifies that polymorphic
-   functions correctly pass through ADT values in all backends. -}
+{- Polymorphic function applied to a parametric ADT value. -}
 import IO.Stdout
 
 type Box a = Box a

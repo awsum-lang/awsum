@@ -1,6 +1,10 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "render" [ "b" ]
+        [ CValDef "minUInt8"
+            ( CIntLit 0 TUInt8 )
+        , CValDef "maxUInt8"
+            ( CIntLit 255 TUInt8 )
+        , CFunDef "render" [ "b" ]
             ( CCase
                 ( CVar "b" )
                 [
@@ -28,16 +32,16 @@ CoreProgram
                                 ( CVar "render" )
                                 [ CCall
                                     ( CBuiltIn "eqUInt8" )
-                                    [ CIntLit 0 TUInt8
-                                    , CIntLit 0 TUInt8
+                                    [ CVar "minUInt8"
+                                    , CVar "minUInt8"
                                     ]
                                 ]
                             , CCall
                                 ( CVar "render" )
                                 [ CCall
                                     ( CBuiltIn "eqUInt8" )
-                                    [ CIntLit 255 TUInt8
-                                    , CIntLit 255 TUInt8
+                                    [ CVar "maxUInt8"
+                                    , CVar "maxUInt8"
                                     ]
                                 ]
                             ]
@@ -45,8 +49,8 @@ CoreProgram
                             ( CVar "render" )
                             [ CCall
                                 ( CBuiltIn "eqUInt8" )
-                                [ CIntLit 255 TUInt8
-                                , CIntLit 0 TUInt8
+                                [ CVar "maxUInt8"
+                                , CVar "minUInt8"
                                 ]
                             ]
                         ]

@@ -1,8 +1,8 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "sumTriple" [ "$arg_21_11" ]
+        [ CFunDef "sumTriple" [ "$arg_5_11" ]
             ( CCase
-                ( CVar "$arg_21_11" )
+                ( CVar "$arg_5_11" )
                 [
                     ( 0
                     ,
@@ -48,9 +48,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "sumPair" [ "$arg_31_9" ]
+        , CFunDef "sumPair" [ "$arg_15_9" ]
             ( CCase
-                ( CVar "$arg_31_9" )
+                ( CVar "$arg_15_9" )
                 [
                     ( 0
                     ,
@@ -99,9 +99,9 @@ CoreProgram
                     [ CVar "triple" ]
                 ]
             )
-        , CFunDef "$lam$0" [ "$arg_44_19" ]
+        , CFunDef "$lam$0" [ "$arg_28_19" ]
             ( CCase
-                ( CVar "$arg_44_19" )
+                ( CVar "$arg_28_19" )
                 [
                     ( 0
                     ,

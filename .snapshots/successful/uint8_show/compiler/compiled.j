@@ -27,19 +27,35 @@
   areturn
 .end method
 
+.method static v_minUInt8()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
+.method static v_maxUInt8()Ljava/lang/Object;
+  sipush 255
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_minUInt8()Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   ldc ", "
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_small()Ljava/lang/Object;
+  bipush 42
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   ldc ", "
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_aboveSignedByte()Ljava/lang/Object;
+  sipush 200
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -50,34 +66,6 @@
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v_minUInt8()Ljava/lang/Object;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_small()Ljava/lang/Object;
-  bipush 42
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_aboveSignedByte()Ljava/lang/Object;
-  sipush 200
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_maxUInt8()Ljava/lang/Object;
-  sipush 255
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 .end method
 

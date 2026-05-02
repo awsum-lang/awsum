@@ -1,4 +1,4 @@
--- Test: higher-order map over recursive list; case branches return parametric ADT
+{- HOF over recursive ADT; case branches reconstruct the parametric type. -}
 import IO.Stdout
 
 type List a = Cons a (List a) | Nil

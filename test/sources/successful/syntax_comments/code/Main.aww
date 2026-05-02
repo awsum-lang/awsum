@@ -1,4 +1,4 @@
--- Test: block and line comments preserved through parsing and formatting
+{- Block and line comments preserved through parsing and formatting. -}
 import IO.Stdout
 
 {- Block comment 1

@@ -1,5 +1,4 @@
--- Test: `Maybe a` and its constructors `Just`/`Nothing` from the prelude.
--- Parallel to `prelude-either`, which covers `Either a b`.
+{- `Maybe a` from prelude (no import). -}
 import IO.Stdout
 
 unwrap : Maybe String -> String

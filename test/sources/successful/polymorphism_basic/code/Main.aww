@@ -1,5 +1,4 @@
--- Test: polymorphic functions (identity, compose) with type variables.
--- 'const' lives in the prelude.
+{- Polymorphic `identity`, `compose`; `const` from prelude. -}
 import IO.Stdout
 
 main : String -> IO Unit

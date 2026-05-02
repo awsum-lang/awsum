@@ -1,5 +1,4 @@
--- Test: Bool operators `not`, `and`, `or` from the prelude.
--- No `showBool` in the prelude, so we case-of to stringify.
+{- Prelude `Bool` ops `not`, `and`, `or`. -}
 import IO.Stdout
 
 showBool : Bool -> String

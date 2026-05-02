@@ -3,9 +3,9 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [882564211, [0]]]; if (s < -2147483648) return [0, [3768445577, [0]]]; return [1, s|0]; }
 
-function v_sumTriple(v__arg_21_11){
+function v_sumTriple(v__arg_5_11){
     {
-      const __s = v__arg_21_11;
+      const __s = v__arg_5_11;
       switch (__s[0]) {
         case 0: {
           const v_a = __s[1];
@@ -41,9 +41,9 @@ function v_sumTriple(v__arg_21_11){
     }
 }
 
-function v_sumPair(v__arg_31_9){
+function v_sumPair(v__arg_15_9){
     {
-      const __s = v__arg_31_9;
+      const __s = v__arg_15_9;
       switch (__s[0]) {
         case 0: {
           const v_a = __s[1];
@@ -74,9 +74,9 @@ function main(v__input){
     return (v__let_2)((v_sumTriple)(v_triple));
 }
 
-function v__lam_0(v__arg_44_19){
+function v__lam_0(v__arg_28_19){
     {
-      const __s = v__arg_44_19;
+      const __s = v__arg_28_19;
       switch (__s[0]) {
         case 0: {
           const v_a = __s[1];

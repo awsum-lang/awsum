@@ -3,9 +3,6 @@
 -- towards 255 to make the boundary case appear in 100-test runs.
 import IO.Stdout
 
-maxUInt8 : UInt8
-maxUInt8 = 255
-
 property : UInt8 -> Bool
 property x = case succUInt8 x of
   Left _ -> eqUInt8 x maxUInt8

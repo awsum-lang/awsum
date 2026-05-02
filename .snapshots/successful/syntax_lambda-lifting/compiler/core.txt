@@ -22,10 +22,10 @@ CoreProgram
                 ( CVar "op1" )
                 [
                     ( 0
-                    , [ "$do_e_35_3" ]
+                    , [ "$do_e_23_3" ]
                     , CCon 0
                         [ CRow 2252990199
-                            ( CVar "$do_e_35_3" )
+                            ( CVar "$do_e_23_3" )
                         ]
                     )
                 ,
@@ -38,10 +38,10 @@ CoreProgram
                         )
                         [
                             ( 0
-                            , [ "$do_e_36_3" ]
+                            , [ "$do_e_24_3" ]
                             , CCon 0
                                 [ CRow 2269767818
-                                    ( CVar "$do_e_36_3" )
+                                    ( CVar "$do_e_24_3" )
                                 ]
                             )
                         ,

@@ -22,14 +22,6 @@
     ret
   }
 
-  .method private hidebysig static object v_zero() cil managed
-  {
-    ldc.i4 0
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
   .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4.1
@@ -73,7 +65,8 @@
     switch (IL_tco_arm_0, IL_tco_arm_1)
   IL_tco_arm_0:
     pop
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     ret
   IL_tco_arm_1:
     pop
@@ -110,7 +103,8 @@
     switch (IL_tco_arm_0, IL_tco_arm_1)
   IL_tco_arm_0:
     pop
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     ret
   IL_tco_arm_1:
     pop
@@ -127,7 +121,8 @@
     stelem.ref
     dup
     ldc.i4.2
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     stelem.ref
     starg.s 0
     br IL_tco_loop

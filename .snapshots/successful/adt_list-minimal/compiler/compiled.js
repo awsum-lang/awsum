@@ -50,10 +50,8 @@ function v__apply_show(v__k, v__x){
   }
 }
 
-const v_exampleList = [0, "a", [0, "b", [0, "c", [1]]]];
-
 function main(v__input){
-    return __print((v_show)(v_exampleList));
+    return __print((v_show)([0, "a", [0, "b", [0, "c", [1]]]]));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

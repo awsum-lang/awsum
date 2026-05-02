@@ -8,8 +8,6 @@ function v_showUnderflowError(v__wild0){
     return "UnderflowError";
 }
 
-const v_zero = (0|0);
-
 function v_showResult(v_r){
     {
       const __s = v_r;
@@ -26,10 +24,8 @@ function v_showResult(v_r){
     }
 }
 
-const v_start = (100000|0);
-
 function main(v__input){
-    return __print((v_showResult)((v_pingOne)(v_start)));
+    return __print((v_showResult)((v_pingOne)((100000|0))));
 }
 
 function v__scc_pingOne_pongTwo(v__args){
@@ -40,10 +36,10 @@ function v__scc_pingOne_pongTwo(v__args){
         case 0: {
           const v_n = __s[1];
           {
-            const __s = __eqInt32(v_n, v_zero);
+            const __s = __eqInt32(v_n, (0|0));
             switch (__s[0]) {
               case 0: {
-                return [1, v_zero];
+                return [1, (0|0)];
               }
               case 1: {
                 {
@@ -55,7 +51,7 @@ function v__scc_pingOne_pongTwo(v__args){
                     }
                     case 1: {
                       const v_m = __s[1];
-                      const __t0 = [1, v_m, v_zero];
+                      const __t0 = [1, v_m, (0|0)];
                       v__args = __t0;
                       continue;
                     }
@@ -69,10 +65,10 @@ function v__scc_pingOne_pongTwo(v__args){
           const v_n = __s[1];
           const v__acc = __s[2];
           {
-            const __s = __eqInt32(v_n, v_zero);
+            const __s = __eqInt32(v_n, (0|0));
             switch (__s[0]) {
               case 0: {
-                return [1, v_zero];
+                return [1, (0|0)];
               }
               case 1: {
                 {

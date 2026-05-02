@@ -18,13 +18,6 @@
   areturn
 .end method
 
-.method static v_zero()Ljava/lang/Object;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_1
   anewarray java/lang/Object
@@ -75,7 +68,8 @@ L_tco_arm_0:
     default: L_tco_arm_0
 L_tco_arm_0:
   pop
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 L_tco_arm_1:
   pop
@@ -116,7 +110,8 @@ L_tco_arm_1:
     default: L_tco_arm_0
 L_tco_arm_0:
   pop
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   areturn
 L_tco_arm_1:
   pop
@@ -133,7 +128,8 @@ L_tco_arm_1:
   aastore
   dup
   iconst_2
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_0
   goto L_tco_loop

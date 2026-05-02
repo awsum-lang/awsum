@@ -1,4 +1,4 @@
--- Test: non-parametric single-constructor wrapper with a concrete field type
+{- Non-parametric single-constructor wrapper over a concrete field. -}
 import IO.Stdout
 
 type Wrapper = Wrap String

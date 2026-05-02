@@ -81,6 +81,13 @@ L_succ_ok:
 .end method
 
 
+.method static v_maxInt32()Ljava/lang/Object;
+  ldc 2147483647
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  areturn
+.end method
+
+
 .method static v_render(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
@@ -120,22 +127,9 @@ L_join:
 .end method
 
 
-.method static v_maxInt32()Ljava/lang/Object;
-  ldc 2147483647
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_ordinary()Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   bipush 42
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_ordinary()Ljava/lang/Object;
   invokestatic AwsumMain/__succInt32(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_render(Ljava/lang/Object;)Ljava/lang/Object;
   ldc ", "

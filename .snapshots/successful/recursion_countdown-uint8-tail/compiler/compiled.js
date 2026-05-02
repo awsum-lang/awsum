@@ -8,12 +8,10 @@ function v_showUnderflowError(v__wild0){
     return "UnderflowError";
 }
 
-const v_zero = (0 & 0xFF);
-
 function v_countDown(v_n, v_acc){
   while (true) {
     {
-      const __s = __eqUInt8(v_n, v_zero);
+      const __s = __eqUInt8(v_n, (0 & 0xFF));
       switch (__s[0]) {
         case 0: {
           return [1, (v_acc + String(v_n))];
@@ -58,10 +56,8 @@ function v_showResult(v_r){
     }
 }
 
-const v_start = (255 & 0xFF);
-
 function main(v__input){
-    return __print((v_showResult)((v_countDown)(v_start, "")));
+    return __print((v_showResult)((v_countDown)((255 & 0xFF), "")));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

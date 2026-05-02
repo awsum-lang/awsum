@@ -1,5 +1,4 @@
-{- Tests: mutual recursion — handleA calls handleB and vice versa.
-Verifies that forward references work correctly in all backends. -}
+{- Mutual recursion: forward references resolve across both functions. -}
 import IO.Stdout
 
 type Step = StepA | StepB | StepC | Done

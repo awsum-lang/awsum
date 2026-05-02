@@ -109,13 +109,6 @@ L_eq_u8_ne:
 .end method
 
 
-.method static v_zero()Ljava/lang/Object;
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
 .method static v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   iconst_1
@@ -133,7 +126,8 @@ L_eq_u8_ne:
 .method static v__cps_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
-  invokestatic AwsumMain/v_zero()Ljava/lang/Object;
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/__eqUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -347,15 +341,9 @@ L_join:
 .end method
 
 
-.method static v_start()Ljava/lang/Object;
+.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   sipush 255
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  areturn
-.end method
-
-
-.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_start()Ljava/lang/Object;
   invokestatic AwsumMain/v_countDown(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_showResult(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;

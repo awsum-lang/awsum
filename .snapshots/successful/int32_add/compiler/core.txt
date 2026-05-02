@@ -4,6 +4,12 @@ CoreProgram
             ( CString "UnderflowError" )
         , CFunDef "showOverflowError" [ "$wild0" ]
             ( CString "OverflowError" )
+        , CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CValDef "maxInt32"
+            ( CIntLit 2147483647 TInt32 )
         , CFunDef "render" [ "r" ]
             ( CCase
                 ( CVar "r" )
@@ -48,12 +54,6 @@ CoreProgram
                         ]
                     )
                 ]
-            )
-        , CValDef "maxInt32"
-            ( CIntLit 2147483647 TInt32 )
-        , CValDef "minInt32"
-            ( CIntLit
-                ( -2147483648 ) TInt32
             )
         , CFunDef "main" [ "_input" ]
             ( CCall

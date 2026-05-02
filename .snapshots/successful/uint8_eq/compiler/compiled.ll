@@ -44,6 +44,18 @@ define internal ptr @__eqUInt8(ptr %a, ptr %b) {
 }
 
 
+define internal ptr @v_minUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 0, ptr %t0
+  ret ptr %t0
+}
+
+define internal ptr @v_maxUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 255, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_render(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
@@ -67,23 +79,17 @@ case.join.4:
 }
 
 define internal ptr @v_main(ptr %v__input) {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t0
-  %t1 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t1
+  %t0 = call ptr @v_minUInt8()
+  %t1 = call ptr @v_minUInt8()
   %t2 = call ptr @__eqUInt8(ptr %t0, ptr %t1)
   %t3 = call ptr @v_render(ptr %t2)
-  %t4 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t4
-  %t5 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t5
+  %t4 = call ptr @v_maxUInt8()
+  %t5 = call ptr @v_maxUInt8()
   %t6 = call ptr @__eqUInt8(ptr %t4, ptr %t5)
   %t7 = call ptr @v_render(ptr %t6)
   %t8 = call ptr @__concat(ptr %t3, ptr %t7)
-  %t9 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t9
-  %t10 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t10
+  %t9 = call ptr @v_maxUInt8()
+  %t10 = call ptr @v_minUInt8()
   %t11 = call ptr @__eqUInt8(ptr %t9, ptr %t10)
   %t12 = call ptr @v_render(ptr %t11)
   %t13 = call ptr @__concat(ptr %t8, ptr %t12)

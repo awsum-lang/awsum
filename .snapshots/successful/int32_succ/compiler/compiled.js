@@ -7,6 +7,8 @@ function v_showOverflowError(v__wild0){
     return "OverflowError";
 }
 
+const v_maxInt32 = (2147483647|0);
+
 function v_render(v_r){
     {
       const __s = v_r;
@@ -23,12 +25,8 @@ function v_render(v_r){
     }
 }
 
-const v_maxInt32 = (2147483647|0);
-
-const v_ordinary = (42|0);
-
 function main(v__input){
-    return __print((((v_render)(__succInt32(v_ordinary)) + ", ") + (v_render)(__succInt32(v_maxInt32))));
+    return __print((((v_render)(__succInt32((42|0))) + ", ") + (v_render)(__succInt32(v_maxInt32))));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

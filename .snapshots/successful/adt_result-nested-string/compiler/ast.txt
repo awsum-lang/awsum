@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: nested monomorphic Result with inline flat pattern matching (4 branches)" ]
+            [ BlockComment " Nested monomorphic Result; flat 4-arm inline patterns. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

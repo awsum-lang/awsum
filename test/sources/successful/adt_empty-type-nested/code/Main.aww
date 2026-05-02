@@ -1,4 +1,4 @@
--- Test: deeply nested uninhabited type (Box (Box (Box Never))) still recognized as empty
+{- Uninhabited type detected through deep nesting. -}
 import IO.Stdout
 
 type Never

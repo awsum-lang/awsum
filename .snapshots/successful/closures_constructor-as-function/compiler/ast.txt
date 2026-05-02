@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: constructors passed as first-class function arguments to HOFs" ]
+            [ BlockComment " Constructor passed as a first-class function argument to a HOF. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

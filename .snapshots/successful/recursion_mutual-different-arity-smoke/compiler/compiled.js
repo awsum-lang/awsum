@@ -2,8 +2,6 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
-const v_zero = (0|0);
-
 function main(v__input){
     return __print(String((v_parseExpr)([1])));
 }
@@ -20,7 +18,7 @@ function v__scc_parseBinary_parseExpr(v__args){
             const __s = v_tok;
             switch (__s[0]) {
               case 0: {
-                return v_zero;
+                return (0|0);
               }
               case 1: {
                 const __t0 = [1, [0]];
@@ -36,10 +34,10 @@ function v__scc_parseBinary_parseExpr(v__args){
             const __s = v_tok;
             switch (__s[0]) {
               case 0: {
-                return v_zero;
+                return (0|0);
               }
               case 1: {
-                const __t0 = [0, v_tok, v_zero];
+                const __t0 = [0, v_tok, (0|0)];
                 v__args = __t0;
                 continue;
               }

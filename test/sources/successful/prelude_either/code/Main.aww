@@ -1,6 +1,4 @@
--- Test: `Either a b` is available without an explicit import because it
--- lives in the bundled prelude. Both constructors are used; the
--- case-of unwraps them to a uniform String so the result can be printed.
+{- `Either a b` from prelude (no import). -}
 import IO.Stdout
 
 unwrap : Either String String -> String

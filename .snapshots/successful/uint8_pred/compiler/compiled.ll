@@ -75,6 +75,18 @@ define internal ptr @v_showUnderflowError(ptr %v__wild0) {
   ret ptr %t0
 }
 
+define internal ptr @v_minUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 0, ptr %t0
+  ret ptr %t0
+}
+
+define internal ptr @v_maxUInt8() {
+  %t0 = call ptr @malloc(i64 1)
+  store i8 255, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
@@ -106,8 +118,7 @@ case.join.4:
 }
 
 define internal ptr @v_main(ptr %v__input) {
-  %t0 = call ptr @malloc(i64 1)
-  store i8 0, ptr %t0
+  %t0 = call ptr @v_minUInt8()
   %t1 = call ptr @__predUInt8(ptr %t0)
   %t2 = call ptr @v_render(ptr %t1)
   %t3 = getelementptr [3 x i8], ptr @.str.3, i64 0, i64 0
@@ -119,8 +130,7 @@ define internal ptr @v_main(ptr %v__input) {
   %t8 = call ptr @__concat(ptr %t4, ptr %t7)
   %t9 = getelementptr [3 x i8], ptr @.str.3, i64 0, i64 0
   %t10 = call ptr @__concat(ptr %t8, ptr %t9)
-  %t11 = call ptr @malloc(i64 1)
-  store i8 255, ptr %t11
+  %t11 = call ptr @v_maxUInt8()
   %t12 = call ptr @__predUInt8(ptr %t11)
   %t13 = call ptr @v_render(ptr %t12)
   %t14 = call ptr @__concat(ptr %t10, ptr %t13)

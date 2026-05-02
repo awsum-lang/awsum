@@ -1,18 +1,5 @@
--- End-to-end: multi-arm row dispatch under a nominal head. The
--- scrutinee is the plain `Maybe (Bool | Unit)` (a TyApp, not a TyOr),
--- so it goes through the nominal-case lowering path. The two
--- @Just (… : T)@ arms used to fail at lowering with "conflicting
--- pattern shapes in merge" because @desugarPats@ silently stripped
--- the @PAscribe@ — losing the row-tag dispatch info — and the two
--- arms then produced bodies that 'mergeAlts' didn't know how to
--- combine (one inner @CCase@, one bare expression).
---
--- The fix: 'desugarPatsM' is field-type-aware and emits a 'CRowCase'
--- wrap for @PAscribe@ when the field is row-typed. Both arms now
--- produce @(tag=Just, vars=["__pa0"], body=CRowCase __pa0 [(rowTag T, name, body)])@,
--- so 'mergeAlts' sees two 'CRowCase'-bodied alts on the same outer
--- tag and merges them into one multi-label dispatch — the same shape
--- the existing whatsThat fixture exercises through the row-case path.
+{- Multi-arm row dispatch under a nominal head: two `Just (… : T)`
+   ascribed arms merged into one multi-label dispatch. -}
 import IO.Stdout
 
 whatsInside : Maybe (Bool | Unit) -> String

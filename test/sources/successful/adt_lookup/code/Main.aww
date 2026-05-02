@@ -1,4 +1,4 @@
--- Test: parametric ADT with one data constructor and one nullary constructor
+{- Parametric ADT mixing one data constructor with one nullary constructor. -}
 import IO.Stdout
 
 type Lookup a = Found a | NotFound

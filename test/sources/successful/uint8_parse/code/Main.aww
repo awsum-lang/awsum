@@ -1,6 +1,4 @@
--- Test: `parseUInt8` covers each example from the docstring in
--- `stdlib/Prelude.aww`, in the same order. Output is a comma-separated
--- trace; each case writes either `ok:<n>` or `err`.
+{- `parseUInt8`: covers all cases from the prelude docstring. -}
 import IO.Stdout
 
 render : Either ParseError UInt8 -> String

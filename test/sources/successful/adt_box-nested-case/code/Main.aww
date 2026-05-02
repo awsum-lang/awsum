@@ -1,4 +1,4 @@
--- Test: nested Box with sequential case expressions instead of inline patterns
+{- Nested ADT unwrapped via sequential case-of (not nested patterns). -}
 import IO.Stdout
 
 type Box a = Box a

@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: parametric ADT with one data constructor and one nullary constructor" ]
+            [ BlockComment " Parametric ADT mixing one data constructor with one nullary constructor. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

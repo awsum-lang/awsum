@@ -155,6 +155,12 @@
   (func $v_showOverflowError (param $v__wild0 i32) (result i32)
     (i32.const 65))
 
+  (func $v_minUInt8 (result i32)
+    (call $__box_i32 (i32.const 0)))
+
+  (func $v_maxUInt8 (result i32)
+    (call $__box_i32 (i32.const 255)))
+
   (func $v_render (param $v_r i32) (result i32)
     (local $v_e i32)
     (local $v_v i32)
@@ -162,7 +168,7 @@
     (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 79) (call $v_showOverflowError (local.get $v_e)))) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__concat (i32.const 90) (call $__show_i32 (local.get $v_v)))))))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 15)) (call $__box_i32 (i32.const 17)))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 16)) (call $__box_i32 (i32.const 16))))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 255)) (call $__box_i32 (i32.const 255))))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 0)) (call $__box_i32 (i32.const 200))))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 1)) (call $__box_i32 (i32.const 200)))))))
+    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 15)) (call $__box_i32 (i32.const 17)))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 16)) (call $__box_i32 (i32.const 16))))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $v_maxUInt8) (call $v_maxUInt8)))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $v_minUInt8) (call $__box_i32 (i32.const 200))))) (i32.const 95)) (call $v_render (call $__mulUInt8 (call $__box_i32 (i32.const 1)) (call $__box_i32 (i32.const 200)))))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

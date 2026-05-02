@@ -1,27 +1,5 @@
--- End-to-end test for the standalone 'let n = e in body' form, the
--- non-'do' shape. Three things are exercised:
---
---   * 'pad' uses a multi-binding 'let' written in the layout shape
---     the formatter emits ('let n1 = e1' on the first line, more
---     bindings aligned underneath, 'in body' dedented). Lowering
---     synthesises a '$let$N' helper for each binding; captures
---     from the enclosing scope come in as leading parameters of
---     the helper, so 'q' (which references 'p') sees 'p' as a
---     parameter at runtime — no PAP / closure runtime is needed
---     even though the inner binding depends on the outer one.
---
---   * The body 'q ++ q' references 'q' twice; the lifted helper
---     for the second binding takes 'q' as its parameter, so the
---     RHS is evaluated exactly once regardless of how many times
---     the binder is mentioned in the body.
---
---   * 'main' uses 'let' inside an argument position, exercising
---     the check-mode typing path (the let-body is checked against
---     the 'String' slot of 'IO.Stdout.print'). The 2-line render
---     for nested single-binding 'let' has weak alignment but
---     still parses (the parser only requires that 'in' is on a
---     line whose indent is strictly less than the bindings
---     column).
+{- Standalone `let n = e in body`: multi-binding layout form, inner
+   binding referencing outer, and `let` used in argument position. -}
 import IO.Stdout
 
 pad : String -> String

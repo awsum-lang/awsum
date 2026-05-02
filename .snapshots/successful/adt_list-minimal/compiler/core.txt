@@ -74,24 +74,22 @@ CoreProgram
                     ]
                 )
             )
-        , CValDef "exampleList"
-            ( CCon 0
-                [ CString "a"
-                , CCon 0
-                    [ CString "b"
-                    , CCon 0
-                        [ CString "c"
-                        , CCon 1 []
-                        ]
-                    ]
-                ]
-            )
         , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
                     ( CVar "show" )
-                    [ CVar "exampleList" ]
+                    [ CCon 0
+                        [ CString "a"
+                        , CCon 0
+                            [ CString "b"
+                            , CCon 0
+                                [ CString "c"
+                                , CCon 1 []
+                                ]
+                            ]
+                        ]
+                    ]
                 ]
             )
         ]

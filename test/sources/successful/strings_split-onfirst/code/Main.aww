@@ -1,8 +1,4 @@
--- Test: `splitOnFirst` covers all eight cases listed in its prelude
--- docstring, in the same order. Output is a comma-separated trace of
--- the rendered results. Each case writes either `Nothing` or
--- `Just(<prefix>|<suffix>)` so absent vs empty fields stay
--- distinguishable on every backend.
+{- `splitOnFirst`: covers all cases from the prelude docstring. -}
 import IO.Stdout
 
 render : Maybe (Tuple2 String String) -> String

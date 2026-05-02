@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ BlockComment " Tests: ADT with 3 type parameters and a constructor with 3 fields. " ]
+            [ BlockComment " ADT with 3 type parameters and a 3-field constructor. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

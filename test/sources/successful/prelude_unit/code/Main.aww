@@ -1,5 +1,4 @@
--- Test: showUnit from the prelude.
--- Unit is known from Prelude (no import needed).
+{- `Unit` and `showUnit` from prelude (no import). -}
 import IO.Stdout
 
 main : String -> IO Unit

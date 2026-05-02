@@ -1,5 +1,4 @@
-{- Tests: case expression applied directly to a function call result
-   (case f x of ...) rather than to a variable or parameter. -}
+{- `case f x of …` — scrutinee is a direct call, not a variable. -}
 import IO.Stdout
 
 type Lookup a = Found a | NotFound

@@ -129,26 +129,14 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
-  (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__show_i32 (call $v_minInt32)) (i32.const 65)) (call $__show_i32 (call $v_negative))) (i32.const 65)) (call $__show_i32 (call $v_zero))) (i32.const 65)) (call $__show_i32 (call $v_positive))) (i32.const 65)) (call $__show_i32 (call $v_manyDigits))) (i32.const 65)) (call $__show_i32 (call $v_maxInt32)))))
-
   (func $v_minInt32 (result i32)
     (call $__box_i32 (i32.const -2147483648)))
 
-  (func $v_negative (result i32)
-    (call $__box_i32 (i32.const -42)))
-
-  (func $v_zero (result i32)
-    (call $__box_i32 (i32.const 0)))
-
-  (func $v_positive (result i32)
-    (call $__box_i32 (i32.const 7)))
-
-  (func $v_manyDigits (result i32)
-    (call $__box_i32 (i32.const 1234567)))
-
   (func $v_maxInt32 (result i32)
     (call $__box_i32 (i32.const 2147483647)))
+
+  (func $v_main (param $v__input i32) (result i32)
+    (call $__print (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__concat (call $__show_i32 (call $v_minInt32)) (i32.const 65)) (call $__show_i32 (call $__box_i32 (i32.const -42)))) (i32.const 65)) (call $__show_i32 (call $__box_i32 (i32.const 0)))) (i32.const 65)) (call $__show_i32 (call $__box_i32 (i32.const 7)))) (i32.const 65)) (call $__show_i32 (call $__box_i32 (i32.const 1234567)))) (i32.const 65)) (call $__show_i32 (call $v_maxInt32)))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

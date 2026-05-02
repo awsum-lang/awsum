@@ -1,4 +1,4 @@
--- Stress test: chain of 300 non-recursive function calls, each appending its index to the accumulator.
+{- Chain of 300 non-recursive function calls. -}
 import IO.Stdout
 
 main : String -> IO Unit

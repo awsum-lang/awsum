@@ -74,6 +74,12 @@ define internal ptr @v_showUnderflowError(ptr %v__wild0) {
   ret ptr %t0
 }
 
+define internal ptr @v_minInt32() {
+  %t0 = call ptr @malloc(i64 4)
+  store i32 -2147483648, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_render(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
@@ -104,20 +110,9 @@ case.join.4:
   ret ptr %t19
 }
 
-define internal ptr @v_minInt32() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 -2147483648, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_ordinary() {
+define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @malloc(i64 4)
   store i32 42, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_main(ptr %v__input) {
-  %t0 = call ptr @v_ordinary()
   %t1 = call ptr @__predInt32(ptr %t0)
   %t2 = call ptr @v_render(ptr %t1)
   %t3 = getelementptr [3 x i8], ptr @.str.3, i64 0, i64 0

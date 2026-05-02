@@ -112,19 +112,12 @@
   }
 
 
-  .method private hidebysig static object v_zero() cil managed
-  {
-    ldc.i4 0
-    box [System.Runtime]System.Int32
-    ret
-  }
-
-
   .method private hidebysig static object v_countDown(object, object) cil managed
   {
   IL_tco_loop:
     ldarg.0
-    call object AwsumMain::v_zero()
+    ldc.i4 0
+    box [System.Runtime]System.Int32
     call object AwsumMain::__eqUInt8(object, object)
     dup
     ldc.i4.0
@@ -228,17 +221,10 @@
   }
 
 
-  .method private hidebysig static object v_start() cil managed
+  .method private hidebysig static object v_main(object) cil managed
   {
     ldc.i4 255
     box [System.Runtime]System.Int32
-    ret
-  }
-
-
-  .method private hidebysig static object v_main(object) cil managed
-  {
-    call object AwsumMain::v_start()
     ldstr ""
     call object AwsumMain::v_countDown(object, object)
     call object AwsumMain::v_showResult(object)

@@ -1,4 +1,4 @@
--- Test: basic string concatenation, helper functions, and IO.Stdout.print
+{- Smoke: string concat, helper function, `IO.Stdout.print`. -}
 import IO.Stdout
 
 main : String -> IO Unit

@@ -1,25 +1,6 @@
--- End-to-end: cross-boundary row normalisation. A value built in a
--- non-row context (`defaultJust : Maybe Bool`) flows into a slot
--- expecting a row-typed equivalent (`Maybe (Bool | Unit)`) and the
--- consumer's row-case dispatches correctly.
---
--- Without the fix the value's runtime shape was `CCon Just [CCon True []]`
--- (positional tags), but the consumer's `(b : Bool)` arm reads the
--- inner via row-tag dispatch — different protocol, silent wrong
--- answer. Lowering now synthesises a `$lift$N` helper that
--- destructures the source and reconstructs in the target shape
--- (`CCon Just [CRow (rowTag Bool) (CCon True [])]`) so the consumer
--- finds the row tag it expects.
---
--- Three shapes exercised in one program:
---   * direct nominal-head wrap: `Maybe Bool → Maybe (Bool | Unit)`,
---     the canonical caveat case;
---   * recursive types: `Lst Bool → Lst (Bool | Unit)` — the lift
---     helper memoises by `(src, tgt)` so it self-recurses through
---     the `Cons` field instead of expanding infinitely;
---   * deep nesting: `Either ErrA (Maybe Bool) → Either ErrA (Maybe (Bool | Unit))`,
---     where the coercion descends through `Right`'s payload and
---     reuses the `Maybe Bool → Maybe (Bool | Unit)` helper.
+{- Non-row values flow into row-typed slots; lift helpers must reconstruct
+   under the target row shape. Three shapes: direct nominal wrap, recursive
+   ADT (memoised), deep nesting through `Either`/`Maybe`. -}
 import IO.Stdout
 
 type ErrA = ErrA

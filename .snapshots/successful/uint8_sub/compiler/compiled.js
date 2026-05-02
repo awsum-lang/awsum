@@ -7,6 +7,10 @@ function v_showUnderflowError(v__wild0){
     return "UnderflowError";
 }
 
+const v_minUInt8 = (0 & 0xFF);
+
+const v_maxUInt8 = (255 & 0xFF);
+
 function v_render(v_r){
     {
       const __s = v_r;
@@ -24,7 +28,7 @@ function v_render(v_r){
 }
 
 function main(v__input){
-    return __print((((((((v_render)(__subUInt8((5 & 0xFF), (5 & 0xFF))) + ", ") + (v_render)(__subUInt8((255 & 0xFF), (0 & 0xFF)))) + ", ") + (v_render)(__subUInt8((0 & 0xFF), (1 & 0xFF)))) + ", ") + (v_render)(__subUInt8((0 & 0xFF), (255 & 0xFF)))));
+    return __print((((((((v_render)(__subUInt8((5 & 0xFF), (5 & 0xFF))) + ", ") + (v_render)(__subUInt8(v_maxUInt8, v_minUInt8))) + ", ") + (v_render)(__subUInt8(v_minUInt8, (1 & 0xFF)))) + ", ") + (v_render)(__subUInt8(v_minUInt8, v_maxUInt8))));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

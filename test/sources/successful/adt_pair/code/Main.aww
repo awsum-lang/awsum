@@ -1,4 +1,4 @@
-{- Tests: constructor with 2 independent fields and pattern matching that binds both. -}
+{- Constructor with 2 fields; pattern match binds both. -}
 import IO.Stdout
 
 type Pair a b = Pair a b

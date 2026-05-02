@@ -1,4 +1,4 @@
--- Test: constructors passed as first-class function arguments to HOFs
+{- Constructor passed as a first-class function argument to a HOF. -}
 import IO.Stdout
 
 type Box a = Box a

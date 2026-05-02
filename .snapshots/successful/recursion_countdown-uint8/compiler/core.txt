@@ -2,8 +2,6 @@ CoreProgram
     { cdecls =
         [ CFunDef "showUnderflowError" [ "$wild0" ]
             ( CString "UnderflowError" )
-        , CValDef "zero"
-            ( CIntLit 0 TUInt8 )
         , CFunDef "countDown" [ "n" ]
             ( CCall
                 ( CVar "$cps$countDown" )
@@ -20,7 +18,7 @@ CoreProgram
                     ( CCall
                         ( CBuiltIn "eqUInt8" )
                         [ CVar "n"
-                        , CVar "zero"
+                        , CIntLit 0 TUInt8
                         ]
                     )
                     [
@@ -149,8 +147,6 @@ CoreProgram
                     )
                 ]
             )
-        , CValDef "start"
-            ( CIntLit 255 TUInt8 )
         , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
@@ -158,7 +154,7 @@ CoreProgram
                     ( CVar "showResult" )
                     [ CCall
                         ( CVar "countDown" )
-                        [ CVar "start" ]
+                        [ CIntLit 255 TUInt8 ]
                     ]
                 ]
             )

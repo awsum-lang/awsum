@@ -1,4 +1,4 @@
--- Stress test: 300 top-level String constants joined by ",".
+{- 300 top-level String constants joined by `,`. -}
 import IO.Stdout
 
 main : String -> IO Unit

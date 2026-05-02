@@ -44,6 +44,12 @@ define internal ptr @__eqInt32(ptr %a, ptr %b) {
 }
 
 
+define internal ptr @v_minInt32() {
+  %t0 = call ptr @malloc(i64 4)
+  store i32 -2147483648, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_render(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
@@ -64,12 +70,6 @@ case.default.3:
 case.join.4:
   %t11 = phi ptr [%t7, %case.end.0.6], [%t10, %case.end.1.9]
   ret ptr %t11
-}
-
-define internal ptr @v_minInt32() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 -2147483648, ptr %t0
-  ret ptr %t0
 }
 
 define internal ptr @v_main(ptr %v__input) {

@@ -57,6 +57,14 @@
     ret
   }
 
+  .method private hidebysig static object v_minInt32() cil managed
+  {
+    ldc.i4 -2147483648
+    box [System.Runtime]System.Int32
+    ret
+  }
+
+
   .method private hidebysig static object v_render(object) cil managed
   {
     ldarg.0
@@ -74,14 +82,6 @@
     ldstr "F"
     br.s IL_join
   IL_join:
-    ret
-  }
-
-
-  .method private hidebysig static object v_minInt32() cil managed
-  {
-    ldc.i4 -2147483648
-    box [System.Runtime]System.Int32
     ret
   }
 

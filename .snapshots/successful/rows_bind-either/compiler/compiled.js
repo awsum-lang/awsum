@@ -42,12 +42,20 @@ function v_liftB(v_x){
     }
 }
 
-function v_opBLifted(v_n){
-    return (v_liftB)((v_opB)(v_n));
-}
-
 function v_run(v_x){
-    return (v__df_bindEither_0)((v_liftA)((v_opA)(v_x)));
+    {
+      const __s = (v_liftA)((v_opA)(v_x));
+      switch (__s[0]) {
+        case 0: {
+          const v__do_e_28_3 = __s[1];
+          return [0, v__do_e_28_3];
+        }
+        case 1: {
+          const v_a = __s[1];
+          return (v_liftB)((v_opB)(v_a));
+        }
+      }
+    }
 }
 
 function v_describe(v_r){
@@ -80,22 +88,6 @@ function v_describe(v_r){
 
 function main(v__input){
     return __print((v_describe)((v_run)((5|0))));
-}
-
-function v__df_bindEither_0(v_x){
-    {
-      const __s = v_x;
-      switch (__s[0]) {
-        case 0: {
-          const v_e = __s[1];
-          return [0, v_e];
-        }
-        case 1: {
-          const v_a = __s[1];
-          return (v_opBLifted)(v_a);
-        }
-      }
-    }
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

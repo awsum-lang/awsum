@@ -1,4 +1,4 @@
-{- 300 constructors: stress-test for branch encoding, memory growth, and concat depth -}
+{- 300 data constructors over a single type parameter. -}
 
 import IO.Stdout
 

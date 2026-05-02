@@ -12,7 +12,7 @@ function main(v__input){
     return __print(String((v_captureFn)((7|0))));
 }
 
-function v__lam_0(v_k, v_n){
+function v__lam_0(v_k, v__n){
     return v_k;
 }
 

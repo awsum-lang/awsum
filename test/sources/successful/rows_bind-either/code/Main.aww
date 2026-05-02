@@ -1,13 +1,7 @@
--- End-to-end: the prelude's row-polymorphic 'bindEither' composes two
--- 'Either'-returning operations whose error types differ by a single
--- nominal label, and the resulting error is dispatched by row-tag
--- (FNV-1a tag-by-name) in a 'PAscribe'-only 'case'.
---
--- Lift wrappers ('liftA' / 'liftB') re-construct the value with the
--- combined row type as the surrounding context; that is where the inner
--- nominal label gets implicitly injected as a CRow at lowering time.
--- The test exercises both arms (Right path threading 'opA' through,
--- Left path bubbling 'opB''s ErrB up).
+{- Chains two `Either`-returning ops with mismatching error labels;
+   `do` desugars to row-polymorphic `bindEither`. The lift wrappers are
+   load-bearing: implicit row-injection through `bindEither`'s lambda
+   typechecks but lowers wrong on JVM (no `CRow` wrap). -}
 import IO.Stdout
 
 type ErrA = ErrA
@@ -29,11 +23,10 @@ liftB x = case x of
   Left e -> Left e
   Right n -> Right n
 
-opBLifted : Int32 -> Either (ErrA | ErrB) Int32
-opBLifted n = liftB (opB n)
-
 run : Int32 -> Either (ErrA | ErrB) Int32
-run x = bindEither (liftA (opA x)) opBLifted
+run x = do
+  a <- liftA (opA x)
+  liftB (opB a)
 
 describe : Either (ErrA | ErrB) Int32 -> String
 describe r = case r of

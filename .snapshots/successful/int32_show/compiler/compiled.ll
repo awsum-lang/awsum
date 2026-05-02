@@ -39,27 +39,43 @@ define internal ptr @__showInt32(ptr %p) {
 }
 
 
+define internal ptr @v_minInt32() {
+  %t0 = call ptr @malloc(i64 4)
+  store i32 -2147483648, ptr %t0
+  ret ptr %t0
+}
+
+define internal ptr @v_maxInt32() {
+  %t0 = call ptr @malloc(i64 4)
+  store i32 2147483647, ptr %t0
+  ret ptr %t0
+}
+
 define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_minInt32()
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   %t3 = call ptr @__concat(ptr %t1, ptr %t2)
-  %t4 = call ptr @v_negative()
+  %t4 = call ptr @malloc(i64 4)
+  store i32 -42, ptr %t4
   %t5 = call ptr @__showInt32(ptr %t4)
   %t6 = call ptr @__concat(ptr %t3, ptr %t5)
   %t7 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   %t8 = call ptr @__concat(ptr %t6, ptr %t7)
-  %t9 = call ptr @v_zero()
+  %t9 = call ptr @malloc(i64 4)
+  store i32 0, ptr %t9
   %t10 = call ptr @__showInt32(ptr %t9)
   %t11 = call ptr @__concat(ptr %t8, ptr %t10)
   %t12 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   %t13 = call ptr @__concat(ptr %t11, ptr %t12)
-  %t14 = call ptr @v_positive()
+  %t14 = call ptr @malloc(i64 4)
+  store i32 7, ptr %t14
   %t15 = call ptr @__showInt32(ptr %t14)
   %t16 = call ptr @__concat(ptr %t13, ptr %t15)
   %t17 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
   %t18 = call ptr @__concat(ptr %t16, ptr %t17)
-  %t19 = call ptr @v_manyDigits()
+  %t19 = call ptr @malloc(i64 4)
+  store i32 1234567, ptr %t19
   %t20 = call ptr @__showInt32(ptr %t19)
   %t21 = call ptr @__concat(ptr %t18, ptr %t20)
   %t22 = getelementptr [3 x i8], ptr @.str.0, i64 0, i64 0
@@ -69,42 +85,6 @@ define internal ptr @v_main(ptr %v__input) {
   %t26 = call ptr @__concat(ptr %t23, ptr %t25)
   %t27 = call ptr @__print(ptr %t26)
   ret ptr %t27
-}
-
-define internal ptr @v_minInt32() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 -2147483648, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_negative() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 -42, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_zero() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 0, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_positive() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 7, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_manyDigits() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 1234567, ptr %t0
-  ret ptr %t0
-}
-
-define internal ptr @v_maxInt32() {
-  %t0 = call ptr @malloc(i64 4)
-  store i32 2147483647, ptr %t0
-  ret ptr %t0
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

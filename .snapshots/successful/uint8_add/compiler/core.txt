@@ -2,6 +2,10 @@ CoreProgram
     { cdecls =
         [ CFunDef "showOverflowError" [ "$wild0" ]
             ( CString "OverflowError" )
+        , CValDef "minUInt8"
+            ( CIntLit 0 TUInt8 )
+        , CValDef "maxUInt8"
+            ( CIntLit 255 TUInt8 )
         , CFunDef "render" [ "r" ]
             ( CCase
                 ( CVar "r" )
@@ -69,8 +73,8 @@ CoreProgram
                                 ( CVar "render" )
                                 [ CCall
                                     ( CBuiltIn "addUInt8" )
-                                    [ CIntLit 255 TUInt8
-                                    , CIntLit 255 TUInt8
+                                    [ CVar "maxUInt8"
+                                    , CVar "maxUInt8"
                                     ]
                                 ]
                             ]
@@ -80,8 +84,8 @@ CoreProgram
                         ( CVar "render" )
                         [ CCall
                             ( CBuiltIn "addUInt8" )
-                            [ CIntLit 0 TUInt8
-                            , CIntLit 0 TUInt8
+                            [ CVar "minUInt8"
+                            , CVar "minUInt8"
                             ]
                         ]
                     ]

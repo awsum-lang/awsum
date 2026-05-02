@@ -1,7 +1,7 @@
 Program
     { imports =
         [ ImportDecl
-            [ LineComment " Test: simple enum (three nullary constructors) with exhaustive pattern matching" ]
+            [ BlockComment " Enum: nullary constructors, exhaustive case-of. " ]
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = TypeDecl

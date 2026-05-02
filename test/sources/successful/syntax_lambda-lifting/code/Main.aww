@@ -1,17 +1,5 @@
--- End-to-end test for lambda lifting at lowering time. Two shapes:
---
---   * 'inc42' uses a closed lambda '(\n -> n)' as the first argument
---     of a polymorphic 'apply'. The lambda has no captures; lowering
---     lifts it to '$lam$0 n = n' and replaces the call site with a
---     bare reference to the helper. Cross-backend stdout asserts the
---     same lifted shape on every target.
---
---   * 'g' is a 'do'-block where the second '<-' uses the previous
---     bind, which the desugarer can no longer eliminate via η or
---     'const'. The desugarer leaves a real 'ELam' for the lowering
---     pass: the lambda's only free variable is its own parameter, so
---     the lifted helper has no capture and the call site is a
---     plain reference.
+{- Lambda lifting at lowering: closed lambda passed to a HOF, and a
+   `do`-block whose desugaring leaves a real lambda for the lifter. -}
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

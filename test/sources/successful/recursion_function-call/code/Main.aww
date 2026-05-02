@@ -1,4 +1,4 @@
--- Test: self-recursive function with enum-driven termination
+{- Self-recursive function with enum-driven termination. -}
 import IO.Stdout
 
 type Step = Step1 | Step2 | Step3

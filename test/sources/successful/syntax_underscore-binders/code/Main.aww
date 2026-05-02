@@ -1,8 +1,4 @@
-{- Tests: underscore in binders.
-   • _ alone (in function params or patterns) is a wildcard — no binding.
-   • _foo binds the name but the parser forbids referencing names with a
-     leading underscore, so the binding is intentionally unused.
-   • Multiple _ wildcards in the same scope are fine; they don't collide. -}
+{- Underscore binders: bare `_` is a wildcard, `_foo` is named-but-unused. -}
 import IO.Stdout
 
 type Box a = Box a

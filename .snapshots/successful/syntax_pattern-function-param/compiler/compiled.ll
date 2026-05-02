@@ -76,17 +76,17 @@ ok:
 }
 
 
-define internal ptr @v_sumTriple(ptr %v__arg_21_11) {
-  %t0 = getelementptr ptr, ptr %v__arg_21_11, i32 0
+define internal ptr @v_sumTriple(ptr %v__arg_5_11) {
+  %t0 = getelementptr ptr, ptr %v__arg_5_11, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 ]
 case.arm.0.5:
-  %t7 = getelementptr ptr, ptr %v__arg_21_11, i32 1
+  %t7 = getelementptr ptr, ptr %v__arg_5_11, i32 1
   %t8 = load ptr, ptr %t7
-  %t9 = getelementptr ptr, ptr %v__arg_21_11, i32 2
+  %t9 = getelementptr ptr, ptr %v__arg_5_11, i32 2
   %t10 = load ptr, ptr %t9
-  %t11 = getelementptr ptr, ptr %v__arg_21_11, i32 3
+  %t11 = getelementptr ptr, ptr %v__arg_5_11, i32 3
   %t12 = load ptr, ptr %t11
   %t13 = call ptr @__addInt32(ptr %t8, ptr %t10)
   %t14 = getelementptr ptr, ptr %t13, i32 0
@@ -144,15 +144,15 @@ case.join.4:
   ret ptr %t45
 }
 
-define internal ptr @v_sumPair(ptr %v__arg_31_9) {
-  %t0 = getelementptr ptr, ptr %v__arg_31_9, i32 0
+define internal ptr @v_sumPair(ptr %v__arg_15_9) {
+  %t0 = getelementptr ptr, ptr %v__arg_15_9, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 ]
 case.arm.0.5:
-  %t7 = getelementptr ptr, ptr %v__arg_31_9, i32 1
+  %t7 = getelementptr ptr, ptr %v__arg_15_9, i32 1
   %t8 = load ptr, ptr %t7
-  %t9 = getelementptr ptr, ptr %v__arg_31_9, i32 2
+  %t9 = getelementptr ptr, ptr %v__arg_15_9, i32 2
   %t10 = load ptr, ptr %t9
   %t11 = call ptr @__addInt32(ptr %t8, ptr %t10)
   %t12 = getelementptr ptr, ptr %t11, i32 0
@@ -230,15 +230,15 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t2
 }
 
-define internal ptr @v__lam_0(ptr %v__arg_44_19) {
-  %t0 = getelementptr ptr, ptr %v__arg_44_19, i32 0
+define internal ptr @v__lam_0(ptr %v__arg_28_19) {
+  %t0 = getelementptr ptr, ptr %v__arg_28_19, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 ]
 case.arm.0.5:
-  %t7 = getelementptr ptr, ptr %v__arg_44_19, i32 1
+  %t7 = getelementptr ptr, ptr %v__arg_28_19, i32 1
   %t8 = load ptr, ptr %t7
-  %t9 = getelementptr ptr, ptr %v__arg_44_19, i32 2
+  %t9 = getelementptr ptr, ptr %v__arg_28_19, i32 2
   %t10 = load ptr, ptr %t9
   %t11 = call ptr @malloc(i64 24)
   %t12 = inttoptr i64 0 to ptr

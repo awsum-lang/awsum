@@ -188,21 +188,45 @@
   }
 
 
-  .method private hidebysig static object v_opBLifted(object) cil managed
-  {
-    ldarg.0
-    call object AwsumMain::v_opB(object)
-    call object AwsumMain::v_liftB(object)
-    ret
-  }
-
-
   .method private hidebysig static object v_run(object) cil managed
   {
     ldarg.0
     call object AwsumMain::v_opA(object)
     call object AwsumMain::v_liftA(object)
-    call object AwsumMain::v__df_bindEither_0(object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    call object AwsumMain::v_opB(object)
+    call object AwsumMain::v_liftB(object)
+    br.s IL_join
+  IL_join:
     ret
   }
 
@@ -268,46 +292,6 @@
     call object AwsumMain::v_run(object)
     call object AwsumMain::v_describe(object)
     call object AwsumMain::__print(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__df_bindEither_0(object) cil managed
-  {
-    ldarg.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.0
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
-    ldloc.0
-    stelem.ref
-    br.s IL_join
-  IL_arm_1:
-    dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
-    pop
-    ldloc.0
-    call object AwsumMain::v_opBLifted(object)
-    br.s IL_join
-  IL_join:
     ret
   }
 

@@ -1,4 +1,4 @@
--- Test: single nullary constructor (CustomUnit type) with pattern matching
+{- Single nullary constructor; pattern match. -}
 import IO.Stdout
 
 type CustomUnit = CustomUnit
