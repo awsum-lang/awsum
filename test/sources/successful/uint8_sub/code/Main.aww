@@ -1,0 +1,10 @@
+{- `subUInt8`: `Left UnderflowError` when `a < b`; `0 - 255` traps sign-extension on JVM/CLR. -}
+import IO.Stdout
+
+render : Either UnderflowError UInt8 -> String
+render r = case r of
+  Left e -> "underflow: " ++ showUnderflowError e
+  Right v -> "ok: " ++ showUInt8 v
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (subUInt8 5 5) ++ ", " ++ render (subUInt8 maxUInt8 minUInt8) ++ ", " ++ render (subUInt8 minUInt8 1) ++ ", " ++ render (subUInt8 minUInt8 maxUInt8))

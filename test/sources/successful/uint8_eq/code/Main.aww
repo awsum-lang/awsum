@@ -1,0 +1,10 @@
+{- `eqUInt8`: `255 == 255` smoke-tests the JVM `& 0xFF` mask. -}
+import IO.Stdout
+
+render : Bool -> String
+render b = case b of
+  True -> "T"
+  False -> "F"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (eqUInt8 minUInt8 minUInt8) ++ render (eqUInt8 maxUInt8 maxUInt8) ++ render (eqUInt8 maxUInt8 minUInt8) ++ render (eqUInt8 128 127))

@@ -4,9 +4,6 @@
 -- — the inner `case` inspects the `Either` directly.
 import IO.Stdout
 
-minInt32 : Int32
-minInt32 = -2147483648
-
 property : Int32 -> Bool
 property x = case predInt32 x of
   Left _ -> eqInt32 x minInt32

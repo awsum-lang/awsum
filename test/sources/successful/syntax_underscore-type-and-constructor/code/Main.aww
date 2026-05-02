@@ -1,0 +1,14 @@
+{- `_` prefix on type names: intentionally-unused type compiles. -}
+import IO.Stdout
+
+type _A = X | Y
+
+type B = One | Two
+
+show : B -> String
+show x = case x of
+  One -> "one"
+  Two -> "two"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (show One)

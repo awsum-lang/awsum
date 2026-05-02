@@ -1,0 +1,18 @@
+{- Pattern on the LHS of a do-bind: `Tuple3 a b c <- e`. -}
+import IO.Stdout
+
+opTuple : String -> Either ParseError (Tuple3 Int32 Int32 Int32)
+opTuple _ = Right (Tuple3 1 2 3)
+
+main : String -> IO Unit
+main raw =
+  let res : Either ParseError Int32 = do
+        Tuple3 a b c <- opTuple raw
+        pureEither (case addInt32 a b of
+          Left _ -> c
+          Right ab -> case addInt32 ab c of
+            Left _ -> c
+            Right abc -> abc)
+   in case res of
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Right n -> IO.Stdout.print (showInt32 n)

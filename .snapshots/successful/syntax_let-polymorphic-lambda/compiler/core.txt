@@ -1,0 +1,84 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showTri" [ "t" ]
+            ( CCase
+                ( CVar "t" )
+                [
+                    ( 0
+                    , []
+                    , CString "A"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "B"
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CString "C"
+                    )
+                ]
+            )
+        , CFunDef "threeTypes"
+            [ "n"
+            , "s"
+            , "b"
+            ]
+            ( CCall
+                ( CVar "$df$$let$2$0" )
+                [ CVar "b"
+                , CVar "n"
+                , CVar "s"
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "threeTypes" )
+                    [ CIntLit 42 TInt32
+                    , CString "hello"
+                    , CCon 0 []
+                    ]
+                ]
+            )
+        , CFunDef "$lam$1" [ "x" ]
+            ( CVar "x" )
+        , CFunDef "$df$$let$2$0"
+            [ "b"
+            , "n"
+            , "s"
+            ]
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "showInt32" )
+                                [ CCall
+                                    ( CVar "$lam$1" )
+                                    [ CVar "n" ]
+                                ]
+                            , CString "/"
+                            ]
+                        , CCall
+                            ( CVar "$lam$1" )
+                            [ CVar "s" ]
+                        ]
+                    , CString "/"
+                    ]
+                , CCall
+                    ( CVar "showTri" )
+                    [ CCall
+                        ( CVar "$lam$1" )
+                        [ CVar "b" ]
+                    ]
+                ]
+            )
+        ]
+    }

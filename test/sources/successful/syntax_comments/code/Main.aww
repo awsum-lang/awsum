@@ -1,0 +1,18 @@
+{- Block and line comments preserved through parsing and formatting. -}
+import IO.Stdout
+
+{- Block comment 1
+Block comment 2
+-}
+
+-- Line comment 2
+
+-- Line comment 3
+
+main : String -> IO Unit -- Signature comment
+
+-- Line comment 4
+
+main input = IO.Stdout.print input -- Definition comment
+
+-- Line comment 5

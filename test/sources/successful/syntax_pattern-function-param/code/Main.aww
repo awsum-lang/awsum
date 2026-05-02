@@ -1,0 +1,29 @@
+{- Pattern on a function (and lambda) parameter: `f (Tuple3 a b c) = …`. -}
+import IO.Stdout
+
+sumTriple : Tuple3 Int32 Int32 Int32 -> Int32
+sumTriple (Tuple3 a b c) = case addInt32 a b of
+  Left _ -> 0
+  Right ab -> case addInt32 ab c of
+    Left _ -> 0
+    Right abc -> abc
+
+apply : (Tuple2 Int32 Int32 -> Int32) -> Tuple2 Int32 Int32 -> Int32
+apply f t = f t
+
+sumPair : Tuple2 Int32 Int32 -> Int32
+sumPair (Tuple2 a b) = case addInt32 a b of
+  Left _ -> 0
+  Right s -> s
+
+triple : Tuple3 Int32 Int32 Int32
+triple = Tuple3 10 20 30
+
+pair : Tuple2 Int32 Int32
+pair = Tuple2 100 200
+
+main : String -> IO Unit
+main _input =
+  let n = sumTriple triple
+      m = apply (\(Tuple2 a b) -> sumPair (Tuple2 a b)) pair
+   in IO.Stdout.print (showInt32 n ++ " / " ++ showInt32 m)

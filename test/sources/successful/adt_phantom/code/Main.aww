@@ -1,0 +1,11 @@
+{- Phantom type parameter (unused in any constructor). -}
+import IO.Stdout
+
+type Phantom _tag = Phantom
+
+show : Phantom String -> String
+show p = case p of
+  Phantom -> "Phantom"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (show Phantom)

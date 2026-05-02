@@ -1,0 +1,11 @@
+{- ADT with 3 type parameters and a 3-field constructor. -}
+import IO.Stdout
+
+type Triple a b c = Triple a b c
+
+showTriple : Triple String String String -> String
+showTriple t = case t of
+  Triple a b c -> a ++ " " ++ b ++ " " ++ c
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showTriple (Triple "one" "two" "three"))

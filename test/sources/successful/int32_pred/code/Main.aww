@@ -1,0 +1,10 @@
+{- `predInt32`: ordinary `Right (x-1)`; `Left UnderflowError` at `minInt32`. -}
+import IO.Stdout
+
+render : Either UnderflowError Int32 -> String
+render r = case r of
+  Left e -> "underflow: " ++ showUnderflowError e
+  Right v -> "ok: " ++ showInt32 v
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (predInt32 42) ++ ", " ++ render (predInt32 minInt32))

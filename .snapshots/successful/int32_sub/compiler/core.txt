@@ -1,0 +1,134 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "showUnderflowError" [ "$wild0" ]
+            ( CString "UnderflowError" )
+        , CFunDef "showOverflowError" [ "$wild0" ]
+            ( CString "OverflowError" )
+        , CValDef "minInt32"
+            ( CIntLit
+                ( -2147483648 ) TInt32
+            )
+        , CValDef "maxInt32"
+            ( CIntLit 2147483647 TInt32 )
+        , CFunDef "render" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 882564211
+                            , "o"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "err: "
+                                , CCall
+                                    ( CVar "showOverflowError" )
+                                    [ CVar "o" ]
+                                ]
+                            )
+                        ,
+                            ( 3768445577
+                            , "u"
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "err: "
+                                , CCall
+                                    ( CVar "showUnderflowError" )
+                                    [ CVar "u" ]
+                                ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok: "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CCall
+                                                    ( CVar "render" )
+                                                    [ CCall
+                                                        ( CBuiltIn "subInt32" )
+                                                        [ CIntLit 100 TInt32
+                                                        , CIntLit 23 TInt32
+                                                        ]
+                                                    ]
+                                                , CString ", "
+                                                ]
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "subInt32" )
+                                                    [ CIntLit 100 TInt32
+                                                    , CIntLit
+                                                        ( -50 ) TInt32
+                                                    ]
+                                                ]
+                                            ]
+                                        , CString ", "
+                                        ]
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "subInt32" )
+                                            [ CVar "maxInt32"
+                                            , CIntLit
+                                                ( -1 ) TInt32
+                                            ]
+                                        ]
+                                    ]
+                                , CString ", "
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "subInt32" )
+                                    [ CVar "minInt32"
+                                    , CIntLit 1 TInt32
+                                    ]
+                                ]
+                            ]
+                        , CString ", "
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "subInt32" )
+                            [ CIntLit 0 TInt32
+                            , CVar "minInt32"
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

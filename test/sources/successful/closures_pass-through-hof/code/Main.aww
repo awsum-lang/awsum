@@ -1,0 +1,14 @@
+{- Function-typed parameter flows through one HOF into another. -}
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+applyTwice : (a -> a) -> a -> a
+applyTwice f x = apply f (apply f x)
+
+incr : Int32 -> Int32
+incr n = n
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 (applyTwice incr 7))

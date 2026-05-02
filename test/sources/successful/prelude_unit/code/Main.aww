@@ -1,0 +1,5 @@
+{- `Unit` and `showUnit` from prelude (no import). -}
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showUnit Unit)

@@ -1,0 +1,11 @@
+{- Closed structural sum `(Int32 | String)`: row-dispatch arms, implicit
+   injection at the call site. -}
+import IO.Stdout
+
+describe : (Int32 | String) -> String
+describe x = case x of
+  (n : Int32) -> "Int32 " ++ showInt32 n
+  (s : String) -> "String " ++ s
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe "hello")

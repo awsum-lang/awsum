@@ -1,0 +1,26 @@
+{- `let` between two `<-` binds: lifted helper must capture both the
+   previous bind and the let-binder, and keep the let in scope through
+   the rest of the do-block. -}
+import IO.Stdout
+
+step1 : Int32 -> Either String Int32
+step1 n = case addInt32 n 10 of
+  Left _e -> Left "overflow"
+  Right m -> Right m
+
+step2 : Int32 -> Either String Int32
+step2 n = case mulInt32 n 2 of
+  Left _e -> Left "overflow"
+  Right m -> Right m
+
+run : Int32 -> Either String String
+run start = do
+  a <- step1 start
+  let prefix = "answer="
+  b <- step2 a
+  pureEither (prefix ++ showInt32 b)
+
+main : String -> IO Unit
+main _input = case run 5 of
+  Left e -> IO.Stdout.print ("err: " ++ e)
+  Right s -> IO.Stdout.print s

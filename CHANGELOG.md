@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lambda syntax `\x -> body`** as a surface form; lifted at lowering.
 - **Eta-reduced top-level definitions** — `f = g` works for any RHS whose type matches the signature.
 - **Property-based tests across all backends** (`just test-property`); 40 starter properties covering integer arithmetic (commutativity / associativity / identities / no-overflow agreement / distributivity), succ/pred (round-trip + boundary), equality, parse/show round-trip, string monoid laws, splitOnFirst, boolean laws.
-- **Prelude** — `Tuple2`, `Tuple3`, `parseInt32`, `parseUInt8`, `splitOnFirst`, `addInt32`, `addUInt8`, `subInt32`, `subUInt8`, `negInt32`, `mulInt32`, `mulUInt8`; new types `ParseError`, `UnderflowError`, `OverflowError`.
+- **Prelude** — `Tuple2`, `Tuple3`, `parseInt32`, `parseUInt8`, `splitOnFirst`, `addInt32`, `addUInt8`, `subInt32`, `subUInt8`, `negInt32`, `mulInt32`, `mulUInt8`, range constants `minInt32` / `maxInt32` / `minUInt8` / `maxUInt8`; new types `ParseError`, `UnderflowError`, `OverflowError`.
 
 ### Changed
 
@@ -40,9 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **JVM** — `caseSMT` slot 0 for `CValDef CCase`; `bcIconst` truncation of row tags > 2¹⁵; hardcoded `max_locals` / `max_stack` for deeply nested constructors; slot indices ≥ 256 (now uses `wide` prefix); `exprMaxStack` underestimate for first-class calls; inconsistent stackmap frames between sibling arms of a `case`; single-arm `case` tag slots tracked in SMT.
 - **CLR** — `InvalidProgramException` on deeply nested constructors (hardcoded `MaxStack`, dup/stelem stack peak, `LocalVarSig` count truncation ≥ 128 locals).
 - **`mergeAlts`** for nominal-headed scrutinees with row-typed fields.
+- **Implicit row-injection on call results** — a call returning e.g. `Either ErrB Int32` into a `Either (ErrA | ErrB) Int32` slot is now wrapped with a `$lift$N` helper at lowering time. Previously the typechecker accepted it but codegen left the result unwrapped, crashing JVM dispatch on the bare-nominal payload.
 - **Bidirectional check** propagates through polymorphic application.
 - **`do` / `let` / `in`** reserved at the parser level.
 - **Free type variables** in constructor fields are rejected.
+- **WASM `__alloc`** traps via `unreachable` when `memory.grow` returns -1 (engine memory cap reached). Previously the bump allocator dropped the failure result and looped on retrying `memory.grow` forever, hanging the program; now OOM surfaces as an immediate `wasm trap: unreachable executed`.
 
 ### Tooling
 

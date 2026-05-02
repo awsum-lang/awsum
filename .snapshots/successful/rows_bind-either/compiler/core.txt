@@ -1,0 +1,101 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "opA" [ "n" ]
+            ( CCon 1
+                [ CVar "n" ]
+            )
+        , CFunDef "opB" [ "_n" ]
+            ( CCon 0
+                [ CCon 0 [] ]
+            )
+        , CFunDef "run" [ "x" ]
+            ( CCase
+                ( CCall
+                    ( CVar "opA" )
+                    [ CVar "x" ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_18_3" ]
+                    , CCon 0
+                        [ CRow 2252990199
+                            ( CVar "$do_e_18_3" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCall
+                        ( CVar "$lift$1" )
+                        [ CCall
+                            ( CVar "opB" )
+                            [ CVar "a" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 2252990199
+                            , "__rw"
+                            , CString "ErrA"
+                            )
+                        ,
+                            ( 2269767818
+                            , "__rw"
+                            , CString "ErrB"
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "describe" )
+                    [ CCall
+                        ( CVar "run" )
+                        [ CIntLit 5 TInt32 ]
+                    ]
+                ]
+            )
+        , CFunDef "$lift$1" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 0
+                    , [ "__f0" ]
+                    , CCon 0
+                        [ CRow 2269767818
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "__f0" ]
+                    , CCon 1
+                        [ CVar "__f0" ]
+                    )
+                ]
+            )
+        ]
+    }

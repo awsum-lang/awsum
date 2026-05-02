@@ -1,0 +1,17 @@
+{- Polymorphic `identity`, `compose`; `const` from prelude. -}
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (identity (compose appendY appendX (const "a" "b")))
+
+identity : a -> a
+identity x = x
+
+appendX : String -> String
+appendX s = s ++ "x"
+
+appendY : String -> String
+appendY s = s ++ "y"
+
+compose : (b -> c) -> (a -> b) -> a -> c
+compose g f x = g (f x)

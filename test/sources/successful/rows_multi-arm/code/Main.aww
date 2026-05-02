@@ -1,0 +1,17 @@
+{- Multi-arm row dispatch under a nominal head: two `Just (… : T)`
+   ascribed arms merged into one multi-label dispatch. -}
+import IO.Stdout
+
+whatsInside : Maybe (Bool | Unit) -> String
+whatsInside x = case x of
+  Nothing -> "Nothing"
+  Just (b : Bool) -> case b of
+    True -> "Just True"
+    False -> "Just False"
+  Just (u : Unit) -> "Just " ++ showUnit u
+
+summary : String
+summary = whatsInside (Just True) ++ "; " ++ whatsInside (Just Unit) ++ "; " ++ whatsInside Nothing
+
+main : String -> IO Unit
+main _input = IO.Stdout.print summary

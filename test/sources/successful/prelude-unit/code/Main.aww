@@ -1,6 +1,0 @@
--- Test: showUnit from the prelude.
--- Unit is known from Prelude (no import needed).
-import IO.Stdout
-
-main : String -> IO Unit
-main _input = IO.Stdout.print (showUnit Unit)

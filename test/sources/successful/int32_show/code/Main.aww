@@ -1,0 +1,5 @@
+{- `showInt32`: full range (sign, zero, multi-digit, boundaries). -}
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 minInt32 ++ ", " ++ showInt32 (-42) ++ ", " ++ showInt32 0 ++ ", " ++ showInt32 7 ++ ", " ++ showInt32 1234567 ++ ", " ++ showInt32 maxInt32)

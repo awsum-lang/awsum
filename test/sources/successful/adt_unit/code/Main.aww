@@ -1,0 +1,11 @@
+{- Single nullary constructor; pattern match. -}
+import IO.Stdout
+
+type CustomUnit = CustomUnit
+
+show : CustomUnit -> String
+show u = case u of
+  CustomUnit -> "CustomUnit"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (show CustomUnit)

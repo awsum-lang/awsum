@@ -1,0 +1,18 @@
+{- One polymorphic function applied to two different type instantiations. -}
+import IO.Stdout
+
+type Box a = Box a
+
+type Result a e = Ok a | Err e
+
+unwrap : Box a -> a
+unwrap box = case box of
+  Box value -> value
+
+showResult : Result String String -> String
+showResult r = case r of
+  Ok a -> a
+  Err e -> e
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (unwrap (Box "from box") ++ " " ++ showResult (unwrap (Box (Ok "nested"))))

@@ -1,0 +1,24 @@
+{- Underscore binders: bare `_` is a wildcard, `_foo` is named-but-unused. -}
+import IO.Stdout
+
+type Box a = Box a
+
+type Pair a b = Pair a b
+
+greeting : String -> String
+greeting _ = "hi"
+
+unwrapBox : Box String -> String
+unwrapBox b = case b of
+  Box _ -> "unwrapped"
+
+unwrapBoxNamed : Box String -> String
+unwrapBoxNamed b = case b of
+  Box _v -> "unwrapped-named"
+
+showPair : Pair String String -> String
+showPair p = case p of
+  Pair _ _ -> "paired"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (greeting "x" ++ " " ++ unwrapBox (Box "a") ++ " " ++ unwrapBoxNamed (Box "b") ++ " " ++ showPair (Pair "l" "r"))

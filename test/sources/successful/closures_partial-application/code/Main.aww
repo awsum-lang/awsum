@@ -1,0 +1,21 @@
+{- Partial application produces a first-class function value
+   that another HOF (`apply`) can then invoke. -}
+import IO.Stdout
+
+type Box a = Box a
+
+wrap : String -> Box String
+wrap s = Box s
+
+unwrap : Box String -> String
+unwrap b = case b of
+  Box value -> value
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+compose : (b -> c) -> (a -> b) -> a -> c
+compose f g x = f (g x)
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (apply (compose unwrap wrap) "chain")

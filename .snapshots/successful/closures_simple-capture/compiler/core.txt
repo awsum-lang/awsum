@@ -1,0 +1,39 @@
+CoreProgram
+    { cdecls =
+        [ CValDef "answer"
+            ( CIntLit 42 TInt32 )
+        , CFunDef "captureFn" [ "k" ]
+            ( CCall
+                ( CVar "$df$apply$0" )
+                [ CVar "answer"
+                , CVar "k"
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "showInt32" )
+                    [ CCall
+                        ( CVar "captureFn" )
+                        [ CIntLit 7 TInt32 ]
+                    ]
+                ]
+            )
+        , CFunDef "$lam$1"
+            [ "k"
+            , "_n"
+            ]
+            ( CVar "k" )
+        , CFunDef "$df$apply$0"
+            [ "x"
+            , "$df$apply$0$cap0$0"
+            ]
+            ( CCall
+                ( CVar "$lam$1" )
+                [ CVar "$df$apply$0$cap0$0"
+                , CVar "x"
+                ]
+            )
+        ]
+    }

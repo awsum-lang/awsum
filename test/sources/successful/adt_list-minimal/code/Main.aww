@@ -1,0 +1,12 @@
+{- Recursive ADT (List) with recursive show. -}
+import IO.Stdout
+
+type List a = Cons a (List a) | Nil
+
+show : List String -> String
+show xs = case xs of
+  Cons h t -> h ++ "," ++ (show t)
+  Nil -> ""
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (show (Cons "a" (Cons "b" (Cons "c" Nil))))

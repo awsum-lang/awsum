@@ -1,0 +1,18 @@
+{- Mutual recursion with mismatched arities; SCC must merge via a
+   sum-typed args ADT. -}
+import IO.Stdout
+
+type Input = IDone | IStep
+
+parseExpr : Input -> Int32
+parseExpr tok = case tok of
+  IDone -> 0
+  IStep -> parseBinary tok 0
+
+parseBinary : Input -> Int32 -> Int32
+parseBinary tok _acc = case tok of
+  IDone -> 0
+  IStep -> parseExpr IDone
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 (parseExpr IStep))

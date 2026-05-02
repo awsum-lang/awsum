@@ -1,0 +1,10 @@
+{- `eqInt32`: returns prelude `Bool`. -}
+import IO.Stdout
+
+render : Bool -> String
+render b = case b of
+  True -> "T"
+  False -> "F"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (eqInt32 42 42) ++ render (eqInt32 42 7) ++ render (eqInt32 minInt32 minInt32) ++ render (eqInt32 0 1))

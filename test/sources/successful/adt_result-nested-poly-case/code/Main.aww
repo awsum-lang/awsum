@@ -1,0 +1,16 @@
+{- Nested polymorphic Result; sequential case-of (no nested patterns). -}
+import IO.Stdout
+
+type Result a e = Ok a | Err e
+
+unwrap : Result (Result a a) (Result a a) -> a
+unwrap r = case r of
+  Ok r2 -> case r2 of
+    Ok value -> value
+    Err value -> value
+  Err r2 -> case r2 of
+    Ok value -> value
+    Err value -> value
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (unwrap (Ok (Ok "1")) ++ "," ++ unwrap (Ok (Err "2")) ++ "," ++ unwrap (Err (Ok "3")) ++ "," ++ unwrap (Err (Err "4")))

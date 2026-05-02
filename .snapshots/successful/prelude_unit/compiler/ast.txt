@@ -1,0 +1,138 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " `Unit` and `showUnit` from prelude (no import). " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 4
+            , spanStartCol = 1
+            , spanEndLine = 4
+            , spanEndCol = 25
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 8
+                , spanEndLine = 4
+                , spanEndCol = 25
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 8
+                    , spanEndLine = 4
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 18
+                    , spanEndLine = 4
+                    , spanEndCol = 25
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 18
+                        , spanEndLine = 4
+                        , spanEndCol = 20
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 21
+                        , spanEndLine = 4
+                        , spanEndCol = 25
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 1
+                , spanEndLine = 5
+                , spanEndCol = 46
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 6
+                    , spanEndLine = 5
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 15
+                    , spanEndLine = 5
+                    , spanEndCol = 46
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 15
+                        , spanEndLine = 5
+                        , spanEndCol = 31
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 31
+                        , spanEndLine = 5
+                        , spanEndCol = 46
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 32
+                            , spanEndLine = 5
+                            , spanEndCol = 45
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 32
+                                , spanEndLine = 5
+                                , spanEndCol = 41
+                                }
+                            )
+                            ( QName [] "showUnit" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 41
+                                , spanEndLine = 5
+                                , spanEndCol = 45
+                                }
+                            ) "Unit"
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

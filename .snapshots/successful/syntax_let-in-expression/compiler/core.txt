@@ -1,0 +1,52 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "pad" [ "s" ]
+            ( CCall
+                ( CVar "$let$2" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CString "["
+                    , CVar "s"
+                    ]
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CVar "$let$3" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "<"
+                            , CCall
+                                ( CVar "pad" )
+                                [ CString "hi" ]
+                            ]
+                        , CString ">"
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$let$1" [ "q" ]
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CVar "q"
+                , CVar "q"
+                ]
+            )
+        , CFunDef "$let$2" [ "p" ]
+            ( CCall
+                ( CVar "$let$1" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "p"
+                    , CString "]"
+                    ]
+                ]
+            )
+        , CFunDef "$let$3" [ "body" ]
+            ( CVar "body" )
+        ]
+    }

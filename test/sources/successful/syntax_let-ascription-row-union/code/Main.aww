@@ -1,0 +1,26 @@
+{- `let n : T = e in body`: ascription pushes the expected row-union
+   down through a do-block; without it the do-block can't synthesise. -}
+import IO.Stdout
+
+type ErrA = ErrA
+
+type ErrB = ErrB
+
+opA : Either ErrA Int32
+opA = Right 1
+
+opB : Either ErrB Int32
+opB = Right 2
+
+main : String -> IO Unit
+main _ =
+  let res : Either (ParseError | ErrA | ErrB) Int32 = do
+        a <- opA
+        b <- opB
+        pureEither b
+   in case res of
+        Left e -> case e of
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : ErrA) -> IO.Stdout.print "ERR_A"
+          (_ : ErrB) -> IO.Stdout.print "ERR_B"
+        Right n -> IO.Stdout.print (showInt32 n)

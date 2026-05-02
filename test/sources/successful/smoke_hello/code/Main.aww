@@ -1,0 +1,13 @@
+{- Smoke: string concat, helper function, `IO.Stdout.print`. -}
+import IO.Stdout
+
+main : String -> IO Unit
+main input = IO.Stdout.print (addGreeting input)
+
+{- Block comment -}
+
+greeting : String
+greeting = "Hello" -- Line comment
+
+addGreeting : String -> String
+addGreeting name = greeting ++ ", " ++ name ++ "!"

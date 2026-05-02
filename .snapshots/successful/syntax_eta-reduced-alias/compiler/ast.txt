@@ -1,0 +1,182 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Eta-reduced (point-free) alias for a function-typed value. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 4
+            , spanStartCol = 1
+            , spanEndLine = 4
+            , spanEndCol = 24
+            }
+        ) "say"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 7
+                , spanEndLine = 4
+                , spanEndCol = 24
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 7
+                    , spanEndLine = 4
+                    , spanEndCol = 13
+                    }
+                ) "String"
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 17
+                    , spanEndLine = 4
+                    , spanEndCol = 24
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 17
+                        , spanEndLine = 4
+                        , spanEndCol = 19
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 20
+                        , spanEndLine = 4
+                        , spanEndCol = 24
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 1
+                , spanEndLine = 5
+                , spanEndCol = 22
+                }
+            ) "say" []
+            ( EVar
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 7
+                    , spanEndLine = 5
+                    , spanEndCol = 22
+                    }
+                )
+                ( QName
+                    [ "IO"
+                    , "Stdout"
+                    ] "print"
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 7
+                , spanEndCol = 25
+                }
+            ) "main"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 8
+                    , spanEndLine = 7
+                    , spanEndCol = 25
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 8
+                        , spanEndLine = 7
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 18
+                        , spanEndLine = 7
+                        , spanEndCol = 25
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 18
+                            , spanEndLine = 7
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 21
+                            , spanEndLine = 7
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 23
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 6
+                    , spanEndLine = 8
+                    , spanEndCol = 11
+                    }
+                ) "input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 14
+                    , spanEndLine = 8
+                    , spanEndCol = 23
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 14
+                        , spanEndLine = 8
+                        , spanEndCol = 18
+                        }
+                    )
+                    ( QName [] "say" )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 18
+                        , spanEndLine = 8
+                        , spanEndCol = 23
+                        }
+                    )
+                    ( QName [] "input" )
+                )
+            ) Nothing
+        ]
+    }

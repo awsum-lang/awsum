@@ -1,0 +1,16 @@
+{- Closure capturing one outer parameter; lambda flows through a polymorphic HOF.
+   `answer` has to be a typed binding because lambda params can't be ascribed,
+   and a bare literal can't pin `apply`'s `a` through `\_n -> k`. -}
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+answer : Int32
+answer = 42
+
+captureFn : Int32 -> Int32
+captureFn k = apply (\_n -> k) answer
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 (captureFn 7))

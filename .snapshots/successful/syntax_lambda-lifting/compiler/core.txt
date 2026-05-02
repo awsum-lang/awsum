@@ -1,0 +1,117 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "pureEither" [ "x" ]
+            ( CCon 1
+                [ CVar "x" ]
+            )
+        , CValDef "inc42"
+            ( CCall
+                ( CVar "$df$apply$0" )
+                [ CIntLit 42 TInt32 ]
+            )
+        , CValDef "op1"
+            ( CCon 1
+                [ CIntLit 1 TInt32 ]
+            )
+        , CFunDef "op2WithA" [ "n" ]
+            ( CCon 1
+                [ CVar "n" ]
+            )
+        , CValDef "g"
+            ( CCase
+                ( CVar "op1" )
+                [
+                    ( 0
+                    , [ "$do_e_23_3" ]
+                    , CCon 0
+                        [ CRow 2252990199
+                            ( CVar "$do_e_23_3" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCase
+                        ( CCall
+                            ( CVar "op2WithA" )
+                            [ CVar "a" ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_24_3" ]
+                            , CCon 0
+                                [ CRow 2269767818
+                                    ( CVar "$do_e_24_3" )
+                                ]
+                            )
+                        ,
+                            ( 1
+                            , [ "b" ]
+                            , CCall
+                                ( CVar "pureEither" )
+                                [ CVar "b" ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "describe" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 2252990199
+                            , "__rw"
+                            , CString "ErrA"
+                            )
+                        ,
+                            ( 2269767818
+                            , "__rw"
+                            , CString "ErrB"
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "n" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "inc42" ]
+                        , CString " / "
+                        ]
+                    , CCall
+                        ( CVar "describe" )
+                        [ CVar "g" ]
+                    ]
+                ]
+            )
+        , CFunDef "$lam$1" [ "n" ]
+            ( CVar "n" )
+        , CFunDef "$df$apply$0" [ "x" ]
+            ( CCall
+                ( CVar "$lam$1" )
+                [ CVar "x" ]
+            )
+        ]
+    }

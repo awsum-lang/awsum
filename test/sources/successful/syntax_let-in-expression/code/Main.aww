@@ -1,0 +1,13 @@
+{- Standalone `let n = e in body`: multi-binding layout form, inner
+   binding referencing outer, and `let` used in argument position. -}
+import IO.Stdout
+
+pad : String -> String
+pad s =
+  let p = "[" ++ s
+      q = p ++ "]"
+   in q ++ q
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (let body = "<" ++ pad "hi" ++ ">"
+ in body)

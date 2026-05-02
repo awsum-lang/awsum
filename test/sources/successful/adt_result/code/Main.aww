@@ -1,0 +1,12 @@
+{- Both branches unify to the same type variable (`Result a a -> a`). -}
+import IO.Stdout
+
+type Result a e = Ok a | Err e
+
+unwrap : Result a a -> a
+unwrap r = case r of
+  Ok value -> value
+  Err value -> value
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (unwrap (Ok "1") ++ "," ++ unwrap (Err "2"))

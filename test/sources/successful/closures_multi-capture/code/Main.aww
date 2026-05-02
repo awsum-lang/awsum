@@ -1,0 +1,14 @@
+{- Closure capturing two outer parameters at once. -}
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+zero : Int32
+zero = 0
+
+both : Int32 -> Int32 -> String
+both a b = apply (\_n -> showInt32 a ++ "/" ++ showInt32 b) zero
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (both 11 22)

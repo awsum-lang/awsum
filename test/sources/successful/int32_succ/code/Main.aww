@@ -1,0 +1,10 @@
+{- `succInt32`: ordinary `Right (x+1)`; `Left OverflowError` at `maxInt32`. -}
+import IO.Stdout
+
+render : Either OverflowError Int32 -> String
+render r = case r of
+  Left e -> "overflow: " ++ showOverflowError e
+  Right v -> "ok: " ++ showInt32 v
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (succInt32 42) ++ ", " ++ render (succInt32 maxInt32))

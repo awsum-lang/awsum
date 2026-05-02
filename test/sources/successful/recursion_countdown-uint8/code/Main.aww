@@ -1,0 +1,20 @@
+{- Non-tail self-recursion on UInt8 from 255 to 0; recursive call wrapped
+   in `case`, frames stay live until termination. -}
+import IO.Stdout
+
+countDown : UInt8 -> Either UnderflowError String
+countDown n = case eqUInt8 n 0 of
+  True -> Right (showUInt8 n)
+  False -> case predUInt8 n of
+    Left e -> Left e
+    Right m -> case countDown m of
+      Left e -> Left e
+      Right s -> Right (showUInt8 n ++ "," ++ s)
+
+showResult : Either UnderflowError String -> String
+showResult r = case r of
+  Left e -> "left: " ++ showUnderflowError e
+  Right s -> "right: " ++ s
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showResult (countDown 255))

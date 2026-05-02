@@ -1,0 +1,1472 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Pattern on a function (and lambda) parameter: `f (Tuple3 a b c) = …`. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 4
+            , spanStartCol = 1
+            , spanEndLine = 4
+            , spanEndCol = 46
+            }
+        ) "sumTriple"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 13
+                , spanEndLine = 4
+                , spanEndCol = 46
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 13
+                    , spanEndLine = 4
+                    , spanEndCol = 37
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 13
+                        , spanEndLine = 4
+                        , spanEndCol = 31
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 4
+                            , spanStartCol = 13
+                            , spanEndLine = 4
+                            , spanEndCol = 25
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 4
+                                , spanStartCol = 13
+                                , spanEndLine = 4
+                                , spanEndCol = 19
+                                }
+                            ) "Tuple3"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 4
+                                , spanStartCol = 20
+                                , spanEndLine = 4
+                                , spanEndCol = 25
+                                }
+                            ) "Int32"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 4
+                            , spanStartCol = 26
+                            , spanEndLine = 4
+                            , spanEndCol = 31
+                            }
+                        ) "Int32"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 32
+                        , spanEndLine = 4
+                        , spanEndCol = 37
+                        }
+                    ) "Int32"
+                )
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 41
+                    , spanEndLine = 4
+                    , spanEndCol = 46
+                    }
+                ) "Int32"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 21
+                }
+            ) "sumTriple"
+            [ ParamPat
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 11
+                    , spanEndLine = 5
+                    , spanEndCol = 26
+                    }
+                )
+                ( PCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 12
+                        , spanEndLine = 5
+                        , spanEndCol = 18
+                        }
+                    ) "Tuple3"
+                    [ PVar
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 19
+                            , spanEndLine = 5
+                            , spanEndCol = 20
+                            }
+                        ) "a"
+                    , PVar
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 21
+                            , spanEndLine = 5
+                            , spanEndCol = 22
+                            }
+                        ) "b"
+                    , PVar
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 23
+                            , spanEndLine = 5
+                            , spanEndCol = 24
+                            }
+                        ) "c"
+                    ]
+                )
+            ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 28
+                    , spanEndLine = 9
+                    , spanEndCol = 21
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 33
+                        , spanEndLine = 5
+                        , spanEndCol = 46
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 33
+                            , spanEndLine = 5
+                            , spanEndCol = 44
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 33
+                                , spanEndLine = 5
+                                , spanEndCol = 42
+                                }
+                            )
+                            ( QName [] "addInt32" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 42
+                                , spanEndLine = 5
+                                , spanEndCol = 44
+                                }
+                            )
+                            ( QName [] "a" )
+                        )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 44
+                            , spanEndLine = 5
+                            , spanEndCol = 46
+                            }
+                        )
+                        ( QName [] "b" )
+                    )
+                )
+                ( CaseAlt []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 3
+                            , spanEndLine = 6
+                            , spanEndCol = 7
+                            }
+                        ) "Left"
+                        [ PWild
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 8
+                                , spanEndLine = 6
+                                , spanEndCol = 9
+                                }
+                            )
+                        ]
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 13
+                            , spanEndLine = 6
+                            , spanEndCol = 14
+                            }
+                        )
+                        ( LInt 0 )
+                    ) Nothing :|
+                    [ CaseAlt []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 3
+                                , spanEndLine = 7
+                                , spanEndCol = 8
+                                }
+                            ) "Right"
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 7
+                                    , spanStartCol = 9
+                                    , spanEndLine = 7
+                                    , spanEndCol = 11
+                                    }
+                                ) "ab"
+                            ]
+                        )
+                        ( ECase
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 15
+                                , spanEndLine = 9
+                                , spanEndCol = 21
+                                }
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 7
+                                    , spanStartCol = 20
+                                    , spanEndLine = 7
+                                    , spanEndCol = 34
+                                    }
+                                )
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 7
+                                        , spanStartCol = 20
+                                        , spanEndLine = 7
+                                        , spanEndCol = 32
+                                        }
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 7
+                                            , spanStartCol = 20
+                                            , spanEndLine = 7
+                                            , spanEndCol = 29
+                                            }
+                                        )
+                                        ( QName [] "addInt32" )
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 7
+                                            , spanStartCol = 29
+                                            , spanEndLine = 7
+                                            , spanEndCol = 32
+                                            }
+                                        )
+                                        ( QName [] "ab" )
+                                    )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 7
+                                        , spanStartCol = 32
+                                        , spanEndLine = 7
+                                        , spanEndCol = 34
+                                        }
+                                    )
+                                    ( QName [] "c" )
+                                )
+                            )
+                            ( CaseAlt []
+                                ( PCon
+                                    ( SrcSpan
+                                        { spanStartLine = 8
+                                        , spanStartCol = 5
+                                        , spanEndLine = 8
+                                        , spanEndCol = 9
+                                        }
+                                    ) "Left"
+                                    [ PWild
+                                        ( SrcSpan
+                                            { spanStartLine = 8
+                                            , spanStartCol = 10
+                                            , spanEndLine = 8
+                                            , spanEndCol = 11
+                                            }
+                                        )
+                                    ]
+                                )
+                                ( ELit
+                                    ( SrcSpan
+                                        { spanStartLine = 8
+                                        , spanStartCol = 15
+                                        , spanEndLine = 8
+                                        , spanEndCol = 16
+                                        }
+                                    )
+                                    ( LInt 0 )
+                                ) Nothing :|
+                                [ CaseAlt []
+                                    ( PCon
+                                        ( SrcSpan
+                                            { spanStartLine = 9
+                                            , spanStartCol = 5
+                                            , spanEndLine = 9
+                                            , spanEndCol = 10
+                                            }
+                                        ) "Right"
+                                        [ PVar
+                                            ( SrcSpan
+                                                { spanStartLine = 9
+                                                , spanStartCol = 11
+                                                , spanEndLine = 9
+                                                , spanEndCol = 14
+                                                }
+                                            ) "abc"
+                                        ]
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 9
+                                            , spanStartCol = 18
+                                            , spanEndLine = 9
+                                            , spanEndCol = 21
+                                            }
+                                        )
+                                        ( QName [] "abc" )
+                                    ) Nothing
+                                ]
+                            ) []
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 11
+                , spanStartCol = 1
+                , spanEndLine = 11
+                , spanEndCol = 69
+                }
+            ) "apply"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 11
+                    , spanStartCol = 9
+                    , spanEndLine = 11
+                    , spanEndCol = 69
+                    }
+                )
+                ( TyArrow
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 9
+                        , spanEndLine = 11
+                        , spanEndCol = 39
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 10
+                            , spanEndLine = 11
+                            , spanEndCol = 28
+                            }
+                        )
+                        ( TyApp
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 10
+                                , spanEndLine = 11
+                                , spanEndCol = 22
+                                }
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 10
+                                    , spanEndLine = 11
+                                    , spanEndCol = 16
+                                    }
+                                ) "Tuple2"
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 17
+                                    , spanEndLine = 11
+                                    , spanEndCol = 22
+                                    }
+                                ) "Int32"
+                            )
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 23
+                                , spanEndLine = 11
+                                , spanEndCol = 28
+                                }
+                            ) "Int32"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 32
+                            , spanEndLine = 11
+                            , spanEndCol = 37
+                            }
+                        ) "Int32"
+                    )
+                )
+                ( TyArrow
+                    ( SrcSpan
+                        { spanStartLine = 11
+                        , spanStartCol = 42
+                        , spanEndLine = 11
+                        , spanEndCol = 69
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 42
+                            , spanEndLine = 11
+                            , spanEndCol = 60
+                            }
+                        )
+                        ( TyApp
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 42
+                                , spanEndLine = 11
+                                , spanEndCol = 54
+                                }
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 42
+                                    , spanEndLine = 11
+                                    , spanEndCol = 48
+                                    }
+                                ) "Tuple2"
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 49
+                                    , spanEndLine = 11
+                                    , spanEndCol = 54
+                                    }
+                                ) "Int32"
+                            )
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 55
+                                , spanEndLine = 11
+                                , spanEndCol = 60
+                                }
+                            ) "Int32"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 64
+                            , spanEndLine = 11
+                            , spanEndCol = 69
+                            }
+                        ) "Int32"
+                    )
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 12
+                , spanEndCol = 16
+                }
+            ) "apply"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 7
+                    , spanEndLine = 12
+                    , spanEndCol = 8
+                    }
+                ) "f"
+            , Param
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 9
+                    , spanEndLine = 12
+                    , spanEndCol = 10
+                    }
+                ) "t"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 13
+                    , spanEndLine = 12
+                    , spanEndCol = 16
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 13
+                        , spanEndLine = 12
+                        , spanEndCol = 15
+                        }
+                    )
+                    ( QName [] "f" )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 15
+                        , spanEndLine = 12
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( QName [] "t" )
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 14
+                , spanStartCol = 1
+                , spanEndLine = 14
+                , spanEndCol = 38
+                }
+            ) "sumPair"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 11
+                    , spanEndLine = 14
+                    , spanEndCol = 38
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 11
+                        , spanEndLine = 14
+                        , spanEndCol = 29
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 11
+                            , spanEndLine = 14
+                            , spanEndCol = 23
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 11
+                                , spanEndLine = 14
+                                , spanEndCol = 17
+                                }
+                            ) "Tuple2"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 18
+                                , spanEndLine = 14
+                                , spanEndCol = 23
+                                }
+                            ) "Int32"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 24
+                            , spanEndLine = 14
+                            , spanEndCol = 29
+                            }
+                        ) "Int32"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 33
+                        , spanEndLine = 14
+                        , spanEndCol = 38
+                        }
+                    ) "Int32"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 15
+                , spanStartCol = 1
+                , spanEndLine = 17
+                , spanEndCol = 15
+                }
+            ) "sumPair"
+            [ ParamPat
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 9
+                    , spanEndLine = 15
+                    , spanEndCol = 22
+                    }
+                )
+                ( PCon
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 10
+                        , spanEndLine = 15
+                        , spanEndCol = 16
+                        }
+                    ) "Tuple2"
+                    [ PVar
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 17
+                            , spanEndLine = 15
+                            , spanEndCol = 18
+                            }
+                        ) "a"
+                    , PVar
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 19
+                            , spanEndLine = 15
+                            , spanEndCol = 20
+                            }
+                        ) "b"
+                    ]
+                )
+            ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 24
+                    , spanEndLine = 17
+                    , spanEndCol = 15
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 29
+                        , spanEndLine = 15
+                        , spanEndCol = 42
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 29
+                            , spanEndLine = 15
+                            , spanEndCol = 40
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 15
+                                , spanStartCol = 29
+                                , spanEndLine = 15
+                                , spanEndCol = 38
+                                }
+                            )
+                            ( QName [] "addInt32" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 15
+                                , spanStartCol = 38
+                                , spanEndLine = 15
+                                , spanEndCol = 40
+                                }
+                            )
+                            ( QName [] "a" )
+                        )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 40
+                            , spanEndLine = 15
+                            , spanEndCol = 42
+                            }
+                        )
+                        ( QName [] "b" )
+                    )
+                )
+                ( CaseAlt []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 3
+                            , spanEndLine = 16
+                            , spanEndCol = 7
+                            }
+                        ) "Left"
+                        [ PWild
+                            ( SrcSpan
+                                { spanStartLine = 16
+                                , spanStartCol = 8
+                                , spanEndLine = 16
+                                , spanEndCol = 9
+                                }
+                            )
+                        ]
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 16
+                            , spanStartCol = 13
+                            , spanEndLine = 16
+                            , spanEndCol = 14
+                            }
+                        )
+                        ( LInt 0 )
+                    ) Nothing :|
+                    [ CaseAlt []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 17
+                                , spanStartCol = 3
+                                , spanEndLine = 17
+                                , spanEndCol = 8
+                                }
+                            ) "Right"
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 17
+                                    , spanStartCol = 9
+                                    , spanEndLine = 17
+                                    , spanEndCol = 10
+                                    }
+                                ) "s"
+                            ]
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 17
+                                , spanStartCol = 14
+                                , spanEndLine = 17
+                                , spanEndCol = 15
+                                }
+                            )
+                            ( QName [] "s" )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 19
+                , spanStartCol = 1
+                , spanEndLine = 19
+                , spanEndCol = 34
+                }
+            ) "triple"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 19
+                    , spanStartCol = 10
+                    , spanEndLine = 19
+                    , spanEndCol = 34
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 10
+                        , spanEndLine = 19
+                        , spanEndCol = 28
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 19
+                            , spanStartCol = 10
+                            , spanEndLine = 19
+                            , spanEndCol = 22
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 19
+                                , spanStartCol = 10
+                                , spanEndLine = 19
+                                , spanEndCol = 16
+                                }
+                            ) "Tuple3"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 19
+                                , spanStartCol = 17
+                                , spanEndLine = 19
+                                , spanEndCol = 22
+                                }
+                            ) "Int32"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 19
+                            , spanStartCol = 23
+                            , spanEndLine = 19
+                            , spanEndCol = 28
+                            }
+                        ) "Int32"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 29
+                        , spanEndLine = 19
+                        , spanEndCol = 34
+                        }
+                    ) "Int32"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 20
+                , spanStartCol = 1
+                , spanEndLine = 20
+                , spanEndCol = 25
+                }
+            ) "triple" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 20
+                    , spanStartCol = 10
+                    , spanEndLine = 20
+                    , spanEndCol = 25
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 20
+                        , spanStartCol = 10
+                        , spanEndLine = 20
+                        , spanEndCol = 23
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 20
+                            , spanStartCol = 10
+                            , spanEndLine = 20
+                            , spanEndCol = 20
+                            }
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 20
+                                , spanStartCol = 10
+                                , spanEndLine = 20
+                                , spanEndCol = 17
+                                }
+                            ) "Tuple3"
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 20
+                                , spanStartCol = 17
+                                , spanEndLine = 20
+                                , spanEndCol = 20
+                                }
+                            )
+                            ( LInt 10 )
+                        )
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 20
+                            , spanStartCol = 20
+                            , spanEndLine = 20
+                            , spanEndCol = 23
+                            }
+                        )
+                        ( LInt 20 )
+                    )
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 20
+                        , spanStartCol = 23
+                        , spanEndLine = 20
+                        , spanEndCol = 25
+                        }
+                    )
+                    ( LInt 30 )
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 22
+                , spanStartCol = 1
+                , spanEndLine = 22
+                , spanEndCol = 26
+                }
+            ) "pair"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 22
+                    , spanStartCol = 8
+                    , spanEndLine = 22
+                    , spanEndCol = 26
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 22
+                        , spanStartCol = 8
+                        , spanEndLine = 22
+                        , spanEndCol = 20
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 22
+                            , spanStartCol = 8
+                            , spanEndLine = 22
+                            , spanEndCol = 14
+                            }
+                        ) "Tuple2"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 22
+                            , spanStartCol = 15
+                            , spanEndLine = 22
+                            , spanEndCol = 20
+                            }
+                        ) "Int32"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 22
+                        , spanStartCol = 21
+                        , spanEndLine = 22
+                        , spanEndCol = 26
+                        }
+                    ) "Int32"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 23
+                , spanStartCol = 1
+                , spanEndLine = 23
+                , spanEndCol = 22
+                }
+            ) "pair" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 23
+                    , spanStartCol = 8
+                    , spanEndLine = 23
+                    , spanEndCol = 22
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 23
+                        , spanStartCol = 8
+                        , spanEndLine = 23
+                        , spanEndCol = 19
+                        }
+                    )
+                    ( ECon
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 8
+                            , spanEndLine = 23
+                            , spanEndCol = 15
+                            }
+                        ) "Tuple2"
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 15
+                            , spanEndLine = 23
+                            , spanEndCol = 19
+                            }
+                        )
+                        ( LInt 100 )
+                    )
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 23
+                        , spanStartCol = 19
+                        , spanEndLine = 23
+                        , spanEndCol = 22
+                        }
+                    )
+                    ( LInt 200 )
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 25
+                , spanStartCol = 1
+                , spanEndLine = 25
+                , spanEndCol = 25
+                }
+            ) "main"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 25
+                    , spanStartCol = 8
+                    , spanEndLine = 25
+                    , spanEndCol = 25
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 25
+                        , spanStartCol = 8
+                        , spanEndLine = 25
+                        , spanEndCol = 14
+                        }
+                    ) "String"
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 25
+                        , spanStartCol = 18
+                        , spanEndLine = 25
+                        , spanEndCol = 25
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 25
+                            , spanStartCol = 18
+                            , spanEndLine = 25
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 25
+                            , spanStartCol = 21
+                            , spanEndLine = 25
+                            , spanEndCol = 25
+                            }
+                        ) "Unit"
+                    )
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 26
+                , spanStartCol = 1
+                , spanEndLine = 29
+                , spanEndCol = 60
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 26
+                    , spanStartCol = 6
+                    , spanEndLine = 26
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( ELet
+                ( SrcSpan
+                    { spanStartLine = 27
+                    , spanStartCol = 7
+                    , spanEndLine = 27
+                    , spanEndCol = 27
+                    }
+                )
+                ( PVar
+                    ( SrcSpan
+                        { spanStartLine = 27
+                        , spanStartCol = 7
+                        , spanEndLine = 27
+                        , spanEndCol = 8
+                        }
+                    ) "n"
+                ) Nothing
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 27
+                        , spanStartCol = 11
+                        , spanEndLine = 27
+                        , spanEndCol = 27
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 27
+                            , spanStartCol = 11
+                            , spanEndLine = 27
+                            , spanEndCol = 21
+                            }
+                        )
+                        ( QName [] "sumTriple" )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 27
+                            , spanStartCol = 21
+                            , spanEndLine = 27
+                            , spanEndCol = 27
+                            }
+                        )
+                        ( QName [] "triple" )
+                    )
+                )
+                ( ELet
+                    ( SrcSpan
+                        { spanStartLine = 28
+                        , spanStartCol = 7
+                        , spanEndLine = 28
+                        , spanEndCol = 61
+                        }
+                    )
+                    ( PVar
+                        ( SrcSpan
+                            { spanStartLine = 28
+                            , spanStartCol = 7
+                            , spanEndLine = 28
+                            , spanEndCol = 8
+                            }
+                        ) "m"
+                    ) Nothing
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 28
+                            , spanStartCol = 11
+                            , spanEndLine = 28
+                            , spanEndCol = 61
+                            }
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 28
+                                , spanStartCol = 11
+                                , spanEndLine = 28
+                                , spanEndCol = 57
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 28
+                                    , spanStartCol = 11
+                                    , spanEndLine = 28
+                                    , spanEndCol = 17
+                                    }
+                                )
+                                ( QName [] "apply" )
+                            )
+                            ( EParens
+                                ( SrcSpan
+                                    { spanStartLine = 28
+                                    , spanStartCol = 17
+                                    , spanEndLine = 28
+                                    , spanEndCol = 57
+                                    }
+                                )
+                                ( ELam
+                                    ( SrcSpan
+                                        { spanStartLine = 28
+                                        , spanStartCol = 18
+                                        , spanEndLine = 28
+                                        , spanEndCol = 55
+                                        }
+                                    )
+                                    [ ParamPat
+                                        ( SrcSpan
+                                            { spanStartLine = 28
+                                            , spanStartCol = 19
+                                            , spanEndLine = 28
+                                            , spanEndCol = 32
+                                            }
+                                        )
+                                        ( PCon
+                                            ( SrcSpan
+                                                { spanStartLine = 28
+                                                , spanStartCol = 20
+                                                , spanEndLine = 28
+                                                , spanEndCol = 26
+                                                }
+                                            ) "Tuple2"
+                                            [ PVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 28
+                                                    , spanStartCol = 27
+                                                    , spanEndLine = 28
+                                                    , spanEndCol = 28
+                                                    }
+                                                ) "a"
+                                            , PVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 28
+                                                    , spanStartCol = 29
+                                                    , spanEndLine = 28
+                                                    , spanEndCol = 30
+                                                    }
+                                                ) "b"
+                                            ]
+                                        )
+                                    ]
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 28
+                                            , spanStartCol = 35
+                                            , spanEndLine = 28
+                                            , spanEndCol = 55
+                                            }
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 28
+                                                , spanStartCol = 35
+                                                , spanEndLine = 28
+                                                , spanEndCol = 43
+                                                }
+                                            )
+                                            ( QName [] "sumPair" )
+                                        )
+                                        ( EParens
+                                            ( SrcSpan
+                                                { spanStartLine = 28
+                                                , spanStartCol = 43
+                                                , spanEndLine = 28
+                                                , spanEndCol = 55
+                                                }
+                                            )
+                                            ( EApp
+                                                ( SrcSpan
+                                                    { spanStartLine = 28
+                                                    , spanStartCol = 44
+                                                    , spanEndLine = 28
+                                                    , spanEndCol = 54
+                                                    }
+                                                )
+                                                ( EApp
+                                                    ( SrcSpan
+                                                        { spanStartLine = 28
+                                                        , spanStartCol = 44
+                                                        , spanEndLine = 28
+                                                        , spanEndCol = 53
+                                                        }
+                                                    )
+                                                    ( ECon
+                                                        ( SrcSpan
+                                                            { spanStartLine = 28
+                                                            , spanStartCol = 44
+                                                            , spanEndLine = 28
+                                                            , spanEndCol = 51
+                                                            }
+                                                        ) "Tuple2"
+                                                    )
+                                                    ( EVar
+                                                        ( SrcSpan
+                                                            { spanStartLine = 28
+                                                            , spanStartCol = 51
+                                                            , spanEndLine = 28
+                                                            , spanEndCol = 53
+                                                            }
+                                                        )
+                                                        ( QName [] "a" )
+                                                    )
+                                                )
+                                                ( EVar
+                                                    ( SrcSpan
+                                                        { spanStartLine = 28
+                                                        , spanStartCol = 53
+                                                        , spanEndLine = 28
+                                                        , spanEndCol = 54
+                                                        }
+                                                    )
+                                                    ( QName [] "b" )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 28
+                                , spanStartCol = 57
+                                , spanEndLine = 28
+                                , spanEndCol = 61
+                                }
+                            )
+                            ( QName [] "pair" )
+                        )
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 29
+                            , spanStartCol = 7
+                            , spanEndLine = 29
+                            , spanEndCol = 60
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 29
+                                , spanStartCol = 7
+                                , spanEndLine = 29
+                                , spanEndCol = 23
+                                }
+                            )
+                            ( QName
+                                [ "IO"
+                                , "Stdout"
+                                ] "print"
+                            )
+                        )
+                        ( EParens
+                            ( SrcSpan
+                                { spanStartLine = 29
+                                , spanStartCol = 23
+                                , spanEndLine = 29
+                                , spanEndCol = 60
+                                }
+                            )
+                            ( EInfix
+                                ( SrcSpan
+                                    { spanStartLine = 29
+                                    , spanStartCol = 24
+                                    , spanEndLine = 29
+                                    , spanEndCol = 59
+                                    }
+                                ) OpConcat
+                                ( EInfix
+                                    ( SrcSpan
+                                        { spanStartLine = 29
+                                        , spanStartCol = 24
+                                        , spanEndLine = 29
+                                        , spanEndCol = 45
+                                        }
+                                    ) OpConcat
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 29
+                                            , spanStartCol = 24
+                                            , spanEndLine = 29
+                                            , spanEndCol = 36
+                                            }
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 29
+                                                , spanStartCol = 24
+                                                , spanEndLine = 29
+                                                , spanEndCol = 34
+                                                }
+                                            )
+                                            ( QName [] "showInt32" )
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 29
+                                                , spanStartCol = 34
+                                                , spanEndLine = 29
+                                                , spanEndCol = 36
+                                                }
+                                            )
+                                            ( QName [] "n" )
+                                        )
+                                    )
+                                    ( ELit
+                                        ( SrcSpan
+                                            { spanStartLine = 29
+                                            , spanStartCol = 39
+                                            , spanEndLine = 29
+                                            , spanEndCol = 45
+                                            }
+                                        )
+                                        ( LString " / " )
+                                    )
+                                )
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 29
+                                        , spanStartCol = 48
+                                        , spanEndLine = 29
+                                        , spanEndCol = 59
+                                        }
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 29
+                                            , spanStartCol = 48
+                                            , spanEndLine = 29
+                                            , spanEndCol = 58
+                                            }
+                                        )
+                                        ( QName [] "showInt32" )
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 29
+                                            , spanStartCol = 58
+                                            , spanEndLine = 29
+                                            , spanEndCol = 59
+                                            }
+                                        )
+                                        ( QName [] "m" )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

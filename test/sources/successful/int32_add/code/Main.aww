@@ -1,0 +1,12 @@
+{- `addInt32`: row-union `(UnderflowError | OverflowError)` at `Int32` boundaries. -}
+import IO.Stdout
+
+render : Either (UnderflowError | OverflowError) Int32 -> String
+render r = case r of
+  Left e -> case e of
+    (u : UnderflowError) -> "err: " ++ showUnderflowError u
+    (o : OverflowError) -> "err: " ++ showOverflowError o
+  Right v -> "ok: " ++ showInt32 v
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (addInt32 100 23) ++ ", " ++ render (addInt32 100 (-50)) ++ ", " ++ render (addInt32 maxInt32 1) ++ ", " ++ render (addInt32 minInt32 (-1)) ++ ", " ++ render (addInt32 maxInt32 minInt32))

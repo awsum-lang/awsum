@@ -1,0 +1,21 @@
+{- Mutual recursion: forward references resolve across both functions. -}
+import IO.Stdout
+
+type Step = StepA | StepB | StepC | Done
+
+handleA : Step -> String
+handleA step = case step of
+  StepA -> "A" ++ handleB StepB
+  StepB -> handleB step
+  StepC -> handleB step
+  Done -> ""
+
+handleB : Step -> String
+handleB step = case step of
+  StepB -> "B" ++ handleA StepC
+  StepA -> handleA step
+  StepC -> "C" ++ handleA Done
+  Done -> ""
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (handleA StepA)

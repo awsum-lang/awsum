@@ -1,0 +1,12 @@
+{- `mulInt32`: row-union boundaries; `minInt32 * (-1)` overflows (negation doesn't fit). -}
+import IO.Stdout
+
+render : Either (UnderflowError | OverflowError) Int32 -> String
+render r = case r of
+  Left e -> case e of
+    (u : UnderflowError) -> "err: " ++ showUnderflowError u
+    (o : OverflowError) -> "err: " ++ showOverflowError o
+  Right v -> "ok: " ++ showInt32 v
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (mulInt32 6 7) ++ ", " ++ render (mulInt32 (-6) 7) ++ ", " ++ render (mulInt32 100000 100000) ++ ", " ++ render (mulInt32 (-100000) 100000) ++ ", " ++ render (mulInt32 minInt32 (-1)) ++ ", " ++ render (mulInt32 minInt32 1))

@@ -1,0 +1,69 @@
+CoreProgram
+    { cdecls =
+        [ CValDef "minUInt8"
+            ( CIntLit 0 TUInt8 )
+        , CValDef "maxUInt8"
+            ( CIntLit 255 TUInt8 )
+        , CFunDef "render" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CString "T"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "F"
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "eqUInt8" )
+                                    [ CVar "minUInt8"
+                                    , CVar "minUInt8"
+                                    ]
+                                ]
+                            , CCall
+                                ( CVar "render" )
+                                [ CCall
+                                    ( CBuiltIn "eqUInt8" )
+                                    [ CVar "maxUInt8"
+                                    , CVar "maxUInt8"
+                                    ]
+                                ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqUInt8" )
+                                [ CVar "maxUInt8"
+                                , CVar "minUInt8"
+                                ]
+                            ]
+                        ]
+                    , CCall
+                        ( CVar "render" )
+                        [ CCall
+                            ( CBuiltIn "eqUInt8" )
+                            [ CIntLit 128 TUInt8
+                            , CIntLit 127 TUInt8
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        ]
+    }

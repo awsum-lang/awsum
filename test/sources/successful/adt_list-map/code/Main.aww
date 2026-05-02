@@ -1,0 +1,20 @@
+{- HOF over recursive ADT; case branches reconstruct the parametric type. -}
+import IO.Stdout
+
+type List a = Cons a (List a) | Nil
+
+map : (String -> String) -> List String -> List String
+map f list = case list of
+  Cons head tail -> Cons (f head) (map f tail)
+  Nil -> Nil
+
+show : List String -> String
+show xs = case xs of
+  Cons h t -> h ++ "," ++ (show t)
+  Nil -> ""
+
+shout : String -> String
+shout s = s ++ "!"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (show (map shout (Cons "a" (Cons "b" (Cons "c" Nil)))))

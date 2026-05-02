@@ -1,0 +1,5 @@
+{- `showUInt8`: full range; values 128..255 trap signed-byte divergence on JVM. -}
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showUInt8 minUInt8 ++ ", " ++ showUInt8 42 ++ ", " ++ showUInt8 200 ++ ", " ++ showUInt8 maxUInt8)

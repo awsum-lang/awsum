@@ -1,0 +1,296 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Smoke: string concat, helper function, `IO.Stdout.print`. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 4
+            , spanStartCol = 1
+            , spanEndLine = 4
+            , spanEndCol = 25
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 4
+                , spanStartCol = 8
+                , spanEndLine = 4
+                , spanEndCol = 25
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 8
+                    , spanEndLine = 4
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 4
+                    , spanStartCol = 18
+                    , spanEndLine = 4
+                    , spanEndCol = 25
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 18
+                        , spanEndLine = 4
+                        , spanEndCol = 20
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 4
+                        , spanStartCol = 21
+                        , spanEndLine = 4
+                        , spanEndCol = 25
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 1
+                , spanEndLine = 5
+                , spanEndCol = 49
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 6
+                    , spanEndLine = 5
+                    , spanEndCol = 11
+                    }
+                ) "input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 14
+                    , spanEndLine = 5
+                    , spanEndCol = 49
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 14
+                        , spanEndLine = 5
+                        , spanEndCol = 30
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 30
+                        , spanEndLine = 5
+                        , spanEndCol = 49
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 31
+                            , spanEndLine = 5
+                            , spanEndCol = 48
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 31
+                                , spanEndLine = 5
+                                , spanEndCol = 43
+                                }
+                            )
+                            ( QName [] "addGreeting" )
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 43
+                                , spanEndLine = 5
+                                , spanEndCol = 48
+                                }
+                            )
+                            ( QName [] "input" )
+                        )
+                    )
+                )
+            ) Nothing
+        , CommentDecl
+            ( BlockComment " Block comment " )
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 18
+                }
+            ) "greeting"
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 12
+                    , spanEndLine = 9
+                    , spanEndCol = 18
+                    }
+                ) "String"
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 35
+                }
+            ) "greeting" []
+            ( ELit
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 12
+                    , spanEndLine = 10
+                    , spanEndCol = 20
+                    }
+                )
+                ( LString "Hello" )
+            )
+            ( Just " Line comment" )
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 12
+                , spanEndCol = 31
+                }
+            ) "addGreeting"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 12
+                    , spanStartCol = 15
+                    , spanEndLine = 12
+                    , spanEndCol = 31
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 15
+                        , spanEndLine = 12
+                        , spanEndCol = 21
+                        }
+                    ) "String"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 25
+                        , spanEndLine = 12
+                        , spanEndCol = 31
+                        }
+                    ) "String"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 13
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 51
+                }
+            ) "addGreeting"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 13
+                    , spanEndLine = 13
+                    , spanEndCol = 17
+                    }
+                ) "name"
+            ]
+            ( EInfix
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 20
+                    , spanEndLine = 13
+                    , spanEndCol = 51
+                    }
+                ) OpConcat
+                ( EInfix
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 20
+                        , spanEndLine = 13
+                        , spanEndCol = 45
+                        }
+                    ) OpConcat
+                    ( EInfix
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 20
+                            , spanEndLine = 13
+                            , spanEndCol = 37
+                            }
+                        ) OpConcat
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 20
+                                , spanEndLine = 13
+                                , spanEndCol = 29
+                                }
+                            )
+                            ( QName [] "greeting" )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 32
+                                , spanEndLine = 13
+                                , spanEndCol = 37
+                                }
+                            )
+                            ( LString ", " )
+                        )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 40
+                            , spanEndLine = 13
+                            , spanEndCol = 45
+                            }
+                        )
+                        ( QName [] "name" )
+                    )
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 48
+                        , spanEndLine = 13
+                        , spanEndCol = 51
+                        }
+                    )
+                    ( LString "!" )
+                )
+            ) Nothing
+        ]
+    }

@@ -1,0 +1,11 @@
+{- Polymorphic function applied to a parametric ADT value. -}
+import IO.Stdout
+
+type Box a = Box a
+
+identity : a -> a
+identity x = x
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (case identity (Box "one") of
+  Box v -> v)

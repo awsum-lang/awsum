@@ -1,0 +1,11 @@
+{- Lambda as the head of an application: `(\x -> x) 5`. -}
+import IO.Stdout
+
+runMe : Int32
+runMe = (\x -> x) 5
+
+doubled : Int32
+doubled = (\n -> n) runMe
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 doubled)

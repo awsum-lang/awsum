@@ -1,0 +1,36 @@
+{- `do` over three `Either`-returning steps with distinct error labels;
+   overall error is the row union, dispatched by row-tag. -}
+import IO.Stdout
+
+type ErrorA = ErrorA
+
+type ErrorB = ErrorB
+
+type ErrorC = ErrorC
+
+op1 : Either ErrorA Int32
+op1 = Right 1
+
+op2 : Either (ErrorB | ErrorC) Int32
+op2 = Left ErrorC
+
+op3 : Either ErrorB Int32
+op3 = Right 3
+
+f : Either (ErrorA | ErrorB | ErrorC) Int32
+f = do
+  a <- op1
+  b <- op2
+  c <- op3
+  pureEither c
+
+describe : Either (ErrorA | ErrorB | ErrorC) Int32 -> String
+describe r = case r of
+  Left e -> case e of
+    (_ : ErrorA) -> "ErrorA"
+    (_ : ErrorB) -> "ErrorB"
+    (_ : ErrorC) -> "ErrorC"
+  Right n -> "Ok " ++ showInt32 n
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe f)

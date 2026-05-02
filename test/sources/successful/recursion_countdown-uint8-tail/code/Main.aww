@@ -1,0 +1,18 @@
+{- Tail self-recursion on UInt8 with accumulator; TCO must fold to
+   `CLoop` before codegen. -}
+import IO.Stdout
+
+countDown : UInt8 -> String -> Either UnderflowError String
+countDown n acc = case eqUInt8 n 0 of
+  True -> Right (acc ++ showUInt8 n)
+  False -> case predUInt8 n of
+    Left e -> Left e
+    Right m -> countDown m (acc ++ showUInt8 n ++ ",")
+
+showResult : Either UnderflowError String -> String
+showResult r = case r of
+  Left e -> "left: " ++ showUnderflowError e
+  Right s -> "right: " ++ s
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showResult (countDown 255 ""))

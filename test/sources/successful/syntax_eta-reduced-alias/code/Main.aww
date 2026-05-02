@@ -1,0 +1,8 @@
+{- Eta-reduced (point-free) alias for a function-typed value. -}
+import IO.Stdout
+
+say : String -> IO Unit
+say = IO.Stdout.print
+
+main : String -> IO Unit
+main input = say input

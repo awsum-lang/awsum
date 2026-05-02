@@ -1,0 +1,11 @@
+{- Parametric single-constructor type; pattern match unwraps. -}
+import IO.Stdout
+
+type Box a = Box a
+
+unwrap : Box String -> String
+unwrap b = case b of
+  Box value -> value
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (unwrap (Box "hello"))

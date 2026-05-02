@@ -1,0 +1,10 @@
+{- `parseUInt8`: covers all cases from the prelude docstring. -}
+import IO.Stdout
+
+render : Either ParseError UInt8 -> String
+render r = case r of
+  Left _ -> "err"
+  Right v -> "ok:" ++ showUInt8 v
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (render (parseUInt8 "0") ++ ", " ++ render (parseUInt8 "255") ++ ", " ++ render (parseUInt8 "256") ++ ", " ++ render (parseUInt8 "-1") ++ ", " ++ render (parseUInt8 "") ++ ", " ++ render (parseUInt8 "abc") ++ ", " ++ render (parseUInt8 " 5") ++ ", " ++ render (parseUInt8 "12a"))

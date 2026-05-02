@@ -1,0 +1,19 @@
+{- `let id = \x -> x in body` — polymorphic let-bound lambda used at
+   multiple types in the body, no annotation needed. -}
+import IO.Stdout
+
+type Tri = TA | TB | TC
+
+showTri : Tri -> String
+showTri t = case t of
+  TA -> "A"
+  TB -> "B"
+  TC -> "C"
+
+threeTypes : Int32 -> String -> Tri -> String
+threeTypes n s b =
+  let id = \x -> x
+   in showInt32 (id n) ++ "/" ++ id s ++ "/" ++ showTri (id b)
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (threeTypes 42 "hello" TA)

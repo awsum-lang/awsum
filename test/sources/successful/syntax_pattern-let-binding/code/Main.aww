@@ -1,0 +1,15 @@
+{- Pattern on the LHS of a `let`: `let (Tuple2 a b) = e in …`. -}
+import IO.Stdout
+
+threeAndDouble : Int32 -> Tuple2 Int32 Int32
+threeAndDouble n = case mulInt32 n 2 of
+  Left _ -> Tuple2 n n
+  Right d -> Tuple2 n d
+
+show : Tuple2 Int32 Int32 -> String
+show pair =
+  let (Tuple2 a b) = pair
+   in "[" ++ showInt32 a ++ ", " ++ showInt32 b ++ "]"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (show (threeAndDouble 5))
