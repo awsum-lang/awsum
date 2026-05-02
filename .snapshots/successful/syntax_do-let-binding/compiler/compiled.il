@@ -351,7 +351,7 @@
     pop
     ldloc.0
     ldstr "answer="
-    call object AwsumMain::v__let_0(object, object)
+    call object AwsumMain::v__let_1(object, object)
     br.s IL_join
   IL_join:
     ret
@@ -393,7 +393,7 @@
   }
 
 
-  .method private hidebysig static object v__let_0(object, object) cil managed
+  .method private hidebysig static object v__let_1(object, object) cil managed
   {
     ldarg.0
     call object AwsumMain::v_step2(object)

@@ -71,10 +71,10 @@ const v_triple = [0, (10|0), (20|0), (30|0)];
 const v_pair = [0, (100|0), (200|0)];
 
 function main(v__input){
-    return (v__let_2)((v_sumTriple)(v_triple));
+    return (v__let_3)((v_sumTriple)(v_triple));
 }
 
-function v__lam_0(v__arg_28_19){
+function v__lam_1(v__arg_28_19){
     {
       const __s = v__arg_28_19;
       switch (__s[0]) {
@@ -87,16 +87,16 @@ function v__lam_0(v__arg_28_19){
     }
 }
 
-function v__let_1(v_n, v_m){
+function v__let_2(v_n, v_m){
     return __print(((String(v_n) + " / ") + String(v_m)));
 }
 
-function v__let_2(v_n){
-    return (v__let_1)(v_n, (v__df_apply_0)(v_pair));
+function v__let_3(v_n){
+    return (v__let_2)(v_n, (v__df_apply_0)(v_pair));
 }
 
 function v__df_apply_0(v_t){
-    return (v__lam_0)(v_t);
+    return (v__lam_1)(v_t);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

@@ -15,7 +15,7 @@
   (data (i32.const 71) "hello\00")
   (data (i32.const 77) "/\00")
   (table 5 funcref)
-  (elem (i32.const 0) $v_showTri $v_threeTypes $v_main $v__lam_0 $v__df__let_1_0)
+  (elem (i32.const 0) $v_showTri $v_threeTypes $v_main $v__lam_1 $v__df__let_2_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -138,17 +138,17 @@
     (block (result i32) (local.set $__scrut (local.get $v_t)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (i32.const 67)) (else (i32.const 69)))))))
 
   (func $v_threeTypes (param $v_n i32) (param $v_s i32) (param $v_b i32) (result i32)
-    (call $v__df__let_1_0 (local.get $v_b) (local.get $v_n) (local.get $v_s)))
+    (call $v__df__let_2_0 (local.get $v_b) (local.get $v_n) (local.get $v_s)))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (call $__print (call $v_threeTypes (call $__box_i32 (i32.const 42)) (i32.const 71) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0)))))
 
-  (func $v__lam_0 (param $v_x i32) (result i32)
+  (func $v__lam_1 (param $v_x i32) (result i32)
     (local.get $v_x))
 
-  (func $v__df__let_1_0 (param $v_b i32) (param $v_n i32) (param $v_s i32) (result i32)
-    (call $__concat (call $__concat (call $__concat (call $__concat (call $__show_i32 (call $v__lam_0 (local.get $v_n))) (i32.const 77)) (call $v__lam_0 (local.get $v_s))) (i32.const 77)) (call $v_showTri (call $v__lam_0 (local.get $v_b)))))
+  (func $v__df__let_2_0 (param $v_b i32) (param $v_n i32) (param $v_s i32) (result i32)
+    (call $__concat (call $__concat (call $__concat (call $__concat (call $__show_i32 (call $v__lam_1 (local.get $v_n))) (i32.const 77)) (call $v__lam_1 (local.get $v_s))) (i32.const 77)) (call $v_showTri (call $v__lam_1 (local.get $v_b)))))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

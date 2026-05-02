@@ -14,7 +14,7 @@ CoreProgram
             )
         , CFunDef "main" [ "$wild0" ]
             ( CCall
-                ( CVar "$let$0" )
+                ( CVar "$let$1" )
                 [ CCase
                     ( CVar "opA" )
                     [
@@ -50,7 +50,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$0" [ "res" ]
+        , CFunDef "$let$1" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

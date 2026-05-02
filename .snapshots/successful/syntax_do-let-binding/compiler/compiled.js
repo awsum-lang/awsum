@@ -50,7 +50,7 @@ function v_run(v_start){
         }
         case 1: {
           const v_a = __s[1];
-          return (v__let_0)(v_a, "answer=");
+          return (v__let_1)(v_a, "answer=");
         }
       }
     }
@@ -72,7 +72,7 @@ function main(v__input){
     }
 }
 
-function v__let_0(v_a, v_prefix){
+function v__let_1(v_a, v_prefix){
     {
       const __s = (v_step2)(v_a);
       switch (__s[0]) {

@@ -15,7 +15,7 @@
   (data (i32.const 72) ">\00")
   (data (i32.const 74) "]\00")
   (table 5 funcref)
-  (elem (i32.const 0) $v_pad $v_main $v__let_0 $v__let_1 $v__let_2)
+  (elem (i32.const 0) $v_pad $v_main $v__let_1 $v__let_2 $v__let_3)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -94,18 +94,18 @@
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
   (func $v_pad (param $v_s i32) (result i32)
-    (call $v__let_1 (call $__concat (i32.const 65) (local.get $v_s))))
+    (call $v__let_2 (call $__concat (i32.const 65) (local.get $v_s))))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v__let_2 (call $__concat (call $__concat (i32.const 67) (call $v_pad (i32.const 69))) (i32.const 72)))))
+    (call $__print (call $v__let_3 (call $__concat (call $__concat (i32.const 67) (call $v_pad (i32.const 69))) (i32.const 72)))))
 
-  (func $v__let_0 (param $v_q i32) (result i32)
+  (func $v__let_1 (param $v_q i32) (result i32)
     (call $__concat (local.get $v_q) (local.get $v_q)))
 
-  (func $v__let_1 (param $v_p i32) (result i32)
-    (call $v__let_0 (call $__concat (local.get $v_p) (i32.const 74))))
+  (func $v__let_2 (param $v_p i32) (result i32)
+    (call $v__let_1 (call $__concat (local.get $v_p) (i32.const 74))))
 
-  (func $v__let_2 (param $v_body i32) (result i32)
+  (func $v__let_3 (param $v_body i32) (result i32)
     (local.get $v_body))
 
   (func $_start (export "_start")

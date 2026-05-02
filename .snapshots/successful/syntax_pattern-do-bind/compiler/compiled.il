@@ -267,12 +267,12 @@
   IL_join:
     br.s IL_join
   IL_join:
-    call object AwsumMain::v__let_0(object)
+    call object AwsumMain::v__let_1(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_0(object) cil managed
+  .method private hidebysig static object v__let_1(object) cil managed
   {
     ldarg.0
     dup

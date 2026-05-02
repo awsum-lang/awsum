@@ -60,7 +60,7 @@ L_join:
   aload_2
   aload_0
   aload_1
-  invokestatic AwsumMain/v__df__let_1_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df__let_2_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -82,26 +82,26 @@ L_join:
 .end method
 
 
-.method static v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method static v__df__let_1_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__df__let_2_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_1
-  invokestatic AwsumMain/v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   ldc "/"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_2
-  invokestatic AwsumMain/v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   ldc "/"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  invokestatic AwsumMain/v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_showTri(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn

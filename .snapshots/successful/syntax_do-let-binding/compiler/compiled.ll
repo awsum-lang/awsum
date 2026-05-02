@@ -228,7 +228,7 @@ case.arm.1.14:
   %t16 = getelementptr ptr, ptr %t0, i32 1
   %t17 = load ptr, ptr %t16
   %t18 = getelementptr [8 x i8], ptr @.str.1, i64 0, i64 0
-  %t19 = call ptr @v__let_0(ptr %t17, ptr %t18)
+  %t19 = call ptr @v__let_1(ptr %t17, ptr %t18)
   br label %case.end.1.15
 case.end.1.15:
   br label %case.join.5
@@ -270,7 +270,7 @@ case.join.6:
   ret ptr %t19
 }
 
-define internal ptr @v__let_0(ptr %v_a, ptr %v_prefix) {
+define internal ptr @v__let_1(ptr %v_a, ptr %v_prefix) {
   %t0 = call ptr @v_step2(ptr %v_a)
   %t1 = getelementptr ptr, ptr %t0, i32 0
   %t2 = load ptr, ptr %t1

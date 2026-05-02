@@ -64,7 +64,7 @@ CoreProgram
                     ( 1
                     , [ "a" ]
                     , CCall
-                        ( CVar "$let$0" )
+                        ( CVar "$let$1" )
                         [ CVar "a"
                         , CString "answer="
                         ]
@@ -98,7 +98,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$0"
+        , CFunDef "$let$1"
             [ "a"
             , "prefix"
             ]

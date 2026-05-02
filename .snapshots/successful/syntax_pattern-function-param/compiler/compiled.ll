@@ -226,11 +226,11 @@ define internal ptr @v_pair() {
 define internal ptr @v_main(ptr %v__input) {
   %t0 = call ptr @v_triple()
   %t1 = call ptr @v_sumTriple(ptr %t0)
-  %t2 = call ptr @v__let_2(ptr %t1)
+  %t2 = call ptr @v__let_3(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__lam_0(ptr %v__arg_28_19) {
+define internal ptr @v__lam_1(ptr %v__arg_28_19) {
   %t0 = getelementptr ptr, ptr %v__arg_28_19, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -259,7 +259,7 @@ case.join.4:
   ret ptr %t17
 }
 
-define internal ptr @v__let_1(ptr %v_n, ptr %v_m) {
+define internal ptr @v__let_2(ptr %v_n, ptr %v_m) {
   %t0 = call ptr @__showInt32(ptr %v_n)
   %t1 = getelementptr [4 x i8], ptr @.str.0, i64 0, i64 0
   %t2 = call ptr @__concat(ptr %t0, ptr %t1)
@@ -269,15 +269,15 @@ define internal ptr @v__let_1(ptr %v_n, ptr %v_m) {
   ret ptr %t5
 }
 
-define internal ptr @v__let_2(ptr %v_n) {
+define internal ptr @v__let_3(ptr %v_n) {
   %t0 = call ptr @v_pair()
   %t1 = call ptr @v__df_apply_0(ptr %t0)
-  %t2 = call ptr @v__let_1(ptr %v_n, ptr %t1)
+  %t2 = call ptr @v__let_2(ptr %v_n, ptr %t1)
   ret ptr %t2
 }
 
 define internal ptr @v__df_apply_0(ptr %v_t) {
-  %t0 = call ptr @v__lam_0(ptr %v_t)
+  %t0 = call ptr @v__lam_1(ptr %v_t)
   ret ptr %t0
 }
 

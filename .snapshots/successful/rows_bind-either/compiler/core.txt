@@ -8,64 +8,25 @@ CoreProgram
             ( CCon 0
                 [ CCon 0 [] ]
             )
-        , CFunDef "liftA" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 0
-                    , [ "e" ]
-                    , CCon 0
-                        [ CRow 2252990199
-                            ( CVar "e" )
-                        ]
-                    )
-                ,
-                    ( 1
-                    , [ "n" ]
-                    , CCon 1
-                        [ CVar "n" ]
-                    )
-                ]
-            )
-        , CFunDef "liftB" [ "x" ]
-            ( CCase
-                ( CVar "x" )
-                [
-                    ( 0
-                    , [ "e" ]
-                    , CCon 0
-                        [ CRow 2269767818
-                            ( CVar "e" )
-                        ]
-                    )
-                ,
-                    ( 1
-                    , [ "n" ]
-                    , CCon 1
-                        [ CVar "n" ]
-                    )
-                ]
-            )
         , CFunDef "run" [ "x" ]
             ( CCase
                 ( CCall
-                    ( CVar "liftA" )
-                    [ CCall
-                        ( CVar "opA" )
-                        [ CVar "x" ]
-                    ]
+                    ( CVar "opA" )
+                    [ CVar "x" ]
                 )
                 [
                     ( 0
-                    , [ "$do_e_28_3" ]
+                    , [ "$do_e_18_3" ]
                     , CCon 0
-                        [ CVar "$do_e_28_3" ]
+                        [ CRow 2252990199
+                            ( CVar "$do_e_18_3" )
+                        ]
                     )
                 ,
                     ( 1
                     , [ "a" ]
                     , CCall
-                        ( CVar "liftB" )
+                        ( CVar "$lift$1" )
                         [ CCall
                             ( CVar "opB" )
                             [ CVar "a" ]
@@ -115,6 +76,25 @@ CoreProgram
                         ( CVar "run" )
                         [ CIntLit 5 TInt32 ]
                     ]
+                ]
+            )
+        , CFunDef "$lift$1" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 0
+                    , [ "__f0" ]
+                    , CCon 0
+                        [ CRow 2269767818
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "__f0" ]
+                    , CCon 1
+                        [ CVar "__f0" ]
+                    )
                 ]
             )
         ]

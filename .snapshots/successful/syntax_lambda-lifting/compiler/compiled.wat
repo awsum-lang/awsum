@@ -14,7 +14,7 @@
   (data (i32.const 75) "Ok \00")
   (data (i32.const 79) " / \00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_pureEither $v_op2WithA $v_describe $v_main $v__lam_0 $v__df_apply_0)
+  (elem (i32.const 0) $v_pureEither $v_op2WithA $v_describe $v_main $v__lam_1 $v__df_apply_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -167,11 +167,11 @@
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__show_i32 (call $v_inc42)) (i32.const 79)) (call $v_describe (call $v_g)))))
 
-  (func $v__lam_0 (param $v_n i32) (result i32)
+  (func $v__lam_1 (param $v_n i32) (result i32)
     (local.get $v_n))
 
   (func $v__df_apply_0 (param $v_x i32) (result i32)
-    (call $v__lam_0 (local.get $v_x)))
+    (call $v__lam_1 (local.get $v_x)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

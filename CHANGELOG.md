@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **JVM** — `caseSMT` slot 0 for `CValDef CCase`; `bcIconst` truncation of row tags > 2¹⁵; hardcoded `max_locals` / `max_stack` for deeply nested constructors; slot indices ≥ 256 (now uses `wide` prefix); `exprMaxStack` underestimate for first-class calls; inconsistent stackmap frames between sibling arms of a `case`; single-arm `case` tag slots tracked in SMT.
 - **CLR** — `InvalidProgramException` on deeply nested constructors (hardcoded `MaxStack`, dup/stelem stack peak, `LocalVarSig` count truncation ≥ 128 locals).
 - **`mergeAlts`** for nominal-headed scrutinees with row-typed fields.
+- **Implicit row-injection on call results** — a call returning e.g. `Either ErrB Int32` into a `Either (ErrA | ErrB) Int32` slot is now wrapped with a `$lift$N` helper at lowering time. Previously the typechecker accepted it but codegen left the result unwrapped, crashing JVM dispatch on the bare-nominal payload.
 - **Bidirectional check** propagates through polymorphic application.
 - **`do` / `let` / `in`** reserved at the parser level.
 - **Free type variables** in constructor fields are rejected.

@@ -29,13 +29,13 @@ define internal ptr @__showInt32(ptr %p) {
 define internal ptr @v_runMe() {
   %t0 = call ptr @malloc(i64 4)
   store i32 5, ptr %t0
-  %t1 = call ptr @v__lam_0(ptr %t0)
+  %t1 = call ptr @v__lam_1(ptr %t0)
   ret ptr %t1
 }
 
 define internal ptr @v_doubled() {
   %t0 = call ptr @v_runMe()
-  %t1 = call ptr @v__lam_1(ptr %t0)
+  %t1 = call ptr @v__lam_2(ptr %t0)
   ret ptr %t1
 }
 
@@ -46,11 +46,11 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t2
 }
 
-define internal ptr @v__lam_0(ptr %v_x) {
+define internal ptr @v__lam_1(ptr %v_x) {
   ret ptr %v_x
 }
 
-define internal ptr @v__lam_1(ptr %v_n) {
+define internal ptr @v__lam_2(ptr %v_n) {
   ret ptr %v_n
 }
 

@@ -260,7 +260,7 @@ L_join:
 .end method
 
 
-.method static v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
@@ -268,7 +268,7 @@ L_join:
 
 .method static v__df_apply_0(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  invokestatic AwsumMain/v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

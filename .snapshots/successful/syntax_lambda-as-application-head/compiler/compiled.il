@@ -26,7 +26,7 @@
   {
     ldc.i4 5
     box [System.Runtime]System.Int32
-    call object AwsumMain::v__lam_0(object)
+    call object AwsumMain::v__lam_1(object)
     ret
   }
 
@@ -34,7 +34,7 @@
   .method private hidebysig static object v_doubled() cil managed
   {
     call object AwsumMain::v_runMe()
-    call object AwsumMain::v__lam_1(object)
+    call object AwsumMain::v__lam_2(object)
     ret
   }
 
@@ -48,14 +48,14 @@
   }
 
 
-  .method private hidebysig static object v__lam_0(object) cil managed
+  .method private hidebysig static object v__lam_1(object) cil managed
   {
     ldarg.0
     ret
   }
 
 
-  .method private hidebysig static object v__lam_1(object) cil managed
+  .method private hidebysig static object v__lam_2(object) cil managed
   {
     ldarg.0
     ret

@@ -35,7 +35,7 @@
     ldstr "["
     ldarg.0
     call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v__let_1(object)
+    call object AwsumMain::v__let_2(object)
     ret
   }
 
@@ -48,17 +48,8 @@
     call object AwsumMain::__concat(object, object)
     ldstr ">"
     call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v__let_2(object)
+    call object AwsumMain::v__let_3(object)
     call object AwsumMain::__print(object)
-    ret
-  }
-
-
-  .method private hidebysig static object v__let_0(object) cil managed
-  {
-    ldarg.0
-    ldarg.0
-    call object AwsumMain::__concat(object, object)
     ret
   }
 
@@ -66,14 +57,23 @@
   .method private hidebysig static object v__let_1(object) cil managed
   {
     ldarg.0
-    ldstr "]"
+    ldarg.0
     call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v__let_0(object)
     ret
   }
 
 
   .method private hidebysig static object v__let_2(object) cil managed
+  {
+    ldarg.0
+    ldstr "]"
+    call object AwsumMain::__concat(object, object)
+    call object AwsumMain::v__let_1(object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__let_3(object) cil managed
   {
     ldarg.0
     ret

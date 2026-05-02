@@ -2,7 +2,7 @@ CoreProgram
     { cdecls =
         [ CFunDef "pad" [ "s" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CCall
                     ( CBuiltIn "concatString" )
                     [ CString "["
@@ -14,7 +14,7 @@ CoreProgram
             ( CCall
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CCall
-                    ( CVar "$let$2" )
+                    ( CVar "$let$3" )
                     [ CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
@@ -29,16 +29,16 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$0" [ "q" ]
+        , CFunDef "$let$1" [ "q" ]
             ( CCall
                 ( CBuiltIn "concatString" )
                 [ CVar "q"
                 , CVar "q"
                 ]
             )
-        , CFunDef "$let$1" [ "p" ]
+        , CFunDef "$let$2" [ "p" ]
             ( CCall
-                ( CVar "$let$0" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CBuiltIn "concatString" )
                     [ CVar "p"
@@ -46,7 +46,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "body" ]
+        , CFunDef "$let$3" [ "body" ]
             ( CVar "body" )
         ]
     }

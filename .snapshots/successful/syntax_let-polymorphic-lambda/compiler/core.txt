@@ -26,7 +26,7 @@ CoreProgram
             , "b"
             ]
             ( CCall
-                ( CVar "$df$$let$1$0" )
+                ( CVar "$df$$let$2$0" )
                 [ CVar "b"
                 , CVar "n"
                 , CVar "s"
@@ -43,9 +43,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$0" [ "x" ]
+        , CFunDef "$lam$1" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$df$$let$1$0"
+        , CFunDef "$df$$let$2$0"
             [ "b"
             , "n"
             , "s"
@@ -61,13 +61,13 @@ CoreProgram
                             [ CCall
                                 ( CBuiltIn "showInt32" )
                                 [ CCall
-                                    ( CVar "$lam$0" )
+                                    ( CVar "$lam$1" )
                                     [ CVar "n" ]
                                 ]
                             , CString "/"
                             ]
                         , CCall
-                            ( CVar "$lam$0" )
+                            ( CVar "$lam$1" )
                             [ CVar "s" ]
                         ]
                     , CString "/"
@@ -75,7 +75,7 @@ CoreProgram
                 , CCall
                     ( CVar "showTri" )
                     [ CCall
-                        ( CVar "$lam$0" )
+                        ( CVar "$lam$1" )
                         [ CVar "b" ]
                     ]
                 ]

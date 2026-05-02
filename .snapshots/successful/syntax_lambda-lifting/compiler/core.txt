@@ -106,11 +106,11 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$0" [ "n" ]
+        , CFunDef "$lam$1" [ "n" ]
             ( CVar "n" )
         , CFunDef "$df$apply$0" [ "x" ]
             ( CCall
-                ( CVar "$lam$0" )
+                ( CVar "$lam$1" )
                 [ CVar "x" ]
             )
         ]

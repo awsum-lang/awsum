@@ -38,7 +38,7 @@ define internal ptr @__print(ptr %s) {
 define internal ptr @v_pad(ptr %v_s) {
   %t0 = getelementptr [2 x i8], ptr @.str.0, i64 0, i64 0
   %t1 = call ptr @__concat(ptr %t0, ptr %v_s)
-  %t2 = call ptr @v__let_1(ptr %t1)
+  %t2 = call ptr @v__let_2(ptr %t1)
   ret ptr %t2
 }
 
@@ -49,24 +49,24 @@ define internal ptr @v_main(ptr %v__input) {
   %t3 = call ptr @__concat(ptr %t0, ptr %t2)
   %t4 = getelementptr [2 x i8], ptr @.str.3, i64 0, i64 0
   %t5 = call ptr @__concat(ptr %t3, ptr %t4)
-  %t6 = call ptr @v__let_2(ptr %t5)
+  %t6 = call ptr @v__let_3(ptr %t5)
   %t7 = call ptr @__print(ptr %t6)
   ret ptr %t7
 }
 
-define internal ptr @v__let_0(ptr %v_q) {
+define internal ptr @v__let_1(ptr %v_q) {
   %t0 = call ptr @__concat(ptr %v_q, ptr %v_q)
   ret ptr %t0
 }
 
-define internal ptr @v__let_1(ptr %v_p) {
+define internal ptr @v__let_2(ptr %v_p) {
   %t0 = getelementptr [2 x i8], ptr @.str.4, i64 0, i64 0
   %t1 = call ptr @__concat(ptr %v_p, ptr %t0)
-  %t2 = call ptr @v__let_0(ptr %t1)
+  %t2 = call ptr @v__let_1(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_2(ptr %v_body) {
+define internal ptr @v__let_3(ptr %v_body) {
   ret ptr %v_body
 }
 

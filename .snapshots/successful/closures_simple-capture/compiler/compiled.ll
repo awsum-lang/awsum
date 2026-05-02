@@ -47,12 +47,12 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t3
 }
 
-define internal ptr @v__lam_0(ptr %v_k, ptr %v__n) {
+define internal ptr @v__lam_1(ptr %v_k, ptr %v__n) {
   ret ptr %v_k
 }
 
 define internal ptr @v__df_apply_0(ptr %v_x, ptr %v__df_apply_0_cap0_0) {
-  %t0 = call ptr @v__lam_0(ptr %v__df_apply_0_cap0_0, ptr %v_x)
+  %t0 = call ptr @v__lam_1(ptr %v__df_apply_0_cap0_0, ptr %v_x)
   ret ptr %t0
 }
 

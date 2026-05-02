@@ -61,7 +61,7 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t3
 }
 
-define internal ptr @v__lam_0(ptr %v_a, ptr %v_b, ptr %v__n) {
+define internal ptr @v__lam_1(ptr %v_a, ptr %v_b, ptr %v__n) {
   %t0 = call ptr @__showInt32(ptr %v_a)
   %t1 = getelementptr [2 x i8], ptr @.str.0, i64 0, i64 0
   %t2 = call ptr @__concat(ptr %t0, ptr %t1)
@@ -71,7 +71,7 @@ define internal ptr @v__lam_0(ptr %v_a, ptr %v_b, ptr %v__n) {
 }
 
 define internal ptr @v__df_apply_0(ptr %v_x, ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1) {
-  %t0 = call ptr @v__lam_0(ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1, ptr %v_x)
+  %t0 = call ptr @v__lam_1(ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1, ptr %v_x)
   ret ptr %t0
 }
 

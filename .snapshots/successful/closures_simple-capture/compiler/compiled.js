@@ -12,12 +12,12 @@ function main(v__input){
     return __print(String((v_captureFn)((7|0))));
 }
 
-function v__lam_0(v_k, v__n){
+function v__lam_1(v_k, v__n){
     return v_k;
 }
 
 function v__df_apply_0(v_x, v__df_apply_0_cap0_0){
-    return (v__lam_0)(v__df_apply_0_cap0_0, v_x);
+    return (v__lam_1)(v__df_apply_0_cap0_0, v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

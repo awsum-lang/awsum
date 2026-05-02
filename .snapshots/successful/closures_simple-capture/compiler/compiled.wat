@@ -10,7 +10,7 @@
   (global $heap (mut i32) (i32.const 65))
   (data (i32.const 64) "\00")
   (table 4 funcref)
-  (elem (i32.const 0) $v_captureFn $v_main $v__lam_0 $v__df_apply_0)
+  (elem (i32.const 0) $v_captureFn $v_main $v__lam_1 $v__df_apply_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -126,11 +126,11 @@
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__show_i32 (call $v_captureFn (call $__box_i32 (i32.const 7))))))
 
-  (func $v__lam_0 (param $v_k i32) (param $v__n i32) (result i32)
+  (func $v__lam_1 (param $v_k i32) (param $v__n i32) (result i32)
     (local.get $v_k))
 
   (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (result i32)
-    (call $v__lam_0 (local.get $v__df_apply_0_cap0_0) (local.get $v_x)))
+    (call $v__lam_1 (local.get $v__df_apply_0_cap0_0) (local.get $v_x)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

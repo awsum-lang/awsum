@@ -93,13 +93,13 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$3" )
                 [ CCall
                     ( CVar "sumTriple" )
                     [ CVar "triple" ]
                 ]
             )
-        , CFunDef "$lam$0" [ "$arg_28_19" ]
+        , CFunDef "$lam$1" [ "$arg_28_19" ]
             ( CCase
                 ( CVar "$arg_28_19" )
                 [
@@ -118,7 +118,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$1"
+        , CFunDef "$let$2"
             [ "n"
             , "m"
             ]
@@ -139,9 +139,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "n" ]
+        , CFunDef "$let$3" [ "n" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CVar "n"
                 , CCall
                     ( CVar "$df$apply$0" )
@@ -150,7 +150,7 @@ CoreProgram
             )
         , CFunDef "$df$apply$0" [ "t" ]
             ( CCall
-                ( CVar "$lam$0" )
+                ( CVar "$lam$1" )
                 [ CVar "t" ]
             )
         ]

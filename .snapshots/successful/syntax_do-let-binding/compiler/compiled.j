@@ -361,7 +361,7 @@ L_arm_1:
   pop
   aload_1
   ldc "answer="
-  invokestatic AwsumMain/v__let_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   goto L_join
 L_join:
   areturn
@@ -406,7 +406,7 @@ L_join:
 .end method
 
 
-.method static v__let_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   invokestatic AwsumMain/v_step2(Ljava/lang/Object;)Ljava/lang/Object;
   dup

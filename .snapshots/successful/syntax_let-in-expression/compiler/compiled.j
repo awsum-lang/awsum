@@ -31,7 +31,7 @@
   ldc "["
   aload_0
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -43,30 +43,30 @@
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   ldc ">"
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_3(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v__let_0(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  aload_0
-  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v__let_1(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  ldc "]"
+  aload_0
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_0(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  ldc "]"
+  invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_1(Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method static v__let_3(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method

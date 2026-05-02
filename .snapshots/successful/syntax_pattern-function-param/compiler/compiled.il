@@ -297,12 +297,12 @@
   {
     call object AwsumMain::v_triple()
     call object AwsumMain::v_sumTriple(object)
-    call object AwsumMain::v__let_2(object)
+    call object AwsumMain::v__let_3(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_0(object) cil managed
+  .method private hidebysig static object v__lam_1(object) cil managed
   {
     ldarg.0
     dup
@@ -342,7 +342,7 @@
   }
 
 
-  .method private hidebysig static object v__let_1(object, object) cil managed
+  .method private hidebysig static object v__let_2(object, object) cil managed
   {
     ldarg.0
     callvirt instance string [System.Runtime]System.Object::ToString()
@@ -356,12 +356,12 @@
   }
 
 
-  .method private hidebysig static object v__let_2(object) cil managed
+  .method private hidebysig static object v__let_3(object) cil managed
   {
     ldarg.0
     call object AwsumMain::v_pair()
     call object AwsumMain::v__df_apply_0(object)
-    call object AwsumMain::v__let_1(object, object)
+    call object AwsumMain::v__let_2(object, object)
     ret
   }
 
@@ -369,7 +369,7 @@
   .method private hidebysig static object v__df_apply_0(object) cil managed
   {
     ldarg.0
-    call object AwsumMain::v__lam_0(object)
+    call object AwsumMain::v__lam_1(object)
     ret
   }
 

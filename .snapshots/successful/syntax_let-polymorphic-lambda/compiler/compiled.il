@@ -60,7 +60,7 @@
     ldarg.2
     ldarg.0
     ldarg.1
-    call object AwsumMain::v__df__let_1_0(object, object, object)
+    call object AwsumMain::v__df__let_2_0(object, object, object)
     ret
   }
 
@@ -83,27 +83,27 @@
   }
 
 
-  .method private hidebysig static object v__lam_0(object) cil managed
+  .method private hidebysig static object v__lam_1(object) cil managed
   {
     ldarg.0
     ret
   }
 
 
-  .method private hidebysig static object v__df__let_1_0(object, object, object) cil managed
+  .method private hidebysig static object v__df__let_2_0(object, object, object) cil managed
   {
     ldarg.1
-    call object AwsumMain::v__lam_0(object)
+    call object AwsumMain::v__lam_1(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     ldstr "/"
     call object AwsumMain::__concat(object, object)
     ldarg.2
-    call object AwsumMain::v__lam_0(object)
+    call object AwsumMain::v__lam_1(object)
     call object AwsumMain::__concat(object, object)
     ldstr "/"
     call object AwsumMain::__concat(object, object)
     ldarg.0
-    call object AwsumMain::v__lam_0(object)
+    call object AwsumMain::v__lam_1(object)
     call object AwsumMain::v_showTri(object)
     call object AwsumMain::__concat(object, object)
     ret

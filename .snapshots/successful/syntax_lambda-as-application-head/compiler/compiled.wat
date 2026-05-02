@@ -10,7 +10,7 @@
   (global $heap (mut i32) (i32.const 65))
   (data (i32.const 64) "\00")
   (table 3 funcref)
-  (elem (i32.const 0) $v_main $v__lam_0 $v__lam_1)
+  (elem (i32.const 0) $v_main $v__lam_1 $v__lam_2)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -118,18 +118,18 @@
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
   (func $v_runMe (result i32)
-    (call $v__lam_0 (call $__box_i32 (i32.const 5))))
+    (call $v__lam_1 (call $__box_i32 (i32.const 5))))
 
   (func $v_doubled (result i32)
-    (call $v__lam_1 (call $v_runMe)))
+    (call $v__lam_2 (call $v_runMe)))
 
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $__show_i32 (call $v_doubled))))
 
-  (func $v__lam_0 (param $v_x i32) (result i32)
+  (func $v__lam_1 (param $v_x i32) (result i32)
     (local.get $v_x))
 
-  (func $v__lam_1 (param $v_n i32) (result i32)
+  (func $v__lam_2 (param $v_n i32) (result i32)
     (local.get $v_n))
 
   (func $_start (export "_start")

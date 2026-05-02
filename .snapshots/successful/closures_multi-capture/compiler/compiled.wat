@@ -11,7 +11,7 @@
   (data (i32.const 64) "\00")
   (data (i32.const 65) "/\00")
   (table 4 funcref)
-  (elem (i32.const 0) $v_both $v_main $v__lam_0 $v__df_apply_0)
+  (elem (i32.const 0) $v_both $v_main $v__lam_1 $v__df_apply_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -138,11 +138,11 @@
   (func $v_main (param $v__input i32) (result i32)
     (call $__print (call $v_both (call $__box_i32 (i32.const 11)) (call $__box_i32 (i32.const 22)))))
 
-  (func $v__lam_0 (param $v_a i32) (param $v_b i32) (param $v__n i32) (result i32)
+  (func $v__lam_1 (param $v_a i32) (param $v_b i32) (param $v__n i32) (result i32)
     (call $__concat (call $__concat (call $__show_i32 (local.get $v_a)) (i32.const 65)) (call $__show_i32 (local.get $v_b))))
 
   (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (param $v__df_apply_0_cap0_1 i32) (result i32)
-    (call $v__lam_0 (local.get $v__df_apply_0_cap0_0) (local.get $v__df_apply_0_cap0_1) (local.get $v_x)))
+    (call $v__lam_1 (local.get $v__df_apply_0_cap0_0) (local.get $v__df_apply_0_cap0_1) (local.get $v_x)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

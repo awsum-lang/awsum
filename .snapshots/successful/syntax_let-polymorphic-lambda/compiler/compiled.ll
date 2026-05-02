@@ -71,7 +71,7 @@ case.join.4:
 }
 
 define internal ptr @v_threeTypes(ptr %v_n, ptr %v_s, ptr %v_b) {
-  %t0 = call ptr @v__df__let_1_0(ptr %v_b, ptr %v_n, ptr %v_s)
+  %t0 = call ptr @v__df__let_2_0(ptr %v_b, ptr %v_n, ptr %v_s)
   ret ptr %t0
 }
 
@@ -88,20 +88,20 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t6
 }
 
-define internal ptr @v__lam_0(ptr %v_x) {
+define internal ptr @v__lam_1(ptr %v_x) {
   ret ptr %v_x
 }
 
-define internal ptr @v__df__let_1_0(ptr %v_b, ptr %v_n, ptr %v_s) {
-  %t0 = call ptr @v__lam_0(ptr %v_n)
+define internal ptr @v__df__let_2_0(ptr %v_b, ptr %v_n, ptr %v_s) {
+  %t0 = call ptr @v__lam_1(ptr %v_n)
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = getelementptr [2 x i8], ptr @.str.4, i64 0, i64 0
   %t3 = call ptr @__concat(ptr %t1, ptr %t2)
-  %t4 = call ptr @v__lam_0(ptr %v_s)
+  %t4 = call ptr @v__lam_1(ptr %v_s)
   %t5 = call ptr @__concat(ptr %t3, ptr %t4)
   %t6 = getelementptr [2 x i8], ptr @.str.4, i64 0, i64 0
   %t7 = call ptr @__concat(ptr %t5, ptr %t6)
-  %t8 = call ptr @v__lam_0(ptr %v_b)
+  %t8 = call ptr @v__lam_1(ptr %v_b)
   %t9 = call ptr @v_showTri(ptr %t8)
   %t10 = call ptr @__concat(ptr %t7, ptr %t9)
   ret ptr %t10

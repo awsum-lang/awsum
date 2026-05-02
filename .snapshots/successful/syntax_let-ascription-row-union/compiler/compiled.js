@@ -11,10 +11,10 @@ const v_opA = [1, (1|0)];
 const v_opB = [1, (2|0)];
 
 function main(v__wild0){
-    return (v__let_0)(((s) => { switch(s[0]) { case 0: { const v__do_e_18_9 = s[1]; return [0, [2252990199, v__do_e_18_9]]; } case 1: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_19_9 = s[1]; return [0, [2269767818, v__do_e_19_9]]; } case 1: { const v_b = s[1]; return (v_pureEither)(v_b); } } })(v_opB); } } })(v_opA));
+    return (v__let_1)(((s) => { switch(s[0]) { case 0: { const v__do_e_18_9 = s[1]; return [0, [2252990199, v__do_e_18_9]]; } case 1: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_19_9 = s[1]; return [0, [2269767818, v__do_e_19_9]]; } case 1: { const v_b = s[1]; return (v_pureEither)(v_b); } } })(v_opB); } } })(v_opA));
 }
 
-function v__let_0(v_res){
+function v__let_1(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

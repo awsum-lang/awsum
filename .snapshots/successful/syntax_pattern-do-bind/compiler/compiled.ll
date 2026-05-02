@@ -189,11 +189,11 @@ case.default.4:
   unreachable
 case.join.5:
   %t63 = phi ptr [%t10, %case.end.0.7], [%t62, %case.end.1.15]
-  %t64 = call ptr @v__let_0(ptr %t63)
+  %t64 = call ptr @v__let_1(ptr %t63)
   ret ptr %t64
 }
 
-define internal ptr @v__let_0(ptr %v_res) {
+define internal ptr @v__let_1(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

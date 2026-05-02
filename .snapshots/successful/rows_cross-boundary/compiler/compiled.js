@@ -117,13 +117,13 @@ function v_describeEither(v_r){
     }
 }
 
-const v_summary = (((((v_describeMaybe)((v__lift_0)(v_defaultJust)) + " / ") + (v_describeLst)((v__lift_1)(v_defaultBools))) + " / ") + (v_describeEither)((v__lift_2)(v_defaultRight)));
+const v_summary = (((((v_describeMaybe)((v__lift_1)(v_defaultJust)) + " / ") + (v_describeLst)((v__lift_2)(v_defaultBools))) + " / ") + (v_describeEither)((v__lift_3)(v_defaultRight)));
 
 function main(v__input){
     return __print(v_summary);
 }
 
-function v__lift_0(v___input){
+function v__lift_1(v___input){
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -138,17 +138,17 @@ function v__lift_0(v___input){
     }
 }
 
-function v__lift_1(v___input){
-    return (v__cps__lift_1)(v___input, [0]);
+function v__lift_2(v___input){
+    return (v__cps__lift_2)(v___input, [0]);
 }
 
-function v__cps__lift_1(v___input, v__k){
+function v__cps__lift_2(v___input, v__k){
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 0: {
-          return (v__apply__lift_1)(v__k, [0]);
+          return (v__apply__lift_2)(v__k, [0]);
         }
         case 1: {
           const v___f0 = __s[1];
@@ -164,7 +164,7 @@ function v__cps__lift_1(v___input, v__k){
   }
 }
 
-function v__apply__lift_1(v__k, v__x){
+function v__apply__lift_2(v__k, v__x){
   while (true) {
     {
       const __s = v__k;
@@ -186,7 +186,7 @@ function v__apply__lift_1(v__k, v__x){
   }
 }
 
-function v__lift_2(v___input){
+function v__lift_3(v___input){
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -196,7 +196,7 @@ function v__lift_2(v___input){
         }
         case 1: {
           const v___f0 = __s[1];
-          return [1, (v__lift_0)(v___f0)];
+          return [1, (v__lift_1)(v___f0)];
         }
       }
     }

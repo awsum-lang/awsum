@@ -50,7 +50,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_0(object, object) cil managed
+  .method private hidebysig static object v__lam_1(object, object) cil managed
   {
     ldarg.0
     ret
@@ -61,7 +61,7 @@
   {
     ldarg.1
     ldarg.0
-    call object AwsumMain::v__lam_0(object, object)
+    call object AwsumMain::v__lam_1(object, object)
     ret
   }
 

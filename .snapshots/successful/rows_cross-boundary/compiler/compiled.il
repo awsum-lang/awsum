@@ -347,18 +347,18 @@
   .method private hidebysig static object v_summary() cil managed
   {
     call object AwsumMain::v_defaultJust()
-    call object AwsumMain::v__lift_0(object)
+    call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v_describeMaybe(object)
     ldstr " / "
     call object AwsumMain::__concat(object, object)
     call object AwsumMain::v_defaultBools()
-    call object AwsumMain::v__lift_1(object)
+    call object AwsumMain::v__lift_2(object)
     call object AwsumMain::v_describeLst(object)
     call object AwsumMain::__concat(object, object)
     ldstr " / "
     call object AwsumMain::__concat(object, object)
     call object AwsumMain::v_defaultRight()
-    call object AwsumMain::v__lift_2(object)
+    call object AwsumMain::v__lift_3(object)
     call object AwsumMain::v_describeEither(object)
     call object AwsumMain::__concat(object, object)
     ret
@@ -373,7 +373,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_0(object) cil managed
+  .method private hidebysig static object v__lift_1(object) cil managed
   {
     ldarg.0
     dup
@@ -424,7 +424,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_1(object) cil managed
+  .method private hidebysig static object v__lift_2(object) cil managed
   {
     ldarg.0
     ldc.i4.1
@@ -434,12 +434,12 @@
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
-    call object AwsumMain::v__cps__lift_1(object, object)
+    call object AwsumMain::v__cps__lift_2(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_1(object, object) cil managed
+  .method private hidebysig static object v__cps__lift_2(object, object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -458,7 +458,7 @@
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
-    call object AwsumMain::v__apply__lift_1(object, object)
+    call object AwsumMain::v__apply__lift_2(object, object)
     ret
   IL_tco_arm_1:
     dup
@@ -492,7 +492,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_1(object, object) cil managed
+  .method private hidebysig static object v__apply__lift_2(object, object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -547,7 +547,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_2(object) cil managed
+  .method private hidebysig static object v__lift_3(object) cil managed
   {
     ldarg.0
     dup
@@ -589,7 +589,7 @@
     dup
     ldc.i4.1
     ldloc.0
-    call object AwsumMain::v__lift_0(object)
+    call object AwsumMain::v__lift_1(object)
     stelem.ref
     br.s IL_join
   IL_join:

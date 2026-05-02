@@ -11,7 +11,7 @@
   (data (i32.const 64) "\00")
   (data (i32.const 65) " / \00")
   (table 7 funcref)
-  (elem (i32.const 0) $v_sumTriple $v_sumPair $v_main $v__lam_0 $v__let_1 $v__let_2 $v__df_apply_0)
+  (elem (i32.const 0) $v_sumTriple $v_sumPair $v_main $v__lam_1 $v__let_2 $v__let_3 $v__df_apply_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -190,23 +190,23 @@
     (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (call $__box_i32 (i32.const 100))) (i32.store offset=8 (local.get $__con_0) (call $__box_i32 (i32.const 200))) (local.get $__con_0)))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $v__let_2 (call $v_sumTriple (call $v_triple))))
+    (call $v__let_3 (call $v_sumTriple (call $v_triple))))
 
-  (func $v__lam_0 (param $v__arg_28_19 i32) (result i32)
+  (func $v__lam_1 (param $v__arg_28_19 i32) (result i32)
     (local $__con_0 i32)
     (local $v_a i32)
     (local $v_b i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v__arg_28_19)) (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (local.set $v_b (i32.load offset=8 (local.get $__scrut))) (call $v_sumPair (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_a)) (i32.store offset=8 (local.get $__con_0) (local.get $v_b)) (local.get $__con_0)))))
 
-  (func $v__let_1 (param $v_n i32) (param $v_m i32) (result i32)
+  (func $v__let_2 (param $v_n i32) (param $v_m i32) (result i32)
     (call $__print (call $__concat (call $__concat (call $__show_i32 (local.get $v_n)) (i32.const 65)) (call $__show_i32 (local.get $v_m)))))
 
-  (func $v__let_2 (param $v_n i32) (result i32)
-    (call $v__let_1 (local.get $v_n) (call $v__df_apply_0 (call $v_pair))))
+  (func $v__let_3 (param $v_n i32) (result i32)
+    (call $v__let_2 (local.get $v_n) (call $v__df_apply_0 (call $v_pair))))
 
   (func $v__df_apply_0 (param $v_t i32) (result i32)
-    (call $v__lam_0 (local.get $v_t)))
+    (call $v__lam_1 (local.get $v_t)))
 
   (func $_start (export "_start")
     (drop (call $v_main (call $__get_arg))))

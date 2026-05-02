@@ -172,7 +172,7 @@ CoreProgram
                             [ CCall
                                 ( CVar "describeMaybe" )
                                 [ CCall
-                                    ( CVar "$lift$0" )
+                                    ( CVar "$lift$1" )
                                     [ CVar "defaultJust" ]
                                 ]
                             , CString " / "
@@ -180,7 +180,7 @@ CoreProgram
                         , CCall
                             ( CVar "describeLst" )
                             [ CCall
-                                ( CVar "$lift$1" )
+                                ( CVar "$lift$2" )
                                 [ CVar "defaultBools" ]
                             ]
                         ]
@@ -189,7 +189,7 @@ CoreProgram
                 , CCall
                     ( CVar "describeEither" )
                     [ CCall
-                        ( CVar "$lift$2" )
+                        ( CVar "$lift$3" )
                         [ CVar "defaultRight" ]
                     ]
                 ]
@@ -199,7 +199,7 @@ CoreProgram
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CVar "summary" ]
             )
-        , CFunDef "$lift$0" [ "__input" ]
+        , CFunDef "$lift$1" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -217,14 +217,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$1" [ "__input" ]
+        , CFunDef "$lift$2" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$1" )
+                ( CVar "$cps$$lift$2" )
                 [ CVar "__input"
                 , CCon 0 []
                 ]
             )
-        , CFunDef "$cps$$lift$1"
+        , CFunDef "$cps$$lift$2"
             [ "__input"
             , "$k"
             ]
@@ -235,7 +235,7 @@ CoreProgram
                         ( 0
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$1" )
+                            ( CVar "$apply$$lift$2" )
                             [ CVar "$k"
                             , CCon 0 []
                             ]
@@ -257,7 +257,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$1"
+        , CFunDef "$apply$$lift$2"
             [ "$k"
             , "$x"
             ]
@@ -287,7 +287,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lift$2" [ "__input" ]
+        , CFunDef "$lift$3" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -301,7 +301,7 @@ CoreProgram
                     , [ "__f0" ]
                     , CCon 1
                         [ CCall
-                            ( CVar "$lift$0" )
+                            ( CVar "$lift$1" )
                             [ CVar "__f0" ]
                         ]
                     )

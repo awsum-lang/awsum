@@ -12,10 +12,10 @@ function v_opTuple(v__wild0){
 }
 
 function main(v_raw){
-    return (v__let_0)(((s) => { switch(s[0]) { case 0: { const v__do_e_10_9 = s[1]; return [0, v__do_e_10_9]; } case 1: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v_a = s[1]; const v_b = s[2]; const v_c = s[3]; return (v_pureEither)(((s) => { switch(s[0]) { case 0: { const v___w0 = s[1]; return v_c; } case 1: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 0: { const v___w0 = s[1]; return v_c; } case 1: { const v_abc = s[1]; return v_abc; } } })(__addInt32(v_ab, v_c)); } } })(__addInt32(v_a, v_b))); } } })(v___p0); } } })((v_opTuple)(v_raw)));
+    return (v__let_1)(((s) => { switch(s[0]) { case 0: { const v__do_e_10_9 = s[1]; return [0, v__do_e_10_9]; } case 1: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v_a = s[1]; const v_b = s[2]; const v_c = s[3]; return (v_pureEither)(((s) => { switch(s[0]) { case 0: { const v___w0 = s[1]; return v_c; } case 1: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 0: { const v___w0 = s[1]; return v_c; } case 1: { const v_abc = s[1]; return v_abc; } } })(__addInt32(v_ab, v_c)); } } })(__addInt32(v_a, v_b))); } } })(v___p0); } } })((v_opTuple)(v_raw)));
 }
 
-function v__let_0(v_res){
+function v__let_1(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

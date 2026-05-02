@@ -13,7 +13,7 @@
   (data (i32.const 74) "answer=\00")
   (data (i32.const 82) "err: \00")
   (table 6 funcref)
-  (elem (i32.const 0) $v_pureEither $v_step1 $v_step2 $v_run $v_main $v__let_0)
+  (elem (i32.const 0) $v_pureEither $v_step1 $v_step2 $v_run $v_main $v__let_1)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -227,7 +227,7 @@
     (local $v__do_e_18_3 i32)
     (local $v_a i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (call $v_step1 (local.get $v_start))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v__do_e_18_3 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_18_3)) (local.get $__con_0))) (else (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (call $v__let_0 (local.get $v_a) (i32.const 74))))))
+    (block (result i32) (local.set $__scrut (call $v_step1 (local.get $v_start))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v__do_e_18_3 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_18_3)) (local.get $__con_0))) (else (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (call $v__let_1 (local.get $v_a) (i32.const 74))))))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $v_e i32)
@@ -235,7 +235,7 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (call $v_run (call $__box_i32 (i32.const 5)))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $__print (call $__concat (i32.const 82) (local.get $v_e)))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (call $__print (local.get $v_s))))))
 
-  (func $v__let_0 (param $v_a i32) (param $v_prefix i32) (result i32)
+  (func $v__let_1 (param $v_a i32) (param $v_prefix i32) (result i32)
     (local $__con_0 i32)
     (local $v__do_e_20_3 i32)
     (local $v_b i32)

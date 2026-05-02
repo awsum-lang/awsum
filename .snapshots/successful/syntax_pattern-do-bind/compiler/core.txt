@@ -15,7 +15,7 @@ CoreProgram
             )
         , CFunDef "main" [ "raw" ]
             ( CCall
-                ( CVar "$let$0" )
+                ( CVar "$let$1" )
                 [ CCase
                     ( CCall
                         ( CVar "opTuple" )
@@ -83,7 +83,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$0" [ "res" ]
+        , CFunDef "$let$1" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

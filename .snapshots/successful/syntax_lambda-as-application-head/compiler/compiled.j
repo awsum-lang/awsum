@@ -21,14 +21,14 @@
 .method static v_runMe()Ljava/lang/Object;
   iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v_doubled()Ljava/lang/Object;
   invokestatic AwsumMain/v_runMe()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_2(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -42,13 +42,13 @@
 .end method
 
 
-.method static v__lam_0(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method static v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_2(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method

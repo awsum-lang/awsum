@@ -293,18 +293,18 @@ case.join.4:
 
 define internal ptr @v_summary() {
   %t0 = call ptr @v_defaultJust()
-  %t1 = call ptr @v__lift_0(ptr %t0)
+  %t1 = call ptr @v__lift_1(ptr %t0)
   %t2 = call ptr @v_describeMaybe(ptr %t1)
   %t3 = getelementptr [4 x i8], ptr @.str.7, i64 0, i64 0
   %t4 = call ptr @__concat(ptr %t2, ptr %t3)
   %t5 = call ptr @v_defaultBools()
-  %t6 = call ptr @v__lift_1(ptr %t5)
+  %t6 = call ptr @v__lift_2(ptr %t5)
   %t7 = call ptr @v_describeLst(ptr %t6)
   %t8 = call ptr @__concat(ptr %t4, ptr %t7)
   %t9 = getelementptr [4 x i8], ptr @.str.7, i64 0, i64 0
   %t10 = call ptr @__concat(ptr %t8, ptr %t9)
   %t11 = call ptr @v_defaultRight()
-  %t12 = call ptr @v__lift_2(ptr %t11)
+  %t12 = call ptr @v__lift_3(ptr %t11)
   %t13 = call ptr @v_describeEither(ptr %t12)
   %t14 = call ptr @__concat(ptr %t10, ptr %t13)
   ret ptr %t14
@@ -316,7 +316,7 @@ define internal ptr @v_main(ptr %v__input) {
   ret ptr %t1
 }
 
-define internal ptr @v__lift_0(ptr %v___input) {
+define internal ptr @v__lift_1(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -354,16 +354,16 @@ case.join.4:
   ret ptr %t22
 }
 
-define internal ptr @v__lift_1(ptr %v___input) {
+define internal ptr @v__lift_2(ptr %v___input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__lift_1(ptr %v___input, ptr %t0)
+  %t3 = call ptr @v__cps__lift_2(ptr %v___input, ptr %t0)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__lift_1(ptr %v___input, ptr %v__k) {
+define internal ptr @v__cps__lift_2(ptr %v___input, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v___input, ptr %t3
@@ -383,7 +383,7 @@ tco.case.arm.0.11:
   %t13 = inttoptr i64 0 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = call ptr @v__apply__lift_1(ptr %t6, ptr %t12)
+  %t15 = call ptr @v__apply__lift_2(ptr %t6, ptr %t12)
   store ptr %t15, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.16:
@@ -409,7 +409,7 @@ tco.exit.1:
   ret ptr %t26
 }
 
-define internal ptr @v__apply__lift_1(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__lift_2(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -456,7 +456,7 @@ tco.exit.1:
   ret ptr %t26
 }
 
-define internal ptr @v__lift_2(ptr %v___input) {
+define internal ptr @v__lift_3(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -480,7 +480,7 @@ case.arm.1.13:
   %t18 = inttoptr i64 1 to ptr
   %t19 = getelementptr ptr, ptr %t17, i32 0
   store ptr %t18, ptr %t19
-  %t20 = call ptr @v__lift_0(ptr %t16)
+  %t20 = call ptr @v__lift_1(ptr %t16)
   %t21 = getelementptr ptr, ptr %t17, i32 1
   store ptr %t20, ptr %t21
   br label %case.end.1.14

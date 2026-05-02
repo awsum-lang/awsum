@@ -48,12 +48,12 @@ function main(v__input){
     return __print(((String(v_inc42) + " / ") + (v_describe)(v_g)));
 }
 
-function v__lam_0(v_n){
+function v__lam_1(v_n){
     return v_n;
 }
 
 function v__df_apply_0(v_x){
-    return (v__lam_0)(v_x);
+    return (v__lam_1)(v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

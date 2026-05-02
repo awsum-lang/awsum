@@ -788,7 +788,9 @@ lowerExprM env locals expected = \case
         let f0Expected = if isLamHead f0 then mHeadTy else Nothing
         f0' <- lowerExprM env locals f0Expected f0
         xs' <- zipWithM (lowerArgWithRowInjectionM env locals) argExpected xs
-        pure (CCall f0' xs')
+        let bare = CCall f0' xs'
+            mResultTy' = applySubst sFinal <$> mResultTy
+        wrapInjectedM (leConInfo env) expected mResultTy' bare
 
 -- | Best-effort substitution that an argument expression contributes
 --   given a (possibly tyvar-laden) expected type. Used by 'lowerExprM'
@@ -1036,9 +1038,14 @@ coercible src tgt
   | TyOr {} <- tgt = any (coercible src) (flattenRow tgt)
   -- Source is a row but target isn't: would lose alternatives.
   | TyOr {} <- src = False
+  -- Multi-arg type constructors land here as nested TyApps; recurse
+  -- on both sides so a head difference deeper than one level (e.g.
+  -- @Either ErrB Int32@ vs @Either (ErrA | ErrB) Int32@, where the
+  -- first @TyApp@ pair already differs because the inner row sits
+  -- inside @TyApp Either …@) still resolves through 'synthCoerce'.
   | TyApp _ f1 x1 <- src,
     TyApp _ f2 x2 <- tgt =
-      typeEq f1 f2 && coercible x1 x2
+      coercible f1 f2 && coercible x1 x2
   | otherwise = False
 
 -- | Find a label in the target row that 'src' can be coerced to.
@@ -1046,6 +1053,35 @@ coercible src tgt
 --   falls back to recursive 'coercible' check.
 findCoercibleLabel :: Type' -> [Type'] -> Maybe Type'
 findCoercibleLabel src = find (coercible src)
+
+-- | Apply implicit row-injection to an already-lowered CExpr based on
+--   the expression's source and expected types. Mirrors
+--   'lowerArgWithRowInjectionM' but operates post-lowering, so it can
+--   wrap expression positions whose lowering doesn't recursively
+--   thread the expected type — e.g. the result of a non-constructor
+--   call, where the expected type informs argument lowering but the
+--   call result itself was returned unwrapped.
+wrapInjectedM :: ConInfoEnv -> Maybe Type' -> Maybe Type' -> CExpr -> LowerM CExpr
+wrapInjectedM conInfo (Just expected@(TyOr {})) (Just src) bare
+  | src `elem` flattenRow expected = do
+      tag <- recordRowTag src
+      pure (CRow tag bare)
+  | Just lbl <- findCoercibleLabel src (flattenRow expected),
+    not (typeEq src lbl) = do
+      wrap <- synthCoerce conInfo src lbl
+      v <- wrap bare
+      tag <- recordRowTag lbl
+      pure (CRow tag v)
+wrapInjectedM conInfo (Just expected) (Just src) bare
+  | not (typeEq src expected),
+    not (isTyOr expected),
+    coercible src expected = do
+      wrap <- synthCoerce conInfo src expected
+      wrap bare
+  where
+    isTyOr (TyOr {}) = True
+    isTyOr _ = False
+wrapInjectedM _ _ _ bare = pure bare
 
 -- | Synthesise a CExpr-level coercion from @src@ to @tgt@. The
 --   returned function wraps a CExpr of source type into one of target

@@ -2,12 +2,12 @@ CoreProgram
     { cdecls =
         [ CValDef "runMe"
             ( CCall
-                ( CVar "$lam$0" )
+                ( CVar "$lam$1" )
                 [ CIntLit 5 TInt32 ]
             )
         , CValDef "doubled"
             ( CCall
-                ( CVar "$lam$1" )
+                ( CVar "$lam$2" )
                 [ CVar "runMe" ]
             )
         , CFunDef "main" [ "_input" ]
@@ -18,9 +18,9 @@ CoreProgram
                     [ CVar "doubled" ]
                 ]
             )
-        , CFunDef "$lam$0" [ "x" ]
+        , CFunDef "$lam$1" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$lam$1" [ "n" ]
+        , CFunDef "$lam$2" [ "n" ]
             ( CVar "n" )
         ]
     }
