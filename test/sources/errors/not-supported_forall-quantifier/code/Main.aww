@@ -1,0 +1,14 @@
+-- Not yet supported: explicit `forall` quantifiers in type
+-- signatures. Awsum's polymorphism is implicit — every lowercase
+-- type variable in a signature is universally quantified at the
+-- top level. The grammar has no `forall` token, no `.` in types
+-- (the `.` is reserved for module-path qualification only), so
+-- `forall a. a -> a` is a parse error. Workaround: drop the
+-- `forall` and the `.`; just write `a -> a`.
+import IO.Stdout
+
+identity : forall a. a -> a
+identity x = x
+
+main : String -> IO Unit
+main input = IO.Stdout.print (identity input)

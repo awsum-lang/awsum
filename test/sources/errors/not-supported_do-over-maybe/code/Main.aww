@@ -1,0 +1,15 @@
+-- Not yet supported: `do`-notation over `Maybe`. The desugarer is
+-- hard-coded to `bindEither` / `pureEither`, both of which mention
+-- `Either e a`; binding `x <- Just 1` makes the typechecker check
+-- `Just 1` against an `Either` shape and report a type mismatch.
+-- Will work once type classes land and `Maybe` gets a `Monad`
+-- instance. Workaround: explicit `case` on `Just` / `Nothing`.
+import IO.Stdout
+
+result : Maybe Int32
+result = do
+  x <- Just 1
+  pureEither x
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

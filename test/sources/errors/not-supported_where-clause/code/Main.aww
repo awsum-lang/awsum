@@ -1,0 +1,11 @@
+-- Not yet supported: `where` clauses. Awsum has no `where`-block form
+-- in the surface grammar — top-level definitions are flat and there is
+-- no in-function helper-binding sugar. `where` is not reserved, so the
+-- parser tries to continue the body and fails on the indented helper
+-- definition that follows. Workaround: lift the helper to a top-level
+-- definition, or use `let n = e in body` inside the function body.
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print msg where
+  msg = "hello"

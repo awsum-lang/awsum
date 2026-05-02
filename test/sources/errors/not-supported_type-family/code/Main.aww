@@ -1,0 +1,13 @@
+-- Not yet supported: type families / type-level functions
+-- (`type family F a`). The `TypeDecl` rule starts with `type UIdent`
+-- — the second `LIdent` `family` is rejected where the parser
+-- expected `=`, end of declaration, or another type parameter
+-- (which must be uppercase here, since type-decl heads expect
+-- their name first). Workaround: in the absence of type-level
+-- functions, model the relationship at the value level.
+import IO.Stdout
+
+type family Element a
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

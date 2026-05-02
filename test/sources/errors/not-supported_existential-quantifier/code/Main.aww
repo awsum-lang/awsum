@@ -1,0 +1,12 @@
+-- Not yet supported: existential / scoped `forall` inside a type
+-- declaration (`type Box = forall a. Box a`). The `ConDef` rule
+-- accepts only nullary or positional `TypeAtom` fields — there is
+-- no `forall` token at the type-decl level. Workaround: simulate
+-- the existential by parametrising the wrapper type
+-- (`type Box a = Box a`) and choosing `a` at each use site.
+import IO.Stdout
+
+type Box = forall a. Box a
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

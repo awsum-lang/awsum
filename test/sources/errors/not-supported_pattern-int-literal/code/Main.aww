@@ -1,0 +1,16 @@
+-- Not yet supported: integer literal patterns (`case n of 0 -> …`).
+-- The `Pattern` rule allows a constructor application, a name, or a
+-- type-ascribed pattern — there is no rule for matching integer
+-- literals. Workaround: compare with `eqInt32`, then branch on the
+-- resulting `Bool` (this is exactly how the prelude expresses
+-- "is zero" today; integer-literal patterns are a readability win
+-- the language will pick up later, not a stack-safety blocker).
+import IO.Stdout
+
+describe : Int32 -> String
+describe n = case n of
+  0 -> "zero"
+  m -> showInt32 m
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe 0)

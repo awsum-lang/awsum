@@ -1,0 +1,14 @@
+-- Not yet supported: dropping type annotations from a layout-form
+-- `let` whose RHSes are bare integer literals. Each binding is
+-- still independently typed: an unannotated `let a = 1` raises
+-- `MissingLetAnnotation` even when the surrounding `in body`
+-- uses `a` against an `Int32` context. The current synthesis path
+-- does not push the body's expected type through to per-binding
+-- RHSes. Workaround: annotate each binding individually.
+import IO.Stdout
+
+main : String -> IO Unit
+main _input =
+  let a = 1
+      b = 2
+   in IO.Stdout.print (showInt32 a ++ " " ++ showInt32 b)

@@ -1,0 +1,12 @@
+-- Not yet supported: `do`-notation for any monad other than
+-- `Either e a`. The current desugaring is hard-coded to `bindEither`
+-- — a `<-` whose RHS is `IO Unit` ends up scrutinised as if it were
+-- an `Either`, and the desugar fails before typechecking can produce
+-- a more specific diagnostic. `do` for `IO` will arrive together
+-- with type-class dispatch (the `Monad` instance for `IO`).
+import IO.Stdout
+
+main : String -> IO Unit
+main input = do
+  x <- IO.Stdout.print input
+  pureEither x

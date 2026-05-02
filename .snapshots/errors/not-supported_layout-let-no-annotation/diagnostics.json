@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":12,"startCol":7,"endLine":12,"endCol":12,"message":"Cannot infer the type of let-binding 'a'. Add an explicit type annotation: `let a : <type> = …`.","fixes":[]}]

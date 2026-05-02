@@ -1,0 +1,7 @@
+-- Not yet supported: backtick infix application (`` 1 `add` 2 ``).
+-- Backtick is not a token in the lexer. Workaround: write the
+-- function in prefix position (`add 1 2`).
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print ("hello" `concatString` " world")

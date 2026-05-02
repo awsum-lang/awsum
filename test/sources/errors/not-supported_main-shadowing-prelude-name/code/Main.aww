@@ -1,0 +1,11 @@
+-- Not yet supported: shadowing a prelude-visible name with a
+-- function parameter. The no-shadowing rule applies across the
+-- prelude / user-program boundary for top-level identifiers — even
+-- `main`'s own argument cannot reuse a name introduced by the
+-- prelude. Here `not` is a prelude function (`Bool -> Bool`), and
+-- using `not` as the parameter name shadows that visible binding.
+-- Workaround: rename the parameter.
+import IO.Stdout
+
+main : String -> IO Unit
+main not = IO.Stdout.print not

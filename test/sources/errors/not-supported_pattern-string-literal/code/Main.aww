@@ -1,0 +1,16 @@
+-- Not yet supported: string literal patterns
+-- (`case s of "foo" -> …`). `Pattern` only accepts constructor
+-- applications, names, and type-ascribed patterns — string literals
+-- are not allowed at pattern position. Workaround: compare with
+-- a string-equality function and branch on the resulting `Bool`
+-- (the prelude does not currently expose one — adding it is a
+-- straightforward `BuiltIn`-backed shim).
+import IO.Stdout
+
+describe : String -> String
+describe s = case s of
+  "hello" -> "greeting"
+  other -> other
+
+main : String -> IO Unit
+main input = IO.Stdout.print (describe input)

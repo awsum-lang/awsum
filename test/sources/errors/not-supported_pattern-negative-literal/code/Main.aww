@@ -1,0 +1,17 @@
+-- Not yet supported: negative literal patterns (`case n of -1 -> …`).
+-- Patterns at the top of a `case` arm have to be an `LIdent`, a
+-- constructor application, or a parens-wrapped pattern — a leading
+-- `-` is rejected by the parser. Even if integer-literal patterns
+-- land later, the `-1` form would still need a separate decision
+-- about whether the unary minus is parsed as part of the literal or
+-- as an operator. Workaround: as with positive integer-literal
+-- patterns, compare with `eqInt32` and branch on the resulting `Bool`.
+import IO.Stdout
+
+describe : Int32 -> String
+describe n = case n of
+  -1 -> "minus one"
+  m -> showInt32 m
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe 0)

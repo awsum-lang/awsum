@@ -1,0 +1,12 @@
+-- Not yet supported: equality / comparison operators
+-- (`==`, `/=`, `<`, `>`, `<=`, `>=`). The prelude exposes only the
+-- type-specialised `eqInt32`, `eqUInt8` etc., which return `Bool`.
+-- Polymorphic comparison operators land with the type-class system.
+-- The parser rejects the `==` token directly.
+import IO.Stdout
+
+b : Bool
+b = 1 == 2
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

@@ -1,0 +1,10 @@
+-- Not yet supported: visible type application (`f @T`). Awsum
+-- infers tyvar substitutions bidirectionally from the surrounding
+-- expected type — there is no syntax for the user to pin a tyvar
+-- explicitly. `@` is not a token at expression position; the parser
+-- rejects it directly. Workaround: pin the result type at the
+-- enclosing binding site / argument position.
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (showInt32 @Int32 1)
