@@ -15,8 +15,8 @@ How the same Awsum program maps to each compilation target. All targets produce 
 | **Higher-order**  | Opaque `ptr` indirect call                        | `MethodHandle` (`ldc` + `invokevirtual invoke`)   | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) | `funcref` table + `call_indirect`                       | First-class values                            |
 | **Constructors**  | `malloc`'d `ptr` array: `[tag, fields...]`        | `Object[]`: `[Integer(tag), fields...]`           | `object[]`: `[box(tag), fields...]`                              | Linear memory: `[i32 tag, i32 fields...]`               | Array: `[tag, fields...]`                     |
 | **Pattern match** | `ptrtoint` tag → `icmp eq` → `br`                 | `aaload` tag → `intValue` → `ifeq`                | `ldelem.ref` tag → `unbox.any` → `beq.s`                         | `i32.load` tag → `i32.eq` → `if`/`else`                 | `s[0] === N ? ...`                            |
-| **Int32 / UInt8** | Heap cell: `ptr` to `i32` / `i8`                  | Boxed `java.lang.Integer`                         | Boxed `System.Int32`                                             | Heap cell: `i32` in linear memory                       | `(N\|0)` / `(N & 0xFF)` — unboxed JS `number` |
-| **show\***        | Runtime helpers using `snprintf`                  | `Integer.toString()`                              | `callvirt Object::ToString()`                                    | Hand-rolled itoa in linear memory                       | `String(x)`                                   |
+| **Int32 / UInt8 / UInt32** | Heap cell: `ptr` to `i32` / `i8` / `i32`     | Boxed `java.lang.Integer` (all three)             | Boxed `System.Int32` (all three)                                 | Heap cell: `i32` in linear memory                       | `(N\|0)` / `(N & 0xFF)` / `(N >>> 0)` — unboxed JS `number` |
+| **show\***        | Runtime helpers using `snprintf`                  | `Integer.toString()` for signed-friendly types; `Long.toString((long)v & 0xFFFFFFFFL)` for `UInt32` | `Object::ToString()` after re-boxing as `System.UInt32` for `UInt32` | Hand-rolled itoa; separate `__show_u32` skips the sign branch | `String(x)`                                   |
 | **Memory**        | Manual (`malloc`, no `free`)                      | GC                                                | GC                                                               | Bump allocator (no free)                                | GC                                            |
 | **Name mangling** | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`)                | `v_` prefix for all (`_start` is WASI entry)            | `v_` prefix, `main` unchanged                 |
 
@@ -102,7 +102,7 @@ Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be s
 
 ## Parsing decimals
 
-`parseInt32 : String -> Either ParseError Int32` and `parseUInt8 : String -> Either ParseError UInt8` follow a strict grammar that mirrors Awsum's own integer literal: optional `-` (Int32 only), one or more ASCII digits, nothing else — no `+`, no whitespace, no trailing characters. See the docstrings in [stdlib/Prelude.aww](../stdlib/Prelude.aww) for the worked example list.
+`parseInt32 : String -> Either ParseError Int32`, `parseUInt8 : String -> Either ParseError UInt8`, and `parseUInt32 : String -> Either ParseError UInt32` follow a strict grammar that mirrors Awsum's own integer literal: optional `-` (Int32 only), one or more ASCII digits, nothing else — no `+`, no whitespace, no trailing characters. See the docstrings in [stdlib/Prelude.aww](../stdlib/Prelude.aww) for the worked example list.
 
 **Every backend hand-rolls the parser**; native parsers are not used:
 
@@ -135,6 +135,8 @@ parseInt32(s):
 
 `parseUInt8` is the same shape with no sign branch and an i32 accumulator (the running magnitude never exceeds 2559 before the `> 255` check fails the parse).
 
+`parseUInt32` is also unsigned-only but the bound widens to `4294967295`. Since `4294967295 * 10 + 9 = 42949672959` exceeds `INT_MAX`, the accumulator is i64 (same as `parseInt32`). The early-fail check is `acc > 4294967295` at i64 width — straightforwardly representable everywhere.
+
 The `2147483648L` constant (= `|minInt32|`) does not fit in an i32, so each backend builds it differently:
 
 - **LLVM** — direct `2147483648` integer literal, used at i64 width.
@@ -142,6 +144,14 @@ The `2147483648L` constant (= `|minInt32|`) does not fit in an i32, so each back
 - **CLR** — same shift trick (`ldc.i4.1; conv.i8; ldc.i4.s 31; shl`) in both text and binary, for symmetry with JVM.
 - **WASM** — `i64.shl (i64.const 1) (i64.const 31)` everywhere — there's no native i64 literal limit but the shift form keeps the source aligned with JVM/CLR.
 - **JS** — IEEE-754 double represents `2147483648` exactly, so the literal is written directly.
+
+The `4294967295L` constant (= `maxUInt32`) used by `parseUInt32` / `addUInt32` / `mulUInt32` follows a similar pattern:
+
+- **LLVM** — direct `4294967295` integer literal at i64 width.
+- **JVM** — `ldc2_w 4294967295` in the text codegen; the binary assembler builds it with `lconst_1; bipush 32; lshl; lconst_1; lsub` (6 bytes, no CPLong slot).
+- **CLR** — uses native `ldc.i8 4294967295` in both text and binary (CIL has a one-instruction long literal, unlike JVM).
+- **WASM** — `i64.const 4294967295` in WAT; binary uses a new `encodeSLEB128I64 :: Int64 -> [Word8]` helper since the existing `encodeSLEB128` is fixed at `Int32` and overflows at this magnitude.
+- **JS** — IEEE-754 double represents `4294967295` exactly, written directly.
 
 The grammar is byte-level (ASCII digits 0x30..0x39 only); other Unicode digit forms are rejected. UTF-8-aware parsing is a separate, future API.
 
@@ -175,16 +185,17 @@ Zero-argument definitions like `greeting = "Hello"` are compiled differently per
 
 ## Integers
 
-Awsum currently has two integer types: `Int32` (signed 32-bit) and `UInt8` (unsigned 8-bit). Integer literals have no runtime default type — context fixes the type, and the type checker validates the literal against its range at compile time.
+Awsum currently has three integer types: `Int32` (signed 32-bit), `UInt8` (unsigned 8-bit), and `UInt32` (unsigned 32-bit). Integer literals have no runtime default type — context fixes the type, and the type checker validates the literal against its range at compile time.
 
-Two builtins render integers as strings:
+Three builtins render integers as strings:
 
 - `showInt32 : Int32 -> String`
 - `showUInt8 : UInt8 -> String`
+- `showUInt32 : UInt32 -> String`
 
-These are unqualified top-level names (no `import` required), because the types themselves are prelude-visible and a faked `Int32.show` quote would imply a module that does not exist. When polymorphic `show` arrives (type classes), these two specialised helpers go away in favour of it.
+These are unqualified top-level names (no `import` required), because the types themselves are prelude-visible and a faked `Int32.show` quote would imply a module that does not exist. When polymorphic `show` arrives (type classes), these three specialised helpers go away in favour of it.
 
-All five backends produce identical decimal output for the same value — this is verified by the cross-backend tests `int32-show` and `uint8-show`, which render the full range (min, negatives, zero, positives, max) as a comma-separated list.
+All five backends produce identical decimal output for the same value — this is verified by the cross-backend tests `int32_show`, `uint8_show`, and `uint32_show`, which render the full range (min, negatives where applicable, zero, mid-range, max) as a comma-separated list. The `uint32_show` test specifically pins values ≥ 2^31 (`2147483648`, `4000000000`) where a naive signed-`Int32::ToString` would render them as negative.
 
 ### Representation
 
@@ -203,9 +214,9 @@ define ptr @__showInt32(ptr %p) {
 }
 ```
 
-`__showUInt8` is the same with `load i8` + `zext i8 to i32` + `@.fmt_u8`. 16 bytes is enough for `-2147483648` (11 chars) plus null terminator.
+`__showUInt8` is the same with `load i8` + `zext i8 to i32` + `@.fmt_u8`. `__showUInt32` reuses `@.fmt_u8` (the format string `"%u"` is identical) since `printf("%u", i32)` already treats the 32-bit bit pattern as unsigned. UInt32 literals 2^31..2^32-1 are written as their signed two's-complement equivalents (`n - 2^32`) because LLVM `i32` immediates are signed-only — the bit pattern is preserved across the wraparound. 16 bytes is enough for `-2147483648` (11 chars) and `4294967295` (10 chars) plus null terminator.
 
-**JVM**: Both `Int32` and `UInt8` are boxed as `java.lang.Integer` (not `java.lang.Byte`, because `byte` is signed on the JVM — `Integer` preserves the 0..255 value space without masking headaches for later arithmetic). Literals are pushed with `iconst`/`bipush`/`sipush`, or loaded from a `CONSTANT_Integer` pool entry via `ldc` for values outside the short range:
+**JVM**: All three of `Int32`, `UInt8`, and `UInt32` are boxed as `java.lang.Integer` (not `java.lang.Byte` for UInt8, because `byte` is signed on the JVM — `Integer` preserves the 0..255 value space without masking headaches for later arithmetic). Literals are pushed with `iconst`/`bipush`/`sipush`, or loaded from a `CONSTANT_Integer` pool entry via `ldc` for values outside the short range. `Int32` and `UInt8` use the standard `Integer.toString()` virtual call:
 
 ```
 ; showInt32 42 → boxed Integer(42) → "42"
@@ -215,7 +226,22 @@ checkcast java/lang/Integer
 invokevirtual java/lang/Integer.toString()Ljava/lang/String;
 ```
 
-**CLR**: Both types are boxed as `System.Int32` (same rationale as JVM — avoiding `System.Byte`'s unsigned primitive path keeps the representation uniform). `ldc.i4` pushes the value, `box` turns it into an `object`, and show is a virtual call to `Object::ToString()` — boxed `Int32` dispatches to `System.Int32.ToString()`:
+`UInt32` cannot use `Integer.toString()` directly because Java 7's `Integer.toString` interprets the value as signed — `4294967295` would render as `-1`. The class file targets bytecode 51.0 (Java 7), which predates `Integer.toUnsignedString` (Java 8). So `__showUInt32` masks via long arithmetic and calls `Long.toString` instead:
+
+```
+ldarg.0
+checkcast java/lang/Integer
+invokevirtual Integer.intValue()I
+i2l
+ldc2_w 4294967295            ; mask 0xFFFFFFFFL
+land
+invokestatic java/lang/Long.toString(J)Ljava/lang/String;
+areturn
+```
+
+The binary assembler builds `4294967295L` via the shift trick `lconst_1; bipush 32; lshl; lconst_1; lsub` (6 bytes, no `CONSTANT_Long_info` slot).
+
+**CLR**: All three types are boxed as `System.Int32` (same rationale as JVM — keeping the representation uniform avoids `System.Byte` / `System.UInt32` boxing variants flowing around). `ldc.i4` pushes the value, `box` turns it into an `object`, and show for `Int32` / `UInt8` is a virtual call to `Object::ToString()` — boxed `Int32` dispatches to `System.Int32.ToString()`:
 
 ```
 ; showInt32 42 → boxed Int32 → "42"
@@ -224,32 +250,49 @@ box [System.Runtime]System.Int32
 callvirt instance string [System.Runtime]System.Object::ToString()
 ```
 
+`UInt32` re-boxes the value as `System.UInt32` before the virtual call so `ToString` dispatches to `System.UInt32.ToString()`, which prints unsigned-decimal:
+
+```
+; showUInt32 4294967295 → "4294967295" (not "-1")
+ldarg.0
+unbox.any [System.Runtime]System.Int32
+box [System.Runtime]System.UInt32
+callvirt instance string [System.Runtime]System.Object::ToString()
+```
+
+The bit pattern of `Int32 -1` and `UInt32 4294967295` is identical, so `unbox.any Int32 + box UInt32` is a re-tagging operation, not a value transformation. CLR's native `unsigned int32` type makes this far simpler than the JVM workaround above — calling `System.UInt32::ToString` directly via `Convert.ToString(uint32)` would also work, but the re-box + `Object::ToString()` route lets us reuse the virtual-dispatch machinery already used for `Int32` / `UInt8`.
+
 **WASM**: Integers are boxed in linear memory — `__box_i32(v)` allocates 4 bytes via `__alloc`, stores `v`, and returns the pointer. Show is implemented by hand because WASM has no stdlib: `__show_i32` reads the value, writes digits into a 16-byte buffer from the end, and prepends `-` if the value is negative. The same routine handles `UInt8`: values 0..255 are always positive in the signed interpretation, so `i32.lt_s (x) 0` is false and no `-` is written.
 
-`i32.div_u` / `i32.rem_u` are used on the magnitude — this sidesteps the `INT_MIN` corner case where `0 - INT_MIN` is `INT_MIN` again in two's complement: the unsigned reading of `0x80000000` is `2147483648`, which is the correct magnitude.
+`UInt32` is the only type that cannot share `__show_i32` — values 2^31..2^32-1 would test as negative under `i32.lt_s 0` and erroneously get a `-` prefix. So WASM emits a separate `__show_u32` that omits the sign branch entirely and starts the digit loop directly. The body is otherwise identical to `__show_i32` (both already use `i32.div_u` / `i32.rem_u` for the digit extraction).
+
+`i32.div_u` / `i32.rem_u` are used on the magnitude — this sidesteps the `INT_MIN` corner case where `0 - INT_MIN` is `INT_MIN` again in two's complement: the unsigned reading of `0x80000000` is `2147483648`, which is the correct magnitude. The same unsigned-division behaviour makes `__show_u32` correct across the full `0..2^32-1` range without further special-casing.
 
 **JS**: Integers are unboxed JS `number`s, coerced to match the declared type's value space at the literal site:
 
 ```javascript
-// Int32 N → (N|0)    forces signed 32-bit semantics
-// UInt8 N → (N & 0xFF)   masks to 0..255
-// showInt32 / showUInt8 → String(x)
+// Int32 N  → (N|0)     forces signed 32-bit semantics
+// UInt8 N  → (N & 0xFF)   masks to 0..255
+// UInt32 N → (N >>> 0)   coerces to unsigned 32-bit
+// showInt32 / showUInt8 / showUInt32 → String(x)
 ```
 
-`String(x)` produces the decimal form with no locale-specific separators. JS numbers hold `Int32` and `UInt8` ranges exactly, so no precision loss.
+The `>>> 0` coercion produces the unsigned 32-bit interpretation directly — `((-1) >>> 0)` is `4294967295`, not `-1`, so `String(x)` then prints the correct unsigned decimal. `(N | 0)` would wrap values 2^31..2^32-1 to negative, which is exactly what we want for `Int32` and not at all what we want for `UInt32`. JS numbers hold `Int32`, `UInt8`, and `UInt32` ranges exactly (all fit in the 53-bit IEEE-754 mantissa), so no precision loss at the literal site.
 
-Signedness and width are not visible at the show layer because both backends widen to a representation big enough to hold the full UInt8 / Int32 range (JVM `Integer`, JS `number`). Where they *do* matter is in arithmetic — see the next subsection.
+Signedness and width are mostly invisible at the show layer because every backend widens to a representation big enough to hold the full UInt8 / Int32 / UInt32 range — JVM `Integer` (32-bit container) for the first two via masking; JVM `Long.toString` after `& 0xFFFFFFFFL` for `UInt32`; CLR `System.UInt32::ToString` for `UInt32` via re-boxing; WASM `__show_u32` (separate hand-rolled helper); JS `>>> 0` then `String`. Where the unsigned interpretation has to be wired through arithmetic the divergence is more visible — see the next subsection.
 
 ### Honest arithmetic
 
 Every numeric primitive that can produce a value outside its declared type's range returns `Either <error> <result>` rather than wrapping or trapping at runtime. Currently:
 
 - `predInt32` / `succInt32` — `Left UnderflowError` / `Left OverflowError` at the boundaries; otherwise `Right (x ± 1)`.
-- `predUInt8` / `succUInt8` — same shape, with the boundaries at 0 and 255.
+- `predUInt8` / `succUInt8` / `predUInt32` / `succUInt32` — same shape; boundaries 0 / 255 for UInt8, 0 / 4294967295 for UInt32.
 - `addInt32 : Int32 -> Int32 -> Either ArithError Int32` — `Left Underflow` / `Left Overflow` (`type ArithError = Underflow | Overflow`), since signed addition can fail at *both* ends from a single operation.
-- `addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8` — only overflow is reachable for unsigned addition, so the closed `OverflowError` suffices.
+- `addUInt8` / `addUInt32` — `Either OverflowError <type>`. Only overflow is reachable for unsigned addition, so the closed `OverflowError` suffices.
+- `subUInt8` / `subUInt32` — `Either UnderflowError <type>`. Only underflow is reachable for unsigned subtraction (the difference of two non-negative values stays in range when `a >= b` and underflows otherwise).
+- `mulUInt8` / `mulUInt32` — `Either OverflowError <type>`, mirroring `add` for the same reason.
 
-`eqInt32` / `eqUInt8` are also in this layer but cannot fail; they return `Bool` directly.
+`eqInt32` / `eqUInt8` / `eqUInt32` are also in this layer but cannot fail; they return `Bool` directly. All three share a single runtime helper per backend (`__eqInt32` reused everywhere) since bit-pattern equality is sign-agnostic at the i32 level.
 
 Because the error type is part of the surface signature, tests pin both branches at the language level. Per-backend the detection methods do differ:
 
@@ -273,6 +316,18 @@ return Right (s | 0);
 ```
 
 For `addUInt8` the picture is uniform: every backend widens both operands into a representation that holds at least 9 bits (i32 / Integer / number), sums, compares against 255, and either returns `Left OverflowError` or boxes the truncated low byte as `Right`. No native u8 add is used anywhere — even where the platform has one (LLVM `i8`), promoting first sidesteps the wrap-on-overflow that the Either-returning signature is designed to forbid.
+
+For `addUInt32` the same lift goes one level higher — into a 64-bit-wide unsigned domain — because the unmasked sum of two u32 values can be up to `2 * (2^32 - 1) ≈ 2^33 − 2`, which doesn't fit in i32:
+
+- **LLVM** — `zext i32 to i64` on both operands, `add i64`, `icmp ugt i64 %sum, 4294967295`, then `trunc i64 to i32` on the ok path.
+- **JVM** — `i2l` plus `ldc2_w 4294967295L; land` on each operand to mask to 32 bits unsigned (since `i2l` sign-extends), `ladd`, `lcmp` against 4294967295L, `l2i` on the ok path. The mask is mandatory because Java has no native zero-extending widening for `int → long`.
+- **CLR** — `conv.u8` on each operand (zero-extends a u32 bit pattern to u64 directly, no mask needed), `add`, `bgt.un.s` against `ldc.i8 4294967295`, `conv.u4` on the ok path. CLR's `conv.u8` collapses the JVM's two-step into one byte.
+- **WASM** — `i64.extend_i32_u` on each operand, `i64.add`, `i64.gt_u` against `i64.const 4294967295`, `i32.wrap_i64` on the ok path. The new `opI64GtU = 0x56` opcode was added to the binary assembler for this — `i64.gt_s` is unsuitable below.
+- **JS** — direct `a + b` produces an exact double (the sum is at most ~2^33), single `> 4294967295` test against the result, `>>> 0` to coerce the in-range value to u32. The simplest of the five.
+
+`mulUInt32` adds one more wrinkle: the product `(2^32 − 1)^2 ≈ 1.8 × 2^63` exceeds `Int64.MaxValue` (`2^63 − 1`), so signed-int64 comparison against 4294967295 misclassifies some overflowing products as in-range. Three of the five backends already use unsigned-int64 comparison; JVM (Java 7) doesn't have one, so it detects overflow by shifting the product right by 32 (`lushr`) and checking that the high half is zero. JS uses `BigInt` to compute the exact product before comparing, since regular JS doubles only have 53-bit precision and would round the largest u32 × u32 products.
+
+`subUInt32` is the cleanest: every backend can do unsigned-i32 compare directly (LLVM `icmp ult`, JVM `i2l + ldc2_w mask + land + lcmp + iflt`, CLR `blt.un.s`, WASM `i32.lt_u`, JS `<` on the JS-coerced numbers). On the ok path `a - b` at i32 width produces the correct u32 difference because the bit pattern of `(a - b) mod 2^32` equals `a - b` exactly when `a >= b` unsigned.
 
 ## Higher-Order Functions
 
@@ -617,6 +672,6 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Memory layout**: One page (64KB) of linear memory. Bytes 0-63 are scratch space for WASI iovec structs and argument buffers. String constants start at byte 64. A bump allocator (`$heap` global) grows from the end of the string pool. No deallocation — the OS reclaims memory on exit (same as LLVM).
 
-**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Two boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer) and `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). One string-manipulation: `__splitOnFirst` (hand-rolled byte scan because WASM has no native substring search). The remainder are honest-arithmetic and parse primitives — `__predInt32`, `__predUInt8`, `__succInt32`, `__succUInt8`, `__eq_i32` (shared by both equality builtins since both types flow as i32 cells), `__addInt32`, `__addUInt8`, `__parseInt32`, `__parseUInt8` — each returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use. `__parseInt32` is the only helper that needs an i64 local (the accumulator), and the only one whose `locals` declaration uses two run-length groups (`8 i32`, then `1 i64`) instead of one.
+**Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Three boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer), `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude; shared by `Int32` and `UInt8`), and `__show_u32` (same shape with the sign branch removed, so values 2^31..2^32-1 render correctly). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). One string-manipulation: `__splitOnFirst` (hand-rolled byte scan because WASM has no native substring search). The remainder are honest-arithmetic and parse primitives — `__predInt32` / `__predUInt8` / `__predUInt32`, `__succInt32` / `__succUInt8` / `__succUInt32`, `__eq_i32` (shared by all three equality builtins since the types flow as i32 cells with bit-pattern-comparable equality), `__addInt32` / `__subInt32` / `__mulInt32` / `__negInt32`, `__addUInt8` / `__subUInt8` / `__mulUInt8`, `__addUInt32` / `__subUInt32` / `__mulUInt32`, `__parseInt32` / `__parseUInt8` / `__parseUInt32` — each returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use. `__parseInt32`, `__parseUInt32`, `__addUInt32`, `__mulUInt32`, and `__mulInt32` need i64 locals; `__addUInt32` and `__mulUInt32` use the new `opI64GtU = 0x56` opcode (mandatory for `__mulUInt32` since `(2^32-1)^2` exceeds `Int64.MaxValue`, optional for `__addUInt32` but kept for symmetry). The new `encodeSLEB128I64 :: Int64 -> [Word8]` helper widens the SLEB128 encoder so 4294967295 fits — the existing `encodeSLEB128 :: Int32` would silently wrap.
 
 **Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
