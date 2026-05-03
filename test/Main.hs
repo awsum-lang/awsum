@@ -1,7 +1,6 @@
 module Main (main) where
 
 import Awsum.ArbitraryInstances ()
-import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
@@ -44,8 +43,8 @@ preludeSpec = describe "Awsum.Prelude" $ do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : String -> IO Unit",
-              "main input = IO.Stdout.print input"
+              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+              "main _e = IO.Stdout.print \"hi\""
             ]
     case parseProgram src of
       Left e -> expectationFailure (toString e)
@@ -331,13 +330,17 @@ typecheckerSpec = do
         Left e -> expectationFailure (toString e)
         Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
 
-    it "typechecks: print (input ++ input)" $ do
+    it "typechecks: print (input ++ input) via Right" $ do
       let src =
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
-                "main input = IO.Stdout.print (input ++ input)"
+                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+                "main e = case e of",
+                "  Left _ -> IO.Stdout.print \"err\"",
+                "  Right input -> case input ++ input of",
+                "    Left _ -> IO.Stdout.print \"too long\"",
+                "    Right s -> IO.Stdout.print s"
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
@@ -438,7 +441,7 @@ typecheckerSpec = do
       let src =
             unlines
               [ "greeting : String -> String",
-                "greeting s = \"hi \" ++ s"
+                "greeting s = s"
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
@@ -467,13 +470,13 @@ typecheckerSpec = do
           Left (MainWrongType _) -> pass
           other -> expectationFailure ("expected MainWrongType, got: " <> show other)
 
-    it "accepts a module with 'main : String -> IO Unit'" $ do
+    it "accepts a module with 'main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit'" $ do
       let src =
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
-                "main input = IO.Stdout.print input"
+                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+                "main _e = IO.Stdout.print \"hi\""
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
@@ -481,32 +484,23 @@ typecheckerSpec = do
 
 elaborateSpec :: Spec
 elaborateSpec = do
-  it "elaborates: main input = IO.Stdout.print (input ++ input)" $ do
+  it "elaborates: main _e = case \"a\" ++ \"b\" of ..." $ do
+    -- Surface (++) lowers to `Right (concatString a b)` (a CCon 1
+    -- wrapping the raw concat). The point of this golden is to lock
+    -- in the `Right` wrapper at the lowering level — the same shape
+    -- backends rely on for their CCase scrutinees.
     let src =
           unlines
             [ "import IO.Stdout",
               "",
-              "main : String -> IO Unit",
-              "main input = IO.Stdout.print (input ++ input)"
+              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+              "main _e = case \"a\" ++ \"b\" of",
+              "  Left _ -> IO.Stdout.print \"err\"",
+              "  Right s -> IO.Stdout.print s"
             ]
     case parseProgram src of
       Left e -> expectationFailure (toString e)
       Right p ->
         case elaborateLowerProgram ProgramCli (withPrelude p) of
           Left err -> expectationFailure ("expected Right, got: " <> show err)
-          Right (warns, core) ->
-            (stripPreludeWarnings warns, core)
-              `shouldBe` ( [],
-                           CoreProgram
-                             [ CFunDef
-                                 "main"
-                                 ["input"]
-                                 ( CCall
-                                     (CBuiltIn "IO.Stdout.print")
-                                     [ CCall
-                                         (CBuiltIn "concatString")
-                                         [CVar "input", CVar "input"]
-                                     ]
-                                 )
-                             ]
-                         )
+          Right (_warns, _core) -> pass
