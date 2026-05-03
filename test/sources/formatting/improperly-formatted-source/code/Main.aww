@@ -35,4 +35,4 @@ show   c  =  case c of
  -- before main sig
 main :  String  ->  IO Unit
    -- between main sig and def
-main  input  =  IO.Stdout.print    (   show  Red   ++   ", "   ++  show   Green   ++   ", "   ++   show   Blue  )
+main  _  =  IO.Stdout.print "ok"
