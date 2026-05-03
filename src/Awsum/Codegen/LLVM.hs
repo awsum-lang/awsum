@@ -238,7 +238,15 @@ runtime builtIns =
         if Set.member "mulUInt8" builtIns then rtMulUInt8 else "",
         if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
         if Set.member "parseInt32" builtIns then rtParseInt32 else "",
-        if Set.member "parseUInt8" builtIns then rtParseUInt8 else ""
+        if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
+        if Set.member "showUInt32" builtIns then rtShowUInt32 else "",
+        if Set.member "predUInt32" builtIns then rtPredUInt32 else "",
+        if Set.member "succUInt32" builtIns then rtSuccUInt32 else "",
+        if Set.member "eqUInt32" builtIns then rtEqUInt32 else "",
+        if Set.member "addUInt32" builtIns then rtAddUInt32 else "",
+        if Set.member "subUInt32" builtIns then rtSubUInt32 else "",
+        if Set.member "mulUInt32" builtIns then rtMulUInt32 else "",
+        if Set.member "parseUInt32" builtIns then rtParseUInt32 else ""
       ]
     rtConcat =
       unlines
@@ -939,6 +947,265 @@ runtime builtIns =
           "  ret ptr %left",
           "}"
         ]
+    -- showUInt32: load i32, snprintf with the shared @.fmt_u8 ("%u")
+    -- into a 16-byte buffer (max u32 "4294967295" is 10 digits + null).
+    -- The format string is identical to UInt8's, so we don't introduce
+    -- a separate constant — printf's "%u" with an i32 value already
+    -- treats the 32-bit bit pattern as unsigned.
+    rtShowUInt32 =
+      unlines
+        [ "define internal ptr @__showUInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %buf = call ptr @malloc(i64 16)",
+          "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  ret ptr %buf",
+          "}"
+        ]
+    -- predUInt32: Left UnderflowError on 0, else Right (v - 1). i32 storage
+    -- with unsigned semantics — the subtract is purely on the ok path
+    -- where v >= 1, so wrap-around is irrelevant.
+    rtPredUInt32 =
+      unlines
+        [ "define internal ptr @__predUInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %is_zero = icmp eq i32 %v, 0",
+          "  br i1 %is_zero, label %overflow, label %ok",
+          "overflow:",
+          "  %ue = call ptr @malloc(i64 8)",
+          "  %ue_tag = inttoptr i64 0 to ptr",
+          "  store ptr %ue_tag, ptr %ue",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %ue, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = sub i32 %v, 1",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- succUInt32: Left OverflowError on 0xFFFFFFFF (-1 as signed i32),
+    -- else Right (v + 1). The boundary literal is encoded as i32 -1 since
+    -- LLVM accepts signed literals only for i32 immediates; the bit
+    -- pattern is identical to 4294967295 unsigned.
+    rtSuccUInt32 =
+      unlines
+        [ "define internal ptr @__succUInt32(ptr %p) {",
+          "  %v = load i32, ptr %p",
+          "  %is_max = icmp eq i32 %v, -1",
+          "  br i1 %is_max, label %overflow, label %ok",
+          "overflow:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = add i32 %v, 1",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- eqUInt32: Mirrors rtEqInt32 since equality on i32 is sign-agnostic
+    -- at the bit level.
+    rtEqUInt32 =
+      unlines
+        [ "define internal ptr @__eqUInt32(ptr %a, ptr %b) {",
+          "  %va = load i32, ptr %a",
+          "  %vb = load i32, ptr %b",
+          "  %eq = icmp eq i32 %va, %vb",
+          "  %tag = select i1 %eq, i64 0, i64 1",
+          "  %box = call ptr @malloc(i64 8)",
+          "  %tag_ptr = inttoptr i64 %tag to ptr",
+          "  store ptr %tag_ptr, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
+    -- addUInt32: Either OverflowError UInt32. Widen both operands to i64
+    -- (zext, unsigned) so the unmasked sum fits, then compare against
+    -- 4294967295 with 'icmp ugt'. On the ok path the sum is in
+    -- 0..4294967295 — truncating back to i32 keeps the low bits exactly.
+    rtAddUInt32 =
+      unlines
+        [ "define internal ptr @__addUInt32(ptr %pa, ptr %pb) {",
+          "  %a = load i32, ptr %pa",
+          "  %b = load i32, ptr %pb",
+          "  %a64 = zext i32 %a to i64",
+          "  %b64 = zext i32 %b to i64",
+          "  %sum64 = add i64 %a64, %b64",
+          "  %ovf = icmp ugt i64 %sum64, 4294967295",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = trunc i64 %sum64 to i32",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- subUInt32: Either UnderflowError UInt32. Compare 'a < b' as
+    -- unsigned at i32 width — overflow is unreachable for unsigned
+    -- subtraction.
+    rtSubUInt32 =
+      unlines
+        [ "define internal ptr @__subUInt32(ptr %pa, ptr %pb) {",
+          "  %a = load i32, ptr %pa",
+          "  %b = load i32, ptr %pb",
+          "  %unf = icmp ult i32 %a, %b",
+          "  br i1 %unf, label %err, label %ok",
+          "err:",
+          "  %ue = call ptr @malloc(i64 8)",
+          "  %ue_tag = inttoptr i64 0 to ptr",
+          "  store ptr %ue_tag, ptr %ue",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %ue, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = sub i32 %a, %b",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- mulUInt32: Either OverflowError UInt32. Widen both operands to i64
+    -- (zext) so the unmasked product fits — max u32 * u32 is
+    -- 0xFFFFFFFE00000001, well inside i64 range — then compare against
+    -- 4294967295 with 'icmp ugt'. Same shape as 'rtAddUInt32' with 'mul'.
+    rtMulUInt32 =
+      unlines
+        [ "define internal ptr @__mulUInt32(ptr %pa, ptr %pb) {",
+          "  %a = load i32, ptr %pa",
+          "  %b = load i32, ptr %pb",
+          "  %a64 = zext i32 %a to i64",
+          "  %b64 = zext i32 %b to i64",
+          "  %prod64 = mul i64 %a64, %b64",
+          "  %ovf = icmp ugt i64 %prod64, 4294967295",
+          "  br i1 %ovf, label %err, label %ok",
+          "err:",
+          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %oe_tag, ptr %oe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %oe, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          "  %newv = trunc i64 %prod64 to i32",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %newv, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "}"
+        ]
+    -- parseUInt32: Same grammar as parseUInt8 — no sign accepted, decimal
+    -- digits only — range 0..4294967295. Accumulator is i64 so the
+    -- 'big' fast-fail check (acc > 4294967295) can fire as soon as
+    -- accumulation overshoots; the running magnitude before failing is
+    -- bounded by 4294967295 * 10 + 9 = 42949672959, which fits in i64.
+    rtParseUInt32 =
+      unlines
+        [ "define internal ptr @__parseUInt32(ptr %s) {",
+          "entry:",
+          "  %i_alloca = alloca i64, align 8",
+          "  store i64 0, ptr %i_alloca",
+          "  %acc_alloca = alloca i64, align 8",
+          "  store i64 0, ptr %acc_alloca",
+          "  %len = call i64 @strlen(ptr %s)",
+          "  %is_empty = icmp eq i64 %len, 0",
+          "  br i1 %is_empty, label %fail, label %loop_head",
+          "loop_head:",
+          "  %i = load i64, ptr %i_alloca",
+          "  %acc = load i64, ptr %acc_alloca",
+          "  %cond = icmp ult i64 %i, %len",
+          "  br i1 %cond, label %body, label %ok",
+          "body:",
+          "  %ptr_c = getelementptr i8, ptr %s, i64 %i",
+          "  %c = load i8, ptr %ptr_c",
+          "  %c_i32 = zext i8 %c to i32",
+          "  %low = icmp ult i32 %c_i32, 48",
+          "  %high = icmp ugt i32 %c_i32, 57",
+          "  %bad = or i1 %low, %high",
+          "  br i1 %bad, label %fail, label %parse",
+          "parse:",
+          "  %d = sub i32 %c_i32, 48",
+          "  %d_i64 = zext i32 %d to i64",
+          "  %x10 = mul i64 %acc, 10",
+          "  %acc_next = add i64 %x10, %d_i64",
+          "  %big = icmp ugt i64 %acc_next, 4294967295",
+          "  br i1 %big, label %fail, label %body_end",
+          "body_end:",
+          "  store i64 %acc_next, ptr %acc_alloca",
+          "  %i_next = add i64 %i, 1",
+          "  store i64 %i_next, ptr %i_alloca",
+          "  br label %loop_head",
+          "ok:",
+          "  %result_i32 = trunc i64 %acc to i32",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %result_i32, ptr %box",
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %box, ptr %right_f",
+          "  ret ptr %right",
+          "fail:",
+          "  %pe = call ptr @malloc(i64 8)",
+          "  %pe_tag = inttoptr i64 0 to ptr",
+          "  store ptr %pe_tag, ptr %pe",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %pe, ptr %left_f",
+          "  ret ptr %left",
+          "}"
+        ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Footer: C main entry point
@@ -1243,6 +1510,9 @@ emitExpr ctx = \case
     let (llvmTy, bytes, val) = case it of
           TInt32 -> ("i32" :: Text, 4 :: Int, show n :: Text)
           TUInt8 -> ("i8", 1, show n)
+          -- LLVM i32 immediates are signed; values 2147483648..4294967295 must be
+          -- written as their signed two's-complement equivalents (n - 2^32).
+          TUInt32 -> ("i32", 4, show (if n >= 2147483648 then n - 4294967296 else n))
     pure
       ( "  "
           <> buf
@@ -1398,7 +1668,7 @@ emitExpr ctx = \case
               )
           _ -> error "__print: arity mismatch"
       CBuiltIn name
-        | name == "showInt32" || name == "showUInt8" ->
+        | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of
               [x] -> do
                 (instrX, resX) <- emitExpr ctx x
@@ -1406,6 +1676,7 @@ emitExpr ctx = \case
                 let fn :: Text
                     fn = case name of
                       "showUInt8" -> "@__showUInt8"
+                      "showUInt32" -> "@__showUInt32"
                       _ -> "@__showInt32"
                 pure
                   ( instrX <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resX <> ")\n",
@@ -1432,6 +1703,16 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "BuiltIn.predUInt8: arity mismatch"
+      CBuiltIn "predUInt32" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__predUInt32(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.predUInt32: arity mismatch"
       CBuiltIn "succInt32" ->
         case xs of
           [x] -> do
@@ -1452,8 +1733,18 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "BuiltIn.succUInt8: arity mismatch"
+      CBuiltIn "succUInt32" ->
+        case xs of
+          [x] -> do
+            (instrX, resX) <- emitExpr ctx x
+            tmp <- freshTemp
+            pure
+              ( instrX <> "  " <> tmp <> " = call ptr @__succUInt32(ptr " <> resX <> ")\n",
+                tmp
+              )
+          _ -> error "BuiltIn.succUInt32: arity mismatch"
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" ->
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" ->
             case xs of
               [a, b] -> do
                 (instrA, resA) <- emitExpr ctx a
@@ -1462,6 +1753,7 @@ emitExpr ctx = \case
                 let fn :: Text
                     fn = case name of
                       "eqUInt8" -> "@__eqUInt8"
+                      "eqUInt32" -> "@__eqUInt32"
                       _ -> "@__eqInt32"
                 pure
                   ( instrA <> instrB <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ", ptr " <> resB <> ")\n",
@@ -1469,7 +1761,7 @@ emitExpr ctx = \case
                   )
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32" ->
+        | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32" ->
             case xs of
               [a, b] -> do
                 (instrA, resA) <- emitExpr ctx a
@@ -1478,9 +1770,12 @@ emitExpr ctx = \case
                 let fn :: Text
                     fn = case name of
                       "addUInt8" -> "@__addUInt8"
+                      "addUInt32" -> "@__addUInt32"
                       "subInt32" -> "@__subInt32"
                       "subUInt8" -> "@__subUInt8"
+                      "subUInt32" -> "@__subUInt32"
                       "mulUInt8" -> "@__mulUInt8"
+                      "mulUInt32" -> "@__mulUInt32"
                       "mulInt32" -> "@__mulInt32"
                       _ -> "@__addInt32"
                 pure
@@ -1521,7 +1816,7 @@ emitExpr ctx = \case
               )
           _ -> error "BuiltIn.splitOnFirst: arity mismatch"
       CBuiltIn name
-        | name == "parseInt32" || name == "parseUInt8" ->
+        | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32" ->
             case xs of
               [a] -> do
                 (instrA, resA) <- emitExpr ctx a
@@ -1529,6 +1824,7 @@ emitExpr ctx = \case
                 let fn :: Text
                     fn = case name of
                       "parseInt32" -> "@__parseInt32"
+                      "parseUInt32" -> "@__parseUInt32"
                       _ -> "@__parseUInt8"
                 pure
                   ( instrA <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ")\n",

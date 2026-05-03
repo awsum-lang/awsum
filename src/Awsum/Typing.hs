@@ -506,6 +506,7 @@ intTypeRange :: Name -> Maybe (Integer, Integer)
 intTypeRange = \case
   "Int32" -> Just (-2147483648, 2147483647)
   "UInt8" -> Just (0, 255)
+  "UInt32" -> Just (0, 4294967295)
   _ -> Nothing
 
 -- | Typing environment: maps fully-qualified names to types.
@@ -568,6 +569,7 @@ wellFormedTypeWith userTypes = \case
   TyCon _ "IO" -> Right ()
   TyCon _ "Int32" -> Right ()
   TyCon _ "UInt8" -> Right ()
+  TyCon _ "UInt32" -> Right ()
   TyCon sp n
     | S.member n userTypes -> Right ()
     | otherwise -> Left (UnknownTypeCon sp n)

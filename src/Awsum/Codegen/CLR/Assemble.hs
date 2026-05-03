@@ -441,11 +441,24 @@ cilBge off = 0x3C : w32le (fromIntegral off :: Word32)
 cilBgt off = 0x3D : w32le (fromIntegral off :: Word32)
 cilBlt off = 0x3F : w32le (fromIntegral off :: Word32)
 
-cilNeg, cilMul, cilConvI8, cilShl :: [Word8]
+cilNeg, cilMul, cilConvI8, cilShl, cilConvU8, cilConvU4 :: [Word8]
 cilNeg = [0x65]
 cilMul = [0x5A]
 cilConvI8 = [0x6A]
 cilShl = [0x62]
+cilConvU8 = [0x6E] -- conv.u8: zero-extend top of stack to uint64
+cilConvU4 = [0x6D] -- conv.u4: truncate / unsigned-narrow to uint32
+
+-- | @ldc.i8 <imm64>@ — push a signed-int64 literal. Used by UInt32
+-- helpers to materialise 4294967295 as a long boundary without
+-- relying on a CPLong-style indirection.
+cilLdcI8 :: Int64 -> [Word8]
+cilLdcI8 n = 0x21 : w64le (fromIntegral n :: Word64)
+
+-- | Unsigned compare branches with 1-byte signed offset.
+cilBgtUnS, cilBltUnS :: Word8 -> [Word8]
+cilBgtUnS off = [0x35, off]
+cilBltUnS off = [0x37, off]
 
 -- | @starg.s <n>@ / long form — stores the top of stack into argument
 -- slot @n@. Used by 'CContinue' to rebind parameters in place before
@@ -601,10 +614,13 @@ doAssemble (CoreProgram decls) = do
                    ("__print", Set.member "IO.Stdout.print" builtIns),
                    ("__predInt32", Set.member "predInt32" builtIns),
                    ("__predUInt8", Set.member "predUInt8" builtIns),
+                   ("__predUInt32", Set.member "predUInt32" builtIns),
                    ("__succInt32", Set.member "succInt32" builtIns),
                    ("__succUInt8", Set.member "succUInt8" builtIns),
+                   ("__succUInt32", Set.member "succUInt32" builtIns),
                    ("__eqInt32", Set.member "eqInt32" builtIns),
                    ("__eqUInt8", Set.member "eqUInt8" builtIns),
+                   ("__eqUInt32", Set.member "eqUInt32" builtIns),
                    ("__addInt32", Set.member "addInt32" builtIns),
                    ("__subInt32", Set.member "subInt32" builtIns),
                    ("__mulInt32", Set.member "mulInt32" builtIns),
@@ -612,9 +628,14 @@ doAssemble (CoreProgram decls) = do
                    ("__addUInt8", Set.member "addUInt8" builtIns),
                    ("__subUInt8", Set.member "subUInt8" builtIns),
                    ("__mulUInt8", Set.member "mulUInt8" builtIns),
+                   ("__addUInt32", Set.member "addUInt32" builtIns),
+                   ("__subUInt32", Set.member "subUInt32" builtIns),
+                   ("__mulUInt32", Set.member "mulUInt32" builtIns),
+                   ("__showUInt32", Set.member "showUInt32" builtIns),
                    ("__splitOnFirst", Set.member "splitOnFirst" builtIns),
                    ("__parseInt32", Set.member "parseInt32" builtIns),
-                   ("__parseUInt8", Set.member "parseUInt8" builtIns)
+                   ("__parseUInt8", Set.member "parseUInt8" builtIns),
+                   ("__parseUInt32", Set.member "parseUInt32" builtIns)
                  ],
                keep
              ]
@@ -631,10 +652,13 @@ doAssemble (CoreProgram decls) = do
   m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
+  m3u32p <- if Set.member "predUInt32" builtIns then (: []) <$> mkPredUInt32 else pure []
   m3sI <- if Set.member "succInt32" builtIns then (: []) <$> mkSuccInt32 else pure []
   m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
+  m3u32s <- if Set.member "succUInt32" builtIns then (: []) <$> mkSuccUInt32 else pure []
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
+  m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" else pure []
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6sub <- if Set.member "subInt32" builtIns then (: []) <$> mkSubInt32 else pure []
   m6mul <- if Set.member "mulInt32" builtIns then (: []) <$> mkMulInt32 else pure []
@@ -642,12 +666,17 @@ doAssemble (CoreProgram decls) = do
   m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
   m6usSub <- if Set.member "subUInt8" builtIns then (: []) <$> mkSubUInt8 else pure []
   m6usMul <- if Set.member "mulUInt8" builtIns then (: []) <$> mkMulUInt8 else pure []
+  m6u32a <- if Set.member "addUInt32" builtIns then (: []) <$> mkAddUInt32 else pure []
+  m6u32sub <- if Set.member "subUInt32" builtIns then (: []) <$> mkSubUInt32 else pure []
+  m6u32mul <- if Set.member "mulUInt32" builtIns then (: []) <$> mkMulUInt32 else pure []
+  m6u32sh <- if Set.member "showUInt32" builtIns then (: []) <$> mkShowUInt32 else pure []
   m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
   m8sI <- if Set.member "parseInt32" builtIns then (: []) <$> mkParseInt32 else pure []
   m8sU <- if Set.member "parseUInt8" builtIns then (: []) <$> mkParseUInt8 else pure []
+  m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3sI <> m3sU <> m4s <> m5s <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m7s <> m8sI <> m8sU <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -1998,6 +2027,493 @@ mkParseUInt8 = do
           <> blockY
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
+-- | showUInt32: UInt32 -> String. Re-box the Int32-shaped argument as
+--   System.UInt32 (bit pattern preserved) and call the virtual ToString
+--   override on the boxed value, which prints the unsigned-decimal
+--   representation. Avoids a long-arith dance by leaning on the BCL.
+mkShowUInt32 :: AsmM MInfo
+mkShowUInt32 = do
+  ni <- w16 <$> addStr "__showUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trUInt32 <- addTypeRef (resScopeAR 1) "UInt32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  toStringRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
+  let code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilBox (tokTR trUInt32)
+          <> cilCallvirt (tokMR toStringRef)
+          <> cilRet
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+
+-- | predUInt32: UInt32 -> Either UnderflowError UInt32. Boundary check is
+--   against 0 (same as 'mkPredUInt8'); the binary body is bit-identical
+--   to 'mkPredUInt8' modulo the UTF8 method name. (v - 1) wraps in i32
+--   but on the ok path v >= 1, so the result is in [0, 2^32-2] — no wrap.
+mkPredUInt32 :: AsmM MInfo
+mkPredUInt32 = do
+  ni <- w16 <$> addStr "__predUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      overflow =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      okBranch =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdcI4 1
+          <> cilSub
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length overflow) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 0
+          <> cilBneUnS branchOffset
+          <> overflow
+          <> okBranch
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
+-- | succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
+--   encoded as 'cilLdcI4 (-1)' (= 'ldc.i4.m1', identical bit pattern as
+--   u32). On the ok path v + 1 wraps in i32 but since v != -1 the result
+--   is in [1, 2^32-1] — no wrap.
+mkSuccUInt32 :: AsmM MInfo
+mkSuccUInt32 = do
+  ni <- w16 <$> addStr "__succUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      overflow =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      okBranch =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdcI4 1
+          <> cilAdd
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      branchOffset = fromIntegral (length overflow) :: Word8
+      code =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI4 (-1)
+          <> cilBneUnS branchOffset
+          <> overflow
+          <> okBranch
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
+-- | addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
+--   both operands to uint64 via 'conv.u8' (zero-extends a u32 bit pattern),
+--   add, then 'bgt.un.s' against 4294967295L. The sum lives in
+--   [0, 2*2^32-2] so the i64 add doesn't itself overflow.
+--   Locals: V_0 = int64 sum, V_1 = object (Left payload).
+mkAddUInt32 :: AsmM MInfo
+mkAddUInt32 = do
+  ni <- w16 <$> addStr "__addUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- locals: int64 (0x0A), object (0x1C)
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x0A, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      okBlock =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1 -- Right tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilConvU4
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      overBlock =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- OverflowError tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- Left tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      bgtOff = fromIntegral (length okBlock) :: Word8
+      preamble =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilConvU8
+          <> cilLdarg 1
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilConvU8
+          <> cilAdd
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI8 4294967295
+          <> cilBgtUnS bgtOff -- if sum > 4294967295 → overBlock
+      code = preamble <> okBlock <> overBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
+-- | subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
+--   @a < b@ unsigned via 'blt.un.s' on i32 stack values; on the ok path
+--   'sub' at i32 gives the correct u32 difference (bit pattern of
+--   @a - b mod 2^32@ equals @a - b@ when a >= b unsigned).
+--   Locals: V_0 = int32 a, V_1 = int32 b, V_2 = object (Left payload).
+mkSubUInt32 :: AsmM MInfo
+mkSubUInt32 = do
+  ni <- w16 <$> addStr "__subUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- locals: int32, int32, object
+  localTok <- addLocalSigBytes [0x07, 0x03, 0x08, 0x08, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      okBlock =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1 -- Right tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilLdloc 1
+          <> cilSub
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      underBlock =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- UnderflowError tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 2
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0 -- Left tag
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 2
+          <> cilStelemRef
+          <> cilRet
+      bltOff = fromIntegral (length okBlock) :: Word8
+      preamble =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 0
+          <> cilLdarg 1
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilStloc 1
+          <> cilLdloc 0
+          <> cilLdloc 1
+          <> cilBltUnS bltOff -- if a <u b → underBlock
+      code = preamble <> okBlock <> underBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
+-- | mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
+--   both operands to uint64 via 'conv.u8', multiply at int64-stack
+--   width (the bit pattern of the result is the low 64 bits of the
+--   true u32*u32 product, which fits exactly in u64). Compare against
+--   4294967295L unsigned.
+--   Locals: V_0 = int64 product, V_1 = object (Left payload).
+mkMulUInt32 :: AsmM MInfo
+mkMulUInt32 = do
+  ni <- w16 <$> addStr "__mulUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  localTok <- addLocalSigBytes [0x07, 0x02, 0x0A, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      okBlock =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilConvU4
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      overBlock =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 1
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 1
+          <> cilStelemRef
+          <> cilRet
+      bgtOff = fromIntegral (length okBlock) :: Word8
+      preamble =
+        cilLdarg 0
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilConvU8
+          <> cilLdarg 1
+          <> cilUnboxAny (tokTR trInt32)
+          <> cilConvU8
+          <> cilMul
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilLdcI8 4294967295
+          <> cilBgtUnS bgtOff
+      code = preamble <> okBlock <> overBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
+-- | parseUInt32: String -> Either ParseError UInt32. Same shape as
+--   'mkParseUInt8' but with an int64 accumulator and a > 4294967295L
+--   cap (max running magnitude is 4294967295 * 10 + 9 = 42949672959,
+--   fits in i64 signed).
+--   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int64 acc,
+--   4 = int c, 5 = object (Left payload on fail).
+mkParseUInt32 :: AsmM MInfo
+mkParseUInt32 = do
+  ni <- w16 <$> addStr "__parseUInt32"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
+  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
+  -- locals: string, int32, int32, int64, int32, object
+  localTok <- addLocalSigBytes [0x07, 0x06, etString, 0x08, 0x08, 0x0A, 0x08, etObject]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      castStr = cilCastclass (tokTR trStr)
+      callLength = cilCallvirt (tokMR lengthRef)
+      callChars = cilCallvirt (tokMR charsRef)
+      blockA =
+        cilLdarg 0
+          <> castStr
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> callLength
+          <> cilStloc 1
+      lenA = length blockA
+      blockB = cilLdloc 1
+      lenB = length blockB
+      brfalse1At = lenA + lenB
+      after1 = brfalse1At + 5
+      blockC = cilLdcI4 0 <> cilStloc 2 <> cilLdcI4 0 <> cilConvI8 <> cilStloc 3
+      lenC = length blockC
+      loopAt = after1 + lenC
+      blockI = cilLdloc 2 <> cilLdloc 1
+      lenI = length blockI
+      bgeAt = loopAt + lenI
+      afterBge = bgeAt + 5
+      blockK = cilLdloc 0 <> cilLdloc 2 <> callChars <> cilStloc 4
+      lenK = length blockK
+      blockL = cilLdloc 4 <> cilLdcI4 48
+      lenL = length blockL
+      bltAt = afterBge + lenK + lenL
+      afterBlt = bltAt + 5
+      blockN = cilLdloc 4 <> cilLdcI4 57
+      lenN = length blockN
+      bgtCharAt = afterBlt + lenN
+      afterBgtChar = bgtCharAt + 5
+      blockP =
+        cilLdloc 3
+          <> cilLdcI4 10
+          <> cilConvI8
+          <> cilMul
+          <> cilLdloc 4
+          <> cilLdcI4 48
+          <> cilSub
+          <> cilConvI8
+          <> cilAdd
+          <> cilStloc 3
+      lenP = length blockP
+      blockQ = cilLdloc 3 <> cilLdcI8 4294967295
+      lenQ = length blockQ
+      bgtAccAt = afterBgtChar + lenP + lenQ
+      afterBgtAcc = bgtAccAt + 5
+      blockS = cilLdloc 2 <> cilLdcI4 1 <> cilAdd <> cilStloc 2
+      lenS = length blockS
+      brLoopAt = afterBgtAcc + lenS
+      okAt = brLoopAt + 5
+      blockX =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 3
+          <> cilConvU4
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      lenX = length blockX
+      failAt = okAt + lenX
+      blockY =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 5
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 5
+          <> cilStelemRef
+          <> cilRet
+      brfalse1Off = fromIntegral (failAt - after1) :: Int32
+      bgeOff = fromIntegral (okAt - afterBge) :: Int32
+      bltOff = fromIntegral (failAt - afterBlt) :: Int32
+      bgtCharOff = fromIntegral (failAt - afterBgtChar) :: Int32
+      bgtAccOff = fromIntegral (failAt - afterBgtAcc) :: Int32
+      brLoopOff = fromIntegral (loopAt - okAt) :: Int32
+      code =
+        blockA
+          <> blockB
+          <> cilBrfalse brfalse1Off
+          <> blockC
+          <> blockI
+          <> cilBge bgeOff
+          <> blockK
+          <> blockL
+          <> cilBlt bltOff
+          <> blockN
+          <> cilBgt bgtCharOff
+          <> blockP
+          <> blockQ
+          <> cilBgt bgtAccOff
+          <> blockS
+          <> cilBr brLoopOff
+          <> blockX
+          <> blockY
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -2247,36 +2763,51 @@ emitExpr ctx = \case
           trObj <- addTypeRef (resScopeAR 1) "Object" "System"
           toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
           pure (cx <> cilCallvirt (tokMR toStrRef))
+    CBuiltIn "showUInt32" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__showUInt32"))
     CBuiltIn "predInt32" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__predInt32"))
     CBuiltIn "predUInt8" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__predUInt8"))
+    CBuiltIn "predUInt32" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__predUInt32"))
     CBuiltIn "succInt32" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__succInt32"))
     CBuiltIn "succUInt8" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__succUInt8"))
+    CBuiltIn "succUInt32" | [x] <- xs -> do
+      cx <- emitExpr ctx x
+      pure (cx <> cilCall (lkTok ctx "__succUInt32"))
     CBuiltIn name
-      | name == "eqInt32" || name == "eqUInt8",
+      | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
         [a, b] <- xs -> do
           ca <- emitExpr ctx a
           cb <- emitExpr ctx b
-          let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+          let fn = case name of
+                "eqInt32" -> "__eqInt32"
+                "eqUInt8" -> "__eqUInt8"
+                _ -> "__eqUInt32"
           pure (ca <> cb <> cilCall (lkTok ctx fn))
     CBuiltIn name
-      | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
+      | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
         [a, b] <- xs -> do
           ca <- emitExpr ctx a
           cb <- emitExpr ctx b
           let fn = case name of
                 "addInt32" -> "__addInt32"
                 "addUInt8" -> "__addUInt8"
+                "addUInt32" -> "__addUInt32"
                 "subInt32" -> "__subInt32"
                 "subUInt8" -> "__subUInt8"
+                "subUInt32" -> "__subUInt32"
                 "mulInt32" -> "__mulInt32"
+                "mulUInt32" -> "__mulUInt32"
                 _ -> "__mulUInt8"
           pure (ca <> cb <> cilCall (lkTok ctx fn))
     CBuiltIn "negInt32" | [x] <- xs -> do
@@ -2291,10 +2822,13 @@ emitExpr ctx = \case
       cb <- emitExpr ctx b
       pure (ca <> cb <> cilCall (lkTok ctx "__splitOnFirst"))
     CBuiltIn name
-      | name == "parseInt32" || name == "parseUInt8",
+      | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32",
         [x] <- xs -> do
           cx <- emitExpr ctx x
-          let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+          let fn = case name of
+                "parseInt32" -> "__parseInt32"
+                "parseUInt32" -> "__parseUInt32"
+                _ -> "__parseUInt8"
           pure (cx <> cilCall (lkTok ctx fn))
     CBuiltIn n ->
       error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")

@@ -40,13 +40,19 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "predUInt8" builtIns) predUInt8Method,
             "",
+            gate (Set.member "predUInt32" builtIns) predUInt32Method,
+            "",
             gate (Set.member "succInt32" builtIns) succInt32Method,
             "",
             gate (Set.member "succUInt8" builtIns) succUInt8Method,
             "",
+            gate (Set.member "succUInt32" builtIns) succUInt32Method,
+            "",
             gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "L_eq_i32"),
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "L_eq_u8"),
+            "",
+            gate (Set.member "eqUInt32" builtIns) (eqMethod "__eqUInt32" "L_eq_u32"),
             "",
             gate (Set.member "addInt32" builtIns) addInt32Method,
             "",
@@ -62,11 +68,21 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "mulUInt8" builtIns) mulUInt8Method,
             "",
+            gate (Set.member "addUInt32" builtIns) addUInt32Method,
+            "",
+            gate (Set.member "subUInt32" builtIns) subUInt32Method,
+            "",
+            gate (Set.member "mulUInt32" builtIns) mulUInt32Method,
+            "",
+            gate (Set.member "showUInt32" builtIns) showUInt32Method,
+            "",
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
             "",
             gate (Set.member "parseInt32" builtIns) parseInt32Method,
             "",
             gate (Set.member "parseUInt8" builtIns) parseUInt8Method,
+            "",
+            gate (Set.member "parseUInt32" builtIns) parseUInt32Method,
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
@@ -908,6 +924,440 @@ mulUInt8Method =
       ".end method"
     ]
 
+-- showUInt32: UInt32 -> String. JVM int is signed 32-bit, so values
+--   2^31..2^32-1 would render as negative via 'Integer.toString'. Mask
+--   to unsigned long via @(long)v & 0xFFFFFFFFL@ then call
+--   'Long.toString'. 'Integer.toUnsignedString' would be cleaner but is
+--   Java 8+; this code targets bytecode 51.0 (Java 7).
+showUInt32Method :: Text
+showUInt32Method =
+  unlines
+    [ ".method static __showUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 4",
+      "  .limit locals 1",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  invokestatic java/lang/Long/toString(J)Ljava/lang/String;",
+      "  areturn",
+      ".end method"
+    ]
+
+-- predUInt32: UInt32 -> Either UnderflowError UInt32. The boundary check
+--   is also against 0 (same as 'predUInt8'), so the body is structurally
+--   identical to predUInt8Method — only the labels are renamed to keep
+--   both methods in one class without label collision.
+predUInt32Method :: Text
+predUInt32Method =
+  unlines
+    [ ".method static __predUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  ifne L_predu32_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_predu32_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  iconst_1",
+      "  isub",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
+--   is encoded as @iconst_m1@ — identical bit pattern when stored as
+--   signed i32. On the ok path '(v + 1)' wraps modulo 2^32, but since
+--   we already checked v != 4294967295, the result is in 1..4294967295
+--   (no wrap).
+succUInt32Method :: Text
+succUInt32Method =
+  unlines
+    [ ".method static __succUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_1",
+      "  iload_1",
+      "  iconst_m1",
+      "  if_icmpne L_succu32_ok",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_succu32_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  iload_1",
+      "  iconst_1",
+      "  iadd",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
+--   both operands to unsigned long via @(long)x & 0xFFFFFFFFL@; the
+--   sum lives in [0, 2*2^32-2] which fits in long-signed, so 'lcmp'
+--   against 4294967295 gives the correct branch. The l2i on the ok
+--   path keeps the low 32 bits — exactly the in-range u32 result.
+addUInt32Method :: Text
+addUInt32Method =
+  unlines
+    [ ".method static __addUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 3",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  ladd",
+      "  dup2",
+      "  ldc2_w 4294967295",
+      "  lcmp",
+      "  ifgt L_addu32_over",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_addu32_over:",
+      "  pop2",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
+--   @a < b@ as unsigned via long masking + lcmp. On the ok path
+--   @isub@ at int width gives the correct u32 difference (bit pattern
+--   of @a - b mod 2^32@ equals @a - b@ when @a >= b@ in unsigned).
+subUInt32Method :: Text
+subUInt32Method =
+  unlines
+    [ ".method static __subUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 5",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_2",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  istore_3",
+      "  iload_2",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  iload_3",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  lcmp",
+      "  iflt L_subu32_under",
+      "  iload_2",
+      "  iload_3",
+      "  isub",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore 4",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 4",
+      "  aastore",
+      "  areturn",
+      "L_subu32_under:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore 4",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 4",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. The
+--   product of two u32 values is in [0, (2^32-1)^2 ≈ 2^64-2^33+1]; this
+--   exceeds @Long.MAX_VALUE@, so 'lcmp' against 4294967295 would
+--   misclassify some overflowing products as in-range. Instead we shift
+--   the product right by 32 (unsigned, 'lushr') and check whether any
+--   high bit is set — equivalent to @(a*b) > 2^32 - 1@ unsigned.
+mulUInt32Method :: Text
+mulUInt32Method =
+  unlines
+    [ ".method static __mulUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 4",
+      "  aload_0",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  aload_1",
+      "  checkcast java/lang/Integer",
+      "  invokevirtual java/lang/Integer/intValue()I",
+      "  i2l",
+      "  ldc2_w 4294967295",
+      "  land",
+      "  lmul",
+      "  lstore_2",
+      "  lload_2",
+      "  bipush 32",
+      "  lushr",
+      "  l2i",
+      "  ifne L_mulu32_over",
+      "  lload_2",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_mulu32_over:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
+-- parseUInt32: String -> Either ParseError UInt32. Same shape as
+--   'parseUInt8Method' minus the sign handling, with a long accumulator
+--   (max running magnitude is 4294967295 * 10 + 9 = 42949672959 — fits
+--   in long-signed). On the ok path l2i takes the low 32 bits, which
+--   are the correct u32 bit pattern.
+parseUInt32Method :: Text
+parseUInt32Method =
+  unlines
+    [ ".method static __parseUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 5",
+      "  .limit locals 8",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  astore_1",
+      "  aload_1",
+      "  invokevirtual java/lang/String/length()I",
+      "  istore_2",
+      "  iload_2",
+      "  ifeq L_parseUInt32_fail",
+      "  iconst_0",
+      "  istore_3",
+      "  lconst_0",
+      "  lstore 4",
+      "L_parseUInt32_loop:",
+      "  iload_3",
+      "  iload_2",
+      "  if_icmpge L_parseUInt32_ok",
+      "  aload_1",
+      "  iload_3",
+      "  invokevirtual java/lang/String/charAt(I)C",
+      "  istore 6",
+      "  iload 6",
+      "  bipush 48",
+      "  if_icmplt L_parseUInt32_fail",
+      "  iload 6",
+      "  bipush 57",
+      "  if_icmpgt L_parseUInt32_fail",
+      "  lload 4",
+      "  bipush 10",
+      "  i2l",
+      "  lmul",
+      "  iload 6",
+      "  bipush 48",
+      "  isub",
+      "  i2l",
+      "  ladd",
+      "  lstore 4",
+      "  lload 4",
+      "  ldc2_w 4294967295",
+      "  lcmp",
+      "  ifgt L_parseUInt32_fail",
+      "  iinc 3 1",
+      "  goto L_parseUInt32_loop",
+      "L_parseUInt32_ok:",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  lload 4",
+      "  l2i",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  areturn",
+      "L_parseUInt32_fail:",
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore 4",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 4",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Defers substring search to 'String.indexOf(String)', which returns -1
 --   on miss and 0 on empty 'sep' — both behaviours match the prelude
@@ -1381,6 +1831,13 @@ emitExprText ctx paramMap = \case
                 "  checkcast java/lang/Integer",
                 "  invokevirtual java/lang/Integer/toString()Ljava/lang/String;"
               ]
+      CBuiltIn "showUInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__showUInt32(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
       CBuiltIn "predInt32"
         | [x] <- xs ->
             T.intercalate
@@ -1394,6 +1851,13 @@ emitExprText ctx paramMap = \case
               "\n"
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__predUInt8(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
+      CBuiltIn "predUInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__predUInt32(Ljava/lang/Object;)Ljava/lang/Object;"
               ]
       CBuiltIn "succInt32"
         | [x] <- xs ->
@@ -1409,10 +1873,20 @@ emitExprText ctx paramMap = \case
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__succUInt8(Ljava/lang/Object;)Ljava/lang/Object;"
               ]
+      CBuiltIn "succUInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx paramMap x,
+                "  invokestatic AwsumMain/__succUInt32(Ljava/lang/Object;)Ljava/lang/Object;"
+              ]
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8",
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
           [a, b] <- xs ->
-            let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+            let fn = case name of
+                  "eqInt32" -> "__eqInt32"
+                  "eqUInt8" -> "__eqUInt8"
+                  _ -> "__eqUInt32"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap a,
@@ -1420,14 +1894,17 @@ emitExprText ctx paramMap = \case
                     "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
                   ]
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
+        | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
           [a, b] <- xs ->
             let fn = case name of
                   "addInt32" -> "__addInt32"
                   "addUInt8" -> "__addUInt8"
+                  "addUInt32" -> "__addUInt32"
                   "subInt32" -> "__subInt32"
                   "subUInt8" -> "__subUInt8"
+                  "subUInt32" -> "__subUInt32"
                   "mulInt32" -> "__mulInt32"
+                  "mulUInt32" -> "__mulUInt32"
                   _ -> "__mulUInt8"
              in T.intercalate
                   "\n"
@@ -1459,9 +1936,12 @@ emitExprText ctx paramMap = \case
                 "  invokestatic AwsumMain/__splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
               ]
       CBuiltIn name
-        | name == "parseInt32" || name == "parseUInt8",
+        | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32",
           [x] <- xs ->
-            let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+            let fn = case name of
+                  "parseInt32" -> "__parseInt32"
+                  "parseUInt32" -> "__parseUInt32"
+                  _ -> "__parseUInt8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap x,

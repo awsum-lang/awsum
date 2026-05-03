@@ -285,6 +285,60 @@ mulUInt8 = BuiltIn.mulUInt8
 parseUInt8 : String -> Either ParseError UInt8
 parseUInt8 = BuiltIn.parseUInt8
 
+-- ---------------------- UInt32
+
+{- Lower and upper bounds of `UInt32` (0..4294967295). Useful for
+   boundary checks without spelling out the literal at every call site. -}
+
+minUInt32 : UInt32
+minUInt32 = 0
+
+maxUInt32 : UInt32
+maxUInt32 = 4294967295
+
+eqUInt32 : UInt32 -> UInt32 -> Bool
+eqUInt32 = BuiltIn.eqUInt32
+
+showUInt32 : UInt32 -> String
+showUInt32 = BuiltIn.showUInt32
+
+predUInt32 : UInt32 -> Either UnderflowError UInt32
+predUInt32 = BuiltIn.predUInt32
+
+succUInt32 : UInt32 -> Either OverflowError UInt32
+succUInt32 = BuiltIn.succUInt32
+
+addUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
+addUInt32 = BuiltIn.addUInt32
+
+subUInt32 : UInt32 -> UInt32 -> Either UnderflowError UInt32
+subUInt32 = BuiltIn.subUInt32
+
+mulUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
+mulUInt32 = BuiltIn.mulUInt32
+
+{- Parse a `UInt32` from a decimal string. Same grammar as `parseUInt8`:
+   one or more decimal digits, no sign (UInt32 cannot represent a
+   negative number), no whitespace, no trailing characters. Range is
+   0..4294967295 inclusive.
+
+   Examples:
+   - `parseUInt32 "0"`           → `Right 0`
+   - `parseUInt32 "4294967295"`  → `Right 4294967295`
+   - `parseUInt32 "4294967296"`  → `Left ParseError`   (above max)
+   - `parseUInt32 "-1"`          → `Left ParseError`   (negative)
+   - `parseUInt32 ""`            → `Left ParseError`   (empty)
+   - `parseUInt32 "abc"`         → `Left ParseError`   (not digits)
+   - `parseUInt32 " 5"`          → `Left ParseError`   (whitespace)
+   - `parseUInt32 "12a"`         → `Left ParseError`   (trailing garbage)
+
+   Strings are byte sequences and digits are recognised as the seven-bit
+   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
+   rejected. -}
+
+parseUInt32 : String -> Either ParseError UInt32
+parseUInt32 = BuiltIn.parseUInt32
+
 -- ---------------------- Int32
 
 {- Lower and upper bounds of `Int32` (-2147483648..2147483647). Useful

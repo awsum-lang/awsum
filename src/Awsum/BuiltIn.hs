@@ -104,11 +104,39 @@ builtIns =
       ("parseInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy int32Ty)),
       -- parseUInt8 : String -> Either ParseError UInt8
       -- Same grammar, no sign accepted (UInt8 is unsigned), range 0..255.
-      ("parseUInt8", TyArrow noSpan stringTy (eitherTy parseErrorTy uint8Ty))
+      ("parseUInt8", TyArrow noSpan stringTy (eitherTy parseErrorTy uint8Ty)),
+      -- showUInt32 : UInt32 -> String
+      ("showUInt32", TyArrow noSpan uint32Ty stringTy),
+      -- predUInt32 : UInt32 -> Either UnderflowError UInt32
+      -- Returns `Left UnderflowError` on 0, `Right (x - 1)` elsewhere.
+      ("predUInt32", TyArrow noSpan uint32Ty (eitherTy underflowErrorTy uint32Ty)),
+      -- succUInt32 : UInt32 -> Either OverflowError UInt32
+      -- Returns `Left OverflowError` on 4294967295, `Right (x + 1)` elsewhere.
+      ("succUInt32", TyArrow noSpan uint32Ty (eitherTy overflowErrorTy uint32Ty)),
+      -- eqUInt32 : UInt32 -> UInt32 -> Bool
+      ("eqUInt32", TyArrow noSpan uint32Ty (TyArrow noSpan uint32Ty boolTy)),
+      -- addUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
+      -- `Left OverflowError` if `a + b > 4294967295`, `Right (a + b)`
+      -- otherwise. Underflow is unreachable for unsigned addition,
+      -- symmetric to 'addUInt8'.
+      ("addUInt32", TyArrow noSpan uint32Ty (TyArrow noSpan uint32Ty (eitherTy overflowErrorTy uint32Ty))),
+      -- subUInt32 : UInt32 -> UInt32 -> Either UnderflowError UInt32
+      -- `Left UnderflowError` if `a < b`, `Right (a - b)` otherwise.
+      -- Symmetric to 'subUInt8'.
+      ("subUInt32", TyArrow noSpan uint32Ty (TyArrow noSpan uint32Ty (eitherTy underflowErrorTy uint32Ty))),
+      -- mulUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
+      -- `Left OverflowError` if `a * b > 4294967295`, `Right (a * b)`
+      -- otherwise. Symmetric to 'mulUInt8'.
+      ("mulUInt32", TyArrow noSpan uint32Ty (TyArrow noSpan uint32Ty (eitherTy overflowErrorTy uint32Ty))),
+      -- parseUInt32 : String -> Either ParseError UInt32
+      -- Same grammar as 'parseUInt8' — no sign, decimal digits only —
+      -- range 0..4294967295.
+      ("parseUInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy uint32Ty))
     ]
   where
     int32Ty = TyCon noSpan "Int32"
     uint8Ty = TyCon noSpan "UInt8"
+    uint32Ty = TyCon noSpan "UInt32"
     stringTy = TyCon noSpan "String"
     boolTy = TyCon noSpan "Bool"
     underflowErrorTy = TyCon noSpan "UnderflowError"

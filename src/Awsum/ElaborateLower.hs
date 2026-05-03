@@ -675,6 +675,7 @@ lowerExprM env locals expected = \case
   ELit sp (LInt n) -> case expected of
     Just (TyCon _ "Int32") -> pure (CIntLit n TInt32)
     Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
+    Just (TyCon _ "UInt32") -> pure (CIntLit n TUInt32)
     _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
     -- (a ++ b) lowers to `Right (concatString a b)`, matching Prelude's

@@ -124,6 +124,11 @@ newtype Word8V = Word8V Word8 deriving stock (Show)
 instance Arbitrary Word8V where
   arbitrary = Word8V <$> chooseBoundedIntegral (0, 255)
 
+newtype Word32V = Word32V Word32 deriving stock (Show)
+
+instance Arbitrary Word32V where
+  arbitrary = Word32V <$> chooseBoundedIntegral (minBound, maxBound)
+
 -- | (a, b) where @a * b@ stays in Int32 range. Pick @a@ uniformly,
 --   then @b@ from the no-overflow interval — for @a == 0@ the
 --   product is always 0 so the full range is OK; otherwise the
@@ -238,6 +243,18 @@ instance Arbitrary Word8MaybeEqualPair where
         ]
     pure (Word8MaybeEqualPair (a, b))
 
+newtype Word32MaybeEqualPair = Word32MaybeEqualPair (Word32, Word32) deriving stock (Show)
+
+instance Arbitrary Word32MaybeEqualPair where
+  arbitrary = do
+    a <- chooseBoundedIntegral (minBound, maxBound)
+    b <-
+      frequency
+        [ (1, pure a),
+          (4, chooseBoundedIntegral (minBound, maxBound))
+        ]
+    pure (Word32MaybeEqualPair (a, b))
+
 -- | Int32 with @maxBound@ favoured (~9 %). Used for boundary tests
 --   where the failure case (succ at max) would otherwise never be hit
 --   by a uniform sample.
@@ -279,6 +296,26 @@ instance Arbitrary Word8WithMinFavored where
       <$> frequency
         [ (1, pure 0),
           (10, chooseBoundedIntegral (0, 255))
+        ]
+
+newtype Word32WithMaxFavored = Word32WithMaxFavored Word32 deriving stock (Show)
+
+instance Arbitrary Word32WithMaxFavored where
+  arbitrary =
+    Word32WithMaxFavored
+      <$> frequency
+        [ (1, pure maxBound),
+          (10, chooseBoundedIntegral (minBound, maxBound))
+        ]
+
+newtype Word32WithMinFavored = Word32WithMinFavored Word32 deriving stock (Show)
+
+instance Arbitrary Word32WithMinFavored where
+  arbitrary =
+    Word32WithMinFavored
+      <$> frequency
+        [ (1, pure 0),
+          (10, chooseBoundedIntegral (minBound, maxBound))
         ]
 
 newtype NoOverflowAddUInt8 = NoOverflowAddUInt8 (Word8, Word8) deriving stock (Show)
@@ -354,6 +391,60 @@ instance Arbitrary NoOverflowMulUInt8 where
     let bMax = if a == 0 then 255 else 255 `div` a
     b <- chooseBoundedIntegral (0, bMax)
     pure (NoOverflowMulUInt8 (a, b))
+
+-- ── UInt32 ──
+
+-- | (a, b) where @a + b@ stays in UInt32 range. Pick @a@ uniformly in
+--   the full u32 domain, then @b@ from the remaining capacity
+--   @0..maxBound - a@. Constructive — no rejection sampling.
+newtype NoOverflowAddUInt32 = NoOverflowAddUInt32 (Word32, Word32) deriving stock (Show)
+
+instance Arbitrary NoOverflowAddUInt32 where
+  arbitrary = do
+    a <- chooseBoundedIntegral (minBound :: Word32, maxBound)
+    b <- chooseBoundedIntegral (0, maxBound - a)
+    pure (NoOverflowAddUInt32 (a, b))
+
+-- | (a, b, c) such that @a + b@, @a + b + c@ both stay in UInt32 range
+--   (which subsumes @b + c@ since @c <= maxBound - (a+b) <= maxBound - b@).
+newtype NoOverflowAddUInt32Triple = NoOverflowAddUInt32Triple (Word32, Word32, Word32) deriving stock (Show)
+
+instance Arbitrary NoOverflowAddUInt32Triple where
+  arbitrary = do
+    a <- chooseBoundedIntegral (minBound :: Word32, maxBound)
+    b <- chooseBoundedIntegral (0, maxBound - a)
+    c <- chooseBoundedIntegral (0, maxBound - (a + b))
+    pure (NoOverflowAddUInt32Triple (a, b, c))
+
+-- | (a, b) such that @a * b <= maxUInt32@. Pick @a@ uniformly, then
+--   @b@ from @[0..maxBound \`div\` a]@ (or the full range when
+--   @a == 0@, since @0 * anything = 0@). Constructive — no
+--   rejection-sampling.
+newtype NoOverflowMulUInt32 = NoOverflowMulUInt32 (Word32, Word32) deriving stock (Show)
+
+instance Arbitrary NoOverflowMulUInt32 where
+  arbitrary = do
+    a <- chooseBoundedIntegral (minBound :: Word32, maxBound)
+    let bMax = if a == 0 then maxBound else maxBound `div` a
+    b <- chooseBoundedIntegral (0, bMax)
+    pure (NoOverflowMulUInt32 (a, b))
+
+-- | (a, b, c) such that @a*b@, @b*c@ and @a*b*c@ all fit in UInt32.
+--   Same shape as 'NoOverflowMulUInt8Triple' on the full u32 range —
+--   bound every intermediate product, not just the left-grouping ones.
+newtype NoOverflowMulUInt32Triple = NoOverflowMulUInt32Triple (Word32, Word32, Word32) deriving stock (Show)
+
+instance Arbitrary NoOverflowMulUInt32Triple where
+  arbitrary = do
+    a <- chooseBoundedIntegral (minBound :: Word32, maxBound)
+    let bMax = if a == 0 then maxBound else maxBound `div` a
+    b <- chooseBoundedIntegral (0, bMax)
+    let ab = a * b
+        cMaxBC = if b == 0 then maxBound else maxBound `div` b
+        cMaxABC = if ab == 0 then maxBound else maxBound `div` ab
+        cMax = min cMaxBC cMaxABC
+    c <- chooseBoundedIntegral (0, cMax)
+    pure (NoOverflowMulUInt32Triple (a, b, c))
 
 -- | (a, b, c) such that @a*b@, @b*c@ and @a*b*c@ all fit in UInt8.
 --   Under overflow-checked arithmetic the two groupings @(a*b)*c@ and
@@ -473,6 +564,14 @@ properties =
     SomeProperty mulUInt8OneIdentityLeftProp,
     SomeProperty mulUInt8OneIdentityRightProp,
     SomeProperty mulUInt8AssociativeProp,
+    SomeProperty addUInt32CommutativeProp,
+    SomeProperty addUInt32AssociativeProp,
+    SomeProperty addUInt32ZeroIdentityLeftProp,
+    SomeProperty addUInt32ZeroIdentityRightProp,
+    SomeProperty mulUInt32CommutativeProp,
+    SomeProperty mulUInt32AssociativeProp,
+    SomeProperty mulUInt32OneIdentityLeftProp,
+    SomeProperty mulUInt32OneIdentityRightProp,
     SomeProperty mulInt32CommutativeProp,
     SomeProperty mulInt32OneIdentityLeftProp,
     SomeProperty mulInt32OneIdentityRightProp,
@@ -485,13 +584,17 @@ properties =
     SomeProperty predInt32FailsIffMinProp,
     SomeProperty succUInt8FailsIff255Prop,
     SomeProperty predUInt8FailsIffZeroProp,
+    SomeProperty succUInt32FailsIffMaxProp,
+    SomeProperty predUInt32FailsIffZeroProp,
     -- ── Equality ──
     SomeProperty eqInt32ReflexiveProp,
     SomeProperty eqInt32SymmetricProp,
     SomeProperty eqUInt8SymmetricProp,
+    SomeProperty eqUInt32SymmetricProp,
     -- ── Parser / show round-trip ──
     SomeProperty parseInt32ShowRoundtripProp,
     SomeProperty parseUInt8ShowRoundtripProp,
+    SomeProperty parseUInt32ShowRoundtripProp,
     -- ── String monoid + split ──
     SomeProperty concatLeftIdentityProp,
     SomeProperty concatRightIdentityProp,
@@ -767,6 +870,132 @@ mulUInt8AssociativeProp =
         show a <> ":" <> show b <> ":" <> show c,
       propExpectedOutput = const "OK"
     }
+
+-- ── UInt32 ──
+
+addUInt32CommutativeProp :: Property NoOverflowAddUInt32
+addUInt32CommutativeProp =
+  Property
+    { propName = "addUInt32-commutative",
+      propSourceDir = "addUInt32-commutative",
+      propGen = arbitrary,
+      propEncode = \(NoOverflowAddUInt32 (a, b)) -> show a <> ":" <> show b,
+      propExpectedOutput = const "OK"
+    }
+
+addUInt32AssociativeProp :: Property NoOverflowAddUInt32Triple
+addUInt32AssociativeProp =
+  Property
+    { propName = "addUInt32-associative",
+      propSourceDir = "addUInt32-associative",
+      propGen = arbitrary,
+      propEncode = \(NoOverflowAddUInt32Triple (a, b, c)) ->
+        show a <> ":" <> show b <> ":" <> show c,
+      propExpectedOutput = const "OK"
+    }
+
+addUInt32ZeroIdentityLeftProp :: Property Word32V
+addUInt32ZeroIdentityLeftProp =
+  Property
+    { propName = "addUInt32-zero-identity-left",
+      propSourceDir = "addUInt32-zero-identity-left",
+      propGen = arbitrary,
+      propEncode = \(Word32V a) -> show a,
+      propExpectedOutput = const "OK"
+    }
+
+addUInt32ZeroIdentityRightProp :: Property Word32V
+addUInt32ZeroIdentityRightProp =
+  Property
+    { propName = "addUInt32-zero-identity-right",
+      propSourceDir = "addUInt32-zero-identity-right",
+      propGen = arbitrary,
+      propEncode = \(Word32V a) -> show a,
+      propExpectedOutput = const "OK"
+    }
+
+mulUInt32CommutativeProp :: Property NoOverflowMulUInt32
+mulUInt32CommutativeProp =
+  Property
+    { propName = "mulUInt32-commutative",
+      propSourceDir = "mulUInt32-commutative",
+      propGen = arbitrary,
+      propEncode = \(NoOverflowMulUInt32 (a, b)) -> show a <> ":" <> show b,
+      propExpectedOutput = const "OK"
+    }
+
+mulUInt32OneIdentityLeftProp :: Property Word32V
+mulUInt32OneIdentityLeftProp =
+  Property
+    { propName = "mulUInt32-one-identity-left",
+      propSourceDir = "mulUInt32-one-identity-left",
+      propGen = arbitrary,
+      propEncode = \(Word32V a) -> show a,
+      propExpectedOutput = const "OK"
+    }
+
+mulUInt32OneIdentityRightProp :: Property Word32V
+mulUInt32OneIdentityRightProp =
+  Property
+    { propName = "mulUInt32-one-identity-right",
+      propSourceDir = "mulUInt32-one-identity-right",
+      propGen = arbitrary,
+      propEncode = \(Word32V a) -> show a,
+      propExpectedOutput = const "OK"
+    }
+
+mulUInt32AssociativeProp :: Property NoOverflowMulUInt32Triple
+mulUInt32AssociativeProp =
+  Property
+    { propName = "mulUInt32-associative",
+      propSourceDir = "mulUInt32-associative",
+      propGen = arbitrary,
+      propEncode = \(NoOverflowMulUInt32Triple (a, b, c)) ->
+        show a <> ":" <> show b <> ":" <> show c,
+      propExpectedOutput = const "OK"
+    }
+
+succUInt32FailsIffMaxProp :: Property Word32WithMaxFavored
+succUInt32FailsIffMaxProp =
+  Property
+    { propName = "succUInt32-fails-iff-max",
+      propSourceDir = "succUInt32-fails-iff-max",
+      propGen = arbitrary,
+      propEncode = \(Word32WithMaxFavored x) -> show x,
+      propExpectedOutput = const "OK"
+    }
+
+predUInt32FailsIffZeroProp :: Property Word32WithMinFavored
+predUInt32FailsIffZeroProp =
+  Property
+    { propName = "predUInt32-fails-iff-zero",
+      propSourceDir = "predUInt32-fails-iff-zero",
+      propGen = arbitrary,
+      propEncode = \(Word32WithMinFavored x) -> show x,
+      propExpectedOutput = const "OK"
+    }
+
+eqUInt32SymmetricProp :: Property Word32MaybeEqualPair
+eqUInt32SymmetricProp =
+  Property
+    { propName = "eqUInt32-symmetric",
+      propSourceDir = "eqUInt32-symmetric",
+      propGen = arbitrary,
+      propEncode = \(Word32MaybeEqualPair (a, b)) -> show a <> ":" <> show b,
+      propExpectedOutput = const "OK"
+    }
+
+parseUInt32ShowRoundtripProp :: Property Word32V
+parseUInt32ShowRoundtripProp =
+  Property
+    { propName = "parseUInt32-show-roundtrip",
+      propSourceDir = "parseUInt32-show-roundtrip",
+      propGen = arbitrary,
+      propEncode = \(Word32V x) -> show x,
+      propExpectedOutput = \(Word32V x) -> show x
+    }
+
+-- ── Int32 ──
 
 mulInt32CommutativeProp :: Property NoOverflowMulInt32
 mulInt32CommutativeProp =
