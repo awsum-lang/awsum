@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Eta-reduced top-level definitions** — `f = g` works for any RHS whose type matches the signature.
 - **Property-based tests across all backends** (`just test-property`); 40 starter properties covering integer arithmetic (commutativity / associativity / identities / no-overflow agreement / distributivity), succ/pred (round-trip + boundary), equality, parse/show round-trip, string monoid laws, splitOnFirst, boolean laws.
 - **Prelude** — `Tuple2`, `Tuple3`, `parseInt32`, `parseUInt8`, `splitOnFirst`, `addInt32`, `addUInt8`, `subInt32`, `subUInt8`, `negInt32`, `mulInt32`, `mulUInt8`, range constants `minInt32` / `maxInt32` / `minUInt8` / `maxUInt8`; new types `ParseError`, `UnderflowError`, `OverflowError`.
+- **Three explicit string-length functions** — `lengthCodePoints`, `lengthUtf16CodeUnits`, `lengthBytesAsUtf8`, all `String -> UInt32`. No `length` alias by design: the unit being counted is meaningful (a supplementary character is 1 code point, 2 UTF-16 code units, 4 UTF-8 bytes), and a call site that picked the wrong default would silently produce wrong answers.
+
+### Fixed
+
+- **Non-ASCII string literals** now compile correctly on the LLVM, JVM, and WASM backends. Previously LLVM declared `[N x i8]` based on Haskell `T.length` (code-point count) but emitted UTF-8 bytes (4 bytes for `🔥`, not 1), failing `clang` with a constant-expression type mismatch; JVM emitted standard UTF-8 into the constant pool where the verifier expects "modified UTF-8" (surrogate-pair-encoded), failing class load with `ClassFormatError`; WASM mis-sized the data-section offset for each pool entry, allowing later strings to overlap. CLR and JS were already correct because they store strings as UTF-16 natively.
 
 ### Changed
 

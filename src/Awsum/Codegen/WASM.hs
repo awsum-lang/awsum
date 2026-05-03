@@ -15,6 +15,7 @@ module Awsum.Codegen.WASM (codegenWASM) where
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Name, Type' (..), noSpan)
+import Data.ByteString qualified as BS
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -100,11 +101,12 @@ buildStringPool (CoreProgram decls) =
       heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last (zipWith (\s o -> o + byteLen s + 1) strs offsets)
    in (pool, emptyOff, heapStart)
 
--- | Byte length of a string. Currently all strings are ASCII,
---   so T.length == byte length. When multi-byte UTF-8 is supported,
---   this should use Data.Text.Encoding.encodeUtf8 + BS.length.
+-- | Byte length of a string in UTF-8 — the encoding used by the data
+--   section and by every runtime helper that walks bytes through linear
+--   memory. T.length would count code points, which diverges from the
+--   on-the-wire byte count as soon as a non-ASCII character appears.
 byteLen :: Text -> Int
-byteLen = T.length
+byteLen = BS.length . encodeUtf8
 
 stringsInDecl :: CDecl -> [Text]
 stringsInDecl = \case
@@ -185,25 +187,27 @@ dataSection pool
 watString :: Text -> Text
 watString s = "\"" <> watEscape s <> "\\00\""
 
--- | Escape a string for WAT syntax.
+-- | Escape a string for WAT syntax. Encodes the string to UTF-8 first
+--   and emits each byte: ASCII printable bytes pass through, everything
+--   else (including the multi-byte tail of every non-ASCII codepoint)
+--   becomes a @\\XX@ hex pair.
 watEscape :: Text -> Text
-watEscape = T.concatMap escChar
+watEscape = T.concat . map escByte . BS.unpack . encodeUtf8
   where
-    escChar c
-      | c == '\\' = "\\\\"
-      | c == '"' = "\\22"
-      | c == '\n' = "\\0a"
-      | c == '\t' = "\\09"
-      | c == '\r' = "\\0d"
-      | c == '\0' = "\\00"
-      | Char.isPrint c = one c
+    escByte b
+      | b == 0x5C = "\\\\" -- backslash
+      | b == 0x22 = "\\22" -- double quote
+      | b == 0x0A = "\\0a" -- newline
+      | b == 0x09 = "\\09" -- tab
+      | b == 0x0D = "\\0d" -- carriage return
+      | b == 0x00 = "\\00" -- nul
+      | b >= 0x20 && b <= 0x7E = T.singleton (chr (fromIntegral b))
       | otherwise =
-          let n = Char.ord c
-              hi = n `div` 16
-              lo = n `mod` 16
+          let hi = b `div` 16
+              lo = b `mod` 16
               hexChar x
-                | x < 10 = chr (Char.ord '0' + x)
-                | otherwise = chr (Char.ord 'a' + x - 10)
+                | x < 10 = chr (fromIntegral (0x30 + x))
+                | otherwise = chr (fromIntegral (0x61 + x - 10))
            in "\\" <> toText [hexChar hi, hexChar lo]
 
 table :: Int -> Text
@@ -276,6 +280,9 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "parseInt32" builtIns then rtParseInt32 else "",
             if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
             if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
+            if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else "",
+            if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
+            if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -870,6 +877,69 @@ rtSplitOnFirst =
       "        (i32.store (local.get $cell) (i32.const 1))",
       "        (i32.store offset=4 (local.get $cell) (local.get $tuple))",
       "        (local.get $cell))))"
+    ]
+
+-- | lengthBytesAsUtf8 : String -> UInt32. Strings are null-terminated
+--   UTF-8 byte buffers in linear memory, so '__strlen' is the answer.
+rtLengthBytesAsUtf8 :: Text
+rtLengthBytesAsUtf8 =
+  unlines
+    [ "  (func $__lengthBytesAsUtf8 (param $s i32) (result i32)",
+      "    (local $box i32)",
+      "    (local.set $box (call $__alloc (i32.const 4)))",
+      "    (i32.store (local.get $box) (call $__strlen (local.get $s)))",
+      "    (local.get $box))"
+    ]
+
+-- | lengthCodePoints : String -> UInt32. Walk UTF-8 bytes counting
+--   non-continuation start bytes (top two bits != 10). One increment
+--   per Unicode scalar regardless of how wide its UTF-8 encoding is.
+rtLengthCodePoints :: Text
+rtLengthCodePoints =
+  unlines
+    [ "  (func $__lengthCodePoints (param $s i32) (result i32)",
+      "    (local $i i32) (local $n i32) (local $b i32) (local $box i32)",
+      "    (local.set $i (i32.const 0))",
+      "    (local.set $n (i32.const 0))",
+      "    (block $break",
+      "      (loop $loop",
+      "        (local.set $b (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "        (br_if $break (i32.eqz (local.get $b)))",
+      "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
+      "          (then (local.set $n (i32.add (local.get $n) (i32.const 1)))))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $loop)))",
+      "    (local.set $box (call $__alloc (i32.const 4)))",
+      "    (i32.store (local.get $box) (local.get $n))",
+      "    (local.get $box))"
+    ]
+
+-- | lengthUtf16CodeUnits : String -> UInt32. Walk codepoint starts; a
+--   4-byte UTF-8 sequence (start byte 11110xxx) corresponds to a
+--   supplementary code point that needs a UTF-16 surrogate pair, so it
+--   contributes 2 units. Continuation bytes are skipped, every other
+--   start byte contributes 1.
+rtLengthUtf16CodeUnits :: Text
+rtLengthUtf16CodeUnits =
+  unlines
+    [ "  (func $__lengthUtf16CodeUnits (param $s i32) (result i32)",
+      "    (local $i i32) (local $n i32) (local $b i32) (local $box i32)",
+      "    (local.set $i (i32.const 0))",
+      "    (local.set $n (i32.const 0))",
+      "    (block $break",
+      "      (loop $loop",
+      "        (local.set $b (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "        (br_if $break (i32.eqz (local.get $b)))",
+      "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
+      "          (then",
+      "            (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))",
+      "              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))",
+      "              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $loop)))",
+      "    (local.set $box (call $__alloc (i32.const 4)))",
+      "    (i32.store (local.get $box) (local.get $n))",
+      "    (local.get $box))"
     ]
 
 -- | parseInt32 : String -> Either ParseError Int32. Handrolled byte
@@ -1476,6 +1546,14 @@ emitExpr ctx = \case
                   "parseInt32" -> "$__parseInt32"
                   "parseUInt32" -> "$__parseUInt32"
                   _ -> "$__parseUInt8"
+             in "(call " <> fn <> " " <> emitExpr ctx x <> ")"
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+          [x] <- xs ->
+            let fn = case name of
+                  "lengthCodePoints" -> "$__lengthCodePoints"
+                  "lengthUtf16CodeUnits" -> "$__lengthUtf16CodeUnits"
+                  _ -> "$__lengthBytesAsUtf8"
              in "(call " <> fn <> " " <> emitExpr ctx x <> ")"
       CBuiltIn "concatString"
         | [a, b] <- xs ->

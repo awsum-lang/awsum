@@ -505,19 +505,66 @@ genLowerStr = toText <$> listOf (elements ['a' .. 'z'])
 genUpperNonemptyStr :: Gen Text
 genUpperNonemptyStr = toText <$> listOf1 (elements ['A' .. 'Z'])
 
+-- | Any valid-UTF-16 Unicode scalar value: U+0001..U+10FFFF excluding
+--   the surrogate range U+D800..U+DFFF. The two exclusions correspond
+--   to:
+--
+--   * **U+0000.** Strings reach the program through @argv[1]@, which is
+--     a NUL-terminated byte sequence on every backend's host (POSIX,
+--     Node's @process.argv@, the JVM and CLR's argv decoders, WASI's
+--     @args_get@). A NUL inside the string would truncate the argument
+--     before it ever reaches user code.
+--   * **U+D800..U+DFFF.** These code units are valid in WTF-16 but not
+--     in UTF-16; Awsum strings are strict UTF-16 (see @docs/prelude.md@
+--     and the @UnpairedUtf16Surrogate@ entry-point error). A surrogate
+--     half generated here would have nothing meaningful to round-trip.
+--
+--   Newlines and other ASCII control characters are kept — the test
+--   compares stdout as raw bytes through @readProcessWithExitCode@, no
+--   shell or terminal layer in between. CJK / supplementary-plane code
+--   points (which encode as 2 UTF-16 code units / 4 UTF-8 bytes) are
+--   the most interesting cases the generator will reach: they're the
+--   ones where a backend that fumbled UTF-16/UTF-8 round-tripping
+--   would diverge from the others.
+genValidUtf16Char :: Gen Char
+genValidUtf16Char = do
+  n <- chooseInteger (1, 0x10FFFF)
+  if n >= 0xD800 && n <= 0xDFFF
+    then genValidUtf16Char
+    else pure (chr (fromInteger n))
+
+genUtf16Str :: Gen Text
+genUtf16Str = toText <$> listOf genValidUtf16Char
+
 newtype LowerStr = LowerStr Text deriving stock (Show)
 
 instance Arbitrary LowerStr where
   arbitrary = LowerStr <$> genLowerStr
 
-newtype LowerTriple = LowerTriple (Text, Text, Text) deriving stock (Show)
+-- | Any-valid-UTF-16 string used by the concatenation properties.
+--   Distinct from 'LowerStr' (which the splitOnFirst properties keep
+--   using) because those rely on a disjoint alphabet between separator
+--   and operands.
+newtype Utf16Str = Utf16Str Text deriving stock (Show)
 
-instance Arbitrary LowerTriple where
+instance Arbitrary Utf16Str where
+  arbitrary = Utf16Str <$> genUtf16Str
+
+-- | Triple of any-valid-UTF-16 strings, with one extra exclusion: the
+--   colon ':'. The associativity property encodes the triple as
+--   @"a:b:c"@ in @argv[1]@ and splits on ':' inside Awsum, so a colon
+--   inside any operand would corrupt the parse and turn a true
+--   property failure into a noise failure.
+newtype Utf16TripleNoColon = Utf16TripleNoColon (Text, Text, Text) deriving stock (Show)
+
+instance Arbitrary Utf16TripleNoColon where
   arbitrary = do
-    a <- genLowerStr
-    b <- genLowerStr
-    c <- genLowerStr
-    pure (LowerTriple (a, b, c))
+    a <- genUtf16NoColon
+    b <- genUtf16NoColon
+    c <- genUtf16NoColon
+    pure (Utf16TripleNoColon (a, b, c))
+    where
+      genUtf16NoColon = toText <$> listOf (genValidUtf16Char `QC.suchThat` (/= ':'))
 
 -- | (sep, a, b): sep ∈ [A-Z]+, a, b ∈ [a-z]*.
 --   Disjoint alphabets ⇒ neither a nor b can contain sep as a substring.
@@ -1071,34 +1118,34 @@ eqInt32ReflexiveProp =
 
 -- ── String monoid + split ──
 
-concatLeftIdentityProp :: Property LowerStr
+concatLeftIdentityProp :: Property Utf16Str
 concatLeftIdentityProp =
   Property
     { propName = "concat-left-identity",
       propSourceDir = "concat-left-identity",
       propGen = arbitrary,
-      propEncode = \(LowerStr s) -> s,
-      propExpectedOutput = \(LowerStr s) -> s
+      propEncode = \(Utf16Str s) -> s,
+      propExpectedOutput = \(Utf16Str s) -> s
     }
 
-concatRightIdentityProp :: Property LowerStr
+concatRightIdentityProp :: Property Utf16Str
 concatRightIdentityProp =
   Property
     { propName = "concat-right-identity",
       propSourceDir = "concat-right-identity",
       propGen = arbitrary,
-      propEncode = \(LowerStr s) -> s,
-      propExpectedOutput = \(LowerStr s) -> s
+      propEncode = \(Utf16Str s) -> s,
+      propExpectedOutput = \(Utf16Str s) -> s
     }
 
-concatAssociativeProp :: Property LowerTriple
+concatAssociativeProp :: Property Utf16TripleNoColon
 concatAssociativeProp =
   Property
     { propName = "concat-associative",
       propSourceDir = "concat-associative",
       propGen = arbitrary,
-      propEncode = \(LowerTriple (a, b, c)) -> a <> ":" <> b <> ":" <> c,
-      propExpectedOutput = \(LowerTriple (a, b, c)) ->
+      propEncode = \(Utf16TripleNoColon (a, b, c)) -> a <> ":" <> b <> ":" <> c,
+      propExpectedOutput = \(Utf16TripleNoColon (a, b, c)) ->
         let s = a <> b <> c in s <> ":" <> s
     }
 

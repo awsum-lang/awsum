@@ -79,6 +79,9 @@ codegenCLR prog@(CoreProgram decls) =
             gate (Set.member "showUInt32" builtIns) showUInt32Method,
             "",
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            gate (Set.member "lengthCodePoints" builtIns) lengthCodePointsMethod,
+            gate (Set.member "lengthUtf16CodeUnits" builtIns) lengthUtf16CodeUnitsMethod,
+            gate (Set.member "lengthBytesAsUtf8" builtIns) lengthBytesAsUtf8Method,
             "",
             gate (Set.member "parseInt32" builtIns) parseInt32Method,
             "",
@@ -1636,6 +1639,64 @@ splitOnFirstMethod =
       "  }"
     ]
 
+-- lengthCodePoints: String -> UInt32. UTF-32 byte count divided by 4
+--   gives the code-point count exactly — every Unicode scalar is one
+--   four-byte UTF-32 unit, surrogate pairs collapse to a single unit.
+--   Cleaner than walking the string and pairing surrogates by hand.
+lengthCodePointsMethod :: Text
+lengthCodePointsMethod =
+  unlines
+    [ "  .method private hidebysig static object __lengthCodePoints(object) cil managed",
+      "  {",
+      "    .maxstack 3",
+      "    .locals init (string V_0)",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    stloc.0",
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF32()",
+      "    ldloc.0",
+      "    callvirt instance int32 [System.Runtime]System.Text.Encoding::GetByteCount(string)",
+      "    ldc.i4.4",
+      "    div",
+      "    box [System.Runtime]System.Int32",
+      "    ret",
+      "  }"
+    ]
+
+-- lengthUtf16CodeUnits: String -> UInt32. .NET strings are UTF-16
+--   internally so 'String.Length' is the code-unit count by definition.
+lengthUtf16CodeUnitsMethod :: Text
+lengthUtf16CodeUnitsMethod =
+  unlines
+    [ "  .method private hidebysig static object __lengthUtf16CodeUnits(object) cil managed",
+      "  {",
+      "    .maxstack 1",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+      "    box [System.Runtime]System.Int32",
+      "    ret",
+      "  }"
+    ]
+
+-- lengthBytesAsUtf8: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
+--   returns the standard UTF-8 byte count without materialising the
+--   bytes themselves.
+lengthBytesAsUtf8Method :: Text
+lengthBytesAsUtf8Method =
+  unlines
+    [ "  .method private hidebysig static object __lengthBytesAsUtf8(object) cil managed",
+      "  {",
+      "    .maxstack 2",
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    callvirt instance int32 [System.Runtime]System.Text.Encoding::GetByteCount(string)",
+      "    box [System.Runtime]System.Int32",
+      "    ret",
+      "  }"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -1948,6 +2009,18 @@ emitExprText ctx varMap = \case
                   "parseInt32" -> "__parseInt32"
                   "parseUInt32" -> "__parseUInt32"
                   _ -> "__parseUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx varMap x,
+                    "    call object AwsumMain::" <> fn <> "(object)"
+                  ]
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+          [x] <- xs ->
+            let fn = case name of
+                  "lengthCodePoints" -> "__lengthCodePoints"
+                  "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
+                  _ -> "__lengthBytesAsUtf8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap x,

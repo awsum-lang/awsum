@@ -11,6 +11,7 @@ module Awsum.Codegen.JVM.Assemble (assembleJVM) where
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Type' (..), noSpan)
+import Data.Bits qualified as Bits
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
 import Data.Char qualified as Char
@@ -83,7 +84,46 @@ addEntry key entry = do
       pure idx
 
 addUtf8 :: Text -> AsmM Word16
-addUtf8 t = addEntry (KUtf8 t) (CPUtf8 (encodeUtf8 t))
+addUtf8 t = addEntry (KUtf8 t) (CPUtf8 (modifiedUtf8 t))
+
+-- | Encode a 'Text' as JVM "modified UTF-8" (the constant-pool string
+--   encoding). Differs from standard UTF-8 in two places:
+--
+--   * U+0000 is encoded as the two-byte sequence @C0 80@, never @00@,
+--     so a NUL inside a string never terminates the constant-pool entry.
+--   * Supplementary code points (U+10000..U+10FFFF) are first split into
+--     a UTF-16 surrogate pair, and each surrogate is then encoded as a
+--     three-byte sequence — six bytes total per supplementary codepoint,
+--     not the four bytes standard UTF-8 would use.
+--
+--   Both deviations matter: a class file emitted with standard UTF-8
+--   for these cases is rejected by the verifier as
+--   @ClassFormatError: Illegal UTF8 string in constant pool@.
+modifiedUtf8 :: Text -> ByteString
+modifiedUtf8 = BS.pack . concatMap encChar . toString
+  where
+    encChar :: Char -> [Word8]
+    encChar c =
+      let cp = Char.ord c
+       in case () of
+            _
+              | cp == 0x0000 -> [0xC0, 0x80]
+              | cp <= 0x007F -> [fromIntegral cp]
+              | cp <= 0x07FF ->
+                  [ fromIntegral (0xC0 Bits..|. Bits.shiftR cp 6),
+                    fromIntegral (0x80 Bits..|. (cp Bits..&. 0x3F))
+                  ]
+              | cp <= 0xFFFF -> threeByte cp
+              | otherwise ->
+                  let v = cp - 0x10000
+                      hi = 0xD800 + Bits.shiftR v 10
+                      lo = 0xDC00 + (v Bits..&. 0x3FF)
+                   in threeByte hi <> threeByte lo
+    threeByte cp =
+      [ fromIntegral (0xE0 Bits..|. Bits.shiftR cp 12),
+        fromIntegral (0x80 Bits..|. (Bits.shiftR cp 6 Bits..&. 0x3F)),
+        fromIntegral (0x80 Bits..|. (cp Bits..&. 0x3F))
+      ]
 
 addInt :: Int32 -> AsmM Word16
 addInt n = addEntry (KInteger n) (CPInteger n)
@@ -303,9 +343,12 @@ doAssemble prog@(CoreProgram decls) = do
   m8sI <- if Set.member "parseInt32" builtIns then (: []) <$> mkParseInt32 else pure []
   m8sU <- if Set.member "parseUInt8" builtIns then (: []) <$> mkParseUInt8 else pure []
   m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
+  mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
+  mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
+  mLb <- if Set.member "lengthBytesAsUtf8" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -2502,6 +2545,104 @@ mkSplitOnFirst = do
         mMaxLocals = 256
       }
 
+-- | lengthCodePoints: String -> UInt32. Walks the UTF-16 buffer once via
+--   'String.codePointCount(int, int)' so a surrogate pair is counted
+--   exactly once. Binary equivalent of
+--   'Awsum.Codegen.JVM.lengthCodePointsMethod'.
+mkLengthCodePoints :: AsmM MInfo
+mkLengthCodePoints = do
+  ni <- addUtf8 "__lengthCodePoints"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
+  cpcRef <- addMRef "java/lang/String" "codePointCount" "(II)I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  let code =
+        bcAload 0
+          <> bcCheckCast strCls
+          <> bcAstore 1
+          <> bcAload 1
+          <> bcIconst 0
+          <> bcAload 1
+          <> bcInvokeVirtual lengthRef
+          <> bcInvokeVirtual cpcRef
+          <> bcInvokeStatic valueOfRef
+          <> [0xB0] -- areturn
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
+-- | lengthUtf16CodeUnits: String -> UInt32. JVM strings are UTF-16
+--   internally, so 'String.length()' is exactly the code-unit count.
+--   Binary equivalent of 'Awsum.Codegen.JVM.lengthUtf16CodeUnitsMethod'.
+mkLengthUtf16CodeUnits :: AsmM MInfo
+mkLengthUtf16CodeUnits = do
+  ni <- addUtf8 "__lengthUtf16CodeUnits"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  let code =
+        bcAload 0
+          <> bcCheckCast strCls
+          <> bcInvokeVirtual lengthRef
+          <> bcInvokeStatic valueOfRef
+          <> [0xB0] -- areturn
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
+-- | lengthBytesAsUtf8: String -> UInt32. Encodes via
+--   'String.getBytes(Charset)' with 'StandardCharsets.UTF_8' (standard,
+--   not modified UTF-8) and reports the resulting array length. The
+--   intermediate byte array is dropped on the next instruction; if
+--   profiling ever flags this, swap in a manual scan over the chars
+--   that sums 1/2/3/4-byte contributions per code point.
+--   Binary equivalent of 'Awsum.Codegen.JVM.lengthBytesAsUtf8Method'.
+mkLengthBytesAsUtf8 :: AsmM MInfo
+mkLengthBytesAsUtf8 = do
+  ni <- addUtf8 "__lengthBytesAsUtf8"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  utf8FieldRef <- addFRef "java/nio/charset/StandardCharsets" "UTF_8" "Ljava/nio/charset/Charset;"
+  getBytesRef <- addMRef "java/lang/String" "getBytes" "(Ljava/nio/charset/Charset;)[B"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  let code =
+        bcAload 0
+          <> bcCheckCast strCls
+          <> bcGetStatic utf8FieldRef
+          <> bcInvokeVirtual getBytesRef
+          <> [0xBE] -- arraylength
+          <> bcInvokeStatic valueOfRef
+          <> [0xB0] -- areturn
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
 -- | parseInt32: String -> Either ParseError Int32. Binary equivalent of
 --   'Awsum.Codegen.JVM.parseInt32Method'. Same handrolled algorithm as
 --   the LLVM and WASM helpers — long accumulator capped at the magnitude
@@ -3586,6 +3727,16 @@ emitExpr ctx = \case
                   "parseInt32" -> "__parseInt32"
                   "parseUInt32" -> "__parseUInt32"
                   _ -> "__parseUInt8"
+            ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
+            pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+          [x] <- xs -> do
+            xMeta <- emitExpr ctx x
+            let fn = case name of
+                  "lengthCodePoints" -> "__lengthCodePoints"
+                  "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
+                  _ -> "__lengthBytesAsUtf8"
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
             pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
       CBuiltIn n ->

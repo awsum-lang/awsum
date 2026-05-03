@@ -14,7 +14,6 @@ import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
-import Data.Text qualified as T
 import Relude
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -169,12 +168,13 @@ importCount = 3
 -- __succInt32, __succUInt8, __succUInt32, __eq_i32, __addInt32, __subInt32,
 -- __mulInt32, __negInt32, __addUInt8, __subUInt8, __mulUInt8, __addUInt32,
 -- __subUInt32, __mulUInt32, __splitOnFirst, __parseInt32, __parseUInt8,
--- __parseUInt32, __get_arg
+-- __parseUInt32, __lengthCodePoints, __lengthUtf16CodeUnits,
+-- __lengthBytesAsUtf8, __get_arg
 runtimeCount :: Word32
-runtimeCount = 30
+runtimeCount = 33
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -204,7 +204,10 @@ idxSplitOnFirst = importCount + 25
 idxParseI32 = importCount + 26
 idxParseU8 = importCount + 27
 idxParseU32 = importCount + 28
-idxGetArg = importCount + 29
+idxLengthCodePoints = importCount + 29
+idxLengthUtf16CodeUnits = importCount + 30
+idxLengthBytesAsUtf8 = importCount + 31
+idxGetArg = importCount + 32
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -249,10 +252,11 @@ scratchSize = 64
 buildStringPool :: CoreProgram -> (Map Text Int, Int, Int)
 buildStringPool (CoreProgram decls) =
   let strs = ordNub $ "" : concatMap stringsInDecl decls
-      offsets = scanl (\off s -> off + T.length s + 1) scratchSize strs
+      utf8Len s = BS.length (encodeUtf8 s)
+      offsets = scanl (\off s -> off + utf8Len s + 1) scratchSize strs
       pool = Map.fromList (zip strs offsets)
       emptyOff = fromMaybe scratchSize (Map.lookup "" pool)
-      heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last (zipWith (\s o -> o + T.length s + 1) strs offsets)
+      heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last (zipWith (\s o -> o + utf8Len s + 1) strs offsets)
    in (pool, emptyOff, heapStart)
 
 stringsInDecl :: CDecl -> [Text]
@@ -413,6 +417,9 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __parseInt32
           lookupType (FuncType 1 True) typeMap, -- __parseUInt8
           lookupType (FuncType 1 True) typeMap, -- __parseUInt32
+          lookupType (FuncType 1 True) typeMap, -- __lengthCodePoints
+          lookupType (FuncType 1 True) typeMap, -- __lengthUtf16CodeUnits
+          lookupType (FuncType 1 True) typeMap, -- __lengthBytesAsUtf8
           lookupType (FuncType 0 True) typeMap -- __get_arg
         ]
           -- User declarations
@@ -538,6 +545,9 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeParseInt32 info,
           codeParseUInt8 info,
           codeParseUInt32 info,
+          codeLengthCodePoints,
+          codeLengthUtf16CodeUnits,
+          codeLengthBytesAsUtf8,
           codeGetArg info
         ]
           -- User declarations
@@ -3842,6 +3852,216 @@ codeShowU32 _info =
         [opI32Add]
       ]
 
+-- __lengthBytesAsUtf8(s: i32) -> i32
+-- Strings are null-terminated UTF-8 byte buffers, so '__strlen' is the
+-- answer; box the result in a 4-byte cell. Locals: $box(1).
+codeLengthBytesAsUtf8 :: [Word8]
+codeLengthBytesAsUtf8 =
+  encodeBody
+    (encodeLocals 1)
+    $ concat
+      [ -- box = __alloc(4)
+        [opI32Const],
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- store at box: __strlen(s)
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opCall],
+        encodeULEB128 idxStrlen,
+        [opI32Store, 0x02, 0x00],
+        -- return box
+        [opLocalGet],
+        encodeULEB128 1
+      ]
+
+-- __lengthCodePoints(s: i32) -> i32
+-- Walks UTF-8 bytes; counts every byte whose top two bits are not 10
+-- (i.e., every codepoint start). Locals: $i(1), $n(2), $b(3), $box(4).
+codeLengthCodePoints :: [Word8]
+codeLengthCodePoints =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ -- i = 0; n = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 2,
+        -- block $break
+        [opBlock, blocktypeVoid],
+        -- loop $loop
+        [opLoop, blocktypeVoid],
+        -- b = i32.load8_u (s + i)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- if b == 0 break
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1, -- to $break
+        -- if (b & 0xC0) != 0x80: n++
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 0xC0,
+        [opI32And],
+        [opI32Const],
+        encodeSLEB128 0x80,
+        [opI32Ne],
+        [opIf, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        [opEnd],
+        -- i = i + 1
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 1,
+        -- br $loop
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block
+        -- box = __alloc(4); store n; return box
+        [opI32Const],
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 4
+      ]
+
+-- __lengthUtf16CodeUnits(s: i32) -> i32
+-- Walks UTF-8 bytes; counts 1 for every codepoint start except 4-byte
+-- starts (top five bits = 11110), which need a UTF-16 surrogate pair
+-- and contribute 2. Continuation bytes are skipped. Locals:
+
+-- $i(1), \$n(2), $b(3), $box(4).
+
+codeLengthUtf16CodeUnits :: [Word8]
+codeLengthUtf16CodeUnits =
+  encodeBody
+    (encodeLocals 4)
+    $ concat
+      [ [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 2,
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opLocalSet],
+        encodeULEB128 3,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1,
+        -- if (b & 0xC0) != 0x80
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 0xC0,
+        [opI32And],
+        [opI32Const],
+        encodeSLEB128 0x80,
+        [opI32Ne],
+        [opIf, blocktypeVoid],
+        -- inner if (b & 0xF8) == 0xF0 then n+=2 else n+=1
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 0xF8,
+        [opI32And],
+        [opI32Const],
+        encodeSLEB128 0xF0,
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        [opElse],
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        [opEnd], -- end inner if
+        [opEnd], -- end outer if
+        -- i = i + 1
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 1,
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block
+        [opI32Const],
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 4
+      ]
+
 -- __get_arg() -> i32
 -- locals: $argv_buf(0), $ptrs(1)
 codeGetArg :: WasmInfo -> [Word8]
@@ -4259,6 +4479,16 @@ emitExpr ctx = \case
                   "parseInt32" -> idxParseI32
                   "parseUInt32" -> idxParseU32
                   _ -> idxParseU8
+             in emitExpr ctx x
+                  <> [opCall]
+                  <> encodeULEB128 idx
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+          [x] <- xs ->
+            let idx = case name of
+                  "lengthCodePoints" -> idxLengthCodePoints
+                  "lengthUtf16CodeUnits" -> idxLengthUtf16CodeUnits
+                  _ -> idxLengthBytesAsUtf8
              in emitExpr ctx x
                   <> [opCall]
                   <> encodeULEB128 idx

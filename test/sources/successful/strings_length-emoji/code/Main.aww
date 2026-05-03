@@ -1,0 +1,31 @@
+{- The three explicit string-length functions disagree on width for any
+   string with a non-BMP character. `🔥` (U+1F525) is one Unicode scalar
+   but a UTF-16 surrogate pair (D83D + DD25 = 2 code units) and a
+   four-byte UTF-8 sequence (F0 9F 94 A5). Each `case` arm asserts the
+   exact value the prelude contract promises. -}
+import IO.Stdout
+
+check : UInt32 -> UInt32 -> String -> Either StringTooLong String
+check expected actual label = case eqUInt32 expected actual of
+  True -> label ++ "=ok"
+  False -> do
+    s0 <- label ++ "=FAIL(expected="
+    s1 <- s0 ++ showUInt32 expected
+    s2 <- s1 ++ ", got="
+    s3 <- s2 ++ showUInt32 actual
+    s3 ++ ")"
+
+run : Either StringTooLong String
+run = do
+  a <- check 1 (lengthCodePoints "🔥") "lengthCodePoints"
+  b <- check 2 (lengthUtf16CodeUnits "🔥") "lengthUtf16CodeUnits"
+  c <- check 4 (lengthBytesAsUtf8 "🔥") "lengthBytesAsUtf8"
+  s0 <- a ++ ", "
+  s1 <- s0 ++ b
+  s2 <- s1 ++ ", "
+  s2 ++ c
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input = case run of
+  Right s -> IO.Stdout.print s
+  Left _ -> IO.Stdout.print "STRING_TOO_LONG"

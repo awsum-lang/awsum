@@ -228,6 +228,26 @@ header builtIns =
             -- 4294967295 exactly, so direct '> 4294967295' is faithful.
             if Set.member "parseUInt32" builtIns
               then "function __parseUInt32(s){ if (!/^[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n > 4294967295) return [0, [0]]; return [1, (n >>> 0)]; }"
+              else "",
+            -- lengthCodePoints: spread iteration walks the string by code
+            -- point — the JS string iterator yields a surrogate pair as a
+            -- single two-char element, so '[...s].length' gives the USV count.
+            -- The cached UTF-16 'length' would over-count supplementary chars.
+            if Set.member "lengthCodePoints" builtIns
+              then "function __lengthCodePoints(s){ let n = 0; for (const _ of s) n++; return (n >>> 0); }"
+              else "",
+            -- lengthUtf16CodeUnits: native JS string length is the UTF-16
+            -- code-unit count by spec — surrogate pairs contribute 2.
+            if Set.member "lengthUtf16CodeUnits" builtIns
+              then "function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }"
+              else "",
+            -- lengthBytesAsUtf8: TextEncoder always uses standard (not
+            -- modified) UTF-8 — 1 byte for ASCII, 2 for U+0080..U+07FF,
+            -- 3 for U+0800..U+FFFF, 4 for U+10000..U+10FFFF.
+            -- Allocating one encoder per call keeps the helper stateless;
+            -- benchmarks haven't motivated hoisting it.
+            if Set.member "lengthBytesAsUtf8" builtIns
+              then "function __lengthBytesAsUtf8(s){ return (new TextEncoder().encode(s).length >>> 0); }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -478,6 +498,16 @@ emitExpr = \case
                       "parseInt32" -> "__parseInt32"
                       "parseUInt8" -> "__parseUInt8"
                       _ -> "__parseUInt32"
+                 in fn <> "(" <> emitExpr a <> ")"
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8" ->
+            case xs of
+              [a] ->
+                let fn = case name of
+                      "lengthCodePoints" -> "__lengthCodePoints"
+                      "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
+                      _ -> "__lengthBytesAsUtf8"
                  in fn <> "(" <> emitExpr a <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn n ->

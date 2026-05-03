@@ -18,6 +18,7 @@ module Awsum.Codegen.LLVM (codegenLLVM) where
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Name, Type' (..), noSpan)
+import Data.ByteString qualified as BS
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -131,7 +132,7 @@ emitStringConstants pool
   where
     emitOne (s, i) =
       let escaped = llvmEscapeString s
-          len = T.length s + 1
+          len = BS.length (encodeUtf8 s) + 1
        in "@.str."
             <> show i
             <> " = private unnamed_addr constant ["
@@ -140,26 +141,26 @@ emitStringConstants pool
             <> escaped
             <> "\\00\""
 
--- | Escape a string for LLVM IR constant syntax.
---   Non-printable and special chars become @\\XX@ hex pairs.
+-- | Escape a string for LLVM IR constant syntax. ASCII printable bytes pass
+--   through; everything else (including non-ASCII codepoints, which encode
+--   to multi-byte UTF-8 sequences) becomes @\\XX@ hex pairs per byte.
 llvmEscapeString :: Text -> Text
-llvmEscapeString = T.concatMap escChar
+llvmEscapeString = T.concat . map escByte . BS.unpack . encodeUtf8
   where
-    escChar c
-      | c == '\\' = "\\5C"
-      | c == '"' = "\\22"
-      | c == '\n' = "\\0A"
-      | c == '\t' = "\\09"
-      | c == '\r' = "\\0D"
-      | c == '\0' = "\\00"
-      | Char.isPrint c = one c
+    escByte b
+      | b == 0x5C = "\\5C" -- backslash
+      | b == 0x22 = "\\22" -- double quote
+      | b == 0x0A = "\\0A" -- newline
+      | b == 0x09 = "\\09" -- tab
+      | b == 0x0D = "\\0D" -- carriage return
+      | b == 0x00 = "\\00" -- nul
+      | b >= 0x20 && b <= 0x7E = T.singleton (chr (fromIntegral b))
       | otherwise =
-          let n = Char.ord c
-              hi = n `div` 16
-              lo = n `mod` 16
+          let hi = b `div` 16
+              lo = b `mod` 16
               hexChar x
-                | x < 10 = chr (Char.ord '0' + x)
-                | otherwise = chr (Char.ord 'A' + x - 10)
+                | x < 10 = chr (fromIntegral (0x30 + x))
+                | otherwise = chr (fromIntegral (0x41 + x - 10))
            in "\\" <> toText [hexChar hi, hexChar lo]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -246,7 +247,10 @@ runtime builtIns =
         if Set.member "addUInt32" builtIns then rtAddUInt32 else "",
         if Set.member "subUInt32" builtIns then rtSubUInt32 else "",
         if Set.member "mulUInt32" builtIns then rtMulUInt32 else "",
-        if Set.member "parseUInt32" builtIns then rtParseUInt32 else ""
+        if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
+        if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
+        if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
+        if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else ""
       ]
     rtConcat =
       unlines
@@ -1148,6 +1152,108 @@ runtime builtIns =
     -- 'big' fast-fail check (acc > 4294967295) can fire as soon as
     -- accumulation overshoots; the running magnitude before failing is
     -- bounded by 4294967295 * 10 + 9 = 42949672959, which fits in i64.
+    -- lengthBytesAsUtf8: strings are stored as null-terminated UTF-8
+    -- byte buffers, so 'strlen' is exactly the answer. Truncated to i32
+    -- because UInt32 boxes always 4 bytes wide.
+    rtLengthBytesAsUtf8 =
+      unlines
+        [ "define internal ptr @__lengthBytesAsUtf8(ptr %s) {",
+          "  %len64 = call i64 @strlen(ptr %s)",
+          "  %len32 = trunc i64 %len64 to i32",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %len32, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
+    -- lengthCodePoints: walk UTF-8 bytes; every byte that is *not* a
+    -- continuation byte (top two bits are 10) starts a fresh codepoint.
+    -- Works for any well-formed UTF-8: 1/2/3/4-byte sequences each have
+    -- exactly one start byte.
+    rtLengthCodePoints =
+      unlines
+        [ "define internal ptr @__lengthCodePoints(ptr %s) {",
+          "entry:",
+          "  %i_p = alloca i64, align 8",
+          "  store i64 0, ptr %i_p",
+          "  %n_p = alloca i32, align 4",
+          "  store i32 0, ptr %n_p",
+          "  br label %head",
+          "head:",
+          "  %i = load i64, ptr %i_p",
+          "  %bp = getelementptr i8, ptr %s, i64 %i",
+          "  %b = load i8, ptr %bp",
+          "  %is_nul = icmp eq i8 %b, 0",
+          "  br i1 %is_nul, label %done, label %body",
+          "body:",
+          "  %bz = zext i8 %b to i32",
+          "  %top2 = and i32 %bz, 192",
+          "  %is_cont = icmp eq i32 %top2, 128",
+          "  br i1 %is_cont, label %step, label %inc",
+          "inc:",
+          "  %n0 = load i32, ptr %n_p",
+          "  %n1 = add i32 %n0, 1",
+          "  store i32 %n1, ptr %n_p",
+          "  br label %step",
+          "step:",
+          "  %i1 = add i64 %i, 1",
+          "  store i64 %i1, ptr %i_p",
+          "  br label %head",
+          "done:",
+          "  %nf = load i32, ptr %n_p",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %nf, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
+    -- lengthUtf16CodeUnits: walk codepoint starts; BMP codepoints
+    -- (1-/2-/3-byte UTF-8 sequences) contribute 1 code unit, supplementary
+    -- ones (4-byte UTF-8, 11110xxx start byte) contribute 2 (surrogate
+    -- pair). Continuation bytes (10xxxxxx) are skipped.
+    rtLengthUtf16CodeUnits =
+      unlines
+        [ "define internal ptr @__lengthUtf16CodeUnits(ptr %s) {",
+          "entry:",
+          "  %i_p = alloca i64, align 8",
+          "  store i64 0, ptr %i_p",
+          "  %n_p = alloca i32, align 4",
+          "  store i32 0, ptr %n_p",
+          "  br label %head",
+          "head:",
+          "  %i = load i64, ptr %i_p",
+          "  %bp = getelementptr i8, ptr %s, i64 %i",
+          "  %b = load i8, ptr %bp",
+          "  %is_nul = icmp eq i8 %b, 0",
+          "  br i1 %is_nul, label %done, label %body",
+          "body:",
+          "  %bz = zext i8 %b to i32",
+          "  %top2 = and i32 %bz, 192",
+          "  %is_cont = icmp eq i32 %top2, 128",
+          "  br i1 %is_cont, label %step, label %check4",
+          "check4:",
+          "  %top5 = and i32 %bz, 248",
+          "  %is_4 = icmp eq i32 %top5, 240",
+          "  br i1 %is_4, label %add2, label %add1",
+          "add2:",
+          "  %n2_0 = load i32, ptr %n_p",
+          "  %n2_1 = add i32 %n2_0, 2",
+          "  store i32 %n2_1, ptr %n_p",
+          "  br label %step",
+          "add1:",
+          "  %n1_0 = load i32, ptr %n_p",
+          "  %n1_1 = add i32 %n1_0, 1",
+          "  store i32 %n1_1, ptr %n_p",
+          "  br label %step",
+          "step:",
+          "  %i1 = add i64 %i, 1",
+          "  store i64 %i1, ptr %i_p",
+          "  br label %head",
+          "done:",
+          "  %nf = load i32, ptr %n_p",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %nf, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
     rtParseUInt32 =
       unlines
         [ "define internal ptr @__parseUInt32(ptr %s) {",
@@ -1826,6 +1932,22 @@ emitExpr ctx = \case
                       "parseInt32" -> "@__parseInt32"
                       "parseUInt32" -> "@__parseUInt32"
                       _ -> "@__parseUInt8"
+                pure
+                  ( instrA <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ")\n",
+                    tmp
+                  )
+              _ -> error ("BuiltIn." <> name <> ": arity mismatch")
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8" ->
+            case xs of
+              [a] -> do
+                (instrA, resA) <- emitExpr ctx a
+                tmp <- freshTemp
+                let fn :: Text
+                    fn = case name of
+                      "lengthCodePoints" -> "@__lengthCodePoints"
+                      "lengthUtf16CodeUnits" -> "@__lengthUtf16CodeUnits"
+                      _ -> "@__lengthBytesAsUtf8"
                 pure
                   ( instrA <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ")\n",
                     tmp

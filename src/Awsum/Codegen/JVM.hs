@@ -78,6 +78,12 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
             "",
+            gate (Set.member "lengthCodePoints" builtIns) lengthCodePointsMethod,
+            "",
+            gate (Set.member "lengthUtf16CodeUnits" builtIns) lengthUtf16CodeUnitsMethod,
+            "",
+            gate (Set.member "lengthBytesAsUtf8" builtIns) lengthBytesAsUtf8Method,
+            "",
             gate (Set.member "parseInt32" builtIns) parseInt32Method,
             "",
             gate (Set.member "parseUInt8" builtIns) parseUInt8Method,
@@ -1435,6 +1441,66 @@ splitOnFirstMethod =
       ".end method"
     ]
 
+-- lengthCodePoints: String -> UInt32. 'String.codePointCount(0, length())'
+--   walks the UTF-16 buffer once and counts surrogate pairs as one
+--   codepoint, matching the prelude contract.
+lengthCodePointsMethod :: Text
+lengthCodePointsMethod =
+  unlines
+    [ ".method static __lengthCodePoints(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 3",
+      "  .limit locals 2",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  astore_1",
+      "  aload_1",
+      "  iconst_0",
+      "  aload_1",
+      "  invokevirtual java/lang/String/length()I",
+      "  invokevirtual java/lang/String/codePointCount(II)I",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  areturn",
+      ".end method"
+    ]
+
+-- lengthUtf16CodeUnits: String -> UInt32. JVM strings are UTF-16
+--   internally, so 'String.length()' is exactly the code-unit count.
+lengthUtf16CodeUnitsMethod :: Text
+lengthUtf16CodeUnitsMethod =
+  unlines
+    [ ".method static __lengthUtf16CodeUnits(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 2",
+      "  .limit locals 1",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/length()I",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  areturn",
+      ".end method"
+    ]
+
+-- lengthBytesAsUtf8: String -> UInt32. 'String.getBytes(StandardCharsets.UTF_8)'
+--   produces standard (not modified) UTF-8 — supplementary characters
+--   come out as four bytes, not six. The intermediate byte array is
+--   discarded; if profiling ever flags this, a manual pass over the
+--   chars summing 1/2/3/4-byte contributions per code point would
+--   avoid it.
+lengthBytesAsUtf8Method :: Text
+lengthBytesAsUtf8Method =
+  unlines
+    [ ".method static __lengthBytesAsUtf8(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 2",
+      "  .limit locals 1",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  getstatic java/nio/charset/StandardCharsets/UTF_8 Ljava/nio/charset/Charset;",
+      "  invokevirtual java/lang/String/getBytes(Ljava/nio/charset/Charset;)[B",
+      "  arraylength",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  areturn",
+      ".end method"
+    ]
+
 -- parseInt32: String -> Either ParseError Int32.
 --   Handrolled decimal parser; grammar mirrors Awsum's literal — optional
 --   '-', one or more ASCII digits, nothing else. The accumulator is a
@@ -1942,6 +2008,18 @@ emitExprText ctx paramMap = \case
                   "parseInt32" -> "__parseInt32"
                   "parseUInt32" -> "__parseUInt32"
                   _ -> "__parseUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx paramMap x,
+                    "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;)Ljava/lang/Object;"
+                  ]
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+          [x] <- xs ->
+            let fn = case name of
+                  "lengthCodePoints" -> "__lengthCodePoints"
+                  "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
+                  _ -> "__lengthBytesAsUtf8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap x,

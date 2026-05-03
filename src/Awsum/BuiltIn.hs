@@ -131,7 +131,22 @@ builtIns =
       -- parseUInt32 : String -> Either ParseError UInt32
       -- Same grammar as 'parseUInt8' — no sign, decimal digits only —
       -- range 0..4294967295.
-      ("parseUInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy uint32Ty))
+      ("parseUInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy uint32Ty)),
+      -- lengthCodePoints : String -> UInt32
+      -- Counts Unicode code points (USVs) in the string. A surrogate
+      -- pair counts once, never twice. The result is independent of how
+      -- the backend stores the string (UTF-8 bytes vs UTF-16 code units).
+      ("lengthCodePoints", TyArrow noSpan stringTy uint32Ty),
+      -- lengthUtf16CodeUnits : String -> UInt32
+      -- Number of 16-bit code units in the UTF-16 form of the string —
+      -- BMP characters count as 1, supplementary characters count as 2
+      -- (high + low surrogate). Matches 'String.length' on JVM/JS/CLR.
+      ("lengthUtf16CodeUnits", TyArrow noSpan stringTy uint32Ty),
+      -- lengthBytesAsUtf8 : String -> UInt32
+      -- Number of bytes the string would occupy when serialised as
+      -- (standard, not modified) UTF-8. ASCII characters count as 1,
+      -- 2/3/4 bytes for the higher ranges per RFC 3629.
+      ("lengthBytesAsUtf8", TyArrow noSpan stringTy uint32Ty)
     ]
   where
     int32Ty = TyCon noSpan "Int32"

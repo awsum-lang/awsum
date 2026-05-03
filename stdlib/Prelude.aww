@@ -37,6 +37,42 @@
 splitOnFirst : String -> String -> Maybe (Tuple2 String String)
 splitOnFirst = BuiltIn.splitOnFirst
 
+{- The string-length API is three explicit functions, not one `length`.
+   Each name spells out the unit it counts so the call site does not
+   have to remember which one is the default. There is no `length`
+   alias, by design — the choice of unit is meaningful, and a call site
+   that picks the wrong one (UTF-16 code units when it meant code
+   points, say) will silently produce wrong answers for any string
+   containing a surrogate pair. -}
+
+{- Number of Unicode code points (USVs) in the string. A supplementary-
+   plane character (e.g. an emoji like `🔥`, U+1F525) counts as 1, even
+   though it is two UTF-16 code units and four UTF-8 bytes wide. Useful
+   when reasoning about "characters" the way the user perceives them
+   for monospace text — though grapheme clusters (combining marks,
+   regional indicators, ZWJ sequences) are still wider concepts than
+   one code point. -}
+
+lengthCodePoints : String -> UInt32
+lengthCodePoints = BuiltIn.lengthCodePoints
+
+{- Number of UTF-16 code units in the string. A BMP character counts as
+   1; a supplementary character counts as 2 (high surrogate + low
+   surrogate). Equal to `String.length` on JVM/CLR/JS backends, where
+   strings are stored as UTF-16 natively. Useful when interfacing with
+   APIs whose offsets are UTF-16-indexed. -}
+
+lengthUtf16CodeUnits : String -> UInt32
+lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
+
+{- Number of bytes the string occupies when encoded as standard UTF-8
+   (RFC 3629). One byte per ASCII character, two for U+0080..U+07FF,
+   three for U+0800..U+FFFF, four for U+10000..U+10FFFF. Useful when
+   sizing a buffer for an API that takes UTF-8. -}
+
+lengthBytesAsUtf8 : String -> UInt32
+lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
+
 -- ---------------------- Unit
 
 {- Single-constructor type carrying no information. Useful as a
