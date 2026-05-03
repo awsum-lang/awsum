@@ -1,905 +1,914 @@
-{- 300 top-level String constants joined by `,`. -}
+{- 300 top-level Bool constants combined with `and`. -}
 import IO.Stdout
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (s1 ++ "," ++ s2 ++ "," ++ s3 ++ "," ++ s4 ++ "," ++ s5 ++ "," ++ s6 ++ "," ++ s7 ++ "," ++ s8 ++ "," ++ s9 ++ "," ++ s10 ++ "," ++ s11 ++ "," ++ s12 ++ "," ++ s13 ++ "," ++ s14 ++ "," ++ s15 ++ "," ++ s16 ++ "," ++ s17 ++ "," ++ s18 ++ "," ++ s19 ++ "," ++ s20 ++ "," ++ s21 ++ "," ++ s22 ++ "," ++ s23 ++ "," ++ s24 ++ "," ++ s25 ++ "," ++ s26 ++ "," ++ s27 ++ "," ++ s28 ++ "," ++ s29 ++ "," ++ s30 ++ "," ++ s31 ++ "," ++ s32 ++ "," ++ s33 ++ "," ++ s34 ++ "," ++ s35 ++ "," ++ s36 ++ "," ++ s37 ++ "," ++ s38 ++ "," ++ s39 ++ "," ++ s40 ++ "," ++ s41 ++ "," ++ s42 ++ "," ++ s43 ++ "," ++ s44 ++ "," ++ s45 ++ "," ++ s46 ++ "," ++ s47 ++ "," ++ s48 ++ "," ++ s49 ++ "," ++ s50 ++ "," ++ s51 ++ "," ++ s52 ++ "," ++ s53 ++ "," ++ s54 ++ "," ++ s55 ++ "," ++ s56 ++ "," ++ s57 ++ "," ++ s58 ++ "," ++ s59 ++ "," ++ s60 ++ "," ++ s61 ++ "," ++ s62 ++ "," ++ s63 ++ "," ++ s64 ++ "," ++ s65 ++ "," ++ s66 ++ "," ++ s67 ++ "," ++ s68 ++ "," ++ s69 ++ "," ++ s70 ++ "," ++ s71 ++ "," ++ s72 ++ "," ++ s73 ++ "," ++ s74 ++ "," ++ s75 ++ "," ++ s76 ++ "," ++ s77 ++ "," ++ s78 ++ "," ++ s79 ++ "," ++ s80 ++ "," ++ s81 ++ "," ++ s82 ++ "," ++ s83 ++ "," ++ s84 ++ "," ++ s85 ++ "," ++ s86 ++ "," ++ s87 ++ "," ++ s88 ++ "," ++ s89 ++ "," ++ s90 ++ "," ++ s91 ++ "," ++ s92 ++ "," ++ s93 ++ "," ++ s94 ++ "," ++ s95 ++ "," ++ s96 ++ "," ++ s97 ++ "," ++ s98 ++ "," ++ s99 ++ "," ++ s100 ++ "," ++ s101 ++ "," ++ s102 ++ "," ++ s103 ++ "," ++ s104 ++ "," ++ s105 ++ "," ++ s106 ++ "," ++ s107 ++ "," ++ s108 ++ "," ++ s109 ++ "," ++ s110 ++ "," ++ s111 ++ "," ++ s112 ++ "," ++ s113 ++ "," ++ s114 ++ "," ++ s115 ++ "," ++ s116 ++ "," ++ s117 ++ "," ++ s118 ++ "," ++ s119 ++ "," ++ s120 ++ "," ++ s121 ++ "," ++ s122 ++ "," ++ s123 ++ "," ++ s124 ++ "," ++ s125 ++ "," ++ s126 ++ "," ++ s127 ++ "," ++ s128 ++ "," ++ s129 ++ "," ++ s130 ++ "," ++ s131 ++ "," ++ s132 ++ "," ++ s133 ++ "," ++ s134 ++ "," ++ s135 ++ "," ++ s136 ++ "," ++ s137 ++ "," ++ s138 ++ "," ++ s139 ++ "," ++ s140 ++ "," ++ s141 ++ "," ++ s142 ++ "," ++ s143 ++ "," ++ s144 ++ "," ++ s145 ++ "," ++ s146 ++ "," ++ s147 ++ "," ++ s148 ++ "," ++ s149 ++ "," ++ s150 ++ "," ++ s151 ++ "," ++ s152 ++ "," ++ s153 ++ "," ++ s154 ++ "," ++ s155 ++ "," ++ s156 ++ "," ++ s157 ++ "," ++ s158 ++ "," ++ s159 ++ "," ++ s160 ++ "," ++ s161 ++ "," ++ s162 ++ "," ++ s163 ++ "," ++ s164 ++ "," ++ s165 ++ "," ++ s166 ++ "," ++ s167 ++ "," ++ s168 ++ "," ++ s169 ++ "," ++ s170 ++ "," ++ s171 ++ "," ++ s172 ++ "," ++ s173 ++ "," ++ s174 ++ "," ++ s175 ++ "," ++ s176 ++ "," ++ s177 ++ "," ++ s178 ++ "," ++ s179 ++ "," ++ s180 ++ "," ++ s181 ++ "," ++ s182 ++ "," ++ s183 ++ "," ++ s184 ++ "," ++ s185 ++ "," ++ s186 ++ "," ++ s187 ++ "," ++ s188 ++ "," ++ s189 ++ "," ++ s190 ++ "," ++ s191 ++ "," ++ s192 ++ "," ++ s193 ++ "," ++ s194 ++ "," ++ s195 ++ "," ++ s196 ++ "," ++ s197 ++ "," ++ s198 ++ "," ++ s199 ++ "," ++ s200 ++ "," ++ s201 ++ "," ++ s202 ++ "," ++ s203 ++ "," ++ s204 ++ "," ++ s205 ++ "," ++ s206 ++ "," ++ s207 ++ "," ++ s208 ++ "," ++ s209 ++ "," ++ s210 ++ "," ++ s211 ++ "," ++ s212 ++ "," ++ s213 ++ "," ++ s214 ++ "," ++ s215 ++ "," ++ s216 ++ "," ++ s217 ++ "," ++ s218 ++ "," ++ s219 ++ "," ++ s220 ++ "," ++ s221 ++ "," ++ s222 ++ "," ++ s223 ++ "," ++ s224 ++ "," ++ s225 ++ "," ++ s226 ++ "," ++ s227 ++ "," ++ s228 ++ "," ++ s229 ++ "," ++ s230 ++ "," ++ s231 ++ "," ++ s232 ++ "," ++ s233 ++ "," ++ s234 ++ "," ++ s235 ++ "," ++ s236 ++ "," ++ s237 ++ "," ++ s238 ++ "," ++ s239 ++ "," ++ s240 ++ "," ++ s241 ++ "," ++ s242 ++ "," ++ s243 ++ "," ++ s244 ++ "," ++ s245 ++ "," ++ s246 ++ "," ++ s247 ++ "," ++ s248 ++ "," ++ s249 ++ "," ++ s250 ++ "," ++ s251 ++ "," ++ s252 ++ "," ++ s253 ++ "," ++ s254 ++ "," ++ s255 ++ "," ++ s256 ++ "," ++ s257 ++ "," ++ s258 ++ "," ++ s259 ++ "," ++ s260 ++ "," ++ s261 ++ "," ++ s262 ++ "," ++ s263 ++ "," ++ s264 ++ "," ++ s265 ++ "," ++ s266 ++ "," ++ s267 ++ "," ++ s268 ++ "," ++ s269 ++ "," ++ s270 ++ "," ++ s271 ++ "," ++ s272 ++ "," ++ s273 ++ "," ++ s274 ++ "," ++ s275 ++ "," ++ s276 ++ "," ++ s277 ++ "," ++ s278 ++ "," ++ s279 ++ "," ++ s280 ++ "," ++ s281 ++ "," ++ s282 ++ "," ++ s283 ++ "," ++ s284 ++ "," ++ s285 ++ "," ++ s286 ++ "," ++ s287 ++ "," ++ s288 ++ "," ++ s289 ++ "," ++ s290 ++ "," ++ s291 ++ "," ++ s292 ++ "," ++ s293 ++ "," ++ s294 ++ "," ++ s295 ++ "," ++ s296 ++ "," ++ s297 ++ "," ++ s298 ++ "," ++ s299 ++ "," ++ s300)
+b1 : Bool
+b1 = True
 
-s1 : String
-s1 = "1"
+b2 : Bool
+b2 = True
 
-s2 : String
-s2 = "2"
+b3 : Bool
+b3 = True
 
-s3 : String
-s3 = "3"
+b4 : Bool
+b4 = True
 
-s4 : String
-s4 = "4"
+b5 : Bool
+b5 = True
 
-s5 : String
-s5 = "5"
+b6 : Bool
+b6 = True
 
-s6 : String
-s6 = "6"
+b7 : Bool
+b7 = True
 
-s7 : String
-s7 = "7"
+b8 : Bool
+b8 = True
 
-s8 : String
-s8 = "8"
+b9 : Bool
+b9 = True
 
-s9 : String
-s9 = "9"
+b10 : Bool
+b10 = True
 
-s10 : String
-s10 = "10"
+b11 : Bool
+b11 = True
 
-s11 : String
-s11 = "11"
+b12 : Bool
+b12 = True
 
-s12 : String
-s12 = "12"
+b13 : Bool
+b13 = True
 
-s13 : String
-s13 = "13"
+b14 : Bool
+b14 = True
 
-s14 : String
-s14 = "14"
+b15 : Bool
+b15 = True
 
-s15 : String
-s15 = "15"
+b16 : Bool
+b16 = True
 
-s16 : String
-s16 = "16"
+b17 : Bool
+b17 = True
 
-s17 : String
-s17 = "17"
+b18 : Bool
+b18 = True
 
-s18 : String
-s18 = "18"
+b19 : Bool
+b19 = True
 
-s19 : String
-s19 = "19"
+b20 : Bool
+b20 = True
 
-s20 : String
-s20 = "20"
+b21 : Bool
+b21 = True
 
-s21 : String
-s21 = "21"
+b22 : Bool
+b22 = True
 
-s22 : String
-s22 = "22"
+b23 : Bool
+b23 = True
 
-s23 : String
-s23 = "23"
+b24 : Bool
+b24 = True
 
-s24 : String
-s24 = "24"
+b25 : Bool
+b25 = True
 
-s25 : String
-s25 = "25"
+b26 : Bool
+b26 = True
 
-s26 : String
-s26 = "26"
+b27 : Bool
+b27 = True
 
-s27 : String
-s27 = "27"
+b28 : Bool
+b28 = True
 
-s28 : String
-s28 = "28"
+b29 : Bool
+b29 = True
 
-s29 : String
-s29 = "29"
+b30 : Bool
+b30 = True
 
-s30 : String
-s30 = "30"
+b31 : Bool
+b31 = True
 
-s31 : String
-s31 = "31"
+b32 : Bool
+b32 = True
 
-s32 : String
-s32 = "32"
+b33 : Bool
+b33 = True
 
-s33 : String
-s33 = "33"
+b34 : Bool
+b34 = True
 
-s34 : String
-s34 = "34"
+b35 : Bool
+b35 = True
 
-s35 : String
-s35 = "35"
+b36 : Bool
+b36 = True
 
-s36 : String
-s36 = "36"
+b37 : Bool
+b37 = True
 
-s37 : String
-s37 = "37"
+b38 : Bool
+b38 = True
 
-s38 : String
-s38 = "38"
+b39 : Bool
+b39 = True
 
-s39 : String
-s39 = "39"
+b40 : Bool
+b40 = True
 
-s40 : String
-s40 = "40"
+b41 : Bool
+b41 = True
 
-s41 : String
-s41 = "41"
+b42 : Bool
+b42 = True
 
-s42 : String
-s42 = "42"
+b43 : Bool
+b43 = True
 
-s43 : String
-s43 = "43"
+b44 : Bool
+b44 = True
 
-s44 : String
-s44 = "44"
+b45 : Bool
+b45 = True
 
-s45 : String
-s45 = "45"
+b46 : Bool
+b46 = True
 
-s46 : String
-s46 = "46"
+b47 : Bool
+b47 = True
 
-s47 : String
-s47 = "47"
+b48 : Bool
+b48 = True
 
-s48 : String
-s48 = "48"
+b49 : Bool
+b49 = True
 
-s49 : String
-s49 = "49"
+b50 : Bool
+b50 = True
 
-s50 : String
-s50 = "50"
+b51 : Bool
+b51 = True
 
-s51 : String
-s51 = "51"
+b52 : Bool
+b52 = True
 
-s52 : String
-s52 = "52"
+b53 : Bool
+b53 = True
 
-s53 : String
-s53 = "53"
+b54 : Bool
+b54 = True
 
-s54 : String
-s54 = "54"
+b55 : Bool
+b55 = True
 
-s55 : String
-s55 = "55"
+b56 : Bool
+b56 = True
 
-s56 : String
-s56 = "56"
+b57 : Bool
+b57 = True
 
-s57 : String
-s57 = "57"
+b58 : Bool
+b58 = True
 
-s58 : String
-s58 = "58"
+b59 : Bool
+b59 = True
 
-s59 : String
-s59 = "59"
+b60 : Bool
+b60 = True
 
-s60 : String
-s60 = "60"
+b61 : Bool
+b61 = True
 
-s61 : String
-s61 = "61"
+b62 : Bool
+b62 = True
 
-s62 : String
-s62 = "62"
+b63 : Bool
+b63 = True
 
-s63 : String
-s63 = "63"
+b64 : Bool
+b64 = True
 
-s64 : String
-s64 = "64"
+b65 : Bool
+b65 = True
 
-s65 : String
-s65 = "65"
+b66 : Bool
+b66 = True
 
-s66 : String
-s66 = "66"
+b67 : Bool
+b67 = True
 
-s67 : String
-s67 = "67"
+b68 : Bool
+b68 = True
 
-s68 : String
-s68 = "68"
+b69 : Bool
+b69 = True
 
-s69 : String
-s69 = "69"
+b70 : Bool
+b70 = True
 
-s70 : String
-s70 = "70"
+b71 : Bool
+b71 = True
 
-s71 : String
-s71 = "71"
+b72 : Bool
+b72 = True
 
-s72 : String
-s72 = "72"
+b73 : Bool
+b73 = True
 
-s73 : String
-s73 = "73"
+b74 : Bool
+b74 = True
 
-s74 : String
-s74 = "74"
+b75 : Bool
+b75 = True
 
-s75 : String
-s75 = "75"
+b76 : Bool
+b76 = True
 
-s76 : String
-s76 = "76"
+b77 : Bool
+b77 = True
 
-s77 : String
-s77 = "77"
+b78 : Bool
+b78 = True
 
-s78 : String
-s78 = "78"
+b79 : Bool
+b79 = True
 
-s79 : String
-s79 = "79"
+b80 : Bool
+b80 = True
 
-s80 : String
-s80 = "80"
+b81 : Bool
+b81 = True
 
-s81 : String
-s81 = "81"
+b82 : Bool
+b82 = True
 
-s82 : String
-s82 = "82"
+b83 : Bool
+b83 = True
 
-s83 : String
-s83 = "83"
+b84 : Bool
+b84 = True
 
-s84 : String
-s84 = "84"
+b85 : Bool
+b85 = True
 
-s85 : String
-s85 = "85"
+b86 : Bool
+b86 = True
 
-s86 : String
-s86 = "86"
+b87 : Bool
+b87 = True
 
-s87 : String
-s87 = "87"
+b88 : Bool
+b88 = True
 
-s88 : String
-s88 = "88"
+b89 : Bool
+b89 = True
 
-s89 : String
-s89 = "89"
+b90 : Bool
+b90 = True
 
-s90 : String
-s90 = "90"
+b91 : Bool
+b91 = True
 
-s91 : String
-s91 = "91"
+b92 : Bool
+b92 = True
 
-s92 : String
-s92 = "92"
+b93 : Bool
+b93 = True
 
-s93 : String
-s93 = "93"
+b94 : Bool
+b94 = True
 
-s94 : String
-s94 = "94"
+b95 : Bool
+b95 = True
 
-s95 : String
-s95 = "95"
+b96 : Bool
+b96 = True
 
-s96 : String
-s96 = "96"
+b97 : Bool
+b97 = True
 
-s97 : String
-s97 = "97"
+b98 : Bool
+b98 = True
 
-s98 : String
-s98 = "98"
+b99 : Bool
+b99 = True
 
-s99 : String
-s99 = "99"
+b100 : Bool
+b100 = True
 
-s100 : String
-s100 = "100"
+b101 : Bool
+b101 = True
 
-s101 : String
-s101 = "101"
+b102 : Bool
+b102 = True
 
-s102 : String
-s102 = "102"
+b103 : Bool
+b103 = True
 
-s103 : String
-s103 = "103"
+b104 : Bool
+b104 = True
 
-s104 : String
-s104 = "104"
+b105 : Bool
+b105 = True
 
-s105 : String
-s105 = "105"
+b106 : Bool
+b106 = True
 
-s106 : String
-s106 = "106"
+b107 : Bool
+b107 = True
 
-s107 : String
-s107 = "107"
+b108 : Bool
+b108 = True
 
-s108 : String
-s108 = "108"
+b109 : Bool
+b109 = True
 
-s109 : String
-s109 = "109"
+b110 : Bool
+b110 = True
 
-s110 : String
-s110 = "110"
+b111 : Bool
+b111 = True
 
-s111 : String
-s111 = "111"
+b112 : Bool
+b112 = True
 
-s112 : String
-s112 = "112"
+b113 : Bool
+b113 = True
 
-s113 : String
-s113 = "113"
+b114 : Bool
+b114 = True
 
-s114 : String
-s114 = "114"
+b115 : Bool
+b115 = True
 
-s115 : String
-s115 = "115"
+b116 : Bool
+b116 = True
 
-s116 : String
-s116 = "116"
+b117 : Bool
+b117 = True
 
-s117 : String
-s117 = "117"
+b118 : Bool
+b118 = True
 
-s118 : String
-s118 = "118"
+b119 : Bool
+b119 = True
 
-s119 : String
-s119 = "119"
+b120 : Bool
+b120 = True
 
-s120 : String
-s120 = "120"
+b121 : Bool
+b121 = True
 
-s121 : String
-s121 = "121"
+b122 : Bool
+b122 = True
 
-s122 : String
-s122 = "122"
+b123 : Bool
+b123 = True
 
-s123 : String
-s123 = "123"
+b124 : Bool
+b124 = True
 
-s124 : String
-s124 = "124"
+b125 : Bool
+b125 = True
 
-s125 : String
-s125 = "125"
+b126 : Bool
+b126 = True
 
-s126 : String
-s126 = "126"
+b127 : Bool
+b127 = True
 
-s127 : String
-s127 = "127"
+b128 : Bool
+b128 = True
 
-s128 : String
-s128 = "128"
+b129 : Bool
+b129 = True
 
-s129 : String
-s129 = "129"
+b130 : Bool
+b130 = True
 
-s130 : String
-s130 = "130"
+b131 : Bool
+b131 = True
 
-s131 : String
-s131 = "131"
+b132 : Bool
+b132 = True
 
-s132 : String
-s132 = "132"
+b133 : Bool
+b133 = True
 
-s133 : String
-s133 = "133"
+b134 : Bool
+b134 = True
 
-s134 : String
-s134 = "134"
+b135 : Bool
+b135 = True
 
-s135 : String
-s135 = "135"
+b136 : Bool
+b136 = True
 
-s136 : String
-s136 = "136"
+b137 : Bool
+b137 = True
 
-s137 : String
-s137 = "137"
+b138 : Bool
+b138 = True
 
-s138 : String
-s138 = "138"
+b139 : Bool
+b139 = True
 
-s139 : String
-s139 = "139"
+b140 : Bool
+b140 = True
 
-s140 : String
-s140 = "140"
+b141 : Bool
+b141 = True
 
-s141 : String
-s141 = "141"
+b142 : Bool
+b142 = True
 
-s142 : String
-s142 = "142"
+b143 : Bool
+b143 = True
 
-s143 : String
-s143 = "143"
+b144 : Bool
+b144 = True
 
-s144 : String
-s144 = "144"
+b145 : Bool
+b145 = True
 
-s145 : String
-s145 = "145"
+b146 : Bool
+b146 = True
 
-s146 : String
-s146 = "146"
+b147 : Bool
+b147 = True
 
-s147 : String
-s147 = "147"
+b148 : Bool
+b148 = True
 
-s148 : String
-s148 = "148"
+b149 : Bool
+b149 = True
 
-s149 : String
-s149 = "149"
+b150 : Bool
+b150 = True
 
-s150 : String
-s150 = "150"
+b151 : Bool
+b151 = True
 
-s151 : String
-s151 = "151"
+b152 : Bool
+b152 = True
 
-s152 : String
-s152 = "152"
+b153 : Bool
+b153 = True
 
-s153 : String
-s153 = "153"
+b154 : Bool
+b154 = True
 
-s154 : String
-s154 = "154"
+b155 : Bool
+b155 = True
 
-s155 : String
-s155 = "155"
+b156 : Bool
+b156 = True
 
-s156 : String
-s156 = "156"
+b157 : Bool
+b157 = True
 
-s157 : String
-s157 = "157"
+b158 : Bool
+b158 = True
 
-s158 : String
-s158 = "158"
+b159 : Bool
+b159 = True
 
-s159 : String
-s159 = "159"
+b160 : Bool
+b160 = True
 
-s160 : String
-s160 = "160"
+b161 : Bool
+b161 = True
 
-s161 : String
-s161 = "161"
+b162 : Bool
+b162 = True
 
-s162 : String
-s162 = "162"
+b163 : Bool
+b163 = True
 
-s163 : String
-s163 = "163"
+b164 : Bool
+b164 = True
 
-s164 : String
-s164 = "164"
+b165 : Bool
+b165 = True
 
-s165 : String
-s165 = "165"
+b166 : Bool
+b166 = True
 
-s166 : String
-s166 = "166"
+b167 : Bool
+b167 = True
 
-s167 : String
-s167 = "167"
+b168 : Bool
+b168 = True
 
-s168 : String
-s168 = "168"
+b169 : Bool
+b169 = True
 
-s169 : String
-s169 = "169"
+b170 : Bool
+b170 = True
 
-s170 : String
-s170 = "170"
+b171 : Bool
+b171 = True
 
-s171 : String
-s171 = "171"
+b172 : Bool
+b172 = True
 
-s172 : String
-s172 = "172"
+b173 : Bool
+b173 = True
 
-s173 : String
-s173 = "173"
+b174 : Bool
+b174 = True
 
-s174 : String
-s174 = "174"
+b175 : Bool
+b175 = True
 
-s175 : String
-s175 = "175"
+b176 : Bool
+b176 = True
 
-s176 : String
-s176 = "176"
+b177 : Bool
+b177 = True
 
-s177 : String
-s177 = "177"
+b178 : Bool
+b178 = True
 
-s178 : String
-s178 = "178"
+b179 : Bool
+b179 = True
 
-s179 : String
-s179 = "179"
+b180 : Bool
+b180 = True
 
-s180 : String
-s180 = "180"
+b181 : Bool
+b181 = True
 
-s181 : String
-s181 = "181"
+b182 : Bool
+b182 = True
 
-s182 : String
-s182 = "182"
+b183 : Bool
+b183 = True
 
-s183 : String
-s183 = "183"
+b184 : Bool
+b184 = True
 
-s184 : String
-s184 = "184"
+b185 : Bool
+b185 = True
 
-s185 : String
-s185 = "185"
+b186 : Bool
+b186 = True
 
-s186 : String
-s186 = "186"
+b187 : Bool
+b187 = True
 
-s187 : String
-s187 = "187"
+b188 : Bool
+b188 = True
 
-s188 : String
-s188 = "188"
+b189 : Bool
+b189 = True
 
-s189 : String
-s189 = "189"
+b190 : Bool
+b190 = True
 
-s190 : String
-s190 = "190"
+b191 : Bool
+b191 = True
 
-s191 : String
-s191 = "191"
+b192 : Bool
+b192 = True
 
-s192 : String
-s192 = "192"
+b193 : Bool
+b193 = True
 
-s193 : String
-s193 = "193"
+b194 : Bool
+b194 = True
 
-s194 : String
-s194 = "194"
+b195 : Bool
+b195 = True
 
-s195 : String
-s195 = "195"
+b196 : Bool
+b196 = True
 
-s196 : String
-s196 = "196"
+b197 : Bool
+b197 = True
 
-s197 : String
-s197 = "197"
+b198 : Bool
+b198 = True
 
-s198 : String
-s198 = "198"
+b199 : Bool
+b199 = True
 
-s199 : String
-s199 = "199"
+b200 : Bool
+b200 = True
 
-s200 : String
-s200 = "200"
+b201 : Bool
+b201 = True
 
-s201 : String
-s201 = "201"
+b202 : Bool
+b202 = True
 
-s202 : String
-s202 = "202"
+b203 : Bool
+b203 = True
 
-s203 : String
-s203 = "203"
+b204 : Bool
+b204 = True
 
-s204 : String
-s204 = "204"
+b205 : Bool
+b205 = True
 
-s205 : String
-s205 = "205"
+b206 : Bool
+b206 = True
 
-s206 : String
-s206 = "206"
+b207 : Bool
+b207 = True
 
-s207 : String
-s207 = "207"
+b208 : Bool
+b208 = True
 
-s208 : String
-s208 = "208"
+b209 : Bool
+b209 = True
 
-s209 : String
-s209 = "209"
+b210 : Bool
+b210 = True
 
-s210 : String
-s210 = "210"
+b211 : Bool
+b211 = True
 
-s211 : String
-s211 = "211"
+b212 : Bool
+b212 = True
 
-s212 : String
-s212 = "212"
+b213 : Bool
+b213 = True
 
-s213 : String
-s213 = "213"
+b214 : Bool
+b214 = True
 
-s214 : String
-s214 = "214"
+b215 : Bool
+b215 = True
 
-s215 : String
-s215 = "215"
+b216 : Bool
+b216 = True
 
-s216 : String
-s216 = "216"
+b217 : Bool
+b217 = True
 
-s217 : String
-s217 = "217"
+b218 : Bool
+b218 = True
 
-s218 : String
-s218 = "218"
+b219 : Bool
+b219 = True
 
-s219 : String
-s219 = "219"
+b220 : Bool
+b220 = True
 
-s220 : String
-s220 = "220"
+b221 : Bool
+b221 = True
 
-s221 : String
-s221 = "221"
+b222 : Bool
+b222 = True
 
-s222 : String
-s222 = "222"
+b223 : Bool
+b223 = True
 
-s223 : String
-s223 = "223"
+b224 : Bool
+b224 = True
 
-s224 : String
-s224 = "224"
+b225 : Bool
+b225 = True
 
-s225 : String
-s225 = "225"
+b226 : Bool
+b226 = True
 
-s226 : String
-s226 = "226"
+b227 : Bool
+b227 = True
 
-s227 : String
-s227 = "227"
+b228 : Bool
+b228 = True
 
-s228 : String
-s228 = "228"
+b229 : Bool
+b229 = True
 
-s229 : String
-s229 = "229"
+b230 : Bool
+b230 = True
 
-s230 : String
-s230 = "230"
+b231 : Bool
+b231 = True
 
-s231 : String
-s231 = "231"
+b232 : Bool
+b232 = True
 
-s232 : String
-s232 = "232"
+b233 : Bool
+b233 = True
 
-s233 : String
-s233 = "233"
+b234 : Bool
+b234 = True
 
-s234 : String
-s234 = "234"
+b235 : Bool
+b235 = True
 
-s235 : String
-s235 = "235"
+b236 : Bool
+b236 = True
 
-s236 : String
-s236 = "236"
+b237 : Bool
+b237 = True
 
-s237 : String
-s237 = "237"
+b238 : Bool
+b238 = True
 
-s238 : String
-s238 = "238"
+b239 : Bool
+b239 = True
 
-s239 : String
-s239 = "239"
+b240 : Bool
+b240 = True
 
-s240 : String
-s240 = "240"
+b241 : Bool
+b241 = True
 
-s241 : String
-s241 = "241"
+b242 : Bool
+b242 = True
 
-s242 : String
-s242 = "242"
+b243 : Bool
+b243 = True
 
-s243 : String
-s243 = "243"
+b244 : Bool
+b244 = True
 
-s244 : String
-s244 = "244"
+b245 : Bool
+b245 = True
 
-s245 : String
-s245 = "245"
+b246 : Bool
+b246 = True
 
-s246 : String
-s246 = "246"
+b247 : Bool
+b247 = True
 
-s247 : String
-s247 = "247"
+b248 : Bool
+b248 = True
 
-s248 : String
-s248 = "248"
+b249 : Bool
+b249 = True
 
-s249 : String
-s249 = "249"
+b250 : Bool
+b250 = True
 
-s250 : String
-s250 = "250"
+b251 : Bool
+b251 = True
 
-s251 : String
-s251 = "251"
+b252 : Bool
+b252 = True
 
-s252 : String
-s252 = "252"
+b253 : Bool
+b253 = True
 
-s253 : String
-s253 = "253"
+b254 : Bool
+b254 = True
 
-s254 : String
-s254 = "254"
+b255 : Bool
+b255 = True
 
-s255 : String
-s255 = "255"
+b256 : Bool
+b256 = True
 
-s256 : String
-s256 = "256"
+b257 : Bool
+b257 = True
 
-s257 : String
-s257 = "257"
+b258 : Bool
+b258 = True
 
-s258 : String
-s258 = "258"
+b259 : Bool
+b259 = True
 
-s259 : String
-s259 = "259"
+b260 : Bool
+b260 = True
 
-s260 : String
-s260 = "260"
+b261 : Bool
+b261 = True
 
-s261 : String
-s261 = "261"
+b262 : Bool
+b262 = True
 
-s262 : String
-s262 = "262"
+b263 : Bool
+b263 = True
 
-s263 : String
-s263 = "263"
+b264 : Bool
+b264 = True
 
-s264 : String
-s264 = "264"
+b265 : Bool
+b265 = True
 
-s265 : String
-s265 = "265"
+b266 : Bool
+b266 = True
 
-s266 : String
-s266 = "266"
+b267 : Bool
+b267 = True
 
-s267 : String
-s267 = "267"
+b268 : Bool
+b268 = True
 
-s268 : String
-s268 = "268"
+b269 : Bool
+b269 = True
 
-s269 : String
-s269 = "269"
+b270 : Bool
+b270 = True
 
-s270 : String
-s270 = "270"
+b271 : Bool
+b271 = True
 
-s271 : String
-s271 = "271"
+b272 : Bool
+b272 = True
 
-s272 : String
-s272 = "272"
+b273 : Bool
+b273 = True
 
-s273 : String
-s273 = "273"
+b274 : Bool
+b274 = True
 
-s274 : String
-s274 = "274"
+b275 : Bool
+b275 = True
 
-s275 : String
-s275 = "275"
+b276 : Bool
+b276 = True
 
-s276 : String
-s276 = "276"
+b277 : Bool
+b277 = True
 
-s277 : String
-s277 = "277"
+b278 : Bool
+b278 = True
 
-s278 : String
-s278 = "278"
+b279 : Bool
+b279 = True
 
-s279 : String
-s279 = "279"
+b280 : Bool
+b280 = True
 
-s280 : String
-s280 = "280"
+b281 : Bool
+b281 = True
 
-s281 : String
-s281 = "281"
+b282 : Bool
+b282 = True
 
-s282 : String
-s282 = "282"
+b283 : Bool
+b283 = True
 
-s283 : String
-s283 = "283"
+b284 : Bool
+b284 = True
 
-s284 : String
-s284 = "284"
+b285 : Bool
+b285 = True
 
-s285 : String
-s285 = "285"
+b286 : Bool
+b286 = True
 
-s286 : String
-s286 = "286"
+b287 : Bool
+b287 = True
 
-s287 : String
-s287 = "287"
+b288 : Bool
+b288 = True
 
-s288 : String
-s288 = "288"
+b289 : Bool
+b289 = True
 
-s289 : String
-s289 = "289"
+b290 : Bool
+b290 = True
 
-s290 : String
-s290 = "290"
+b291 : Bool
+b291 = True
 
-s291 : String
-s291 = "291"
+b292 : Bool
+b292 = True
 
-s292 : String
-s292 = "292"
+b293 : Bool
+b293 = True
 
-s293 : String
-s293 = "293"
+b294 : Bool
+b294 = True
 
-s294 : String
-s294 = "294"
+b295 : Bool
+b295 = True
 
-s295 : String
-s295 = "295"
+b296 : Bool
+b296 = True
 
-s296 : String
-s296 = "296"
+b297 : Bool
+b297 = True
 
-s297 : String
-s297 = "297"
+b298 : Bool
+b298 = True
 
-s298 : String
-s298 = "298"
+b299 : Bool
+b299 = True
 
-s299 : String
-s299 = "299"
+b300 : Bool
+b300 = True
 
-s300 : String
-s300 = "300"
+showBool : Bool -> String
+showBool b = case b of
+  True -> "True"
+  False -> "False"
+
+res : Bool
+res = (and b1 (and b2 (and b3 (and b4 (and b5 (and b6 (and b7 (and b8 (and b9 (and b10 (and b11 (and b12 (and b13 (and b14 (and b15 (and b16 (and b17 (and b18 (and b19 (and b20 (and b21 (and b22 (and b23 (and b24 (and b25 (and b26 (and b27 (and b28 (and b29 (and b30 (and b31 (and b32 (and b33 (and b34 (and b35 (and b36 (and b37 (and b38 (and b39 (and b40 (and b41 (and b42 (and b43 (and b44 (and b45 (and b46 (and b47 (and b48 (and b49 (and b50 (and b51 (and b52 (and b53 (and b54 (and b55 (and b56 (and b57 (and b58 (and b59 (and b60 (and b61 (and b62 (and b63 (and b64 (and b65 (and b66 (and b67 (and b68 (and b69 (and b70 (and b71 (and b72 (and b73 (and b74 (and b75 (and b76 (and b77 (and b78 (and b79 (and b80 (and b81 (and b82 (and b83 (and b84 (and b85 (and b86 (and b87 (and b88 (and b89 (and b90 (and b91 (and b92 (and b93 (and b94 (and b95 (and b96 (and b97 (and b98 (and b99 (and b100 (and b101 (and b102 (and b103 (and b104 (and b105 (and b106 (and b107 (and b108 (and b109 (and b110 (and b111 (and b112 (and b113 (and b114 (and b115 (and b116 (and b117 (and b118 (and b119 (and b120 (and b121 (and b122 (and b123 (and b124 (and b125 (and b126 (and b127 (and b128 (and b129 (and b130 (and b131 (and b132 (and b133 (and b134 (and b135 (and b136 (and b137 (and b138 (and b139 (and b140 (and b141 (and b142 (and b143 (and b144 (and b145 (and b146 (and b147 (and b148 (and b149 (and b150 (and b151 (and b152 (and b153 (and b154 (and b155 (and b156 (and b157 (and b158 (and b159 (and b160 (and b161 (and b162 (and b163 (and b164 (and b165 (and b166 (and b167 (and b168 (and b169 (and b170 (and b171 (and b172 (and b173 (and b174 (and b175 (and b176 (and b177 (and b178 (and b179 (and b180 (and b181 (and b182 (and b183 (and b184 (and b185 (and b186 (and b187 (and b188 (and b189 (and b190 (and b191 (and b192 (and b193 (and b194 (and b195 (and b196 (and b197 (and b198 (and b199 (and b200 (and b201 (and b202 (and b203 (and b204 (and b205 (and b206 (and b207 (and b208 (and b209 (and b210 (and b211 (and b212 (and b213 (and b214 (and b215 (and b216 (and b217 (and b218 (and b219 (and b220 (and b221 (and b222 (and b223 (and b224 (and b225 (and b226 (and b227 (and b228 (and b229 (and b230 (and b231 (and b232 (and b233 (and b234 (and b235 (and b236 (and b237 (and b238 (and b239 (and b240 (and b241 (and b242 (and b243 (and b244 (and b245 (and b246 (and b247 (and b248 (and b249 (and b250 (and b251 (and b252 (and b253 (and b254 (and b255 (and b256 (and b257 (and b258 (and b259 (and b260 (and b261 (and b262 (and b263 (and b264 (and b265 (and b266 (and b267 (and b268 (and b269 (and b270 (and b271 (and b272 (and b273 (and b274 (and b275 (and b276 (and b277 (and b278 (and b279 (and b280 (and b281 (and b282 (and b283 (and b284 (and b285 (and b286 (and b287 (and b288 (and b289 (and b290 (and b291 (and b292 (and b293 (and b294 (and b295 (and b296 (and b297 (and b298 (and b299 b300)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input = IO.Stdout.print (showBool res)
+

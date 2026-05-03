@@ -2,613 +2,643 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
-function main(v__input){
-    return __print(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((v_s1 + ",") + v_s2) + ",") + v_s3) + ",") + v_s4) + ",") + v_s5) + ",") + v_s6) + ",") + v_s7) + ",") + v_s8) + ",") + v_s9) + ",") + v_s10) + ",") + v_s11) + ",") + v_s12) + ",") + v_s13) + ",") + v_s14) + ",") + v_s15) + ",") + v_s16) + ",") + v_s17) + ",") + v_s18) + ",") + v_s19) + ",") + v_s20) + ",") + v_s21) + ",") + v_s22) + ",") + v_s23) + ",") + v_s24) + ",") + v_s25) + ",") + v_s26) + ",") + v_s27) + ",") + v_s28) + ",") + v_s29) + ",") + v_s30) + ",") + v_s31) + ",") + v_s32) + ",") + v_s33) + ",") + v_s34) + ",") + v_s35) + ",") + v_s36) + ",") + v_s37) + ",") + v_s38) + ",") + v_s39) + ",") + v_s40) + ",") + v_s41) + ",") + v_s42) + ",") + v_s43) + ",") + v_s44) + ",") + v_s45) + ",") + v_s46) + ",") + v_s47) + ",") + v_s48) + ",") + v_s49) + ",") + v_s50) + ",") + v_s51) + ",") + v_s52) + ",") + v_s53) + ",") + v_s54) + ",") + v_s55) + ",") + v_s56) + ",") + v_s57) + ",") + v_s58) + ",") + v_s59) + ",") + v_s60) + ",") + v_s61) + ",") + v_s62) + ",") + v_s63) + ",") + v_s64) + ",") + v_s65) + ",") + v_s66) + ",") + v_s67) + ",") + v_s68) + ",") + v_s69) + ",") + v_s70) + ",") + v_s71) + ",") + v_s72) + ",") + v_s73) + ",") + v_s74) + ",") + v_s75) + ",") + v_s76) + ",") + v_s77) + ",") + v_s78) + ",") + v_s79) + ",") + v_s80) + ",") + v_s81) + ",") + v_s82) + ",") + v_s83) + ",") + v_s84) + ",") + v_s85) + ",") + v_s86) + ",") + v_s87) + ",") + v_s88) + ",") + v_s89) + ",") + v_s90) + ",") + v_s91) + ",") + v_s92) + ",") + v_s93) + ",") + v_s94) + ",") + v_s95) + ",") + v_s96) + ",") + v_s97) + ",") + v_s98) + ",") + v_s99) + ",") + v_s100) + ",") + v_s101) + ",") + v_s102) + ",") + v_s103) + ",") + v_s104) + ",") + v_s105) + ",") + v_s106) + ",") + v_s107) + ",") + v_s108) + ",") + v_s109) + ",") + v_s110) + ",") + v_s111) + ",") + v_s112) + ",") + v_s113) + ",") + v_s114) + ",") + v_s115) + ",") + v_s116) + ",") + v_s117) + ",") + v_s118) + ",") + v_s119) + ",") + v_s120) + ",") + v_s121) + ",") + v_s122) + ",") + v_s123) + ",") + v_s124) + ",") + v_s125) + ",") + v_s126) + ",") + v_s127) + ",") + v_s128) + ",") + v_s129) + ",") + v_s130) + ",") + v_s131) + ",") + v_s132) + ",") + v_s133) + ",") + v_s134) + ",") + v_s135) + ",") + v_s136) + ",") + v_s137) + ",") + v_s138) + ",") + v_s139) + ",") + v_s140) + ",") + v_s141) + ",") + v_s142) + ",") + v_s143) + ",") + v_s144) + ",") + v_s145) + ",") + v_s146) + ",") + v_s147) + ",") + v_s148) + ",") + v_s149) + ",") + v_s150) + ",") + v_s151) + ",") + v_s152) + ",") + v_s153) + ",") + v_s154) + ",") + v_s155) + ",") + v_s156) + ",") + v_s157) + ",") + v_s158) + ",") + v_s159) + ",") + v_s160) + ",") + v_s161) + ",") + v_s162) + ",") + v_s163) + ",") + v_s164) + ",") + v_s165) + ",") + v_s166) + ",") + v_s167) + ",") + v_s168) + ",") + v_s169) + ",") + v_s170) + ",") + v_s171) + ",") + v_s172) + ",") + v_s173) + ",") + v_s174) + ",") + v_s175) + ",") + v_s176) + ",") + v_s177) + ",") + v_s178) + ",") + v_s179) + ",") + v_s180) + ",") + v_s181) + ",") + v_s182) + ",") + v_s183) + ",") + v_s184) + ",") + v_s185) + ",") + v_s186) + ",") + v_s187) + ",") + v_s188) + ",") + v_s189) + ",") + v_s190) + ",") + v_s191) + ",") + v_s192) + ",") + v_s193) + ",") + v_s194) + ",") + v_s195) + ",") + v_s196) + ",") + v_s197) + ",") + v_s198) + ",") + v_s199) + ",") + v_s200) + ",") + v_s201) + ",") + v_s202) + ",") + v_s203) + ",") + v_s204) + ",") + v_s205) + ",") + v_s206) + ",") + v_s207) + ",") + v_s208) + ",") + v_s209) + ",") + v_s210) + ",") + v_s211) + ",") + v_s212) + ",") + v_s213) + ",") + v_s214) + ",") + v_s215) + ",") + v_s216) + ",") + v_s217) + ",") + v_s218) + ",") + v_s219) + ",") + v_s220) + ",") + v_s221) + ",") + v_s222) + ",") + v_s223) + ",") + v_s224) + ",") + v_s225) + ",") + v_s226) + ",") + v_s227) + ",") + v_s228) + ",") + v_s229) + ",") + v_s230) + ",") + v_s231) + ",") + v_s232) + ",") + v_s233) + ",") + v_s234) + ",") + v_s235) + ",") + v_s236) + ",") + v_s237) + ",") + v_s238) + ",") + v_s239) + ",") + v_s240) + ",") + v_s241) + ",") + v_s242) + ",") + v_s243) + ",") + v_s244) + ",") + v_s245) + ",") + v_s246) + ",") + v_s247) + ",") + v_s248) + ",") + v_s249) + ",") + v_s250) + ",") + v_s251) + ",") + v_s252) + ",") + v_s253) + ",") + v_s254) + ",") + v_s255) + ",") + v_s256) + ",") + v_s257) + ",") + v_s258) + ",") + v_s259) + ",") + v_s260) + ",") + v_s261) + ",") + v_s262) + ",") + v_s263) + ",") + v_s264) + ",") + v_s265) + ",") + v_s266) + ",") + v_s267) + ",") + v_s268) + ",") + v_s269) + ",") + v_s270) + ",") + v_s271) + ",") + v_s272) + ",") + v_s273) + ",") + v_s274) + ",") + v_s275) + ",") + v_s276) + ",") + v_s277) + ",") + v_s278) + ",") + v_s279) + ",") + v_s280) + ",") + v_s281) + ",") + v_s282) + ",") + v_s283) + ",") + v_s284) + ",") + v_s285) + ",") + v_s286) + ",") + v_s287) + ",") + v_s288) + ",") + v_s289) + ",") + v_s290) + ",") + v_s291) + ",") + v_s292) + ",") + v_s293) + ",") + v_s294) + ",") + v_s295) + ",") + v_s296) + ",") + v_s297) + ",") + v_s298) + ",") + v_s299) + ",") + v_s300));
+function v_and(v_a, v_b){
+    {
+      const __s = v_a;
+      switch (__s[0]) {
+        case 0: {
+          return v_b;
+        }
+        case 1: {
+          return [1];
+        }
+      }
+    }
 }
 
-const v_s1 = "1";
+const v_b1 = [0];
 
-const v_s2 = "2";
+const v_b2 = [0];
 
-const v_s3 = "3";
+const v_b3 = [0];
 
-const v_s4 = "4";
+const v_b4 = [0];
 
-const v_s5 = "5";
+const v_b5 = [0];
 
-const v_s6 = "6";
+const v_b6 = [0];
 
-const v_s7 = "7";
+const v_b7 = [0];
 
-const v_s8 = "8";
+const v_b8 = [0];
 
-const v_s9 = "9";
+const v_b9 = [0];
 
-const v_s10 = "10";
+const v_b10 = [0];
 
-const v_s11 = "11";
+const v_b11 = [0];
 
-const v_s12 = "12";
+const v_b12 = [0];
 
-const v_s13 = "13";
+const v_b13 = [0];
 
-const v_s14 = "14";
+const v_b14 = [0];
 
-const v_s15 = "15";
+const v_b15 = [0];
 
-const v_s16 = "16";
+const v_b16 = [0];
 
-const v_s17 = "17";
+const v_b17 = [0];
 
-const v_s18 = "18";
+const v_b18 = [0];
 
-const v_s19 = "19";
+const v_b19 = [0];
 
-const v_s20 = "20";
+const v_b20 = [0];
 
-const v_s21 = "21";
+const v_b21 = [0];
 
-const v_s22 = "22";
+const v_b22 = [0];
 
-const v_s23 = "23";
+const v_b23 = [0];
 
-const v_s24 = "24";
+const v_b24 = [0];
 
-const v_s25 = "25";
+const v_b25 = [0];
 
-const v_s26 = "26";
+const v_b26 = [0];
 
-const v_s27 = "27";
+const v_b27 = [0];
 
-const v_s28 = "28";
+const v_b28 = [0];
 
-const v_s29 = "29";
+const v_b29 = [0];
 
-const v_s30 = "30";
+const v_b30 = [0];
 
-const v_s31 = "31";
+const v_b31 = [0];
 
-const v_s32 = "32";
+const v_b32 = [0];
 
-const v_s33 = "33";
+const v_b33 = [0];
 
-const v_s34 = "34";
+const v_b34 = [0];
 
-const v_s35 = "35";
+const v_b35 = [0];
 
-const v_s36 = "36";
+const v_b36 = [0];
 
-const v_s37 = "37";
+const v_b37 = [0];
 
-const v_s38 = "38";
+const v_b38 = [0];
 
-const v_s39 = "39";
+const v_b39 = [0];
 
-const v_s40 = "40";
+const v_b40 = [0];
 
-const v_s41 = "41";
+const v_b41 = [0];
 
-const v_s42 = "42";
+const v_b42 = [0];
 
-const v_s43 = "43";
+const v_b43 = [0];
 
-const v_s44 = "44";
+const v_b44 = [0];
 
-const v_s45 = "45";
+const v_b45 = [0];
 
-const v_s46 = "46";
+const v_b46 = [0];
 
-const v_s47 = "47";
+const v_b47 = [0];
 
-const v_s48 = "48";
+const v_b48 = [0];
 
-const v_s49 = "49";
+const v_b49 = [0];
 
-const v_s50 = "50";
+const v_b50 = [0];
 
-const v_s51 = "51";
+const v_b51 = [0];
 
-const v_s52 = "52";
+const v_b52 = [0];
 
-const v_s53 = "53";
+const v_b53 = [0];
 
-const v_s54 = "54";
+const v_b54 = [0];
 
-const v_s55 = "55";
+const v_b55 = [0];
 
-const v_s56 = "56";
+const v_b56 = [0];
 
-const v_s57 = "57";
+const v_b57 = [0];
 
-const v_s58 = "58";
+const v_b58 = [0];
 
-const v_s59 = "59";
+const v_b59 = [0];
 
-const v_s60 = "60";
+const v_b60 = [0];
 
-const v_s61 = "61";
+const v_b61 = [0];
 
-const v_s62 = "62";
+const v_b62 = [0];
 
-const v_s63 = "63";
+const v_b63 = [0];
 
-const v_s64 = "64";
+const v_b64 = [0];
 
-const v_s65 = "65";
+const v_b65 = [0];
 
-const v_s66 = "66";
+const v_b66 = [0];
 
-const v_s67 = "67";
+const v_b67 = [0];
 
-const v_s68 = "68";
+const v_b68 = [0];
 
-const v_s69 = "69";
+const v_b69 = [0];
 
-const v_s70 = "70";
+const v_b70 = [0];
 
-const v_s71 = "71";
+const v_b71 = [0];
 
-const v_s72 = "72";
+const v_b72 = [0];
 
-const v_s73 = "73";
+const v_b73 = [0];
 
-const v_s74 = "74";
+const v_b74 = [0];
 
-const v_s75 = "75";
+const v_b75 = [0];
 
-const v_s76 = "76";
+const v_b76 = [0];
 
-const v_s77 = "77";
+const v_b77 = [0];
 
-const v_s78 = "78";
+const v_b78 = [0];
 
-const v_s79 = "79";
+const v_b79 = [0];
 
-const v_s80 = "80";
+const v_b80 = [0];
 
-const v_s81 = "81";
+const v_b81 = [0];
 
-const v_s82 = "82";
+const v_b82 = [0];
 
-const v_s83 = "83";
+const v_b83 = [0];
 
-const v_s84 = "84";
+const v_b84 = [0];
 
-const v_s85 = "85";
+const v_b85 = [0];
 
-const v_s86 = "86";
+const v_b86 = [0];
 
-const v_s87 = "87";
+const v_b87 = [0];
 
-const v_s88 = "88";
+const v_b88 = [0];
 
-const v_s89 = "89";
+const v_b89 = [0];
 
-const v_s90 = "90";
+const v_b90 = [0];
 
-const v_s91 = "91";
+const v_b91 = [0];
 
-const v_s92 = "92";
+const v_b92 = [0];
 
-const v_s93 = "93";
+const v_b93 = [0];
 
-const v_s94 = "94";
+const v_b94 = [0];
 
-const v_s95 = "95";
+const v_b95 = [0];
 
-const v_s96 = "96";
+const v_b96 = [0];
 
-const v_s97 = "97";
+const v_b97 = [0];
 
-const v_s98 = "98";
+const v_b98 = [0];
 
-const v_s99 = "99";
+const v_b99 = [0];
 
-const v_s100 = "100";
+const v_b100 = [0];
 
-const v_s101 = "101";
+const v_b101 = [0];
 
-const v_s102 = "102";
+const v_b102 = [0];
 
-const v_s103 = "103";
+const v_b103 = [0];
 
-const v_s104 = "104";
+const v_b104 = [0];
 
-const v_s105 = "105";
+const v_b105 = [0];
 
-const v_s106 = "106";
+const v_b106 = [0];
 
-const v_s107 = "107";
+const v_b107 = [0];
 
-const v_s108 = "108";
+const v_b108 = [0];
 
-const v_s109 = "109";
+const v_b109 = [0];
 
-const v_s110 = "110";
+const v_b110 = [0];
 
-const v_s111 = "111";
+const v_b111 = [0];
 
-const v_s112 = "112";
+const v_b112 = [0];
 
-const v_s113 = "113";
+const v_b113 = [0];
 
-const v_s114 = "114";
+const v_b114 = [0];
 
-const v_s115 = "115";
+const v_b115 = [0];
 
-const v_s116 = "116";
+const v_b116 = [0];
 
-const v_s117 = "117";
+const v_b117 = [0];
 
-const v_s118 = "118";
+const v_b118 = [0];
 
-const v_s119 = "119";
+const v_b119 = [0];
 
-const v_s120 = "120";
+const v_b120 = [0];
 
-const v_s121 = "121";
+const v_b121 = [0];
 
-const v_s122 = "122";
+const v_b122 = [0];
 
-const v_s123 = "123";
+const v_b123 = [0];
 
-const v_s124 = "124";
+const v_b124 = [0];
 
-const v_s125 = "125";
+const v_b125 = [0];
 
-const v_s126 = "126";
+const v_b126 = [0];
 
-const v_s127 = "127";
+const v_b127 = [0];
 
-const v_s128 = "128";
+const v_b128 = [0];
 
-const v_s129 = "129";
+const v_b129 = [0];
 
-const v_s130 = "130";
+const v_b130 = [0];
 
-const v_s131 = "131";
+const v_b131 = [0];
 
-const v_s132 = "132";
+const v_b132 = [0];
 
-const v_s133 = "133";
+const v_b133 = [0];
 
-const v_s134 = "134";
+const v_b134 = [0];
 
-const v_s135 = "135";
+const v_b135 = [0];
 
-const v_s136 = "136";
+const v_b136 = [0];
 
-const v_s137 = "137";
+const v_b137 = [0];
 
-const v_s138 = "138";
+const v_b138 = [0];
 
-const v_s139 = "139";
+const v_b139 = [0];
 
-const v_s140 = "140";
+const v_b140 = [0];
 
-const v_s141 = "141";
+const v_b141 = [0];
 
-const v_s142 = "142";
+const v_b142 = [0];
 
-const v_s143 = "143";
+const v_b143 = [0];
 
-const v_s144 = "144";
+const v_b144 = [0];
 
-const v_s145 = "145";
+const v_b145 = [0];
 
-const v_s146 = "146";
+const v_b146 = [0];
 
-const v_s147 = "147";
+const v_b147 = [0];
 
-const v_s148 = "148";
+const v_b148 = [0];
 
-const v_s149 = "149";
+const v_b149 = [0];
 
-const v_s150 = "150";
+const v_b150 = [0];
 
-const v_s151 = "151";
+const v_b151 = [0];
 
-const v_s152 = "152";
+const v_b152 = [0];
 
-const v_s153 = "153";
+const v_b153 = [0];
 
-const v_s154 = "154";
+const v_b154 = [0];
 
-const v_s155 = "155";
+const v_b155 = [0];
 
-const v_s156 = "156";
+const v_b156 = [0];
 
-const v_s157 = "157";
+const v_b157 = [0];
 
-const v_s158 = "158";
+const v_b158 = [0];
 
-const v_s159 = "159";
+const v_b159 = [0];
 
-const v_s160 = "160";
+const v_b160 = [0];
 
-const v_s161 = "161";
+const v_b161 = [0];
 
-const v_s162 = "162";
+const v_b162 = [0];
 
-const v_s163 = "163";
+const v_b163 = [0];
 
-const v_s164 = "164";
+const v_b164 = [0];
 
-const v_s165 = "165";
+const v_b165 = [0];
 
-const v_s166 = "166";
+const v_b166 = [0];
 
-const v_s167 = "167";
+const v_b167 = [0];
 
-const v_s168 = "168";
+const v_b168 = [0];
 
-const v_s169 = "169";
+const v_b169 = [0];
 
-const v_s170 = "170";
+const v_b170 = [0];
 
-const v_s171 = "171";
+const v_b171 = [0];
 
-const v_s172 = "172";
+const v_b172 = [0];
 
-const v_s173 = "173";
+const v_b173 = [0];
 
-const v_s174 = "174";
+const v_b174 = [0];
 
-const v_s175 = "175";
+const v_b175 = [0];
 
-const v_s176 = "176";
+const v_b176 = [0];
 
-const v_s177 = "177";
+const v_b177 = [0];
 
-const v_s178 = "178";
+const v_b178 = [0];
 
-const v_s179 = "179";
+const v_b179 = [0];
 
-const v_s180 = "180";
+const v_b180 = [0];
 
-const v_s181 = "181";
+const v_b181 = [0];
 
-const v_s182 = "182";
+const v_b182 = [0];
 
-const v_s183 = "183";
+const v_b183 = [0];
 
-const v_s184 = "184";
+const v_b184 = [0];
 
-const v_s185 = "185";
+const v_b185 = [0];
 
-const v_s186 = "186";
+const v_b186 = [0];
 
-const v_s187 = "187";
+const v_b187 = [0];
 
-const v_s188 = "188";
+const v_b188 = [0];
 
-const v_s189 = "189";
+const v_b189 = [0];
 
-const v_s190 = "190";
+const v_b190 = [0];
 
-const v_s191 = "191";
+const v_b191 = [0];
 
-const v_s192 = "192";
+const v_b192 = [0];
 
-const v_s193 = "193";
+const v_b193 = [0];
 
-const v_s194 = "194";
+const v_b194 = [0];
 
-const v_s195 = "195";
+const v_b195 = [0];
 
-const v_s196 = "196";
+const v_b196 = [0];
 
-const v_s197 = "197";
+const v_b197 = [0];
 
-const v_s198 = "198";
+const v_b198 = [0];
 
-const v_s199 = "199";
+const v_b199 = [0];
 
-const v_s200 = "200";
+const v_b200 = [0];
 
-const v_s201 = "201";
+const v_b201 = [0];
 
-const v_s202 = "202";
+const v_b202 = [0];
 
-const v_s203 = "203";
+const v_b203 = [0];
 
-const v_s204 = "204";
+const v_b204 = [0];
 
-const v_s205 = "205";
+const v_b205 = [0];
 
-const v_s206 = "206";
+const v_b206 = [0];
 
-const v_s207 = "207";
+const v_b207 = [0];
 
-const v_s208 = "208";
+const v_b208 = [0];
 
-const v_s209 = "209";
+const v_b209 = [0];
 
-const v_s210 = "210";
+const v_b210 = [0];
 
-const v_s211 = "211";
+const v_b211 = [0];
 
-const v_s212 = "212";
+const v_b212 = [0];
 
-const v_s213 = "213";
+const v_b213 = [0];
 
-const v_s214 = "214";
+const v_b214 = [0];
 
-const v_s215 = "215";
+const v_b215 = [0];
 
-const v_s216 = "216";
+const v_b216 = [0];
 
-const v_s217 = "217";
+const v_b217 = [0];
 
-const v_s218 = "218";
+const v_b218 = [0];
 
-const v_s219 = "219";
+const v_b219 = [0];
 
-const v_s220 = "220";
+const v_b220 = [0];
 
-const v_s221 = "221";
+const v_b221 = [0];
 
-const v_s222 = "222";
+const v_b222 = [0];
 
-const v_s223 = "223";
+const v_b223 = [0];
 
-const v_s224 = "224";
+const v_b224 = [0];
 
-const v_s225 = "225";
+const v_b225 = [0];
 
-const v_s226 = "226";
+const v_b226 = [0];
 
-const v_s227 = "227";
+const v_b227 = [0];
 
-const v_s228 = "228";
+const v_b228 = [0];
 
-const v_s229 = "229";
+const v_b229 = [0];
 
-const v_s230 = "230";
+const v_b230 = [0];
 
-const v_s231 = "231";
+const v_b231 = [0];
 
-const v_s232 = "232";
+const v_b232 = [0];
 
-const v_s233 = "233";
+const v_b233 = [0];
 
-const v_s234 = "234";
+const v_b234 = [0];
 
-const v_s235 = "235";
+const v_b235 = [0];
 
-const v_s236 = "236";
+const v_b236 = [0];
 
-const v_s237 = "237";
+const v_b237 = [0];
 
-const v_s238 = "238";
+const v_b238 = [0];
 
-const v_s239 = "239";
+const v_b239 = [0];
 
-const v_s240 = "240";
+const v_b240 = [0];
 
-const v_s241 = "241";
+const v_b241 = [0];
 
-const v_s242 = "242";
+const v_b242 = [0];
 
-const v_s243 = "243";
+const v_b243 = [0];
 
-const v_s244 = "244";
+const v_b244 = [0];
 
-const v_s245 = "245";
+const v_b245 = [0];
 
-const v_s246 = "246";
+const v_b246 = [0];
 
-const v_s247 = "247";
+const v_b247 = [0];
 
-const v_s248 = "248";
+const v_b248 = [0];
 
-const v_s249 = "249";
+const v_b249 = [0];
 
-const v_s250 = "250";
+const v_b250 = [0];
 
-const v_s251 = "251";
+const v_b251 = [0];
 
-const v_s252 = "252";
+const v_b252 = [0];
 
-const v_s253 = "253";
+const v_b253 = [0];
 
-const v_s254 = "254";
+const v_b254 = [0];
 
-const v_s255 = "255";
+const v_b255 = [0];
 
-const v_s256 = "256";
+const v_b256 = [0];
 
-const v_s257 = "257";
+const v_b257 = [0];
 
-const v_s258 = "258";
+const v_b258 = [0];
 
-const v_s259 = "259";
+const v_b259 = [0];
 
-const v_s260 = "260";
+const v_b260 = [0];
 
-const v_s261 = "261";
+const v_b261 = [0];
 
-const v_s262 = "262";
+const v_b262 = [0];
 
-const v_s263 = "263";
+const v_b263 = [0];
 
-const v_s264 = "264";
+const v_b264 = [0];
 
-const v_s265 = "265";
+const v_b265 = [0];
 
-const v_s266 = "266";
+const v_b266 = [0];
 
-const v_s267 = "267";
+const v_b267 = [0];
 
-const v_s268 = "268";
+const v_b268 = [0];
 
-const v_s269 = "269";
+const v_b269 = [0];
 
-const v_s270 = "270";
+const v_b270 = [0];
 
-const v_s271 = "271";
+const v_b271 = [0];
 
-const v_s272 = "272";
+const v_b272 = [0];
 
-const v_s273 = "273";
+const v_b273 = [0];
 
-const v_s274 = "274";
+const v_b274 = [0];
 
-const v_s275 = "275";
+const v_b275 = [0];
 
-const v_s276 = "276";
+const v_b276 = [0];
 
-const v_s277 = "277";
+const v_b277 = [0];
 
-const v_s278 = "278";
+const v_b278 = [0];
 
-const v_s279 = "279";
+const v_b279 = [0];
 
-const v_s280 = "280";
+const v_b280 = [0];
 
-const v_s281 = "281";
+const v_b281 = [0];
 
-const v_s282 = "282";
+const v_b282 = [0];
 
-const v_s283 = "283";
+const v_b283 = [0];
 
-const v_s284 = "284";
+const v_b284 = [0];
 
-const v_s285 = "285";
+const v_b285 = [0];
 
-const v_s286 = "286";
+const v_b286 = [0];
 
-const v_s287 = "287";
+const v_b287 = [0];
 
-const v_s288 = "288";
+const v_b288 = [0];
 
-const v_s289 = "289";
+const v_b289 = [0];
 
-const v_s290 = "290";
+const v_b290 = [0];
 
-const v_s291 = "291";
+const v_b291 = [0];
 
-const v_s292 = "292";
+const v_b292 = [0];
 
-const v_s293 = "293";
+const v_b293 = [0];
 
-const v_s294 = "294";
+const v_b294 = [0];
 
-const v_s295 = "295";
+const v_b295 = [0];
 
-const v_s296 = "296";
+const v_b296 = [0];
 
-const v_s297 = "297";
+const v_b297 = [0];
 
-const v_s298 = "298";
+const v_b298 = [0];
 
-const v_s299 = "299";
+const v_b299 = [0];
 
-const v_s300 = "300";
+const v_b300 = [0];
+
+function v_showBool(v_b){
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 0: {
+          return "True";
+        }
+        case 1: {
+          return "False";
+        }
+      }
+    }
+}
+
+const v_res = (v_and)(v_b1, (v_and)(v_b2, (v_and)(v_b3, (v_and)(v_b4, (v_and)(v_b5, (v_and)(v_b6, (v_and)(v_b7, (v_and)(v_b8, (v_and)(v_b9, (v_and)(v_b10, (v_and)(v_b11, (v_and)(v_b12, (v_and)(v_b13, (v_and)(v_b14, (v_and)(v_b15, (v_and)(v_b16, (v_and)(v_b17, (v_and)(v_b18, (v_and)(v_b19, (v_and)(v_b20, (v_and)(v_b21, (v_and)(v_b22, (v_and)(v_b23, (v_and)(v_b24, (v_and)(v_b25, (v_and)(v_b26, (v_and)(v_b27, (v_and)(v_b28, (v_and)(v_b29, (v_and)(v_b30, (v_and)(v_b31, (v_and)(v_b32, (v_and)(v_b33, (v_and)(v_b34, (v_and)(v_b35, (v_and)(v_b36, (v_and)(v_b37, (v_and)(v_b38, (v_and)(v_b39, (v_and)(v_b40, (v_and)(v_b41, (v_and)(v_b42, (v_and)(v_b43, (v_and)(v_b44, (v_and)(v_b45, (v_and)(v_b46, (v_and)(v_b47, (v_and)(v_b48, (v_and)(v_b49, (v_and)(v_b50, (v_and)(v_b51, (v_and)(v_b52, (v_and)(v_b53, (v_and)(v_b54, (v_and)(v_b55, (v_and)(v_b56, (v_and)(v_b57, (v_and)(v_b58, (v_and)(v_b59, (v_and)(v_b60, (v_and)(v_b61, (v_and)(v_b62, (v_and)(v_b63, (v_and)(v_b64, (v_and)(v_b65, (v_and)(v_b66, (v_and)(v_b67, (v_and)(v_b68, (v_and)(v_b69, (v_and)(v_b70, (v_and)(v_b71, (v_and)(v_b72, (v_and)(v_b73, (v_and)(v_b74, (v_and)(v_b75, (v_and)(v_b76, (v_and)(v_b77, (v_and)(v_b78, (v_and)(v_b79, (v_and)(v_b80, (v_and)(v_b81, (v_and)(v_b82, (v_and)(v_b83, (v_and)(v_b84, (v_and)(v_b85, (v_and)(v_b86, (v_and)(v_b87, (v_and)(v_b88, (v_and)(v_b89, (v_and)(v_b90, (v_and)(v_b91, (v_and)(v_b92, (v_and)(v_b93, (v_and)(v_b94, (v_and)(v_b95, (v_and)(v_b96, (v_and)(v_b97, (v_and)(v_b98, (v_and)(v_b99, (v_and)(v_b100, (v_and)(v_b101, (v_and)(v_b102, (v_and)(v_b103, (v_and)(v_b104, (v_and)(v_b105, (v_and)(v_b106, (v_and)(v_b107, (v_and)(v_b108, (v_and)(v_b109, (v_and)(v_b110, (v_and)(v_b111, (v_and)(v_b112, (v_and)(v_b113, (v_and)(v_b114, (v_and)(v_b115, (v_and)(v_b116, (v_and)(v_b117, (v_and)(v_b118, (v_and)(v_b119, (v_and)(v_b120, (v_and)(v_b121, (v_and)(v_b122, (v_and)(v_b123, (v_and)(v_b124, (v_and)(v_b125, (v_and)(v_b126, (v_and)(v_b127, (v_and)(v_b128, (v_and)(v_b129, (v_and)(v_b130, (v_and)(v_b131, (v_and)(v_b132, (v_and)(v_b133, (v_and)(v_b134, (v_and)(v_b135, (v_and)(v_b136, (v_and)(v_b137, (v_and)(v_b138, (v_and)(v_b139, (v_and)(v_b140, (v_and)(v_b141, (v_and)(v_b142, (v_and)(v_b143, (v_and)(v_b144, (v_and)(v_b145, (v_and)(v_b146, (v_and)(v_b147, (v_and)(v_b148, (v_and)(v_b149, (v_and)(v_b150, (v_and)(v_b151, (v_and)(v_b152, (v_and)(v_b153, (v_and)(v_b154, (v_and)(v_b155, (v_and)(v_b156, (v_and)(v_b157, (v_and)(v_b158, (v_and)(v_b159, (v_and)(v_b160, (v_and)(v_b161, (v_and)(v_b162, (v_and)(v_b163, (v_and)(v_b164, (v_and)(v_b165, (v_and)(v_b166, (v_and)(v_b167, (v_and)(v_b168, (v_and)(v_b169, (v_and)(v_b170, (v_and)(v_b171, (v_and)(v_b172, (v_and)(v_b173, (v_and)(v_b174, (v_and)(v_b175, (v_and)(v_b176, (v_and)(v_b177, (v_and)(v_b178, (v_and)(v_b179, (v_and)(v_b180, (v_and)(v_b181, (v_and)(v_b182, (v_and)(v_b183, (v_and)(v_b184, (v_and)(v_b185, (v_and)(v_b186, (v_and)(v_b187, (v_and)(v_b188, (v_and)(v_b189, (v_and)(v_b190, (v_and)(v_b191, (v_and)(v_b192, (v_and)(v_b193, (v_and)(v_b194, (v_and)(v_b195, (v_and)(v_b196, (v_and)(v_b197, (v_and)(v_b198, (v_and)(v_b199, (v_and)(v_b200, (v_and)(v_b201, (v_and)(v_b202, (v_and)(v_b203, (v_and)(v_b204, (v_and)(v_b205, (v_and)(v_b206, (v_and)(v_b207, (v_and)(v_b208, (v_and)(v_b209, (v_and)(v_b210, (v_and)(v_b211, (v_and)(v_b212, (v_and)(v_b213, (v_and)(v_b214, (v_and)(v_b215, (v_and)(v_b216, (v_and)(v_b217, (v_and)(v_b218, (v_and)(v_b219, (v_and)(v_b220, (v_and)(v_b221, (v_and)(v_b222, (v_and)(v_b223, (v_and)(v_b224, (v_and)(v_b225, (v_and)(v_b226, (v_and)(v_b227, (v_and)(v_b228, (v_and)(v_b229, (v_and)(v_b230, (v_and)(v_b231, (v_and)(v_b232, (v_and)(v_b233, (v_and)(v_b234, (v_and)(v_b235, (v_and)(v_b236, (v_and)(v_b237, (v_and)(v_b238, (v_and)(v_b239, (v_and)(v_b240, (v_and)(v_b241, (v_and)(v_b242, (v_and)(v_b243, (v_and)(v_b244, (v_and)(v_b245, (v_and)(v_b246, (v_and)(v_b247, (v_and)(v_b248, (v_and)(v_b249, (v_and)(v_b250, (v_and)(v_b251, (v_and)(v_b252, (v_and)(v_b253, (v_and)(v_b254, (v_and)(v_b255, (v_and)(v_b256, (v_and)(v_b257, (v_and)(v_b258, (v_and)(v_b259, (v_and)(v_b260, (v_and)(v_b261, (v_and)(v_b262, (v_and)(v_b263, (v_and)(v_b264, (v_and)(v_b265, (v_and)(v_b266, (v_and)(v_b267, (v_and)(v_b268, (v_and)(v_b269, (v_and)(v_b270, (v_and)(v_b271, (v_and)(v_b272, (v_and)(v_b273, (v_and)(v_b274, (v_and)(v_b275, (v_and)(v_b276, (v_and)(v_b277, (v_and)(v_b278, (v_and)(v_b279, (v_and)(v_b280, (v_and)(v_b281, (v_and)(v_b282, (v_and)(v_b283, (v_and)(v_b284, (v_and)(v_b285, (v_and)(v_b286, (v_and)(v_b287, (v_and)(v_b288, (v_and)(v_b289, (v_and)(v_b290, (v_and)(v_b291, (v_and)(v_b292, (v_and)(v_b293, (v_and)(v_b294, (v_and)(v_b295, (v_and)(v_b296, (v_and)(v_b297, (v_and)(v_b298, (v_and)(v_b299, v_b300)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+
+function main(v__input){
+    return __print((v_showBool)(v_res));
+}
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();
