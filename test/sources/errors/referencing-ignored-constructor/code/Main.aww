@@ -10,5 +10,5 @@ show x = case x of
   _B -> "b"
   C -> "c"
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main input = IO.Stdout.print (show C)

@@ -1,3 +1,7 @@
 -- Error: applying a String value as if it were a function
-main : String -> IO Unit
-main input = input input
+import IO.Stdout
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg = case rawArg of
+  Left _ -> IO.Stdout.print "x"
+  Right input -> input input

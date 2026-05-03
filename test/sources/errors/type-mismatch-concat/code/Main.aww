@@ -1,5 +1,7 @@
 -- Error: ++ applied to a function value instead of String
 import IO.Stdout
 
-main : String -> IO Unit
-main input = IO.Stdout.print ++ input
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg = case rawArg of
+  Left _ -> IO.Stdout.print "INPUT_ERROR"
+  Right input -> IO.Stdout.print ++ input

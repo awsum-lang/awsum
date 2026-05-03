@@ -12,5 +12,5 @@ import IO.Stdout
 describe : Maybe Int32 -> String
 describe Nothing = "no"
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print (describe Nothing)

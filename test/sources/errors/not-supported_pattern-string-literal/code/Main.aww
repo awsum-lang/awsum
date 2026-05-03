@@ -12,5 +12,5 @@ describe s = case s of
   "hello" -> "greeting"
   other -> other
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main input = IO.Stdout.print (describe input)

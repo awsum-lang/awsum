@@ -2,5 +2,5 @@
 foo = foo
 foo = foo
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main input = input

@@ -10,5 +10,5 @@ describe m = case m of
   Just x | x -> showInt32 x
   Nothing -> "no"
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print (describe Nothing)

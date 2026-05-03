@@ -11,5 +11,5 @@ f : Wrap -> Int32
 f w = case w of
   Wrap { x = n } -> n
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print "ok"

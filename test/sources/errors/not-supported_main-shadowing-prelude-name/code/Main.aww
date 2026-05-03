@@ -7,5 +7,7 @@
 -- Workaround: rename the parameter.
 import IO.Stdout
 
-main : String -> IO Unit
-main not = IO.Stdout.print not
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main not = case not of
+  Left _ -> IO.Stdout.print "INPUT_ERROR"
+  Right s -> IO.Stdout.print s
