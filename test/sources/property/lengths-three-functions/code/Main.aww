@@ -1,0 +1,36 @@
+{- Property: for any valid UTF-16 input, the three string-length
+   functions produce values on which all five backends agree, and
+   those values match what the Haskell side computes from the same
+   input. The output is `cp:cu:b` where:
+
+     cp = lengthCodePoints      input
+     cu = lengthUtf16CodeUnits  input
+     b  = lengthBytesAsUtf8     input
+
+   Catches divergence in any direction: a backend that miscounts
+   surrogate pairs, undercounts a 4-byte UTF-8 sequence, or treats
+   the underlying buffer as raw bytes instead of as code points
+   would land on a different stdout from at least one of the others
+   and from the Haskell expectation. -}
+import IO.Stdout
+
+property : String -> Either StringTooLong String
+property s = do
+  let cp = showUInt32 (lengthCodePoints s)
+  let cu = showUInt32 (lengthUtf16CodeUnits s)
+  let b = showUInt32 (lengthBytesAsUtf8 s)
+  s0 <- cp ++ ":"
+  s1 <- s0 ++ cu
+  s2 <- s1 ++ ":"
+  s2 ++ b
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = do
+        raw <- rawArg
+        property raw
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+        Right s -> IO.Stdout.print s

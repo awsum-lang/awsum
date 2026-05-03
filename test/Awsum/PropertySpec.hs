@@ -20,6 +20,8 @@
 module Awsum.PropertySpec (spec) where
 
 import Awsum.RunBackend (Backend, CompiledArtifacts, compileFromFile, runOnAll)
+import Data.ByteString qualified as BS
+import Data.Text qualified as T
 import Relude
 import System.FilePath ((</>))
 import Test.Hspec
@@ -589,6 +591,28 @@ instance Arbitrary SplitNegativeCase where
     s <- genLowerStr
     pure (SplitNegativeCase (sep, s))
 
+-- ── String-length helpers (Haskell-side oracle) ──
+
+-- | Code-point count: 'T.length' on 'Text' returns the number of
+--   'Char's, i.e. Unicode scalar values, regardless of the internal
+--   storage (text-2.x is UTF-8, text-1.x was UTF-16; 'T.length' is
+--   defined to be the scalar count in both).
+lengthCodePointsHs :: Text -> Word32
+lengthCodePointsHs = fromIntegral . T.length
+
+-- | UTF-16 code-unit count: every BMP scalar is one unit, every
+--   supplementary scalar (>= U+10000) needs a high+low surrogate
+--   pair so it counts as two. The fold walks each 'Char' once.
+lengthUtf16CodeUnitsHs :: Text -> Word32
+lengthUtf16CodeUnitsHs = T.foldl' step 0
+  where
+    step acc c = acc + if ord c >= 0x10000 then 2 else 1
+
+-- | UTF-8 byte count: encode and ask the bytestring its length.
+--   Allocates the encoded bytes; for a property test that's fine.
+lengthBytesAsUtf8Hs :: Text -> Word32
+lengthBytesAsUtf8Hs = fromIntegral . BS.length . encodeUtf8
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- Property catalogue
 -- ════════════════════════════════════════════════════════════════════════════
@@ -648,6 +672,8 @@ properties =
     SomeProperty concatAssociativeProp,
     SomeProperty splitOnFirstRoundtripPositiveProp,
     SomeProperty splitOnFirstRoundtripNegativeProp,
+    -- ── String length (three explicit functions) ──
+    SomeProperty lengthsThreeFunctionsProp,
     -- ── Boolean laws ──
     SomeProperty notInvolutiveProp,
     SomeProperty andCommutativeProp,
@@ -1172,6 +1198,30 @@ splitOnFirstRoundtripNegativeProp =
       propGen = arbitrary,
       propEncode = \(SplitNegativeCase (sep, s)) -> sep <> ":" <> s,
       propExpectedOutput = const "OK"
+    }
+
+-- ── String length (three explicit functions) ──
+
+-- | For any valid-UTF-16 input, the three string-length functions must
+--   agree across all five backends and match the Haskell oracle.
+--   Awsum prints @cp:cu:b@; Haskell computes the same triple from
+--   'Text' independently. Two-sided check: a backend that miscounts
+--   surrogate pairs, undercounts a 4-byte UTF-8 sequence, or treats
+--   the storage buffer as raw bytes would diverge from at least one
+--   peer and from the oracle.
+lengthsThreeFunctionsProp :: Property Utf16Str
+lengthsThreeFunctionsProp =
+  Property
+    { propName = "lengths-three-functions",
+      propSourceDir = "lengths-three-functions",
+      propGen = arbitrary,
+      propEncode = \(Utf16Str s) -> s,
+      propExpectedOutput = \(Utf16Str s) ->
+        show (lengthCodePointsHs s)
+          <> ":"
+          <> show (lengthUtf16CodeUnitsHs s)
+          <> ":"
+          <> show (lengthBytesAsUtf8Hs s)
     }
 
 -- ── Boolean laws ──
