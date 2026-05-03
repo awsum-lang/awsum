@@ -1,0 +1,8 @@
+-- Error: UInt32 literal 1 below lower bound (-1)
+import IO.Stdout
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _ = IO.Stdout.print "ok"
+
+underMin : UInt32
+underMin = -1

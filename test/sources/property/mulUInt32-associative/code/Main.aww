@@ -1,0 +1,41 @@
+-- Property: `mulUInt32 (mulUInt32 a b) c == mulUInt32 a (mulUInt32 b c)`
+-- whenever every intermediate product stays in range. Input format:
+-- "a:b:c" where a, b, c are decimal UInt32 literals. The Haskell-side
+-- generator picks triples constructively from the no-overflow region
+-- (see `NoOverflowMulUInt32Triple` in PropertySpec.hs), so the
+-- OVERFLOW branch is never expected to fire.
+import IO.Stdout
+
+parseInput : String -> Either ParseError (Tuple3 UInt32 UInt32 UInt32)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 aStr rest) -> case splitOnFirst ":" rest of
+    Nothing -> Left ParseError
+    Just (Tuple2 bStr cStr) -> do
+      a <- parseUInt32 aStr
+      b <- parseUInt32 bStr
+      c <- parseUInt32 cStr
+      pureEither (Tuple3 a b c)
+
+property : UInt32 -> UInt32 -> UInt32 -> Either OverflowError Bool
+property a b c = do
+  ab <- mulUInt32 a b
+  abc <- mulUInt32 ab c
+  bc <- mulUInt32 b c
+  aBc <- mulUInt32 a bc
+  pureEither (eqUInt32 abc aBc)
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = do
+        raw <- rawArg
+        Tuple3 a b c <- parseInput raw
+        property a b c
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

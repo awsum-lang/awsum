@@ -1,0 +1,24 @@
+-- Property: `addUInt32 a 0 == Right a`. Right-identity of zero under
+-- addition. Single UInt32 input. Adding 0 is always in range, so
+-- OVERFLOW cannot fire on a well-formed input.
+import IO.Stdout
+
+property : UInt32 -> Either OverflowError Bool
+property a = do
+  r <- addUInt32 a 0
+  pureEither (eqUInt32 r a)
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = do
+        raw <- rawArg
+        a <- parseUInt32 raw
+        property a
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

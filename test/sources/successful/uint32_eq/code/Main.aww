@@ -1,0 +1,18 @@
+{- `eqUInt32`: high-bit values (≥ 2^31) smoke-test signedness — bit-pattern equality is sign-agnostic. -}
+import IO.Stdout
+
+render : Bool -> String
+render b = case b of
+  True -> "T"
+  False -> "F"
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- render (eqUInt32 minUInt32 minUInt32) ++ render (eqUInt32 maxUInt32 maxUInt32)
+        s1 <- s0 ++ render (eqUInt32 maxUInt32 minUInt32)
+        s2 <- s1 ++ render (eqUInt32 2147483648 2147483648)
+        s2 ++ render (eqUInt32 2147483648 2147483647)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

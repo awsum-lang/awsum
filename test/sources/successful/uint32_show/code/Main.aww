@@ -1,0 +1,17 @@
+{- `showUInt32`: full range; values 2^31..2^32-1 trap signed-int divergence on JVM/CLR. -}
+import IO.Stdout
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- showUInt32 minUInt32 ++ ", "
+        s1 <- s0 ++ showUInt32 42
+        s2 <- s1 ++ ", "
+        s3 <- s2 ++ showUInt32 2147483648
+        s4 <- s3 ++ ", "
+        s5 <- s4 ++ showUInt32 4000000000
+        s6 <- s5 ++ ", "
+        s6 ++ showUInt32 maxUInt32
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

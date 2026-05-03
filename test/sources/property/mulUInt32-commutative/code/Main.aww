@@ -1,0 +1,34 @@
+-- Property: `mulUInt32 a b == mulUInt32 b a` whenever the product stays
+-- in range. Input format: "a:b". The Haskell-side generator picks
+-- pairs constructively from the no-overflow region, so OVERFLOW is
+-- never expected to fire on a well-formed input.
+import IO.Stdout
+
+parseInput : String -> Either ParseError (Tuple2 UInt32 UInt32)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 aStr bStr) -> do
+    a <- parseUInt32 aStr
+    b <- parseUInt32 bStr
+    pureEither (Tuple2 a b)
+
+property : UInt32 -> UInt32 -> Either OverflowError Bool
+property a b = do
+  ab <- mulUInt32 a b
+  ba <- mulUInt32 b a
+  pureEither (eqUInt32 ab ba)
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = do
+        raw <- rawArg
+        Tuple2 a b <- parseInput raw
+        property a b
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

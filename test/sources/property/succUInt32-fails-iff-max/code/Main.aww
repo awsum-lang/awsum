@@ -1,0 +1,23 @@
+-- Property: `succUInt32 x` fails iff `x == maxUInt32`. Both branches
+-- must be exercised, so the Haskell-side generator biases towards
+-- the boundary to make it appear in 100-test runs.
+import IO.Stdout
+
+property : UInt32 -> Bool
+property x = case succUInt32 x of
+  Left _ -> eqUInt32 x maxUInt32
+  Right _ -> not (eqUInt32 x maxUInt32)
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
+        raw <- rawArg
+        x <- parseUInt32 raw
+        pureEither (property x)
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"
