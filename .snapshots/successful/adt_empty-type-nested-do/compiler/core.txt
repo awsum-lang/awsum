@@ -1,0 +1,9 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CBuiltIn "IO.Stdout.print" )
+                [ CString "ok" ]
+            )
+        ]
+    }
