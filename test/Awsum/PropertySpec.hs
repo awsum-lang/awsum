@@ -55,7 +55,7 @@ propertySourceFile dir = "test/sources/property" </> dir </> "code" </> "Main.aw
 
 spec :: Spec
 spec = describe "Property tests"
-  $ modifyMaxSuccess (const 20)
+  $ modifyMaxSuccess (const 100)
   $ forM_ properties
   $ \(SomeProperty p) ->
     describe (toString p.propName) $ do
