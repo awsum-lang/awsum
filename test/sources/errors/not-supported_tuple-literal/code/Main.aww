@@ -1,0 +1,9 @@
+-- Not yet supported: comma-separated tuple literal syntax `(1, 2)`.
+-- The grammar's `Atom` form `( Expr )` is single-expression parens —
+-- the comma is not a token in expressions. Workaround: build pairs
+-- with the prelude's `Tuple2` constructor (`Tuple2 1 2`); the same
+-- applies to triples (`Tuple3 a b c`).
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (1, 2)

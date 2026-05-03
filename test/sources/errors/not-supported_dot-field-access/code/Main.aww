@@ -1,0 +1,16 @@
+-- Not yet supported: dot-syntax field access (`record.field`).
+-- The `.` token is reserved for module-path qualification and only
+-- legal between two `UIdent`s (or a final `LIdent`) inside a
+-- `QName`. After a value-level identifier the parser rejects the
+-- `.field` continuation. Workaround: pattern-match on the type's
+-- constructor to bind the field, or write a named projection
+-- function.
+import IO.Stdout
+
+type Pair = Pair Int32 Int32
+
+first : Pair -> Int32
+first p = p.x
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

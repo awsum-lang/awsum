@@ -1,0 +1,14 @@
+-- Not yet supported: operator sections (`(+) 1 2`, `(+ 1)`, etc.).
+-- Awsum has no user-facing arithmetic operators, and the only
+-- parens-wrapped operator the grammar accepts is the literal `(++)`
+-- — that exists exclusively so the prelude can spell its own
+-- declaration `(++) = BuiltIn.concatString`. Any other `(op …)`
+-- shape is rejected by the parser. Workaround: call the named
+-- prelude function directly.
+import IO.Stdout
+
+inc : Int32 -> Int32
+inc = (+) 1
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

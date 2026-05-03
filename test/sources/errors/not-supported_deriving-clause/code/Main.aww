@@ -1,0 +1,14 @@
+-- Not yet supported: `deriving` clauses on type declarations. The
+-- `TypeDecl` grammar ends after the last `ConDef`; `deriving` is not
+-- recognised as a trailing token. The parser instead reads
+-- `deriving (Show)` as additional positional fields of the last
+-- constructor — `deriving` becomes a free type variable in the
+-- field list, surfacing as `Unknown type variable: 'deriving'` from
+-- the typechecker. Workaround: write `showFoo` etc. by hand;
+-- type-class-driven deriving will appear with the type-class system.
+import IO.Stdout
+
+type Foo = MkFoo deriving (Show)
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

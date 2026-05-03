@@ -1,0 +1,12 @@
+-- Not yet supported: kind annotations on type parameters using `*`
+-- (or `Type`). The `TypeDecl` rule's parameter list is
+-- `{ LIdent }` only — bare names, no `(name : kind)` form, and `*`
+-- is not a token in types. Awsum's only kind today is the implicit
+-- one for value-carrying types; kind polymorphism is not on the
+-- near roadmap.
+import IO.Stdout
+
+type Foo a (b : *) = MkFoo a b
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

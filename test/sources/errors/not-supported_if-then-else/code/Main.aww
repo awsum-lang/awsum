@@ -1,0 +1,12 @@
+-- Not yet supported: `if`/`then`/`else` expressions. Awsum has no
+-- conditional sugar in this iteration — `if` is not a reserved word,
+-- so the parser accepts it as an ordinary `LIdent` and the
+-- typechecker reaches `Unknown variable: if` first. Workaround:
+-- pattern-match on `Bool` directly with `case b of True -> … ; False -> …`.
+import IO.Stdout
+
+pick : Bool -> String
+pick b = if b then "yes" else "no"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (pick True)

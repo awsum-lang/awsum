@@ -1,0 +1,10 @@
+-- Not yet supported: defaulting an integer literal on the RHS of
+-- `let n = 1 in body`. With no defaulting and no expected-type pinning
+-- at the `let` site, the typechecker raises `MissingLetAnnotation`.
+-- This is the same shape as the related `let-ambiguous-do-row-union`
+-- case but specialised to integer literals — an annotation is the
+-- universal fix. Workaround: write `let n : Int32 = 1 in body`.
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = let n = 1 in IO.Stdout.print (showInt32 n)

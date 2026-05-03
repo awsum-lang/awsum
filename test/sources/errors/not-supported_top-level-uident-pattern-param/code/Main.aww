@@ -1,0 +1,16 @@
+-- Not yet supported: bare-constructor parameter patterns on a
+-- top-level definition (`f Nothing = …`). The `ParamBinder` rule is
+-- `LIdent | "(" Pattern ")"` — a constructor pattern needs explicit
+-- parens to be distinguished from a sequence of bare-name parameters
+-- (otherwise `f Tuple3 a b c` would mean four parameters, not one
+-- destructured tuple). The parser sees the `Nothing` UIdent and
+-- rejects it where it expected `(` or `:` or `=`. Workaround: wrap
+-- the pattern in parens — `f (Nothing) = …` (then beware
+-- exhaustiveness on multi-constructor scrutinees).
+import IO.Stdout
+
+describe : Maybe Int32 -> String
+describe Nothing = "no"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe Nothing)

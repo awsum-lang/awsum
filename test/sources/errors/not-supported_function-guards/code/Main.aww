@@ -1,0 +1,13 @@
+-- Not yet supported: guarded equations on function definitions
+-- (`f x | cond = body`). A `FunDef` is `DeclName { ParamBinder }
+-- "=" Expr`; there is no `|` guard slot before the `=`. Workaround:
+-- write the body as a `case` on the guard's result.
+import IO.Stdout
+
+describe : Bool -> String
+describe x
+  | x = "true"
+  | True = "false"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe True)

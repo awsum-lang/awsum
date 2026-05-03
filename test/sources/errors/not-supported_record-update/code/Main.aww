@@ -1,0 +1,13 @@
+-- Not yet supported: record-update syntax (`r { field = value }`).
+-- Awsum has no record types and no record-update form; `{` is not
+-- a token in expressions. Workaround: rebuild the value with the
+-- type's constructor, copying the unchanged fields.
+import IO.Stdout
+
+type Wrap = Wrap Int32
+
+bump : Wrap -> Wrap
+bump w = w { field = 1 }
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

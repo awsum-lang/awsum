@@ -1,0 +1,14 @@
+-- Not yet supported: constraint contexts in type signatures
+-- (`Eq a => a -> a -> Bool`). Awsum has no type classes yet, so the
+-- `=>` token is not in the type grammar at all. The parser fails on
+-- the unexpected `=>` after the type expression. Workaround: write
+-- a monomorphic version against the concrete type
+-- (`eqInt32 : Int32 -> Int32 -> Bool`); polymorphic-class methods
+-- land with the type-class system.
+import IO.Stdout
+
+eqAny : Eq a => a -> a -> Bool
+eqAny x _y = x
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

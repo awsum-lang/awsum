@@ -1,0 +1,8 @@
+-- Not yet supported: Haskell's `$` low-precedence application
+-- operator. There are no user-facing operators in Awsum besides the
+-- single carved-out `(++)`. Workaround: write the application with
+-- explicit parens.
+import IO.Stdout
+
+main : String -> IO Unit
+main input = IO.Stdout.print $ input

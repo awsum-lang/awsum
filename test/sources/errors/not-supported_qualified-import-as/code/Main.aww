@@ -1,0 +1,9 @@
+-- Not yet supported: import aliases (`import Foo.Bar as F`). The
+-- `Import` rule is `"import" ModulePath` — there is no `as` clause
+-- following the module path. Workaround: refer to imported names by
+-- their full module path (`IO.Stdout.print`); aliasing arrives with
+-- the full module-system pass.
+import IO.Stdout as Out
+
+main : String -> IO Unit
+main input = Out.print input

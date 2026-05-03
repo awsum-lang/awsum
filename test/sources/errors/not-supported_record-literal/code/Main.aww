@@ -1,0 +1,9 @@
+-- Not yet supported: record literal syntax `{ field = value }`. Awsum
+-- has no record types, no record literal syntax, and no field-projection
+-- syntax — `{` is not a recognised token in expressions. Workaround:
+-- declare a single-constructor sum (`type Point = Point Int32 Int32`)
+-- and build / destructure positionally.
+import IO.Stdout
+
+main : String -> IO Unit
+main _input = IO.Stdout.print { x = 1 }

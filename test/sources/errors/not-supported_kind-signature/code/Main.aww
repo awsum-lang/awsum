@@ -1,0 +1,12 @@
+-- Not yet supported: explicit kind signatures on type parameters
+-- (`type T (a : Type) = …`). Type parameters are bare `LIdent`s in
+-- the `TypeDecl` rule; there is no place for a `( a : K )` ascription.
+-- Awsum has only one kind in this iteration (`Type`), and kinds are
+-- not user-visible at all. Workaround: drop the ascription —
+-- `type Foo a = MkFoo a` is the right shape.
+import IO.Stdout
+
+type Foo (a : Type) = MkFoo a
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"

@@ -1,0 +1,14 @@
+-- Not yet supported: as-patterns / @-patterns
+-- (`whole@(Just x) -> …`). The grammar has no `@` token at pattern
+-- position; `Pattern` is only a constructor-application, a name, or
+-- a type-ascribed pattern. Workaround: bind the whole scrutinee in
+-- a `let` outside the `case` and refer to it by that name.
+import IO.Stdout
+
+describe : Maybe Int32 -> String
+describe m = case m of
+  whole@(Just x) -> showInt32 x
+  Nothing -> "no"
+
+main : String -> IO Unit
+main _input = IO.Stdout.print (describe Nothing)

@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":9,"startCol":10,"endLine":9,"endCol":10,"message":"unexpected \"(a\"\nexpecting \"--\", '=', end of input, or end of line","fixes":[]}]

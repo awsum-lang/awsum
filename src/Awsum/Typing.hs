@@ -1346,8 +1346,7 @@ typeOfExpr conEnv tcm env = \case
   -- shared tyvar locally, returns its result, and discards the
   -- substitution. We therefore get operationally-correct
   -- polymorphism for closed lambdas without the full HM-monad
-  -- threading. See "Synthesis для замкнутых лямбд" in the strategy
-  -- doc for the rationale.
+  -- threading.
   ELam sp params body -> do
     checkNoShadow env S.empty [(s, n) | Param s n <- params]
     let suffix = "$" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)

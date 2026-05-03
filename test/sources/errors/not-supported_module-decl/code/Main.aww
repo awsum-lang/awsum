@@ -1,0 +1,13 @@
+-- Not yet supported: explicit `module Foo where` headers. Awsum has
+-- exactly two modules in this iteration — the bundled prelude and the
+-- user program — and no surface syntax for declaring a module name.
+-- `module` is not reserved, so the parser treats the line as an
+-- ordinary signature whose name is `module`, expecting `:` next.
+-- Workaround: drop the header; `module Foo where` will land alongside
+-- the multi-file module system.
+module Main where
+
+import IO.Stdout
+
+main : String -> IO Unit
+main input = IO.Stdout.print input

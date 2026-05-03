@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":11,"startCol":13,"endLine":11,"endCol":14,"message":"Type mismatch: expected a$11_8, got <integer literal>","fixes":[]}]

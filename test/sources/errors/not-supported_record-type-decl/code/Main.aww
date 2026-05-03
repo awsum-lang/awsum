@@ -1,0 +1,12 @@
+-- Not yet supported: record-style type declarations
+-- `type T = T { field : Type }`. The `ConDef` rule accepts only
+-- positional `TypeAtom` fields — there is no curly-brace field-name
+-- form. Workaround: a positional single-constructor sum
+-- (`type Point = Point Int32 Int32`), with named accessors written by
+-- hand if needed.
+import IO.Stdout
+
+type Point = Point { x : Int32, y : Int32 }
+
+main : String -> IO Unit
+main _input = IO.Stdout.print "ok"
