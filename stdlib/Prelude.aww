@@ -11,8 +11,8 @@
 
 -- ---------------------- String
 
-(++) : String -> String -> String
-(++) = BuiltIn.concatString
+(++) : String -> String -> Either StringTooLong String
+(++) a b = Right (BuiltIn.concatString a b)
 
 {- Split a string at the first occurrence of `separator`. Returns
    `Just (Tuple2 prefix suffix)` such that
@@ -185,6 +185,36 @@ type OverflowError = OverflowError
 
 showOverflowError : OverflowError -> String
 showOverflowError _ = "OverflowError"
+
+-- ---------------------- StringTooLong
+
+{- Reported by string operations (`(++)`, future input parsing) when the
+   resulting string would exceed the language-fixed maximum length.
+   Single-constructor sum — there is nothing to pattern-match on beyond
+   the fact that it happened. The maximum length value and unit are
+   pinned by the runtime contract and are equivalent across all backends. -}
+
+type StringTooLong = StringTooLong
+
+showStringTooLong : StringTooLong -> String
+showStringTooLong _ = "StringTooLong"
+
+-- ---------------------- UnpairedUtf16Surrogate
+
+{- Reported by string-construction primitives that take input from outside
+   the runtime (CLI arguments, interactive input, FFI) when a UTF-16
+   half-surrogate appears without its mate. Awsum strings are strict
+   UTF-16; one-half surrogates are not representable in the language,
+   so the boundary that decodes external bytes into an Awsum `String`
+   reports them through this label. Internal-only strings stay valid
+   by construction (every operation that synthesises a `String` is
+   closed under UTF-16 validity), so this never appears as the result
+   of a pure computation — only at the I/O boundary. -}
+
+type UnpairedUtf16Surrogate = UnpairedUtf16Surrogate
+
+showUnpairedUtf16Surrogate : UnpairedUtf16Surrogate -> String
+showUnpairedUtf16Surrogate _ = "UnpairedUtf16Surrogate"
 
 -- ---------------------- ParseError
 

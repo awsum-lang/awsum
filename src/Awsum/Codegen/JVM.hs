@@ -1214,6 +1214,23 @@ mainMethod =
       "  iconst_0",
       "  aaload",
       "call_main:",
+      -- Wrap input in `Right input` (tag=1, one field) before handing to user's
+      -- main. Layout matches CCon emit on JVM: Object[1+nFields] with boxed
+      -- Integer tag at index 0, fields at indices 1..  Stack holds the input
+      -- string at this point; we leave the input on the stack as a temp local
+      -- via `astore_1`, then build the Object[2], populate it, and call main.
+      "  astore_1",
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_1",
+      "  aastore",
       "  invokestatic AwsumMain/" <> mangle "main" <> "(" <> objDesc <> ")" <> objDesc,
       "  pop",
       "  return",

@@ -677,11 +677,17 @@ lowerExprM env locals expected = \case
     Just (TyCon _ "UInt8") -> pure (CIntLit n TUInt8)
     _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
+    -- (a ++ b) lowers to `Right (concatString a b)`, matching Prelude's
+    -- `(++) : String -> String -> Either StringTooLong String` claim.
+    -- Phase 1 always produces Right; the Left branch becomes reachable in
+    -- phase 2.x when length validation lands in the runtime.
     let strExpected = Just (TyCon noSpan "String")
      in do
           l' <- lowerExprM env locals strExpected l
           r' <- lowerExprM env locals strExpected r
-          pure (CCall (CBuiltIn "concatString") [l', r'])
+          let concatCall = CCall (CBuiltIn "concatString") [l', r']
+          -- 'Right' has tag 1 in `type Either a b = Left a | Right b`.
+          pure (CCon 1 [concatCall])
   ECon _sp name -> case M.lookup name (leConInfo env) of
     Just ci
       | ciArity ci == 0 -> do

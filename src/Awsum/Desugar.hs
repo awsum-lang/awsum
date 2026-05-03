@@ -152,7 +152,7 @@ desugarDo sp = go
           -- by hand. No special "refutable in do-bind" error.
           rightPat = PCon bsp "Right" [pat]
           arms = CaseAlt [] leftPat leftBody Nothing :| [CaseAlt [] rightPat body Nothing]
-      Right (ECase sp e' arms [])
+      Right (ECase bsp e' arms [])
     go (DoLet lsp pat mAnnot e : rest) = do
       e' <- desugarExpr e
       body <- go rest

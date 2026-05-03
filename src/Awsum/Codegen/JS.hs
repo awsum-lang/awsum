@@ -204,7 +204,9 @@ cliFooter =
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",
       "  const arg = process.argv[2] ?? \"\";",
-      "  if (typeof main === 'function') main(arg);",
+      -- Wrap input in `Right arg` (tag=1) before handing to user's main. Layout
+      -- matches CCon emit: `[tag, ...fields]`.
+      "  if (typeof main === 'function') main([1, arg]);",
       "}"
     ]
 
