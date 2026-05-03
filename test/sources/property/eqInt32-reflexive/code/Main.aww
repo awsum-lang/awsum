@@ -6,12 +6,16 @@ import IO.Stdout
 property : Int32 -> Bool
 property a = eqInt32 a a
 
-main : String -> IO Unit
-main raw =
-  let res : Either ParseError Bool = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
+        raw <- rawArg
         a <- parseInt32 raw
         pureEither (property a)
    in case res of
-        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"

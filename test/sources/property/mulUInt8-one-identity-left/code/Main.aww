@@ -8,13 +8,16 @@ property a = do
   r <- mulUInt8 1 a
   pureEither (eqUInt8 r a)
 
-main : String -> IO Unit
-main raw =
-  let res : Either (ParseError | OverflowError) Bool = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = do
+        raw <- rawArg
         a <- parseUInt8 raw
         property a
    in case res of
         Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
           (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"

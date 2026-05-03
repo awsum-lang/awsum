@@ -10,13 +10,16 @@ property x = do
   s <- succInt32 p
   pureEither (eqInt32 s x)
 
-main : String -> IO Unit
-main raw =
-  let res : Either (ParseError | UnderflowError | OverflowError) Bool = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
+        raw <- rawArg
         x <- parseInt32 raw
         property x
    in case res of
         Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
           (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
           (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"

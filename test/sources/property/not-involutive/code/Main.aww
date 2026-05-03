@@ -17,11 +17,15 @@ boolToStr b = case b of
 property : UInt8 -> String
 property n = boolToStr (not (not (intToBool n)))
 
-main : String -> IO Unit
-main raw =
-  let res : Either ParseError String = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
+        raw <- rawArg
         n <- parseUInt8 raw
         pureEither (property n)
    in case res of
-        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
