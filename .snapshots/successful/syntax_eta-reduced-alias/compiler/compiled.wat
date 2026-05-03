@@ -7,8 +7,9 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 65))
+  (global $heap (mut i32) (i32.const 77))
   (data (i32.const 64) "\00")
+  (data (i32.const 65) "INPUT_ERROR\00")
   (table 2 funcref)
   (elem (i32.const 0) $v_say $v_main)
 
@@ -80,10 +81,19 @@
   (func $v_say (param $v__eta0 i32) (result i32)
     (call $__print (local.get $v__eta0)))
 
-  (func $v_main (param $v_input i32) (result i32)
-    (call $v_say (local.get $v_input)))
+  (func $v_main (param $v_inputArg i32) (result i32)
+    (local $v___w0 i32)
+    (local $v_input i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v_inputArg)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (call $__print (i32.const 65))) (else (local.set $v_input (i32.load offset=4 (local.get $__scrut))) (call $v_say (local.get $v_input))))))
 
   (func $_start (export "_start")
-    (drop (call $v_main (call $__get_arg))))
+    (local $input i32)
+    (local $right_box i32)
+    (local.set $input (call $__get_arg))
+    (local.set $right_box (call $__alloc (i32.const 8)))
+    (i32.store (local.get $right_box) (i32.const 1))
+    (i32.store offset=4 (local.get $right_box) (local.get $input))
+    (drop (call $v_main (local.get $right_box))))
 
 )

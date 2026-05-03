@@ -13,7 +13,8 @@ CoreProgram
                         [
                             ( 0
                             , []
-                            , CString "Nothing"
+                            , CCon 1
+                                [ CString "Nothing" ]
                             )
                         ,
                             ( 1
@@ -28,24 +29,28 @@ CoreProgram
                                         [
                                             ( 0
                                             , []
-                                            , CString "Just True"
+                                            , CCon 1
+                                                [ CString "Just True" ]
                                             )
                                         ,
                                             ( 1
                                             , []
-                                            , CString "Just False"
+                                            , CCon 1
+                                                [ CString "Just False" ]
                                             )
                                         ]
                                     )
                                 ,
                                     ( 1759602215
                                     , "u"
-                                    , CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CString "Just "
-                                        , CCall
-                                            ( CVar "showUnit" )
-                                            [ CVar "u" ]
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CString "Just "
+                                            , CCall
+                                                ( CVar "showUnit" )
+                                                [ CVar "u" ]
+                                            ]
                                         ]
                                     )
                                 ]
@@ -55,28 +60,32 @@ CoreProgram
                 ,
                     ( 1615808600
                     , "s"
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "String "
-                        , CVar "s"
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "String "
+                            , CVar "s"
+                            ]
                         ]
                     )
                 ,
                     ( 2711245919
                     , "n"
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "Int32 "
-                        , CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "n" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "Int32 "
+                            , CCall
+                                ( CBuiltIn "showInt32" )
+                                [ CVar "n" ]
+                            ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "whatsThat" )
                     [ CRow 1454647603
@@ -86,6 +95,25 @@ CoreProgram
                             ]
                         )
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

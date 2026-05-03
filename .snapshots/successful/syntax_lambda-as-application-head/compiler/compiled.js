@@ -20,7 +20,7 @@ function v__lam_2(v_n){
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();

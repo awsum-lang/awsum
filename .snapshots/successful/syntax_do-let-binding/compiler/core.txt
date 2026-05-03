@@ -1,10 +1,6 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "pureEither" [ "x" ]
-            ( CCon 1
-                [ CVar "x" ]
-            )
-        , CFunDef "step1" [ "n" ]
+        [ CFunDef "step1" [ "n" ]
             ( CCase
                 ( CCall
                     ( CBuiltIn "addInt32" )
@@ -58,7 +54,9 @@ CoreProgram
                     ( 0
                     , [ "$do_e_18_3" ]
                     , CCon 0
-                        [ CVar "$do_e_18_3" ]
+                        [ CRow 1615808600
+                            ( CVar "$do_e_18_3" )
+                        ]
                     )
                 ,
                     ( 1
@@ -67,6 +65,28 @@ CoreProgram
                         ( CVar "$let$1" )
                         [ CVar "a"
                         , CString "answer="
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "renderErr" [ "e" ]
+            ( CRowCase
+                ( CVar "e" )
+                [
+                    ( 589989748
+                    , "__rw"
+                    , CCon 1
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1615808600
+                    , "s"
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "err: "
+                            , CVar "s"
+                            ]
                         ]
                     )
                 ]
@@ -80,13 +100,25 @@ CoreProgram
                 [
                     ( 0
                     , [ "e" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "err: "
-                            , CVar "e"
-                            ]
+                    , CCase
+                        ( CCall
+                            ( CVar "renderErr" )
+                            [ CVar "e" ]
+                        )
+                        [
+                            ( 0
+                            , [ "__w0" ]
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CString "STRING_TOO_LONG" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "out" ]
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CVar "out" ]
+                            )
                         ]
                     )
                 ,
@@ -111,13 +143,14 @@ CoreProgram
                     ( 0
                     , [ "$do_e_20_3" ]
                     , CCon 0
-                        [ CVar "$do_e_20_3" ]
+                        [ CRow 1615808600
+                            ( CVar "$do_e_20_3" )
+                        ]
                     )
                 ,
                     ( 1
                     , [ "b" ]
-                    , CCall
-                        ( CVar "pureEither" )
+                    , CCon 1
                         [ CCall
                             ( CBuiltIn "concatString" )
                             [ CVar "prefix"

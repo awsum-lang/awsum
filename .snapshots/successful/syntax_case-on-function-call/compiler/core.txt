@@ -1,17 +1,34 @@
 CoreProgram
     { cdecls =
         [ CFunDef "search" [ "key" ]
-            ( CCon 0
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CString "found:"
-                    , CVar "key"
+            ( CCase
+                ( CCon 1
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "found:"
+                        , CVar "key"
+                        ]
                     ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_8_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_8_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "found" ]
+                    , CCon 1
+                        [ CCon 0
+                            [ CVar "found" ]
+                        ]
+                    )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCase
                     ( CCall
                         ( CVar "search" )
@@ -19,15 +36,49 @@ CoreProgram
                     )
                     [
                         ( 0
-                        , [ "v" ]
-                        , CVar "v"
+                        , [ "e" ]
+                        , CCon 0
+                            [ CVar "e" ]
                         )
                     ,
                         ( 1
-                        , []
-                        , CString "nothing"
+                        , [ "__p0" ]
+                        , CCase
+                            ( CVar "__p0" )
+                            [
+                                ( 0
+                                , [ "v" ]
+                                , CCon 1
+                                    [ CVar "v" ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CCon 1
+                                    [ CString "nothing" ]
+                                )
+                            ]
                         )
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

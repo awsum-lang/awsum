@@ -1,10 +1,27 @@
 {- `mulUInt8`: `Left OverflowError` above 255; `255 * 255` traps sign-extension on JVM/CLR. -}
 import IO.Stdout
 
-render : Either OverflowError UInt8 -> String
+render : Either OverflowError UInt8 -> Either StringTooLong String
 render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (mulUInt8 15 17) ++ ", " ++ render (mulUInt8 16 16) ++ ", " ++ render (mulUInt8 maxUInt8 maxUInt8) ++ ", " ++ render (mulUInt8 minUInt8 200) ++ ", " ++ render (mulUInt8 1 200))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (mulUInt8 15 17)
+        b <- render (mulUInt8 16 16)
+        c <- render (mulUInt8 maxUInt8 maxUInt8)
+        d <- render (mulUInt8 minUInt8 200)
+        e <- render (mulUInt8 1 200)
+        s0 <- a ++ ", "
+        s1 <- s0 ++ b
+        s2 <- s1 ++ ", "
+        s3 <- s2 ++ c
+        s4 <- s3 ++ ", "
+        s5 <- s4 ++ d
+        s6 <- s5 ++ ", "
+        s6 ++ e
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

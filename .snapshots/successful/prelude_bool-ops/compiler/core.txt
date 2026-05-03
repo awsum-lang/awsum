@@ -68,66 +68,151 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CCall
-                        ( CBuiltIn "concatString" )
+                ( CVar "$let$1" )
+                [ CCase
+                    ( CCon 1
                         [ CCall
                             ( CBuiltIn "concatString" )
                             [ CCall
-                                ( CBuiltIn "concatString" )
+                                ( CVar "showBool" )
                                 [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CCall
-                                        ( CVar "showBool" )
-                                        [ CCall
-                                            ( CVar "not" )
-                                            [ CCon 0 [] ]
-                                        ]
-                                    , CCall
-                                        ( CVar "showBool" )
-                                        [ CCall
-                                            ( CVar "not" )
-                                            [ CCon 1 [] ]
-                                        ]
-                                    ]
-                                , CCall
-                                    ( CVar "showBool" )
-                                    [ CCall
-                                        ( CVar "and" )
-                                        [ CCon 0 []
-                                        , CCon 1 []
-                                        ]
-                                    ]
+                                    ( CVar "not" )
+                                    [ CCon 0 [] ]
                                 ]
                             , CCall
                                 ( CVar "showBool" )
                                 [ CCall
-                                    ( CVar "and" )
-                                    [ CCon 0 []
-                                    , CCon 0 []
+                                    ( CVar "not" )
+                                    [ CCon 1 [] ]
+                                ]
+                            ]
+                        ]
+                    )
+                    [
+                        ( 0
+                        , [ "$do_e_12_9" ]
+                        , CCon 0
+                            [ CVar "$do_e_12_9" ]
+                        )
+                    ,
+                        ( 1
+                        , [ "s0" ]
+                        , CCase
+                            ( CCon 1
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s0"
+                                    , CCall
+                                        ( CVar "showBool" )
+                                        [ CCall
+                                            ( CVar "and" )
+                                            [ CCon 0 []
+                                            , CCon 1 []
+                                            ]
+                                        ]
                                     ]
                                 ]
+                            )
+                            [
+                                ( 0
+                                , [ "$do_e_13_9" ]
+                                , CCon 0
+                                    [ CVar "$do_e_13_9" ]
+                                )
+                            ,
+                                ( 1
+                                , [ "s1" ]
+                                , CCase
+                                    ( CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s1"
+                                            , CCall
+                                                ( CVar "showBool" )
+                                                [ CCall
+                                                    ( CVar "and" )
+                                                    [ CCon 0 []
+                                                    , CCon 0 []
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    )
+                                    [
+                                        ( 0
+                                        , [ "$do_e_14_9" ]
+                                        , CCon 0
+                                            [ CVar "$do_e_14_9" ]
+                                        )
+                                    ,
+                                        ( 1
+                                        , [ "s2" ]
+                                        , CCase
+                                            ( CCon 1
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CVar "s2"
+                                                    , CCall
+                                                        ( CVar "showBool" )
+                                                        [ CCall
+                                                            ( CVar "or" )
+                                                            [ CCon 1 []
+                                                            , CCon 1 []
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                            )
+                                            [
+                                                ( 0
+                                                , [ "$do_e_15_9" ]
+                                                , CCon 0
+                                                    [ CVar "$do_e_15_9" ]
+                                                )
+                                            ,
+                                                ( 1
+                                                , [ "s3" ]
+                                                , CCon 1
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CVar "s3"
+                                                        , CCall
+                                                            ( CVar "showBool" )
+                                                            [ CCall
+                                                                ( CVar "or" )
+                                                                [ CCon 0 []
+                                                                , CCon 1 []
+                                                                ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
                             ]
-                        , CCall
-                            ( CVar "showBool" )
-                            [ CCall
-                                ( CVar "or" )
-                                [ CCon 1 []
-                                , CCon 1 []
-                                ]
-                            ]
-                        ]
-                    , CCall
-                        ( CVar "showBool" )
-                        [ CCall
-                            ( CVar "or" )
-                            [ CCon 0 []
-                            , CCon 1 []
-                            ]
-                        ]
+                        )
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

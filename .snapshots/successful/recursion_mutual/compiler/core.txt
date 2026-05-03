@@ -2,10 +2,29 @@ CoreProgram
     { cdecls =
         [ CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "handleA" )
                     [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         , CFunDef "$scc$handleA_handleB" [ "$args" ]
@@ -61,7 +80,8 @@ CoreProgram
                                 , CCall
                                     ( CVar "$apply$$scc$handleA_handleB" )
                                     [ CVar "$k"
-                                    , CString ""
+                                    , CCon 1
+                                        [ CString "" ]
                                     ]
                                 )
                             ]
@@ -106,7 +126,8 @@ CoreProgram
                                 , CCall
                                     ( CVar "$apply$$scc$handleA_handleB" )
                                     [ CVar "$k"
-                                    , CString ""
+                                    , CCon 1
+                                        [ CString "" ]
                                     ]
                                 )
                             ]
@@ -129,37 +150,91 @@ CoreProgram
                     ,
                         ( 1
                         , [ "$pk_1" ]
-                        , CContinue
-                            [ CVar "$pk_1"
-                            , CCall
-                                ( CBuiltIn "concatString" )
-                                [ CString "A"
-                                , CVar "$x"
-                                ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "$do_e_9_5" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 0
+                                        [ CVar "$do_e_9_5" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "rest" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CString "A"
+                                            , CVar "rest"
+                                            ]
+                                        ]
+                                    ]
+                                )
                             ]
                         )
                     ,
                         ( 2
                         , [ "$pk_2" ]
-                        , CContinue
-                            [ CVar "$pk_2"
-                            , CCall
-                                ( CBuiltIn "concatString" )
-                                [ CString "B"
-                                , CVar "$x"
-                                ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "$do_e_18_5" ]
+                                , CContinue
+                                    [ CVar "$pk_2"
+                                    , CCon 0
+                                        [ CVar "$do_e_18_5" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "rest" ]
+                                , CContinue
+                                    [ CVar "$pk_2"
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CString "B"
+                                            , CVar "rest"
+                                            ]
+                                        ]
+                                    ]
+                                )
                             ]
                         )
                     ,
                         ( 3
                         , [ "$pk_3" ]
-                        , CContinue
-                            [ CVar "$pk_3"
-                            , CCall
-                                ( CBuiltIn "concatString" )
-                                [ CString "C"
-                                , CVar "$x"
-                                ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "$do_e_22_5" ]
+                                , CContinue
+                                    [ CVar "$pk_3"
+                                    , CCon 0
+                                        [ CVar "$do_e_22_5" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "rest" ]
+                                , CContinue
+                                    [ CVar "$pk_3"
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CString "C"
+                                            , CVar "rest"
+                                            ]
+                                        ]
+                                    ]
+                                )
                             ]
                         )
                     ]

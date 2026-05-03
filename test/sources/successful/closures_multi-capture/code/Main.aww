@@ -7,8 +7,17 @@ apply f x = f x
 zero : Int32
 zero = 0
 
-both : Int32 -> Int32 -> String
-both a b = apply (\_n -> showInt32 a ++ "/" ++ showInt32 b) zero
+both : Int32 -> Int32 -> Either StringTooLong String
+both a b = apply (\_n -> bothBody a b) zero
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (both 11 22)
+bothBody : Int32 -> Int32 -> Either StringTooLong String
+bothBody a b = do
+  s0 <- showInt32 a ++ "/"
+  s0 ++ showInt32 b
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = both 11 22
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

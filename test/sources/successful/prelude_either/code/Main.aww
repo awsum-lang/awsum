@@ -1,10 +1,18 @@
 {- `Either a b` from prelude (no import). -}
 import IO.Stdout
 
-unwrap : Either String String -> String
+unwrap : Either String String -> Either StringTooLong String
 unwrap r = case r of
   Left e -> "left: " ++ e
   Right v -> "right: " ++ v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (unwrap (Left "bad") ++ ", " ++ unwrap (Right "good"))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- unwrap (Left "bad")
+        b <- unwrap (Right "good")
+        s0 <- a ++ ", "
+        s0 ++ b
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

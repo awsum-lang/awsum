@@ -18,12 +18,16 @@ run x = do
   a <- opA x
   opB a
 
-describe : Either (ErrA | ErrB) Int32 -> String
+describe : Either (ErrA | ErrB) Int32 -> Either StringTooLong String
 describe r = case r of
   Left e -> case e of
-    (_ : ErrA) -> "ErrA"
-    (_ : ErrB) -> "ErrB"
+    (_ : ErrA) -> Right "ErrA"
+    (_ : ErrB) -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (describe (run 5))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = describe (run 5)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

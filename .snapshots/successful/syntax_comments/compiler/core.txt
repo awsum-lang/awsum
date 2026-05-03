@@ -1,9 +1,23 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "input" ]
-            ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CVar "input" ]
+        [ CFunDef "main" [ "inputArg" ]
+            ( CCase
+                ( CVar "inputArg" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "INPUT_ERROR" ]
+                    )
+                ,
+                    ( 1
+                    , [ "input" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "input" ]
+                    )
+                ]
             )
         ]
     }

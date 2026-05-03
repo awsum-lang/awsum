@@ -13,14 +13,21 @@ step2 n = case mulInt32 n 2 of
   Left _e -> Left "overflow"
   Right m -> Right m
 
-run : Int32 -> Either String String
+run : Int32 -> Either (String | StringTooLong) String
 run start = do
   a <- step1 start
   let prefix = "answer="
   b <- step2 a
-  pureEither (prefix ++ showInt32 b)
+  prefix ++ showInt32 b
 
-main : String -> IO Unit
+renderErr : (String | StringTooLong) -> Either StringTooLong String
+renderErr e = case e of
+  (s : String) -> "err: " ++ s
+  (_ : StringTooLong) -> Right "STRING_TOO_LONG"
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = case run 5 of
-  Left e -> IO.Stdout.print ("err: " ++ e)
+  Left e -> case renderErr e of
+    Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+    Right out -> IO.Stdout.print out
   Right s -> IO.Stdout.print s

@@ -2,19 +2,27 @@
    in `case`, frames stay live until termination. -}
 import IO.Stdout
 
-countDown : UInt8 -> Either UnderflowError String
+countDown : UInt8 -> Either (UnderflowError | StringTooLong) String
 countDown n = case eqUInt8 n 0 of
   True -> Right (showUInt8 n)
   False -> case predUInt8 n of
     Left e -> Left e
     Right m -> case countDown m of
       Left e -> Left e
-      Right s -> Right (showUInt8 n ++ "," ++ s)
+      Right s -> case showUInt8 n ++ "," of
+        Left e -> Left e
+        Right s0 -> s0 ++ s
 
-showResult : Either UnderflowError String -> String
+showResult : Either (UnderflowError | StringTooLong) String -> Either StringTooLong String
 showResult r = case r of
-  Left e -> "left: " ++ showUnderflowError e
+  Left e -> case e of
+    (u : UnderflowError) -> "left: " ++ showUnderflowError u
+    (_ : StringTooLong) -> Right "STRING_TOO_LONG"
   Right s -> "right: " ++ s
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (showResult (countDown 255))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = showResult (countDown 255)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

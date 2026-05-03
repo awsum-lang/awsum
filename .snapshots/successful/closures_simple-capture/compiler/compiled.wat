@@ -133,6 +133,12 @@
     (call $v__lam_1 (local.get $v__df_apply_0_cap0_0) (local.get $v_x)))
 
   (func $_start (export "_start")
-    (drop (call $v_main (call $__get_arg))))
+    (local $input i32)
+    (local $right_box i32)
+    (local.set $input (call $__get_arg))
+    (local.set $right_box (call $__alloc (i32.const 8)))
+    (i32.store (local.get $right_box) (i32.const 1))
+    (i32.store offset=4 (local.get $right_box) (local.get $input))
+    (drop (call $v_main (local.get $right_box))))
 
 )

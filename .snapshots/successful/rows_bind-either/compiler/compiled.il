@@ -148,7 +148,17 @@
     ldelem.ref
     stloc.1
     pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "ErrA"
+    stelem.ref
     br.s IL_join
   IL_arm_2269767818:
     dup
@@ -156,7 +166,17 @@
     ldelem.ref
     stloc.1
     pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "ErrB"
+    stelem.ref
     br.s IL_join
   IL_join:
     br.s IL_join
@@ -166,10 +186,20 @@
     ldelem.ref
     stloc.0
     pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "Ok "
     ldloc.0
     callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
+    stelem.ref
     br.s IL_join
   IL_join:
     ret
@@ -182,7 +212,7 @@
     box [System.Runtime]System.Int32
     call object AwsumMain::v_run(object)
     call object AwsumMain::v_describe(object)
-    call object AwsumMain::__print(object)
+    call object AwsumMain::v__let_2(object)
     ret
   }
 
@@ -245,9 +275,41 @@
     ret
   }
 
+
+  .method private hidebysig static object v__let_2(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldstr "STRING_TOO_LONG"
+    call object AwsumMain::__print(object)
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    call object AwsumMain::__print(object)
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
+    .locals init (object input)
     ldarg.0
     ldlen
     conv.i4
@@ -260,6 +322,18 @@
     ldc.i4.0
     ldelem.ref
   call_main:
+    stloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     call object AwsumMain::v_main(object)
     pop
     ret

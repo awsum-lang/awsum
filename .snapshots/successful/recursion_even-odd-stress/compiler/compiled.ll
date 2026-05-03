@@ -16,6 +16,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.2 = private unnamed_addr constant [6 x i8] c"false\00"
 @.str.3 = private unnamed_addr constant [7 x i8] c"left: \00"
 @.str.4 = private unnamed_addr constant [8 x i8] c"right: \00"
+@.str.5 = private unnamed_addr constant [16 x i8] c"STRING_TOO_LONG\00"
 
 define internal ptr @__concat(ptr %a, ptr %b) {
   %la = call i64 @strlen(ptr %a)
@@ -105,30 +106,42 @@ define internal ptr @v_showResult(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.12 ]
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.16 ]
 case.arm.0.5:
   %t7 = getelementptr ptr, ptr %v_r, i32 1
   %t8 = load ptr, ptr %t7
-  %t9 = getelementptr [7 x i8], ptr @.str.3, i64 0, i64 0
-  %t10 = call ptr @v_showUnderflowError(ptr %t8)
-  %t11 = call ptr @__concat(ptr %t9, ptr %t10)
+  %t9 = call ptr @malloc(i64 16)
+  %t10 = inttoptr i64 1 to ptr
+  %t11 = getelementptr ptr, ptr %t9, i32 0
+  store ptr %t10, ptr %t11
+  %t12 = getelementptr [7 x i8], ptr @.str.3, i64 0, i64 0
+  %t13 = call ptr @v_showUnderflowError(ptr %t8)
+  %t14 = call ptr @__concat(ptr %t12, ptr %t13)
+  %t15 = getelementptr ptr, ptr %t9, i32 1
+  store ptr %t14, ptr %t15
   br label %case.end.0.6
 case.end.0.6:
   br label %case.join.4
-case.arm.1.12:
-  %t14 = getelementptr ptr, ptr %v_r, i32 1
-  %t15 = load ptr, ptr %t14
-  %t16 = getelementptr [8 x i8], ptr @.str.4, i64 0, i64 0
-  %t17 = call ptr @v_showBool(ptr %t15)
-  %t18 = call ptr @__concat(ptr %t16, ptr %t17)
-  br label %case.end.1.13
-case.end.1.13:
+case.arm.1.16:
+  %t18 = getelementptr ptr, ptr %v_r, i32 1
+  %t19 = load ptr, ptr %t18
+  %t20 = call ptr @malloc(i64 16)
+  %t21 = inttoptr i64 1 to ptr
+  %t22 = getelementptr ptr, ptr %t20, i32 0
+  store ptr %t21, ptr %t22
+  %t23 = getelementptr [8 x i8], ptr @.str.4, i64 0, i64 0
+  %t24 = call ptr @v_showBool(ptr %t19)
+  %t25 = call ptr @__concat(ptr %t23, ptr %t24)
+  %t26 = getelementptr ptr, ptr %t20, i32 1
+  store ptr %t25, ptr %t26
+  br label %case.end.1.17
+case.end.1.17:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t19 = phi ptr [%t11, %case.end.0.6], [%t18, %case.end.1.13]
-  ret ptr %t19
+  %t27 = phi ptr [%t9, %case.end.0.6], [%t20, %case.end.1.17]
+  ret ptr %t27
 }
 
 define internal ptr @v_main(ptr %v__input) {
@@ -136,8 +149,35 @@ define internal ptr @v_main(ptr %v__input) {
   store i32 1000000, ptr %t0
   %t1 = call ptr @v_evenInt(ptr %t0)
   %t2 = call ptr @v_showResult(ptr %t1)
-  %t3 = call ptr @__print(ptr %t2)
+  %t3 = call ptr @v__let_1(ptr %t2)
   ret ptr %t3
+}
+
+define internal ptr @v__let_1(ptr %v_res) {
+  %t0 = getelementptr ptr, ptr %v_res, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.11 ]
+case.arm.0.5:
+  %t7 = getelementptr ptr, ptr %v_res, i32 1
+  %t8 = load ptr, ptr %t7
+  %t9 = getelementptr [16 x i8], ptr @.str.5, i64 0, i64 0
+  %t10 = call ptr @__print(ptr %t9)
+  br label %case.end.0.6
+case.end.0.6:
+  br label %case.join.4
+case.arm.1.11:
+  %t13 = getelementptr ptr, ptr %v_res, i32 1
+  %t14 = load ptr, ptr %t13
+  %t15 = call ptr @__print(ptr %t14)
+  br label %case.end.1.12
+case.end.1.12:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t16 = phi ptr [%t10, %case.end.0.6], [%t15, %case.end.1.12]
+  ret ptr %t16
 }
 
 define internal ptr @v__scc_evenInt_oddInt(ptr %v__args) {
@@ -291,6 +331,12 @@ no_arg:
   br label %call_main
 call_main:
   %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]
-  call ptr @v_main(ptr %input)
+  %right_box = call ptr @malloc(i64 16)
+  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0
+  %right_tag = inttoptr i64 1 to ptr
+  store ptr %right_tag, ptr %right_tag_ptr
+  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1
+  store ptr %input, ptr %right_payload_ptr
+  call ptr @v_main(ptr %right_box)
   ret i32 0
 }

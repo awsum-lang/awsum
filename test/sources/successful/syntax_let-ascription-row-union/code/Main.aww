@@ -12,7 +12,7 @@ opA = Right 1
 opB : Either ErrB Int32
 opB = Right 2
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _ =
   let res : Either (ParseError | ErrA | ErrB) Int32 = do
         a <- opA

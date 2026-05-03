@@ -4,5 +4,7 @@ import IO.Stdout
 say : String -> IO Unit
 say = IO.Stdout.print
 
-main : String -> IO Unit
-main input = say input
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main inputArg = case inputArg of
+  Left _ -> IO.Stdout.print "INPUT_ERROR"
+  Right input -> say input

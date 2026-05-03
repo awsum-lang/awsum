@@ -3,19 +3,29 @@ import IO.Stdout
 
 type Step = StepA | StepB | StepC | Done
 
-handleA : Step -> String
+handleA : Step -> Either StringTooLong String
 handleA step = case step of
-  StepA -> "A" ++ handleB StepB
+  StepA -> do
+    rest <- handleB StepB
+    "A" ++ rest
   StepB -> handleB step
   StepC -> handleB step
-  Done -> ""
+  Done -> Right ""
 
-handleB : Step -> String
+handleB : Step -> Either StringTooLong String
 handleB step = case step of
-  StepB -> "B" ++ handleA StepC
+  StepB -> do
+    rest <- handleA StepC
+    "B" ++ rest
   StepA -> handleA step
-  StepC -> "C" ++ handleA Done
-  Done -> ""
+  StepC -> do
+    rest <- handleA Done
+    "C" ++ rest
+  Done -> Right ""
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (handleA StepA)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = handleA StepA
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

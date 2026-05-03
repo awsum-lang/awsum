@@ -24,12 +24,19 @@ g = do
   b <- op2WithA a
   pureEither b
 
-describe : Either (ErrA | ErrB) Int32 -> String
+describe : Either (ErrA | ErrB) Int32 -> Either StringTooLong String
 describe r = case r of
   Left e -> case e of
-    (_ : ErrA) -> "ErrA"
-    (_ : ErrB) -> "ErrB"
+    (_ : ErrA) -> Right "ErrA"
+    (_ : ErrB) -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (showInt32 inc42 ++ " / " ++ describe g)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        d <- describe g
+        s0 <- showInt32 inc42 ++ " / "
+        s0 ++ d
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

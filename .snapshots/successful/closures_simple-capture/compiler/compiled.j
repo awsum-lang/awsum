@@ -69,6 +69,18 @@ has_arg:
   iconst_0
   aaload
 call_main:
+  astore_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
   invokestatic AwsumMain/v_main(Ljava/lang/Object;)Ljava/lang/Object;
   pop
   return

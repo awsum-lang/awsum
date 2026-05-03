@@ -6,10 +6,18 @@ threeAndDouble n = case mulInt32 n 2 of
   Left _ -> Tuple2 n n
   Right d -> Tuple2 n d
 
-show : Tuple2 Int32 Int32 -> String
+show : Tuple2 Int32 Int32 -> Either StringTooLong String
 show pair =
   let (Tuple2 a b) = pair
-   in "[" ++ showInt32 a ++ ", " ++ showInt32 b ++ "]"
+   in do
+        s0 <- "[" ++ showInt32 a
+        s1 <- s0 ++ ", "
+        s2 <- s1 ++ showInt32 b
+        s2 ++ "]"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (show (threeAndDouble 5))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = show (threeAndDouble 5)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

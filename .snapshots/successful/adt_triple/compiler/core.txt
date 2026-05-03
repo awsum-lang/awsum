@@ -11,20 +11,9 @@ CoreProgram
                         , "c"
                         ]
                     , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "a"
-                                    , CString " "
-                                    ]
-                                , CVar "b"
-                                ]
-                            , CString " "
-                            ]
+                        ( CVar "h0" )
+                        [ CVar "a"
+                        , CVar "b"
                         , CVar "c"
                         ]
                     )
@@ -32,7 +21,7 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "showTriple" )
                     [ CCon 0
@@ -41,6 +30,98 @@ CoreProgram
                         , CString "three"
                         ]
                     ]
+                ]
+            )
+        , CFunDef "h0"
+            [ "a"
+            , "b"
+            , "c"
+            ]
+            ( CCase
+                ( CCon 1
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CVar "a"
+                        , CString " "
+                        ]
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_20_5" ]
+                    , CCon 0
+                        [ CVar "$do_e_20_5" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s0" ]
+                    , CCase
+                        ( CCon 1
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CVar "b"
+                                ]
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_21_5" ]
+                            , CCon 0
+                                [ CVar "$do_e_21_5" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "s1" ]
+                            , CCase
+                                ( CCon 1
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CString " "
+                                        ]
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "$do_e_22_5" ]
+                                    , CCon 0
+                                        [ CVar "$do_e_22_5" ]
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "s2" ]
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CVar "c"
+                                            ]
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

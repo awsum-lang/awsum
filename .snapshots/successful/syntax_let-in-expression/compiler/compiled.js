@@ -3,28 +3,56 @@
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
 function v_pad(v_s){
-    return (v__let_2)(("[" + v_s));
+    {
+      const __s = [1, ("[" + v_s)];
+      switch (__s[0]) {
+        case 0: {
+          const v__do_e_7_3 = __s[1];
+          return [0, v__do_e_7_3];
+        }
+        case 1: {
+          const v_p = __s[1];
+          {
+            const __s = [1, (v_p + "]")];
+            switch (__s[0]) {
+              case 0: {
+                const v__do_e_8_3 = __s[1];
+                return [0, v__do_e_8_3];
+              }
+              case 1: {
+                const v_q = __s[1];
+                return [1, (v_q + v_q)];
+              }
+            }
+          }
+        }
+      }
+    }
 }
 
 function main(v__input){
-    return __print((v__let_3)((("<" + (v_pad)("hi")) + ">")));
+    return (v__let_1)(((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_padded = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_15_9 = s[1]; return [0, v__do_e_15_9]; } case 1: { const v_s0 = s[1]; return [1, (v_s0 + ">")]; } } })([1, ("<" + v_padded)]); } } })((v_pad)("hi")));
 }
 
-function v__let_1(v_q){
-    return (v_q + v_q);
-}
-
-function v__let_2(v_p){
-    return (v__let_1)((v_p + "]"));
-}
-
-function v__let_3(v_body){
-    return v_body;
+function v__let_1(v_res){
+    {
+      const __s = v_res;
+      switch (__s[0]) {
+        case 0: {
+          const v___w0 = __s[1];
+          return __print("STRING_TOO_LONG");
+        }
+        case 1: {
+          const v_s = __s[1];
+          return __print(v_s);
+        }
+      }
+    }
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();

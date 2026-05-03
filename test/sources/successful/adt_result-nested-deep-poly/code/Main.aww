@@ -14,5 +14,23 @@ unwrap r = case r of
   Err (Err (Ok value)) -> value
   Err (Err (Err value)) -> value
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (unwrap (Ok (Ok (Ok "1"))) ++ "," ++ unwrap (Ok (Ok (Err "2"))) ++ "," ++ unwrap (Ok (Err (Ok "3"))) ++ "," ++ unwrap (Ok (Err (Err "4"))) ++ "," ++ unwrap (Err (Ok (Ok "5"))) ++ "," ++ unwrap (Err (Ok (Err "6"))) ++ "," ++ unwrap (Err (Err (Ok "7"))) ++ "," ++ unwrap (Err (Err (Err "8"))))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- unwrap (Ok (Ok (Ok "1"))) ++ ","
+        s1 <- s0 ++ unwrap (Ok (Ok (Err "2")))
+        s2 <- s1 ++ ","
+        s3 <- s2 ++ unwrap (Ok (Err (Ok "3")))
+        s4 <- s3 ++ ","
+        s5 <- s4 ++ unwrap (Ok (Err (Err "4")))
+        s6 <- s5 ++ ","
+        s7 <- s6 ++ unwrap (Err (Ok (Ok "5")))
+        s8 <- s7 ++ ","
+        s9 <- s8 ++ unwrap (Err (Ok (Err "6")))
+        s10 <- s9 ++ ","
+        s11 <- s10 ++ unwrap (Err (Err (Ok "7")))
+        s12 <- s11 ++ ","
+        s12 ++ unwrap (Err (Err (Err "8")))
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

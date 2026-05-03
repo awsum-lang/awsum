@@ -8,5 +8,11 @@ unwrap r = case r of
   Ok value -> value
   Err value -> value
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (unwrap (Ok "1") ++ "," ++ unwrap (Err "2"))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- unwrap (Ok "1") ++ ","
+        s0 ++ unwrap (Err "2")
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

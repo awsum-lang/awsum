@@ -1,52 +1,120 @@
 CoreProgram
     { cdecls =
         [ CFunDef "pad" [ "s" ]
-            ( CCall
-                ( CVar "$let$2" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CString "["
-                    , CVar "s"
+            ( CCase
+                ( CCon 1
+                    [ CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "["
+                        , CVar "s"
+                        ]
                     ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_7_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_7_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "p" ]
+                    , CCase
+                        ( CCon 1
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "p"
+                                , CString "]"
+                                ]
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_8_3" ]
+                            , CCon 0
+                                [ CVar "$do_e_8_3" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "q" ]
+                            , CCon 1
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "q"
+                                    , CVar "q"
+                                    ]
+                                ]
+                            )
+                        ]
+                    )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CCall
-                    ( CVar "$let$3" )
-                    [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "<"
-                            , CCall
-                                ( CVar "pad" )
-                                [ CString "hi" ]
-                            ]
-                        , CString ">"
-                        ]
-                    ]
-                ]
-            )
-        , CFunDef "$let$1" [ "q" ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CVar "q"
-                , CVar "q"
-                ]
-            )
-        , CFunDef "$let$2" [ "p" ]
-            ( CCall
                 ( CVar "$let$1" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CVar "p"
-                    , CString "]"
+                [ CCase
+                    ( CCall
+                        ( CVar "pad" )
+                        [ CString "hi" ]
+                    )
+                    [
+                        ( 0
+                        , [ "$do_e_14_9" ]
+                        , CCon 0
+                            [ CVar "$do_e_14_9" ]
+                        )
+                    ,
+                        ( 1
+                        , [ "padded" ]
+                        , CCase
+                            ( CCon 1
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CString "<"
+                                    , CVar "padded"
+                                    ]
+                                ]
+                            )
+                            [
+                                ( 0
+                                , [ "$do_e_15_9" ]
+                                , CCon 0
+                                    [ CVar "$do_e_15_9" ]
+                                )
+                            ,
+                                ( 1
+                                , [ "s0" ]
+                                , CCon 1
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s0"
+                                        , CString ">"
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
                     ]
                 ]
             )
-        , CFunDef "$let$3" [ "body" ]
-            ( CVar "body" )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
+                ]
+            )
         ]
     }

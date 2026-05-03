@@ -4,10 +4,6 @@ function __print(s){ process.stdout.write(String(s)); return undefined; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [882564211, [0]]]; if (s < -2147483648) return [0, [3768445577, [0]]]; return [1, s|0]; }
 function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [882564211, [0]]]; if (p < -2147483648) return [0, [3768445577, [0]]]; return [1, p|0]; }
 
-function v_pureEither(v_x){
-    return [1, v_x];
-}
-
 function v_step1(v_n){
     {
       const __s = __addInt32(v_n, (10|0));
@@ -46,11 +42,27 @@ function v_run(v_start){
       switch (__s[0]) {
         case 0: {
           const v__do_e_18_3 = __s[1];
-          return [0, v__do_e_18_3];
+          return [0, [1615808600, v__do_e_18_3]];
         }
         case 1: {
           const v_a = __s[1];
           return (v__let_1)(v_a, "answer=");
+        }
+      }
+    }
+}
+
+function v_renderErr(v_e){
+    {
+      const __s = v_e;
+      switch (__s[0]) {
+        case 589989748: {
+          const v___rw = __s[1];
+          return [1, "STRING_TOO_LONG"];
+        }
+        case 1615808600: {
+          const v_s = __s[1];
+          return [1, ("err: " + v_s)];
         }
       }
     }
@@ -62,7 +74,19 @@ function main(v__input){
       switch (__s[0]) {
         case 0: {
           const v_e = __s[1];
-          return __print(("err: " + v_e));
+          {
+            const __s = (v_renderErr)(v_e);
+            switch (__s[0]) {
+              case 0: {
+                const v___w0 = __s[1];
+                return __print("STRING_TOO_LONG");
+              }
+              case 1: {
+                const v_out = __s[1];
+                return __print(v_out);
+              }
+            }
+          }
         }
         case 1: {
           const v_s = __s[1];
@@ -78,11 +102,11 @@ function v__let_1(v_a, v_prefix){
       switch (__s[0]) {
         case 0: {
           const v__do_e_20_3 = __s[1];
-          return [0, v__do_e_20_3];
+          return [0, [1615808600, v__do_e_20_3]];
         }
         case 1: {
           const v_b = __s[1];
-          return (v_pureEither)((v_prefix + String(v_b)));
+          return [1, (v_prefix + String(v_b))];
         }
       }
     }
@@ -90,7 +114,7 @@ function v__let_1(v_a, v_prefix){
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();

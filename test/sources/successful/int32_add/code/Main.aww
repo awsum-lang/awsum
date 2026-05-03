@@ -1,12 +1,29 @@
 {- `addInt32`: row-union `(UnderflowError | OverflowError)` at `Int32` boundaries. -}
 import IO.Stdout
 
-render : Either (UnderflowError | OverflowError) Int32 -> String
+render : Either (UnderflowError | OverflowError) Int32 -> Either StringTooLong String
 render r = case r of
   Left e -> case e of
     (u : UnderflowError) -> "err: " ++ showUnderflowError u
     (o : OverflowError) -> "err: " ++ showOverflowError o
   Right v -> "ok: " ++ showInt32 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (addInt32 100 23) ++ ", " ++ render (addInt32 100 (-50)) ++ ", " ++ render (addInt32 maxInt32 1) ++ ", " ++ render (addInt32 minInt32 (-1)) ++ ", " ++ render (addInt32 maxInt32 minInt32))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (addInt32 100 23)
+        b <- render (addInt32 100 (-50))
+        c <- render (addInt32 maxInt32 1)
+        d <- render (addInt32 minInt32 (-1))
+        e <- render (addInt32 maxInt32 minInt32)
+        s0 <- a ++ ", "
+        s1 <- s0 ++ b
+        s2 <- s1 ++ ", "
+        s3 <- s2 ++ c
+        s4 <- s3 ++ ", "
+        s5 <- s4 ++ d
+        s6 <- s5 ++ ", "
+        s6 ++ e
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

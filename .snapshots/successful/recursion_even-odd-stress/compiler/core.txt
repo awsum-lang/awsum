@@ -23,36 +23,59 @@ CoreProgram
                 [
                     ( 0
                     , [ "e" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "left: "
-                        , CCall
-                            ( CVar "showUnderflowError" )
-                            [ CVar "e" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "left: "
+                            , CCall
+                                ( CVar "showUnderflowError" )
+                                [ CVar "e" ]
+                            ]
                         ]
                     )
                 ,
                     ( 1
                     , [ "b" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "right: "
-                        , CCall
-                            ( CVar "showBool" )
-                            [ CVar "b" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "right: "
+                            , CCall
+                                ( CVar "showBool" )
+                                [ CVar "b" ]
+                            ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
                         ( CVar "evenInt" )
                         [ CIntLit 1000000 TInt32 ]
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         , CFunDef "$scc$evenInt_oddInt" [ "$args" ]

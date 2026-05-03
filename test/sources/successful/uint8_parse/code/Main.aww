@@ -1,10 +1,36 @@
 {- `parseUInt8`: covers all cases from the prelude docstring. -}
 import IO.Stdout
 
-render : Either ParseError UInt8 -> String
+render : Either ParseError UInt8 -> Either StringTooLong String
 render r = case r of
-  Left _ -> "err"
+  Left _ -> Right "err"
   Right v -> "ok:" ++ showUInt8 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (parseUInt8 "0") ++ ", " ++ render (parseUInt8 "255") ++ ", " ++ render (parseUInt8 "256") ++ ", " ++ render (parseUInt8 "-1") ++ ", " ++ render (parseUInt8 "") ++ ", " ++ render (parseUInt8 "abc") ++ ", " ++ render (parseUInt8 " 5") ++ ", " ++ render (parseUInt8 "12a"))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (parseUInt8 "0")
+        b <- render (parseUInt8 "255")
+        c <- render (parseUInt8 "256")
+        d <- render (parseUInt8 "-1")
+        e <- render (parseUInt8 "")
+        f <- render (parseUInt8 "abc")
+        g <- render (parseUInt8 " 5")
+        h <- render (parseUInt8 "12a")
+        r0 <- a ++ ", "
+        r1 <- r0 ++ b
+        r2 <- r1 ++ ", "
+        r3 <- r2 ++ c
+        r4 <- r3 ++ ", "
+        r5 <- r4 ++ d
+        r6 <- r5 ++ ", "
+        r7 <- r6 ++ e
+        r8 <- r7 ++ ", "
+        r9 <- r8 ++ f
+        r10 <- r9 ++ ", "
+        r11 <- r10 ++ g
+        r12 <- r11 ++ ", "
+        r12 ++ h
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

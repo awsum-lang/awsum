@@ -14,18 +14,34 @@ function v_showResult(v_r){
       switch (__s[0]) {
         case 0: {
           const v_e = __s[1];
-          return ("left: " + (v_showUnderflowError)(v_e));
+          return [1, ("left: " + (v_showUnderflowError)(v_e))];
         }
         case 1: {
           const v_v = __s[1];
-          return ("right: " + String(v_v));
+          return [1, ("right: " + String(v_v))];
         }
       }
     }
 }
 
 function main(v__input){
-    return __print((v_showResult)((v_stepA)((1000000|0))));
+    return (v__let_1)((v_showResult)((v_stepA)((1000000|0))));
+}
+
+function v__let_1(v_res){
+    {
+      const __s = v_res;
+      switch (__s[0]) {
+        case 0: {
+          const v___w0 = __s[1];
+          return __print("STRING_TOO_LONG");
+        }
+        case 1: {
+          const v_s = __s[1];
+          return __print(v_s);
+        }
+      }
+    }
 }
 
 function v__scc_stepA_stepB_stepC(v__args){
@@ -128,7 +144,7 @@ function v_stepA(v_n){
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();

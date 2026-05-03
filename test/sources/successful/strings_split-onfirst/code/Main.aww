@@ -1,11 +1,44 @@
 {- `splitOnFirst`: covers all cases from the prelude docstring. -}
 import IO.Stdout
 
-render : Maybe (Tuple2 String String) -> String
+render : Maybe (Tuple2 String String) -> Either StringTooLong String
 render r = case r of
-  Nothing -> "Nothing"
+  Nothing -> Right "Nothing"
   Just t -> case t of
-    Tuple2 a b -> "Just(" ++ a ++ "|" ++ b ++ ")"
+    Tuple2 a b -> renderTuple a b
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (splitOnFirst "," "a,b,c") ++ ", " ++ render (splitOnFirst "::" "user::42::admin") ++ ", " ++ render (splitOnFirst "x" "abc") ++ ", " ++ render (splitOnFirst "" "abc") ++ ", " ++ render (splitOnFirst ":" ":foo") ++ ", " ++ render (splitOnFirst ":" "foo:") ++ ", " ++ render (splitOnFirst "abc" "abc") ++ ", " ++ render (splitOnFirst "abcde" "ab"))
+renderTuple : String -> String -> Either StringTooLong String
+renderTuple a b = do
+  s0 <- "Just(" ++ a
+  s1 <- s0 ++ "|"
+  s2 <- s1 ++ b
+  s2 ++ ")"
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (splitOnFirst "," "a,b,c")
+        b <- render (splitOnFirst "::" "user::42::admin")
+        c <- render (splitOnFirst "x" "abc")
+        d <- render (splitOnFirst "" "abc")
+        e <- render (splitOnFirst ":" ":foo")
+        f <- render (splitOnFirst ":" "foo:")
+        g <- render (splitOnFirst "abc" "abc")
+        h <- render (splitOnFirst "abcde" "ab")
+        r0 <- a ++ ", "
+        r1 <- r0 ++ b
+        r2 <- r1 ++ ", "
+        r3 <- r2 ++ c
+        r4 <- r3 ++ ", "
+        r5 <- r4 ++ d
+        r6 <- r5 ++ ", "
+        r7 <- r6 ++ e
+        r8 <- r7 ++ ", "
+        r9 <- r8 ++ f
+        r10 <- r9 ++ ", "
+        r11 <- r10 ++ g
+        r12 <- r11 ++ ", "
+        r12 ++ h
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

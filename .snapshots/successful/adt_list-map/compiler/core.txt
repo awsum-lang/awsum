@@ -1,89 +1,17 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "show" [ "xs" ]
-            ( CCall
-                ( CVar "$cps$show" )
-                [ CVar "xs"
-                , CCon 0 []
-                ]
-            )
-        , CFunDef "$cps$show"
-            [ "xs"
-            , "$k"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "xs" )
-                    [
-                        ( 0
-                        ,
-                            [ "h"
-                            , "t"
-                            ]
-                        , CContinue
-                            [ CVar "t"
-                            , CCon 1
-                                [ CVar "$k"
-                                , CVar "h"
-                                ]
-                            ]
-                        )
-                    ,
-                        ( 1
-                        , []
-                        , CCall
-                            ( CVar "$apply$show" )
-                            [ CVar "$k"
-                            , CString ""
-                            ]
-                        )
+        [ CFunDef "shout" [ "s" ]
+            ( CCon 1
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "s"
+                    , CString "!"
                     ]
-                )
-            )
-        , CFunDef "$apply$show"
-            [ "$k"
-            , "$x"
-            ]
-            ( CLoop
-                ( CCase
-                    ( CVar "$k" )
-                    [
-                        ( 0
-                        , []
-                        , CVar "$x"
-                        )
-                    ,
-                        ( 1
-                        ,
-                            [ "$pk_1"
-                            , "h"
-                            ]
-                        , CContinue
-                            [ CVar "$pk_1"
-                            , CCall
-                                ( CBuiltIn "concatString" )
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "h"
-                                    , CString ","
-                                    ]
-                                , CVar "$x"
-                                ]
-                            ]
-                        )
-                    ]
-                )
-            )
-        , CFunDef "shout" [ "s" ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CVar "s"
-                , CString "!"
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "show" )
                     [ CCall
@@ -100,6 +28,25 @@ CoreProgram
                             ]
                         ]
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         , CFunDef "$df$map$0" [ "list" ]
@@ -172,6 +119,164 @@ CoreProgram
                         )
                     ]
                 )
+            )
+        , CFunDef "$scc$show_showCons" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$show_showCons" )
+                [ CVar "$args"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$scc$show_showCons"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 0
+                        , [ "xs" ]
+                        , CCase
+                            ( CVar "xs" )
+                            [
+                                ( 0
+                                ,
+                                    [ "h"
+                                    , "t"
+                                    ]
+                                , CContinue
+                                    [ CCon 1
+                                        [ CVar "h"
+                                        , CVar "t"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CCall
+                                    ( CVar "$apply$$scc$show_showCons" )
+                                    [ CVar "$k"
+                                    , CCon 1
+                                        [ CString "" ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "h"
+                            , "t"
+                            ]
+                        , CCase
+                            ( CVar "h" )
+                            [
+                                ( 0
+                                , [ "$do_e_18_3" ]
+                                , CCall
+                                    ( CVar "$apply$$scc$show_showCons" )
+                                    [ CVar "$k"
+                                    , CCon 0
+                                        [ CVar "$do_e_18_3" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "hStr" ]
+                                , CContinue
+                                    [ CCon 0
+                                        [ CVar "t" ]
+                                    , CCon 1
+                                        [ CVar "$k"
+                                        , CVar "hStr"
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$scc$show_showCons"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "hStr"
+                            ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "$do_e_19_3" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 0
+                                        [ CVar "$do_e_19_3" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "rest" ]
+                                , CCase
+                                    ( CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "hStr"
+                                            , CString ","
+                                            ]
+                                        ]
+                                    )
+                                    [
+                                        ( 0
+                                        , [ "$do_e_20_3" ]
+                                        , CContinue
+                                            [ CVar "$pk_1"
+                                            , CCon 0
+                                                [ CVar "$do_e_20_3" ]
+                                            ]
+                                        )
+                                    ,
+                                        ( 1
+                                        , [ "comma" ]
+                                        , CContinue
+                                            [ CVar "$pk_1"
+                                            , CCon 1
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CVar "comma"
+                                                    , CVar "rest"
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "show" [ "xs" ]
+            ( CCall
+                ( CVar "$scc$show_showCons" )
+                [ CCon 0
+                    [ CVar "xs" ]
+                ]
             )
         ]
     }

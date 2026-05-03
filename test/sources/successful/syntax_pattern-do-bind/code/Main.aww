@@ -4,9 +4,10 @@ import IO.Stdout
 opTuple : String -> Either ParseError (Tuple3 Int32 Int32 Int32)
 opTuple _ = Right (Tuple3 1 2 3)
 
-main : String -> IO Unit
-main raw =
-  let res : Either ParseError Int32 = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = do
+        raw <- rawArg
         Tuple3 a b c <- opTuple raw
         pureEither (case addInt32 a b of
           Left _ -> c
@@ -14,5 +15,8 @@ main raw =
             Left _ -> c
             Right abc -> abc)
    in case res of
-        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
         Right n -> IO.Stdout.print (showInt32 n)

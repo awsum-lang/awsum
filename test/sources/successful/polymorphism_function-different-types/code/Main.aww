@@ -14,5 +14,11 @@ showResult r = case r of
   Ok a -> a
   Err e -> e
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (unwrap (Box "from box") ++ " " ++ showResult (unwrap (Box (Ok "nested"))))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- unwrap (Box "from box") ++ " "
+        s0 ++ showResult (unwrap (Box (Ok "nested")))
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

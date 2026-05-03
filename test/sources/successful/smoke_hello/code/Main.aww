@@ -1,13 +1,24 @@
 {- Smoke: string concat, helper function, `IO.Stdout.print`. -}
 import IO.Stdout
 
-main : String -> IO Unit
-main input = IO.Stdout.print (addGreeting input)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main inputArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = do
+        input <- inputArg
+        addGreeting input
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+        Right s -> IO.Stdout.print s
 
 {- Block comment -}
 
 greeting : String
 greeting = "Hello" -- Line comment
 
-addGreeting : String -> String
-addGreeting name = greeting ++ ", " ++ name ++ "!"
+addGreeting : String -> Either StringTooLong String
+addGreeting name = do
+  s0 <- greeting ++ ", "
+  s1 <- s0 ++ name
+  s1 ++ "!"

@@ -6,5 +6,12 @@ render b = case b of
   True -> "T"
   False -> "F"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (eqInt32 42 42) ++ render (eqInt32 42 7) ++ render (eqInt32 minInt32 minInt32) ++ render (eqInt32 0 1))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- render (eqInt32 42 42) ++ render (eqInt32 42 7)
+        s1 <- s0 ++ render (eqInt32 minInt32 minInt32)
+        s1 ++ render (eqInt32 0 1)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

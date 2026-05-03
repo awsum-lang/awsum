@@ -5,10 +5,24 @@ CoreProgram
                 ( CBuiltIn "IO.Stdout.print" )
                 [ CVar "$eta0" ]
             )
-        , CFunDef "main" [ "input" ]
-            ( CCall
-                ( CVar "say" )
-                [ CVar "input" ]
+        , CFunDef "main" [ "inputArg" ]
+            ( CCase
+                ( CVar "inputArg" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "INPUT_ERROR" ]
+                    )
+                ,
+                    ( 1
+                    , [ "input" ]
+                    , CCall
+                        ( CVar "say" )
+                        [ CVar "input" ]
+                    )
+                ]
             )
         ]
     }

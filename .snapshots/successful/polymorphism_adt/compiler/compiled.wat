@@ -88,6 +88,12 @@
     (call $__print (block (result i32) (local.set $__scrut (call $v_identity (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (i32.const 65)) (local.get $__con_0)))) (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (local.get $v_v))))
 
   (func $_start (export "_start")
-    (drop (call $v_main (call $__get_arg))))
+    (local $input i32)
+    (local $right_box i32)
+    (local.set $input (call $__get_arg))
+    (local.set $right_box (call $__alloc (i32.const 8)))
+    (i32.store (local.get $right_box) (i32.const 1))
+    (i32.store offset=4 (local.get $right_box) (local.get $input))
+    (drop (call $v_main (local.get $right_box))))
 
 )
