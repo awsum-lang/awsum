@@ -15,11 +15,15 @@ import IO.Stdout
 opMaybe : String -> Either ParseError (Maybe Int32)
 opMaybe _ = Right (Just 1)
 
-main : String -> IO Unit
-main raw =
-  let res : Either ParseError Int32 = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = do
+        raw <- rawArg
         Just x <- opMaybe raw
         pureEither x
    in case res of
-        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
         Right n -> IO.Stdout.print (showInt32 n)

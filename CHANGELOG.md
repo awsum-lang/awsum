@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`(++) : String -> String -> Either StringTooLong String`** — string concatenation reports overflow through an error channel instead of silently truncating. New sentinel types in Prelude: `type StringTooLong = StringTooLong` and `type UnpairedUtf16Surrogate = UnpairedUtf16Surrogate`.
+- **`main` signature** is now `main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit` — the runtime hands the entry-point input (`argv[1]` / stdin / FFI) to user code as `Right` on success or `Left StringTooLong` / `Left UnpairedUtf16Surrogate` on invalid input. All five backends construct the `Right` box natively at their entry point.
 - **Closures over outer parameters** — lambdas may reference any enclosing-scope binding. A new `Awsum.Defunctionalize` pass specialises each HOF call site for the closure flowing in: captures become first-order parameters and polymorphic HOFs split into monomorphic copies, so no backend grows a closure runtime.
 - **Synthesis form for closed lambdas** — `let id = \x -> x in body` and `(\x -> x) 5` typecheck without annotation; per-use unification lets one local `\x -> x` flow at multiple types in one body. Top-level definitions still require signatures.
 - **Structural sums `T1 | T2`** — closed anonymous unions; `(x : T)` ascription patterns for discrimination, exhaustive without catch-all; FNV-1a tag dispatch identical on all backends; mixed ascription + constructor arms in one `case`; implicit injection through nominal heads; cross-boundary row normalisation; row-tag collision check.

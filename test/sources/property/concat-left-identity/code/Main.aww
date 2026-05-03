@@ -4,8 +4,16 @@
 -- 'main raw' directly — Haskell expects the input back.
 import IO.Stdout
 
-property : String -> String
+property : String -> Either StringTooLong String
 property s = "" ++ s
 
-main : String -> IO Unit
-main raw = IO.Stdout.print (property raw)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = do
+        raw <- rawArg
+        property raw
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+        Right s -> IO.Stdout.print s

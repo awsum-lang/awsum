@@ -1022,7 +1022,17 @@ startFunc :: Text
 startFunc =
   unlines
     [ "  (func $_start (export \"_start\")",
-      "    (drop (call $" <> mangle "main" <> " (call $__get_arg))))"
+      "    (local $input i32)",
+      "    (local $right_box i32)",
+      "    (local.set $input (call $__get_arg))",
+      -- Wrap input in `Right input` (tag=1, one field) before handing to user's
+      -- main. Layout matches CCon emit on WASM: alloc(4 * (1 + nFields)),
+      -- i32 tag at offset 0, fields at offsets 4..  Tag is a raw i32 at offset
+      -- 0; field is the boxed value pointer at offset 4.
+      "    (local.set $right_box (call $__alloc (i32.const 8)))",
+      "    (i32.store (local.get $right_box) (i32.const 1))",
+      "    (i32.store offset=4 (local.get $right_box) (local.get $input))",
+      "    (drop (call $" <> mangle "main" <> " (local.get $right_box))))"
     ]
 
 -- ════════════════════════════════════════════════════════════════════════════

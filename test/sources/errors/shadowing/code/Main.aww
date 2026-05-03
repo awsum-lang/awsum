@@ -7,5 +7,5 @@ unwrap : Box String -> String
 unwrap x = case x of
   Box x -> x
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main input = IO.Stdout.print (unwrap (Box "hello"))

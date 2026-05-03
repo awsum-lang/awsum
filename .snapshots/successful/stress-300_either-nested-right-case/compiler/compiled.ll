@@ -8142,6 +8142,12 @@ no_arg:
   br label %call_main
 call_main:
   %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]
-  call ptr @v_main(ptr %input)
+  %right_box = call ptr @malloc(i64 16)
+  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0
+  %right_tag = inttoptr i64 1 to ptr
+  store ptr %right_tag, ptr %right_tag_ptr
+  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1
+  store ptr %input, ptr %right_payload_ptr
+  call ptr @v_main(ptr %right_box)
   ret i32 0
 }

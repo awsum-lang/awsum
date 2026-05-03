@@ -2,921 +2,951 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return undefined; }
 
-function v_show(v_c){
+function v_and(v_a, v_b){
     {
-      const __s = v_c;
+      const __s = v_a;
       switch (__s[0]) {
         case 0: {
-          return "1";
+          return v_b;
         }
         case 1: {
-          return "2";
-        }
-        case 2: {
-          return "3";
-        }
-        case 3: {
-          return "4";
-        }
-        case 4: {
-          return "5";
-        }
-        case 5: {
-          return "6";
-        }
-        case 6: {
-          return "7";
-        }
-        case 7: {
-          return "8";
-        }
-        case 8: {
-          return "9";
-        }
-        case 9: {
-          return "10";
-        }
-        case 10: {
-          return "11";
-        }
-        case 11: {
-          return "12";
-        }
-        case 12: {
-          return "13";
-        }
-        case 13: {
-          return "14";
-        }
-        case 14: {
-          return "15";
-        }
-        case 15: {
-          return "16";
-        }
-        case 16: {
-          return "17";
-        }
-        case 17: {
-          return "18";
-        }
-        case 18: {
-          return "19";
-        }
-        case 19: {
-          return "20";
-        }
-        case 20: {
-          return "21";
-        }
-        case 21: {
-          return "22";
-        }
-        case 22: {
-          return "23";
-        }
-        case 23: {
-          return "24";
-        }
-        case 24: {
-          return "25";
-        }
-        case 25: {
-          return "26";
-        }
-        case 26: {
-          return "27";
-        }
-        case 27: {
-          return "28";
-        }
-        case 28: {
-          return "29";
-        }
-        case 29: {
-          return "30";
-        }
-        case 30: {
-          return "31";
-        }
-        case 31: {
-          return "32";
-        }
-        case 32: {
-          return "33";
-        }
-        case 33: {
-          return "34";
-        }
-        case 34: {
-          return "35";
-        }
-        case 35: {
-          return "36";
-        }
-        case 36: {
-          return "37";
-        }
-        case 37: {
-          return "38";
-        }
-        case 38: {
-          return "39";
-        }
-        case 39: {
-          return "40";
-        }
-        case 40: {
-          return "41";
-        }
-        case 41: {
-          return "42";
-        }
-        case 42: {
-          return "43";
-        }
-        case 43: {
-          return "44";
-        }
-        case 44: {
-          return "45";
-        }
-        case 45: {
-          return "46";
-        }
-        case 46: {
-          return "47";
-        }
-        case 47: {
-          return "48";
-        }
-        case 48: {
-          return "49";
-        }
-        case 49: {
-          return "50";
-        }
-        case 50: {
-          return "51";
-        }
-        case 51: {
-          return "52";
-        }
-        case 52: {
-          return "53";
-        }
-        case 53: {
-          return "54";
-        }
-        case 54: {
-          return "55";
-        }
-        case 55: {
-          return "56";
-        }
-        case 56: {
-          return "57";
-        }
-        case 57: {
-          return "58";
-        }
-        case 58: {
-          return "59";
-        }
-        case 59: {
-          return "60";
-        }
-        case 60: {
-          return "61";
-        }
-        case 61: {
-          return "62";
-        }
-        case 62: {
-          return "63";
-        }
-        case 63: {
-          return "64";
-        }
-        case 64: {
-          return "65";
-        }
-        case 65: {
-          return "66";
-        }
-        case 66: {
-          return "67";
-        }
-        case 67: {
-          return "68";
-        }
-        case 68: {
-          return "69";
-        }
-        case 69: {
-          return "70";
-        }
-        case 70: {
-          return "71";
-        }
-        case 71: {
-          return "72";
-        }
-        case 72: {
-          return "73";
-        }
-        case 73: {
-          return "74";
-        }
-        case 74: {
-          return "75";
-        }
-        case 75: {
-          return "76";
-        }
-        case 76: {
-          return "77";
-        }
-        case 77: {
-          return "78";
-        }
-        case 78: {
-          return "79";
-        }
-        case 79: {
-          return "80";
-        }
-        case 80: {
-          return "81";
-        }
-        case 81: {
-          return "82";
-        }
-        case 82: {
-          return "83";
-        }
-        case 83: {
-          return "84";
-        }
-        case 84: {
-          return "85";
-        }
-        case 85: {
-          return "86";
-        }
-        case 86: {
-          return "87";
-        }
-        case 87: {
-          return "88";
-        }
-        case 88: {
-          return "89";
-        }
-        case 89: {
-          return "90";
-        }
-        case 90: {
-          return "91";
-        }
-        case 91: {
-          return "92";
-        }
-        case 92: {
-          return "93";
-        }
-        case 93: {
-          return "94";
-        }
-        case 94: {
-          return "95";
-        }
-        case 95: {
-          return "96";
-        }
-        case 96: {
-          return "97";
-        }
-        case 97: {
-          return "98";
-        }
-        case 98: {
-          return "99";
-        }
-        case 99: {
-          return "100";
-        }
-        case 100: {
-          return "101";
-        }
-        case 101: {
-          return "102";
-        }
-        case 102: {
-          return "103";
-        }
-        case 103: {
-          return "104";
-        }
-        case 104: {
-          return "105";
-        }
-        case 105: {
-          return "106";
-        }
-        case 106: {
-          return "107";
-        }
-        case 107: {
-          return "108";
-        }
-        case 108: {
-          return "109";
-        }
-        case 109: {
-          return "110";
-        }
-        case 110: {
-          return "111";
-        }
-        case 111: {
-          return "112";
-        }
-        case 112: {
-          return "113";
-        }
-        case 113: {
-          return "114";
-        }
-        case 114: {
-          return "115";
-        }
-        case 115: {
-          return "116";
-        }
-        case 116: {
-          return "117";
-        }
-        case 117: {
-          return "118";
-        }
-        case 118: {
-          return "119";
-        }
-        case 119: {
-          return "120";
-        }
-        case 120: {
-          return "121";
-        }
-        case 121: {
-          return "122";
-        }
-        case 122: {
-          return "123";
-        }
-        case 123: {
-          return "124";
-        }
-        case 124: {
-          return "125";
-        }
-        case 125: {
-          return "126";
-        }
-        case 126: {
-          return "127";
-        }
-        case 127: {
-          return "128";
-        }
-        case 128: {
-          return "129";
-        }
-        case 129: {
-          return "130";
-        }
-        case 130: {
-          return "131";
-        }
-        case 131: {
-          return "132";
-        }
-        case 132: {
-          return "133";
-        }
-        case 133: {
-          return "134";
-        }
-        case 134: {
-          return "135";
-        }
-        case 135: {
-          return "136";
-        }
-        case 136: {
-          return "137";
-        }
-        case 137: {
-          return "138";
-        }
-        case 138: {
-          return "139";
-        }
-        case 139: {
-          return "140";
-        }
-        case 140: {
-          return "141";
-        }
-        case 141: {
-          return "142";
-        }
-        case 142: {
-          return "143";
-        }
-        case 143: {
-          return "144";
-        }
-        case 144: {
-          return "145";
-        }
-        case 145: {
-          return "146";
-        }
-        case 146: {
-          return "147";
-        }
-        case 147: {
-          return "148";
-        }
-        case 148: {
-          return "149";
-        }
-        case 149: {
-          return "150";
-        }
-        case 150: {
-          return "151";
-        }
-        case 151: {
-          return "152";
-        }
-        case 152: {
-          return "153";
-        }
-        case 153: {
-          return "154";
-        }
-        case 154: {
-          return "155";
-        }
-        case 155: {
-          return "156";
-        }
-        case 156: {
-          return "157";
-        }
-        case 157: {
-          return "158";
-        }
-        case 158: {
-          return "159";
-        }
-        case 159: {
-          return "160";
-        }
-        case 160: {
-          return "161";
-        }
-        case 161: {
-          return "162";
-        }
-        case 162: {
-          return "163";
-        }
-        case 163: {
-          return "164";
-        }
-        case 164: {
-          return "165";
-        }
-        case 165: {
-          return "166";
-        }
-        case 166: {
-          return "167";
-        }
-        case 167: {
-          return "168";
-        }
-        case 168: {
-          return "169";
-        }
-        case 169: {
-          return "170";
-        }
-        case 170: {
-          return "171";
-        }
-        case 171: {
-          return "172";
-        }
-        case 172: {
-          return "173";
-        }
-        case 173: {
-          return "174";
-        }
-        case 174: {
-          return "175";
-        }
-        case 175: {
-          return "176";
-        }
-        case 176: {
-          return "177";
-        }
-        case 177: {
-          return "178";
-        }
-        case 178: {
-          return "179";
-        }
-        case 179: {
-          return "180";
-        }
-        case 180: {
-          return "181";
-        }
-        case 181: {
-          return "182";
-        }
-        case 182: {
-          return "183";
-        }
-        case 183: {
-          return "184";
-        }
-        case 184: {
-          return "185";
-        }
-        case 185: {
-          return "186";
-        }
-        case 186: {
-          return "187";
-        }
-        case 187: {
-          return "188";
-        }
-        case 188: {
-          return "189";
-        }
-        case 189: {
-          return "190";
-        }
-        case 190: {
-          return "191";
-        }
-        case 191: {
-          return "192";
-        }
-        case 192: {
-          return "193";
-        }
-        case 193: {
-          return "194";
-        }
-        case 194: {
-          return "195";
-        }
-        case 195: {
-          return "196";
-        }
-        case 196: {
-          return "197";
-        }
-        case 197: {
-          return "198";
-        }
-        case 198: {
-          return "199";
-        }
-        case 199: {
-          return "200";
-        }
-        case 200: {
-          return "201";
-        }
-        case 201: {
-          return "202";
-        }
-        case 202: {
-          return "203";
-        }
-        case 203: {
-          return "204";
-        }
-        case 204: {
-          return "205";
-        }
-        case 205: {
-          return "206";
-        }
-        case 206: {
-          return "207";
-        }
-        case 207: {
-          return "208";
-        }
-        case 208: {
-          return "209";
-        }
-        case 209: {
-          return "210";
-        }
-        case 210: {
-          return "211";
-        }
-        case 211: {
-          return "212";
-        }
-        case 212: {
-          return "213";
-        }
-        case 213: {
-          return "214";
-        }
-        case 214: {
-          return "215";
-        }
-        case 215: {
-          return "216";
-        }
-        case 216: {
-          return "217";
-        }
-        case 217: {
-          return "218";
-        }
-        case 218: {
-          return "219";
-        }
-        case 219: {
-          return "220";
-        }
-        case 220: {
-          return "221";
-        }
-        case 221: {
-          return "222";
-        }
-        case 222: {
-          return "223";
-        }
-        case 223: {
-          return "224";
-        }
-        case 224: {
-          return "225";
-        }
-        case 225: {
-          return "226";
-        }
-        case 226: {
-          return "227";
-        }
-        case 227: {
-          return "228";
-        }
-        case 228: {
-          return "229";
-        }
-        case 229: {
-          return "230";
-        }
-        case 230: {
-          return "231";
-        }
-        case 231: {
-          return "232";
-        }
-        case 232: {
-          return "233";
-        }
-        case 233: {
-          return "234";
-        }
-        case 234: {
-          return "235";
-        }
-        case 235: {
-          return "236";
-        }
-        case 236: {
-          return "237";
-        }
-        case 237: {
-          return "238";
-        }
-        case 238: {
-          return "239";
-        }
-        case 239: {
-          return "240";
-        }
-        case 240: {
-          return "241";
-        }
-        case 241: {
-          return "242";
-        }
-        case 242: {
-          return "243";
-        }
-        case 243: {
-          return "244";
-        }
-        case 244: {
-          return "245";
-        }
-        case 245: {
-          return "246";
-        }
-        case 246: {
-          return "247";
-        }
-        case 247: {
-          return "248";
-        }
-        case 248: {
-          return "249";
-        }
-        case 249: {
-          return "250";
-        }
-        case 250: {
-          return "251";
-        }
-        case 251: {
-          return "252";
-        }
-        case 252: {
-          return "253";
-        }
-        case 253: {
-          return "254";
-        }
-        case 254: {
-          return "255";
-        }
-        case 255: {
-          return "256";
-        }
-        case 256: {
-          return "257";
-        }
-        case 257: {
-          return "258";
-        }
-        case 258: {
-          return "259";
-        }
-        case 259: {
-          return "260";
-        }
-        case 260: {
-          return "261";
-        }
-        case 261: {
-          return "262";
-        }
-        case 262: {
-          return "263";
-        }
-        case 263: {
-          return "264";
-        }
-        case 264: {
-          return "265";
-        }
-        case 265: {
-          return "266";
-        }
-        case 266: {
-          return "267";
-        }
-        case 267: {
-          return "268";
-        }
-        case 268: {
-          return "269";
-        }
-        case 269: {
-          return "270";
-        }
-        case 270: {
-          return "271";
-        }
-        case 271: {
-          return "272";
-        }
-        case 272: {
-          return "273";
-        }
-        case 273: {
-          return "274";
-        }
-        case 274: {
-          return "275";
-        }
-        case 275: {
-          return "276";
-        }
-        case 276: {
-          return "277";
-        }
-        case 277: {
-          return "278";
-        }
-        case 278: {
-          return "279";
-        }
-        case 279: {
-          return "280";
-        }
-        case 280: {
-          return "281";
-        }
-        case 281: {
-          return "282";
-        }
-        case 282: {
-          return "283";
-        }
-        case 283: {
-          return "284";
-        }
-        case 284: {
-          return "285";
-        }
-        case 285: {
-          return "286";
-        }
-        case 286: {
-          return "287";
-        }
-        case 287: {
-          return "288";
-        }
-        case 288: {
-          return "289";
-        }
-        case 289: {
-          return "290";
-        }
-        case 290: {
-          return "291";
-        }
-        case 291: {
-          return "292";
-        }
-        case 292: {
-          return "293";
-        }
-        case 293: {
-          return "294";
-        }
-        case 294: {
-          return "295";
-        }
-        case 295: {
-          return "296";
-        }
-        case 296: {
-          return "297";
-        }
-        case 297: {
-          return "298";
-        }
-        case 298: {
-          return "299";
-        }
-        case 299: {
-          return "300";
+          return [1];
         }
       }
     }
 }
 
+function v_un(v_x){
+    {
+      const __s = v_x;
+      switch (__s[0]) {
+        case 0: {
+          return [0];
+        }
+        case 1: {
+          return [0];
+        }
+        case 2: {
+          return [0];
+        }
+        case 3: {
+          return [0];
+        }
+        case 4: {
+          return [0];
+        }
+        case 5: {
+          return [0];
+        }
+        case 6: {
+          return [0];
+        }
+        case 7: {
+          return [0];
+        }
+        case 8: {
+          return [0];
+        }
+        case 9: {
+          return [0];
+        }
+        case 10: {
+          return [0];
+        }
+        case 11: {
+          return [0];
+        }
+        case 12: {
+          return [0];
+        }
+        case 13: {
+          return [0];
+        }
+        case 14: {
+          return [0];
+        }
+        case 15: {
+          return [0];
+        }
+        case 16: {
+          return [0];
+        }
+        case 17: {
+          return [0];
+        }
+        case 18: {
+          return [0];
+        }
+        case 19: {
+          return [0];
+        }
+        case 20: {
+          return [0];
+        }
+        case 21: {
+          return [0];
+        }
+        case 22: {
+          return [0];
+        }
+        case 23: {
+          return [0];
+        }
+        case 24: {
+          return [0];
+        }
+        case 25: {
+          return [0];
+        }
+        case 26: {
+          return [0];
+        }
+        case 27: {
+          return [0];
+        }
+        case 28: {
+          return [0];
+        }
+        case 29: {
+          return [0];
+        }
+        case 30: {
+          return [0];
+        }
+        case 31: {
+          return [0];
+        }
+        case 32: {
+          return [0];
+        }
+        case 33: {
+          return [0];
+        }
+        case 34: {
+          return [0];
+        }
+        case 35: {
+          return [0];
+        }
+        case 36: {
+          return [0];
+        }
+        case 37: {
+          return [0];
+        }
+        case 38: {
+          return [0];
+        }
+        case 39: {
+          return [0];
+        }
+        case 40: {
+          return [0];
+        }
+        case 41: {
+          return [0];
+        }
+        case 42: {
+          return [0];
+        }
+        case 43: {
+          return [0];
+        }
+        case 44: {
+          return [0];
+        }
+        case 45: {
+          return [0];
+        }
+        case 46: {
+          return [0];
+        }
+        case 47: {
+          return [0];
+        }
+        case 48: {
+          return [0];
+        }
+        case 49: {
+          return [0];
+        }
+        case 50: {
+          return [0];
+        }
+        case 51: {
+          return [0];
+        }
+        case 52: {
+          return [0];
+        }
+        case 53: {
+          return [0];
+        }
+        case 54: {
+          return [0];
+        }
+        case 55: {
+          return [0];
+        }
+        case 56: {
+          return [0];
+        }
+        case 57: {
+          return [0];
+        }
+        case 58: {
+          return [0];
+        }
+        case 59: {
+          return [0];
+        }
+        case 60: {
+          return [0];
+        }
+        case 61: {
+          return [0];
+        }
+        case 62: {
+          return [0];
+        }
+        case 63: {
+          return [0];
+        }
+        case 64: {
+          return [0];
+        }
+        case 65: {
+          return [0];
+        }
+        case 66: {
+          return [0];
+        }
+        case 67: {
+          return [0];
+        }
+        case 68: {
+          return [0];
+        }
+        case 69: {
+          return [0];
+        }
+        case 70: {
+          return [0];
+        }
+        case 71: {
+          return [0];
+        }
+        case 72: {
+          return [0];
+        }
+        case 73: {
+          return [0];
+        }
+        case 74: {
+          return [0];
+        }
+        case 75: {
+          return [0];
+        }
+        case 76: {
+          return [0];
+        }
+        case 77: {
+          return [0];
+        }
+        case 78: {
+          return [0];
+        }
+        case 79: {
+          return [0];
+        }
+        case 80: {
+          return [0];
+        }
+        case 81: {
+          return [0];
+        }
+        case 82: {
+          return [0];
+        }
+        case 83: {
+          return [0];
+        }
+        case 84: {
+          return [0];
+        }
+        case 85: {
+          return [0];
+        }
+        case 86: {
+          return [0];
+        }
+        case 87: {
+          return [0];
+        }
+        case 88: {
+          return [0];
+        }
+        case 89: {
+          return [0];
+        }
+        case 90: {
+          return [0];
+        }
+        case 91: {
+          return [0];
+        }
+        case 92: {
+          return [0];
+        }
+        case 93: {
+          return [0];
+        }
+        case 94: {
+          return [0];
+        }
+        case 95: {
+          return [0];
+        }
+        case 96: {
+          return [0];
+        }
+        case 97: {
+          return [0];
+        }
+        case 98: {
+          return [0];
+        }
+        case 99: {
+          return [0];
+        }
+        case 100: {
+          return [0];
+        }
+        case 101: {
+          return [0];
+        }
+        case 102: {
+          return [0];
+        }
+        case 103: {
+          return [0];
+        }
+        case 104: {
+          return [0];
+        }
+        case 105: {
+          return [0];
+        }
+        case 106: {
+          return [0];
+        }
+        case 107: {
+          return [0];
+        }
+        case 108: {
+          return [0];
+        }
+        case 109: {
+          return [0];
+        }
+        case 110: {
+          return [0];
+        }
+        case 111: {
+          return [0];
+        }
+        case 112: {
+          return [0];
+        }
+        case 113: {
+          return [0];
+        }
+        case 114: {
+          return [0];
+        }
+        case 115: {
+          return [0];
+        }
+        case 116: {
+          return [0];
+        }
+        case 117: {
+          return [0];
+        }
+        case 118: {
+          return [0];
+        }
+        case 119: {
+          return [0];
+        }
+        case 120: {
+          return [0];
+        }
+        case 121: {
+          return [0];
+        }
+        case 122: {
+          return [0];
+        }
+        case 123: {
+          return [0];
+        }
+        case 124: {
+          return [0];
+        }
+        case 125: {
+          return [0];
+        }
+        case 126: {
+          return [0];
+        }
+        case 127: {
+          return [0];
+        }
+        case 128: {
+          return [0];
+        }
+        case 129: {
+          return [0];
+        }
+        case 130: {
+          return [0];
+        }
+        case 131: {
+          return [0];
+        }
+        case 132: {
+          return [0];
+        }
+        case 133: {
+          return [0];
+        }
+        case 134: {
+          return [0];
+        }
+        case 135: {
+          return [0];
+        }
+        case 136: {
+          return [0];
+        }
+        case 137: {
+          return [0];
+        }
+        case 138: {
+          return [0];
+        }
+        case 139: {
+          return [0];
+        }
+        case 140: {
+          return [0];
+        }
+        case 141: {
+          return [0];
+        }
+        case 142: {
+          return [0];
+        }
+        case 143: {
+          return [0];
+        }
+        case 144: {
+          return [0];
+        }
+        case 145: {
+          return [0];
+        }
+        case 146: {
+          return [0];
+        }
+        case 147: {
+          return [0];
+        }
+        case 148: {
+          return [0];
+        }
+        case 149: {
+          return [0];
+        }
+        case 150: {
+          return [0];
+        }
+        case 151: {
+          return [0];
+        }
+        case 152: {
+          return [0];
+        }
+        case 153: {
+          return [0];
+        }
+        case 154: {
+          return [0];
+        }
+        case 155: {
+          return [0];
+        }
+        case 156: {
+          return [0];
+        }
+        case 157: {
+          return [0];
+        }
+        case 158: {
+          return [0];
+        }
+        case 159: {
+          return [0];
+        }
+        case 160: {
+          return [0];
+        }
+        case 161: {
+          return [0];
+        }
+        case 162: {
+          return [0];
+        }
+        case 163: {
+          return [0];
+        }
+        case 164: {
+          return [0];
+        }
+        case 165: {
+          return [0];
+        }
+        case 166: {
+          return [0];
+        }
+        case 167: {
+          return [0];
+        }
+        case 168: {
+          return [0];
+        }
+        case 169: {
+          return [0];
+        }
+        case 170: {
+          return [0];
+        }
+        case 171: {
+          return [0];
+        }
+        case 172: {
+          return [0];
+        }
+        case 173: {
+          return [0];
+        }
+        case 174: {
+          return [0];
+        }
+        case 175: {
+          return [0];
+        }
+        case 176: {
+          return [0];
+        }
+        case 177: {
+          return [0];
+        }
+        case 178: {
+          return [0];
+        }
+        case 179: {
+          return [0];
+        }
+        case 180: {
+          return [0];
+        }
+        case 181: {
+          return [0];
+        }
+        case 182: {
+          return [0];
+        }
+        case 183: {
+          return [0];
+        }
+        case 184: {
+          return [0];
+        }
+        case 185: {
+          return [0];
+        }
+        case 186: {
+          return [0];
+        }
+        case 187: {
+          return [0];
+        }
+        case 188: {
+          return [0];
+        }
+        case 189: {
+          return [0];
+        }
+        case 190: {
+          return [0];
+        }
+        case 191: {
+          return [0];
+        }
+        case 192: {
+          return [0];
+        }
+        case 193: {
+          return [0];
+        }
+        case 194: {
+          return [0];
+        }
+        case 195: {
+          return [0];
+        }
+        case 196: {
+          return [0];
+        }
+        case 197: {
+          return [0];
+        }
+        case 198: {
+          return [0];
+        }
+        case 199: {
+          return [0];
+        }
+        case 200: {
+          return [0];
+        }
+        case 201: {
+          return [0];
+        }
+        case 202: {
+          return [0];
+        }
+        case 203: {
+          return [0];
+        }
+        case 204: {
+          return [0];
+        }
+        case 205: {
+          return [0];
+        }
+        case 206: {
+          return [0];
+        }
+        case 207: {
+          return [0];
+        }
+        case 208: {
+          return [0];
+        }
+        case 209: {
+          return [0];
+        }
+        case 210: {
+          return [0];
+        }
+        case 211: {
+          return [0];
+        }
+        case 212: {
+          return [0];
+        }
+        case 213: {
+          return [0];
+        }
+        case 214: {
+          return [0];
+        }
+        case 215: {
+          return [0];
+        }
+        case 216: {
+          return [0];
+        }
+        case 217: {
+          return [0];
+        }
+        case 218: {
+          return [0];
+        }
+        case 219: {
+          return [0];
+        }
+        case 220: {
+          return [0];
+        }
+        case 221: {
+          return [0];
+        }
+        case 222: {
+          return [0];
+        }
+        case 223: {
+          return [0];
+        }
+        case 224: {
+          return [0];
+        }
+        case 225: {
+          return [0];
+        }
+        case 226: {
+          return [0];
+        }
+        case 227: {
+          return [0];
+        }
+        case 228: {
+          return [0];
+        }
+        case 229: {
+          return [0];
+        }
+        case 230: {
+          return [0];
+        }
+        case 231: {
+          return [0];
+        }
+        case 232: {
+          return [0];
+        }
+        case 233: {
+          return [0];
+        }
+        case 234: {
+          return [0];
+        }
+        case 235: {
+          return [0];
+        }
+        case 236: {
+          return [0];
+        }
+        case 237: {
+          return [0];
+        }
+        case 238: {
+          return [0];
+        }
+        case 239: {
+          return [0];
+        }
+        case 240: {
+          return [0];
+        }
+        case 241: {
+          return [0];
+        }
+        case 242: {
+          return [0];
+        }
+        case 243: {
+          return [0];
+        }
+        case 244: {
+          return [0];
+        }
+        case 245: {
+          return [0];
+        }
+        case 246: {
+          return [0];
+        }
+        case 247: {
+          return [0];
+        }
+        case 248: {
+          return [0];
+        }
+        case 249: {
+          return [0];
+        }
+        case 250: {
+          return [0];
+        }
+        case 251: {
+          return [0];
+        }
+        case 252: {
+          return [0];
+        }
+        case 253: {
+          return [0];
+        }
+        case 254: {
+          return [0];
+        }
+        case 255: {
+          return [0];
+        }
+        case 256: {
+          return [0];
+        }
+        case 257: {
+          return [0];
+        }
+        case 258: {
+          return [0];
+        }
+        case 259: {
+          return [0];
+        }
+        case 260: {
+          return [0];
+        }
+        case 261: {
+          return [0];
+        }
+        case 262: {
+          return [0];
+        }
+        case 263: {
+          return [0];
+        }
+        case 264: {
+          return [0];
+        }
+        case 265: {
+          return [0];
+        }
+        case 266: {
+          return [0];
+        }
+        case 267: {
+          return [0];
+        }
+        case 268: {
+          return [0];
+        }
+        case 269: {
+          return [0];
+        }
+        case 270: {
+          return [0];
+        }
+        case 271: {
+          return [0];
+        }
+        case 272: {
+          return [0];
+        }
+        case 273: {
+          return [0];
+        }
+        case 274: {
+          return [0];
+        }
+        case 275: {
+          return [0];
+        }
+        case 276: {
+          return [0];
+        }
+        case 277: {
+          return [0];
+        }
+        case 278: {
+          return [0];
+        }
+        case 279: {
+          return [0];
+        }
+        case 280: {
+          return [0];
+        }
+        case 281: {
+          return [0];
+        }
+        case 282: {
+          return [0];
+        }
+        case 283: {
+          return [0];
+        }
+        case 284: {
+          return [0];
+        }
+        case 285: {
+          return [0];
+        }
+        case 286: {
+          return [0];
+        }
+        case 287: {
+          return [0];
+        }
+        case 288: {
+          return [0];
+        }
+        case 289: {
+          return [0];
+        }
+        case 290: {
+          return [0];
+        }
+        case 291: {
+          return [0];
+        }
+        case 292: {
+          return [0];
+        }
+        case 293: {
+          return [0];
+        }
+        case 294: {
+          return [0];
+        }
+        case 295: {
+          return [0];
+        }
+        case 296: {
+          return [0];
+        }
+        case 297: {
+          return [0];
+        }
+        case 298: {
+          return [0];
+        }
+        case 299: {
+          return [0];
+        }
+      }
+    }
+}
+
+function v_showBool(v_b){
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 0: {
+          return "True";
+        }
+        case 1: {
+          return "False";
+        }
+      }
+    }
+}
+
+const v_res = (v_and)((v_un)([0]), (v_and)((v_un)([1]), (v_and)((v_un)([2]), (v_and)((v_un)([3]), (v_and)((v_un)([4]), (v_and)((v_un)([5]), (v_and)((v_un)([6]), (v_and)((v_un)([7]), (v_and)((v_un)([8]), (v_and)((v_un)([9]), (v_and)((v_un)([10]), (v_and)((v_un)([11]), (v_and)((v_un)([12]), (v_and)((v_un)([13]), (v_and)((v_un)([14]), (v_and)((v_un)([15]), (v_and)((v_un)([16]), (v_and)((v_un)([17]), (v_and)((v_un)([18]), (v_and)((v_un)([19]), (v_and)((v_un)([20]), (v_and)((v_un)([21]), (v_and)((v_un)([22]), (v_and)((v_un)([23]), (v_and)((v_un)([24]), (v_and)((v_un)([25]), (v_and)((v_un)([26]), (v_and)((v_un)([27]), (v_and)((v_un)([28]), (v_and)((v_un)([29]), (v_and)((v_un)([30]), (v_and)((v_un)([31]), (v_and)((v_un)([32]), (v_and)((v_un)([33]), (v_and)((v_un)([34]), (v_and)((v_un)([35]), (v_and)((v_un)([36]), (v_and)((v_un)([37]), (v_and)((v_un)([38]), (v_and)((v_un)([39]), (v_and)((v_un)([40]), (v_and)((v_un)([41]), (v_and)((v_un)([42]), (v_and)((v_un)([43]), (v_and)((v_un)([44]), (v_and)((v_un)([45]), (v_and)((v_un)([46]), (v_and)((v_un)([47]), (v_and)((v_un)([48]), (v_and)((v_un)([49]), (v_and)((v_un)([50]), (v_and)((v_un)([51]), (v_and)((v_un)([52]), (v_and)((v_un)([53]), (v_and)((v_un)([54]), (v_and)((v_un)([55]), (v_and)((v_un)([56]), (v_and)((v_un)([57]), (v_and)((v_un)([58]), (v_and)((v_un)([59]), (v_and)((v_un)([60]), (v_and)((v_un)([61]), (v_and)((v_un)([62]), (v_and)((v_un)([63]), (v_and)((v_un)([64]), (v_and)((v_un)([65]), (v_and)((v_un)([66]), (v_and)((v_un)([67]), (v_and)((v_un)([68]), (v_and)((v_un)([69]), (v_and)((v_un)([70]), (v_and)((v_un)([71]), (v_and)((v_un)([72]), (v_and)((v_un)([73]), (v_and)((v_un)([74]), (v_and)((v_un)([75]), (v_and)((v_un)([76]), (v_and)((v_un)([77]), (v_and)((v_un)([78]), (v_and)((v_un)([79]), (v_and)((v_un)([80]), (v_and)((v_un)([81]), (v_and)((v_un)([82]), (v_and)((v_un)([83]), (v_and)((v_un)([84]), (v_and)((v_un)([85]), (v_and)((v_un)([86]), (v_and)((v_un)([87]), (v_and)((v_un)([88]), (v_and)((v_un)([89]), (v_and)((v_un)([90]), (v_and)((v_un)([91]), (v_and)((v_un)([92]), (v_and)((v_un)([93]), (v_and)((v_un)([94]), (v_and)((v_un)([95]), (v_and)((v_un)([96]), (v_and)((v_un)([97]), (v_and)((v_un)([98]), (v_and)((v_un)([99]), (v_and)((v_un)([100]), (v_and)((v_un)([101]), (v_and)((v_un)([102]), (v_and)((v_un)([103]), (v_and)((v_un)([104]), (v_and)((v_un)([105]), (v_and)((v_un)([106]), (v_and)((v_un)([107]), (v_and)((v_un)([108]), (v_and)((v_un)([109]), (v_and)((v_un)([110]), (v_and)((v_un)([111]), (v_and)((v_un)([112]), (v_and)((v_un)([113]), (v_and)((v_un)([114]), (v_and)((v_un)([115]), (v_and)((v_un)([116]), (v_and)((v_un)([117]), (v_and)((v_un)([118]), (v_and)((v_un)([119]), (v_and)((v_un)([120]), (v_and)((v_un)([121]), (v_and)((v_un)([122]), (v_and)((v_un)([123]), (v_and)((v_un)([124]), (v_and)((v_un)([125]), (v_and)((v_un)([126]), (v_and)((v_un)([127]), (v_and)((v_un)([128]), (v_and)((v_un)([129]), (v_and)((v_un)([130]), (v_and)((v_un)([131]), (v_and)((v_un)([132]), (v_and)((v_un)([133]), (v_and)((v_un)([134]), (v_and)((v_un)([135]), (v_and)((v_un)([136]), (v_and)((v_un)([137]), (v_and)((v_un)([138]), (v_and)((v_un)([139]), (v_and)((v_un)([140]), (v_and)((v_un)([141]), (v_and)((v_un)([142]), (v_and)((v_un)([143]), (v_and)((v_un)([144]), (v_and)((v_un)([145]), (v_and)((v_un)([146]), (v_and)((v_un)([147]), (v_and)((v_un)([148]), (v_and)((v_un)([149]), (v_and)((v_un)([150]), (v_and)((v_un)([151]), (v_and)((v_un)([152]), (v_and)((v_un)([153]), (v_and)((v_un)([154]), (v_and)((v_un)([155]), (v_and)((v_un)([156]), (v_and)((v_un)([157]), (v_and)((v_un)([158]), (v_and)((v_un)([159]), (v_and)((v_un)([160]), (v_and)((v_un)([161]), (v_and)((v_un)([162]), (v_and)((v_un)([163]), (v_and)((v_un)([164]), (v_and)((v_un)([165]), (v_and)((v_un)([166]), (v_and)((v_un)([167]), (v_and)((v_un)([168]), (v_and)((v_un)([169]), (v_and)((v_un)([170]), (v_and)((v_un)([171]), (v_and)((v_un)([172]), (v_and)((v_un)([173]), (v_and)((v_un)([174]), (v_and)((v_un)([175]), (v_and)((v_un)([176]), (v_and)((v_un)([177]), (v_and)((v_un)([178]), (v_and)((v_un)([179]), (v_and)((v_un)([180]), (v_and)((v_un)([181]), (v_and)((v_un)([182]), (v_and)((v_un)([183]), (v_and)((v_un)([184]), (v_and)((v_un)([185]), (v_and)((v_un)([186]), (v_and)((v_un)([187]), (v_and)((v_un)([188]), (v_and)((v_un)([189]), (v_and)((v_un)([190]), (v_and)((v_un)([191]), (v_and)((v_un)([192]), (v_and)((v_un)([193]), (v_and)((v_un)([194]), (v_and)((v_un)([195]), (v_and)((v_un)([196]), (v_and)((v_un)([197]), (v_and)((v_un)([198]), (v_and)((v_un)([199]), (v_and)((v_un)([200]), (v_and)((v_un)([201]), (v_and)((v_un)([202]), (v_and)((v_un)([203]), (v_and)((v_un)([204]), (v_and)((v_un)([205]), (v_and)((v_un)([206]), (v_and)((v_un)([207]), (v_and)((v_un)([208]), (v_and)((v_un)([209]), (v_and)((v_un)([210]), (v_and)((v_un)([211]), (v_and)((v_un)([212]), (v_and)((v_un)([213]), (v_and)((v_un)([214]), (v_and)((v_un)([215]), (v_and)((v_un)([216]), (v_and)((v_un)([217]), (v_and)((v_un)([218]), (v_and)((v_un)([219]), (v_and)((v_un)([220]), (v_and)((v_un)([221]), (v_and)((v_un)([222]), (v_and)((v_un)([223]), (v_and)((v_un)([224]), (v_and)((v_un)([225]), (v_and)((v_un)([226]), (v_and)((v_un)([227]), (v_and)((v_un)([228]), (v_and)((v_un)([229]), (v_and)((v_un)([230]), (v_and)((v_un)([231]), (v_and)((v_un)([232]), (v_and)((v_un)([233]), (v_and)((v_un)([234]), (v_and)((v_un)([235]), (v_and)((v_un)([236]), (v_and)((v_un)([237]), (v_and)((v_un)([238]), (v_and)((v_un)([239]), (v_and)((v_un)([240]), (v_and)((v_un)([241]), (v_and)((v_un)([242]), (v_and)((v_un)([243]), (v_and)((v_un)([244]), (v_and)((v_un)([245]), (v_and)((v_un)([246]), (v_and)((v_un)([247]), (v_and)((v_un)([248]), (v_and)((v_un)([249]), (v_and)((v_un)([250]), (v_and)((v_un)([251]), (v_and)((v_un)([252]), (v_and)((v_un)([253]), (v_and)((v_un)([254]), (v_and)((v_un)([255]), (v_and)((v_un)([256]), (v_and)((v_un)([257]), (v_and)((v_un)([258]), (v_and)((v_un)([259]), (v_and)((v_un)([260]), (v_and)((v_un)([261]), (v_and)((v_un)([262]), (v_and)((v_un)([263]), (v_and)((v_un)([264]), (v_and)((v_un)([265]), (v_and)((v_un)([266]), (v_and)((v_un)([267]), (v_and)((v_un)([268]), (v_and)((v_un)([269]), (v_and)((v_un)([270]), (v_and)((v_un)([271]), (v_and)((v_un)([272]), (v_and)((v_un)([273]), (v_and)((v_un)([274]), (v_and)((v_un)([275]), (v_and)((v_un)([276]), (v_and)((v_un)([277]), (v_and)((v_un)([278]), (v_and)((v_un)([279]), (v_and)((v_un)([280]), (v_and)((v_un)([281]), (v_and)((v_un)([282]), (v_and)((v_un)([283]), (v_and)((v_un)([284]), (v_and)((v_un)([285]), (v_and)((v_un)([286]), (v_and)((v_un)([287]), (v_and)((v_un)([288]), (v_and)((v_un)([289]), (v_and)((v_un)([290]), (v_and)((v_un)([291]), (v_and)((v_un)([292]), (v_and)((v_un)([293]), (v_and)((v_un)([294]), (v_and)((v_un)([295]), (v_and)((v_un)([296]), (v_and)((v_un)([297]), (v_and)((v_un)([298]), (v_un)([299]))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+
 function main(v__input){
-    return __print((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((v_show)([0]) + ", ") + (v_show)([1])) + ", ") + (v_show)([2])) + ", ") + (v_show)([3])) + ", ") + (v_show)([4])) + ", ") + (v_show)([5])) + ", ") + (v_show)([6])) + ", ") + (v_show)([7])) + ", ") + (v_show)([8])) + ", ") + (v_show)([9])) + ", ") + (v_show)([10])) + ", ") + (v_show)([11])) + ", ") + (v_show)([12])) + ", ") + (v_show)([13])) + ", ") + (v_show)([14])) + ", ") + (v_show)([15])) + ", ") + (v_show)([16])) + ", ") + (v_show)([17])) + ", ") + (v_show)([18])) + ", ") + (v_show)([19])) + ", ") + (v_show)([20])) + ", ") + (v_show)([21])) + ", ") + (v_show)([22])) + ", ") + (v_show)([23])) + ", ") + (v_show)([24])) + ", ") + (v_show)([25])) + ", ") + (v_show)([26])) + ", ") + (v_show)([27])) + ", ") + (v_show)([28])) + ", ") + (v_show)([29])) + ", ") + (v_show)([30])) + ", ") + (v_show)([31])) + ", ") + (v_show)([32])) + ", ") + (v_show)([33])) + ", ") + (v_show)([34])) + ", ") + (v_show)([35])) + ", ") + (v_show)([36])) + ", ") + (v_show)([37])) + ", ") + (v_show)([38])) + ", ") + (v_show)([39])) + ", ") + (v_show)([40])) + ", ") + (v_show)([41])) + ", ") + (v_show)([42])) + ", ") + (v_show)([43])) + ", ") + (v_show)([44])) + ", ") + (v_show)([45])) + ", ") + (v_show)([46])) + ", ") + (v_show)([47])) + ", ") + (v_show)([48])) + ", ") + (v_show)([49])) + ", ") + (v_show)([50])) + ", ") + (v_show)([51])) + ", ") + (v_show)([52])) + ", ") + (v_show)([53])) + ", ") + (v_show)([54])) + ", ") + (v_show)([55])) + ", ") + (v_show)([56])) + ", ") + (v_show)([57])) + ", ") + (v_show)([58])) + ", ") + (v_show)([59])) + ", ") + (v_show)([60])) + ", ") + (v_show)([61])) + ", ") + (v_show)([62])) + ", ") + (v_show)([63])) + ", ") + (v_show)([64])) + ", ") + (v_show)([65])) + ", ") + (v_show)([66])) + ", ") + (v_show)([67])) + ", ") + (v_show)([68])) + ", ") + (v_show)([69])) + ", ") + (v_show)([70])) + ", ") + (v_show)([71])) + ", ") + (v_show)([72])) + ", ") + (v_show)([73])) + ", ") + (v_show)([74])) + ", ") + (v_show)([75])) + ", ") + (v_show)([76])) + ", ") + (v_show)([77])) + ", ") + (v_show)([78])) + ", ") + (v_show)([79])) + ", ") + (v_show)([80])) + ", ") + (v_show)([81])) + ", ") + (v_show)([82])) + ", ") + (v_show)([83])) + ", ") + (v_show)([84])) + ", ") + (v_show)([85])) + ", ") + (v_show)([86])) + ", ") + (v_show)([87])) + ", ") + (v_show)([88])) + ", ") + (v_show)([89])) + ", ") + (v_show)([90])) + ", ") + (v_show)([91])) + ", ") + (v_show)([92])) + ", ") + (v_show)([93])) + ", ") + (v_show)([94])) + ", ") + (v_show)([95])) + ", ") + (v_show)([96])) + ", ") + (v_show)([97])) + ", ") + (v_show)([98])) + ", ") + (v_show)([99])) + ", ") + (v_show)([100])) + ", ") + (v_show)([101])) + ", ") + (v_show)([102])) + ", ") + (v_show)([103])) + ", ") + (v_show)([104])) + ", ") + (v_show)([105])) + ", ") + (v_show)([106])) + ", ") + (v_show)([107])) + ", ") + (v_show)([108])) + ", ") + (v_show)([109])) + ", ") + (v_show)([110])) + ", ") + (v_show)([111])) + ", ") + (v_show)([112])) + ", ") + (v_show)([113])) + ", ") + (v_show)([114])) + ", ") + (v_show)([115])) + ", ") + (v_show)([116])) + ", ") + (v_show)([117])) + ", ") + (v_show)([118])) + ", ") + (v_show)([119])) + ", ") + (v_show)([120])) + ", ") + (v_show)([121])) + ", ") + (v_show)([122])) + ", ") + (v_show)([123])) + ", ") + (v_show)([124])) + ", ") + (v_show)([125])) + ", ") + (v_show)([126])) + ", ") + (v_show)([127])) + ", ") + (v_show)([128])) + ", ") + (v_show)([129])) + ", ") + (v_show)([130])) + ", ") + (v_show)([131])) + ", ") + (v_show)([132])) + ", ") + (v_show)([133])) + ", ") + (v_show)([134])) + ", ") + (v_show)([135])) + ", ") + (v_show)([136])) + ", ") + (v_show)([137])) + ", ") + (v_show)([138])) + ", ") + (v_show)([139])) + ", ") + (v_show)([140])) + ", ") + (v_show)([141])) + ", ") + (v_show)([142])) + ", ") + (v_show)([143])) + ", ") + (v_show)([144])) + ", ") + (v_show)([145])) + ", ") + (v_show)([146])) + ", ") + (v_show)([147])) + ", ") + (v_show)([148])) + ", ") + (v_show)([149])) + ", ") + (v_show)([150])) + ", ") + (v_show)([151])) + ", ") + (v_show)([152])) + ", ") + (v_show)([153])) + ", ") + (v_show)([154])) + ", ") + (v_show)([155])) + ", ") + (v_show)([156])) + ", ") + (v_show)([157])) + ", ") + (v_show)([158])) + ", ") + (v_show)([159])) + ", ") + (v_show)([160])) + ", ") + (v_show)([161])) + ", ") + (v_show)([162])) + ", ") + (v_show)([163])) + ", ") + (v_show)([164])) + ", ") + (v_show)([165])) + ", ") + (v_show)([166])) + ", ") + (v_show)([167])) + ", ") + (v_show)([168])) + ", ") + (v_show)([169])) + ", ") + (v_show)([170])) + ", ") + (v_show)([171])) + ", ") + (v_show)([172])) + ", ") + (v_show)([173])) + ", ") + (v_show)([174])) + ", ") + (v_show)([175])) + ", ") + (v_show)([176])) + ", ") + (v_show)([177])) + ", ") + (v_show)([178])) + ", ") + (v_show)([179])) + ", ") + (v_show)([180])) + ", ") + (v_show)([181])) + ", ") + (v_show)([182])) + ", ") + (v_show)([183])) + ", ") + (v_show)([184])) + ", ") + (v_show)([185])) + ", ") + (v_show)([186])) + ", ") + (v_show)([187])) + ", ") + (v_show)([188])) + ", ") + (v_show)([189])) + ", ") + (v_show)([190])) + ", ") + (v_show)([191])) + ", ") + (v_show)([192])) + ", ") + (v_show)([193])) + ", ") + (v_show)([194])) + ", ") + (v_show)([195])) + ", ") + (v_show)([196])) + ", ") + (v_show)([197])) + ", ") + (v_show)([198])) + ", ") + (v_show)([199])) + ", ") + (v_show)([200])) + ", ") + (v_show)([201])) + ", ") + (v_show)([202])) + ", ") + (v_show)([203])) + ", ") + (v_show)([204])) + ", ") + (v_show)([205])) + ", ") + (v_show)([206])) + ", ") + (v_show)([207])) + ", ") + (v_show)([208])) + ", ") + (v_show)([209])) + ", ") + (v_show)([210])) + ", ") + (v_show)([211])) + ", ") + (v_show)([212])) + ", ") + (v_show)([213])) + ", ") + (v_show)([214])) + ", ") + (v_show)([215])) + ", ") + (v_show)([216])) + ", ") + (v_show)([217])) + ", ") + (v_show)([218])) + ", ") + (v_show)([219])) + ", ") + (v_show)([220])) + ", ") + (v_show)([221])) + ", ") + (v_show)([222])) + ", ") + (v_show)([223])) + ", ") + (v_show)([224])) + ", ") + (v_show)([225])) + ", ") + (v_show)([226])) + ", ") + (v_show)([227])) + ", ") + (v_show)([228])) + ", ") + (v_show)([229])) + ", ") + (v_show)([230])) + ", ") + (v_show)([231])) + ", ") + (v_show)([232])) + ", ") + (v_show)([233])) + ", ") + (v_show)([234])) + ", ") + (v_show)([235])) + ", ") + (v_show)([236])) + ", ") + (v_show)([237])) + ", ") + (v_show)([238])) + ", ") + (v_show)([239])) + ", ") + (v_show)([240])) + ", ") + (v_show)([241])) + ", ") + (v_show)([242])) + ", ") + (v_show)([243])) + ", ") + (v_show)([244])) + ", ") + (v_show)([245])) + ", ") + (v_show)([246])) + ", ") + (v_show)([247])) + ", ") + (v_show)([248])) + ", ") + (v_show)([249])) + ", ") + (v_show)([250])) + ", ") + (v_show)([251])) + ", ") + (v_show)([252])) + ", ") + (v_show)([253])) + ", ") + (v_show)([254])) + ", ") + (v_show)([255])) + ", ") + (v_show)([256])) + ", ") + (v_show)([257])) + ", ") + (v_show)([258])) + ", ") + (v_show)([259])) + ", ") + (v_show)([260])) + ", ") + (v_show)([261])) + ", ") + (v_show)([262])) + ", ") + (v_show)([263])) + ", ") + (v_show)([264])) + ", ") + (v_show)([265])) + ", ") + (v_show)([266])) + ", ") + (v_show)([267])) + ", ") + (v_show)([268])) + ", ") + (v_show)([269])) + ", ") + (v_show)([270])) + ", ") + (v_show)([271])) + ", ") + (v_show)([272])) + ", ") + (v_show)([273])) + ", ") + (v_show)([274])) + ", ") + (v_show)([275])) + ", ") + (v_show)([276])) + ", ") + (v_show)([277])) + ", ") + (v_show)([278])) + ", ") + (v_show)([279])) + ", ") + (v_show)([280])) + ", ") + (v_show)([281])) + ", ") + (v_show)([282])) + ", ") + (v_show)([283])) + ", ") + (v_show)([284])) + ", ") + (v_show)([285])) + ", ") + (v_show)([286])) + ", ") + (v_show)([287])) + ", ") + (v_show)([288])) + ", ") + (v_show)([289])) + ", ") + (v_show)([290])) + ", ") + (v_show)([291])) + ", ") + (v_show)([292])) + ", ") + (v_show)([293])) + ", ") + (v_show)([294])) + ", ") + (v_show)([295])) + ", ") + (v_show)([296])) + ", ") + (v_show)([297])) + ", ") + (v_show)([298])) + ", ") + (v_show)([299])));
+    return __print((v_showBool)(v_res));
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();

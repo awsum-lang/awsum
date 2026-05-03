@@ -22,7 +22,7 @@ function v__df_apply_0(v_x, v__df_apply_0_cap0_0){
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main(arg);
+  if (typeof main === 'function') main([1, arg]);
 }
 
 })();

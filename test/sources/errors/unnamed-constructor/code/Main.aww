@@ -5,5 +5,5 @@ import IO.Stdout
 
 type A = _
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main input = IO.Stdout.print input

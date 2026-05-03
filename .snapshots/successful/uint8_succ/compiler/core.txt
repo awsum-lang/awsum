@@ -12,62 +12,177 @@ CoreProgram
                 [
                     ( 0
                     , [ "e" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "overflow: "
-                        , CCall
-                            ( CVar "showOverflowError" )
-                            [ CVar "e" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "overflow: "
+                            , CCall
+                                ( CVar "showOverflowError" )
+                                [ CVar "e" ]
+                            ]
                         ]
                     )
                 ,
                     ( 1
                     , [ "v" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "ok: "
-                        , CCall
-                            ( CBuiltIn "showUInt8" )
-                            [ CVar "v" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "ok: "
+                            , CCall
+                                ( CBuiltIn "showUInt8" )
+                                [ CVar "v" ]
+                            ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CCall
-                        ( CBuiltIn "concatString" )
+                ( CVar "$let$1" )
+                [ CCase
+                    ( CCall
+                        ( CVar "render" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CCall
-                                    ( CVar "render" )
-                                    [ CCall
-                                        ( CBuiltIn "succUInt8" )
-                                        [ CVar "maxUInt8" ]
-                                    ]
-                                , CString ", "
-                                ]
-                            , CCall
+                            ( CBuiltIn "succUInt8" )
+                            [ CVar "maxUInt8" ]
+                        ]
+                    )
+                    [
+                        ( 0
+                        , [ "$do_e_12_9" ]
+                        , CCon 0
+                            [ CVar "$do_e_12_9" ]
+                        )
+                    ,
+                        ( 1
+                        , [ "a" ]
+                        , CCase
+                            ( CCall
                                 ( CVar "render" )
                                 [ CCall
                                     ( CBuiltIn "succUInt8" )
                                     [ CIntLit 254 TUInt8 ]
                                 ]
+                            )
+                            [
+                                ( 0
+                                , [ "$do_e_13_9" ]
+                                , CCon 0
+                                    [ CVar "$do_e_13_9" ]
+                                )
+                            ,
+                                ( 1
+                                , [ "b" ]
+                                , CCase
+                                    ( CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "succUInt8" )
+                                            [ CVar "minUInt8" ]
+                                        ]
+                                    )
+                                    [
+                                        ( 0
+                                        , [ "$do_e_14_9" ]
+                                        , CCon 0
+                                            [ CVar "$do_e_14_9" ]
+                                        )
+                                    ,
+                                        ( 1
+                                        , [ "c" ]
+                                        , CCase
+                                            ( CCon 1
+                                                [ CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CVar "a"
+                                                    , CString ", "
+                                                    ]
+                                                ]
+                                            )
+                                            [
+                                                ( 0
+                                                , [ "$do_e_15_9" ]
+                                                , CCon 0
+                                                    [ CVar "$do_e_15_9" ]
+                                                )
+                                            ,
+                                                ( 1
+                                                , [ "s0" ]
+                                                , CCase
+                                                    ( CCon 1
+                                                        [ CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CVar "s0"
+                                                            , CVar "b"
+                                                            ]
+                                                        ]
+                                                    )
+                                                    [
+                                                        ( 0
+                                                        , [ "$do_e_16_9" ]
+                                                        , CCon 0
+                                                            [ CVar "$do_e_16_9" ]
+                                                        )
+                                                    ,
+                                                        ( 1
+                                                        , [ "s1" ]
+                                                        , CCase
+                                                            ( CCon 1
+                                                                [ CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CVar "s1"
+                                                                    , CString ", "
+                                                                    ]
+                                                                ]
+                                                            )
+                                                            [
+                                                                ( 0
+                                                                , [ "$do_e_17_9" ]
+                                                                , CCon 0
+                                                                    [ CVar "$do_e_17_9" ]
+                                                                )
+                                                            ,
+                                                                ( 1
+                                                                , [ "s2" ]
+                                                                , CCon 1
+                                                                    [ CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CVar "s2"
+                                                                        , CVar "c"
+                                                                        ]
+                                                                    ]
+                                                                )
+                                                            ]
+                                                        )
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
                             ]
-                        , CString ", "
-                        ]
-                    , CCall
-                        ( CVar "render" )
-                        [ CCall
-                            ( CBuiltIn "succUInt8" )
-                            [ CVar "minUInt8" ]
-                        ]
+                        )
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

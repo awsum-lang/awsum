@@ -10,5 +10,5 @@ import IO.Stdout
 class Eq a where
   eq : a -> a -> Bool
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print "ok"

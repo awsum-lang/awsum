@@ -1,10 +1,48 @@
 {- `parseInt32`: covers all cases from the prelude docstring. -}
 import IO.Stdout
 
-render : Either ParseError Int32 -> String
+render : Either ParseError Int32 -> Either StringTooLong String
 render r = case r of
-  Left _ -> "err"
+  Left _ -> Right "err"
   Right v -> "ok:" ++ showInt32 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (parseInt32 "42") ++ ", " ++ render (parseInt32 "-42") ++ ", " ++ render (parseInt32 "0") ++ ", " ++ render (parseInt32 "2147483647") ++ ", " ++ render (parseInt32 "-2147483648") ++ ", " ++ render (parseInt32 "2147483648") ++ ", " ++ render (parseInt32 "-2147483649") ++ ", " ++ render (parseInt32 "") ++ ", " ++ render (parseInt32 "-") ++ ", " ++ render (parseInt32 "+42") ++ ", " ++ render (parseInt32 " 42") ++ ", " ++ render (parseInt32 "12abc"))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (parseInt32 "42")
+        b <- render (parseInt32 "-42")
+        c <- render (parseInt32 "0")
+        d <- render (parseInt32 "2147483647")
+        e <- render (parseInt32 "-2147483648")
+        f <- render (parseInt32 "2147483648")
+        g <- render (parseInt32 "-2147483649")
+        h <- render (parseInt32 "")
+        i <- render (parseInt32 "-")
+        j <- render (parseInt32 "+42")
+        k <- render (parseInt32 " 42")
+        l <- render (parseInt32 "12abc")
+        s0 <- a ++ ", "
+        s1 <- s0 ++ b
+        s2 <- s1 ++ ", "
+        s3 <- s2 ++ c
+        s4 <- s3 ++ ", "
+        s5 <- s4 ++ d
+        s6 <- s5 ++ ", "
+        s7 <- s6 ++ e
+        s8 <- s7 ++ ", "
+        s9 <- s8 ++ f
+        s10 <- s9 ++ ", "
+        s11 <- s10 ++ g
+        s12 <- s11 ++ ", "
+        s13 <- s12 ++ h
+        s14 <- s13 ++ ", "
+        s15 <- s14 ++ i
+        s16 <- s15 ++ ", "
+        s17 <- s16 ++ j
+        s18 <- s17 ++ ", "
+        s19 <- s18 ++ k
+        s20 <- s19 ++ ", "
+        s20 ++ l
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

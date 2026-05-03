@@ -24,13 +24,17 @@ f = do
   c <- op3
   pureEither c
 
-describe : Either (ErrorA | ErrorB | ErrorC) Int32 -> String
+describe : Either (ErrorA | ErrorB | ErrorC) Int32 -> Either StringTooLong String
 describe r = case r of
   Left e -> case e of
-    (_ : ErrorA) -> "ErrorA"
-    (_ : ErrorB) -> "ErrorB"
-    (_ : ErrorC) -> "ErrorC"
+    (_ : ErrorA) -> Right "ErrorA"
+    (_ : ErrorB) -> Right "ErrorB"
+    (_ : ErrorC) -> Right "ErrorC"
   Right n -> "Ok " ++ showInt32 n
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (describe f)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = describe f
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

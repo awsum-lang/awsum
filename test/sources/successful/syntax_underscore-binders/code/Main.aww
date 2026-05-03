@@ -20,5 +20,15 @@ showPair : Pair String String -> String
 showPair p = case p of
   Pair _ _ -> "paired"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (greeting "x" ++ " " ++ unwrapBox (Box "a") ++ " " ++ unwrapBoxNamed (Box "b") ++ " " ++ showPair (Pair "l" "r"))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- greeting "x" ++ " "
+        s1 <- s0 ++ unwrapBox (Box "a")
+        s2 <- s1 ++ " "
+        s3 <- s2 ++ unwrapBoxNamed (Box "b")
+        s4 <- s3 ++ " "
+        s4 ++ showPair (Pair "l" "r")
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

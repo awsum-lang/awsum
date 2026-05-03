@@ -12,5 +12,5 @@ type Pair = Pair Int32 Int32
 first : Pair -> Int32
 first p = p.x
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print "ok"

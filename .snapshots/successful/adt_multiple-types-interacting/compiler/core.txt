@@ -51,26 +51,63 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CCall
-                        ( CBuiltIn "concatString" )
+                ( CVar "$let$1" )
+                [ CCase
+                    ( CCon 1
                         [ CCall
-                            ( CVar "showBoxedColor" )
-                            [ CCon 0
-                                [ CCon 0 [] ]
-                            ]
-                        , CString " "
-                        ]
-                    , CCall
-                        ( CVar "showResult" )
-                        [ CCon 0
-                            [ CCon 0
-                                [ CCon 1 [] ]
+                            ( CBuiltIn "concatString" )
+                            [ CCall
+                                ( CVar "showBoxedColor" )
+                                [ CCon 0
+                                    [ CCon 0 [] ]
+                                ]
+                            , CString " "
                             ]
                         ]
+                    )
+                    [
+                        ( 0
+                        , [ "$do_e_28_9" ]
+                        , CCon 0
+                            [ CVar "$do_e_28_9" ]
+                        )
+                    ,
+                        ( 1
+                        , [ "s0" ]
+                        , CCon 1
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "showResult" )
+                                    [ CCon 0
+                                        [ CCon 0
+                                            [ CCon 1 [] ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        )
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

@@ -1217,6 +1217,7 @@ mainMethod =
     [ "  .method private hidebysig static void Main(string[]) cil managed",
       "  {",
       "    .entrypoint",
+      "    .locals init (object input)",
       "    ldarg.0",
       "    ldlen",
       "    conv.i4",
@@ -1229,6 +1230,22 @@ mainMethod =
       "    ldc.i4.0",
       "    ldelem.ref",
       "  call_main:",
+      -- Wrap input in `Right input` (tag=1, one field) before handing to user's
+      -- main. Layout matches CCon emit on CLR: object[1+nFields] with boxed
+      -- Int32 tag at index 0, fields at indices 1.. Save input to local, then
+      -- build the array.
+      "    stloc.0",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    stelem.ref",
       "    call object AwsumMain::" <> mangle "main" <> "(object)",
       "    pop",
       "    ret",

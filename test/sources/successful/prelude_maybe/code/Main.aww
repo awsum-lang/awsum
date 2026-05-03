@@ -1,10 +1,18 @@
 {- `Maybe a` from prelude (no import). -}
 import IO.Stdout
 
-unwrap : Maybe String -> String
+unwrap : Maybe String -> Either StringTooLong String
 unwrap m = case m of
   Just s -> "just: " ++ s
-  Nothing -> "nothing"
+  Nothing -> Right "nothing"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (unwrap (Just "hi") ++ ", " ++ unwrap Nothing)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- unwrap (Just "hi")
+        b <- unwrap Nothing
+        s0 <- a ++ ", "
+        s0 ++ b
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

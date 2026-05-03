@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":10,"startCol":14,"endLine":12,"endCol":15,"message":"Case on non-sum type: IO Unit","fixes":[]}]
+[{"severity":"error","startLine":13,"startCol":5,"endLine":13,"endCol":31,"message":"Case on non-sum type: IO Unit","fixes":[]}]

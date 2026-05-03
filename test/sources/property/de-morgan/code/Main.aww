@@ -22,17 +22,21 @@ parseInput raw = case splitOnFirst ":" raw of
     nb <- parseUInt8 sb
     pureEither (Tuple2 na nb)
 
-property : UInt8 -> UInt8 -> String
+property : UInt8 -> UInt8 -> Either StringTooLong String
 property na nb =
   let a = intToBool na
       b = intToBool nb
    in boolToStr (not (and a b)) ++ boolToStr (or (not a) (not b))
 
-main : String -> IO Unit
-main raw =
-  let res : Either ParseError String = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
+        raw <- rawArg
         Tuple2 na nb <- parseInput raw
-        pureEither (property na nb)
+        property na nb
    in case res of
-        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s

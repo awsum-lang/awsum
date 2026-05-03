@@ -12,5 +12,5 @@ describe n = case n of
   0 -> "zero"
   m -> showInt32 m
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print (describe 0)

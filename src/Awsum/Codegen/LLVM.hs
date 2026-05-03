@@ -959,7 +959,17 @@ footer =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]",
-      "  call ptr @v_main(ptr %input)",
+      -- Wrap input in `Right input` (tag=1, one field) before handing to v_main.
+      -- Layout matches CCon emit: malloc(8 * (1 + nFields)), tag at offset 0,
+      -- fields at offsets 1.. — both stored as `ptr` slots. Tag is encoded as
+      -- `inttoptr` to match how CCase reads it back via `ptrtoint`.
+      "  %right_box = call ptr @malloc(i64 16)",
+      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
+      "  %right_tag = inttoptr i64 1 to ptr",
+      "  store ptr %right_tag, ptr %right_tag_ptr",
+      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
+      "  store ptr %input, ptr %right_payload_ptr",
+      "  call ptr @v_main(ptr %right_box)",
       "  ret i32 0",
       "}"
     ]

@@ -77,39 +77,63 @@ CoreProgram
                         [
                             ( 401451280
                             , "__rw"
-                            , CString "ErrorA"
+                            , CCon 1
+                                [ CString "ErrorA" ]
                             )
                         ,
                             ( 435006518
                             , "__rw"
-                            , CString "ErrorC"
+                            , CCon 1
+                                [ CString "ErrorC" ]
                             )
                         ,
                             ( 451784137
                             , "__rw"
-                            , CString "ErrorB"
+                            , CCon 1
+                                [ CString "ErrorB" ]
                             )
                         ]
                     )
                 ,
                     ( 1
                     , [ "n" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "Ok "
-                        , CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "n" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "Ok "
+                            , CCall
+                                ( CBuiltIn "showInt32" )
+                                [ CVar "n" ]
+                            ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "describe" )
                     [ CVar "f" ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

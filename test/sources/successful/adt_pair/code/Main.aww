@@ -3,9 +3,20 @@ import IO.Stdout
 
 type Pair a b = Pair a b
 
-showPair : Pair String String -> String
+showPair : Pair String String -> Either StringTooLong String
 showPair pair = case pair of
-  Pair first second -> "(" ++ first ++ ", " ++ second ++ ")"
+  Pair first second -> showPairBody first second
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (showPair (Pair "hello" "world"))
+showPairBody : String -> String -> Either StringTooLong String
+showPairBody first second = do
+  s0 <- "(" ++ first
+  s1 <- s0 ++ ", "
+  s2 <- s1 ++ second
+  s2 ++ ")"
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = showPair (Pair "hello" "world")
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

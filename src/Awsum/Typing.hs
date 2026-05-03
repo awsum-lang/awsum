@@ -358,7 +358,7 @@ prettyPrintTypeError = \case
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
   MainMissing -> "Missing 'main' function"
-  MainWrongType ty -> "Wrong type for 'main': expected String -> IO Unit, got " <> showType ty
+  MainWrongType ty -> "Wrong type for 'main': expected Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
   TELowering msg -> msg
   DuplicateTypeDef _ name -> "Duplicate type definition: " <> name
@@ -940,16 +940,30 @@ bareBuiltInRef = \case
   EParens _ e -> bareBuiltInRef e
   _ -> Nothing
 
--- | Entry-point check: verify the program declares @main : String -> IO Unit@.
+-- | Entry-point check: verify the program declares
+--   @main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit@.
 --   Called only from @build@/@run@ — modules without @main@ (libraries,
 --   @Prelude.aww@) pass 'typecheckProgram' but fail here when an executable
 --   is requested.
+--
+--   The argument is an 'Either' on a structural sum because the runtime
+--   reports two independent failures while decoding @argv[1]@ into an
+--   Awsum 'String': length cap exceeded ('StringTooLong') and a stray
+--   UTF-16 half surrogate ('UnpairedUtf16Surrogate'). Phase 1 always
+--   passes 'Right'; the validators that produce 'Left' move into the
+--   per-target entry points incrementally (phase 2.x).
 requireMain :: Program -> Either TypeError ()
 requireMain Program {decls} =
   case listToMaybe [t | Sig _ "main" t _ <- toList decls] of
     Nothing -> Left MainMissing
     Just ty ->
-      let want = TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))
+      let stringTy = TyCon noSpan "String"
+          ioUnit = TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit")
+          tooLong = TyCon noSpan "StringTooLong"
+          unpaired = TyCon noSpan "UnpairedUtf16Surrogate"
+          errSum = TyOr noSpan tooLong unpaired
+          eitherErr = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") errSum) stringTy
+          want = TyArrow noSpan eitherErr ioUnit
        in unless (ty == want) (Left (MainWrongType ty))
 
 -- | Reject a fresh list of binders if any of them are already in scope or
@@ -1301,12 +1315,21 @@ typeOfExpr conEnv tcm env = \case
                   then Right b
                   else Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
-  -- String concatenation is only defined for (String, String) → String.
+  -- String concatenation `a ++ b` is defined for (String, String) and
+  -- returns `Either StringTooLong String`. Phase 1 always produces 'Right';
+  -- 'StringTooLong' becomes reachable in phase 2.x when length validation
+  -- moves into the runtime.
   EInfix sp OpConcat l r -> do
     tl <- typeOfExpr conEnv tcm env l
     tr <- typeOfExpr conEnv tcm env r
     if tl == TyCon noSpan "String" && tr == TyCon noSpan "String"
-      then Right (TyCon noSpan "String")
+      then
+        let resTy =
+              TyApp
+                noSpan
+                (TyApp noSpan (TyCon noSpan "Either") (TyCon noSpan "StringTooLong"))
+                (TyCon noSpan "String")
+         in Right resTy
       else
         -- pick the first offender for a more helpful message
         let blame = if tl /= TyCon noSpan "String" then tl else tr

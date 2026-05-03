@@ -8,5 +8,11 @@ unwrap x = case x of
   Found value -> value
   NotFound -> "not found"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (unwrap (Found "hello") ++ ", " ++ unwrap NotFound)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        s0 <- unwrap (Found "hello") ++ ", "
+        s0 ++ unwrap NotFound
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

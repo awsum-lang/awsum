@@ -10,28 +10,88 @@ CoreProgram
                         , "second"
                         ]
                     , CCall
+                        ( CVar "showPairBody" )
+                        [ CVar "first"
+                        , CVar "second"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "showPairBody"
+            [ "first"
+            , "second"
+            ]
+            ( CCase
+                ( CCon 1
+                    [ CCall
                         ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "concatString" )
+                        [ CString "("
+                        , CVar "first"
+                        ]
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_12_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_12_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s0" ]
+                    , CCase
+                        ( CCon 1
                             [ CCall
                                 ( CBuiltIn "concatString" )
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CString "("
-                                    , CVar "first"
-                                    ]
+                                [ CVar "s0"
                                 , CString ", "
                                 ]
-                            , CVar "second"
                             ]
-                        , CString ")"
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_13_3" ]
+                            , CCon 0
+                                [ CVar "$do_e_13_3" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "s1" ]
+                            , CCase
+                                ( CCon 1
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CVar "second"
+                                        ]
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "$do_e_14_3" ]
+                                    , CCon 0
+                                        [ CVar "$do_e_14_3" ]
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "s2" ]
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CString ")"
+                                            ]
+                                        ]
+                                    )
+                                ]
+                            )
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$1" )
                 [ CCall
                     ( CVar "showPair" )
                     [ CCon 0
@@ -39,6 +99,25 @@ CoreProgram
                         , CString "world"
                         ]
                     ]
+                ]
+            )
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

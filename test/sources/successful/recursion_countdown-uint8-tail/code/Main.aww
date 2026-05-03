@@ -2,17 +2,27 @@
    `CLoop` before codegen. -}
 import IO.Stdout
 
-countDown : UInt8 -> String -> Either UnderflowError String
+countDown : UInt8 -> String -> Either (UnderflowError | StringTooLong) String
 countDown n acc = case eqUInt8 n 0 of
-  True -> Right (acc ++ showUInt8 n)
+  True -> acc ++ showUInt8 n
   False -> case predUInt8 n of
     Left e -> Left e
-    Right m -> countDown m (acc ++ showUInt8 n ++ ",")
+    Right m -> case acc ++ showUInt8 n of
+      Left e -> Left e
+      Right s0 -> case s0 ++ "," of
+        Left e -> Left e
+        Right s1 -> countDown m s1
 
-showResult : Either UnderflowError String -> String
+showResult : Either (UnderflowError | StringTooLong) String -> Either StringTooLong String
 showResult r = case r of
-  Left e -> "left: " ++ showUnderflowError e
+  Left e -> case e of
+    (u : UnderflowError) -> "left: " ++ showUnderflowError u
+    (_ : StringTooLong) -> Right "STRING_TOO_LONG"
   Right s -> "right: " ++ s
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (showResult (countDown 255 ""))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = showResult (countDown 255 "")
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

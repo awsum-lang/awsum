@@ -11,5 +11,5 @@ import IO.Stdout
 equal : Bool
 equal = eqString "a" "a"
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print "ok"

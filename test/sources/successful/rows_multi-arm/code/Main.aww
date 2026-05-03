@@ -2,16 +2,27 @@
    ascribed arms merged into one multi-label dispatch. -}
 import IO.Stdout
 
-whatsInside : Maybe (Bool | Unit) -> String
+whatsInside : Maybe (Bool | Unit) -> Either StringTooLong String
 whatsInside x = case x of
-  Nothing -> "Nothing"
+  Nothing -> Right "Nothing"
   Just (b : Bool) -> case b of
-    True -> "Just True"
-    False -> "Just False"
+    True -> Right "Just True"
+    False -> Right "Just False"
   Just (u : Unit) -> "Just " ++ showUnit u
 
-summary : String
-summary = whatsInside (Just True) ++ "; " ++ whatsInside (Just Unit) ++ "; " ++ whatsInside Nothing
+summary : Either StringTooLong String
+summary = do
+  a <- whatsInside (Just True)
+  b <- whatsInside (Just Unit)
+  c <- whatsInside Nothing
+  s0 <- a ++ "; "
+  s1 <- s0 ++ b
+  s2 <- s1 ++ "; "
+  s2 ++ c
 
-main : String -> IO Unit
-main _input = IO.Stdout.print summary
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = summary
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

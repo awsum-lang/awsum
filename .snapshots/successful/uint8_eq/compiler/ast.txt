@@ -122,7 +122,7 @@ Program
                 { spanStartLine = 9
                 , spanStartCol = 1
                 , spanEndLine = 9
-                , spanEndCol = 25
+                , spanEndCol = 73
                 }
             ) "main"
             ( TyArrow
@@ -130,41 +130,95 @@ Program
                     { spanStartLine = 9
                     , spanStartCol = 8
                     , spanEndLine = 9
-                    , spanEndCol = 25
+                    , spanEndCol = 73
                     }
-                )
-                ( TyCon
-                    ( SrcSpan
-                        { spanStartLine = 9
-                        , spanStartCol = 8
-                        , spanEndLine = 9
-                        , spanEndCol = 14
-                        }
-                    ) "String"
                 )
                 ( TyApp
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 18
+                        , spanStartCol = 8
                         , spanEndLine = 9
-                        , spanEndCol = 25
+                        , spanEndCol = 62
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 8
+                            , spanEndLine = 9
+                            , spanEndCol = 56
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 8
+                                , spanEndLine = 9
+                                , spanEndCol = 14
+                                }
+                            ) "Either"
+                        )
+                        ( TyOr
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 15
+                                , spanEndLine = 9
+                                , spanEndCol = 56
+                                }
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 9
+                                    , spanStartCol = 16
+                                    , spanEndLine = 9
+                                    , spanEndCol = 29
+                                    }
+                                ) "StringTooLong"
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 9
+                                    , spanStartCol = 32
+                                    , spanEndLine = 9
+                                    , spanEndCol = 54
+                                    }
+                                ) "UnpairedUtf16Surrogate"
+                            )
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 56
+                            , spanEndLine = 9
+                            , spanEndCol = 62
+                            }
+                        ) "String"
+                    )
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 66
+                        , spanEndLine = 9
+                        , spanEndCol = 73
                         }
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 9
-                            , spanStartCol = 18
+                            , spanStartCol = 66
                             , spanEndLine = 9
-                            , spanEndCol = 20
+                            , spanEndCol = 68
                             }
                         ) "IO"
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 9
-                            , spanStartCol = 21
+                            , spanStartCol = 69
                             , spanEndLine = 9
-                            , spanEndCol = 25
+                            , spanEndCol = 73
                             }
                         ) "Unit"
                     )
@@ -174,8 +228,8 @@ Program
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1
-                , spanEndLine = 10
-                , spanEndCol = 171
+                , spanEndLine = 17
+                , spanEndCol = 37
                 }
             ) "main"
             [ Param
@@ -187,271 +241,237 @@ Program
                     }
                 ) "_input"
             ]
-            ( EApp
+            ( ELet
                 ( SrcSpan
-                    { spanStartLine = 10
-                    , spanStartCol = 15
-                    , spanEndLine = 10
-                    , spanEndCol = 171
+                    { spanStartLine = 11
+                    , spanStartCol = 7
+                    , spanEndLine = 14
+                    , spanEndCol = 39
                     }
                 )
-                ( EVar
+                ( PVar
                     ( SrcSpan
-                        { spanStartLine = 10
-                        , spanStartCol = 15
-                        , spanEndLine = 10
-                        , spanEndCol = 31
+                        { spanStartLine = 11
+                        , spanStartCol = 7
+                        , spanEndLine = 11
+                        , spanEndCol = 10
                         }
-                    )
-                    ( QName
-                        [ "IO"
-                        , "Stdout"
-                        ] "print"
+                    ) "res"
+                )
+                ( Just
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 13
+                            , spanEndLine = 11
+                            , spanEndCol = 40
+                            }
+                        )
+                        ( TyApp
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 13
+                                , spanEndLine = 11
+                                , spanEndCol = 33
+                                }
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 13
+                                    , spanEndLine = 11
+                                    , spanEndCol = 19
+                                    }
+                                ) "Either"
+                            )
+                            ( TyCon
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 20
+                                    , spanEndLine = 11
+                                    , spanEndCol = 33
+                                    }
+                                ) "StringTooLong"
+                            )
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 34
+                                , spanEndLine = 11
+                                , spanEndCol = 40
+                                }
+                            ) "String"
+                        )
                     )
                 )
-                ( EParens
+                ( EDo
                     ( SrcSpan
-                        { spanStartLine = 10
-                        , spanStartCol = 31
-                        , spanEndLine = 10
-                        , spanEndCol = 171
+                        { spanStartLine = 11
+                        , spanStartCol = 43
+                        , spanEndLine = 14
+                        , spanEndCol = 39
                         }
                     )
-                    ( EInfix
+                    [ DoBind
                         ( SrcSpan
-                            { spanStartLine = 10
-                            , spanStartCol = 32
-                            , spanEndLine = 10
-                            , spanEndCol = 170
+                            { spanStartLine = 12
+                            , spanStartCol = 9
+                            , spanEndLine = 12
+                            , spanEndCol = 87
                             }
-                        ) OpConcat
+                        )
+                        ( PVar
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 9
+                                , spanEndLine = 12
+                                , spanEndCol = 11
+                                }
+                            ) "s0"
+                        )
                         ( EInfix
                             ( SrcSpan
-                                { spanStartLine = 10
-                                , spanStartCol = 32
-                                , spanEndLine = 10
-                                , spanEndCol = 143
+                                { spanStartLine = 12
+                                , spanStartCol = 15
+                                , spanEndLine = 12
+                                , spanEndCol = 87
                                 }
                             ) OpConcat
-                            ( EInfix
-                                ( SrcSpan
-                                    { spanStartLine = 10
-                                    , spanStartCol = 32
-                                    , spanEndLine = 10
-                                    , spanEndCol = 105
-                                    }
-                                ) OpConcat
-                                ( EApp
-                                    ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 32
-                                        , spanEndLine = 10
-                                        , spanEndCol = 67
-                                        }
-                                    )
-                                    ( EVar
-                                        ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 32
-                                            , spanEndLine = 10
-                                            , spanEndCol = 39
-                                            }
-                                        )
-                                        ( QName [] "render" )
-                                    )
-                                    ( EParens
-                                        ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 39
-                                            , spanEndLine = 10
-                                            , spanEndCol = 67
-                                            }
-                                        )
-                                        ( EApp
-                                            ( SrcSpan
-                                                { spanStartLine = 10
-                                                , spanStartCol = 40
-                                                , spanEndLine = 10
-                                                , spanEndCol = 65
-                                                }
-                                            )
-                                            ( EApp
-                                                ( SrcSpan
-                                                    { spanStartLine = 10
-                                                    , spanStartCol = 40
-                                                    , spanEndLine = 10
-                                                    , spanEndCol = 57
-                                                    }
-                                                )
-                                                ( EVar
-                                                    ( SrcSpan
-                                                        { spanStartLine = 10
-                                                        , spanStartCol = 40
-                                                        , spanEndLine = 10
-                                                        , spanEndCol = 48
-                                                        }
-                                                    )
-                                                    ( QName [] "eqUInt8" )
-                                                )
-                                                ( EVar
-                                                    ( SrcSpan
-                                                        { spanStartLine = 10
-                                                        , spanStartCol = 48
-                                                        , spanEndLine = 10
-                                                        , spanEndCol = 57
-                                                        }
-                                                    )
-                                                    ( QName [] "minUInt8" )
-                                                )
-                                            )
-                                            ( EVar
-                                                ( SrcSpan
-                                                    { spanStartLine = 10
-                                                    , spanStartCol = 57
-                                                    , spanEndLine = 10
-                                                    , spanEndCol = 65
-                                                    }
-                                                )
-                                                ( QName [] "minUInt8" )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( EApp
-                                    ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 70
-                                        , spanEndLine = 10
-                                        , spanEndCol = 105
-                                        }
-                                    )
-                                    ( EVar
-                                        ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 70
-                                            , spanEndLine = 10
-                                            , spanEndCol = 77
-                                            }
-                                        )
-                                        ( QName [] "render" )
-                                    )
-                                    ( EParens
-                                        ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 77
-                                            , spanEndLine = 10
-                                            , spanEndCol = 105
-                                            }
-                                        )
-                                        ( EApp
-                                            ( SrcSpan
-                                                { spanStartLine = 10
-                                                , spanStartCol = 78
-                                                , spanEndLine = 10
-                                                , spanEndCol = 103
-                                                }
-                                            )
-                                            ( EApp
-                                                ( SrcSpan
-                                                    { spanStartLine = 10
-                                                    , spanStartCol = 78
-                                                    , spanEndLine = 10
-                                                    , spanEndCol = 95
-                                                    }
-                                                )
-                                                ( EVar
-                                                    ( SrcSpan
-                                                        { spanStartLine = 10
-                                                        , spanStartCol = 78
-                                                        , spanEndLine = 10
-                                                        , spanEndCol = 86
-                                                        }
-                                                    )
-                                                    ( QName [] "eqUInt8" )
-                                                )
-                                                ( EVar
-                                                    ( SrcSpan
-                                                        { spanStartLine = 10
-                                                        , spanStartCol = 86
-                                                        , spanEndLine = 10
-                                                        , spanEndCol = 95
-                                                        }
-                                                    )
-                                                    ( QName [] "maxUInt8" )
-                                                )
-                                            )
-                                            ( EVar
-                                                ( SrcSpan
-                                                    { spanStartLine = 10
-                                                    , spanStartCol = 95
-                                                    , spanEndLine = 10
-                                                    , spanEndCol = 103
-                                                    }
-                                                )
-                                                ( QName [] "maxUInt8" )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
                             ( EApp
                                 ( SrcSpan
-                                    { spanStartLine = 10
-                                    , spanStartCol = 108
-                                    , spanEndLine = 10
-                                    , spanEndCol = 143
+                                    { spanStartLine = 12
+                                    , spanStartCol = 15
+                                    , spanEndLine = 12
+                                    , spanEndCol = 50
                                     }
                                 )
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 108
-                                        , spanEndLine = 10
-                                        , spanEndCol = 115
+                                        { spanStartLine = 12
+                                        , spanStartCol = 15
+                                        , spanEndLine = 12
+                                        , spanEndCol = 22
                                         }
                                     )
                                     ( QName [] "render" )
                                 )
                                 ( EParens
                                     ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 115
-                                        , spanEndLine = 10
-                                        , spanEndCol = 143
+                                        { spanStartLine = 12
+                                        , spanStartCol = 22
+                                        , spanEndLine = 12
+                                        , spanEndCol = 50
                                         }
                                     )
                                     ( EApp
                                         ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 116
-                                            , spanEndLine = 10
-                                            , spanEndCol = 141
+                                            { spanStartLine = 12
+                                            , spanStartCol = 23
+                                            , spanEndLine = 12
+                                            , spanEndCol = 48
                                             }
                                         )
                                         ( EApp
                                             ( SrcSpan
-                                                { spanStartLine = 10
-                                                , spanStartCol = 116
-                                                , spanEndLine = 10
-                                                , spanEndCol = 133
+                                                { spanStartLine = 12
+                                                , spanStartCol = 23
+                                                , spanEndLine = 12
+                                                , spanEndCol = 40
                                                 }
                                             )
                                             ( EVar
                                                 ( SrcSpan
-                                                    { spanStartLine = 10
-                                                    , spanStartCol = 116
-                                                    , spanEndLine = 10
-                                                    , spanEndCol = 124
+                                                    { spanStartLine = 12
+                                                    , spanStartCol = 23
+                                                    , spanEndLine = 12
+                                                    , spanEndCol = 31
                                                     }
                                                 )
                                                 ( QName [] "eqUInt8" )
                                             )
                                             ( EVar
                                                 ( SrcSpan
-                                                    { spanStartLine = 10
-                                                    , spanStartCol = 124
-                                                    , spanEndLine = 10
-                                                    , spanEndCol = 133
+                                                    { spanStartLine = 12
+                                                    , spanStartCol = 31
+                                                    , spanEndLine = 12
+                                                    , spanEndCol = 40
+                                                    }
+                                                )
+                                                ( QName [] "minUInt8" )
+                                            )
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 12
+                                                , spanStartCol = 40
+                                                , spanEndLine = 12
+                                                , spanEndCol = 48
+                                                }
+                                            )
+                                            ( QName [] "minUInt8" )
+                                        )
+                                    )
+                                )
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 53
+                                    , spanEndLine = 12
+                                    , spanEndCol = 87
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 12
+                                        , spanStartCol = 53
+                                        , spanEndLine = 12
+                                        , spanEndCol = 60
+                                        }
+                                    )
+                                    ( QName [] "render" )
+                                )
+                                ( EParens
+                                    ( SrcSpan
+                                        { spanStartLine = 12
+                                        , spanStartCol = 60
+                                        , spanEndLine = 12
+                                        , spanEndCol = 87
+                                        }
+                                    )
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 12
+                                            , spanStartCol = 61
+                                            , spanEndLine = 12
+                                            , spanEndCol = 86
+                                            }
+                                        )
+                                        ( EApp
+                                            ( SrcSpan
+                                                { spanStartLine = 12
+                                                , spanStartCol = 61
+                                                , spanEndLine = 12
+                                                , spanEndCol = 78
+                                                }
+                                            )
+                                            ( EVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 12
+                                                    , spanStartCol = 61
+                                                    , spanEndLine = 12
+                                                    , spanEndCol = 69
+                                                    }
+                                                )
+                                                ( QName [] "eqUInt8" )
+                                            )
+                                            ( EVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 12
+                                                    , spanStartCol = 69
+                                                    , spanEndLine = 12
+                                                    , spanEndCol = 78
                                                     }
                                                 )
                                                 ( QName [] "maxUInt8" )
@@ -459,10 +479,122 @@ Program
                                         )
                                         ( EVar
                                             ( SrcSpan
-                                                { spanStartLine = 10
-                                                , spanStartCol = 133
-                                                , spanEndLine = 10
-                                                , spanEndCol = 141
+                                                { spanStartLine = 12
+                                                , spanStartCol = 78
+                                                , spanEndLine = 12
+                                                , spanEndCol = 86
+                                                }
+                                            )
+                                            ( QName [] "maxUInt8" )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    , DoBind
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 9
+                            , spanEndLine = 13
+                            , spanEndCol = 55
+                            }
+                        )
+                        ( PVar
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 9
+                                , spanEndLine = 13
+                                , spanEndCol = 11
+                                }
+                            ) "s1"
+                        )
+                        ( EInfix
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 15
+                                , spanEndLine = 13
+                                , spanEndCol = 55
+                                }
+                            ) OpConcat
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 13
+                                    , spanStartCol = 15
+                                    , spanEndLine = 13
+                                    , spanEndCol = 18
+                                    }
+                                )
+                                ( QName [] "s0" )
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 13
+                                    , spanStartCol = 21
+                                    , spanEndLine = 13
+                                    , spanEndCol = 55
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 13
+                                        , spanStartCol = 21
+                                        , spanEndLine = 13
+                                        , spanEndCol = 28
+                                        }
+                                    )
+                                    ( QName [] "render" )
+                                )
+                                ( EParens
+                                    ( SrcSpan
+                                        { spanStartLine = 13
+                                        , spanStartCol = 28
+                                        , spanEndLine = 13
+                                        , spanEndCol = 55
+                                        }
+                                    )
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 13
+                                            , spanStartCol = 29
+                                            , spanEndLine = 13
+                                            , spanEndCol = 54
+                                            }
+                                        )
+                                        ( EApp
+                                            ( SrcSpan
+                                                { spanStartLine = 13
+                                                , spanStartCol = 29
+                                                , spanEndLine = 13
+                                                , spanEndCol = 46
+                                                }
+                                            )
+                                            ( EVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 13
+                                                    , spanStartCol = 29
+                                                    , spanEndLine = 13
+                                                    , spanEndCol = 37
+                                                    }
+                                                )
+                                                ( QName [] "eqUInt8" )
+                                            )
+                                            ( EVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 13
+                                                    , spanStartCol = 37
+                                                    , spanEndLine = 13
+                                                    , spanEndCol = 46
+                                                    }
+                                                )
+                                                ( QName [] "maxUInt8" )
+                                            )
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 13
+                                                , spanStartCol = 46
+                                                , spanEndLine = 13
+                                                , spanEndCol = 54
                                                 }
                                             )
                                             ( QName [] "minUInt8" )
@@ -471,83 +603,235 @@ Program
                                 )
                             )
                         )
-                        ( EApp
+                    , DoExpr
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 9
+                            , spanEndLine = 14
+                            , spanEndCol = 39
+                            }
+                        )
+                        ( EInfix
                             ( SrcSpan
-                                { spanStartLine = 10
-                                , spanStartCol = 146
-                                , spanEndLine = 10
-                                , spanEndCol = 170
+                                { spanStartLine = 14
+                                , spanStartCol = 9
+                                , spanEndLine = 14
+                                , spanEndCol = 39
                                 }
-                            )
+                            ) OpConcat
                             ( EVar
                                 ( SrcSpan
-                                    { spanStartLine = 10
-                                    , spanStartCol = 146
-                                    , spanEndLine = 10
-                                    , spanEndCol = 153
+                                    { spanStartLine = 14
+                                    , spanStartCol = 9
+                                    , spanEndLine = 14
+                                    , spanEndCol = 12
                                     }
                                 )
-                                ( QName [] "render" )
+                                ( QName [] "s1" )
                             )
-                            ( EParens
+                            ( EApp
                                 ( SrcSpan
-                                    { spanStartLine = 10
-                                    , spanStartCol = 153
-                                    , spanEndLine = 10
-                                    , spanEndCol = 170
+                                    { spanStartLine = 14
+                                    , spanStartCol = 15
+                                    , spanEndLine = 14
+                                    , spanEndCol = 39
                                     }
                                 )
-                                ( EApp
+                                ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 10
-                                        , spanStartCol = 154
-                                        , spanEndLine = 10
-                                        , spanEndCol = 169
+                                        { spanStartLine = 14
+                                        , spanStartCol = 15
+                                        , spanEndLine = 14
+                                        , spanEndCol = 22
+                                        }
+                                    )
+                                    ( QName [] "render" )
+                                )
+                                ( EParens
+                                    ( SrcSpan
+                                        { spanStartLine = 14
+                                        , spanStartCol = 22
+                                        , spanEndLine = 14
+                                        , spanEndCol = 39
                                         }
                                     )
                                     ( EApp
                                         ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 154
-                                            , spanEndLine = 10
-                                            , spanEndCol = 166
+                                            { spanStartLine = 14
+                                            , spanStartCol = 23
+                                            , spanEndLine = 14
+                                            , spanEndCol = 38
                                             }
                                         )
-                                        ( EVar
+                                        ( EApp
                                             ( SrcSpan
-                                                { spanStartLine = 10
-                                                , spanStartCol = 154
-                                                , spanEndLine = 10
-                                                , spanEndCol = 162
+                                                { spanStartLine = 14
+                                                , spanStartCol = 23
+                                                , spanEndLine = 14
+                                                , spanEndCol = 35
                                                 }
                                             )
-                                            ( QName [] "eqUInt8" )
+                                            ( EVar
+                                                ( SrcSpan
+                                                    { spanStartLine = 14
+                                                    , spanStartCol = 23
+                                                    , spanEndLine = 14
+                                                    , spanEndCol = 31
+                                                    }
+                                                )
+                                                ( QName [] "eqUInt8" )
+                                            )
+                                            ( ELit
+                                                ( SrcSpan
+                                                    { spanStartLine = 14
+                                                    , spanStartCol = 31
+                                                    , spanEndLine = 14
+                                                    , spanEndCol = 35
+                                                    }
+                                                )
+                                                ( LInt 128 )
+                                            )
                                         )
                                         ( ELit
                                             ( SrcSpan
-                                                { spanStartLine = 10
-                                                , spanStartCol = 162
-                                                , spanEndLine = 10
-                                                , spanEndCol = 166
+                                                { spanStartLine = 14
+                                                , spanStartCol = 35
+                                                , spanEndLine = 14
+                                                , spanEndCol = 38
                                                 }
                                             )
-                                            ( LInt 128 )
+                                            ( LInt 127 )
                                         )
-                                    )
-                                    ( ELit
-                                        ( SrcSpan
-                                            { spanStartLine = 10
-                                            , spanStartCol = 166
-                                            , spanEndLine = 10
-                                            , spanEndCol = 169
-                                            }
-                                        )
-                                        ( LInt 127 )
                                     )
                                 )
                             )
                         )
+                    ]
+                )
+                ( ECase
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 7
+                        , spanEndLine = 17
+                        , spanEndCol = 37
+                        }
                     )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 15
+                            , spanStartCol = 12
+                            , spanEndLine = 15
+                            , spanEndCol = 16
+                            }
+                        )
+                        ( QName [] "res" )
+                    )
+                    ( CaseAlt []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 16
+                                , spanStartCol = 9
+                                , spanEndLine = 16
+                                , spanEndCol = 13
+                                }
+                            ) "Left"
+                            [ PWild
+                                ( SrcSpan
+                                    { spanStartLine = 16
+                                    , spanStartCol = 14
+                                    , spanEndLine = 16
+                                    , spanEndCol = 15
+                                    }
+                                )
+                            ]
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 16
+                                , spanStartCol = 19
+                                , spanEndLine = 16
+                                , spanEndCol = 52
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 16
+                                    , spanStartCol = 19
+                                    , spanEndLine = 16
+                                    , spanEndCol = 35
+                                    }
+                                )
+                                ( QName
+                                    [ "IO"
+                                    , "Stdout"
+                                    ] "print"
+                                )
+                            )
+                            ( ELit
+                                ( SrcSpan
+                                    { spanStartLine = 16
+                                    , spanStartCol = 35
+                                    , spanEndLine = 16
+                                    , spanEndCol = 52
+                                    }
+                                )
+                                ( LString "STRING_TOO_LONG" )
+                            )
+                        ) Nothing :|
+                        [ CaseAlt []
+                            ( PCon
+                                ( SrcSpan
+                                    { spanStartLine = 17
+                                    , spanStartCol = 9
+                                    , spanEndLine = 17
+                                    , spanEndCol = 14
+                                    }
+                                ) "Right"
+                                [ PVar
+                                    ( SrcSpan
+                                        { spanStartLine = 17
+                                        , spanStartCol = 15
+                                        , spanEndLine = 17
+                                        , spanEndCol = 16
+                                        }
+                                    ) "s"
+                                ]
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 17
+                                    , spanStartCol = 20
+                                    , spanEndLine = 17
+                                    , spanEndCol = 37
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 17
+                                        , spanStartCol = 20
+                                        , spanEndLine = 17
+                                        , spanEndCol = 36
+                                        }
+                                    )
+                                    ( QName
+                                        [ "IO"
+                                        , "Stdout"
+                                        ] "print"
+                                    )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 17
+                                        , spanStartCol = 36
+                                        , spanEndLine = 17
+                                        , spanEndCol = 37
+                                        }
+                                    )
+                                    ( QName [] "s" )
+                                )
+                            ) Nothing
+                        ]
+                    ) []
                 )
             ) Nothing
         ]

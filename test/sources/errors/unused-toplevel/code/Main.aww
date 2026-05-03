@@ -3,11 +3,15 @@
 -- so the file stays type-correct after the rename.
 import IO.Stdout
 
-greeting : String -> String
+greeting : String -> Either StringTooLong String
 greeting s = "hi " ++ s
 
 orphan : String -> String
 orphan s = s
 
-main : String -> IO Unit
-main input = IO.Stdout.print (greeting input)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg = case rawArg of
+  Left _ -> IO.Stdout.print "INPUT_ERROR"
+  Right input -> case greeting input of
+    Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+    Right s -> IO.Stdout.print s

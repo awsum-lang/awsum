@@ -2251,28 +2251,48 @@ mkMain = do
   di <- addUtf8 "([Ljava/lang/String;)V"
   emptyIdx <- addStr ""
   vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 1)
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
   let ldcEmpty = bcLdc emptyIdx
       ldcLen = length ldcEmpty
-      -- Layout:
+      -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
+      -- v_main. Layout matches CCon emit on JVM: Object[1+nFields] with
+      -- boxed Integer tag at index 0, fields at indices 1..
+      --
+      -- Layout (all offsets relative to method start):
       -- 0: aload_0           (1)
-      -- 1: arraylength        (1)
-      -- 2: iconst_1           (1)
-      -- 3: if_icmpge          (3)  → has_arg at offset (6 + ldcLen + 3)
-      -- 6: ldc ""             (ldcLen)
-      -- 6+L: goto             (3)  → call_main at offset (6 + ldcLen + 3 + 3)
-      -- 6+L+3: aload_0       (1)   [has_arg]
+      -- 1: arraylength       (1)
+      -- 2: iconst_1          (1)
+      -- 3: if_icmpge has_arg (3)
+      -- 6: ldc ""            (ldcLen)
+      -- 6+L: goto call_main  (3)
+      -- 6+L+3: aload_0       (1)  [has_arg]
       -- 6+L+4: iconst_0      (1)
-      -- 6+L+5: aaload         (1)
-      -- 6+L+6: invokestatic  (3)   [call_main]
-      -- 6+L+9: pop            (1)
-      -- 6+L+10: return        (1)
+      -- 6+L+5: aaload        (1)
+      -- 6+L+6: astore_1      (1)  [call_main]  (input → locals[1])
+      -- 6+L+7: iconst_2      (1)
+      -- 6+L+8: anewarray Object (3)
+      -- 6+L+11: dup          (1)
+      -- 6+L+12: iconst_0     (1)
+      -- 6+L+13: iconst_1     (1)  (tag=1 for Right)
+      -- 6+L+14: invokestatic Integer.valueOf (3)
+      -- 6+L+17: aastore      (1)
+      -- 6+L+18: dup          (1)
+      -- 6+L+19: iconst_1     (1)
+      -- 6+L+20: aload_1      (1)
+      -- 6+L+21: aastore      (1)
+      -- 6+L+22: invokestatic v_main (3)
+      -- 6+L+25: pop          (1)
+      -- 6+L+26: return       (1)
       hasArg = 6 + ldcLen + 3
       callMain = hasArg + 3
       ifRel = hasArg - 3 :: Int
       gotoRel = callMain - (6 + ldcLen) :: Int
-      -- StackMapTable: two frames at branch targets
+      -- StackMapTable: two frames at branch targets. Branches are
+      -- has_arg and call_main; the bytecode after call_main is straight-
+      -- line, no further frames needed.
+      --
       -- 1) has_arg: same_frame (same locals as initial, empty stack)
       --    frame_type = offset_delta = hasArg (first entry, <= 63)
       -- 2) call_main: same_locals_1_stack_item (stack = [Object])
@@ -2280,15 +2300,14 @@ mkMain = do
       --    frame_type = 64 + 2 = 66
       --    verification_type_info = Object_variable_info(tag=7, cpool_index)
       smtEntries =
-        [fromIntegral hasArg] -- same_frame at has_arg
-          <> [66, 7, hi8 objClsIdx, lo8 objClsIdx] -- same_locals_1_stack_item at call_main
+        [fromIntegral hasArg]
+          <> [66, 7, hi8 objClsIdx, lo8 objClsIdx]
       smtEntriesLen = length smtEntries
-      -- StackMapTable attribute: name(2) + length(4) + num_entries(2) + entries
       smtAttr =
         [hi8 smtNameIdx, lo8 smtNameIdx]
           <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
               in [fromIntegral (totalLen `div` 16777216), fromIntegral ((totalLen `div` 65536) `mod` 256), fromIntegral ((totalLen `div` 256) `mod` 256), fromIntegral (totalLen `mod` 256)]
-                   <> [0, 2] -- number_of_entries = 2
+                   <> [0, 2]
                    <> smtEntries
   pure
     MInfo
@@ -2305,7 +2324,19 @@ mkMain = do
             <> bcAload 0 -- has_arg
             <> [0x03] -- iconst_0
             <> [0x32] -- aaload
-            <> bcInvokeStatic vMainRef -- call_main
+            <> [0x4C] -- call_main: astore_1 (input → locals[1])
+            <> [0x05] -- iconst_2
+            <> [0xBD, hi8 objClsIdx, lo8 objClsIdx] -- anewarray Object
+            <> [0x59] -- dup
+            <> [0x03] -- iconst_0
+            <> [0x04] -- iconst_1 (tag=1 for Right)
+            <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- invokestatic Integer.valueOf
+            <> [0x53] -- aastore
+            <> [0x59] -- dup
+            <> [0x04] -- iconst_1
+            <> [0x2B] -- aload_1
+            <> [0x53] -- aastore
+            <> bcInvokeStatic vMainRef
             <> [0x57] -- pop
             <> [0xB1], -- return
         mCodeAttrCount = 1,

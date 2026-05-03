@@ -2,12 +2,18 @@
    binding referencing outer, and `let` used in argument position. -}
 import IO.Stdout
 
-pad : String -> String
-pad s =
-  let p = "[" ++ s
-      q = p ++ "]"
-   in q ++ q
+pad : String -> Either StringTooLong String
+pad s = do
+  p <- "[" ++ s
+  q <- p ++ "]"
+  q ++ q
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (let body = "<" ++ pad "hi" ++ ">"
- in body)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        padded <- pad "hi"
+        s0 <- "<" ++ padded
+        s0 ++ ">"
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

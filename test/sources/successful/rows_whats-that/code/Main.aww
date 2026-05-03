@@ -2,15 +2,19 @@
    row arms, nominal arms (`Just`/`Nothing`) and a nested row inside `Just`. -}
 import IO.Stdout
 
-whatsThat : (Int32 | String | Maybe (Bool | Unit)) -> String
+whatsThat : (Int32 | String | Maybe (Bool | Unit)) -> Either StringTooLong String
 whatsThat x = case x of
   (n : Int32) -> "Int32 " ++ showInt32 n
   (s : String) -> "String " ++ s
-  Nothing -> "Nothing"
+  Nothing -> Right "Nothing"
   Just (b : Bool) -> case b of
-    True -> "Just True"
-    False -> "Just False"
+    True -> Right "Just True"
+    False -> Right "Just False"
   Just (u : Unit) -> "Just " ++ showUnit u
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (whatsThat (Just True))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = whatsThat (Just True)
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

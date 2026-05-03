@@ -3,10 +3,20 @@ import IO.Stdout
 
 type List a = Cons a (List a) | Nil
 
-show : List String -> String
+show : List String -> Either StringTooLong String
 show xs = case xs of
-  Cons h t -> h ++ "," ++ (show t)
-  Nil -> ""
+  Cons h t -> showCons h t
+  Nil -> Right ""
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (show (Cons "a" (Cons "b" (Cons "c" Nil))))
+showCons : String -> List String -> Either StringTooLong String
+showCons h t = do
+  hc <- h ++ ","
+  rest <- show t
+  hc ++ rest
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = show (Cons "a" (Cons "b" (Cons "c" Nil)))
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

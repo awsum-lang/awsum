@@ -12,18 +12,23 @@ parseInput raw = case splitOnFirst ":" raw of
   Nothing -> Left ParseError
   Just (Tuple2 sep s) -> Right (Tuple2 sep s)
 
-property : String -> String -> Either NoMatch String
+property : String -> String -> Either (NoMatch | StringTooLong) String
 property sep s = case splitOnFirst sep s of
   Nothing -> Left NoMatch
-  Just (Tuple2 a b) -> Right (a ++ sep ++ b)
+  Just (Tuple2 a b) -> do
+    s0 <- a ++ sep
+    s0 ++ b
 
-main : String -> IO Unit
-main raw =
-  let res : Either (ParseError | NoMatch) String = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | NoMatch) String = do
+        raw <- rawArg
         Tuple2 sep s <- parseInput raw
         property sep s
    in case res of
         Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
           (_ : NoMatch) -> IO.Stdout.print "NO_MATCH"
         Right s -> IO.Stdout.print s

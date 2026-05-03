@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":3,"startCol":14,"endLine":3,"endCol":20,"message":"Not a function; has type String","fixes":[]}]
+[{"severity":"error","startLine":7,"startCol":18,"endLine":7,"endCol":24,"message":"Not a function; has type String","fixes":[]}]

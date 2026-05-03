@@ -3226,17 +3226,36 @@ codeUserDecl info typeMap = \case
             }
      in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx rhs)
 
--- _start: calls v_main(__get_arg()), drops result
+-- _start: wraps __get_arg() result in `Right input` (tag=1, one field)
+-- and hands it to v_main, dropping the result.
+--
+-- Layout matches CCon emit on WASM: alloc(4 * (1 + nFields)), i32 tag at
+-- offset 0, fields at offsets 4..  Two extra locals: $input (slot 0) and
+
+-- $right_box (slot 1).
+
 codeStart :: WasmInfo -> [Word8]
 codeStart info =
   let mainIdx = fromMaybe 0 (Map.lookup "main" info.wiFuncIdx)
    in encodeBody
-        (encodeLocals 0)
+        (encodeLocals 2)
         $ concat
           [ [opCall],
-            encodeULEB128 idxGetArg,
+            encodeULEB128 idxGetArg, -- stack: [input]
+            [opLocalSet, 0x00], -- locals[0] = input
+            [opI32Const, 0x08], -- stack: [8]
             [opCall],
-            encodeULEB128 mainIdx,
+            encodeULEB128 idxAlloc, -- stack: [box]
+            [opLocalSet, 0x01], -- locals[1] = box
+            [opLocalGet, 0x01], -- stack: [box]
+            [opI32Const, 0x01], -- stack: [box, 1]
+            [opI32Store, 0x02, 0x00], -- mem[box+0] = 1
+            [opLocalGet, 0x01], -- stack: [box]
+            [opLocalGet, 0x00], -- stack: [box, input]
+            [opI32Store, 0x02, 0x04], -- mem[box+4] = input
+            [opLocalGet, 0x01], -- stack: [box]
+            [opCall],
+            encodeULEB128 mainIdx, -- stack: [result]
             [opDrop]
           ]
 

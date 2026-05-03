@@ -1,12 +1,32 @@
 {- `mulInt32`: row-union boundaries; `minInt32 * (-1)` overflows (negation doesn't fit). -}
 import IO.Stdout
 
-render : Either (UnderflowError | OverflowError) Int32 -> String
+render : Either (UnderflowError | OverflowError) Int32 -> Either StringTooLong String
 render r = case r of
   Left e -> case e of
     (u : UnderflowError) -> "err: " ++ showUnderflowError u
     (o : OverflowError) -> "err: " ++ showOverflowError o
   Right v -> "ok: " ++ showInt32 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (mulInt32 6 7) ++ ", " ++ render (mulInt32 (-6) 7) ++ ", " ++ render (mulInt32 100000 100000) ++ ", " ++ render (mulInt32 (-100000) 100000) ++ ", " ++ render (mulInt32 minInt32 (-1)) ++ ", " ++ render (mulInt32 minInt32 1))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (mulInt32 6 7)
+        b <- render (mulInt32 (-6) 7)
+        c <- render (mulInt32 100000 100000)
+        d <- render (mulInt32 (-100000) 100000)
+        e <- render (mulInt32 minInt32 (-1))
+        f <- render (mulInt32 minInt32 1)
+        s0 <- a ++ ", "
+        s1 <- s0 ++ b
+        s2 <- s1 ++ ", "
+        s3 <- s2 ++ c
+        s4 <- s3 ++ ", "
+        s5 <- s4 ++ d
+        s6 <- s5 ++ ", "
+        s7 <- s6 ++ e
+        s8 <- s7 ++ ", "
+        s8 ++ f
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

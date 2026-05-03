@@ -7,42 +7,73 @@ CoreProgram
             ( CVar "x" )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CCall
-                    ( CVar "identity" )
-                    [ CCall
-                        ( CVar "$df$compose$0" )
+                ( CVar "$let$1" )
+                [ CCase
+                    ( CCall
+                        ( CVar "appendX" )
                         [ CCall
                             ( CVar "const" )
                             [ CString "a"
                             , CString "b"
                             ]
                         ]
+                    )
+                    [
+                        ( 0
+                        , [ "$do_e_7_9" ]
+                        , CCon 0
+                            [ CVar "$do_e_7_9" ]
+                        )
+                    ,
+                        ( 1
+                        , [ "ax" ]
+                        , CCall
+                            ( CVar "identity" )
+                            [ CCall
+                                ( CVar "appendY" )
+                                [ CVar "ax" ]
+                            ]
+                        )
                     ]
                 ]
             )
         , CFunDef "identity" [ "x" ]
             ( CVar "x" )
         , CFunDef "appendX" [ "s" ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CVar "s"
-                , CString "x"
+            ( CCon 1
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "s"
+                    , CString "x"
+                    ]
                 ]
             )
         , CFunDef "appendY" [ "s" ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CVar "s"
-                , CString "y"
+            ( CCon 1
+                [ CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "s"
+                    , CString "y"
+                    ]
                 ]
             )
-        , CFunDef "$df$compose$0" [ "x" ]
-            ( CCall
-                ( CVar "appendY" )
-                [ CCall
-                    ( CVar "appendX" )
-                    [ CVar "x" ]
+        , CFunDef "$let$1" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

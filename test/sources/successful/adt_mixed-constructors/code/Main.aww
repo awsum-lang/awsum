@@ -3,12 +3,26 @@ import IO.Stdout
 
 type Token = Word String | Number String | Comma | EOF
 
-showToken : Token -> String
+showToken : Token -> Either StringTooLong String
 showToken token = case token of
   Word w -> "word:" ++ w
   Number n -> "num:" ++ n
-  Comma -> ","
-  EOF -> "<eof>"
+  Comma -> Right ","
+  EOF -> Right "<eof>"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (showToken (Word "hello") ++ " " ++ showToken Comma ++ " " ++ showToken (Number "42") ++ " " ++ showToken EOF)
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- showToken (Word "hello")
+        b <- showToken Comma
+        c <- showToken (Number "42")
+        d <- showToken EOF
+        ab <- a ++ " "
+        abc <- ab ++ b
+        abcs <- abc ++ " "
+        abcsc <- abcs ++ c
+        abcscd <- abcsc ++ " "
+        abcscd ++ d
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

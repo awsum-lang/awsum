@@ -20,13 +20,16 @@ property a b = do
   addResult <- addInt32 a negB
   pureEither (eqInt32 subResult addResult)
 
-main : String -> IO Unit
-main raw =
-  let res : Either (ParseError | UnderflowError | OverflowError) Bool = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
+        raw <- rawArg
         Tuple2 a b <- parseInput raw
         property a b
    in case res of
         Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
           (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
           (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"

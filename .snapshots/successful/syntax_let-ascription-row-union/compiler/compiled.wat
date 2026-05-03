@@ -150,6 +150,12 @@
     (block (result i32) (local.set $__scrut (local.get $v_res)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v_e)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2252990199)) (then (local.set $v___rw (i32.load offset=4 (local.get $__scrut))) (call $__print (i32.const 65))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2269767818)) (then (local.set $v___rw (i32.load offset=4 (local.get $__scrut))) (call $__print (i32.const 71))) (else (local.set $v___rw (i32.load offset=4 (local.get $__scrut))) (call $__print (i32.const 77)))))))) (else (local.set $v_n (i32.load offset=4 (local.get $__scrut))) (call $__print (call $__show_i32 (local.get $v_n)))))))
 
   (func $_start (export "_start")
-    (drop (call $v_main (call $__get_arg))))
+    (local $input i32)
+    (local $right_box i32)
+    (local.set $input (call $__get_arg))
+    (local.set $right_box (call $__alloc (i32.const 8)))
+    (i32.store (local.get $right_box) (i32.const 1))
+    (i32.store offset=4 (local.get $right_box) (local.get $input))
+    (drop (call $v_main (local.get $right_box))))
 
 )

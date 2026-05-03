@@ -56,17 +56,20 @@ CoreProgram
                 [
                     ( 0
                     , []
-                    , CString "N"
+                    , CCon 1
+                        [ CString "N" ]
                     )
                 ,
                     ( 1
                     , [ "inner" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "J"
-                        , CCall
-                            ( CVar "dispatchInner" )
-                            [ CVar "inner" ]
+                    , CCon 1
+                        [ CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "J"
+                            , CCall
+                                ( CVar "dispatchInner" )
+                                [ CVar "inner" ]
+                            ]
                         ]
                     )
                 ]
@@ -91,7 +94,8 @@ CoreProgram
                         , CCall
                             ( CVar "$apply$describeLst" )
                             [ CVar "$k"
-                            , CString ""
+                            , CCon 1
+                                [ CString "" ]
                             ]
                         )
                     ,
@@ -129,15 +133,33 @@ CoreProgram
                             [ "$pk_1"
                             , "h"
                             ]
-                        , CContinue
-                            [ CVar "$pk_1"
-                            , CCall
-                                ( CBuiltIn "concatString" )
-                                [ CCall
-                                    ( CVar "dispatchInner" )
-                                    [ CVar "h" ]
-                                , CVar "$x"
-                                ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "$do_e_35_5" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 0
+                                        [ CVar "$do_e_35_5" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "rest" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CCall
+                                                ( CVar "dispatchInner" )
+                                                [ CVar "h" ]
+                                            , CVar "rest"
+                                            ]
+                                        ]
+                                    ]
+                                )
                             ]
                         )
                     ]
@@ -149,7 +171,8 @@ CoreProgram
                 [
                     ( 0
                     , [ "_e" ]
-                    , CString "ErrA"
+                    , CCon 1
+                        [ CString "ErrA" ]
                     )
                 ,
                     ( 1
@@ -161,42 +184,134 @@ CoreProgram
                 ]
             )
         , CValDef "summary"
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
+            ( CCase
+                ( CCall
+                    ( CVar "describeMaybe" )
                     [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CVar "describeMaybe" )
-                                [ CCall
-                                    ( CVar "$lift$1" )
-                                    [ CVar "defaultJust" ]
-                                ]
-                            , CString " / "
-                            ]
-                        , CCall
+                        ( CVar "$lift$1" )
+                        [ CVar "defaultJust" ]
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_45_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_45_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCase
+                        ( CCall
                             ( CVar "describeLst" )
                             [ CCall
                                 ( CVar "$lift$2" )
                                 [ CVar "defaultBools" ]
                             ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_46_3" ]
+                            , CCon 0
+                                [ CVar "$do_e_46_3" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "b" ]
+                            , CCase
+                                ( CCall
+                                    ( CVar "describeEither" )
+                                    [ CCall
+                                        ( CVar "$lift$3" )
+                                        [ CVar "defaultRight" ]
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "$do_e_47_3" ]
+                                    , CCon 0
+                                        [ CVar "$do_e_47_3" ]
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "c" ]
+                                    , CCase
+                                        ( CCon 1
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "a"
+                                                , CString " / "
+                                                ]
+                                            ]
+                                        )
+                                        [
+                                            ( 0
+                                            , [ "$do_e_48_3" ]
+                                            , CCon 0
+                                                [ CVar "$do_e_48_3" ]
+                                            )
+                                        ,
+                                            ( 1
+                                            , [ "s0" ]
+                                            , CCase
+                                                ( CCon 1
+                                                    [ CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CVar "s0"
+                                                        , CVar "b"
+                                                        ]
+                                                    ]
+                                                )
+                                                [
+                                                    ( 0
+                                                    , [ "$do_e_49_3" ]
+                                                    , CCon 0
+                                                        [ CVar "$do_e_49_3" ]
+                                                    )
+                                                ,
+                                                    ( 1
+                                                    , [ "s1" ]
+                                                    , CCase
+                                                        ( CCon 1
+                                                            [ CCall
+                                                                ( CBuiltIn "concatString" )
+                                                                [ CVar "s1"
+                                                                , CString " / "
+                                                                ]
+                                                            ]
+                                                        )
+                                                        [
+                                                            ( 0
+                                                            , [ "$do_e_50_3" ]
+                                                            , CCon 0
+                                                                [ CVar "$do_e_50_3" ]
+                                                            )
+                                                        ,
+                                                            ( 1
+                                                            , [ "s2" ]
+                                                            , CCon 1
+                                                                [ CCall
+                                                                    ( CBuiltIn "concatString" )
+                                                                    [ CVar "s2"
+                                                                    , CVar "c"
+                                                                    ]
+                                                                ]
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
                         ]
-                    , CString " / "
-                    ]
-                , CCall
-                    ( CVar "describeEither" )
-                    [ CCall
-                        ( CVar "$lift$3" )
-                        [ CVar "defaultRight" ]
-                    ]
+                    )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$4" )
                 [ CVar "summary" ]
             )
         , CFunDef "$lift$1" [ "__input" ]
@@ -304,6 +419,25 @@ CoreProgram
                             ( CVar "$lift$1" )
                             [ CVar "__f0" ]
                         ]
+                    )
+                ]
+            )
+        , CFunDef "$let$4" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
                     )
                 ]
             )

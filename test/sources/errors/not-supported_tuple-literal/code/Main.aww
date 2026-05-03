@@ -5,5 +5,5 @@
 -- applies to triples (`Tuple3 a b c`).
 import IO.Stdout
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print (1, 2)

@@ -2004,22 +2004,45 @@ mkMain tokMap = do
   si <- w16 <$> addBlob [0x00, 0x01, etVoid, etSZArray, etString]
   ps <- addParams 1
   emptyTok <- addUS ""
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- LocalVarSig: count=1, ELEMENT_TYPE_OBJECT (0x1C) — local to stash
+  -- argv[1] while we build the Right-wrapper array.
+  localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
   let vMainTok = fromMaybe (error "no v_main") (Map.lookup (mangle "main") tokMap)
+      boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
+      -- v_main. Layout matches CCon emit on CLR: object[1+nFields] with
+      -- boxed Int32 tag at index 0, fields at indices 1..
       code =
-        cilLdarg 0 -- 0: 1
-          <> cilLdlen -- 1: 1
-          <> cilConvI4 -- 2: 1
-          <> cilLdcI4_1 -- 3: 1
-          <> cilBgeS 7 -- 4: 2  → offset 13
-          <> cilLdstr emptyTok -- 6: 5
-          <> cilBrS 3 -- 11: 2  → offset 16
-          <> cilLdarg 0 -- 13: 1 (has_arg)
-          <> cilLdcI4_0 -- 14: 1
-          <> cilLdelemRef -- 15: 1
-          <> cilCall vMainTok -- 16: 5 (call_main)
-          <> cilPop -- 21: 1
-          <> cilRet -- 22: 1
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+        cilLdarg 0 -- 0
+          <> cilLdlen -- 1
+          <> cilConvI4 -- 2
+          <> cilLdcI4_1 -- 3
+          <> cilBgeS 7 -- 4–5
+          <> cilLdstr emptyTok -- 6–10
+          <> cilBrS 3 -- 11–12
+          <> cilLdarg 0 -- 13 (has_arg)
+          <> cilLdcI4_0 -- 14
+          <> cilLdelemRef -- 15
+          -- call_main:
+          <> cilStloc 0 -- save input → locals[0]
+          <> cilLdcI4 2 -- length
+          <> newarrObj -- new object[2]
+          <> cilDup -- arr,arr
+          <> cilLdcI4_0 -- arr,arr,0
+          <> cilLdcI4 1 -- arr,arr,0,1 (tag=1 for Right)
+          <> boxInt32 -- arr,arr,0,boxedTag
+          <> cilStelemRef -- arr   (arr[0]=tag)
+          <> cilDup -- arr,arr
+          <> cilLdcI4 1 -- arr,arr,1
+          <> cilLdloc 0 -- arr,arr,1,input
+          <> cilStelemRef -- arr   (arr[1]=input)
+          <> cilCall vMainTok
+          <> cilPop
+          <> cilRet
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods

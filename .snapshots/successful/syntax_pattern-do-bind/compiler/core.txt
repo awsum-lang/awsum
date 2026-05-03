@@ -13,14 +13,11 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "main" [ "raw" ]
+        , CFunDef "main" [ "rawArg" ]
             ( CCall
                 ( CVar "$let$1" )
                 [ CCase
-                    ( CCall
-                        ( CVar "opTuple" )
-                        [ CVar "raw" ]
-                    )
+                    ( CVar "rawArg" )
                     [
                         ( 0
                         , [ "$do_e_10_9" ]
@@ -29,38 +26,39 @@ CoreProgram
                         )
                     ,
                         ( 1
-                        , [ "__p0" ]
+                        , [ "raw" ]
                         , CCase
-                            ( CVar "__p0" )
+                            ( CCall
+                                ( CVar "opTuple" )
+                                [ CVar "raw" ]
+                            )
                             [
                                 ( 0
-                                ,
-                                    [ "a"
-                                    , "b"
-                                    , "c"
+                                , [ "$do_e_11_9" ]
+                                , CCon 0
+                                    [ CRow 2448244154
+                                        ( CVar "$do_e_11_9" )
                                     ]
-                                , CCall
-                                    ( CVar "pureEither" )
-                                    [ CCase
-                                        ( CCall
-                                            ( CBuiltIn "addInt32" )
-                                            [ CVar "a"
-                                            , CVar "b"
-                                            ]
-                                        )
-                                        [
-                                            ( 0
-                                            , [ "__w0" ]
-                                            , CVar "c"
-                                            )
+                                )
+                            ,
+                                ( 1
+                                , [ "__p0" ]
+                                , CCase
+                                    ( CVar "__p0" )
+                                    [
+                                        ( 0
                                         ,
-                                            ( 1
-                                            , [ "ab" ]
-                                            , CCase
+                                            [ "a"
+                                            , "b"
+                                            , "c"
+                                            ]
+                                        , CCall
+                                            ( CVar "pureEither" )
+                                            [ CCase
                                                 ( CCall
                                                     ( CBuiltIn "addInt32" )
-                                                    [ CVar "ab"
-                                                    , CVar "c"
+                                                    [ CVar "a"
+                                                    , CVar "b"
                                                     ]
                                                 )
                                                 [
@@ -70,12 +68,29 @@ CoreProgram
                                                     )
                                                 ,
                                                     ( 1
-                                                    , [ "abc" ]
-                                                    , CVar "abc"
+                                                    , [ "ab" ]
+                                                    , CCase
+                                                        ( CCall
+                                                            ( CBuiltIn "addInt32" )
+                                                            [ CVar "ab"
+                                                            , CVar "c"
+                                                            ]
+                                                        )
+                                                        [
+                                                            ( 0
+                                                            , [ "__w0" ]
+                                                            , CVar "c"
+                                                            )
+                                                        ,
+                                                            ( 1
+                                                            , [ "abc" ]
+                                                            , CVar "abc"
+                                                            )
+                                                        ]
                                                     )
                                                 ]
-                                            )
-                                        ]
+                                            ]
+                                        )
                                     ]
                                 )
                             ]
@@ -88,10 +103,31 @@ CoreProgram
                 ( CVar "res" )
                 [
                     ( 0
-                    , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "PARSE_ERROR" ]
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 502975519
+                            , "__rw"
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CString "UNPAIRED_UTF16_SURROGATE" ]
+                            )
+                        ,
+                            ( 589989748
+                            , "__rw"
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CString "STRING_TOO_LONG" ]
+                            )
+                        ,
+                            ( 2448244154
+                            , "__rw"
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CString "PARSE_ERROR" ]
+                            )
+                        ]
                     )
                 ,
                     ( 1

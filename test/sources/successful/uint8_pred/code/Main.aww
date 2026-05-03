@@ -1,10 +1,21 @@
 {- `predUInt8`: `Left UnderflowError` at 0; `predUInt8 255` traps signed-byte clipping on JVM. -}
 import IO.Stdout
 
-render : Either UnderflowError UInt8 -> String
+render : Either UnderflowError UInt8 -> Either StringTooLong String
 render r = case r of
   Left e -> "underflow: " ++ showUnderflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (predUInt8 minUInt8) ++ ", " ++ render (predUInt8 1) ++ ", " ++ render (predUInt8 maxUInt8))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (predUInt8 minUInt8)
+        b <- render (predUInt8 1)
+        c <- render (predUInt8 maxUInt8)
+        s0 <- a ++ ", "
+        s1 <- s0 ++ b
+        s2 <- s1 ++ ", "
+        s2 ++ c
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

@@ -1,8 +1,8 @@
 -- Error: Int32 literal 1 above upper bound (2^31)
 import IO.Stdout
 
-main : String -> IO Unit
-main input = IO.Stdout.print input
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _ = IO.Stdout.print "ok"
 
 overMax : Int32
 overMax = 2147483648

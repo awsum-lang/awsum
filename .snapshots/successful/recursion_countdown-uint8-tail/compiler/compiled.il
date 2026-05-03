@@ -165,7 +165,17 @@
     stelem.ref
     dup
     ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 3768445577
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldloc.0
+    stelem.ref
     stelem.ref
     ret
   IL_tco_arm_1:
@@ -174,13 +184,113 @@
     ldelem.ref
     stloc.0
     pop
-    ldloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldarg.1
     ldarg.0
     callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
+    stelem.ref
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_1)
+  IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 3768445577
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.1
+    stelem.ref
+    stelem.ref
+    ret
+  IL_tco_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.1
     ldstr ","
     call object AwsumMain::__concat(object, object)
+    stelem.ref
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_1)
+  IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 3768445577
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.2
+    stelem.ref
+    stelem.ref
+    ret
+  IL_tco_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.2
+    pop
+    ldloc.0
+    ldloc.2
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -201,10 +311,52 @@
     ldelem.ref
     stloc.0
     pop
-    ldstr "left: "
     ldloc.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_589989748, IL_arm_3768445577)
+  IL_arm_589989748:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldstr "STRING_TOO_LONG"
+    stelem.ref
+    br.s IL_join
+  IL_arm_3768445577:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldstr "left: "
+    ldloc.1
     call object AwsumMain::v_showUnderflowError(object)
     call object AwsumMain::__concat(object, object)
+    stelem.ref
+    br.s IL_join
+  IL_join:
     br.s IL_join
   IL_arm_1:
     dup
@@ -212,9 +364,19 @@
     ldelem.ref
     stloc.0
     pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "right: "
     ldloc.0
     call object AwsumMain::__concat(object, object)
+    stelem.ref
     br.s IL_join
   IL_join:
     ret
@@ -228,13 +390,45 @@
     ldstr ""
     call object AwsumMain::v_countDown(object, object)
     call object AwsumMain::v_showResult(object)
+    call object AwsumMain::v__let_1(object)
+    ret
+  }
+
+
+  .method private hidebysig static object v__let_1(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldstr "STRING_TOO_LONG"
     call object AwsumMain::__print(object)
+    br.s IL_join
+  IL_arm_1:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    call object AwsumMain::__print(object)
+    br.s IL_join
+  IL_join:
     ret
   }
 
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
+    .locals init (object input)
     ldarg.0
     ldlen
     conv.i4
@@ -247,6 +441,18 @@
     ldc.i4.0
     ldelem.ref
   call_main:
+    stloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     call object AwsumMain::v_main(object)
     pop
     ret

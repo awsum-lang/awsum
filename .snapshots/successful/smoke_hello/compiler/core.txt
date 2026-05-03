@@ -1,28 +1,130 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "input" ]
+        [ CFunDef "main" [ "inputArg" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CCall
-                    ( CVar "addGreeting" )
-                    [ CVar "input" ]
+                ( CVar "$let$2" )
+                [ CCase
+                    ( CVar "inputArg" )
+                    [
+                        ( 0
+                        , [ "$do_e_7_9" ]
+                        , CCon 0
+                            [ CVar "$do_e_7_9" ]
+                        )
+                    ,
+                        ( 1
+                        , [ "input" ]
+                        , CCall
+                            ( CVar "$lift$1" )
+                            [ CCall
+                                ( CVar "addGreeting" )
+                                [ CVar "input" ]
+                            ]
+                        )
+                    ]
                 ]
             )
         , CValDef "greeting"
             ( CString "Hello" )
         , CFunDef "addGreeting" [ "name" ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
+            ( CCase
+                ( CCon 1
                     [ CCall
                         ( CBuiltIn "concatString" )
                         [ CVar "greeting"
                         , CString ", "
                         ]
-                    , CVar "name"
                     ]
-                , CString "!"
+                )
+                [
+                    ( 0
+                    , [ "$do_e_22_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_22_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s0" ]
+                    , CCase
+                        ( CCon 1
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CVar "name"
+                                ]
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_23_3" ]
+                            , CCon 0
+                                [ CVar "$do_e_23_3" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "s1" ]
+                            , CCon 1
+                                [ CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s1"
+                                    , CString "!"
+                                    ]
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$lift$1" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 0
+                    , [ "__f0" ]
+                    , CCon 0
+                        [ CRow 589989748
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "__f0" ]
+                    , CCon 1
+                        [ CVar "__f0" ]
+                    )
+                ]
+            )
+        , CFunDef "$let$2" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 502975519
+                            , "__rw"
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CString "UNPAIRED_UTF16_SURROGATE" ]
+                            )
+                        ,
+                            ( 589989748
+                            , "__rw"
+                            , CCall
+                                ( CBuiltIn "IO.Stdout.print" )
+                                [ CString "STRING_TOO_LONG" ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
                 ]
             )
         ]

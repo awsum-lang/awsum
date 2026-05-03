@@ -1,10 +1,21 @@
 {- `succUInt8`: `Left OverflowError` at 255; `succUInt8 254` traps signed-byte clipping on JVM. -}
 import IO.Stdout
 
-render : Either OverflowError UInt8 -> String
+render : Either OverflowError UInt8 -> Either StringTooLong String
 render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (render (succUInt8 maxUInt8) ++ ", " ++ render (succUInt8 254) ++ ", " ++ render (succUInt8 minUInt8))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = do
+        a <- render (succUInt8 maxUInt8)
+        b <- render (succUInt8 254)
+        c <- render (succUInt8 minUInt8)
+        s0 <- a ++ ", "
+        s1 <- s0 ++ b
+        s2 <- s1 ++ ", "
+        s2 ++ c
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

@@ -3,18 +3,29 @@ import IO.Stdout
 
 type List a = Cons a (List a) | Nil
 
-map : (String -> String) -> List String -> List String
+map : (String -> Either StringTooLong String) -> List String -> List (Either StringTooLong String)
 map f list = case list of
   Cons head tail -> Cons (f head) (map f tail)
   Nil -> Nil
 
-show : List String -> String
+show : List (Either StringTooLong String) -> Either StringTooLong String
 show xs = case xs of
-  Cons h t -> h ++ "," ++ (show t)
-  Nil -> ""
+  Cons h t -> showCons h t
+  Nil -> Right ""
 
-shout : String -> String
+showCons : Either StringTooLong String -> List (Either StringTooLong String) -> Either StringTooLong String
+showCons h t = do
+  hStr <- h
+  rest <- show t
+  comma <- hStr ++ ","
+  comma ++ rest
+
+shout : String -> Either StringTooLong String
 shout s = s ++ "!"
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (show (map shout (Cons "a" (Cons "b" (Cons "c" Nil)))))
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = show (map shout (Cons "a" (Cons "b" (Cons "c" Nil))))
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

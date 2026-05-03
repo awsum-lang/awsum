@@ -7,11 +7,12 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 67))
+  (global $heap (mut i32) (i32.const 83))
   (data (i32.const 64) "\00")
   (data (i32.const 65) "/\00")
-  (table 4 funcref)
-  (elem (i32.const 0) $v_both $v_main $v__lam_1 $v__df_apply_0)
+  (data (i32.const 67) "STRING_TOO_LONG\00")
+  (table 6 funcref)
+  (elem (i32.const 0) $v_both $v_bothBody $v_main $v__lam_1 $v__let_2 $v__df_apply_0)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -135,16 +136,35 @@
   (func $v_both (param $v_a i32) (param $v_b i32) (result i32)
     (call $v__df_apply_0 (call $v_zero) (local.get $v_a) (local.get $v_b)))
 
+  (func $v_bothBody (param $v_a i32) (param $v_b i32) (result i32)
+    (local $__con_0 i32)
+    (local $v__do_e_15_3 i32)
+    (local $v_s0 i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (call $__concat (call $__show_i32 (local.get $v_a)) (i32.const 65))) (local.get $__con_0))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v__do_e_15_3 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_15_3)) (local.get $__con_0))) (else (local.set $v_s0 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (call $__concat (local.get $v_s0) (call $__show_i32 (local.get $v_b)))) (local.get $__con_0))))))
+
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v_both (call $__box_i32 (i32.const 11)) (call $__box_i32 (i32.const 22)))))
+    (call $v__let_2 (call $v_both (call $__box_i32 (i32.const 11)) (call $__box_i32 (i32.const 22)))))
 
   (func $v__lam_1 (param $v_a i32) (param $v_b i32) (param $v__n i32) (result i32)
-    (call $__concat (call $__concat (call $__show_i32 (local.get $v_a)) (i32.const 65)) (call $__show_i32 (local.get $v_b))))
+    (call $v_bothBody (local.get $v_a) (local.get $v_b)))
+
+  (func $v__let_2 (param $v_res i32) (result i32)
+    (local $v___w0 i32)
+    (local $v_s i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v_res)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (call $__print (i32.const 67))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (call $__print (local.get $v_s))))))
 
   (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (param $v__df_apply_0_cap0_1 i32) (result i32)
     (call $v__lam_1 (local.get $v__df_apply_0_cap0_0) (local.get $v__df_apply_0_cap0_1) (local.get $v_x)))
 
   (func $_start (export "_start")
-    (drop (call $v_main (call $__get_arg))))
+    (local $input i32)
+    (local $right_box i32)
+    (local.set $input (call $__get_arg))
+    (local.set $right_box (call $__alloc (i32.const 8)))
+    (i32.store (local.get $right_box) (i32.const 1))
+    (i32.store offset=4 (local.get $right_box) (local.get $input))
+    (drop (call $v_main (local.get $right_box))))
 
 )

@@ -5,5 +5,5 @@
 -- runtime distinction between an escape and a literal codepoint.
 import IO.Stdout
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
 main _input = IO.Stdout.print "\x41"

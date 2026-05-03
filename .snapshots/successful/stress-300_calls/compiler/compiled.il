@@ -14,14 +14,6 @@
     ret
   }
 
-  .method private hidebysig static object __concat(object, object) cil managed
-  {
-    ldarg.0
-    ldarg.1
-    call string [System.Runtime]System.String::Concat(object, object)
-    ret
-  }
-
   .method private hidebysig static object __print(object) cil managed
   {
     ldarg.0
@@ -30,10 +22,65 @@
     ret
   }
 
+  .method private hidebysig static object v_and(object, object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    pop
+    ldarg.1
+    br.s IL_join
+  IL_arm_1:
+    pop
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
+  .method private hidebysig static object v_showBool(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    pop
+    ldstr "True"
+    br.s IL_join
+  IL_arm_1:
+    pop
+    ldstr "False"
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
   .method private hidebysig static object v_main(object) cil managed
   {
-    ldstr ""
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
     call object AwsumMain::v_f1(object)
+    call object AwsumMain::v_showBool(object)
     call object AwsumMain::__print(object)
     ret
   }
@@ -42,8 +89,14 @@
   .method private hidebysig static object v_f1(object) cil managed
   {
     ldarg.0
-    ldstr "1,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f2(object)
     ret
   }
@@ -52,8 +105,14 @@
   .method private hidebysig static object v_f2(object) cil managed
   {
     ldarg.0
-    ldstr "2,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f3(object)
     ret
   }
@@ -62,8 +121,14 @@
   .method private hidebysig static object v_f3(object) cil managed
   {
     ldarg.0
-    ldstr "3,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f4(object)
     ret
   }
@@ -72,8 +137,14 @@
   .method private hidebysig static object v_f4(object) cil managed
   {
     ldarg.0
-    ldstr "4,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f5(object)
     ret
   }
@@ -82,8 +153,14 @@
   .method private hidebysig static object v_f5(object) cil managed
   {
     ldarg.0
-    ldstr "5,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f6(object)
     ret
   }
@@ -92,8 +169,14 @@
   .method private hidebysig static object v_f6(object) cil managed
   {
     ldarg.0
-    ldstr "6,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f7(object)
     ret
   }
@@ -102,8 +185,14 @@
   .method private hidebysig static object v_f7(object) cil managed
   {
     ldarg.0
-    ldstr "7,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f8(object)
     ret
   }
@@ -112,8 +201,14 @@
   .method private hidebysig static object v_f8(object) cil managed
   {
     ldarg.0
-    ldstr "8,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f9(object)
     ret
   }
@@ -122,8 +217,14 @@
   .method private hidebysig static object v_f9(object) cil managed
   {
     ldarg.0
-    ldstr "9,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f10(object)
     ret
   }
@@ -132,8 +233,14 @@
   .method private hidebysig static object v_f10(object) cil managed
   {
     ldarg.0
-    ldstr "10,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f11(object)
     ret
   }
@@ -142,8 +249,14 @@
   .method private hidebysig static object v_f11(object) cil managed
   {
     ldarg.0
-    ldstr "11,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f12(object)
     ret
   }
@@ -152,8 +265,14 @@
   .method private hidebysig static object v_f12(object) cil managed
   {
     ldarg.0
-    ldstr "12,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f13(object)
     ret
   }
@@ -162,8 +281,14 @@
   .method private hidebysig static object v_f13(object) cil managed
   {
     ldarg.0
-    ldstr "13,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f14(object)
     ret
   }
@@ -172,8 +297,14 @@
   .method private hidebysig static object v_f14(object) cil managed
   {
     ldarg.0
-    ldstr "14,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f15(object)
     ret
   }
@@ -182,8 +313,14 @@
   .method private hidebysig static object v_f15(object) cil managed
   {
     ldarg.0
-    ldstr "15,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f16(object)
     ret
   }
@@ -192,8 +329,14 @@
   .method private hidebysig static object v_f16(object) cil managed
   {
     ldarg.0
-    ldstr "16,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f17(object)
     ret
   }
@@ -202,8 +345,14 @@
   .method private hidebysig static object v_f17(object) cil managed
   {
     ldarg.0
-    ldstr "17,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f18(object)
     ret
   }
@@ -212,8 +361,14 @@
   .method private hidebysig static object v_f18(object) cil managed
   {
     ldarg.0
-    ldstr "18,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f19(object)
     ret
   }
@@ -222,8 +377,14 @@
   .method private hidebysig static object v_f19(object) cil managed
   {
     ldarg.0
-    ldstr "19,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f20(object)
     ret
   }
@@ -232,8 +393,14 @@
   .method private hidebysig static object v_f20(object) cil managed
   {
     ldarg.0
-    ldstr "20,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f21(object)
     ret
   }
@@ -242,8 +409,14 @@
   .method private hidebysig static object v_f21(object) cil managed
   {
     ldarg.0
-    ldstr "21,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f22(object)
     ret
   }
@@ -252,8 +425,14 @@
   .method private hidebysig static object v_f22(object) cil managed
   {
     ldarg.0
-    ldstr "22,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f23(object)
     ret
   }
@@ -262,8 +441,14 @@
   .method private hidebysig static object v_f23(object) cil managed
   {
     ldarg.0
-    ldstr "23,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f24(object)
     ret
   }
@@ -272,8 +457,14 @@
   .method private hidebysig static object v_f24(object) cil managed
   {
     ldarg.0
-    ldstr "24,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f25(object)
     ret
   }
@@ -282,8 +473,14 @@
   .method private hidebysig static object v_f25(object) cil managed
   {
     ldarg.0
-    ldstr "25,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f26(object)
     ret
   }
@@ -292,8 +489,14 @@
   .method private hidebysig static object v_f26(object) cil managed
   {
     ldarg.0
-    ldstr "26,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f27(object)
     ret
   }
@@ -302,8 +505,14 @@
   .method private hidebysig static object v_f27(object) cil managed
   {
     ldarg.0
-    ldstr "27,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f28(object)
     ret
   }
@@ -312,8 +521,14 @@
   .method private hidebysig static object v_f28(object) cil managed
   {
     ldarg.0
-    ldstr "28,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f29(object)
     ret
   }
@@ -322,8 +537,14 @@
   .method private hidebysig static object v_f29(object) cil managed
   {
     ldarg.0
-    ldstr "29,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f30(object)
     ret
   }
@@ -332,8 +553,14 @@
   .method private hidebysig static object v_f30(object) cil managed
   {
     ldarg.0
-    ldstr "30,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f31(object)
     ret
   }
@@ -342,8 +569,14 @@
   .method private hidebysig static object v_f31(object) cil managed
   {
     ldarg.0
-    ldstr "31,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f32(object)
     ret
   }
@@ -352,8 +585,14 @@
   .method private hidebysig static object v_f32(object) cil managed
   {
     ldarg.0
-    ldstr "32,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f33(object)
     ret
   }
@@ -362,8 +601,14 @@
   .method private hidebysig static object v_f33(object) cil managed
   {
     ldarg.0
-    ldstr "33,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f34(object)
     ret
   }
@@ -372,8 +617,14 @@
   .method private hidebysig static object v_f34(object) cil managed
   {
     ldarg.0
-    ldstr "34,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f35(object)
     ret
   }
@@ -382,8 +633,14 @@
   .method private hidebysig static object v_f35(object) cil managed
   {
     ldarg.0
-    ldstr "35,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f36(object)
     ret
   }
@@ -392,8 +649,14 @@
   .method private hidebysig static object v_f36(object) cil managed
   {
     ldarg.0
-    ldstr "36,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f37(object)
     ret
   }
@@ -402,8 +665,14 @@
   .method private hidebysig static object v_f37(object) cil managed
   {
     ldarg.0
-    ldstr "37,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f38(object)
     ret
   }
@@ -412,8 +681,14 @@
   .method private hidebysig static object v_f38(object) cil managed
   {
     ldarg.0
-    ldstr "38,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f39(object)
     ret
   }
@@ -422,8 +697,14 @@
   .method private hidebysig static object v_f39(object) cil managed
   {
     ldarg.0
-    ldstr "39,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f40(object)
     ret
   }
@@ -432,8 +713,14 @@
   .method private hidebysig static object v_f40(object) cil managed
   {
     ldarg.0
-    ldstr "40,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f41(object)
     ret
   }
@@ -442,8 +729,14 @@
   .method private hidebysig static object v_f41(object) cil managed
   {
     ldarg.0
-    ldstr "41,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f42(object)
     ret
   }
@@ -452,8 +745,14 @@
   .method private hidebysig static object v_f42(object) cil managed
   {
     ldarg.0
-    ldstr "42,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f43(object)
     ret
   }
@@ -462,8 +761,14 @@
   .method private hidebysig static object v_f43(object) cil managed
   {
     ldarg.0
-    ldstr "43,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f44(object)
     ret
   }
@@ -472,8 +777,14 @@
   .method private hidebysig static object v_f44(object) cil managed
   {
     ldarg.0
-    ldstr "44,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f45(object)
     ret
   }
@@ -482,8 +793,14 @@
   .method private hidebysig static object v_f45(object) cil managed
   {
     ldarg.0
-    ldstr "45,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f46(object)
     ret
   }
@@ -492,8 +809,14 @@
   .method private hidebysig static object v_f46(object) cil managed
   {
     ldarg.0
-    ldstr "46,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f47(object)
     ret
   }
@@ -502,8 +825,14 @@
   .method private hidebysig static object v_f47(object) cil managed
   {
     ldarg.0
-    ldstr "47,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f48(object)
     ret
   }
@@ -512,8 +841,14 @@
   .method private hidebysig static object v_f48(object) cil managed
   {
     ldarg.0
-    ldstr "48,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f49(object)
     ret
   }
@@ -522,8 +857,14 @@
   .method private hidebysig static object v_f49(object) cil managed
   {
     ldarg.0
-    ldstr "49,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f50(object)
     ret
   }
@@ -532,8 +873,14 @@
   .method private hidebysig static object v_f50(object) cil managed
   {
     ldarg.0
-    ldstr "50,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f51(object)
     ret
   }
@@ -542,8 +889,14 @@
   .method private hidebysig static object v_f51(object) cil managed
   {
     ldarg.0
-    ldstr "51,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f52(object)
     ret
   }
@@ -552,8 +905,14 @@
   .method private hidebysig static object v_f52(object) cil managed
   {
     ldarg.0
-    ldstr "52,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f53(object)
     ret
   }
@@ -562,8 +921,14 @@
   .method private hidebysig static object v_f53(object) cil managed
   {
     ldarg.0
-    ldstr "53,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f54(object)
     ret
   }
@@ -572,8 +937,14 @@
   .method private hidebysig static object v_f54(object) cil managed
   {
     ldarg.0
-    ldstr "54,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f55(object)
     ret
   }
@@ -582,8 +953,14 @@
   .method private hidebysig static object v_f55(object) cil managed
   {
     ldarg.0
-    ldstr "55,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f56(object)
     ret
   }
@@ -592,8 +969,14 @@
   .method private hidebysig static object v_f56(object) cil managed
   {
     ldarg.0
-    ldstr "56,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f57(object)
     ret
   }
@@ -602,8 +985,14 @@
   .method private hidebysig static object v_f57(object) cil managed
   {
     ldarg.0
-    ldstr "57,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f58(object)
     ret
   }
@@ -612,8 +1001,14 @@
   .method private hidebysig static object v_f58(object) cil managed
   {
     ldarg.0
-    ldstr "58,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f59(object)
     ret
   }
@@ -622,8 +1017,14 @@
   .method private hidebysig static object v_f59(object) cil managed
   {
     ldarg.0
-    ldstr "59,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f60(object)
     ret
   }
@@ -632,8 +1033,14 @@
   .method private hidebysig static object v_f60(object) cil managed
   {
     ldarg.0
-    ldstr "60,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f61(object)
     ret
   }
@@ -642,8 +1049,14 @@
   .method private hidebysig static object v_f61(object) cil managed
   {
     ldarg.0
-    ldstr "61,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f62(object)
     ret
   }
@@ -652,8 +1065,14 @@
   .method private hidebysig static object v_f62(object) cil managed
   {
     ldarg.0
-    ldstr "62,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f63(object)
     ret
   }
@@ -662,8 +1081,14 @@
   .method private hidebysig static object v_f63(object) cil managed
   {
     ldarg.0
-    ldstr "63,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f64(object)
     ret
   }
@@ -672,8 +1097,14 @@
   .method private hidebysig static object v_f64(object) cil managed
   {
     ldarg.0
-    ldstr "64,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f65(object)
     ret
   }
@@ -682,8 +1113,14 @@
   .method private hidebysig static object v_f65(object) cil managed
   {
     ldarg.0
-    ldstr "65,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f66(object)
     ret
   }
@@ -692,8 +1129,14 @@
   .method private hidebysig static object v_f66(object) cil managed
   {
     ldarg.0
-    ldstr "66,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f67(object)
     ret
   }
@@ -702,8 +1145,14 @@
   .method private hidebysig static object v_f67(object) cil managed
   {
     ldarg.0
-    ldstr "67,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f68(object)
     ret
   }
@@ -712,8 +1161,14 @@
   .method private hidebysig static object v_f68(object) cil managed
   {
     ldarg.0
-    ldstr "68,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f69(object)
     ret
   }
@@ -722,8 +1177,14 @@
   .method private hidebysig static object v_f69(object) cil managed
   {
     ldarg.0
-    ldstr "69,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f70(object)
     ret
   }
@@ -732,8 +1193,14 @@
   .method private hidebysig static object v_f70(object) cil managed
   {
     ldarg.0
-    ldstr "70,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f71(object)
     ret
   }
@@ -742,8 +1209,14 @@
   .method private hidebysig static object v_f71(object) cil managed
   {
     ldarg.0
-    ldstr "71,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f72(object)
     ret
   }
@@ -752,8 +1225,14 @@
   .method private hidebysig static object v_f72(object) cil managed
   {
     ldarg.0
-    ldstr "72,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f73(object)
     ret
   }
@@ -762,8 +1241,14 @@
   .method private hidebysig static object v_f73(object) cil managed
   {
     ldarg.0
-    ldstr "73,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f74(object)
     ret
   }
@@ -772,8 +1257,14 @@
   .method private hidebysig static object v_f74(object) cil managed
   {
     ldarg.0
-    ldstr "74,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f75(object)
     ret
   }
@@ -782,8 +1273,14 @@
   .method private hidebysig static object v_f75(object) cil managed
   {
     ldarg.0
-    ldstr "75,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f76(object)
     ret
   }
@@ -792,8 +1289,14 @@
   .method private hidebysig static object v_f76(object) cil managed
   {
     ldarg.0
-    ldstr "76,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f77(object)
     ret
   }
@@ -802,8 +1305,14 @@
   .method private hidebysig static object v_f77(object) cil managed
   {
     ldarg.0
-    ldstr "77,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f78(object)
     ret
   }
@@ -812,8 +1321,14 @@
   .method private hidebysig static object v_f78(object) cil managed
   {
     ldarg.0
-    ldstr "78,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f79(object)
     ret
   }
@@ -822,8 +1337,14 @@
   .method private hidebysig static object v_f79(object) cil managed
   {
     ldarg.0
-    ldstr "79,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f80(object)
     ret
   }
@@ -832,8 +1353,14 @@
   .method private hidebysig static object v_f80(object) cil managed
   {
     ldarg.0
-    ldstr "80,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f81(object)
     ret
   }
@@ -842,8 +1369,14 @@
   .method private hidebysig static object v_f81(object) cil managed
   {
     ldarg.0
-    ldstr "81,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f82(object)
     ret
   }
@@ -852,8 +1385,14 @@
   .method private hidebysig static object v_f82(object) cil managed
   {
     ldarg.0
-    ldstr "82,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f83(object)
     ret
   }
@@ -862,8 +1401,14 @@
   .method private hidebysig static object v_f83(object) cil managed
   {
     ldarg.0
-    ldstr "83,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f84(object)
     ret
   }
@@ -872,8 +1417,14 @@
   .method private hidebysig static object v_f84(object) cil managed
   {
     ldarg.0
-    ldstr "84,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f85(object)
     ret
   }
@@ -882,8 +1433,14 @@
   .method private hidebysig static object v_f85(object) cil managed
   {
     ldarg.0
-    ldstr "85,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f86(object)
     ret
   }
@@ -892,8 +1449,14 @@
   .method private hidebysig static object v_f86(object) cil managed
   {
     ldarg.0
-    ldstr "86,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f87(object)
     ret
   }
@@ -902,8 +1465,14 @@
   .method private hidebysig static object v_f87(object) cil managed
   {
     ldarg.0
-    ldstr "87,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f88(object)
     ret
   }
@@ -912,8 +1481,14 @@
   .method private hidebysig static object v_f88(object) cil managed
   {
     ldarg.0
-    ldstr "88,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f89(object)
     ret
   }
@@ -922,8 +1497,14 @@
   .method private hidebysig static object v_f89(object) cil managed
   {
     ldarg.0
-    ldstr "89,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f90(object)
     ret
   }
@@ -932,8 +1513,14 @@
   .method private hidebysig static object v_f90(object) cil managed
   {
     ldarg.0
-    ldstr "90,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f91(object)
     ret
   }
@@ -942,8 +1529,14 @@
   .method private hidebysig static object v_f91(object) cil managed
   {
     ldarg.0
-    ldstr "91,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f92(object)
     ret
   }
@@ -952,8 +1545,14 @@
   .method private hidebysig static object v_f92(object) cil managed
   {
     ldarg.0
-    ldstr "92,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f93(object)
     ret
   }
@@ -962,8 +1561,14 @@
   .method private hidebysig static object v_f93(object) cil managed
   {
     ldarg.0
-    ldstr "93,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f94(object)
     ret
   }
@@ -972,8 +1577,14 @@
   .method private hidebysig static object v_f94(object) cil managed
   {
     ldarg.0
-    ldstr "94,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f95(object)
     ret
   }
@@ -982,8 +1593,14 @@
   .method private hidebysig static object v_f95(object) cil managed
   {
     ldarg.0
-    ldstr "95,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f96(object)
     ret
   }
@@ -992,8 +1609,14 @@
   .method private hidebysig static object v_f96(object) cil managed
   {
     ldarg.0
-    ldstr "96,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f97(object)
     ret
   }
@@ -1002,8 +1625,14 @@
   .method private hidebysig static object v_f97(object) cil managed
   {
     ldarg.0
-    ldstr "97,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f98(object)
     ret
   }
@@ -1012,8 +1641,14 @@
   .method private hidebysig static object v_f98(object) cil managed
   {
     ldarg.0
-    ldstr "98,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f99(object)
     ret
   }
@@ -1022,8 +1657,14 @@
   .method private hidebysig static object v_f99(object) cil managed
   {
     ldarg.0
-    ldstr "99,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f100(object)
     ret
   }
@@ -1032,8 +1673,14 @@
   .method private hidebysig static object v_f100(object) cil managed
   {
     ldarg.0
-    ldstr "100,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f101(object)
     ret
   }
@@ -1042,8 +1689,14 @@
   .method private hidebysig static object v_f101(object) cil managed
   {
     ldarg.0
-    ldstr "101,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f102(object)
     ret
   }
@@ -1052,8 +1705,14 @@
   .method private hidebysig static object v_f102(object) cil managed
   {
     ldarg.0
-    ldstr "102,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f103(object)
     ret
   }
@@ -1062,8 +1721,14 @@
   .method private hidebysig static object v_f103(object) cil managed
   {
     ldarg.0
-    ldstr "103,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f104(object)
     ret
   }
@@ -1072,8 +1737,14 @@
   .method private hidebysig static object v_f104(object) cil managed
   {
     ldarg.0
-    ldstr "104,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f105(object)
     ret
   }
@@ -1082,8 +1753,14 @@
   .method private hidebysig static object v_f105(object) cil managed
   {
     ldarg.0
-    ldstr "105,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f106(object)
     ret
   }
@@ -1092,8 +1769,14 @@
   .method private hidebysig static object v_f106(object) cil managed
   {
     ldarg.0
-    ldstr "106,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f107(object)
     ret
   }
@@ -1102,8 +1785,14 @@
   .method private hidebysig static object v_f107(object) cil managed
   {
     ldarg.0
-    ldstr "107,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f108(object)
     ret
   }
@@ -1112,8 +1801,14 @@
   .method private hidebysig static object v_f108(object) cil managed
   {
     ldarg.0
-    ldstr "108,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f109(object)
     ret
   }
@@ -1122,8 +1817,14 @@
   .method private hidebysig static object v_f109(object) cil managed
   {
     ldarg.0
-    ldstr "109,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f110(object)
     ret
   }
@@ -1132,8 +1833,14 @@
   .method private hidebysig static object v_f110(object) cil managed
   {
     ldarg.0
-    ldstr "110,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f111(object)
     ret
   }
@@ -1142,8 +1849,14 @@
   .method private hidebysig static object v_f111(object) cil managed
   {
     ldarg.0
-    ldstr "111,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f112(object)
     ret
   }
@@ -1152,8 +1865,14 @@
   .method private hidebysig static object v_f112(object) cil managed
   {
     ldarg.0
-    ldstr "112,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f113(object)
     ret
   }
@@ -1162,8 +1881,14 @@
   .method private hidebysig static object v_f113(object) cil managed
   {
     ldarg.0
-    ldstr "113,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f114(object)
     ret
   }
@@ -1172,8 +1897,14 @@
   .method private hidebysig static object v_f114(object) cil managed
   {
     ldarg.0
-    ldstr "114,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f115(object)
     ret
   }
@@ -1182,8 +1913,14 @@
   .method private hidebysig static object v_f115(object) cil managed
   {
     ldarg.0
-    ldstr "115,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f116(object)
     ret
   }
@@ -1192,8 +1929,14 @@
   .method private hidebysig static object v_f116(object) cil managed
   {
     ldarg.0
-    ldstr "116,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f117(object)
     ret
   }
@@ -1202,8 +1945,14 @@
   .method private hidebysig static object v_f117(object) cil managed
   {
     ldarg.0
-    ldstr "117,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f118(object)
     ret
   }
@@ -1212,8 +1961,14 @@
   .method private hidebysig static object v_f118(object) cil managed
   {
     ldarg.0
-    ldstr "118,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f119(object)
     ret
   }
@@ -1222,8 +1977,14 @@
   .method private hidebysig static object v_f119(object) cil managed
   {
     ldarg.0
-    ldstr "119,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f120(object)
     ret
   }
@@ -1232,8 +1993,14 @@
   .method private hidebysig static object v_f120(object) cil managed
   {
     ldarg.0
-    ldstr "120,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f121(object)
     ret
   }
@@ -1242,8 +2009,14 @@
   .method private hidebysig static object v_f121(object) cil managed
   {
     ldarg.0
-    ldstr "121,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f122(object)
     ret
   }
@@ -1252,8 +2025,14 @@
   .method private hidebysig static object v_f122(object) cil managed
   {
     ldarg.0
-    ldstr "122,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f123(object)
     ret
   }
@@ -1262,8 +2041,14 @@
   .method private hidebysig static object v_f123(object) cil managed
   {
     ldarg.0
-    ldstr "123,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f124(object)
     ret
   }
@@ -1272,8 +2057,14 @@
   .method private hidebysig static object v_f124(object) cil managed
   {
     ldarg.0
-    ldstr "124,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f125(object)
     ret
   }
@@ -1282,8 +2073,14 @@
   .method private hidebysig static object v_f125(object) cil managed
   {
     ldarg.0
-    ldstr "125,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f126(object)
     ret
   }
@@ -1292,8 +2089,14 @@
   .method private hidebysig static object v_f126(object) cil managed
   {
     ldarg.0
-    ldstr "126,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f127(object)
     ret
   }
@@ -1302,8 +2105,14 @@
   .method private hidebysig static object v_f127(object) cil managed
   {
     ldarg.0
-    ldstr "127,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f128(object)
     ret
   }
@@ -1312,8 +2121,14 @@
   .method private hidebysig static object v_f128(object) cil managed
   {
     ldarg.0
-    ldstr "128,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f129(object)
     ret
   }
@@ -1322,8 +2137,14 @@
   .method private hidebysig static object v_f129(object) cil managed
   {
     ldarg.0
-    ldstr "129,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f130(object)
     ret
   }
@@ -1332,8 +2153,14 @@
   .method private hidebysig static object v_f130(object) cil managed
   {
     ldarg.0
-    ldstr "130,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f131(object)
     ret
   }
@@ -1342,8 +2169,14 @@
   .method private hidebysig static object v_f131(object) cil managed
   {
     ldarg.0
-    ldstr "131,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f132(object)
     ret
   }
@@ -1352,8 +2185,14 @@
   .method private hidebysig static object v_f132(object) cil managed
   {
     ldarg.0
-    ldstr "132,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f133(object)
     ret
   }
@@ -1362,8 +2201,14 @@
   .method private hidebysig static object v_f133(object) cil managed
   {
     ldarg.0
-    ldstr "133,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f134(object)
     ret
   }
@@ -1372,8 +2217,14 @@
   .method private hidebysig static object v_f134(object) cil managed
   {
     ldarg.0
-    ldstr "134,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f135(object)
     ret
   }
@@ -1382,8 +2233,14 @@
   .method private hidebysig static object v_f135(object) cil managed
   {
     ldarg.0
-    ldstr "135,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f136(object)
     ret
   }
@@ -1392,8 +2249,14 @@
   .method private hidebysig static object v_f136(object) cil managed
   {
     ldarg.0
-    ldstr "136,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f137(object)
     ret
   }
@@ -1402,8 +2265,14 @@
   .method private hidebysig static object v_f137(object) cil managed
   {
     ldarg.0
-    ldstr "137,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f138(object)
     ret
   }
@@ -1412,8 +2281,14 @@
   .method private hidebysig static object v_f138(object) cil managed
   {
     ldarg.0
-    ldstr "138,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f139(object)
     ret
   }
@@ -1422,8 +2297,14 @@
   .method private hidebysig static object v_f139(object) cil managed
   {
     ldarg.0
-    ldstr "139,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f140(object)
     ret
   }
@@ -1432,8 +2313,14 @@
   .method private hidebysig static object v_f140(object) cil managed
   {
     ldarg.0
-    ldstr "140,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f141(object)
     ret
   }
@@ -1442,8 +2329,14 @@
   .method private hidebysig static object v_f141(object) cil managed
   {
     ldarg.0
-    ldstr "141,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f142(object)
     ret
   }
@@ -1452,8 +2345,14 @@
   .method private hidebysig static object v_f142(object) cil managed
   {
     ldarg.0
-    ldstr "142,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f143(object)
     ret
   }
@@ -1462,8 +2361,14 @@
   .method private hidebysig static object v_f143(object) cil managed
   {
     ldarg.0
-    ldstr "143,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f144(object)
     ret
   }
@@ -1472,8 +2377,14 @@
   .method private hidebysig static object v_f144(object) cil managed
   {
     ldarg.0
-    ldstr "144,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f145(object)
     ret
   }
@@ -1482,8 +2393,14 @@
   .method private hidebysig static object v_f145(object) cil managed
   {
     ldarg.0
-    ldstr "145,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f146(object)
     ret
   }
@@ -1492,8 +2409,14 @@
   .method private hidebysig static object v_f146(object) cil managed
   {
     ldarg.0
-    ldstr "146,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f147(object)
     ret
   }
@@ -1502,8 +2425,14 @@
   .method private hidebysig static object v_f147(object) cil managed
   {
     ldarg.0
-    ldstr "147,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f148(object)
     ret
   }
@@ -1512,8 +2441,14 @@
   .method private hidebysig static object v_f148(object) cil managed
   {
     ldarg.0
-    ldstr "148,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f149(object)
     ret
   }
@@ -1522,8 +2457,14 @@
   .method private hidebysig static object v_f149(object) cil managed
   {
     ldarg.0
-    ldstr "149,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f150(object)
     ret
   }
@@ -1532,8 +2473,14 @@
   .method private hidebysig static object v_f150(object) cil managed
   {
     ldarg.0
-    ldstr "150,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f151(object)
     ret
   }
@@ -1542,8 +2489,14 @@
   .method private hidebysig static object v_f151(object) cil managed
   {
     ldarg.0
-    ldstr "151,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f152(object)
     ret
   }
@@ -1552,8 +2505,14 @@
   .method private hidebysig static object v_f152(object) cil managed
   {
     ldarg.0
-    ldstr "152,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f153(object)
     ret
   }
@@ -1562,8 +2521,14 @@
   .method private hidebysig static object v_f153(object) cil managed
   {
     ldarg.0
-    ldstr "153,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f154(object)
     ret
   }
@@ -1572,8 +2537,14 @@
   .method private hidebysig static object v_f154(object) cil managed
   {
     ldarg.0
-    ldstr "154,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f155(object)
     ret
   }
@@ -1582,8 +2553,14 @@
   .method private hidebysig static object v_f155(object) cil managed
   {
     ldarg.0
-    ldstr "155,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f156(object)
     ret
   }
@@ -1592,8 +2569,14 @@
   .method private hidebysig static object v_f156(object) cil managed
   {
     ldarg.0
-    ldstr "156,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f157(object)
     ret
   }
@@ -1602,8 +2585,14 @@
   .method private hidebysig static object v_f157(object) cil managed
   {
     ldarg.0
-    ldstr "157,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f158(object)
     ret
   }
@@ -1612,8 +2601,14 @@
   .method private hidebysig static object v_f158(object) cil managed
   {
     ldarg.0
-    ldstr "158,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f159(object)
     ret
   }
@@ -1622,8 +2617,14 @@
   .method private hidebysig static object v_f159(object) cil managed
   {
     ldarg.0
-    ldstr "159,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f160(object)
     ret
   }
@@ -1632,8 +2633,14 @@
   .method private hidebysig static object v_f160(object) cil managed
   {
     ldarg.0
-    ldstr "160,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f161(object)
     ret
   }
@@ -1642,8 +2649,14 @@
   .method private hidebysig static object v_f161(object) cil managed
   {
     ldarg.0
-    ldstr "161,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f162(object)
     ret
   }
@@ -1652,8 +2665,14 @@
   .method private hidebysig static object v_f162(object) cil managed
   {
     ldarg.0
-    ldstr "162,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f163(object)
     ret
   }
@@ -1662,8 +2681,14 @@
   .method private hidebysig static object v_f163(object) cil managed
   {
     ldarg.0
-    ldstr "163,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f164(object)
     ret
   }
@@ -1672,8 +2697,14 @@
   .method private hidebysig static object v_f164(object) cil managed
   {
     ldarg.0
-    ldstr "164,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f165(object)
     ret
   }
@@ -1682,8 +2713,14 @@
   .method private hidebysig static object v_f165(object) cil managed
   {
     ldarg.0
-    ldstr "165,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f166(object)
     ret
   }
@@ -1692,8 +2729,14 @@
   .method private hidebysig static object v_f166(object) cil managed
   {
     ldarg.0
-    ldstr "166,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f167(object)
     ret
   }
@@ -1702,8 +2745,14 @@
   .method private hidebysig static object v_f167(object) cil managed
   {
     ldarg.0
-    ldstr "167,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f168(object)
     ret
   }
@@ -1712,8 +2761,14 @@
   .method private hidebysig static object v_f168(object) cil managed
   {
     ldarg.0
-    ldstr "168,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f169(object)
     ret
   }
@@ -1722,8 +2777,14 @@
   .method private hidebysig static object v_f169(object) cil managed
   {
     ldarg.0
-    ldstr "169,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f170(object)
     ret
   }
@@ -1732,8 +2793,14 @@
   .method private hidebysig static object v_f170(object) cil managed
   {
     ldarg.0
-    ldstr "170,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f171(object)
     ret
   }
@@ -1742,8 +2809,14 @@
   .method private hidebysig static object v_f171(object) cil managed
   {
     ldarg.0
-    ldstr "171,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f172(object)
     ret
   }
@@ -1752,8 +2825,14 @@
   .method private hidebysig static object v_f172(object) cil managed
   {
     ldarg.0
-    ldstr "172,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f173(object)
     ret
   }
@@ -1762,8 +2841,14 @@
   .method private hidebysig static object v_f173(object) cil managed
   {
     ldarg.0
-    ldstr "173,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f174(object)
     ret
   }
@@ -1772,8 +2857,14 @@
   .method private hidebysig static object v_f174(object) cil managed
   {
     ldarg.0
-    ldstr "174,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f175(object)
     ret
   }
@@ -1782,8 +2873,14 @@
   .method private hidebysig static object v_f175(object) cil managed
   {
     ldarg.0
-    ldstr "175,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f176(object)
     ret
   }
@@ -1792,8 +2889,14 @@
   .method private hidebysig static object v_f176(object) cil managed
   {
     ldarg.0
-    ldstr "176,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f177(object)
     ret
   }
@@ -1802,8 +2905,14 @@
   .method private hidebysig static object v_f177(object) cil managed
   {
     ldarg.0
-    ldstr "177,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f178(object)
     ret
   }
@@ -1812,8 +2921,14 @@
   .method private hidebysig static object v_f178(object) cil managed
   {
     ldarg.0
-    ldstr "178,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f179(object)
     ret
   }
@@ -1822,8 +2937,14 @@
   .method private hidebysig static object v_f179(object) cil managed
   {
     ldarg.0
-    ldstr "179,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f180(object)
     ret
   }
@@ -1832,8 +2953,14 @@
   .method private hidebysig static object v_f180(object) cil managed
   {
     ldarg.0
-    ldstr "180,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f181(object)
     ret
   }
@@ -1842,8 +2969,14 @@
   .method private hidebysig static object v_f181(object) cil managed
   {
     ldarg.0
-    ldstr "181,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f182(object)
     ret
   }
@@ -1852,8 +2985,14 @@
   .method private hidebysig static object v_f182(object) cil managed
   {
     ldarg.0
-    ldstr "182,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f183(object)
     ret
   }
@@ -1862,8 +3001,14 @@
   .method private hidebysig static object v_f183(object) cil managed
   {
     ldarg.0
-    ldstr "183,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f184(object)
     ret
   }
@@ -1872,8 +3017,14 @@
   .method private hidebysig static object v_f184(object) cil managed
   {
     ldarg.0
-    ldstr "184,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f185(object)
     ret
   }
@@ -1882,8 +3033,14 @@
   .method private hidebysig static object v_f185(object) cil managed
   {
     ldarg.0
-    ldstr "185,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f186(object)
     ret
   }
@@ -1892,8 +3049,14 @@
   .method private hidebysig static object v_f186(object) cil managed
   {
     ldarg.0
-    ldstr "186,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f187(object)
     ret
   }
@@ -1902,8 +3065,14 @@
   .method private hidebysig static object v_f187(object) cil managed
   {
     ldarg.0
-    ldstr "187,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f188(object)
     ret
   }
@@ -1912,8 +3081,14 @@
   .method private hidebysig static object v_f188(object) cil managed
   {
     ldarg.0
-    ldstr "188,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f189(object)
     ret
   }
@@ -1922,8 +3097,14 @@
   .method private hidebysig static object v_f189(object) cil managed
   {
     ldarg.0
-    ldstr "189,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f190(object)
     ret
   }
@@ -1932,8 +3113,14 @@
   .method private hidebysig static object v_f190(object) cil managed
   {
     ldarg.0
-    ldstr "190,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f191(object)
     ret
   }
@@ -1942,8 +3129,14 @@
   .method private hidebysig static object v_f191(object) cil managed
   {
     ldarg.0
-    ldstr "191,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f192(object)
     ret
   }
@@ -1952,8 +3145,14 @@
   .method private hidebysig static object v_f192(object) cil managed
   {
     ldarg.0
-    ldstr "192,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f193(object)
     ret
   }
@@ -1962,8 +3161,14 @@
   .method private hidebysig static object v_f193(object) cil managed
   {
     ldarg.0
-    ldstr "193,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f194(object)
     ret
   }
@@ -1972,8 +3177,14 @@
   .method private hidebysig static object v_f194(object) cil managed
   {
     ldarg.0
-    ldstr "194,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f195(object)
     ret
   }
@@ -1982,8 +3193,14 @@
   .method private hidebysig static object v_f195(object) cil managed
   {
     ldarg.0
-    ldstr "195,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f196(object)
     ret
   }
@@ -1992,8 +3209,14 @@
   .method private hidebysig static object v_f196(object) cil managed
   {
     ldarg.0
-    ldstr "196,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f197(object)
     ret
   }
@@ -2002,8 +3225,14 @@
   .method private hidebysig static object v_f197(object) cil managed
   {
     ldarg.0
-    ldstr "197,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f198(object)
     ret
   }
@@ -2012,8 +3241,14 @@
   .method private hidebysig static object v_f198(object) cil managed
   {
     ldarg.0
-    ldstr "198,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f199(object)
     ret
   }
@@ -2022,8 +3257,14 @@
   .method private hidebysig static object v_f199(object) cil managed
   {
     ldarg.0
-    ldstr "199,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f200(object)
     ret
   }
@@ -2032,8 +3273,14 @@
   .method private hidebysig static object v_f200(object) cil managed
   {
     ldarg.0
-    ldstr "200,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f201(object)
     ret
   }
@@ -2042,8 +3289,14 @@
   .method private hidebysig static object v_f201(object) cil managed
   {
     ldarg.0
-    ldstr "201,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f202(object)
     ret
   }
@@ -2052,8 +3305,14 @@
   .method private hidebysig static object v_f202(object) cil managed
   {
     ldarg.0
-    ldstr "202,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f203(object)
     ret
   }
@@ -2062,8 +3321,14 @@
   .method private hidebysig static object v_f203(object) cil managed
   {
     ldarg.0
-    ldstr "203,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f204(object)
     ret
   }
@@ -2072,8 +3337,14 @@
   .method private hidebysig static object v_f204(object) cil managed
   {
     ldarg.0
-    ldstr "204,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f205(object)
     ret
   }
@@ -2082,8 +3353,14 @@
   .method private hidebysig static object v_f205(object) cil managed
   {
     ldarg.0
-    ldstr "205,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f206(object)
     ret
   }
@@ -2092,8 +3369,14 @@
   .method private hidebysig static object v_f206(object) cil managed
   {
     ldarg.0
-    ldstr "206,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f207(object)
     ret
   }
@@ -2102,8 +3385,14 @@
   .method private hidebysig static object v_f207(object) cil managed
   {
     ldarg.0
-    ldstr "207,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f208(object)
     ret
   }
@@ -2112,8 +3401,14 @@
   .method private hidebysig static object v_f208(object) cil managed
   {
     ldarg.0
-    ldstr "208,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f209(object)
     ret
   }
@@ -2122,8 +3417,14 @@
   .method private hidebysig static object v_f209(object) cil managed
   {
     ldarg.0
-    ldstr "209,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f210(object)
     ret
   }
@@ -2132,8 +3433,14 @@
   .method private hidebysig static object v_f210(object) cil managed
   {
     ldarg.0
-    ldstr "210,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f211(object)
     ret
   }
@@ -2142,8 +3449,14 @@
   .method private hidebysig static object v_f211(object) cil managed
   {
     ldarg.0
-    ldstr "211,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f212(object)
     ret
   }
@@ -2152,8 +3465,14 @@
   .method private hidebysig static object v_f212(object) cil managed
   {
     ldarg.0
-    ldstr "212,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f213(object)
     ret
   }
@@ -2162,8 +3481,14 @@
   .method private hidebysig static object v_f213(object) cil managed
   {
     ldarg.0
-    ldstr "213,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f214(object)
     ret
   }
@@ -2172,8 +3497,14 @@
   .method private hidebysig static object v_f214(object) cil managed
   {
     ldarg.0
-    ldstr "214,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f215(object)
     ret
   }
@@ -2182,8 +3513,14 @@
   .method private hidebysig static object v_f215(object) cil managed
   {
     ldarg.0
-    ldstr "215,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f216(object)
     ret
   }
@@ -2192,8 +3529,14 @@
   .method private hidebysig static object v_f216(object) cil managed
   {
     ldarg.0
-    ldstr "216,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f217(object)
     ret
   }
@@ -2202,8 +3545,14 @@
   .method private hidebysig static object v_f217(object) cil managed
   {
     ldarg.0
-    ldstr "217,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f218(object)
     ret
   }
@@ -2212,8 +3561,14 @@
   .method private hidebysig static object v_f218(object) cil managed
   {
     ldarg.0
-    ldstr "218,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f219(object)
     ret
   }
@@ -2222,8 +3577,14 @@
   .method private hidebysig static object v_f219(object) cil managed
   {
     ldarg.0
-    ldstr "219,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f220(object)
     ret
   }
@@ -2232,8 +3593,14 @@
   .method private hidebysig static object v_f220(object) cil managed
   {
     ldarg.0
-    ldstr "220,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f221(object)
     ret
   }
@@ -2242,8 +3609,14 @@
   .method private hidebysig static object v_f221(object) cil managed
   {
     ldarg.0
-    ldstr "221,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f222(object)
     ret
   }
@@ -2252,8 +3625,14 @@
   .method private hidebysig static object v_f222(object) cil managed
   {
     ldarg.0
-    ldstr "222,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f223(object)
     ret
   }
@@ -2262,8 +3641,14 @@
   .method private hidebysig static object v_f223(object) cil managed
   {
     ldarg.0
-    ldstr "223,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f224(object)
     ret
   }
@@ -2272,8 +3657,14 @@
   .method private hidebysig static object v_f224(object) cil managed
   {
     ldarg.0
-    ldstr "224,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f225(object)
     ret
   }
@@ -2282,8 +3673,14 @@
   .method private hidebysig static object v_f225(object) cil managed
   {
     ldarg.0
-    ldstr "225,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f226(object)
     ret
   }
@@ -2292,8 +3689,14 @@
   .method private hidebysig static object v_f226(object) cil managed
   {
     ldarg.0
-    ldstr "226,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f227(object)
     ret
   }
@@ -2302,8 +3705,14 @@
   .method private hidebysig static object v_f227(object) cil managed
   {
     ldarg.0
-    ldstr "227,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f228(object)
     ret
   }
@@ -2312,8 +3721,14 @@
   .method private hidebysig static object v_f228(object) cil managed
   {
     ldarg.0
-    ldstr "228,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f229(object)
     ret
   }
@@ -2322,8 +3737,14 @@
   .method private hidebysig static object v_f229(object) cil managed
   {
     ldarg.0
-    ldstr "229,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f230(object)
     ret
   }
@@ -2332,8 +3753,14 @@
   .method private hidebysig static object v_f230(object) cil managed
   {
     ldarg.0
-    ldstr "230,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f231(object)
     ret
   }
@@ -2342,8 +3769,14 @@
   .method private hidebysig static object v_f231(object) cil managed
   {
     ldarg.0
-    ldstr "231,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f232(object)
     ret
   }
@@ -2352,8 +3785,14 @@
   .method private hidebysig static object v_f232(object) cil managed
   {
     ldarg.0
-    ldstr "232,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f233(object)
     ret
   }
@@ -2362,8 +3801,14 @@
   .method private hidebysig static object v_f233(object) cil managed
   {
     ldarg.0
-    ldstr "233,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f234(object)
     ret
   }
@@ -2372,8 +3817,14 @@
   .method private hidebysig static object v_f234(object) cil managed
   {
     ldarg.0
-    ldstr "234,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f235(object)
     ret
   }
@@ -2382,8 +3833,14 @@
   .method private hidebysig static object v_f235(object) cil managed
   {
     ldarg.0
-    ldstr "235,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f236(object)
     ret
   }
@@ -2392,8 +3849,14 @@
   .method private hidebysig static object v_f236(object) cil managed
   {
     ldarg.0
-    ldstr "236,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f237(object)
     ret
   }
@@ -2402,8 +3865,14 @@
   .method private hidebysig static object v_f237(object) cil managed
   {
     ldarg.0
-    ldstr "237,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f238(object)
     ret
   }
@@ -2412,8 +3881,14 @@
   .method private hidebysig static object v_f238(object) cil managed
   {
     ldarg.0
-    ldstr "238,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f239(object)
     ret
   }
@@ -2422,8 +3897,14 @@
   .method private hidebysig static object v_f239(object) cil managed
   {
     ldarg.0
-    ldstr "239,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f240(object)
     ret
   }
@@ -2432,8 +3913,14 @@
   .method private hidebysig static object v_f240(object) cil managed
   {
     ldarg.0
-    ldstr "240,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f241(object)
     ret
   }
@@ -2442,8 +3929,14 @@
   .method private hidebysig static object v_f241(object) cil managed
   {
     ldarg.0
-    ldstr "241,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f242(object)
     ret
   }
@@ -2452,8 +3945,14 @@
   .method private hidebysig static object v_f242(object) cil managed
   {
     ldarg.0
-    ldstr "242,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f243(object)
     ret
   }
@@ -2462,8 +3961,14 @@
   .method private hidebysig static object v_f243(object) cil managed
   {
     ldarg.0
-    ldstr "243,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f244(object)
     ret
   }
@@ -2472,8 +3977,14 @@
   .method private hidebysig static object v_f244(object) cil managed
   {
     ldarg.0
-    ldstr "244,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f245(object)
     ret
   }
@@ -2482,8 +3993,14 @@
   .method private hidebysig static object v_f245(object) cil managed
   {
     ldarg.0
-    ldstr "245,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f246(object)
     ret
   }
@@ -2492,8 +4009,14 @@
   .method private hidebysig static object v_f246(object) cil managed
   {
     ldarg.0
-    ldstr "246,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f247(object)
     ret
   }
@@ -2502,8 +4025,14 @@
   .method private hidebysig static object v_f247(object) cil managed
   {
     ldarg.0
-    ldstr "247,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f248(object)
     ret
   }
@@ -2512,8 +4041,14 @@
   .method private hidebysig static object v_f248(object) cil managed
   {
     ldarg.0
-    ldstr "248,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f249(object)
     ret
   }
@@ -2522,8 +4057,14 @@
   .method private hidebysig static object v_f249(object) cil managed
   {
     ldarg.0
-    ldstr "249,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f250(object)
     ret
   }
@@ -2532,8 +4073,14 @@
   .method private hidebysig static object v_f250(object) cil managed
   {
     ldarg.0
-    ldstr "250,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f251(object)
     ret
   }
@@ -2542,8 +4089,14 @@
   .method private hidebysig static object v_f251(object) cil managed
   {
     ldarg.0
-    ldstr "251,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f252(object)
     ret
   }
@@ -2552,8 +4105,14 @@
   .method private hidebysig static object v_f252(object) cil managed
   {
     ldarg.0
-    ldstr "252,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f253(object)
     ret
   }
@@ -2562,8 +4121,14 @@
   .method private hidebysig static object v_f253(object) cil managed
   {
     ldarg.0
-    ldstr "253,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f254(object)
     ret
   }
@@ -2572,8 +4137,14 @@
   .method private hidebysig static object v_f254(object) cil managed
   {
     ldarg.0
-    ldstr "254,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f255(object)
     ret
   }
@@ -2582,8 +4153,14 @@
   .method private hidebysig static object v_f255(object) cil managed
   {
     ldarg.0
-    ldstr "255,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f256(object)
     ret
   }
@@ -2592,8 +4169,14 @@
   .method private hidebysig static object v_f256(object) cil managed
   {
     ldarg.0
-    ldstr "256,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f257(object)
     ret
   }
@@ -2602,8 +4185,14 @@
   .method private hidebysig static object v_f257(object) cil managed
   {
     ldarg.0
-    ldstr "257,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f258(object)
     ret
   }
@@ -2612,8 +4201,14 @@
   .method private hidebysig static object v_f258(object) cil managed
   {
     ldarg.0
-    ldstr "258,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f259(object)
     ret
   }
@@ -2622,8 +4217,14 @@
   .method private hidebysig static object v_f259(object) cil managed
   {
     ldarg.0
-    ldstr "259,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f260(object)
     ret
   }
@@ -2632,8 +4233,14 @@
   .method private hidebysig static object v_f260(object) cil managed
   {
     ldarg.0
-    ldstr "260,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f261(object)
     ret
   }
@@ -2642,8 +4249,14 @@
   .method private hidebysig static object v_f261(object) cil managed
   {
     ldarg.0
-    ldstr "261,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f262(object)
     ret
   }
@@ -2652,8 +4265,14 @@
   .method private hidebysig static object v_f262(object) cil managed
   {
     ldarg.0
-    ldstr "262,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f263(object)
     ret
   }
@@ -2662,8 +4281,14 @@
   .method private hidebysig static object v_f263(object) cil managed
   {
     ldarg.0
-    ldstr "263,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f264(object)
     ret
   }
@@ -2672,8 +4297,14 @@
   .method private hidebysig static object v_f264(object) cil managed
   {
     ldarg.0
-    ldstr "264,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f265(object)
     ret
   }
@@ -2682,8 +4313,14 @@
   .method private hidebysig static object v_f265(object) cil managed
   {
     ldarg.0
-    ldstr "265,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f266(object)
     ret
   }
@@ -2692,8 +4329,14 @@
   .method private hidebysig static object v_f266(object) cil managed
   {
     ldarg.0
-    ldstr "266,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f267(object)
     ret
   }
@@ -2702,8 +4345,14 @@
   .method private hidebysig static object v_f267(object) cil managed
   {
     ldarg.0
-    ldstr "267,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f268(object)
     ret
   }
@@ -2712,8 +4361,14 @@
   .method private hidebysig static object v_f268(object) cil managed
   {
     ldarg.0
-    ldstr "268,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f269(object)
     ret
   }
@@ -2722,8 +4377,14 @@
   .method private hidebysig static object v_f269(object) cil managed
   {
     ldarg.0
-    ldstr "269,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f270(object)
     ret
   }
@@ -2732,8 +4393,14 @@
   .method private hidebysig static object v_f270(object) cil managed
   {
     ldarg.0
-    ldstr "270,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f271(object)
     ret
   }
@@ -2742,8 +4409,14 @@
   .method private hidebysig static object v_f271(object) cil managed
   {
     ldarg.0
-    ldstr "271,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f272(object)
     ret
   }
@@ -2752,8 +4425,14 @@
   .method private hidebysig static object v_f272(object) cil managed
   {
     ldarg.0
-    ldstr "272,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f273(object)
     ret
   }
@@ -2762,8 +4441,14 @@
   .method private hidebysig static object v_f273(object) cil managed
   {
     ldarg.0
-    ldstr "273,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f274(object)
     ret
   }
@@ -2772,8 +4457,14 @@
   .method private hidebysig static object v_f274(object) cil managed
   {
     ldarg.0
-    ldstr "274,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f275(object)
     ret
   }
@@ -2782,8 +4473,14 @@
   .method private hidebysig static object v_f275(object) cil managed
   {
     ldarg.0
-    ldstr "275,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f276(object)
     ret
   }
@@ -2792,8 +4489,14 @@
   .method private hidebysig static object v_f276(object) cil managed
   {
     ldarg.0
-    ldstr "276,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f277(object)
     ret
   }
@@ -2802,8 +4505,14 @@
   .method private hidebysig static object v_f277(object) cil managed
   {
     ldarg.0
-    ldstr "277,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f278(object)
     ret
   }
@@ -2812,8 +4521,14 @@
   .method private hidebysig static object v_f278(object) cil managed
   {
     ldarg.0
-    ldstr "278,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f279(object)
     ret
   }
@@ -2822,8 +4537,14 @@
   .method private hidebysig static object v_f279(object) cil managed
   {
     ldarg.0
-    ldstr "279,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f280(object)
     ret
   }
@@ -2832,8 +4553,14 @@
   .method private hidebysig static object v_f280(object) cil managed
   {
     ldarg.0
-    ldstr "280,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f281(object)
     ret
   }
@@ -2842,8 +4569,14 @@
   .method private hidebysig static object v_f281(object) cil managed
   {
     ldarg.0
-    ldstr "281,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f282(object)
     ret
   }
@@ -2852,8 +4585,14 @@
   .method private hidebysig static object v_f282(object) cil managed
   {
     ldarg.0
-    ldstr "282,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f283(object)
     ret
   }
@@ -2862,8 +4601,14 @@
   .method private hidebysig static object v_f283(object) cil managed
   {
     ldarg.0
-    ldstr "283,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f284(object)
     ret
   }
@@ -2872,8 +4617,14 @@
   .method private hidebysig static object v_f284(object) cil managed
   {
     ldarg.0
-    ldstr "284,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f285(object)
     ret
   }
@@ -2882,8 +4633,14 @@
   .method private hidebysig static object v_f285(object) cil managed
   {
     ldarg.0
-    ldstr "285,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f286(object)
     ret
   }
@@ -2892,8 +4649,14 @@
   .method private hidebysig static object v_f286(object) cil managed
   {
     ldarg.0
-    ldstr "286,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f287(object)
     ret
   }
@@ -2902,8 +4665,14 @@
   .method private hidebysig static object v_f287(object) cil managed
   {
     ldarg.0
-    ldstr "287,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f288(object)
     ret
   }
@@ -2912,8 +4681,14 @@
   .method private hidebysig static object v_f288(object) cil managed
   {
     ldarg.0
-    ldstr "288,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f289(object)
     ret
   }
@@ -2922,8 +4697,14 @@
   .method private hidebysig static object v_f289(object) cil managed
   {
     ldarg.0
-    ldstr "289,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f290(object)
     ret
   }
@@ -2932,8 +4713,14 @@
   .method private hidebysig static object v_f290(object) cil managed
   {
     ldarg.0
-    ldstr "290,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f291(object)
     ret
   }
@@ -2942,8 +4729,14 @@
   .method private hidebysig static object v_f291(object) cil managed
   {
     ldarg.0
-    ldstr "291,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f292(object)
     ret
   }
@@ -2952,8 +4745,14 @@
   .method private hidebysig static object v_f292(object) cil managed
   {
     ldarg.0
-    ldstr "292,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f293(object)
     ret
   }
@@ -2962,8 +4761,14 @@
   .method private hidebysig static object v_f293(object) cil managed
   {
     ldarg.0
-    ldstr "293,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f294(object)
     ret
   }
@@ -2972,8 +4777,14 @@
   .method private hidebysig static object v_f294(object) cil managed
   {
     ldarg.0
-    ldstr "294,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f295(object)
     ret
   }
@@ -2982,8 +4793,14 @@
   .method private hidebysig static object v_f295(object) cil managed
   {
     ldarg.0
-    ldstr "295,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f296(object)
     ret
   }
@@ -2992,8 +4809,14 @@
   .method private hidebysig static object v_f296(object) cil managed
   {
     ldarg.0
-    ldstr "296,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f297(object)
     ret
   }
@@ -3002,8 +4825,14 @@
   .method private hidebysig static object v_f297(object) cil managed
   {
     ldarg.0
-    ldstr "297,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f298(object)
     ret
   }
@@ -3012,8 +4841,14 @@
   .method private hidebysig static object v_f298(object) cil managed
   {
     ldarg.0
-    ldstr "298,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f299(object)
     ret
   }
@@ -3022,8 +4857,14 @@
   .method private hidebysig static object v_f299(object) cil managed
   {
     ldarg.0
-    ldstr "299,"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f300(object)
     ret
   }
@@ -3032,14 +4873,21 @@
   .method private hidebysig static object v_f300(object) cil managed
   {
     ldarg.0
-    ldstr "300"
-    call object AwsumMain::__concat(object, object)
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    call object AwsumMain::v_and(object, object)
     ret
   }
 
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
+    .locals init (object input)
     ldarg.0
     ldlen
     conv.i4
@@ -3052,6 +4900,18 @@
     ldc.i4.0
     ldelem.ref
   call_main:
+    stloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     call object AwsumMain::v_main(object)
     pop
     ret

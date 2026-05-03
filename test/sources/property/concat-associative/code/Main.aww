@@ -12,14 +12,24 @@ parseInput raw = case splitOnFirst ":" raw of
     Nothing -> Left ParseError
     Just (Tuple2 b c) -> Right (Tuple3 a b c)
 
-property : String -> String -> String -> String
-property a b c = ((a ++ b) ++ c) ++ ":" ++ (a ++ (b ++ c))
+property : String -> String -> String -> Either StringTooLong String
+property a b c = do
+  ab <- a ++ b
+  abc <- ab ++ c
+  bc <- b ++ c
+  aBc <- a ++ bc
+  delim <- abc ++ ":"
+  delim ++ aBc
 
-main : String -> IO Unit
-main raw =
-  let res : Either ParseError String = do
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
+        raw <- rawArg
         Tuple3 a b c <- parseInput raw
-        pureEither (property a b c)
+        property a b c
    in case res of
-        Left _ -> IO.Stdout.print "PARSE_ERROR"
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s

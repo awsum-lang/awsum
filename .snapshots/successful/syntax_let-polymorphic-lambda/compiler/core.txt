@@ -34,7 +34,7 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+                ( CVar "$let$3" )
                 [ CCall
                     ( CVar "threeTypes" )
                     [ CIntLit 42 TInt32
@@ -45,39 +45,108 @@ CoreProgram
             )
         , CFunDef "$lam$1" [ "x" ]
             ( CVar "x" )
+        , CFunDef "$let$3" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CString "STRING_TOO_LONG" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "IO.Stdout.print" )
+                        [ CVar "s" ]
+                    )
+                ]
+            )
         , CFunDef "$df$$let$2$0"
             [ "b"
             , "n"
             , "s"
             ]
-            ( CCall
-                ( CBuiltIn "concatString" )
-                [ CCall
-                    ( CBuiltIn "concatString" )
+            ( CCase
+                ( CCon 1
                     [ CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CBuiltIn "showInt32" )
                             [ CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CCall
-                                    ( CVar "$lam$1" )
-                                    [ CVar "n" ]
-                                ]
-                            , CString "/"
+                                ( CVar "$lam$1" )
+                                [ CVar "n" ]
                             ]
-                        , CCall
-                            ( CVar "$lam$1" )
-                            [ CVar "s" ]
+                        , CString "/"
                         ]
-                    , CString "/"
                     ]
-                , CCall
-                    ( CVar "showTri" )
-                    [ CCall
-                        ( CVar "$lam$1" )
-                        [ CVar "b" ]
-                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_17_9" ]
+                    , CCon 0
+                        [ CVar "$do_e_17_9" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s0" ]
+                    , CCase
+                        ( CCon 1
+                            [ CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "$lam$1" )
+                                    [ CVar "s" ]
+                                ]
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_18_9" ]
+                            , CCon 0
+                                [ CVar "$do_e_18_9" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "s1" ]
+                            , CCase
+                                ( CCon 1
+                                    [ CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CString "/"
+                                        ]
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "$do_e_19_9" ]
+                                    , CCon 0
+                                        [ CVar "$do_e_19_9" ]
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "s2" ]
+                                    , CCon 1
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CCall
+                                                ( CVar "showTri" )
+                                                [ CCall
+                                                    ( CVar "$lam$1" )
+                                                    [ CVar "b" ]
+                                                ]
+                                            ]
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
                 ]
             )
         ]

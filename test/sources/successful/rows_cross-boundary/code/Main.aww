@@ -23,23 +23,36 @@ dispatchInner x = case x of
     False -> "F"
   (u : Unit) -> showUnit u
 
-describeMaybe : Maybe (Bool | Unit) -> String
+describeMaybe : Maybe (Bool | Unit) -> Either StringTooLong String
 describeMaybe m = case m of
-  Nothing -> "N"
+  Nothing -> Right "N"
   Just inner -> "J" ++ dispatchInner inner
 
-describeLst : Lst (Bool | Unit) -> String
+describeLst : Lst (Bool | Unit) -> Either StringTooLong String
 describeLst xs = case xs of
-  Nil -> ""
-  Cons h t -> dispatchInner h ++ describeLst t
+  Nil -> Right ""
+  Cons h t -> do
+    rest <- describeLst t
+    dispatchInner h ++ rest
 
-describeEither : Either ErrA (Maybe (Bool | Unit)) -> String
+describeEither : Either ErrA (Maybe (Bool | Unit)) -> Either StringTooLong String
 describeEither r = case r of
-  Left _e -> "ErrA"
+  Left _e -> Right "ErrA"
   Right m -> describeMaybe m
 
-summary : String
-summary = describeMaybe defaultJust ++ " / " ++ describeLst defaultBools ++ " / " ++ describeEither defaultRight
+summary : Either StringTooLong String
+summary = do
+  a <- describeMaybe defaultJust
+  b <- describeLst defaultBools
+  c <- describeEither defaultRight
+  s0 <- a ++ " / "
+  s1 <- s0 ++ b
+  s2 <- s1 ++ " / "
+  s2 ++ c
 
-main : String -> IO Unit
-main _input = IO.Stdout.print summary
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input =
+  let res : Either StringTooLong String = summary
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

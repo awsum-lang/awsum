@@ -154,7 +154,6 @@ L_addi32_under:
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  invokestatic AwsumMain/v_opTuple(Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
   aaload
@@ -189,31 +188,7 @@ L_arm_1:
   astore_1
   pop
   aload_1
-  dup
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_arm_0
-    default: L_arm_0
-L_arm_0:
-  dup
-  iconst_1
-  aaload
-  astore_2
-  dup
-  iconst_2
-  aaload
-  astore_3
-  dup
-  iconst_3
-  aaload
-  astore 4
-  pop
-  aload_2
-  aload_3
-  invokestatic AwsumMain/__addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_opTuple(Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
   aaload
@@ -227,17 +202,60 @@ L_arm_0:
   dup
   iconst_1
   aaload
-  astore 5
+  astore_2
   pop
-  aload 4
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  sipush 2448244154
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_2
+  aastore
+  aastore
   goto L_join
 L_arm_1:
   dup
   iconst_1
   aaload
+  astore_2
+  pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_3
+  dup
+  iconst_2
+  aaload
+  astore 4
+  dup
+  iconst_3
+  aaload
   astore 5
   pop
-  aload 5
+  aload_3
   aload 4
   invokestatic AwsumMain/__addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
@@ -255,7 +273,7 @@ L_arm_0:
   aaload
   astore 6
   pop
-  aload 4
+  aload 5
   goto L_join
 L_arm_1:
   dup
@@ -264,11 +282,39 @@ L_arm_1:
   astore 6
   pop
   aload 6
+  aload 5
+  invokestatic AwsumMain/__addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore 7
+  pop
+  aload 5
+  goto L_join
+L_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore 7
+  pop
+  aload 7
   goto L_join
 L_join:
   goto L_join
 L_join:
   invokestatic AwsumMain/v_pureEither(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_join:
   goto L_join
 L_join:
   goto L_join
@@ -295,8 +341,45 @@ L_arm_0:
   aaload
   astore_1
   pop
+  aload_1
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    502975519: L_arm_502975519
+    589989748: L_arm_589989748
+    2448244154: L_arm_2448244154
+    default: L_arm_502975519
+L_arm_502975519:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  ldc "UNPAIRED_UTF16_SURROGATE"
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_arm_589989748:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
+  ldc "STRING_TOO_LONG"
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_arm_2448244154:
+  dup
+  iconst_1
+  aaload
+  astore_2
+  pop
   ldc "PARSE_ERROR"
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_join:
   goto L_join
 L_arm_1:
   dup
@@ -325,6 +408,18 @@ has_arg:
   iconst_0
   aaload
 call_main:
+  astore_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
   invokestatic AwsumMain/v_main(Ljava/lang/Object;)Ljava/lang/Object;
   pop
   return
