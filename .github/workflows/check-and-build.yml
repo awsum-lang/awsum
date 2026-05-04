@@ -38,7 +38,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
       matrix:
         include:
           - { os: ubuntu-24.04,     target: linux-x86_64-gnu  }
@@ -221,7 +220,7 @@ jobs:
           & .\clang.exe --version | Select-Object -First 1
 
       - name: Test
-        run: stack test --pedantic
+        run: stack test --pedantic --ta '--fail-fast'
 
       # Only runs when called from the release workflow. The path glob picks up
       # `awsum` on Unix and `awsum.exe` on Windows; upload-artifact strips the
