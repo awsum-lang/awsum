@@ -1710,6 +1710,14 @@ mainMethod =
       "  {",
       "    .entrypoint",
       "    .locals init (object input)",
+      -- Force stdout to UTF-8 before any user code runs. On Windows with a
+      -- piped or redirected stdout, the default 'Console.OutputEncoding'
+      -- falls back to the system ANSI code page, which encodes each UTF-16
+      -- code unit individually — supplementary code points then collapse to
+      -- "??" because their two surrogate units each become a separate '?'.
+      -- Setting UTF-8 keeps the byte stream identical to the other backends.
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
+      "    call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)",
       "    ldarg.0",
       "    ldlen",
       "    conv.i4",

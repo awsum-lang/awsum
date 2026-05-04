@@ -2609,6 +2609,17 @@ mkMain tokMap = do
   emptyTok <- addUS ""
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- Force stdout to UTF-8 before any user code runs. See the IL-text
+  -- 'mainMethod' for the rationale (Windows ANSI fallback mangles
+  -- supplementary code points to '?' per UTF-16 unit when stdout is
+  -- piped). 'addTypeRef' / 'addMemberRef' deduplicate, so the existing
+  -- Console TypeRef (row 2) and any Encoding TypeRef pre-registered by
+  -- the length built-ins are reused.
+  trConsole <- addTypeRef (resScopeAR 2) "Console" "System"
+  trEncoding <- addTypeRef (resScopeAR 1) "Encoding" "System.Text"
+  let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
+  getUtf8Ref <- addMemberRef (mrpTR trEncoding) "get_UTF8" ([0x00, 0x00] <> encodingClass)
+  setOutEncRef <- addMemberRef (mrpTR trConsole) "set_OutputEncoding" ([0x00, 0x01, etVoid] <> encodingClass)
   -- LocalVarSig: count=1, ELEMENT_TYPE_OBJECT (0x1C) — local to stash
   -- argv[1] while we build the Right-wrapper array.
   localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
@@ -2618,8 +2629,15 @@ mkMain tokMap = do
       -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
       -- v_main. Layout matches CCon emit on CLR: object[1+nFields] with
       -- boxed Int32 tag at index 0, fields at indices 1..
+      --
+      -- Offsets in the comments below are relative to the start of the
+      -- Right-box wrap (i.e. after the two encoding-setup calls), so the
+      -- short-branch deltas in cilBgeS/cilBrS read identically to the
+      -- pre-fix layout.
       code =
-        cilLdarg 0 -- 0
+        cilCall (tokMR getUtf8Ref) -- push UTF-8 Encoding instance
+          <> cilCall (tokMR setOutEncRef) -- Console.OutputEncoding = it
+          <> cilLdarg 0 -- 0
           <> cilLdlen -- 1
           <> cilConvI4 -- 2
           <> cilLdcI4_1 -- 3
