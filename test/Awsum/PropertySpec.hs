@@ -55,6 +55,12 @@ propertySourceFile dir = "test/sources/property" </> dir </> "code" </> "Main.aw
 
 spec :: Spec
 spec = describe "Property tests"
+  -- Sibling property descriptions run in parallel — with N properties
+  -- and M hspec workers (default = number of cores) up to M run at
+  -- once. Compiles still happen at spec-build time via 'runIO', which
+  -- is sequential, but that's a small overhead (one @clang@ per
+  -- property at ~100ms) compared to 100 input runs × 5 backends each.
+  $ parallel
   $ modifyMaxSuccess (const 100)
   $ forM_ properties
   $ \(SomeProperty p) ->

@@ -29,10 +29,9 @@ import Common.File
 import Control.Concurrent.Async (concurrently)
 import Control.Exception (IOException, try)
 import Relude
-import System.Directory (emptyPermissions, setOwnerExecutable, setOwnerReadable, setOwnerWritable, setPermissions)
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
-import System.IO.Temp (withSystemTempDirectory)
+import System.IO.Temp (createTempDirectory, getCanonicalTemporaryDirectory, withSystemTempDirectory)
 import System.Process (readProcessWithExitCode)
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -53,13 +52,21 @@ backendName = show
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | The minimum each backend needs to actually run a compiled program.
---   Bytes for backends whose host takes a binary (.class / .dll / .wasm /
---   native ELF/Mach-O); text for the JS backend, which Node interprets.
---   'caLLVM' is kept alongside 'caLLVMBin' because snapshot tests
---   compare it against a golden @.ll@ file — it isn't needed at run time.
+--   Bytes for backends whose host opens its own input file (java reads
+--   .class, dotnet reads .dll, wasmtime reads .wasm); text for JS,
+--   which Node interprets. LLVM is the odd one — we directly @exec@
+--   the native binary, so we keep it as a 'FilePath' to a file
+--   produced by @clang@ rather than as bytes. Writing the bytes
+--   ourselves and then @exec@-ing causes ETXTBSY ("Text file busy")
+--   on Linux: while our 'writeFileBS' fd is open, a sibling thread's
+--   @fork@ inherits it (no @O_CLOEXEC@) and the child holds the file
+--   open for writing past our @exec@ attempt. Letting @clang@ write
+--   the file in its own process avoids that race entirely. 'caLLVM'
+--   is kept alongside the path because snapshot tests compare it to
+--   a golden @.ll@ file — it isn't needed at run time.
 data CompiledArtifacts = CompiledArtifacts
   { caLLVM :: Text,
-    caLLVMBin :: ByteString,
+    caLLVMBinPath :: FilePath,
     caJVMBytes :: ByteString,
     caCLRBytes :: ByteString,
     caWASMBytes :: ByteString,
@@ -82,11 +89,11 @@ compileFromText src = do
         Left err -> error $ "elaborate failed" <> show err
         Right (_warns, x) -> x
       llvmText = codegenLLVM core
-  llvmBin <- compileLLVMBin llvmText
+  llvmBinPath <- compileLLVMBin llvmText
   pure
     CompiledArtifacts
       { caLLVM = llvmText,
-        caLLVMBin = llvmBin,
+        caLLVMBinPath = llvmBinPath,
         caJVMBytes = assembleJVM core,
         caCLRBytes = assembleCLR core,
         caWASMBytes = assembleWASM core,
@@ -97,24 +104,32 @@ compileFromFile :: FilePath -> IO CompiledArtifacts
 compileFromFile path = compileFromText =<< readFileTextUtf8 path
 
 -- | Compile LLVM IR text to a native binary via @clang -O2@ and return
---   its bytes. Runs in a fresh temp dir which is removed on return; the
---   bytes outlive the dir.
-compileLLVMBin :: Text -> IO ByteString
-compileLLVMBin code = withSystemTempDirectory "awsum-llvm" $ \dir -> do
+--   the binary's path. The binary lives in a leaked temp dir under the
+--   system temp root — the OS reaps it eventually. We deliberately do
+--   not bracket the dir for cleanup: the file has to outlive
+--   'compileLLVMBin' so 'runLLVM' can @exec@ it for every QuickCheck
+--   input. It also avoids ETXTBSY: see the 'CompiledArtifacts' note —
+--   keeping the binary written by @clang@ (an external process) rather
+--   than by our test process means no fd in our address space ever
+--   points at this file for writing.
+compileLLVMBin :: Text -> IO FilePath
+compileLLVMBin code = do
+  base <- getCanonicalTemporaryDirectory
+  dir <- createTempDirectory base "awsum-llvm"
   let llFile = dir </> "out.ll"
       binFile = dir </> "out"
   writeFileText llFile code
   (ec, _, err) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
   case ec of
     ExitFailure _ -> error $ toText ("clang failed during compile: " <> err)
-    ExitSuccess -> readFileBS binFile
+    ExitSuccess -> pure binFile
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Per-backend runners
 -- ════════════════════════════════════════════════════════════════════════════
 
 runOn :: Backend -> CompiledArtifacts -> Text -> IO (Either Text Text)
-runOn LLVM ca = runLLVM ca.caLLVMBin
+runOn LLVM ca = runLLVM ca.caLLVMBinPath
 runOn JVM ca = runJVM ca.caJVMBytes
 runOn CLR ca = runCLR ca.caCLRBytes
 runOn WASM ca = runWASM ca.caWASMBytes
@@ -145,16 +160,8 @@ runOnAll ca input = do
       (JS, jsO)
     ]
 
-runLLVM :: ByteString -> Text -> IO (Either Text Text)
-runLLVM binBytes input = withSystemTempDirectory "awsum" $ \dir -> do
-  let binFile = dir </> "out"
-      execPerms =
-        setOwnerExecutable True
-          . setOwnerWritable True
-          . setOwnerReadable True
-          $ emptyPermissions
-  writeFileBS binFile binBytes
-  setPermissions binFile execPerms
+runLLVM :: FilePath -> Text -> IO (Either Text Text)
+runLLVM binFile input = do
   eRun <- try @IOException (readProcessWithExitCode binFile [toString input] "")
   case eRun of
     Left ex -> pure (Left ("failed to run binary: " <> show ex))
