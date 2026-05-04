@@ -173,7 +173,12 @@ runJVM :: ByteString -> Text -> IO (Either Text Text)
 runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let classFile = dir </> "AwsumMain.class"
   writeFileBS classFile classBytes
-  eRes <- try @IOException (readProcessWithExitCode "java" ["-cp", dir, "AwsumMain", toString input] "")
+  -- Pin JVM I/O charsets to UTF-8 so 'argv[1]' survives the startup
+  -- decode on hosts whose default charset isn't UTF-8 (Windows ANSI).
+  -- Stdout side is handled by the 'System.setOut' prologue baked into
+  -- emitted 'main'. Keep these flags in sync with awsum/Main.hs's
+  -- 'awsum run -t jvm' so the test harness mirrors what users get.
+  eRes <- try @IOException (readProcessWithExitCode "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input] "")
   case eRes of
     Left ex -> pure (Left ("failed to start java: " <> show ex))
     Right (ExitSuccess, out, _) -> pure (Right (toText out))

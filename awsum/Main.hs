@@ -312,7 +312,13 @@ runOnTarget progType target core input = case target of
     withSystemTempDirectory "awsum" $ \dir -> do
       let classPath = dir </> "AwsumMain.class"
       writeFileBS classPath (assembleJVM core)
-      (exit, stdoutS, stderrS) <- readProcessWithExitCode "java" ["-cp", dir, "AwsumMain", toString input] ""
+      -- Pin the JVM's I/O charsets to UTF-8 so 'argv[1]' survives the
+      -- startup decode on hosts whose default charset isn't UTF-8 (the
+      -- usual Windows case, where 'sun.jnu.encoding' otherwise comes
+      -- from the system ANSI code page and supplementary code points
+      -- collapse to '?' before our 'main' runs). Stdout side is handled
+      -- inside the emitted 'main' itself via a 'System.setOut' prologue.
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input] ""
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("java error:\n" <> toText stderrS)
