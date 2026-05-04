@@ -119,7 +119,18 @@ compileLLVMBin code = do
   let llFile = dir </> "out.ll"
       binFile = dir </> "out"
   writeFileText llFile code
-  (ec, _, err) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
+  -- @-mllvm -opaque-pointers@ accepts the @ptr@ type the codegen emits on
+  -- LLVM 14/15 (no-op on 16+, where opaque pointers are the default). It
+  -- lets the test harness use whatever @clang@ ends up first on PATH —
+  -- including the LLVM-14 build GHC bundles in its mingw bin, which
+  -- @stack test@ prepends to PATH for child processes and which
+  -- otherwise rejects the IR with "ptr type is only supported in
+  -- -opaque-pointers mode".
+  (ec, _, err) <-
+    readProcessWithExitCode
+      "clang"
+      ["-O2", "-Wno-override-module", "-mllvm", "-opaque-pointers", llFile, "-o", binFile]
+      ""
   case ec of
     ExitFailure _ -> error $ toText ("clang failed during compile: " <> err)
     ExitSuccess -> pure binFile
