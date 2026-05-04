@@ -29,6 +29,7 @@ import Common.File
 import Control.Concurrent.Async (concurrently)
 import Control.Exception (IOException, try)
 import Relude
+import System.Directory (emptyPermissions, setOwnerExecutable, setOwnerReadable, setOwnerWritable, setPermissions)
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
@@ -51,12 +52,14 @@ backendName = show
 -- Compiled artifacts
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | The minimum each backend needs to actually run a compiled program:
---   text for backends whose host accepts source (LLVM IR is fed through
---   @clang@; JS is interpreted); bytes for backends whose host
---   takes a binary (.class / .dll / .wasm).
+-- | The minimum each backend needs to actually run a compiled program.
+--   Bytes for backends whose host takes a binary (.class / .dll / .wasm /
+--   native ELF/Mach-O); text for the JS backend, which Node interprets.
+--   'caLLVM' is kept alongside 'caLLVMBin' because snapshot tests
+--   compare it against a golden @.ll@ file — it isn't needed at run time.
 data CompiledArtifacts = CompiledArtifacts
   { caLLVM :: Text,
+    caLLVMBin :: ByteString,
     caJVMBytes :: ByteString,
     caCLRBytes :: ByteString,
     caWASMBytes :: ByteString,
@@ -64,34 +67,54 @@ data CompiledArtifacts = CompiledArtifacts
   }
 
 -- | Run the compile pipeline (parse → withPrelude → elaborate → codegen)
---   on a piece of source and return the runnable artifacts. Pure modulo
---   `error` on parse / elaborate failure (the test runner is happy to
---   crash here — bad source is a test bug, not a runtime concern).
-compileFromText :: Text -> CompiledArtifacts
-compileFromText src =
+--   on a piece of source and return the runnable artifacts. Crashes on
+--   parse / elaborate failure — bad source is a test bug, not a runtime
+--   concern. Lives in IO because LLVM's runnable artifact is the native
+--   binary, which means shelling out to @clang@ once per source. Doing
+--   it here (rather than inside 'runLLVM') means QuickCheck's N inputs
+--   per property cost one @clang@, not N.
+compileFromText :: Text -> IO CompiledArtifacts
+compileFromText src = do
   let ast = case parseProgram src of
         Left e -> error $ "parse failed" <> e
         Right x -> x
       core = case elaborateLowerProgram ProgramCli (withPrelude ast) of
         Left err -> error $ "elaborate failed" <> show err
         Right (_warns, x) -> x
-   in CompiledArtifacts
-        { caLLVM = codegenLLVM core,
-          caJVMBytes = assembleJVM core,
-          caCLRBytes = assembleCLR core,
-          caWASMBytes = assembleWASM core,
-          caJS = codegenJS ProgramCli core
-        }
+      llvmText = codegenLLVM core
+  llvmBin <- compileLLVMBin llvmText
+  pure
+    CompiledArtifacts
+      { caLLVM = llvmText,
+        caLLVMBin = llvmBin,
+        caJVMBytes = assembleJVM core,
+        caCLRBytes = assembleCLR core,
+        caWASMBytes = assembleWASM core,
+        caJS = codegenJS ProgramCli core
+      }
 
 compileFromFile :: FilePath -> IO CompiledArtifacts
-compileFromFile path = compileFromText <$> readFileTextUtf8 path
+compileFromFile path = compileFromText =<< readFileTextUtf8 path
+
+-- | Compile LLVM IR text to a native binary via @clang -O2@ and return
+--   its bytes. Runs in a fresh temp dir which is removed on return; the
+--   bytes outlive the dir.
+compileLLVMBin :: Text -> IO ByteString
+compileLLVMBin code = withSystemTempDirectory "awsum-llvm" $ \dir -> do
+  let llFile = dir </> "out.ll"
+      binFile = dir </> "out"
+  writeFileText llFile code
+  (ec, _, err) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
+  case ec of
+    ExitFailure _ -> error $ toText ("clang failed during compile: " <> err)
+    ExitSuccess -> readFileBS binFile
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Per-backend runners
 -- ════════════════════════════════════════════════════════════════════════════
 
 runOn :: Backend -> CompiledArtifacts -> Text -> IO (Either Text Text)
-runOn LLVM ca = runLLVM ca.caLLVM
+runOn LLVM ca = runLLVM ca.caLLVMBin
 runOn JVM ca = runJVM ca.caJVMBytes
 runOn CLR ca = runCLR ca.caCLRBytes
 runOn WASM ca = runWASM ca.caWASMBytes
@@ -122,23 +145,22 @@ runOnAll ca input = do
       (JS, jsO)
     ]
 
-runLLVM :: Text -> Text -> IO (Either Text Text)
-runLLVM code input = withSystemTempDirectory "awsum" $ \dir -> do
-  let llFile = dir </> "out.ll"
-      binFile = dir </> "out"
-  writeFileText llFile code
-  eClang <- try @IOException (readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] "")
-  case eClang of
-    Left ex -> pure (Left ("failed to start clang: " <> show ex))
+runLLVM :: ByteString -> Text -> IO (Either Text Text)
+runLLVM binBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let binFile = dir </> "out"
+      execPerms =
+        setOwnerExecutable True
+          . setOwnerWritable True
+          . setOwnerReadable True
+          $ emptyPermissions
+  writeFileBS binFile binBytes
+  setPermissions binFile execPerms
+  eRun <- try @IOException (readProcessWithExitCode binFile [toString input] "")
+  case eRun of
+    Left ex -> pure (Left ("failed to run binary: " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (toText out))
     Right (ExitFailure _, _, err) ->
-      pure (Left ("clang exited with non-zero status:\n" <> toText err))
-    Right (ExitSuccess, _, _) -> do
-      eRun <- try @IOException (readProcessWithExitCode binFile [toString input] "")
-      case eRun of
-        Left ex -> pure (Left ("failed to run binary: " <> show ex))
-        Right (ExitSuccess, out, _) -> pure (Right (toText out))
-        Right (ExitFailure _, _, err) ->
-          pure (Left ("binary exited with non-zero status:\n" <> toText err))
+      pure (Left ("binary exited with non-zero status:\n" <> toText err))
 
 runJVM :: ByteString -> Text -> IO (Either Text Text)
 runJVM classBytes input = withSystemTempDirectory "awsum" $ \dir -> do

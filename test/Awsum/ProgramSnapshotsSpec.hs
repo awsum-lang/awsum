@@ -56,9 +56,10 @@ compileAll testName = do
   core <- case elaborateLowerProgram ProgramCli (withPrelude ast) of
     Left err -> error $ "elaborate failed" <> show err
     Right (_warns, x) -> pure x
+  artifacts <- RB.compileFromText src
   pure
     CompileResult
-      { artifacts = RB.compileFromText src,
+      { artifacts = artifacts,
         ast = ast,
         core = core,
         symbolsJson = symbolsToJson (symbolsOfProgram ast),
