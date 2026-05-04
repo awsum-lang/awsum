@@ -24,6 +24,7 @@ import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
+import System.Info qualified as Info
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Public API
@@ -1317,8 +1318,20 @@ runtime builtIns =
 -- Footer: C main entry point
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- | Choice of @main@ entry point depends on the host the awsum binary
+--   is running on, since we don't yet support cross-compilation: the
+--   target triple of the emitted IR is whatever clang infers for the
+--   host. On Windows MSVCRT's @argv@ goes through the ANSI code page
+--   and silently mangles supplementary code points to @?@; we replace
+--   it with a UTF-16-clean entry that pulls the command line from
+--   shell32 and converts to UTF-8 before handing off to @v_main@.
 footer :: Text
-footer =
+footer
+  | Info.os == "mingw32" = footerWindows
+  | otherwise = footerPosix
+
+footerPosix :: Text
+footerPosix =
   unlines
     [ "",
       "define i32 @main(i32 %argc, ptr %argv) {",
@@ -1336,6 +1349,66 @@ footer =
       -- Layout matches CCon emit: malloc(8 * (1 + nFields)), tag at offset 0,
       -- fields at offsets 1.. — both stored as `ptr` slots. Tag is encoded as
       -- `inttoptr` to match how CCase reads it back via `ptrtoint`.
+      "  %right_box = call ptr @malloc(i64 16)",
+      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
+      "  %right_tag = inttoptr i64 1 to ptr",
+      "  store ptr %right_tag, ptr %right_tag_ptr",
+      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
+      "  store ptr %input, ptr %right_payload_ptr",
+      "  call ptr @v_main(ptr %right_box)",
+      "  ret i32 0",
+      "}"
+    ]
+
+-- | Windows entry: ignore the POSIX-shape @argc@/@argv@ that MSVCRT
+--   hands us (those are ANSI-code-page-mangled), and re-fetch the
+--   command line through @GetCommandLineW@ + @CommandLineToArgvW@,
+--   then convert @argv[1]@ from UTF-16 to UTF-8 with
+--   @WideCharToMultiByte (CP_UTF8)@. The UTF-8 buffer takes the place
+--   the POSIX path's @%arg@ filled, so the rest of the entry (Right-box
+--   wrap + call @v_main@) is identical.
+--
+--   kernel32 (GetCommandLineW, WideCharToMultiByte) and shell32
+--   (CommandLineToArgvW) are auto-linked by the mingw-w64 default
+--   linker line, so we don't need extra @-l@ flags from clang.
+--
+--   We skip @LocalFree@ on the argv array — main returns immediately
+--   after, so the OS reclaims it.
+footerWindows :: Text
+footerWindows =
+  unlines
+    [ "",
+      "declare ptr @GetCommandLineW()",
+      "declare ptr @CommandLineToArgvW(ptr, ptr)",
+      "declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)",
+      "",
+      "define i32 @main(i32 %argc_posix, ptr %argv_posix) {",
+      "entry:",
+      "  %cmdline = call ptr @GetCommandLineW()",
+      "  %argc_slot = alloca i32",
+      "  %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)",
+      "  %argc_w = load i32, ptr %argc_slot",
+      "  %has_arg = icmp sgt i32 %argc_w, 1",
+      "  br i1 %has_arg, label %with_arg, label %no_arg",
+      "with_arg:",
+      "  %arg_w_slot = getelementptr ptr, ptr %argv_w, i64 1",
+      "  %arg_w = load ptr, ptr %arg_w_slot",
+      -- First call queries required UTF-8 byte count (incl. terminating NUL,
+      -- because cchWideChar = -1 means "process the null-terminator too").
+      -- 65001 = CP_UTF8.
+      "  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr null, i32 0, ptr null, ptr null)",
+      "  %need_ok = icmp sgt i32 %needed, 0",
+      "  br i1 %need_ok, label %do_convert, label %no_arg",
+      "do_convert:",
+      "  %needed64 = sext i32 %needed to i64",
+      "  %buf = call ptr @malloc(i64 %needed64)",
+      "  %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)",
+      "  br label %call_main",
+      "no_arg:",
+      "  br label %call_main",
+      "call_main:",
+      "  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]",
+      -- Same Right-box wrap as the POSIX path; see footerPosix for the layout note.
       "  %right_box = call ptr @malloc(i64 16)",
       "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
       "  %right_tag = inttoptr i64 1 to ptr",

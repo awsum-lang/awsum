@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **LLVM `argv[1]` on Windows** now reaches `v_main` as UTF-8 instead of an ANSI-code-page-mangled string. The footer used to emit POSIX `int main(int argc, char** argv)`, which on Windows had MSVCRT decode the command line through the host's ANSI code page — supplementary code points like `\u{C8E2D}` collapsed to `?` per UTF-16 unit before user code ran. On a `mingw32` host the codegen now emits a Windows-specific entry that re-fetches the command line via `GetCommandLineW` + `CommandLineToArgvW` and converts `argv[1]` to UTF-8 with `WideCharToMultiByte (CP_UTF8)`. The POSIX path is unchanged on non-Windows hosts.
 - **Non-ASCII string literals** now compile correctly on the LLVM, JVM, and WASM backends. Previously LLVM declared `[N x i8]` based on Haskell `T.length` (code-point count) but emitted UTF-8 bytes (4 bytes for `🔥`, not 1), failing `clang` with a constant-expression type mismatch; JVM emitted standard UTF-8 into the constant pool where the verifier expects "modified UTF-8" (surrogate-pair-encoded), failing class load with `ClassFormatError`; WASM mis-sized the data-section offset for each pool entry, allowing later strings to overlap. CLR and JS were already correct because they store strings as UTF-16 natively.
 
 ### Changed
