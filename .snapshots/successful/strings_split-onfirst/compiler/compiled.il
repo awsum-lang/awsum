@@ -42,7 +42,8 @@
     stloc.1
     ldloc.1
     ldloc.0
-    callvirt instance int32 [System.Runtime]System.String::IndexOf(string)
+    ldc.i4.4
+    callvirt instance int32 [System.Runtime]System.String::IndexOf(string, valuetype [System.Runtime]System.StringComparison)
     stloc.2
     ldloc.2
     ldc.i4.m1
