@@ -14,22 +14,31 @@ import Awsum.PropertySpec qualified
 import Awsum.Render (renderProgram)
 import Awsum.Syntax
 import Awsum.Typing (TypeError (..), requireMain, typecheckProgram)
+import GHC.IO.Encoding (setLocaleEncoding, utf8)
 import Relude
 import Test.Hspec
 import Test.QuickCheck
 
 main :: IO ()
-main = hspec $ do
-  parserSpec
-  parserPropSpec
-  typecheckerSpec
-  preludeSpec
-  elaborateSpec
-  Awsum.HMSpec.spec
-  Awsum.ProgramSnapshotsSpec.spec
-  Awsum.FormattingSnapshotsSpec.spec
-  Awsum.ErrorSnapshotsSpec.spec
-  Awsum.PropertySpec.spec
+main = do
+  -- Test descriptions contain non-ASCII characters (arrows, set-theory
+  -- glyphs). On Windows the default console code page is cp1252, so hspec's
+  -- printer crashes mid-run on "commitBuffer: invalid argument (cannot
+  -- encode character '\\8596')". Forcing UTF-8 on the locale encoding lets
+  -- hspec write the bytes; the console renders unsupported glyphs as boxes
+  -- rather than aborting the suite.
+  setLocaleEncoding utf8
+  hspec $ do
+    parserSpec
+    parserPropSpec
+    typecheckerSpec
+    preludeSpec
+    elaborateSpec
+    Awsum.HMSpec.spec
+    Awsum.ProgramSnapshotsSpec.spec
+    Awsum.FormattingSnapshotsSpec.spec
+    Awsum.ErrorSnapshotsSpec.spec
+    Awsum.PropertySpec.spec
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do
