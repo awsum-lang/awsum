@@ -22,7 +22,12 @@ import System.FilePath ((</>))
 import Test.Hspec
 
 spec :: Spec
-spec = describe "Program snapshots" $ do
+spec = describe "Program snapshots" $ parallel $ do
+  -- 'parallel' here makes sibling programs run in parallel with each
+  -- other; the inner 'parallel' inside 'testProgram' keeps the per-
+  -- program tests parallelisable too. Each 'beforeAll' block scopes
+  -- its own 'compileOnce', so parallel programs don't fight over a
+  -- shared MVar.
   testNames <- runIO discoverTests
   traverse_ testProgram testNames
 
