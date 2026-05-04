@@ -575,6 +575,8 @@
   {
     .entrypoint
     .locals init (object input)
+    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
+    call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
     ldarg.0
     ldlen
     conv.i4
