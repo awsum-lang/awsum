@@ -1592,12 +1592,18 @@ mkMulUInt8 = do
 
 -- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Binary equivalent of 'Awsum.Codegen.CLR.splitOnFirstMethod'. Defers
---   substring search to 'String.IndexOf(string)' (returns -1 on miss,
---   0 on empty separator — both behaviours match the prelude contract
---   directly). On hit the two 'String.Substring' calls allocate fresh
---   strings (CLR strings are immutable; substrings are owning copies,
---   not aliases). Locals: 0..1 = unboxed String operands, 2 = idx,
---   3..4 = prefix/suffix, 5 = boxed Tuple2 staged before the Just wrap.
+--   substring search to 'String.IndexOf(string, Ordinal)' —
+--   culture-sensitive (the no-StringComparison overload's default) goes
+--   through ICU's UCA on .NET-on-Unix and silently misses substrings
+--   that *are* physically present when the haystack contains
+--   supplementary-plane code points. Ordinal compares UTF-16 code units
+--   directly, matching what every other backend does (byte/code-unit
+--   scan) — so cross-backend equivalence holds. Returns -1 on miss and
+--   0 on empty 'sep'; both match the prelude contract directly. On hit
+--   the two 'String.Substring' calls allocate fresh strings (CLR
+--   strings are immutable; substrings are owning copies, not aliases).
+--   Locals: 0..1 = unboxed String operands, 2 = idx, 3..4 =
+--   prefix/suffix, 5 = boxed Tuple2 staged before the Just wrap.
 mkSplitOnFirst :: AsmM MInfo
 mkSplitOnFirst = do
   ni <- w16 <$> addStr "__splitOnFirst"
@@ -1606,7 +1612,15 @@ mkSplitOnFirst = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  indexOfRef <- addMemberRef (mrpTR trStr) "IndexOf" (sigInstance 0x08 [etString])
+  trStrCmp <- addTypeRef (resScopeAR 1) "StringComparison" "System"
+  -- IndexOf(string, valuetype StringComparison): build the sig blob by
+  -- hand because 'sigInstance' takes one byte per param, and a
+  -- valuetype param is encoded as ELEMENT_TYPE_VALUETYPE (0x11) followed
+  -- by a compressed TypeDefOrRefOrSpecEncoded token (TypeRef tag = 1,
+  -- so the encoded value is `(row << 2) | 1`).
+  let strCmpEnc = compressU ((trStrCmp `shiftL` 2) .|. 1)
+      indexOfSig = [0x20, 2, 0x08, etString, 0x11] <> strCmpEnc
+  indexOfRef <- addMemberRef (mrpTR trStr) "IndexOf" indexOfSig
   substring2Ref <- addMemberRef (mrpTR trStr) "Substring" (sigInstance etString [0x08, 0x08])
   substring1Ref <- addMemberRef (mrpTR trStr) "Substring" (sigInstance etString [0x08])
   lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
@@ -1680,6 +1694,7 @@ mkSplitOnFirst = do
           <> cilStloc 1
           <> cilLdloc 1
           <> cilLdloc 0
+          <> cilLdcI4 4 -- StringComparison.Ordinal
           <> cilCallvirt (tokMR indexOfRef)
           <> cilStloc 2
           <> cilLdloc 2

@@ -1561,12 +1561,17 @@ parseUInt8Method =
     ]
 
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
---   Defers substring search to 'String.IndexOf(string)' which returns
---   -1 on miss and 0 on empty 'sep' — both behaviours match the
---   prelude contract directly. On hit, 'String.Substring' allocates
---   fresh strings (CLR strings are immutable; substrings are owning
---   copies, not aliases). Containers: Maybe Nothing=0, Just=1; Tuple2
---   has one constructor (tag 0).
+--   Defers substring search to 'String.IndexOf(string, Ordinal)' —
+--   culture-sensitive (the no-StringComparison overload's default) goes
+--   through ICU's UCA on .NET-on-Unix and silently misses substrings
+--   that *are* physically present when the haystack contains
+--   supplementary-plane code points. Ordinal compares UTF-16 code units
+--   directly, matching what every other backend does (byte/code-unit
+--   scan) — so cross-backend equivalence holds. Returns -1 on miss and
+--   0 on empty 'sep'; both match the prelude contract directly. On hit,
+--   'String.Substring' allocates fresh strings (CLR strings are
+--   immutable; substrings are owning copies, not aliases). Containers:
+--   Maybe Nothing=0, Just=1; Tuple2 has one constructor (tag 0).
 splitOnFirstMethod :: Text
 splitOnFirstMethod =
   unlines
@@ -1582,7 +1587,8 @@ splitOnFirstMethod =
       "    stloc.1",
       "    ldloc.1",
       "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string)",
+      "    ldc.i4.4",
+      "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string, valuetype [System.Runtime]System.StringComparison)",
       "    stloc.2",
       "    ldloc.2",
       "    ldc.i4.m1",
