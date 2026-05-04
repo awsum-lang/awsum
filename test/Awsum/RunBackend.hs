@@ -28,11 +28,9 @@ import Awsum.Program (ProgramType (..))
 import Common.File
 import Control.Concurrent.Async (concurrently)
 import Control.Exception (IOException, try)
-import Data.Text qualified as T
 import Relude
-import System.Directory (findExecutablesInDirectories)
 import System.Exit (ExitCode (..))
-import System.FilePath (splitSearchPath, (</>))
+import System.FilePath ((</>))
 import System.IO.Temp (createTempDirectory, getCanonicalTemporaryDirectory, withSystemTempDirectory)
 import System.Process (readProcessWithExitCode)
 
@@ -121,49 +119,10 @@ compileLLVMBin code = do
   let llFile = dir </> "out.ll"
       binFile = dir </> "out"
   writeFileText llFile code
-  clang <- resolveClang
-  (ec, _, err) <-
-    readProcessWithExitCode
-      clang
-      ["-O2", "-Wno-override-module", llFile, "-o", binFile]
-      ""
+  (ec, _, err) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
   case ec of
     ExitFailure _ -> error $ toText ("clang failed during compile: " <> err)
     ExitSuccess -> pure binFile
-
--- | Pick the first @clang@ on PATH whose major version is >= 15
---   ('docs/platform-version-policy.md'). Needed because @stack test@
---   prepends GHC's bundled mingw to PATH for child processes, and that
---   mingw ships LLVM 14, which rejects the @ptr@ type our codegen
---   emits ("ptr type is only supported in -opaque-pointers mode").
---   The system-installed @clang@ further along PATH is the one we
---   actually want.
-resolveClang :: IO FilePath
-resolveClang = do
-  -- 'findExecutables' was returning only the GHC-bundled mingw clang
-  -- under @stack test@, even though the system @clang@ is also on
-  -- PATH (verified via 'where clang' in the same env). Threading
-  -- 'getEnv \"PATH\"' through 'findExecutablesInDirectories' explicitly
-  -- avoids whatever the higher-level helper is filtering out.
-  pathVar <- fromMaybe "" <$> lookupEnv "PATH"
-  candidates <- findExecutablesInDirectories (splitSearchPath pathVar) "clang"
-  go candidates
-  where
-    go [] = error "no clang >= 15 found on PATH (see docs/platform-version-policy.md)"
-    go (p : rest) = do
-      (ec, out, _) <- readProcessWithExitCode p ["--version"] ""
-      case ec of
-        ExitSuccess | majorVersion out >= Just 15 -> pure p
-        _ -> go rest
-    -- @clang --version@ prints "clang version X.Y.Z ...", possibly
-    -- preceded by a vendor banner ("Apple clang version ...") — take
-    -- the first line that contains "clang version" and read the major.
-    majorVersion :: String -> Maybe Int
-    majorVersion s = listToMaybe (mapMaybe parseLine (lines (toText s)))
-    parseLine :: Text -> Maybe Int
-    parseLine l = case dropWhile (/= "version") (words l) of
-      ("version" : v : _) -> readMaybe (toString (T.takeWhile (/= '.') v))
-      _ -> Nothing
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Per-backend runners
