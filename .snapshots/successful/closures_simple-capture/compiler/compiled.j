@@ -58,6 +58,16 @@
 .end method
 
 .method public static main([Ljava/lang/String;)V
+  new java/io/PrintStream
+  dup
+  new java/io/FileOutputStream
+  dup
+  getstatic java/io/FileDescriptor/out Ljava/io/FileDescriptor;
+  invokespecial java/io/FileOutputStream/<init>(Ljava/io/FileDescriptor;)V
+  iconst_1
+  ldc "UTF-8"
+  invokespecial java/io/PrintStream/<init>(Ljava/io/OutputStream;ZLjava/lang/String;)V
+  invokestatic java/lang/System/setOut(Ljava/io/PrintStream;)V
   aload_0
   arraylength
   iconst_1

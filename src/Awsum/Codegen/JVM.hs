@@ -1719,6 +1719,29 @@ mainMethod :: Text
 mainMethod =
   unlines
     [ ".method public static main([Ljava/lang/String;)V",
+      -- Force System.out to UTF-8 before any user code runs. JVM startup
+      -- bakes the host's default charset into the original PrintStream
+      -- wrapping FileDescriptor.out, so on Windows with a non-UTF-8 ANSI
+      -- code page (the usual case) every supplementary code point printed
+      -- by 'IO.Stdout.print' would arrive at stdout as "??" — one '?' per
+      -- UTF-16 code unit. 'System.setOut' replaces the static field
+      -- behind 'java.lang.System.out' for everyone in the process,
+      -- including our own '__print' helper which reads it via 'getstatic'.
+      "  new java/io/PrintStream",
+      "  dup",
+      "  new java/io/FileOutputStream",
+      "  dup",
+      "  getstatic java/io/FileDescriptor/out Ljava/io/FileDescriptor;",
+      "  invokespecial java/io/FileOutputStream/<init>(Ljava/io/FileDescriptor;)V",
+      "  iconst_1",
+      -- The Charset-taking PrintStream constructor was added in Java 18;
+      -- the String-encoding form has been there since Java 5, so we go
+      -- through that. UTF-8 is always supported, so the
+      -- UnsupportedEncodingException declared on the constructor never
+      -- fires and the JVM verifier is happy without a throws clause.
+      "  ldc \"UTF-8\"",
+      "  invokespecial java/io/PrintStream/<init>(Ljava/io/OutputStream;ZLjava/lang/String;)V",
+      "  invokestatic java/lang/System/setOut(Ljava/io/PrintStream;)V",
       "  aload_0",
       "  arraylength",
       "  iconst_1",

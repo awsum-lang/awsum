@@ -3130,51 +3130,60 @@ mkMain = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
+  -- Refs for the System.out → UTF-8 swap. See the IL-text 'mainMethod'
+  -- for the rationale (JVM bakes the host's default charset into the
+  -- startup PrintStream wrapping FileDescriptor.out, mangling
+  -- supplementary code points to "??" on non-UTF-8 hosts).
+  --
+  -- We go through the String-encoding PrintStream constructor rather
+  -- than the Charset-taking one because the latter was added in Java
+  -- 18 and we still target older JDKs. UTF-8 is always supported, so
+  -- the declared UnsupportedEncodingException never fires.
+  psClassIdx <- addClass "java/io/PrintStream"
+  fosClassIdx <- addClass "java/io/FileOutputStream"
+  fdOutRef <- addFRef "java/io/FileDescriptor" "out" "Ljava/io/FileDescriptor;"
+  fosInitRef <- addMRef "java/io/FileOutputStream" "<init>" "(Ljava/io/FileDescriptor;)V"
+  utf8StrIdx <- addStr "UTF-8"
+  psInitRef <- addMRef "java/io/PrintStream" "<init>" "(Ljava/io/OutputStream;ZLjava/lang/String;)V"
+  setOutRef <- addMRef "java/lang/System" "setOut" "(Ljava/io/PrintStream;)V"
   let ldcEmpty = bcLdc emptyIdx
       ldcLen = length ldcEmpty
+      ldcUtf8 = bcLdc utf8StrIdx
+      -- Stdout-UTF-8 prologue: build a PrintStream wrapping a
+      -- FileOutputStream over FileDescriptor.out with autoFlush=true and
+      -- "UTF-8" encoding, then assign it via System.setOut. The block
+      -- is balanced (peak depth 5, ends at 0), and uses no locals
+      -- beyond the method parameter, so the original argv-handling
+      -- code below verifies identically — it just sits 'prologueLen'
+      -- bytes further into the method.
+      prologue =
+        [0xBB, hi8 psClassIdx, lo8 psClassIdx] -- new PrintStream
+          <> [0x59] -- dup
+          <> [0xBB, hi8 fosClassIdx, lo8 fosClassIdx] -- new FileOutputStream
+          <> [0x59] -- dup
+          <> [0xB2, hi8 fdOutRef, lo8 fdOutRef] -- getstatic FileDescriptor.out
+          <> [0xB7, hi8 fosInitRef, lo8 fosInitRef] -- invokespecial FOS.<init>
+          <> [0x04] -- iconst_1 (autoFlush=true)
+          <> ldcUtf8 -- ldc "UTF-8" (2 bytes if cpool idx < 256, else 3 via ldc_w)
+          <> [0xB7, hi8 psInitRef, lo8 psInitRef] -- invokespecial PrintStream.<init>
+          <> [0xB8, hi8 setOutRef, lo8 setOutRef] -- invokestatic System.setOut
+      prologueLen = length prologue
       -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
       -- v_main. Layout matches CCon emit on JVM: Object[1+nFields] with
       -- boxed Integer tag at index 0, fields at indices 1..
       --
-      -- Layout (all offsets relative to method start):
-      -- 0: aload_0           (1)
-      -- 1: arraylength       (1)
-      -- 2: iconst_1          (1)
-      -- 3: if_icmpge has_arg (3)
-      -- 6: ldc ""            (ldcLen)
-      -- 6+L: goto call_main  (3)
-      -- 6+L+3: aload_0       (1)  [has_arg]
-      -- 6+L+4: iconst_0      (1)
-      -- 6+L+5: aaload        (1)
-      -- 6+L+6: astore_1      (1)  [call_main]  (input → locals[1])
-      -- 6+L+7: iconst_2      (1)
-      -- 6+L+8: anewarray Object (3)
-      -- 6+L+11: dup          (1)
-      -- 6+L+12: iconst_0     (1)
-      -- 6+L+13: iconst_1     (1)  (tag=1 for Right)
-      -- 6+L+14: invokestatic Integer.valueOf (3)
-      -- 6+L+17: aastore      (1)
-      -- 6+L+18: dup          (1)
-      -- 6+L+19: iconst_1     (1)
-      -- 6+L+20: aload_1      (1)
-      -- 6+L+21: aastore      (1)
-      -- 6+L+22: invokestatic v_main (3)
-      -- 6+L+25: pop          (1)
-      -- 6+L+26: return       (1)
-      hasArg = 6 + ldcLen + 3
+      -- Layout (all offsets relative to method start; the prologue
+      -- contributes 'prologueLen' bytes before any of this):
+      ifAt = prologueLen + 3
+      gotoAt = prologueLen + 6 + ldcLen
+      hasArg = gotoAt + 3
       callMain = hasArg + 3
-      ifRel = hasArg - 3 :: Int
-      gotoRel = callMain - (6 + ldcLen) :: Int
-      -- StackMapTable: two frames at branch targets. Branches are
-      -- has_arg and call_main; the bytecode after call_main is straight-
-      -- line, no further frames needed.
-      --
-      -- 1) has_arg: same_frame (same locals as initial, empty stack)
-      --    frame_type = offset_delta = hasArg (first entry, <= 63)
-      -- 2) call_main: same_locals_1_stack_item (stack = [Object])
-      --    offset_delta = callMain - hasArg - 1 = 2
-      --    frame_type = 64 + 2 = 66
-      --    verification_type_info = Object_variable_info(tag=7, cpool_index)
+      ifRel = hasArg - ifAt :: Int
+      gotoRel = callMain - gotoAt :: Int
+      -- StackMapTable: two frames at branch targets (has_arg, call_main).
+      -- Note: same_frame's frame_type field is 1 byte and ranges over
+      -- [0, 63] for offset_delta. With ldcLen ≤ 3 and the prologue,
+      -- hasArg stays ≤ 36 — still inside same_frame's encoding range.
       smtEntries =
         [fromIntegral hasArg]
           <> [66, 7, hi8 objClsIdx, lo8 objClsIdx]
@@ -3191,7 +3200,8 @@ mkMain = do
         mName = ni,
         mDesc = di,
         mCode =
-          bcAload 0
+          prologue
+            <> bcAload 0
             <> [0xBE] -- arraylength
             <> [0x04] -- iconst_1
             <> [0xA2, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)] -- if_icmpge
