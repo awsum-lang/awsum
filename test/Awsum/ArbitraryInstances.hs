@@ -170,7 +170,7 @@ instance Arbitrary Pattern where
       go 0 =
         oneof
           [ PVar noSpan <$> genLIdent,
-            PWild noSpan <$ pure (),
+            PWild noSpan <$ pass,
             PCon noSpan <$> genUIdent <*> pure []
           ]
       go n =
@@ -191,7 +191,7 @@ instance Arbitrary Pattern where
     PCon _ n ps ->
       PCon noSpan n []
         : [PCon noSpan n' ps | n' <- shrinkIdent n]
-        <> [PCon noSpan n ps' | ps' <- shrinkList shrink ps]
+          <> [PCon noSpan n ps' | ps' <- shrinkList shrink ps]
     PAscribe _ p t -> p : [PAscribe noSpan p' t | p' <- shrink p] <> [PAscribe noSpan p t' | t' <- shrink t]
 
 -- | A single-line constructor field type. The 'TypeDecl' renderer
@@ -402,7 +402,7 @@ instance Arbitrary Decl where
       genDoBlock n = do
         k <- chooseInt (0, min 3 (max 0 n))
         leading <- vectorOf k (resize (n `div` (k + 1)) (mapDoExpr <$> arbitrary))
-        finalE <- (DoExpr noSpan . wrapHeadLet) <$> resize (n `div` (k + 1)) arbitrary
+        finalE <- DoExpr noSpan . wrapHeadLet <$> resize (n `div` (k + 1)) arbitrary
         pure (leading <> [finalE])
       mapDoExpr stmt = case stmt of
         DoExpr sp e -> DoExpr sp (wrapHeadLet e)
