@@ -4,21 +4,21 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 ## Overview
 
-|                   | LLVM                                              | JVM                                               | CLR                                                              | WASM                                                    | JS                                            |
-| ----------------- | ------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------- |
-| **Runtime**       | Native binary (via Clang 15+)                     | Java 7+                                           | .NET 9+ (dotnet)                                                 | wasmtime (WASI)                                         | Node.js 22+                                   |
-| **String type**   | `ptr` to null-terminated C string                 | `java.lang.String` (boxed as `Object`)            | `System.String` (boxed as `object`)                              | `i32` pointer to null-terminated bytes in linear memory | Native JS string                              |
-| **Concat**        | `strlen` + `malloc` + `strcpy` + `strcat`         | `String.concat`                                   | `System.String.Concat(object, object)`                           | `__concat`: strlen + bump alloc + memcpy                | `+`                                           |
-| **Print**         | `printf("%s", s)`                                 | `System.out.print(s)`                             | `System.Console.Write(object)`                                   | WASI `fd_write` via iovec                               | `process.stdout.write(s)`                     |
-| **Constants**     | Zero-arg function, called on each use             | Zero-arg static method, called on each use        | Zero-arg static method, called on each use                       | Zero-arg function, called on each use                   | `const name = expr;`                          |
-| **Functions**     | `define ptr @name(ptr ...) { ... }`               | `static Object v_name(Object...) { ... }`         | `static object v_name(object ...) { ... }`                       | `(func $v_name (param i32 ...) (result i32) ...)`       | `function` declaration (hoisted)              |
-| **Higher-order**  | Opaque `ptr` indirect call                        | `MethodHandle` (`ldc` + `invokevirtual invoke`)   | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`) | `funcref` table + `call_indirect`                       | First-class values                            |
-| **Constructors**  | `malloc`'d `ptr` array: `[tag, fields...]`        | `Object[]`: `[Integer(tag), fields...]`           | `object[]`: `[box(tag), fields...]`                              | Linear memory: `[i32 tag, i32 fields...]`               | Array: `[tag, fields...]`                     |
-| **Pattern match** | `ptrtoint` tag → `icmp eq` → `br`                 | `aaload` tag → `intValue` → `ifeq`                | `ldelem.ref` tag → `unbox.any` → `beq.s`                         | `i32.load` tag → `i32.eq` → `if`/`else`                 | `s[0] === N ? ...`                            |
-| **Int32 / UInt8 / UInt32** | Heap cell: `ptr` to `i32` / `i8` / `i32`     | Boxed `java.lang.Integer` (all three)             | Boxed `System.Int32` (all three)                                 | Heap cell: `i32` in linear memory                       | `(N\|0)` / `(N & 0xFF)` / `(N >>> 0)` — unboxed JS `number` |
-| **show\***        | Runtime helpers using `snprintf`                  | `Integer.toString()` for signed-friendly types; `Long.toString((long)v & 0xFFFFFFFFL)` for `UInt32` | `Object::ToString()` after re-boxing as `System.UInt32` for `UInt32` | Hand-rolled itoa; separate `__show_u32` skips the sign branch | `String(x)`                                   |
-| **Memory**        | Manual (`malloc`, no `free`)                      | GC                                                | GC                                                               | Bump allocator (no free)                                | GC                                            |
-| **Name mangling** | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`)                | `v_` prefix for all (`_start` is WASI entry)            | `v_` prefix, `main` unchanged                 |
+|                            | LLVM                                              | JVM                                                                                                 | CLR                                                                  | WASM                                                          | JS                                                          |
+| -------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Runtime**                | Native binary (via Clang 15+)                     | Java 11+                                                                                            | .NET 9+ (dotnet)                                                     | wasmtime (WASI)                                               | Node.js 22+                                                 |
+| **String type**            | `ptr` to null-terminated C string                 | `java.lang.String` (boxed as `Object`)                                                              | `System.String` (boxed as `object`)                                  | `i32` pointer to null-terminated bytes in linear memory       | Native JS string                                            |
+| **Concat**                 | `strlen` + `malloc` + `strcpy` + `strcat`         | `String.concat`                                                                                     | `System.String.Concat(object, object)`                               | `__concat`: strlen + bump alloc + memcpy                      | `+`                                                         |
+| **Print**                  | `printf("%s", s)`                                 | `System.out.print(s)`                                                                               | `System.Console.Write(object)`                                       | WASI `fd_write` via iovec                                     | `process.stdout.write(s)`                                   |
+| **Constants**              | Zero-arg function, called on each use             | Zero-arg static method, called on each use                                                          | Zero-arg static method, called on each use                           | Zero-arg function, called on each use                         | `const name = expr;`                                        |
+| **Functions**              | `define ptr @name(ptr ...) { ... }`               | `static Object v_name(Object...) { ... }`                                                           | `static object v_name(object ...) { ... }`                           | `(func $v_name (param i32 ...) (result i32) ...)`             | `function` declaration (hoisted)                            |
+| **Higher-order**           | Opaque `ptr` indirect call                        | `MethodHandle` (`ldc` + `invokevirtual invoke`)                                                     | `System.Func` delegates (`ldftn` + `newobj` + `callvirt Invoke`)     | `funcref` table + `call_indirect`                             | First-class values                                          |
+| **Constructors**           | `malloc`'d `ptr` array: `[tag, fields...]`        | `Object[]`: `[Integer(tag), fields...]`                                                             | `object[]`: `[box(tag), fields...]`                                  | Linear memory: `[i32 tag, i32 fields...]`                     | Array: `[tag, fields...]`                                   |
+| **Pattern match**          | `ptrtoint` tag → `icmp eq` → `br`                 | `aaload` tag → `intValue` → `ifeq`                                                                  | `ldelem.ref` tag → `unbox.any` → `beq.s`                             | `i32.load` tag → `i32.eq` → `if`/`else`                       | `s[0] === N ? ...`                                          |
+| **Int32 / UInt8 / UInt32** | Heap cell: `ptr` to `i32` / `i8` / `i32`          | Boxed `java.lang.Integer` (all three)                                                               | Boxed `System.Int32` (all three)                                     | Heap cell: `i32` in linear memory                             | `(N\|0)` / `(N & 0xFF)` / `(N >>> 0)` — unboxed JS `number` |
+| **show\***                 | Runtime helpers using `snprintf`                  | `Integer.toString()` for signed-friendly types; `Long.toString((long)v & 0xFFFFFFFFL)` for `UInt32` | `Object::ToString()` after re-boxing as `System.UInt32` for `UInt32` | Hand-rolled itoa; separate `__show_u32` skips the sign branch | `String(x)`                                                 |
+| **Memory**                 | Manual (`malloc`, no `free`)                      | GC                                                                                                  | GC                                                                   | Bump allocator (no free)                                      | GC                                                          |
+| **Name mangling**          | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`)                                                   | `v_` prefix for all (including `main` → `v_main`)                    | `v_` prefix for all (`_start` is WASI entry)                  | `v_` prefix, `main` unchanged                               |
 
 ## String Concatenation
 
@@ -95,7 +95,9 @@ callvirt instance string [System.Runtime]System.String::Substring(int32)
 
 ```javascript
 const i = str.indexOf(sep);
-return i < 0 ? [0] : [1, [0, str.substring(0, i), str.substring(i + sep.length)]];
+return i < 0
+  ? [0]
+  : [1, [0, str.substring(0, i), str.substring(i + sep.length)]];
 ```
 
 Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be split inside a codepoint. UTF-8-aware splitting is a separate, future API.
@@ -226,7 +228,7 @@ checkcast java/lang/Integer
 invokevirtual java/lang/Integer.toString()Ljava/lang/String;
 ```
 
-`UInt32` cannot use `Integer.toString()` directly because Java 7's `Integer.toString` interprets the value as signed — `4294967295` would render as `-1`. The class file targets bytecode 51.0 (Java 7), which predates `Integer.toUnsignedString` (Java 8). So `__showUInt32` masks via long arithmetic and calls `Long.toString` instead:
+`UInt32` cannot use `Integer.toString()` directly because it interprets the value as signed — `4294967295` would render as `-1`.
 
 ```
 ldarg.0
@@ -287,7 +289,7 @@ Every numeric primitive that can produce a value outside its declared type's ran
 
 - `predInt32` / `succInt32` — `Left UnderflowError` / `Left OverflowError` at the boundaries; otherwise `Right (x ± 1)`.
 - `predUInt8` / `succUInt8` / `predUInt32` / `succUInt32` — same shape; boundaries 0 / 255 for UInt8, 0 / 4294967295 for UInt32.
-- `addInt32 : Int32 -> Int32 -> Either ArithError Int32` — `Left Underflow` / `Left Overflow` (`type ArithError = Underflow | Overflow`), since signed addition can fail at *both* ends from a single operation.
+- `addInt32 : Int32 -> Int32 -> Either ArithError Int32` — `Left Underflow` / `Left Overflow` (`type ArithError = Underflow | Overflow`), since signed addition can fail at _both_ ends from a single operation.
 - `addUInt8` / `addUInt32` — `Either OverflowError <type>`. Only overflow is reachable for unsigned addition, so the closed `OverflowError` suffices.
 - `subUInt8` / `subUInt32` — `Either UnderflowError <type>`. Only underflow is reachable for unsigned subtraction (the difference of two non-negative values stays in range when `a >= b` and underflows otherwise).
 - `mulUInt8` / `mulUInt32` — `Either OverflowError <type>`, mirroring `add` for the same reason.
@@ -304,7 +306,7 @@ Because the error type is part of the surface signature, tests pin both branches
 overflow = ((a ^ s) & (b ^ s)) < 0    -- where s = a + b (wraps mod 2^32)
 ```
 
-`(a ^ s)` flips its sign bit iff the sign of `s` differs from `a`; the bitwise AND with `(b ^ s)` is true on the sign bit iff *both* sources disagree with the sum, which is exactly the same-sign-overflow condition. As on LLVM, `a >= 0` then picks Overflow (positive direction) vs Underflow. The CLR text emits `blt.s` / `ble.s`, the JVM uses `iflt`, WASM uses `i32.lt_s` against zero — three encodings of the same Boolean.
+`(a ^ s)` flips its sign bit iff the sign of `s` differs from `a`; the bitwise AND with `(b ^ s)` is true on the sign bit iff _both_ sources disagree with the sum, which is exactly the same-sign-overflow condition. As on LLVM, `a >= 0` then picks Overflow (positive direction) vs Underflow. The CLR text emits `blt.s` / `ble.s`, the JVM uses `iflt`, WASM uses `i32.lt_s` against zero — three encodings of the same Boolean.
 
 **JS** — JS `number` is an IEEE-754 double, which exactly represents every i32 sum (the result is at most 33 bits). The check is the most direct of the five:
 
@@ -325,7 +327,7 @@ For `addUInt32` the same lift goes one level higher — into a 64-bit-wide unsig
 - **WASM** — `i64.extend_i32_u` on each operand, `i64.add`, `i64.gt_u` against `i64.const 4294967295`, `i32.wrap_i64` on the ok path. The new `opI64GtU = 0x56` opcode was added to the binary assembler for this — `i64.gt_s` is unsuitable below.
 - **JS** — direct `a + b` produces an exact double (the sum is at most ~2^33), single `> 4294967295` test against the result, `>>> 0` to coerce the in-range value to u32. The simplest of the five.
 
-`mulUInt32` adds one more wrinkle: the product `(2^32 − 1)^2 ≈ 1.8 × 2^63` exceeds `Int64.MaxValue` (`2^63 − 1`), so signed-int64 comparison against 4294967295 misclassifies some overflowing products as in-range. Three of the five backends already use unsigned-int64 comparison; JVM (Java 7) doesn't have one, so it detects overflow by shifting the product right by 32 (`lushr`) and checking that the high half is zero. JS uses `BigInt` to compute the exact product before comparing, since regular JS doubles only have 53-bit precision and would round the largest u32 × u32 products.
+`mulUInt32` adds one more wrinkle: the product `(2^32 − 1)^2 ≈ 1.8 × 2^63` exceeds `Int64.MaxValue` (`2^63 − 1`), so signed-int64 comparison against 4294967295 misclassifies some overflowing products as in-range. Three of the five backends use unsigned-int64 comparison; JVM detects overflow by shifting the product right by 32 (`lushr`) and checking that the high half is zero — that's a stack-cheap, branch-free equivalent. JS uses `BigInt` to compute the exact product before comparing, since regular JS doubles only have 53-bit precision and would round the largest u32 × u32 products.
 
 `subUInt32` is the cleanest: every backend can do unsigned-i32 compare directly (LLVM `icmp ult`, JVM `i2l + ldc2_w mask + land + lcmp + iflt`, CLR `blt.un.s`, WASM `i32.lt_u`, JS `<` on the JS-coerced numbers). On the ok path `a - b` at i32 width produces the correct u32 difference because the bit pattern of `(a - b) mod 2^32` equals `a - b` exactly when `a >= b` unsigned.
 
@@ -345,7 +347,7 @@ define ptr @v_compose(ptr %v_g, ptr %v_f, ptr %v_x) {
 
 This uses LLVM 15+ opaque pointers — no `bitcast` or typed function pointer annotations needed.
 
-**JVM**: Function values are `java.lang.invoke.MethodHandle` (available since Java 7, class version 51.0). When a function is used as a value (not called directly), it is loaded as a `CONSTANT_MethodHandle` from the constant pool via `ldc`. Indirect calls use `invokevirtual MethodHandle.invoke(...)`:
+**JVM**: Function values are `java.lang.invoke.MethodHandle` (available since Java 7; we emit class version 55.0 = Java 11). When a function is used as a value (not called directly), it is loaded as a `CONSTANT_MethodHandle` from the constant pool via `ldc`. Indirect calls use `invokevirtual MethodHandle.invoke(...)`:
 
 ```
 ; compose g f x = g (f x)
@@ -634,7 +636,7 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 ## JVM-Specific Details
 
-**Class file version**: 51.0 (Java 7). This is the minimum version that supports `CONSTANT_MethodHandle` (tag 15) in the constant pool, which we need for higher-order functions. Generated `.class` files run on any JVM 7+, including Android.
+**Class file version**: 55.0 (Java 11). Matches the documented JVM target floor (see [docs/platform-version-policy.md](platform-version-policy.md)). Generated `.class` files run on any JVM 11+; modern Android `D8` accepts class files well past this version.
 
 **Binary assembler**: The `.class` file is generated directly in Haskell (`Awsum.Codegen.JVM.Assemble`), with no external tools — no Jasmin, no javac. Only `java` is needed to run. The assembler emits a single `AwsumMain.class` with ~25 JVM instructions.
 

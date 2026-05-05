@@ -15,7 +15,7 @@ A functional language where computation results are guaranteed equivalent across
 ## Targets
 
 - **LLVM** — native binary via Clang (LLVM 15+)
-- **JVM** — Java 7+ bytecode (generated directly, no Jasmin/javac)
+- **JVM** — Java 11+ bytecode (generated directly, no Jasmin/javac)
 - **CLR** — .NET 9+ DLL (generated directly, no ilasm/csc)
 - **WASM** — WebAssembly via WASI (wasmtime)
 - **JS** — Node.js 22+ (LTS), browser (planned)
@@ -95,7 +95,7 @@ Install only the runtimes for the targets you need:
 # LLVM — native binary compiler (opaque pointer support requires 15+)
 brew install llvm@15
 
-# JVM — Java runtime (Java 7+)
+# JVM — Java runtime (Java 11+)
 # https://get-coursier.io/
 
 # CLR — .NET runtime (.NET 9+)
@@ -128,7 +128,7 @@ Examples:
 
 ```sh
 awsum build -t llvm -o out.ll          test/sources/successful/hello/code/Main.aww && clang out.ll -o program && ./program "world"
-awsum build -t jvm  -o AwsumMain.class test/sources/successful/hello/code/Main.aww && java AwsumMain "world"
+awsum build -t jvm  -o AwsumMain.class test/sources/successful/hello/code/Main.aww && java -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 AwsumMain "world"
 awsum build -t clr  -o AwsumMain.dll   test/sources/successful/hello/code/Main.aww && dotnet AwsumMain.dll "world"
 awsum build -t wasm -o out.wasm        test/sources/successful/hello/code/Main.aww && wasmtime out.wasm "world"
 awsum build -t js   -o out.js          test/sources/successful/hello/code/Main.aww && node out.js "world"

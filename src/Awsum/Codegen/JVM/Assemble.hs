@@ -1,6 +1,6 @@
 -- | JVM .class file assembler for Awsum 'Core'.
 --
--- Generates a single @AwsumMain.class@ file (class version 51.0, Java 7+)
+-- Generates a single @AwsumMain.class@ file (class version 55.0, Java 11+)
 -- containing runtime helpers, user declarations, and a @main(String[])@
 -- entry point.
 --
@@ -1717,8 +1717,7 @@ bcU32MaxAsLong =
   ]
 
 -- | showUInt32: UInt32 -> String. Render as decimal via
---   @Long.toString((long)v & 0xFFFFFFFFL)@. JVM 7 has no
---   @Integer.toUnsignedString@, so we mask manually.
+--   @Long.toString((long)v & 0xFFFFFFFFL)@.
 mkShowUInt32 :: AsmM MInfo
 mkShowUInt32 = do
   ni <- addUtf8 "__showUInt32"
@@ -4107,7 +4106,7 @@ buildClassFile st methods =
    in mconcat
         [ B.word32BE 0xCAFEBABE,
           B.word16BE 0, -- minor version
-          B.word16BE 51, -- major version (Java 7)
+          B.word16BE 55, -- major version (Java 11)
           B.word16BE st.nextIdx, -- constant_pool_count
           foldMap encodeCPEntry cpList,
           B.word16BE 0x0021, -- ACC_PUBLIC | ACC_SUPER
