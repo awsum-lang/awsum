@@ -19,15 +19,63 @@
 -- construction.
 module Awsum.PropertySpec (spec) where
 
-import Awsum.RunBackend (Backend, CompiledArtifacts, compileFromFile, runOnAll)
+import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAll)
 import Data.ByteString qualified as BS
+import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 import System.FilePath ((</>))
+import System.Info qualified as Info
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import Test.QuickCheck (Arbitrary (..), Gen, chooseBoundedIntegral, chooseInteger, counterexample, elements, forAll, frequency, ioProperty, listOf, listOf1)
 import Test.QuickCheck qualified as QC
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Known-broken (OS, backend, propName) registry
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Host OS for gating cross-backend assertions. Detected from
+--   'System.Info.os' so the harness picks the right entry without any
+--   per-CI configuration.
+data OS = Windows | Linux | MacOS | UnknownOS
+  deriving stock (Show, Eq, Ord)
+
+currentOS :: OS
+currentOS = case Info.os of
+  "mingw32" -> Windows
+  "linux" -> Linux
+  "darwin" -> MacOS
+  _ -> UnknownOS
+
+-- | (OS, backend, propName) combinations that are known to diverge
+--   while a real fix is pending. The compile + run still happens — only
+--   the cross-backend equivalence assertion excludes the listed
+--   backend, so the property keeps providing signal on the unaffected
+--   backends. Removing the entry once the bug is fixed re-enables
+--   assertion automatically.
+--
+--   Current debt:
+--     LLVM and JVM diverge from CLR / WASM / JS on Windows for the four
+--     string-touching properties below. Fixes attempted via stdout
+--     code-page / charset settings did not help — root cause still
+--     under investigation.
+temporarilyBroken :: Set (OS, Backend, Text)
+temporarilyBroken =
+  Set.fromList
+    [ (Windows, LLVM, "concat-left-identity"),
+      (Windows, JVM, "concat-left-identity"),
+      (Windows, LLVM, "concat-right-identity"),
+      (Windows, JVM, "concat-right-identity"),
+      (Windows, LLVM, "concat-associative"),
+      (Windows, JVM, "concat-associative"),
+      (Windows, LLVM, "lengths-three-functions"),
+      (Windows, JVM, "lengths-three-functions")
+    ]
+
+isSkipped :: Text -> Backend -> Bool
+isSkipped propName backend =
+  Set.member (currentOS, backend, propName) temporarilyBroken
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Framework
@@ -74,26 +122,31 @@ runProperty artifacts p =
     let input = p.propEncode a
         expected = p.propExpectedOutput a
     results <- runOnAll artifacts input
+    let asserted = filter (\(b, _) -> not (isSkipped p.propName b)) results
     pure
-      $ counterexample (toString (formatFailure input expected results))
-      $ allMatch expected results
+      $ counterexample (toString (formatFailure p.propName input expected results))
+      $ allMatch expected asserted
 
 allMatch :: Text -> [(Backend, Either Text Text)] -> Bool
 allMatch expected = all $ \(_, r) -> case r of
   Right out -> out == expected
   Left _ -> False
 
-formatFailure :: Text -> Text -> [(Backend, Either Text Text)] -> Text
-formatFailure input expected results =
+formatFailure :: Text -> Text -> Text -> [(Backend, Either Text Text)] -> Text
+formatFailure propName input expected results =
   unlines
     $ ["input:    " <> show input, "expected: " <> show expected, "results:"]
-    <> ["  " <> show b <> ": " <> formatOne expected r | (b, r) <- results]
+    <> ["  " <> show b <> ": " <> formatOne b r | (b, r) <- results]
   where
-    formatOne :: Text -> Either Text Text -> Text
-    formatOne e (Right o)
-      | o == e = "OK"
+    formatOne :: Backend -> Either Text Text -> Text
+    formatOne b r
+      | isSkipped propName b = "[skipped on " <> show currentOS <> "] " <> formatRaw r
+      | otherwise = formatRaw r
+    formatRaw :: Either Text Text -> Text
+    formatRaw (Right o)
+      | o == expected = "OK"
       | otherwise = "GOT " <> show o
-    formatOne _ (Left e) = "ERROR " <> show e
+    formatRaw (Left e) = "ERROR " <> show e
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Generators
@@ -673,13 +726,13 @@ properties =
     SomeProperty parseUInt8ShowRoundtripProp,
     SomeProperty parseUInt32ShowRoundtripProp,
     -- ── String monoid + split ──
-    -- SomeProperty _concatLeftIdentityProp,
-    -- SomeProperty _concatRightIdentityProp,
-    -- SomeProperty _concatAssociativeProp,
+    SomeProperty concatLeftIdentityProp,
+    SomeProperty concatRightIdentityProp,
+    SomeProperty concatAssociativeProp,
     SomeProperty splitOnFirstRoundtripPositiveProp,
     SomeProperty splitOnFirstRoundtripNegativeProp,
     -- ── String length (three explicit functions) ──
-    -- SomeProperty _lengthsThreeFunctionsProp
+    SomeProperty lengthsThreeFunctionsProp,
     -- ── Boolean laws ──
     SomeProperty notInvolutiveProp,
     SomeProperty andCommutativeProp,
@@ -1150,8 +1203,8 @@ eqInt32ReflexiveProp =
 
 -- ── String monoid + split ──
 
-_concatLeftIdentityProp :: Property Utf16Str
-_concatLeftIdentityProp =
+concatLeftIdentityProp :: Property Utf16Str
+concatLeftIdentityProp =
   Property
     { propName = "concat-left-identity",
       propSourceDir = "concat-left-identity",
@@ -1160,8 +1213,8 @@ _concatLeftIdentityProp =
       propExpectedOutput = \(Utf16Str s) -> s
     }
 
-_concatRightIdentityProp :: Property Utf16Str
-_concatRightIdentityProp =
+concatRightIdentityProp :: Property Utf16Str
+concatRightIdentityProp =
   Property
     { propName = "concat-right-identity",
       propSourceDir = "concat-right-identity",
@@ -1170,8 +1223,8 @@ _concatRightIdentityProp =
       propExpectedOutput = \(Utf16Str s) -> s
     }
 
-_concatAssociativeProp :: Property Utf16TripleNoColon
-_concatAssociativeProp =
+concatAssociativeProp :: Property Utf16TripleNoColon
+concatAssociativeProp =
   Property
     { propName = "concat-associative",
       propSourceDir = "concat-associative",
@@ -1215,8 +1268,8 @@ splitOnFirstRoundtripNegativeProp =
 --   surrogate pairs, undercounts a 4-byte UTF-8 sequence, or treats
 --   the storage buffer as raw bytes would diverge from at least one
 --   peer and from the oracle.
-_lengthsThreeFunctionsProp :: Property Utf16Str
-_lengthsThreeFunctionsProp =
+lengthsThreeFunctionsProp :: Property Utf16Str
+lengthsThreeFunctionsProp =
   Property
     { propName = "lengths-three-functions",
       propSourceDir = "lengths-three-functions",
