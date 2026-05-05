@@ -40,8 +40,8 @@ dependencies:
   - relude # an alternative to Prelude
 
 ghc-options:
-  # Use up to 8 cores for compilation https://ghc.gitlab.haskell.org/ghc/doc/users_guide/using.html?highlight=j#ghc-flag--j[%E2%9F%A8n%E2%9F%A9]
-  - -j8
+  # Use up to 16 cores for compilation https://ghc.gitlab.haskell.org/ghc/doc/users_guide/using.html?highlight=j#ghc-flag--j[%E2%9F%A8n%E2%9F%A9]
+  - -j16
     # Set up rts options for GHC itself https://ghc.gitlab.haskell.org/ghc/doc/users_guide/runtime_control.html#setting-rts-options
   - +RTS -A32m -RTS
     # Optimization level:

@@ -37,6 +37,42 @@
 splitOnFirst : String -> String -> Maybe (Tuple2 String String)
 splitOnFirst = BuiltIn.splitOnFirst
 
+{- The string-length API is three explicit functions, not one `length`.
+   Each name spells out the unit it counts so the call site does not
+   have to remember which one is the default. There is no `length`
+   alias, by design — the choice of unit is meaningful, and a call site
+   that picks the wrong one (UTF-16 code units when it meant code
+   points, say) will silently produce wrong answers for any string
+   containing a surrogate pair. -}
+
+{- Number of Unicode code points (USVs) in the string. A supplementary-
+   plane character (e.g. an emoji like `🔥`, U+1F525) counts as 1, even
+   though it is two UTF-16 code units and four UTF-8 bytes wide. Useful
+   when reasoning about "characters" the way the user perceives them
+   for monospace text — though grapheme clusters (combining marks,
+   regional indicators, ZWJ sequences) are still wider concepts than
+   one code point. -}
+
+lengthCodePoints : String -> UInt32
+lengthCodePoints = BuiltIn.lengthCodePoints
+
+{- Number of UTF-16 code units in the string. A BMP character counts as
+   1; a supplementary character counts as 2 (high surrogate + low
+   surrogate). Equal to `String.length` on JVM/CLR/JS backends, where
+   strings are stored as UTF-16 natively. Useful when interfacing with
+   APIs whose offsets are UTF-16-indexed. -}
+
+lengthUtf16CodeUnits : String -> UInt32
+lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
+
+{- Number of bytes the string occupies when encoded as standard UTF-8
+   (RFC 3629). One byte per ASCII character, two for U+0080..U+07FF,
+   three for U+0800..U+FFFF, four for U+10000..U+10FFFF. Useful when
+   sizing a buffer for an API that takes UTF-8. -}
+
+lengthBytesAsUtf8 : String -> UInt32
+lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
+
 -- ---------------------- Unit
 
 {- Single-constructor type carrying no information. Useful as a
@@ -284,6 +320,60 @@ mulUInt8 = BuiltIn.mulUInt8
 
 parseUInt8 : String -> Either ParseError UInt8
 parseUInt8 = BuiltIn.parseUInt8
+
+-- ---------------------- UInt32
+
+{- Lower and upper bounds of `UInt32` (0..4294967295). Useful for
+   boundary checks without spelling out the literal at every call site. -}
+
+minUInt32 : UInt32
+minUInt32 = 0
+
+maxUInt32 : UInt32
+maxUInt32 = 4294967295
+
+eqUInt32 : UInt32 -> UInt32 -> Bool
+eqUInt32 = BuiltIn.eqUInt32
+
+showUInt32 : UInt32 -> String
+showUInt32 = BuiltIn.showUInt32
+
+predUInt32 : UInt32 -> Either UnderflowError UInt32
+predUInt32 = BuiltIn.predUInt32
+
+succUInt32 : UInt32 -> Either OverflowError UInt32
+succUInt32 = BuiltIn.succUInt32
+
+addUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
+addUInt32 = BuiltIn.addUInt32
+
+subUInt32 : UInt32 -> UInt32 -> Either UnderflowError UInt32
+subUInt32 = BuiltIn.subUInt32
+
+mulUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
+mulUInt32 = BuiltIn.mulUInt32
+
+{- Parse a `UInt32` from a decimal string. Same grammar as `parseUInt8`:
+   one or more decimal digits, no sign (UInt32 cannot represent a
+   negative number), no whitespace, no trailing characters. Range is
+   0..4294967295 inclusive.
+
+   Examples:
+   - `parseUInt32 "0"`           → `Right 0`
+   - `parseUInt32 "4294967295"`  → `Right 4294967295`
+   - `parseUInt32 "4294967296"`  → `Left ParseError`   (above max)
+   - `parseUInt32 "-1"`          → `Left ParseError`   (negative)
+   - `parseUInt32 ""`            → `Left ParseError`   (empty)
+   - `parseUInt32 "abc"`         → `Left ParseError`   (not digits)
+   - `parseUInt32 " 5"`          → `Left ParseError`   (whitespace)
+   - `parseUInt32 "12a"`         → `Left ParseError`   (trailing garbage)
+
+   Strings are byte sequences and digits are recognised as the seven-bit
+   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
+   rejected. -}
+
+parseUInt32 : String -> Either ParseError UInt32
+parseUInt32 = BuiltIn.parseUInt32
 
 -- ---------------------- Int32
 

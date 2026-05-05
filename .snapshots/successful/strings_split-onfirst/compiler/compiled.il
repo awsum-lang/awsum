@@ -42,7 +42,8 @@
     stloc.1
     ldloc.1
     ldloc.0
-    callvirt instance int32 [System.Runtime]System.String::IndexOf(string)
+    ldc.i4.4
+    callvirt instance int32 [System.Runtime]System.String::IndexOf(string, valuetype [System.Runtime]System.StringComparison)
     stloc.2
     ldloc.2
     ldc.i4.m1
@@ -1210,6 +1211,8 @@
   {
     .entrypoint
     .locals init (object input)
+    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
+    call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
     ldarg.0
     ldlen
     conv.i4

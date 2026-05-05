@@ -33,9 +33,9 @@ import Relude
 
 -- | Concrete built-in integer type. One constructor per shipped type so
 --   every pattern match is exhaustive — adding a future variant (Int64,
---   UInt32, …) forces every backend and codegen site to handle it rather
+--   …) forces every backend and codegen site to handle it rather
 --   than silently falling through an @_ -> error@ catch-all.
-data IntType = TInt32 | TUInt8
+data IntType = TInt32 | TUInt8 | TUInt32
   deriving stock (Show, Eq, Ord)
 
 -- | True iff the type's value space is signed. Keeps the old (signed, width)
@@ -45,19 +45,22 @@ intSigned :: IntType -> Bool
 intSigned = \case
   TInt32 -> True
   TUInt8 -> False
+  TUInt32 -> False
 
--- | Bit width of the type's runtime representation (32 for 'TInt32',
---   8 for 'TUInt8').
+-- | Bit width of the type's runtime representation (32 for 'TInt32' /
+--   'TUInt32', 8 for 'TUInt8').
 intWidth :: IntType -> Int
 intWidth = \case
   TInt32 -> 32
   TUInt8 -> 8
+  TUInt32 -> 32
 
--- | Canonical surface name of an 'IntType' (e.g. @Int32@, @UInt8@).
+-- | Canonical surface name of an 'IntType' (e.g. @Int32@, @UInt8@, @UInt32@).
 intTypeName :: IntType -> Name
 intTypeName = \case
   TInt32 -> "Int32"
   TUInt8 -> "UInt8"
+  TUInt32 -> "UInt32"
 
 -- | Core expressions.
 data CExpr

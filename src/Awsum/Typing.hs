@@ -506,6 +506,7 @@ intTypeRange :: Name -> Maybe (Integer, Integer)
 intTypeRange = \case
   "Int32" -> Just (-2147483648, 2147483647)
   "UInt8" -> Just (0, 255)
+  "UInt32" -> Just (0, 4294967295)
   _ -> Nothing
 
 -- | Typing environment: maps fully-qualified names to types.
@@ -568,6 +569,7 @@ wellFormedTypeWith userTypes = \case
   TyCon _ "IO" -> Right ()
   TyCon _ "Int32" -> Right ()
   TyCon _ "UInt8" -> Right ()
+  TyCon _ "UInt32" -> Right ()
   TyCon sp n
     | S.member n userTypes -> Right ()
     | otherwise -> Left (UnknownTypeCon sp n)
@@ -876,18 +878,28 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
   -- If the module has no 'main', we skip this analysis: every top-level
   -- is a potential entry point for a library consumer and we can't tell
   -- from this file alone which are live.
+  -- Reachability roots are 'main' plus every '_'-prefixed top-level: a
+  -- '_name' definition is the user's explicit "keep this around even
+  -- though nothing currently calls it" mark, and references it makes
+  -- to other top-levels are real uses — without this, helpers used
+  -- solely from a '_'-prefixed def would be reported as unused even
+  -- though deleting them would break the kept def.
   let callGraph = M.fromList [(n, freeNames body) | (_sp, n, _args, body) <- defsList]
       topLevelWarnings = case M.lookup "main" sigEnv of
         Nothing -> []
         Just _ ->
-          let reachableFromMain = reachable "main" callGraph
+          let underscoreRoots =
+                [n | (_sp, n, _args, _body) <- defsList, "_" `T.isPrefixOf` n]
+              roots = "main" : underscoreRoots
+              reachableFromRoots =
+                S.unions [reachable r callGraph | r <- roots]
               unusedSet =
                 S.fromList
                   [ n
                   | (_sp, n, _args, _body) <- defsList,
                     n /= "main",
                     not ("_" `T.isPrefixOf` n),
-                    not (S.member n reachableFromMain)
+                    not (S.member n reachableFromRoots)
                   ]
               sourceSccMembers = sourceSccs callGraph unusedSet
               defSpanByName = M.fromList [(n, sp) | (sp, n, _args, _body) <- defsList]
@@ -1695,9 +1707,15 @@ checkPatternColumnCovers sp conEnv tcm ty pats
               -- 'isConInhabited' filter on missing constructors and
               -- for substituting the present constructor's field
               -- types when we recurse.
+              -- Freshening suffix must be '"$scrut"' so the keys line
+              -- up with the '"$scrut"'-freshened field types inside
+              -- 'isConInhabited' (and the recursive
+              -- 'checkPatternColumnCovers' below). With a different
+              -- suffix the substitution silently no-ops and uninhabited
+              -- siblings get reported as missing.
               tySubst =
                 let genericRetTy = conReturnType tyName (ciTypeParams ci)
-                    freshGenericRetTy = freshenType "$exh" genericRetTy
+                    freshGenericRetTy = freshenType "$scrut" genericRetTy
                  in fromRight mempty (unify freshGenericRetTy ty)
               inhabitedMissing =
                 filter (isConInhabited conEnv tcm S.empty tySubst) missingCons
@@ -1711,7 +1729,7 @@ checkPatternColumnCovers sp conEnv tcm ty pats
           forM_ (M.toList perCon) $ \(cName, armsFields) ->
             case M.lookup cName conEnv of
               Just ci' | not (null (ciFieldTypes ci')) -> do
-                let freshFieldTys = map (freshenType "$exh") (ciFieldTypes ci')
+                let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci')
                     fieldTys = map (applySubst tySubst) freshFieldTys
                     columns = transpose armsFields
                 zipWithM_ (checkPatternColumnCovers sp conEnv tcm) fieldTys columns

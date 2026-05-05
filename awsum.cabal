@@ -60,7 +60,7 @@ library
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j8 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists
   build-depends:
       base >=4.7 && <5
     , bytestring
@@ -84,7 +84,7 @@ executable awsum
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j8 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       awsum
     , base >=4.7 && <5
@@ -118,7 +118,7 @@ test-suite awsum-test
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j8 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , async

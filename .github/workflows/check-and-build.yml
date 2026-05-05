@@ -135,19 +135,16 @@ jobs:
             *) echo "ERROR: clang is not LLVM 15.x"; exit 1 ;;
           esac
 
-      # Pin Java to 8 — lowest JVM still installable across our four runners.
-      # README ▸ Targets documents "Java 7+" as the minimum; the assembler
-      # (awsum/CLAUDE.md ▸ "Class file version") emits 51.0 to stay compatible
-      # with Android's dex input requirement. Java 7 itself is no longer
-      # available via actions/setup-java on macOS ARM64, so 8 is the realistic
-      # floor — still an old-enough JVM to catch anything that would break on
-      # pre-9 runtimes, without going through Rosetta hacks. Zulu because
-      # Temurin has no native macOS-ARM64 build of 8.
+      # Pin Java to 11 — the documented JVM target floor (see
+      # docs/platform-version-policy.md). The assembler emits class
+      # version 55.0 (Java 11); JDK 11 understands it natively, and on
+      # any JDK ≥ 11 the same .class loads. Zulu distribution kept for
+      # consistency across the four runners.
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: "zulu"
-          java-version: "8"
+          java-version: "11"
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v5

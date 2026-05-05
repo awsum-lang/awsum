@@ -42,13 +42,19 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "predUInt8" builtIns) predUInt8Method,
             "",
+            gate (Set.member "predUInt32" builtIns) predUInt32Method,
+            "",
             gate (Set.member "succInt32" builtIns) succInt32Method,
             "",
             gate (Set.member "succUInt8" builtIns) succUInt8Method,
             "",
+            gate (Set.member "succUInt32" builtIns) succUInt32Method,
+            "",
             gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "IL_eq_i32"),
             "",
             gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "IL_eq_u8"),
+            "",
+            gate (Set.member "eqUInt32" builtIns) (eqMethod "__eqUInt32" "IL_eq_u32"),
             "",
             gate (Set.member "addInt32" builtIns) addInt32Method,
             "",
@@ -64,11 +70,24 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "mulUInt8" builtIns) mulUInt8Method,
             "",
+            gate (Set.member "addUInt32" builtIns) addUInt32Method,
+            "",
+            gate (Set.member "subUInt32" builtIns) subUInt32Method,
+            "",
+            gate (Set.member "mulUInt32" builtIns) mulUInt32Method,
+            "",
+            gate (Set.member "showUInt32" builtIns) showUInt32Method,
+            "",
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            gate (Set.member "lengthCodePoints" builtIns) lengthCodePointsMethod,
+            gate (Set.member "lengthUtf16CodeUnits" builtIns) lengthUtf16CodeUnitsMethod,
+            gate (Set.member "lengthBytesAsUtf8" builtIns) lengthBytesAsUtf8Method,
             "",
             gate (Set.member "parseInt32" builtIns) parseInt32Method,
             "",
             gate (Set.member "parseUInt8" builtIns) parseUInt8Method,
+            "",
+            gate (Set.member "parseUInt32" builtIns) parseUInt32Method,
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
@@ -915,6 +934,415 @@ mulUInt8Method =
       "  }"
     ]
 
+-- showUInt32: UInt32 -> String. The Awsum literal lowers to a boxed
+--   System.Int32 (same as Int32 / UInt8). Re-box as System.UInt32 (bit
+--   pattern preserved) and call the virtual ToString() — UInt32's
+--   override prints unsigned-decimal, so values 2^31..2^32-1 don't
+--   render as negative.
+showUInt32Method :: Text
+showUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __showUInt32(object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    box [System.Runtime]System.UInt32",
+      "    callvirt instance string [System.Runtime]System.Object::ToString()",
+      "    ret",
+      "  }"
+    ]
+
+-- predUInt32: UInt32 -> Either UnderflowError UInt32. The boundary
+--   check is also against 0 (same as predUInt8), so the body is
+--   structurally identical to 'predUInt8Method' — only the labels
+--   differ. (v - 1) wraps modulo 2^32 in i32, but on the ok path
+--   v >= 1 so the result is in [0, 2^32-2], no wrap.
+predUInt32Method :: Text
+predUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __predUInt32(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4.0",
+      "    bne.un.s IL_predu32_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_predu32_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldc.i4.1",
+      "    sub",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
+--   encoded as 'ldc.i4.m1' (= -1, identical bit pattern when interpreted
+--   as u32). On the ok path v + 1 wraps in i32, but since v != -1 the
+--   result is in [1, 2^32-1] — no wrap.
+succUInt32Method :: Text
+succUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __succUInt32(object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int32 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i4.m1",
+      "    bne.un.s IL_succu32_ok",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  IL_succu32_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldc.i4.1",
+      "    add",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
+--   both operands to uint64 (`conv.u8` zero-extends a u32 bit pattern),
+--   add, compare against 4294967295 with `bgt.un` (unsigned greater).
+--   The sum lives in [0, 2*2^32-2] so the i64 add doesn't itself
+--   overflow.
+addUInt32Method :: Text
+addUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __addUInt32(object, object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int64 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    conv.u8",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    conv.u8",
+      "    add",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i8 4294967295",
+      "    bgt.un.s IL_addu32_over",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    conv.u4",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_addu32_over:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
+--   `a < b` with `blt.un.s` — unsigned less-than on i32 stack values
+--   uses the bit pattern as u32. On the ok path 'sub' at i32 gives the
+--   correct u32 difference (bit pattern of a - b mod 2^32 equals a - b
+--   when a >= b unsigned).
+subUInt32Method :: Text
+subUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __subUInt32(object, object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (int32 V_0, int32 V_1, object V_2)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.0",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    stloc.1",
+      "    ldloc.0",
+      "    ldloc.1",
+      "    blt.un.s IL_subu32_under",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    ldloc.1",
+      "    sub",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_subu32_under:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.2",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.2",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
+--   both operands to uint64 via 'conv.u8', multiply at int64 stack
+--   width (the bit pattern of the result is the low 64 bits of the
+--   true u32*u32 product, which fits exactly in u64). Compare against
+--   4294967295 with 'bgt.un'.
+mulUInt32Method :: Text
+mulUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __mulUInt32(object, object) cil managed",
+      "  {",
+      "    .maxstack 5",
+      "    .locals init (int64 V_0, object V_1)",
+      "    ldarg.0",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    conv.u8",
+      "    ldarg.1",
+      "    unbox.any [System.Runtime]System.Int32",
+      "    conv.u8",
+      "    mul",
+      "    stloc.0",
+      "    ldloc.0",
+      "    ldc.i8 4294967295",
+      "    bgt.un.s IL_mulu32_over",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    conv.u4",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_mulu32_over:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.1",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.1",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
+-- parseUInt32: String -> Either ParseError UInt32. Same shape as
+--   'parseUInt8Method' minus the > 255 cap, with an int64 accumulator
+--   and a > 4294967295 cap (max running magnitude is
+--   4294967295 * 10 + 9 = 42949672959, fits in i64 signed).
+parseUInt32Method :: Text
+parseUInt32Method =
+  unlines
+    [ "  .method private hidebysig static object __parseUInt32(object) cil managed",
+      "  {",
+      "    .maxstack 4",
+      "    .locals init (string V_0, int32 V_1, int32 V_2, int64 V_3, int32 V_4, object V_5)",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    stloc.0",
+      "    ldloc.0",
+      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+      "    stloc.1",
+      "    ldloc.1",
+      "    brfalse IL_parseUInt32_fail",
+      "    ldc.i4.0",
+      "    stloc.2",
+      "    ldc.i4.0",
+      "    conv.i8",
+      "    stloc.3",
+      "  IL_parseUInt32_loop:",
+      "    ldloc.2",
+      "    ldloc.1",
+      "    bge IL_parseUInt32_ok",
+      "    ldloc.0",
+      "    ldloc.2",
+      "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
+      "    stloc.s 4",
+      "    ldloc.s 4",
+      "    ldc.i4.s 48",
+      "    blt IL_parseUInt32_fail",
+      "    ldloc.s 4",
+      "    ldc.i4.s 57",
+      "    bgt IL_parseUInt32_fail",
+      "    ldloc.3",
+      "    ldc.i4.s 10",
+      "    conv.i8",
+      "    mul",
+      "    ldloc.s 4",
+      "    ldc.i4.s 48",
+      "    sub",
+      "    conv.i8",
+      "    add",
+      "    stloc.3",
+      "    ldloc.3",
+      "    ldc.i8 4294967295",
+      "    bgt IL_parseUInt32_fail",
+      "    ldloc.2",
+      "    ldc.i4.1",
+      "    add",
+      "    stloc.2",
+      "    br IL_parseUInt32_loop",
+      "  IL_parseUInt32_ok:",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.3",
+      "    conv.u4",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    ret",
+      "  IL_parseUInt32_fail:",
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.s 5",
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.s 5",
+      "    stelem.ref",
+      "    ret",
+      "  }"
+    ]
+
 -- parseInt32: String -> Either ParseError Int32. Handrolled decimal
 --   parser; same shape as the LLVM and JVM helpers — long accumulator
 --   capped at the magnitude `|minInt32|`. Constant `2147483648L` is
@@ -1133,12 +1561,17 @@ parseUInt8Method =
     ]
 
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
---   Defers substring search to 'String.IndexOf(string)' which returns
---   -1 on miss and 0 on empty 'sep' — both behaviours match the
---   prelude contract directly. On hit, 'String.Substring' allocates
---   fresh strings (CLR strings are immutable; substrings are owning
---   copies, not aliases). Containers: Maybe Nothing=0, Just=1; Tuple2
---   has one constructor (tag 0).
+--   Defers substring search to 'String.IndexOf(string, Ordinal)' —
+--   culture-sensitive (the no-StringComparison overload's default) goes
+--   through ICU's UCA on .NET-on-Unix and silently misses substrings
+--   that *are* physically present when the haystack contains
+--   supplementary-plane code points. Ordinal compares UTF-16 code units
+--   directly, matching what every other backend does (byte/code-unit
+--   scan) — so cross-backend equivalence holds. Returns -1 on miss and
+--   0 on empty 'sep'; both match the prelude contract directly. On hit,
+--   'String.Substring' allocates fresh strings (CLR strings are
+--   immutable; substrings are owning copies, not aliases). Containers:
+--   Maybe Nothing=0, Just=1; Tuple2 has one constructor (tag 0).
 splitOnFirstMethod :: Text
 splitOnFirstMethod =
   unlines
@@ -1154,7 +1587,8 @@ splitOnFirstMethod =
       "    stloc.1",
       "    ldloc.1",
       "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string)",
+      "    ldc.i4.4",
+      "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string, valuetype [System.Runtime]System.StringComparison)",
       "    stloc.2",
       "    ldloc.2",
       "    ldc.i4.m1",
@@ -1211,6 +1645,64 @@ splitOnFirstMethod =
       "  }"
     ]
 
+-- lengthCodePoints: String -> UInt32. UTF-32 byte count divided by 4
+--   gives the code-point count exactly — every Unicode scalar is one
+--   four-byte UTF-32 unit, surrogate pairs collapse to a single unit.
+--   Cleaner than walking the string and pairing surrogates by hand.
+lengthCodePointsMethod :: Text
+lengthCodePointsMethod =
+  unlines
+    [ "  .method private hidebysig static object __lengthCodePoints(object) cil managed",
+      "  {",
+      "    .maxstack 3",
+      "    .locals init (string V_0)",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    stloc.0",
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF32()",
+      "    ldloc.0",
+      "    callvirt instance int32 [System.Runtime]System.Text.Encoding::GetByteCount(string)",
+      "    ldc.i4.4",
+      "    div",
+      "    box [System.Runtime]System.Int32",
+      "    ret",
+      "  }"
+    ]
+
+-- lengthUtf16CodeUnits: String -> UInt32. .NET strings are UTF-16
+--   internally so 'String.Length' is the code-unit count by definition.
+lengthUtf16CodeUnitsMethod :: Text
+lengthUtf16CodeUnitsMethod =
+  unlines
+    [ "  .method private hidebysig static object __lengthUtf16CodeUnits(object) cil managed",
+      "  {",
+      "    .maxstack 1",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+      "    box [System.Runtime]System.Int32",
+      "    ret",
+      "  }"
+    ]
+
+-- lengthBytesAsUtf8: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
+--   returns the standard UTF-8 byte count without materialising the
+--   bytes themselves.
+lengthBytesAsUtf8Method :: Text
+lengthBytesAsUtf8Method =
+  unlines
+    [ "  .method private hidebysig static object __lengthBytesAsUtf8(object) cil managed",
+      "  {",
+      "    .maxstack 2",
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    callvirt instance int32 [System.Runtime]System.Text.Encoding::GetByteCount(string)",
+      "    box [System.Runtime]System.Int32",
+      "    ret",
+      "  }"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -1218,6 +1710,14 @@ mainMethod =
       "  {",
       "    .entrypoint",
       "    .locals init (object input)",
+      -- Force stdout to UTF-8 before any user code runs. On Windows with a
+      -- piped or redirected stdout, the default 'Console.OutputEncoding'
+      -- falls back to the system ANSI code page, which encodes each UTF-16
+      -- code unit individually — supplementary code points then collapse to
+      -- "??" because their two surrogate units each become a separate '?'.
+      -- Setting UTF-8 keeps the byte stream identical to the other backends.
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
+      "    call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)",
       "    ldarg.0",
       "    ldlen",
       "    conv.i4",
@@ -1412,6 +1912,13 @@ emitExprText ctx varMap = \case
               [ emitExprText ctx varMap x,
                 "    callvirt instance string [System.Runtime]System.Object::ToString()"
               ]
+      CBuiltIn "showUInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__showUInt32(object)"
+              ]
       CBuiltIn "predInt32"
         | [x] <- xs ->
             T.intercalate
@@ -1425,6 +1932,13 @@ emitExprText ctx varMap = \case
               "\n"
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__predUInt8(object)"
+              ]
+      CBuiltIn "predUInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__predUInt32(object)"
               ]
       CBuiltIn "succInt32"
         | [x] <- xs ->
@@ -1440,10 +1954,20 @@ emitExprText ctx varMap = \case
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__succUInt8(object)"
               ]
+      CBuiltIn "succUInt32"
+        | [x] <- xs ->
+            T.intercalate
+              "\n"
+              [ emitExprText ctx varMap x,
+                "    call object AwsumMain::__succUInt32(object)"
+              ]
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8",
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
           [a, b] <- xs ->
-            let fn = if name == "eqInt32" then "__eqInt32" else "__eqUInt8"
+            let fn = case name of
+                  "eqInt32" -> "__eqInt32"
+                  "eqUInt8" -> "__eqUInt8"
+                  _ -> "__eqUInt32"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap a,
@@ -1451,14 +1975,17 @@ emitExprText ctx varMap = \case
                     "    call object AwsumMain::" <> fn <> "(object, object)"
                   ]
       CBuiltIn name
-        | name == "addInt32" || name == "addUInt8" || name == "subInt32" || name == "subUInt8" || name == "mulUInt8" || name == "mulInt32",
+        | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
           [a, b] <- xs ->
             let fn = case name of
                   "addInt32" -> "__addInt32"
                   "addUInt8" -> "__addUInt8"
+                  "addUInt32" -> "__addUInt32"
                   "subInt32" -> "__subInt32"
                   "subUInt8" -> "__subUInt8"
+                  "subUInt32" -> "__subUInt32"
                   "mulInt32" -> "__mulInt32"
+                  "mulUInt32" -> "__mulUInt32"
                   _ -> "__mulUInt8"
              in T.intercalate
                   "\n"
@@ -1490,9 +2017,24 @@ emitExprText ctx varMap = \case
                 "    call object AwsumMain::__splitOnFirst(object, object)"
               ]
       CBuiltIn name
-        | name == "parseInt32" || name == "parseUInt8",
+        | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32",
           [x] <- xs ->
-            let fn = if name == "parseInt32" then "__parseInt32" else "__parseUInt8"
+            let fn = case name of
+                  "parseInt32" -> "__parseInt32"
+                  "parseUInt32" -> "__parseUInt32"
+                  _ -> "__parseUInt8"
+             in T.intercalate
+                  "\n"
+                  [ emitExprText ctx varMap x,
+                    "    call object AwsumMain::" <> fn <> "(object)"
+                  ]
+      CBuiltIn name
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+          [x] <- xs ->
+            let fn = case name of
+                  "lengthCodePoints" -> "__lengthCodePoints"
+                  "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
+                  _ -> "__lengthBytesAsUtf8"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap x,

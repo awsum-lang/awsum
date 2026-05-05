@@ -1,0 +1,40 @@
+-- Property: `addUInt32 (addUInt32 a b) c == addUInt32 a (addUInt32 b c)`
+-- whenever every intermediate sum stays in range. Input format:
+-- "a:b:c". The Haskell-side generator picks triples constructively
+-- from the no-overflow region, so OVERFLOW is never expected to
+-- fire on a well-formed input.
+import IO.Stdout
+
+parseInput : String -> Either ParseError (Tuple3 UInt32 UInt32 UInt32)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 aStr rest) -> case splitOnFirst ":" rest of
+    Nothing -> Left ParseError
+    Just (Tuple2 bStr cStr) -> do
+      a <- parseUInt32 aStr
+      b <- parseUInt32 bStr
+      c <- parseUInt32 cStr
+      pureEither (Tuple3 a b c)
+
+property : UInt32 -> UInt32 -> UInt32 -> Either OverflowError Bool
+property a b c = do
+  ab <- addUInt32 a b
+  abc <- addUInt32 ab c
+  bc <- addUInt32 b c
+  aBc <- addUInt32 a bc
+  pureEither (eqUInt32 abc aBc)
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = do
+        raw <- rawArg
+        Tuple3 a b c <- parseInput raw
+        property a b c
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

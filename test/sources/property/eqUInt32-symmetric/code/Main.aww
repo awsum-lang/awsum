@@ -1,0 +1,34 @@
+-- Property: `eqUInt32 a b == eqUInt32 b a` for any (a, b). Both sides
+-- must agree, even when `a /= b`. Input format: "a:b". The property
+-- has no failable inner ops, so the only error path is a parse
+-- failure.
+import IO.Stdout
+
+parseInput : String -> Either ParseError (Tuple2 UInt32 UInt32)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 aStr bStr) -> do
+    a <- parseUInt32 aStr
+    b <- parseUInt32 bStr
+    pureEither (Tuple2 a b)
+
+property : UInt32 -> UInt32 -> Bool
+property a b = case eqUInt32 a b of
+  True -> eqUInt32 b a
+  False -> case eqUInt32 b a of
+    True -> False
+    False -> True
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
+        raw <- rawArg
+        Tuple2 a b <- parseInput raw
+        pureEither (property a b)
+   in case res of
+        Left e -> case e of
+          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"

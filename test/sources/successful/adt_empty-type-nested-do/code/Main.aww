@@ -1,0 +1,19 @@
+{- Uninhabited type detected through deep nesting. -}
+import IO.Stdout
+
+type Never
+
+type Box a = Box a
+
+type Result a e = Ok a | Err e
+
+result : Result String (Box (Box (Box Never)))
+result = Ok "hello"
+
+_expr : Either Unit String
+_expr = do
+  Ok str <- Right (result)
+  pureEither str
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main _input = IO.Stdout.print "ok"

@@ -1,0 +1,174 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Prints a string literal containing a supplementary-plane code point
+               (U+1F525, 🔥) — one Unicode scalar, two UTF-16 code units, four UTF-8
+               bytes. The input arrives via 'main' but is ignored; only the literal
+               is sent to stdout.
+
+               This isolates the stdout-encoding path from the argv-decoding path:
+               a backend whose stdout layer mishandles supplementary characters
+               (e.g. routing through the host's ANSI code page on Windows) will
+               diverge from the others, while a backend whose argv decoder is
+               broken — but whose stdout is fine — will still match. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 13
+            , spanStartCol = 1
+            , spanEndLine = 13
+            , spanEndCol = 73
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 13
+                , spanStartCol = 8
+                , spanEndLine = 13
+                , spanEndCol = 73
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 8
+                    , spanEndLine = 13
+                    , spanEndCol = 62
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 8
+                        , spanEndLine = 13
+                        , spanEndCol = 56
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 8
+                            , spanEndLine = 13
+                            , spanEndCol = 14
+                            }
+                        ) "Either"
+                    )
+                    ( TyOr
+                        ( SrcSpan
+                            { spanStartLine = 13
+                            , spanStartCol = 15
+                            , spanEndLine = 13
+                            , spanEndCol = 56
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 16
+                                , spanEndLine = 13
+                                , spanEndCol = 29
+                                }
+                            ) "StringTooLong"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 13
+                                , spanStartCol = 32
+                                , spanEndLine = 13
+                                , spanEndCol = 54
+                                }
+                            ) "UnpairedUtf16Surrogate"
+                        )
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 56
+                        , spanEndLine = 13
+                        , spanEndCol = 62
+                        }
+                    ) "String"
+                )
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 13
+                    , spanStartCol = 66
+                    , spanEndLine = 13
+                    , spanEndCol = 73
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 66
+                        , spanEndLine = 13
+                        , spanEndCol = 68
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 13
+                        , spanStartCol = 69
+                        , spanEndLine = 13
+                        , spanEndCol = 73
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 14
+                , spanStartCol = 1
+                , spanEndLine = 14
+                , spanEndCol = 35
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 6
+                    , spanEndLine = 14
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 15
+                    , spanEndLine = 14
+                    , spanEndCol = 35
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 15
+                        , spanEndLine = 14
+                        , spanEndCol = 31
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 31
+                        , spanEndLine = 14
+                        , spanEndCol = 35
+                        }
+                    )
+                    ( LString "🔥" )
+                )
+            ) Nothing
+        ]
+    }
