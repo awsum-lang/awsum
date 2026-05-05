@@ -1,24 +1,21 @@
 -- | Self tail-call optimisation pass.
 --
--- Rewrites every self-recursive call that sits in the tail position of a
--- 'CFunDef' body into a 'CContinue', and wraps the body in a 'CLoop'. The
--- transformation is Core-to-Core: the result is still a valid 'CoreProgram'
--- and every existing invariant holds.
+-- Rewrites every self-recursive call in tail position into a
+-- 'CContinue' and wraps the body in a 'CLoop'.
 --
--- Tail positions, by construction:
+-- Tail positions:
 --
 --   * The body of a 'CFunDef'.
---   * Each arm's body of a 'CCase' that is itself in tail position.
+--   * Each arm's body of a 'CCase' in tail position.
 --
--- Everything else — call arguments, 'CCon' fields, the scrutinee of a
--- 'CCase' — is not a tail position, so self-recursive calls there are
--- preserved as ordinary 'CCall's. Non-self-recursive tail calls are also
--- preserved: mutual recursion is a separate transformation (SCC
--- defunctionalization), out of scope for this pass.
+-- Everything else — call arguments, 'CCon' fields, 'CCase' scrutinees —
+-- is non-tail, so self-recursive calls there stay as ordinary 'CCall's.
+-- Non-self-recursive tail calls are also preserved: mutual recursion is
+-- handled by 'Awsum.Scc'.
 --
--- The pass is a no-op on functions with no self-tail-call: the wrapping
--- 'CLoop' is only introduced when the body actually changed, so Core
--- snapshots for non-tail-recursive functions are unaffected.
+-- No-op on functions with no self-tail-call: the 'CLoop' wrapper is
+-- only introduced when the body actually changed, keeping Core
+-- snapshots stable for non-tail-recursive code.
 module Awsum.Tco (tcoProgram, untcoProgram) where
 
 import Awsum.Core
@@ -57,11 +54,11 @@ rewriteTail fn = go
          in (CRowCase scrut alts', anyChanged)
       other -> (other, False)
 
--- | Inverse of 'tcoProgram': rewrites every 'CLoop' wrapper away and
--- turns 'CContinue' back into a self-recursive 'CCall'. Used by backends
--- that have not yet learned to emit real loop-and-jump code: they still
--- receive correct (if stack-non-safe) semantics while newer backends
--- skip this step and lower 'CLoop' / 'CContinue' natively.
+-- | Inverse of 'tcoProgram': strips every 'CLoop' wrapper and turns
+-- 'CContinue' back into a self-recursive 'CCall'. Used by backends
+-- that haven't yet learned to emit real loop-and-jump — they get
+-- correct (if stack-unsafe) semantics; newer backends skip this and
+-- lower 'CLoop' / 'CContinue' natively.
 untcoProgram :: CoreProgram -> CoreProgram
 untcoProgram (CoreProgram ds) = CoreProgram (map untcoDecl ds)
 
@@ -70,9 +67,8 @@ untcoDecl = \case
   CValDef n e -> CValDef n (stripLoop n e)
   CFunDef n ps body -> CFunDef n ps (stripLoop n body)
   where
-    -- Top-level: strip the outer 'CLoop' wrapper and rewrite inner
-    -- 'CContinue's into self-calls. No-op when the body doesn't start
-    -- with 'CLoop' (non-tail-recursive functions).
+    -- Strip the outer 'CLoop' and rewrite inner 'CContinue's into
+    -- self-calls. No-op when the body doesn't start with 'CLoop'.
     stripLoop :: Name -> CExpr -> CExpr
     stripLoop fn = \case
       CLoop b -> unwind fn b

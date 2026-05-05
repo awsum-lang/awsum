@@ -1,71 +1,62 @@
 -- | Defunctionalisation pass.
 --
--- Eliminates first-class function values from the Core program by
--- specialising every higher-order-function call site for the closure
--- statically flowing into it. After this pass no 'CCall' has a
--- function-typed argument and no 'CVar' resolves to a function value
--- at runtime — the language is fully first-order, which is what every
--- backend already handles natively.
+-- Eliminates first-class function values by specialising every
+-- higher-order-function call site for the closure statically flowing
+-- into it. After this pass no 'CCall' has a function-typed argument
+-- and no 'CVar' resolves to a function value — the program is
+-- first-order, the form every backend natively handles.
 --
 -- ## What is a closure?
 --
 -- After 'liftLambda' in 'Awsum.ElaborateLower' has lifted every
 -- surface 'ELam' to a top-level helper, a function-typed expression
--- in Core can have only one of three shapes:
+-- in Core has one of three shapes:
 --
---   * @CVar f@ where @f@ is a top-level 'CFunDef' name — bare
---     reference, no captures.
---   * @CCall (CVar f) [a_0 .. a_{k-1}]@ where @f@ is a top-level
---     'CFunDef' of arity @n@ and @k < n@ — partial application
---     bound to the first @k@ formal arguments. The captured exprs
---     @[a_0 .. a_{k-1}]@ are evaluated at the construction site.
+--   * @CVar f@ where @f@ is a top-level 'CFunDef' — bare reference,
+--     no captures.
+--   * @CCall (CVar f) [a_0 .. a_{k-1}]@ where @f@ has arity @n@ and
+--     @k < n@ — partial application bound to the first @k@
+--     parameters. Capture exprs are evaluated at the construction site.
 --   * @CVar p@ where @p@ is a function-typed parameter of an
 --     enclosing function — a "pass-through" closure whose semantics
 --     come from the surrounding specialisation context.
 --
 -- ## Specialisation
 --
--- For each call site @f x_0 ... x_{n-1}@ whose statically-known
--- callee @f@ is a top-level function with one or more
--- function-typed parameters, we generate a specialised copy of @f@:
+-- For each call site @f x_0 ... x_{n-1}@ whose callee @f@ is a
+-- top-level function with one or more function-typed parameters, we
+-- generate a specialised copy of @f@:
 --
---   * Each function-typed parameter slot is /removed/ from the
---     specialised function's parameter list.
---   * The captures of the closure flowing into each removed slot
---     are /appended/ to the parameter list (so they flow as
---     ordinary first-order values at call time).
---   * Inside the specialised body, every @CCall (CVar p) args@
---     where @p@ was a function-typed parameter is rewritten as
---     @CCall (CVar helper) (captures ++ args)@. Sub-calls that
---     pass @p@ along (pass-through HOFs like
---     @applyTwice f x = applyOnce f (applyOnce f x)@) trigger
---     recursive specialisations that share the same memoised name.
+--   * Each function-typed parameter slot is /removed/.
+--   * The closure's captures are /appended/ to the parameter list
+--     (so they flow as ordinary first-order values).
+--   * Inside the body, every @CCall (CVar p) args@ where @p@ was a
+--     function-typed parameter is rewritten as
+--     @CCall (CVar helper) (captures ++ args)@. Pass-through HOFs
+--     (@applyTwice f x = applyOnce f (applyOnce f x)@) trigger
+--     recursive specialisations sharing the same memoised name.
 --
--- Specialisations are memoised by structural shape — @(HOF, [(slot,
--- helper, capture-count)])@ — so different call sites with
--- structurally identical closures share the same specialised
--- function; only the runtime values flowing through the capture
--- parameters differ. Specialisations of self-recursive HOFs are
--- safe because the memo entry is recorded /before/ the body is
--- walked, so the recursive call resolves to the in-flight name.
+-- Specialisations are memoised by structural shape —
+-- @(HOF, [(slot, helper, capture-count)])@ — so call sites with
+-- structurally identical closures share one specialised function;
+-- only the runtime values in the capture parameters differ.
+-- Self-recursive HOFs are safe because the memo entry is recorded
+-- /before/ the body is walked, so the recursive call resolves to the
+-- in-flight name.
 --
--- ## What this pass does NOT handle (current limits)
+-- ## Not handled today
 --
 --   * Function values stored in constructor fields (@type FnBox =
---     FnBox (Int32 -> Int32)@). Detected via 'asClosure' returning
---     'Nothing' on a 'CCon' field; nothing breaks, but a HOF that
---     consumes such a value would still attempt a first-class
---     application on the back end. Keep in mind for future work.
---   * Function values returned from a HOF (e.g.
---     @makeAdder : Int32 -> (Int32 -> Int32)@). Currently rejected
---     downstream — not exercised by any test fixture today.
+--     FnBox (Int32 -> Int32)@). 'asClosure' returns 'Nothing' on
+--     such a 'CCon' field; nothing breaks here, but a HOF consuming
+--     the value would attempt a first-class application downstream.
+--   * Function values returned from a HOF (@makeAdder : Int32 ->
+--     (Int32 -> Int32)@). Rejected downstream; no test fixture today.
 --
 -- ## Pipeline position
 --
--- Inserted between the post-lowering tree-shake and 'saturateProgram'.
--- Re-running tree-shake afterwards drops the now-unreachable original
--- HOFs (every reachable call site has been replaced by a call to a
--- specialisation).
+-- Between the post-lowering tree-shake and 'saturateProgram'. Tree-shake
+-- re-runs afterwards to drop the now-unreachable original HOFs.
 module Awsum.Defunctionalize (defunctionalizeProgram) where
 
 import Awsum.Core

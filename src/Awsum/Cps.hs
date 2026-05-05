@@ -1,14 +1,13 @@
 -- | CPS + defunctionalization pass for non-tail self-recursion.
 --
--- Core-to-Core transformation that eliminates non-tail self-recursive
--- calls so the system stack no longer grows with recursion depth. The
--- shape of the rewrite, one function at a time:
+-- Eliminates non-tail self-recursive calls so the system stack no
+-- longer grows with recursion depth. The rewrite:
 --
 -- @
 -- f args = body                                                 -- body buries a non-tail self-call
 -- @
 --
--- is rewritten to the triple:
+-- becomes the triple:
 --
 -- @
 -- f args             = f_cps args KTop                          -- wrapper
@@ -22,35 +21,30 @@
 --                                                    = x>
 -- @
 --
--- After the pass, @f_cps@ and @f_apply@ are self-tail-recursive, so the
--- existing 'Awsum.Tco' pass folds them both into 'CLoop' \/ 'CContinue'.
--- The "stack" for the old non-tail recursion lives in the @K@ chain on
--- the heap (one boxed @[tag, parent_k, captured..]@ cell per non-tail
--- call, like any other ADT on every backend).
+-- @f_cps@ and @f_apply@ are self-tail-recursive, so 'Awsum.Tco' folds
+-- both into 'CLoop' \/ 'CContinue'. The "stack" for the old non-tail
+-- recursion lives in the @K@ chain on the heap — one boxed
+-- @[tag, parent_k, captured..]@ cell per non-tail call, like any other
+-- ADT on every backend.
 --
 -- Non-tail self-calls are handled in /any/ non-tail position — @CCon@
--- field, @CCall@ argument, scrutinee of an arbitrary 'CCase'. The
--- transformer walks in evaluation order (left to right), and at each
--- non-tail self-call site generates a fresh @K_i@ whose @apply@
--- handler rebuilds the surrounding expression with the received value
--- substituted at the call position. Multiple self-calls in one
--- expression chain naturally: each generates its own @K_i@, and the
--- @apply@ handler of an earlier @K_i@ can itself emit a tail call to
--- @f_cps@ with a later @K_j@.
+-- field, @CCall@ argument, 'CCase' scrutinee. The transformer walks
+-- left-to-right; at each non-tail self-call it allocates a fresh @K_i@
+-- whose @apply@ handler rebuilds the surrounding expression with the
+-- received value substituted at the call position. Multiple self-calls
+-- in one expression chain naturally: each gets its own @K_i@, and an
+-- earlier @K_i@'s apply can tail-call @f_cps@ with a later @K_j@.
 --
 -- The same defunctionalization primitive drives 'Awsum.Scc' (mutual
 -- recursion via SCC-merge): merge SCCs into one self-recursive
 -- function with a "function tag", then this pass picks up any
 -- resulting non-tail self-calls.
 --
--- **Canonical name for the current continuation.** Throughout the
--- generated code the continuation variable is named @$k@: it is the
--- second parameter of @$cps$f@, it is the first parameter of
--- @$apply$f@, and each @K_i@ arm in @$apply$f@ rebinds its captured
--- parent-k back to @$k@ (Core-level shadowing). Every CPS-built body
--- references @$k@ freely, and in each scope it resolves to the right
--- binder. Awsum's surface-level no-shadowing rule is a typechecker
--- concern and doesn't apply to the post-elaboration Core we generate.
+-- The current continuation is always named @$k@: second parameter of
+-- @$cps$f@, first of @$apply$f@, and each @K_i@ arm rebinds its
+-- captured parent-k back to @$k@ (Core-level shadowing). Awsum's
+-- no-shadowing rule is a typechecker concern; post-elaboration Core
+-- is exempt.
 module Awsum.Cps (cpsProgram) where
 
 import Awsum.CallGraph (hasNonTailSelfCall)
@@ -59,11 +53,9 @@ import Awsum.Syntax (Name)
 import Data.Set qualified as Set
 import Relude
 
--- | Run the pass over every top-level declaration. Functions with at
--- least one non-tail self-call get replaced by the @(wrapper, $cps$f,
-
--- $apply$f)@ trio; everything else passes through untouched.
-
+-- | Run over every top-level declaration. Functions with at least one
+-- non-tail self-call get replaced by the @(wrapper, $cps$f, $apply$f)@
+-- trio; everything else passes through.
 cpsProgram :: CoreProgram -> CoreProgram
 cpsProgram (CoreProgram ds) =
   let topLevelNames = Set.fromList (map declName ds)

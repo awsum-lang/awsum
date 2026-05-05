@@ -3,44 +3,35 @@
 -- Finds strongly connected components (Tarjan) in the Core call graph.
 -- For every cyclic component with more than one function, merges the
 -- members into a single self-recursive function whose parameter is a
--- sum-typed @CCon tag args@ value — one tag per SCC member, fields
--- carrying that member's original arguments. Cross-calls within the
--- SCC become self-calls on the merged function with a different tag;
--- non-SCC callers still reach each original name through a one-line
--- wrapper that packs its args into the right @CCon@. The canonical
--- "merge mutual recursion by tagging" transformation; the same
--- defunctionalization-by-Reynolds primitive used in 'Awsum.Cps', just
+-- sum-typed @CCon tag args@ — one tag per member, fields carrying
+-- that member's original arguments. Cross-calls within the SCC become
+-- self-calls on the merged function with a different tag; outside
+-- callers reach each original name through a one-line wrapper that
+-- packs its args into the right @CCon@. The same
+-- defunctionalization-by-Reynolds primitive used in 'Awsum.Cps',
 -- applied to "which function is active" instead of "what to do after
 -- this call returns".
 --
 -- Why this works for stack safety:
 --
---   * After merge, the SCC contains only self-recursion. Tail
---     cross-calls fold into 'CLoop' \/ 'CContinue' via 'Awsum.Tco'.
---     Non-tail cross-calls become non-tail self-calls and get picked
---     up by 'Awsum.Cps' — the K chain carries the
---     continuation through the fused function body.
---   * No backend needs a new opcode or runtime: the merged function
---     is an ordinary self-recursive 'CFunDef', the tag is an ordinary
---     'CCon' dispatched by an ordinary 'CCase'.
+--   * The SCC now contains only self-recursion. Tail cross-calls fold
+--     into 'CLoop' \/ 'CContinue' via 'Awsum.Tco'; non-tail ones go
+--     through 'Awsum.Cps'.
+--   * No backend needs a new opcode: the merged function is an
+--     ordinary 'CFunDef', the tag an ordinary 'CCon' dispatched by an
+--     ordinary 'CCase'.
 --
--- **Heterogeneous arity.** The sum-typed args shape means members can
--- have different arities (or different parameter types, though Awsum's
--- types are erased at Core level so that is invisible to us) — each
--- tag's fields correspond to exactly one member's parameter list.
--- Classic parser-combinator style (@parseExpr : Input -> Result@ and
--- @parseBinary : Input -> Int -> Result@ calling each other) works out
--- of the box.
+-- Heterogeneous arity falls out of the sum-typed argument: each tag's
+-- fields correspond to exactly one member's parameter list. Classic
+-- parser-combinator style — @parseExpr : Input -> Result@ and
+-- @parseBinary : Input -> Int -> Result@ calling each other — works
+-- without homogenising arities.
 --
--- Current restrictions (the plan skips the SCC and leaves its members
--- intact when they fail):
+-- Restriction: every member must be a 'CFunDef'. Mutually recursive
+-- 'CValDef's have no fixed point; 'Awsum.StackSafety.verifyStackSafety'
+-- rejects them before this pass runs.
 --
---   * Every member must be a 'CFunDef' (no constants). Mutually
---     recursive top-level values have no fixed point and are a
---     user-level error; 'Awsum.StackSafety.verifyStackSafety' rejects
---     them with a diagnostic before this pass runs.
---
--- See @docs\/recursion.md@ for the full pipeline story.
+-- See @docs\/recursion.md@.
 module Awsum.Scc (sccMergeProgram) where
 
 import Awsum.CallGraph (declName, stronglyConnected)
@@ -54,28 +45,21 @@ import Data.Text qualified as T
 import Relude
 
 -- | Run SCC analysis and merge every non-trivial cyclic SCC.
--- Trivial (acyclic or single-member) SCCs are passed through; for each
--- merged SCC we emit @$scc$<joined names>@ plus N one-line wrappers
--- preserving the original public names.
+-- Trivial SCCs (acyclic or single-member) pass through; merged ones
+-- emit @$scc$<joined names>@ plus N wrappers preserving the originals.
 sccMergeProgram :: CoreProgram -> CoreProgram
 sccMergeProgram prog@(CoreProgram ds) =
   let declMap = Map.fromList [(declName d, d) | d <- ds]
       sccs = stronglyConnected prog
-      -- Classify: each SCC either triggers a merge (resulting in one
-      -- merged CFunDef + N wrappers, replacing its members) or is left
-      -- as-is.
       sccOutputs = map (processScc declMap) sccs
       mergedNames = Set.unions [Set.fromList (sccReplaced out) | out <- sccOutputs]
-      -- Keep original declarations that weren't part of any merged SCC,
-      -- preserving the source order.
+      -- Keep originals not part of any merged SCC, preserving source order.
       kept = [d | d <- ds, not (declName d `Set.member` mergedNames)]
-      -- Merged decls (merged fn + wrappers) appended at end in SCC order.
       added = concatMap sccAdded sccOutputs
    in CoreProgram (kept <> added)
 
--- | Output for one SCC: the names it replaced (removed from decls) and
--- the new decls it introduced (merged + wrappers). Trivial/skipped SCCs
--- have both empty.
+-- | Output for one SCC: names it replaced and decls it introduced.
+-- Trivial/skipped SCCs have both empty.
 data SccOutput = SccOutput
   { sccReplaced :: [Name],
     sccAdded :: [CDecl]
@@ -85,8 +69,7 @@ processScc :: Map Name CDecl -> G.SCC Name -> SccOutput
 processScc declMap = \case
   G.AcyclicSCC _ -> SccOutput [] []
   G.CyclicSCC [_] ->
-    -- Single-member cyclic SCC = a self-recursive function. Already
-    -- handled by TCO + Cps; merging would be a no-op.
+    -- Self-recursion — already handled by TCO + Cps.
     SccOutput [] []
   G.CyclicSCC members ->
     case planMerge declMap members of
@@ -97,10 +80,8 @@ processScc declMap = \case
             sccAdded = merged : wrappers
           }
 
--- | Build the @$scc$@ merged function and its wrappers, or fail out
--- and let the SCC pass through untouched (happens only when a member
--- is a 'CValDef' — arity and parameter count are handled via a
--- sum-typed argument value, so heterogeneity is no obstacle).
+-- | Build the @$scc$@ merged function and its wrappers, or 'Nothing'
+-- if a member is a 'CValDef' (the only blocker).
 --
 -- Emission shape:
 --
@@ -114,10 +95,8 @@ processScc declMap = \case
 --   f_i(p_0, p_1, …) = $scc$… (CCon i [p_0, p_1, …])              -- wrapper
 -- @
 --
--- Arm binders are the /original/ parameter names of each member, so
--- that member's body references resolve naturally — no alpha-rename
--- required. This also removes the homogeneous-arity restriction: each
--- tag carries exactly the number of fields that member expects.
+-- Arm binders are each member's /original/ parameter names — body
+-- references resolve naturally, no alpha-rename.
 planMerge :: Map Name CDecl -> [Name] -> Maybe (CDecl, [CDecl])
 planMerge declMap members = do
   memberDecls <- traverse (`Map.lookup` declMap) members
@@ -152,10 +131,9 @@ planMerge declMap members = do
       CFunDef n ps b -> Just (n, ps, b)
       CValDef {} -> Nothing
 
--- | Redirect every direct call @f_j(x, y, …)@ to a fellow SCC member
--- into a tail call on the merged function with its args packed into a
--- tagged 'CCon'. Everything else is traversed structurally and left
--- alone.
+-- | Redirect every direct call to a fellow SCC member into a tail call
+-- on the merged function with args packed into a tagged 'CCon'.
+-- Structural traversal otherwise.
 rewriteCrossCalls :: Set Name -> Name -> [Name] -> CExpr -> CExpr
 rewriteCrossCalls memberSet mergedName memberOrder = go
   where

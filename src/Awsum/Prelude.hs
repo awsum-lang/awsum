@@ -43,25 +43,20 @@ preludeProgram = case parseProgram preludeSource of
       $ "Internal compiler error: stdlib/Prelude.aww failed to parse: "
       <> err
 
--- | Typecheck the bundled prelude. Exposed so CLI commands that
---   typecheck user code can surface a clean diagnostic if the shipped
---   prelude is broken, rather than failing later with a confusing
---   error. The prelude itself uses no platform-gated names, so the
---   check result is independent of the program type — we still take
---   one for uniform plumbing with 'typecheckProgram'.
+-- | Typecheck the bundled prelude. Exposed so CLI commands can surface
+--   a clean diagnostic if the shipped prelude is broken. Result is
+--   program-type-independent; the parameter is taken for uniform
+--   plumbing with 'typecheckProgram'.
 verifyPrelude :: ProgramType -> Either TypeError [Warning]
 verifyPrelude progType = typecheckProgram progType S.empty preludeProgram
 
 -- | Prepend the bundled prelude's imports and declarations to a user
---   program. This is how the \"implicit @import Prelude@\" is realised:
---   downstream passes ('typecheckProgram', 'elaborateLowerProgram', and
---   the codegens reached through them) see a single combined module
---   whose first declarations come from @stdlib/Prelude.aww@.
+--   program — the \"implicit @import Prelude@\". Downstream passes see
+--   a single combined module.
 --
---   The function is idempotent: when the incoming program /is/ the
---   prelude itself (e.g. @awsum check stdlib/Prelude.aww@ during
---   compiler development), it is returned unchanged rather than
---   concatenated with another copy of itself — which would surface as
+--   Idempotent: when the incoming program /is/ the prelude (e.g.
+--   @awsum check stdlib/Prelude.aww@ during compiler development), it
+--   is returned unchanged. Otherwise a self-prepend would surface as
 --   spurious duplicate-signature errors.
 withPrelude :: Program -> Program
 withPrelude userProg
@@ -73,10 +68,8 @@ withPrelude userProg
         }
 
 -- | Top-level names defined in the bundled prelude. Used to strip
---   spurious \"unused top-level\" warnings about prelude entries whose
---   reachability depends on whether user code happens to reference them
---   — the whole point of the prelude is that it sits in scope ready to
---   be used, not that every program must use every prelude function.
+--   spurious \"unused top-level\" warnings — the prelude sits in scope
+--   ready to be used, not every program uses every entry.
 preludeDefNames :: Set Name
 preludeDefNames =
   S.fromList

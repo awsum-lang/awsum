@@ -1,14 +1,6 @@
--- | Hindley-Milner-related infrastructure: substitutions, occurs check,
+-- | Hindley-Milner infrastructure: substitutions, occurs check,
 --   symmetric unification, and a type-checker monad with fresh-tyvar
---   generation.
---
---   This module is the seed for the upcoming HM-based type inference.
---   Its first user is internal to 'Awsum.Typing' — the existing one-way
---   matcher 'Awsum.Typing.match' reuses the substitution machinery from
---   here. Two-way 'unify' and 'UnifyError' are added alongside 'match'
---   for the upcoming bidirectional-checker stage; existing call sites
---   continue to use 'match' until that migration. Later stages introduce
---   bidirectional checking and let-generalisation on top.
+--   generation. Used by 'Awsum.Typing'.
 module Awsum.HM
   ( -- * Substitutions
     Subst,

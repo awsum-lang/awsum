@@ -9,25 +9,21 @@
 --   • Strings: we rely on JS '+' to concatenate (both operands are statically 'String').
 --   • Zero-arg surface defs are lowered to Core 'CValDef' and become JS 'const' values.
 --     Functions remain 'function' declarations (hoisted), so call order is safe.
---   • Wrapping strategy is selected by 'ProgramType':
+--   • Wrapping is selected by 'ProgramType':
 --
---       - 'ProgramCli' → wrap the whole chunk in an IIFE
---         (@(function () { ... })()@). Inside a function scope, top-level
---         @function@ declarations do /not/ become @window.x@ and top-level
---         @const@/@let@ are lexical — so nothing leaks to the global object
---         even when the file is loaded as a classic @<script>@ in a browser,
---         or via Node's CommonJS wrapper. The Node runner in the footer
---         still sees @require@/@module@ via closure over the wrapper's
---         parameters.
+--       - 'ProgramCli' → IIFE (@(function () { ... })()@). Inside a
+--         function scope, top-level @function@ declarations don't
+--         become @window.x@ and top-level @const@/@let@ are lexical,
+--         so nothing leaks to the global object — whether loaded as a
+--         classic @<script>@ or via Node's CommonJS wrapper. The Node
+--         runner in the footer still sees @require@/@module@ via
+--         closure.
 --
---     No module-table indirection is needed: JS has no per-function
---     binding ceiling and function hoisting inside the IIFE already makes
---     declaration order irrelevant.
+--     No module-table indirection: function hoisting inside the IIFE
+--     makes declaration order irrelevant.
 --
---     Other program types (browser module, CommonJS module, ESM) will
---     pick different wrappers — e.g. attach to a namespace object, emit
---     explicit @export@s, or assign to @module.exports@ — without
---     changing the name-emission rules below.
+--     Other program types (browser module, CommonJS, ESM) will pick
+--     different wrappers without changing the name-emission rules below.
 module Awsum.Codegen.JS (codegenJS) where
 
 import Awsum.Core

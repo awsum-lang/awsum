@@ -1,15 +1,11 @@
 -- | Editor-facing diagnostic representation.
 --
--- A 'Diagnostic' is the unit of feedback the compiler emits to consumers
--- (the CLI's @--json@ output, @awsum-vscode@, future LSP). The shape
--- intentionally mirrors what 'vscode.Diagnostic' + 'vscode.CodeAction'
--- expect, so producing the JSON is the only translation needed.
---
--- Why this lives in its own module:
---   • Keeps 'TypeError' / 'Warning' producers free of JSON / presentation
---     concerns; they construct semantic values, this module renders them.
---   • Lets editors evolve (e.g. adding @relatedInformation@ later) without
---     touching the typechecker.
+-- The unit of feedback the compiler emits to consumers (CLI @--json@,
+-- @awsum-vscode@, future LSP). Mirrors 'vscode.Diagnostic' +
+-- 'vscode.CodeAction' so producing JSON is the only translation needed.
+-- Separates 'TypeError'/'Warning' producers (semantic) from JSON
+-- rendering (here), so editors can evolve without touching the
+-- typechecker.
 module Awsum.Diagnostic
   ( Severity (..),
     Diagnostic (..),

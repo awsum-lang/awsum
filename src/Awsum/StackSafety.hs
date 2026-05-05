@@ -1,20 +1,17 @@
 -- | Post-pipeline stack-safety verifier.
 --
 -- After 'Awsum.Scc' (mutual → self-recursion) and 'Awsum.Cps' (non-tail
--- self → tail-self via K chain) have run, the invariant is: /no
--- non-tail recursive call remains in the Core program/. Any remainder
--- is either a skipped SCC (today: an SCC containing a 'CValDef', which
--- has no fixed point and is a user error) or a bug in one of the
--- passes — both cases produce stack-unsafe code that would silently
--- overflow at depth.
+-- self → tail-self via K chain), the invariant is: /no non-tail
+-- recursive call remains in the Core program/. Any remainder is either
+-- a skipped SCC (today: one containing a 'CValDef', which has no fixed
+-- point and is a user error) or a bug in one of the passes — both
+-- produce stack-unsafe code that would silently overflow at depth.
 --
--- This module walks the post-CPS Core and reports any violation so the
--- compiler can refuse to lower such a program to backends. It is
--- strictly a safety net: on every currently-green test the verifier
--- reports nothing.
+-- Walks the post-CPS Core and reports any violation; the compiler then
+-- refuses to lower the program. A safety net: on every currently-green
+-- test it reports nothing.
 --
--- See @docs\/recursion.md@ for the full pipeline and
--- @docs\/recursion-roadmap.md@ for the open work this check guards.
+-- See @docs\/recursion.md@.
 module Awsum.StackSafety
   ( StackSafetyIssue (..),
     verifyStackSafety,
@@ -28,28 +25,24 @@ import Data.Graph qualified as G
 import Data.Map.Strict qualified as Map
 import Relude
 
--- | What the verifier flags. Each constructor carries enough
--- information to build a user-facing diagnostic at the call site.
+-- | What the verifier flags. Each carries enough information to
+-- build a user-facing diagnostic at the call site.
 data StackSafetyIssue
   = -- | All members of a cycle are 'CValDef's. Mutually recursive
-    -- top-level values have no fixed point (evaluating any of them
-    -- demands another with no base case), so the program is
-    -- semantically ill-formed regardless of the compiler — a plain
-    -- user error. Reported without any "compiler bug" hedging.
+    -- top-level values have no fixed point — a user error, not a
+    -- compiler limitation.
     MutuallyRecursiveValues [Name]
-  | -- | A recursion shape the compiler could not prove stack-safe.
-    -- Covers both "a call-graph cycle with at least one 'CFunDef'
-    -- that 'Awsum.Scc' didn't know how to merge" and "a 'CFunDef'
-    -- with a non-tail self-call that 'Awsum.Cps' didn't transform".
-    -- Programs landing here may well be correct — the compiler just
-    -- lacks the transformation to lower them safely. Treated as a
-    -- user-visible limitation, not an internal bug.
+  | -- | A recursion shape the compiler could not prove stack-safe:
+    -- either a cycle 'Awsum.Scc' didn't know how to merge, or a
+    -- 'CFunDef' with a non-tail self-call 'Awsum.Cps' didn't transform.
+    -- Programs landing here may be correct — the compiler just lacks
+    -- the transformation. Reported as a user-visible limitation, not
+    -- an internal bug.
     UnsupportedRecursionShape [Name]
   deriving stock (Show, Eq)
 
 -- | Collect every stack-safety violation in @prog@. An empty result
--- means the program is safe to hand off to 'Awsum.Tco' and the
--- backends.
+-- means the program is safe to hand off to 'Awsum.Tco' and the backends.
 verifyStackSafety :: CoreProgram -> [StackSafetyIssue]
 verifyStackSafety prog@(CoreProgram ds) =
   mutualCycles <> nonTailSelf
