@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Build provenance** — Sigstore attestations on every release asset.
 - **`CONTRIBUTING.md`** — dev-loop commands, signed-commits requirement, PR/CHANGELOG conventions.
+- **Second Windows CI axis** — `windows-x86_64-mingw` job runs the snapshot + property suites against a [WinLibs](https://winlibs.com) GCC 14.2.0 + LLVM 19.1.7 + mingw-w64 + UCRT bundle, in addition to the existing MSVC-flavored `LLVM-15.0.7-win64.exe`. The intentional version skew (15.0.7 vs 19.1.7) means both LLVM lines must accept our IR. The mingw job catches accidental toolchain-coupling in the LLVM codegen / clang invocation. The mingw job is CI-only — release artifacts continue to ship from the MSVC build, since the awsum.exe binary is GHC output and identical across the two runners.
+- **`AWSUM_CLANG`** — optional environment variable that pins the clang executable path used by `awsum run -t llvm` and the test harness. Empty/unset falls back to PATH lookup (`clang`). Useful on hosts where PATH-resolved `clang` is the wrong LLVM — most prominently the Windows case, where Stack prepends GHC's bundled mingw clang (an older LLVM that predates opaque-pointers default) to child-process PATH.
+- **Clang compile-failure messages now include stdout** in addition to stderr, with the exit code; previously a non-zero exit with empty stderr produced a content-free `clang failed during compile:` and hid the actual diagnostic. Applies to both the test harness and `awsum run -t llvm`.
 
 ## [0.0.3] - 2026-04-25
 

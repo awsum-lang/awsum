@@ -300,9 +300,21 @@ runOnTarget progType target core input = case target of
       let llPath = dir </> "out.ll"
           binPath = dir </> "out"
       writeFileText llPath (codegenLLVM core)
-      (exitClang, _, stderrClang) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
+      -- AWSUM_CLANG: optional absolute path to clang. Useful on hosts where
+      -- the PATH-resolved 'clang' points at an outdated LLVM (e.g. GHC's
+      -- bundled mingw clang on Windows when invoked through Stack).
+      clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
+      (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
       case exitClang of
-        ExitFailure _ -> die $ toString ("clang error:\n" <> toText stderrClang)
+        ExitFailure n ->
+          die
+            $ toString
+            $ "clang error (exit "
+            <> show n
+            <> ")\nstderr:\n"
+            <> toText stderrClang
+            <> "\nstdout:\n"
+            <> toText stdoutClang
         ExitSuccess -> do
           (exit, stdoutS, stderrS) <- readProcessWithExitCode binPath [toString input] ""
           case exit of

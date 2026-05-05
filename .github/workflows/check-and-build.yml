@@ -41,10 +41,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-24.04,     target: linux-x86_64-gnu  }
-          - { os: ubuntu-24.04-arm, target: linux-aarch64-gnu }
-          - { os: macos-15,         target: macos-aarch64     }
-          - { os: windows-2025,     target: windows-x86_64    }
+          - { os: ubuntu-24.04,     target: linux-x86_64-gnu,     llvm-flavor: apt   }
+          - { os: ubuntu-24.04-arm, target: linux-aarch64-gnu,    llvm-flavor: apt   }
+          - { os: macos-15,         target: macos-aarch64,        llvm-flavor: brew  }
+          - { os: windows-2025,     target: windows-x86_64,       llvm-flavor: msvc  }
+          - { os: windows-2025,     target: windows-x86_64-mingw, llvm-flavor: mingw }
 
     env:
       # Pin STACK_ROOT to a workspace-relative path so cache keys and paths are
@@ -88,8 +89,8 @@ jobs:
           brew install llvm@15
           echo "$(brew --prefix llvm@15)/bin" >> "$GITHUB_PATH"
 
-      - name: Set up LLVM 15 (Windows)
-        if: runner.os == 'Windows'
+      - name: Set up LLVM 15 (Windows MSVC)
+        if: matrix.llvm-flavor == 'msvc'
         shell: pwsh
         # Download the official LLVM 15.0.7 Windows installer and silent-install
         # into a pristine per-runner directory. Avoids two traps we hit with
@@ -119,7 +120,42 @@ jobs:
           }
           Add-Content -Path $env:GITHUB_PATH -Value "$dest\bin"
 
-      - name: Verify clang resolves to LLVM 15
+      # Second Windows axis — WinLibs's mingw-w64-flavored LLVM, contrasted
+      # with the MSVC-flavored llvm-project build on the canonical job.
+      # Default-triple is x86_64-w64-mingw32 and the link line auto-pulls
+      # the mingw-w64 system-lib set. Pinning the latest UCRT bundle WinLibs
+      # publishes — the version skew vs MSVC's 15.0.7 is the point. Lands at
+      # the same $env:RUNNER_TEMP\llvm\bin path as the MSVC step. Uses .7z
+      # (~150 MB vs ~800 MB .zip) via the runner-preinstalled 7z.exe; archive
+      # extracts to mingw64/ which we Move-Item to $dest.
+      - name: Set up LLVM 19 (Windows MinGW)
+        if: matrix.llvm-flavor == 'mingw'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag     = "14.2.0posix-12.0.0-ucrt-r3"  # GCC 14.2.0 + LLVM 19.1.7 + mingw-w64 12.0.0 + UCRT
+          $file    = "winlibs-x86_64-posix-seh-gcc-14.2.0-llvm-19.1.7-mingw-w64ucrt-12.0.0-r3.7z"
+          $url     = "https://github.com/brechtsanders/winlibs_mingw/releases/download/$tag/$file"
+          $archive = "$env:RUNNER_TEMP\winlibs.7z"
+          $extract = "$env:RUNNER_TEMP\winlibs-extract"
+          $dest    = "$env:RUNNER_TEMP\llvm"
+          curl.exe -fsSL --retry 3 --retry-delay 2 -o $archive $url
+          $size = (Get-Item $archive).Length
+          if ($size -lt 50000000) {
+            throw "WinLibs archive is only $size bytes — download likely failed"
+          }
+          New-Item -ItemType Directory -Path $extract -Force | Out-Null
+          & 7z x $archive "-o$extract" -y -bd | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "7z extraction failed with exit $LASTEXITCODE"
+          }
+          Move-Item "$extract\mingw64" $dest
+          if (-not (Test-Path "$dest\bin\clang.exe")) {
+            throw "clang.exe not found at $dest\bin after extract"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value "$dest\bin"
+
+      - name: Verify clang resolves to LLVM 15+
         shell: bash
         run: |
           set -eu
@@ -127,13 +163,17 @@ jobs:
           clang --version
           echo "=== which clang ==="
           command -v clang
-          # Hard fail if the major version isn't 15 — catches the Windows
-          # PATH-shadowing case before the actual tests run (and without
-          # dumping a 50k-line AST on mismatch).
-          case "$(clang --version | head -n1)" in
-            *"version 15."*) echo "OK: clang is LLVM 15.x" ;;
-            *) echo "ERROR: clang is not LLVM 15.x"; exit 1 ;;
-          esac
+          # Hard fail if major < 15 — catches the Windows PATH-shadowing case
+          # (GHC's bundled mingw clang is LLVM 14, missing opaque pointers)
+          # before the actual tests run, and without dumping a 50k-line AST
+          # on mismatch. The two Windows jobs run different LLVM majors on
+          # purpose (MSVC=15.0.7, WinLibs=19.1.7) — both are >= our floor.
+          if clang --version | head -n1 | grep -qE 'version (1[5-9]|[2-9][0-9])\.'; then
+            echo "OK: clang is LLVM 15+"
+          else
+            echo "ERROR: clang is older than LLVM 15"
+            exit 1
+          fi
 
       # Pin Java to 11 — the documented JVM target floor (see
       # docs/platform-version-policy.md). The assembler emits class
@@ -168,23 +208,27 @@ jobs:
           stack-version: "3.9.1"
           stack-no-global: true
 
+      # Cache key includes 'matrix.target' (not just runner.os/arch) so the two
+      # Windows jobs (MSVC and MinGW flavors of LLVM, same runner image) don't
+      # clobber each other's cache — without it, every other run would be cold
+      # for whichever flavor lost the race to write last.
       - name: Restore STACK_ROOT cache
         id: cache-stack-global
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.STACK_ROOT }}
-          key: ${{ runner.os }}-${{ runner.arch }}-stack-global-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal') }}
+          key: ${{ matrix.target }}-stack-global-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal') }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-stack-global-
+            ${{ matrix.target }}-stack-global-
 
       - name: Restore .stack-work cache
         id: cache-stack-work
         uses: actions/cache/restore@v5
         with:
           path: .stack-work
-          key: ${{ runner.os }}-${{ runner.arch }}-stack-work-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal', 'src/**/*.hs', 'test/**/*.hs', 'awsum/**/*.hs') }}
+          key: ${{ matrix.target }}-stack-work-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml', 'awsum.cabal', 'src/**/*.hs', 'test/**/*.hs', 'awsum/**/*.hs') }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-stack-work-
+            ${{ matrix.target }}-stack-work-
 
       - name: Build dependencies
         run: stack build --only-dependencies --test --no-run-tests
@@ -192,40 +236,35 @@ jobs:
       - name: Build
         run: stack build --pedantic --copy-bins --local-bin-path target --test --no-run-tests
 
-      # Stack on Windows prepends GHC's bundled mingw bin to PATH for child
-      # processes (incl. test executables), and the clang.exe in that mingw is
-      # an older LLVM 14 build — see the `ptr type is only supported in
-      # -opaque-pointers mode` errors in CI before this step existed. We can't
-      # replace GHC's mingw clang because GHC itself needs it (with its MinGW
-      # headers) for its FFI C compilation pipeline.
-      #
-      # Workaround: drop a symlink named `clang.exe` in the project root.
-      # CreateProcess on Windows searches CWD before PATH, so the test
-      # harness's `readCreateProcessWithExitCode "clang"` resolves to our
-      # LLVM 15 binary, while GHC's compilation keeps using its mingw clang
-      # via the absolute path stored in GHC's `settings` file (no CWD lookup).
-      # The symlink form preserves the LLVM bin dir as the image directory,
-      # so clang's DLL dependencies resolve out of $RUNNER_TEMP\llvm\bin
-      # without us needing to copy them next to the symlink.
-      - name: Route clang to LLVM 15 for the test harness (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          Remove-Item clang.exe -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType SymbolicLink -Path "clang.exe" -Target "$env:RUNNER_TEMP\llvm\bin\clang.exe" | Out-Null
-          Write-Host "clang.exe in project root resolves to:"
-          & .\clang.exe --version | Select-Object -First 1
+      # On Windows, the test harness pins clang via AWSUM_CLANG (absolute
+      # path) instead of relying on PATH. Stack on Windows prepends GHC's
+      # bundled mingw bin to its child processes' PATH, and the clang.exe
+      # in that mingw is an older LLVM 14 build that doesn't speak our IR
+      # (no opaque-pointers default). We can't replace GHC's mingw clang
+      # — GHC itself uses it for FFI compilation. AWSUM_CLANG bypasses
+      # PATH lookup entirely from inside the test harness.
+      - name: Test (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: stack test --pedantic
 
-      - name: Test
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
+        env:
+          AWSUM_CLANG: ${{ runner.temp }}\llvm\bin\clang.exe
         run: stack test --pedantic
 
       # Only runs when called from the release workflow. The path glob picks up
       # `awsum` on Unix and `awsum.exe` on Windows; upload-artifact strips the
       # `target/` prefix because the wildcard sits at the leaf, so consumers
       # download a flat archive containing just the binary.
+      #
+      # The mingw Windows job is excluded here on purpose: awsum.exe itself is
+      # GHC output (linked against GHC's bundled mingw runtime), so the binary
+      # is identical regardless of which external clang the runner has — the
+      # mingw job is a CI-only smoke test that proves the released awsum.exe
+      # still drives the *user's* clang correctly when that clang is mingw.
       - name: Upload binary artifact
-        if: inputs.upload-artifacts
+        if: inputs.upload-artifacts && matrix.llvm-flavor != 'mingw'
         uses: actions/upload-artifact@v7
         with:
           name: awsum-${{ matrix.target }}

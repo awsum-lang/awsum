@@ -119,9 +119,21 @@ compileLLVMBin code = do
   let llFile = dir </> "out.ll"
       binFile = dir </> "out"
   writeFileText llFile code
-  (ec, _, err) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
+  -- AWSUM_CLANG lets CI (and users on hosts where 'clang' on PATH points
+  -- at the wrong LLVM, e.g. Stack on Windows prepending GHC's bundled
+  -- mingw clang) pin an absolute path. Empty/unset → fall back to PATH.
+  clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
+  (ec, out, err) <- readProcessWithExitCode clangPath ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
   case ec of
-    ExitFailure _ -> error $ toText ("clang failed during compile: " <> err)
+    ExitFailure n ->
+      error
+        $ toText
+        $ "clang failed during compile (exit "
+        <> show n
+        <> ")\nstderr:\n"
+        <> err
+        <> "\nstdout:\n"
+        <> out
     ExitSuccess -> pure binFile
 
 -- ════════════════════════════════════════════════════════════════════════════
