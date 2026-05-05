@@ -50,7 +50,7 @@ data LLVMHost = LLVMPosix | LLVMWindows
 -- | Every supported host, used by snapshot tests to assert one IR file
 --   per host on every test run regardless of which host is doing the run.
 allLLVMHosts :: [LLVMHost]
-allLLVMHosts = [minBound .. maxBound]
+allLLVMHosts = universe
 
 -- | Stable lowercase name suitable for snapshot file paths
 --   (@compiled.posix.ll@, @compiled.windows.ll@).
