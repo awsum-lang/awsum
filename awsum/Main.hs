@@ -34,6 +34,7 @@ import System.Exit (ExitCode (..))
 import System.FilePath (dropExtension, (</>))
 import System.IO (hIsTerminalDevice)
 import System.IO.Temp (withSystemTempDirectory)
+import System.Info qualified as Info
 import System.Process (readProcessWithExitCode)
 import Text.Pretty.Simple (pPrint)
 
@@ -304,7 +305,17 @@ runOnTarget progType target core input = case target of
       -- the PATH-resolved 'clang' points at an outdated LLVM (e.g. GHC's
       -- bundled mingw clang on Windows when invoked through Stack).
       clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
-      (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
+      -- On Windows, the LLVM footer (Codegen.LLVM.footerWindows) calls
+      -- GetCommandLineW + CommandLineToArgvW + WideCharToMultiByte. The
+      -- mingw-w64 default link line auto-pulls shell32 and kernel32, but
+      -- MSVC's linker only auto-links what's in /DEFAULTLIB and CRT
+      -- carries kernel32 only — shell32 must be passed explicitly or
+      -- CommandLineToArgvW becomes LNK2019. The flags are no-ops on
+      -- mingw-w64 (already auto-linked) so passing them unconditionally
+      -- on a Windows host is safe across both toolchains.
+      let extraFlags :: [String]
+          extraFlags = if Info.os == "mingw32" then ["-lshell32", "-lkernel32"] else []
+      (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llPath, "-o", binPath] <> extraFlags) ""
       case exitClang of
         ExitFailure n ->
           die

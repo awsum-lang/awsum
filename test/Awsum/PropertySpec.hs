@@ -56,20 +56,16 @@ currentOS = case Info.os of
 --   assertion automatically.
 --
 --   Current debt:
---     LLVM and JVM diverge from CLR / WASM / JS on Windows for the four
+--     JVM diverges from LLVM / CLR / WASM / JS on Windows for the four
 --     string-touching properties below. Fixes attempted via stdout
 --     code-page / charset settings did not help — root cause still
 --     under investigation.
 temporarilyBroken :: Set (OS, Backend, Text)
 temporarilyBroken =
   Set.fromList
-    [ (Windows, LLVM, "concat-left-identity"),
-      (Windows, JVM, "concat-left-identity"),
-      (Windows, LLVM, "concat-right-identity"),
+    [ (Windows, JVM, "concat-left-identity"),
       (Windows, JVM, "concat-right-identity"),
-      (Windows, LLVM, "concat-associative"),
       (Windows, JVM, "concat-associative"),
-      (Windows, LLVM, "lengths-three-functions"),
       (Windows, JVM, "lengths-three-functions")
     ]
 

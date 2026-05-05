@@ -32,6 +32,7 @@ import Relude
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
 import System.IO.Temp (createTempDirectory, getCanonicalTemporaryDirectory, withSystemTempDirectory)
+import System.Info qualified as Info
 import System.Process (readProcessWithExitCode)
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -123,7 +124,13 @@ compileLLVMBin code = do
   -- at the wrong LLVM, e.g. Stack on Windows prepending GHC's bundled
   -- mingw clang) pin an absolute path. Empty/unset → fall back to PATH.
   clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
-  (ec, out, err) <- readProcessWithExitCode clangPath ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
+  -- See note in awsum/Main.hs: footerWindows in the LLVM IR uses
+  -- shell32's CommandLineToArgvW, which the MSVC linker doesn't
+  -- auto-link. Passing -lshell32 -lkernel32 fixes MSVC and is a
+  -- harmless no-op on mingw-w64 (already auto-linked there).
+  let extraFlags :: [String]
+      extraFlags = if Info.os == "mingw32" then ["-lshell32", "-lkernel32"] else []
+  (ec, out, err) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llFile, "-o", binFile] <> extraFlags) ""
   case ec of
     ExitFailure n ->
       error
