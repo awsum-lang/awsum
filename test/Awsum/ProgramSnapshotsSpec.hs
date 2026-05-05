@@ -2,6 +2,7 @@ module Awsum.ProgramSnapshotsSpec (spec) where
 
 import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.JVM (codegenJVM)
+import Awsum.Codegen.LLVM (allLLVMHosts, llvmHostName)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
@@ -92,8 +93,9 @@ testProgram testName = do
       res.core `shouldMatchShowSnapshot` (snap <> "/compiler/core.txt")
     it "Symbols JSON should match snapshot" $ \res -> do
       res.symbolsJson `shouldMatchTextSnapshot` (snap <> "/compiler/symbols.json")
-    it "LLVM code should match snapshot" $ \res -> do
-      res.artifacts.caLLVM `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.ll")
+    forM_ allLLVMHosts $ \host ->
+      it ("LLVM code (" <> toString (llvmHostName host) <> ") should match snapshot") $ \res -> do
+        res.artifacts.caLLVM host `shouldMatchTextSnapshot` (snap <> "/compiler/compiled." <> llvmHostName host <> ".ll")
     it "JVM code should match snapshot" $ \res -> do
       res.jvmText `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.j")
     it "CLR code should match snapshot" $ \res -> do

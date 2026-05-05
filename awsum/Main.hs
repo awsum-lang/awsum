@@ -9,7 +9,7 @@ import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Codegen.LLVM (codegenLLVM)
+import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
@@ -34,7 +34,6 @@ import System.Exit (ExitCode (..))
 import System.FilePath (dropExtension, (</>))
 import System.IO (hIsTerminalDevice)
 import System.IO.Temp (withSystemTempDirectory)
-import System.Info qualified as Info
 import System.Process (readProcessWithExitCode)
 import Text.Pretty.Simple (pPrint)
 
@@ -287,7 +286,7 @@ runCommand = \case
 --   depends on it.
 codegenText :: ProgramType -> Target -> CoreProgram -> Text
 codegenText progType = \case
-  TargetLLVM -> codegenLLVM
+  TargetLLVM -> codegenLLVM llvmHostFromSystem
   TargetJVM -> codegenJVM
   TargetCLR -> codegenCLR
   TargetWASM -> codegenWASM
@@ -300,22 +299,18 @@ runOnTarget progType target core input = case target of
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
           binPath = dir </> "out"
-      writeFileText llPath (codegenLLVM core)
+      let host = llvmHostFromSystem
+      writeFileText llPath (codegenLLVM host core)
       -- AWSUM_CLANG: optional absolute path to clang. Useful on hosts where
       -- the PATH-resolved 'clang' points at an outdated LLVM (e.g. GHC's
       -- bundled mingw clang on Windows when invoked through Stack).
       clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
-      -- On Windows, the LLVM footer (Codegen.LLVM.footerWindows) calls
-      -- GetCommandLineW + CommandLineToArgvW + WideCharToMultiByte. The
-      -- mingw-w64 default link line auto-pulls shell32 and kernel32, but
-      -- MSVC's linker only auto-links what's in /DEFAULTLIB and CRT
-      -- carries kernel32 only — shell32 must be passed explicitly or
-      -- CommandLineToArgvW becomes LNK2019. The flags are no-ops on
-      -- mingw-w64 (already auto-linked) so passing them unconditionally
-      -- on a Windows host is safe across both toolchains.
-      let extraFlags :: [String]
-          extraFlags = if Info.os == "mingw32" then ["-lshell32", "-lkernel32"] else []
-      (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llPath, "-o", binPath] <> extraFlags) ""
+      -- Linker flags must match the IR's footer choice: footerWindows
+      -- references CommandLineToArgvW (shell32) and WideCharToMultiByte
+      -- (kernel32), so the Windows host needs explicit -l flags for the
+      -- MSVC linker (no-op on mingw-w64). 'llvmHostLinkerFlags' keeps
+      -- IR shape and link line in lockstep behind the same enum.
+      (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llPath, "-o", binPath] <> llvmHostLinkerFlags host) ""
       case exitClang of
         ExitFailure n ->
           die

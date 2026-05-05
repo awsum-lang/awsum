@@ -13,7 +13,15 @@
 --   * Zero-arg surface defs ('CValDef') become zero-arg LLVM functions.
 --     Pure expressions, so recomputation is safe.
 --   * The C @main@ entry point reads @argv[1]@ and calls @v_main@.
-module Awsum.Codegen.LLVM (codegenLLVM) where
+module Awsum.Codegen.LLVM
+  ( codegenLLVM,
+    LLVMHost,
+    allLLVMHosts,
+    llvmHostName,
+    llvmHostFromSystem,
+    llvmHostLinkerFlags,
+  )
+where
 
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -30,9 +38,49 @@ import System.Info qualified as Info
 -- Public API
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Produce a complete LLVM IR module from a Core program.
-codegenLLVM :: CoreProgram -> Text
-codegenLLVM prog@(CoreProgram decls) =
+-- | The host environment the emitted IR is meant to be linked and run on.
+--   Decides which @main@ entry point shape we generate (POSIX argv vs the
+--   Windows GetCommandLineW path) and which extra @-l@ flags clang needs at
+--   link time. The CLI derives this from 'System.Info.os' once via
+--   'llvmHostFromSystem'; the snapshot test framework iterates all values
+--   so per-host IR is asserted on every CI host.
+data LLVMHost = LLVMPosix | LLVMWindows
+  deriving stock (Eq, Ord, Show, Enum, Bounded)
+
+-- | Every supported host, used by snapshot tests to assert one IR file
+--   per host on every test run regardless of which host is doing the run.
+allLLVMHosts :: [LLVMHost]
+allLLVMHosts = [minBound .. maxBound]
+
+-- | Stable lowercase name suitable for snapshot file paths
+--   (@compiled.posix.ll@, @compiled.windows.ll@).
+llvmHostName :: LLVMHost -> Text
+llvmHostName = \case
+  LLVMPosix -> "posix"
+  LLVMWindows -> "windows"
+
+-- | Detect the natural host for the awsum binary running this code.
+--   GHC reports @"mingw32"@ for any Windows build regardless of which
+--   external clang/linker the user has installed.
+llvmHostFromSystem :: LLVMHost
+llvmHostFromSystem
+  | Info.os == "mingw32" = LLVMWindows
+  | otherwise = LLVMPosix
+
+-- | Extra clang flags required to actually link the IR for a given host.
+--   Windows needs explicit @-lshell32 -lkernel32@ because @footerWindows@
+--   calls 'CommandLineToArgvW' and friends — mingw-w64 auto-links those,
+--   but MSVC's CRT only carries kernel32, so the explicit flag is what
+--   closes @LNK2019: unresolved external symbol CommandLineToArgvW@.
+--   Harmless on mingw-w64 (already in the auto-link line).
+llvmHostLinkerFlags :: LLVMHost -> [String]
+llvmHostLinkerFlags = \case
+  LLVMPosix -> []
+  LLVMWindows -> ["-lshell32", "-lkernel32"]
+
+-- | Produce a complete LLVM IR module from a Core program for a given host.
+codegenLLVM :: LLVMHost -> CoreProgram -> Text
+codegenLLVM host prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
       ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing}
@@ -44,7 +92,7 @@ codegenLLVM prog@(CoreProgram decls) =
           emitStringConstants pool,
           runtime builtIns,
           userCode,
-          footer
+          footer host
         ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1318,17 +1366,17 @@ runtime builtIns =
 -- Footer: C main entry point
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Choice of @main@ entry point depends on the host the awsum binary
---   is running on, since we don't yet support cross-compilation: the
---   target triple of the emitted IR is whatever clang infers for the
---   host. On Windows MSVCRT's @argv@ goes through the ANSI code page
---   and silently mangles supplementary code points to @?@; we replace
---   it with a UTF-16-clean entry that pulls the command line from
---   shell32 and converts to UTF-8 before handing off to @v_main@.
-footer :: Text
-footer
-  | Info.os == "mingw32" = footerWindows
-  | otherwise = footerPosix
+-- | Choice of @main@ entry point per host. We don't yet support
+--   cross-compilation, so the target triple of the emitted IR is whatever
+--   clang infers from the host running the build. On Windows MSVCRT's
+--   @argv@ goes through the ANSI code page and silently mangles
+--   supplementary code points to @?@; the Windows entry replaces it with
+--   a UTF-16-clean path that pulls the command line from shell32 and
+--   converts to UTF-8 before handing off to @v_main@.
+footer :: LLVMHost -> Text
+footer = \case
+  LLVMPosix -> footerPosix
+  LLVMWindows -> footerWindows
 
 footerPosix :: Text
 footerPosix =
