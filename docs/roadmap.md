@@ -25,7 +25,7 @@ Android.GetPhoto -- compiles only under Android target
 
 1. **iOS and Android APIs diverge over time.** A unified abstraction (like React Native's `Platform.select`) pushes platform differences into runtime checks. Awsum should catch these at compile time, consistent with the existing effect model (`Window` unavailable in CLI target).
 
-2. **Forces good architecture.** Shared business logic lives in pure functions (no platform effects, compiles to any target). Platform-specific UI/integration code is isolated per target. The type checker enforces this separation — not convention, not linting.
+2. **Forces good architecture.** Shared business logic lives in pure functions (no platform effects, compiles to any target). Platform-specific UI/integration code is isolated per target. The type checker enforces the separation — not convention, not linting.
 
 3. **Avoids maintaining a lowest-common-denominator abstraction.** Two platforms requesting "a photo" return different result types, have different permission models, and follow different lifecycle rules. Pretending they're the same creates leaky abstractions.
 

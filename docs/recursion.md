@@ -4,7 +4,7 @@ How the compiler turns natural recursion (self, non-tail, mutual) into stack-saf
 
 ## Guarantee to the user
 
-A well-typed Awsum program **does not overflow the system stack on any backend**, regardless of recursion shape. This is a compiler invariant verified by the test suite at depths up to 1 000 000, cross-backend. The user writes whichever recursion expresses the algorithm most clearly; the compiler picks the shape that will not blow up.
+A well-typed Awsum program **does not overflow the system stack on any backend**, regardless of recursion shape. Compiler invariant, verified cross-backend at depths up to 1 000 000. The user writes whichever recursion expresses the algorithm most clearly; the compiler picks the shape that will not blow up.
 
 Concretely:
 
@@ -22,7 +22,7 @@ When a trade-off appears, the compiler follows this order:
 2. **Runtime performance.** Generated code should be fast.
 3. **Compilation speed.** The compiler itself can be slower if it produces better output.
 
-"Heap frames instead of stack frames" costs a boxed allocation per non-tail recursive call. Heap is typically larger than the system stack and configurable; the allocation cost is the price of the correctness guarantee, and the priority order says that is acceptable.
+"Heap frames instead of stack frames" costs a boxed allocation per non-tail recursive call. Heap is typically larger than the system stack and configurable; the allocation cost is the price of the correctness guarantee, and the priority order accepts it.
 
 ## The three passes
 
@@ -48,7 +48,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker
 
 Between Cps and Tco, [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) verifies that none of those invariants slipped — see below.
 
-Each pass is Core-to-Core. None of them add new Core IR constructs. None of them need backend-specific support beyond what the backend already does for ordinary ADTs and functions.
+Each pass is Core-to-Core. None add new Core IR constructs or need backend-specific support beyond what the backend already does for ordinary ADTs and functions.
 
 ### 1. `Awsum.Scc` — mutual recursion → self-recursion
 
@@ -66,13 +66,13 @@ Each pass is Core-to-Core. None of them add new Core IR constructs. None of them
 
 **Why this is enough.** After merge, every cross-call has become a self-call on the merged function. Tail cross-calls are tail self-calls and fall through to TCO below. Non-tail cross-calls are non-tail self-calls and fall through to CPS.
 
-**Why this shape.** The tag `CCon i [args...]` and its destructuring `case $args of i (p_0, p_1, …) -> …` reuse the uniform container layout every backend already has for ordinary ADTs. No new IR nodes, no runtime helpers. Arm binders are the member's /original/ parameter names, so member bodies resolve variables naturally — no alpha-rename required.
+**Why this shape.** The tag `CCon i [args...]` and its destructuring `case $args of i (p_0, p_1, …) -> …` reuse the uniform container layout every backend already has for ordinary ADTs. No new IR nodes, no runtime helpers. Arm binders are the member's /original/ parameter names, so member bodies resolve variables with no alpha-rename.
 
-**Why this belongs at this position in the pipeline.** SCC must run before CPS. If CPS ran first, each member would be individually CPS'd into a `$cps$f`/`$apply$f` pair, and merging those pairs after the fact would be both semantically awkward and pointless noise in the snapshots. The current order (saturate → **SCC** → **CPS** → TCO) produces the minimal, predictable output.
+**Why this position in the pipeline.** SCC must run before CPS. If CPS ran first, each member would be individually CPS'd into a `$cps$f`/`$apply$f` pair, and merging those pairs after the fact would be semantically awkward and pointless noise in the snapshots. The order (saturate → **SCC** → **CPS** → TCO) produces minimal, predictable output.
 
 **Post-SCC tree-shake.** SCC rewrites every cross-call from `f_j(...)` to `$scc$...(CCon j [...])`, so the original member's public name (the wrapper) is no longer referenced by any sibling arm. Wrappers for members that were only ever called from /inside/ the SCC end up dead, and the `treeShakeFromMain` pass in `elaborateLowerProgram` prunes them immediately after merge. In the classic `handleA ⇄ handleB` test only `handleA` is reachable from `main`, so only its wrapper survives; `handleB`'s wrapper is dropped. Same for the three-member `stepA → stepB → stepC → stepA` cycle: only `stepA` survives if that is the sole public entry point.
 
-**Sum-typed args.** Each member's arguments are packed into a `CCon` with a member-specific tag (the field count matches that member's arity), and the merged function's parameter is a single value destructured by `case`. This means members can have different arities — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) is handled out of the box. See [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) for the cross-backend 100 000-iteration proof.
+**Sum-typed args.** Each member's arguments pack into a `CCon` with a member-specific tag (field count = that member's arity); the merged function's parameter is a single value destructured by `case`. Members can have different arities — parser-combinator style (`parseExpr : Input -> Result`, `parseBinary : Input -> Int -> Result` calling each other) works directly. See [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) for the cross-backend 100 000-iteration proof.
 
 **Current limitation.** SCCs containing a `CValDef` are passed through unchanged here and then caught as a compile error by [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) (see below). Mutually recursive top-level values have no fixed point — `a = b; b = a` has no evaluable value — so this is really a user-level error, and the verifier refuses to lower the program.
 
@@ -110,11 +110,11 @@ countDown n = case eqInt32 n zero of
 
 the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/compiler/core.txt) — a wrapper `countDown` that kicks off `$cps$countDown n KTop`, a tail-recursive `$cps$countDown` whose `Right m` branch emits a `CContinue` through a freshly-constructed `K_1 $k`, and a tail-recursive `$apply$countDown` that walks the K chain and reconstructs the final `Either` value.
 
-**Why not add `CLet` and do A-normal form first.** Adding a let node to Core would require teaching all five backends to emit "evaluate, bind to local, continue". The current design keeps post-call remainders as ordinary Core sub-expressions (walked recursively by `goNonTail` with a continuation-callback) and reuses the existing arm-binding machinery in `case`. Net effect: zero backend changes.
+**Why not add `CLet` and do A-normal form first.** A let node would require teaching all five backends to emit "evaluate, bind to local, continue". This design keeps post-call remainders as ordinary Core sub-expressions (walked recursively by `goNonTail` with a continuation-callback) and reuses the existing arm-binding machinery in `case`. Zero backend changes.
 
-**Why not closures + trampoline (path B).** An alternative reading of CPS keeps continuations as closures with captured environments, and a driver loop (trampoline) runs them. That approach requires first-class closures in Core, which every backend then has to represent: LLVM structs with function pointers, JVM `MethodHandle` with bound args, CLR `Func<>` delegates, WASM `funcref` tables plus heap-allocated environments, and so on. The ADT-based defunctionalization in use here reduces to plain `case` dispatch, which every JIT compiles to a native switch, and the implementation lives in one Core-to-Core module. The K-chain story and the SCC-tag story also share the same primitive, which is the main reason the two passes compose so cleanly.
+**Why not closures + trampoline (path B).** An alternative reading of CPS keeps continuations as closures with captured environments, with a trampoline running them. That requires first-class closures in Core, which every backend then has to represent: LLVM structs with function pointers, JVM `MethodHandle` with bound args, CLR `Func<>` delegates, WASM `funcref` tables plus heap-allocated environments. ADT-based defunctionalization reduces to plain `case` dispatch, which every JIT compiles to a native switch, and the implementation lives in one Core-to-Core module. The K-chain story and the SCC-tag story share the same primitive, which is why the two passes compose so cleanly.
 
-**Why `$k → $pk_<tag>` in the apply arm.** The obvious-looking alternative is to rebind the arm-captured parent continuation to the name `$k` itself (Core-level shadowing of the apply function's parameter). This works everywhere except JavaScript: our JS codegen emits arm-bound names as `const`, and the subsequent TCO-driven re-assignment of the parameter slot at the bottom of the loop would then be a write to a `const`. The alpha-rename to `$pk_<tag>` sidesteps the clash without constraining codegen.
+**Why `$k → $pk_<tag>` in the apply arm.** The obvious alternative is to rebind the arm-captured parent continuation to `$k` itself (Core-level shadowing of the apply function's parameter). This works everywhere except JavaScript: the JS codegen emits arm-bound names as `const`, and the TCO-driven reassignment of the parameter slot at the loop bottom would then be a write to a `const`. The alpha-rename to `$pk_<tag>` sidesteps the clash without constraining codegen.
 
 **Works on any non-tail position.** The transformer walks `goTail`, `goNonTail`, and `goArgs` in strict evaluation order. A non-tail self-call buried inside a constructor field (`Cons (f head) (map f tail)`), inside a call argument (`g (f x)`), or inside an arbitrary case scrutinee all generate their own `K_i` with the right captures. Multiple non-tail calls in one expression chain naturally: the apply-handler of the first `K_i` can itself emit a tail call to `$cps$f` with a later `K_j`, so a pair of sibling self-calls produces a pair of Ks that ping-pong through `$apply$f` as the first's result becomes the trigger for the second.
 
@@ -124,8 +124,8 @@ the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/co
 
 Two classes of issues are caught and classified by `Awsum.StackSafety.StackSafetyIssue`:
 
-- **`MutuallyRecursiveValues [Name]`** — the verifier sees a size > 1 SCC whose members are /all/ `CValDef`s. This is a user error that the rest of the pipeline would have silently lowered to code that loops forever during initialisation. Reported as a hard error without any "compiler bug" hedging — `Mutually recursive top-level values cannot be evaluated: bar, foo. The values reference each other in a cycle with no base case, so there is no computable result.`
-- **`UnsupportedRecursionShape [Name]`** — any other remnant: a non-tail self-call that `Awsum.Cps` did not rewrite, or a call-graph cycle involving at least one `CFunDef` that `Awsum.Scc` did not know how to merge. Today no test triggers this path; it exists as a guard rail. Reported as `Awsum cannot guarantee stack safety for this program … If you believe this is a bug, please open an issue on GitHub with a minimal example.` — the program may well be correct, the compiler just lacks the transformation to lower it safely.
+- **`MutuallyRecursiveValues [Name]`** — the verifier sees a size > 1 SCC whose members are /all/ `CValDef`s. A user error that the rest of the pipeline would have silently lowered to code that loops forever during initialisation. Reported as a hard error without "compiler bug" hedging — `Mutually recursive top-level values cannot be evaluated: bar, foo. The values reference each other in a cycle with no base case, so there is no computable result.`
+- **`UnsupportedRecursionShape [Name]`** — any other remnant: a non-tail self-call `Awsum.Cps` did not rewrite, or a call-graph cycle involving at least one `CFunDef` `Awsum.Scc` did not know how to merge. No test triggers this path today; it exists as a guard rail. Reported as `Awsum cannot guarantee stack safety for this program … If you believe this is a bug, please open an issue on GitHub with a minimal example.` — the program may be correct, the compiler just lacks the transformation to lower it safely.
 
 The verifier produces hard `TypeError`s, not warnings — there is no escape hatch. The canonical failing program looks like:
 
@@ -182,13 +182,13 @@ Every test in the table runs on all five backends with identical stdout via `Pro
 
 ## The role of whole-program compilation
 
-The designs above assume every callee is visible when the passes run. Awsum compiles whole-program from source (including the prelude, which is embedded into the binary via `file-embed`), so this assumption holds by construction. A separate-compilation language would either have to do the SCC / CPS passes at link time or give up and rely on whatever native TCO the target provides — and JVM and JS do not provide cross-method tail-call support, so the guarantees would not hold uniformly.
+The designs above assume every callee is visible when the passes run. Awsum compiles whole-program from source (including the prelude, embedded into the binary via `file-embed`), so this holds. A separate-compilation language would have to do SCC / CPS at link time or rely on whatever native TCO the target provides — and JVM and JS do not provide cross-method tail-call support, so the guarantees would not hold uniformly.
 
 The whole-program story also makes the tree-shake honest. Generated `K_i` constructors, `$cps$f`, `$apply$f`, and `$scc$…` functions are reachable only from live user code; anything unused is dropped before codegen. A prelude entry that no program references costs nothing.
 
 ## Pre-existing bugs surfaced during this work
 
-Non-tail self-recursion produces nested `case` expressions whose outer arm-bindings must stay live inside the inner case body — the captures of `K_i` come from exactly such bindings. That pattern had not appeared in any test before the CPS pass landed, and several backends had latent slot-allocation bugs that only surfaced once CPS started generating the shape. All fixed together:
+Non-tail self-recursion produces nested `case` expressions whose outer arm-bindings must stay live inside the inner case body — the captures of `K_i` come from exactly such bindings. That pattern had not appeared in any test before CPS landed, and several backends had latent slot-allocation bugs that only surfaced once CPS generated the shape. All fixed together:
 
 - **CLR text ([`Codegen/CLR.hs`](../src/Awsum/Codegen/CLR.hs))** — `zip vars [0..]` in each `CCase` arm would overwrite outer bindings with inner ones. Fixed by computing the next free `ldloc` slot from the current `varMap`'s ldloc entries and allocating inner bindings beyond that.
 - **CLR binary ([`Codegen/CLR/Assemble.hs`](../src/Awsum/Codegen/CLR/Assemble.hs))** — fixed `arrSlot = 0` and `bindSlotStart = 1` in each `CCase`. Fixed by `arrSlot = max(Map.elems eLocals) + 1`, which jumps past every live local including outer array scratch slots (those are not tracked in `eLocals` but stay live for the arm body). `exprLocalsNeeded` was already additive; the mismatch was in the emitter.
@@ -200,7 +200,7 @@ Non-tail self-recursion produces nested `case` expressions whose outer arm-bindi
 
 Still to do for a complete stack-safety story.
 
-- **Monadic recursion.** Desugaring `do` into `>>=` calls in elaboration makes monadic code flow through the same SCC + CPS passes. Works transparently for "ordinary" monads (`IO`, `State`, `Reader`, `Writer`, `Either`, `Maybe`) whose `>>=` does not itself encode deep control flow; exotic monads (continuations, free monads with deep nesting, search with backtracking) will need an explicit `tailRecM` method à la PureScript. The prerequisites (type classes, monads, `do`-desugaring) are unimplemented today.
+- **Monadic recursion.** Desugaring `do` into `>>=` calls in elaboration routes monadic code through the same SCC + CPS passes. Works for "ordinary" monads (`IO`, `State`, `Reader`, `Writer`, `Either`, `Maybe`) whose `>>=` does not itself encode deep control flow; exotic monads (continuations, free monads with deep nesting, search with backtracking) will need an explicit `tailRecM` method à la PureScript. The prerequisites (type classes, monads, `do`-desugaring) are unimplemented today.
 
 ## References
 

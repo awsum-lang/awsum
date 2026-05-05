@@ -55,7 +55,7 @@ square n = n
 
 Local inference still runs inside a body — the compiler only refuses to pick a type for a top-level definition from its body.
 
-The reason is **error locality**. With global inference a mistake surfaces wherever the system becomes inconsistent, not where it was made. Structural sums sharpen the cost: prelude arithmetic, parsing, and lookup all return `Either e a`, and combining operations takes the set-semantic union of error rows. A missing `<-` or a refactor inside the body silently widens or narrows the inferred row — still well-formed, just no longer the row the user thought they were exporting. Mandatory signatures cap the blast radius at one definition.
+The reason is **error locality**. With global inference a mistake surfaces wherever the system becomes inconsistent, not where it was made. Structural sums sharpen the cost: prelude arithmetic, parsing, and lookup all return `Either e a`, and combining operations takes the set-semantic union of error rows. A missing `<-` or a refactor inside the body silently widens or narrows the inferred row. Mandatory signatures cap the blast radius at one definition.
 
 ---
 
@@ -90,7 +90,7 @@ broken x = case x of
   Just n -> showInt32 n
 ```
 
-There is **no catch-all** (`_ -> …`). When a type gains a new constructor, a catch-all would silently route it into whatever default the arm picked. Without one, every existing `case` over the extended type stops compiling until the new constructor is handled — the change becomes visible everywhere it matters instead of turning into a silent logic bug.
+There is **no catch-all** (`_ -> …`). When a type gains a new constructor, a catch-all would silently route it into whatever default the arm picked. Without one, every existing `case` over the extended type stops compiling until the new constructor is handled.
 
 ### Uninhabited types
 
@@ -231,7 +231,7 @@ captureFn : Int32 -> Int32
 captureFn k = apply (\n -> k) answer
 ```
 
-There is no closure runtime in any backend. The compiler /defunctionalises/ each higher-order-function call site at lowering time: the static closure flowing into a fn-typed slot is replaced with a specialised first-order copy of the HOF whose parameter list adds the closure's captures up front. After this pass no first-class function value remains in any reachable position — every backend sees ordinary first-order calls. Polymorphic HOFs become a family of monomorphic specialisations, one per distinct closure shape across call sites; pass-through HOFs (`applyTwice f x = applyOnce f (applyOnce f x)`) cascade naturally because each inner call resolves the same closure and reuses the memoised specialisation.
+No backend has a closure runtime. The compiler /defunctionalises/ each HOF call site at lowering time: the static closure flowing into a fn-typed slot is replaced with a specialised first-order copy of the HOF whose parameter list adds the closure's captures up front. After this pass no first-class function value remains in any reachable position. Polymorphic HOFs become a family of monomorphic specialisations, one per distinct closure shape across call sites; pass-through HOFs (`applyTwice f x = applyOnce f (applyOnce f x)`) cascade naturally because each inner call resolves the same closure and reuses the memoised specialisation.
 
 ---
 
@@ -274,7 +274,7 @@ x = 1
 
 The rule covers function parameters, pattern variables, top-level definitions, type parameters, and constructor names. The diagnostic always points at the _new_ binder. Every reference in the module is unambiguous — the binding site is the lexically-earliest one.
 
-Cross-module names are exempt. A parameter or pattern variable may shadow a top-level from another module — the prelude's `mapRight x f = …` parameter `f` does **not** clash with a user-program top-level `f`. Otherwise every prelude entry would need defensive parameter names. In the current iteration there are exactly two modules: the bundled prelude and the user program.
+Cross-module names are exempt. A parameter or pattern variable may shadow a top-level from another module — the prelude's `mapRight x f = …` parameter `f` does **not** clash with a user-program top-level `f`. Otherwise every prelude entry would need defensive parameter names. Today there are exactly two modules: the bundled prelude and the user program.
 
 ---
 
@@ -405,7 +405,7 @@ main : String -> IO Unit
 main _input = IO.Stdout.print (greet "hello")  -- "hello" is a String, fits the row
 ```
 
-Injection works through nominal heads too: `Maybe Bool` fits where `Maybe (Bool | Unit)` is expected. Values built outside a row context are normalised at the boundary by a per-shape lifting helper, so a top-level `defaultJust : Maybe Bool` flows into a slot expecting `Maybe (Bool | Unit)` without a user-written wrapper.
+Injection works through nominal heads too: `Maybe Bool` fits where `Maybe (Bool | Unit)` is expected. Values built outside a row context are normalised at the boundary by a per-shape lifting helper, so a top-level `defaultJust : Maybe Bool` flows into a slot expecting `Maybe (Bool | Unit)` with no user-written wrapper.
 
 ```awsum
 -- ok: 'Just True' is constructed directly at the row-typed call site.
@@ -489,7 +489,7 @@ f = do
 ### What's in scope inside a `do` block
 
 - `<-` binds a name to the success value of an `Either`-returning expression. Anything else on the right is `DoBindNonEither`.
-- The block's final statement is an expression. Return a plain value as `Right` by calling `pureEither` explicitly — there is no `pure` keyword in this iteration; once type classes land, `pure` will be a polymorphic function rather than a syntactic rewrite.
+- The block's final statement is an expression. Return a plain value as `Right` by calling `pureEither` explicitly — there is no `pure` keyword today; once type classes land, `pure` will be a polymorphic function rather than a syntactic rewrite.
 - A trailing `<-` or unfinished sentence is `DoBlockMissingResult`.
 
 ### Bound names threaded through subsequent statements
