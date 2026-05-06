@@ -324,6 +324,22 @@ parserPropSpec = do
         fmap normalizeProgram (parseProgram (renderProgram p))
           === Right (normalizeProgram (p :: Program))
 
+  describe "format idempotency" $ do
+    -- 'render . parse . render p == render p' for any 'p'. The
+    -- 'parse . render == id' property above already ensures the AST
+    -- round-trips; this one ensures the *text* produced by the
+    -- formatter is itself in canonical form. Catches drift like
+    -- comment placement that shifts on the second pass, or layout
+    -- that isn't a fixed point of the formatter.
+    it "render . parse . render == render"
+      $ property
+      $ \p ->
+        let firstPass = renderProgram (p :: Program)
+            secondPass = case parseProgram firstPass of
+              Left e -> "<parse failed: " <> e <> ">"
+              Right q -> renderProgram q
+         in secondPass === firstPass
+
 typecheckerSpec :: Spec
 typecheckerSpec = do
   describe "Typing.typecheckProgram" $ do

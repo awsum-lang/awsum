@@ -144,11 +144,13 @@ genStr = do
   let ok c = isAlphaNum c || c == ' ' || c == '_' || c == '-' -- avoid quotes/backslash
   toText <$> vectorOf k (suchThat arbitrary ok)
 
--- | Non-empty single-line comment text — empty trailing comments
---   render as a bare @--@ that the parser canonicalises back to
---   'Nothing'.
+-- | Single-line comment text. Empty texts are valid in the AST but
+--   the renderer emits them as a bare @--@ that the parser
+--   canonicalises back to 'Nothing'; the property's normaliser
+--   ('normalizeTrailing') matches that on both sides, so empty
+--   texts round-trip too.
 genCommentText :: Gen Text
-genCommentText = genStr `suchThat` (not . T.null)
+genCommentText = genStr
 
 genComment :: Gen (Maybe Text)
 genComment = frequency [(3, pure Nothing), (1, Just <$> genCommentText)]
@@ -379,10 +381,10 @@ instance Arbitrary Decl where
     where
       -- Mostly plain-name parameters; an occasional destructuring
       -- 'ParamPat'. The parser canonicalises @(x)@ back to a bare
-      -- 'Param' (see 'paramBinderG' in the parser) — so 'ParamPat'
-      -- only round-trips when its inner pattern is something the
-      -- canonicaliser does /not/ collapse: 'PCon' (with or without
-      -- fields) and 'PAscribe'.
+      -- 'Param' (see 'paramBinderG' in the parser); the normaliser
+      -- ('normalizeParam') matches that on the AST side, so any
+      -- 'ParamPat' shape — including @PVar@ or @PWild@ — round-trips
+      -- through @parse∘render@ once both sides are normalised.
       genParam =
         frequency
           [ (8, Param noSpan <$> genLIdent),
@@ -390,7 +392,9 @@ instance Arbitrary Decl where
           ]
       genParamPat =
         oneof
-          [ PCon noSpan <$> genUIdent <*> pure [],
+          [ PVar noSpan <$> genLIdent,
+            pure (PWild noSpan),
+            PCon noSpan <$> genUIdent <*> pure [],
             do
               k <- chooseInt (1, 2)
               PCon noSpan <$> genUIdent <*> vectorOf k (resize 1 arbitrary),

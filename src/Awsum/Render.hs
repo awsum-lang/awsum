@@ -378,6 +378,10 @@ renderPatternAtom p = renderPattern p
 --   parameters.
 renderParam :: Param -> Text
 renderParam (Param _ n) = n
+-- 'ParamPat (PVar n)' is equivalent to 'Param n' (the parser
+-- canonicalises @(x)@ back to a bare binder); render it without
+-- parens so the formatter is idempotent at the text level.
+renderParam (ParamPat _ (PVar _ n)) = n
 renderParam (ParamPat _ pat) = "(" <> renderPattern pat <> ")"
 
 -- | Utility: surround text with parentheses.
