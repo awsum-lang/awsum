@@ -72,7 +72,7 @@ The built-in table stores types as `Core.Type` values, not Haskell types. Name r
 ```
 import IO.Stdout
 
-main : String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showInt32 42)
 ```
 
@@ -101,6 +101,22 @@ not = BuiltIn.not
 ```
 
 The user sees no change — signature identical, go-to-definition lands in the same place. The compiler's table grows a `not` entry with per-target implementations. Migrating back is symmetric.
+
+## `IO e a`, `runIO`, and `BuiltIn.internalStdoutPrint`
+
+Three things together make IO lazy in Awsum:
+
+1. **`type IO e a` in the prelude** with constructors `IOPure a | IOFail e | IOStdoutPrint String (IO e a)`. An `IO` value is just data describing the effect — building it never performs the effect. The error row `e` carries the failure type explicitly (currently `Never` for every primitive; this tightens as real error sources land).
+
+2. **`IO.Stdout.print` lowers to a constructor.** During Surface→Core lowering, `CCall (CBuiltIn "IO.Stdout.print") [arg]` is rewritten to `CCon ioStdoutPrintTag [arg, IOPure Unit]` (see `lowerIOPlatformBuiltinsDecl` in `Awsum.ElaborateLower`). After this pass, `IO.Stdout.print` no longer exists as a `CBuiltIn` in Core — it's pure data.
+
+3. **`runIO` walks the IO tree at runtime.** `runIO : IO Never Unit -> Unit` is a regular prelude function defined as `case io of IOPure u -> u | IOStdoutPrint s next -> case BuiltIn.internalStdoutPrint s of Unit -> runIO next`. The recursive call is in tail position, so the existing TCO pass folds it into a bounded-stack loop on every backend — no manual per-target loop emission. Each backend's entry-point glue calls `v_runIO(v_main(input))` instead of just `v_main(input)`.
+
+`BuiltIn.internalStdoutPrint : String -> Unit` is a privileged low-level primitive used only by `runIO` to perform the actual stdout write. It is **not** exposed to user code through any prelude alias — there is no module/visibility system in Awsum yet, so the contract is convention only. When modules land, this and `IO`'s constructors move into a privileged module inaccessible to user code.
+
+`runIO` is added as a tree-shake root alongside `main`, because the codegen entry-point glue calls it through a string template (not in Core). Without that, reachability analysis would lose track of `runIO` and shake it away.
+
+The `bindIO` / `pureIO` / `mapIO` / `mapIOError` family is plain Awsum prelude code — `case`-driven, recursive on the `IOStdoutPrint` arm, naturally folded into loops by the existing Cps + TCO passes (no special handling needed).
 
 ## Program type and platform-gated effects
 
@@ -145,5 +161,5 @@ Core-level uniformity is deliberate: both classes collapse to `CBuiltIn`. Backen
 - `src/Awsum/Core.hs` — `CBuiltIn` core node (the one node for both built-in kinds — dispatch is on the key string).
 - `src/Awsum/Parser.hs` — recognising `BuiltIn.foo` as a syntactic primitive.
 - `src/Awsum/Typing.hs` — alias-form arity rule, `UnknownBuiltIn`, `BuiltInTypeMismatch`, and `builtinEnvFromImports` (intersects the program type's platform table with the file's imports).
-- `src/Awsum/ElaborateLower.hs` — lowering `EBuiltIn` to `CBuiltIn` (flat key), qualified names to `CBuiltIn` (dotted key) via the program's platform table, skipping alias `FunDef`s, reachability-based tree-shake (`reachableCore`) that drops any top-level Core declaration not reachable from `main`, including prelude helpers and constructor wrappers.
-- Each backend in `src/Awsum/Codegen/*` — per-target dispatch on `CCall (CBuiltIn name) args` keyed by the name string, e.g. `@__showInt32`, `@__predInt32`, `@__print` for `IO.Stdout.print`.
+- `src/Awsum/ElaborateLower.hs` — lowering `EBuiltIn` to `CBuiltIn` (flat key), qualified names to `CBuiltIn` (dotted key) via the program's platform table, skipping alias `FunDef`s; `lowerIOPlatformBuiltinsDecl` rewrites `CCall (CBuiltIn "IO.Stdout.print") [arg]` into the `IOStdoutPrint` constructor (lazy IO); reachability-based tree-shake (`reachableCore`) from `main` and `runIO` that drops any top-level Core declaration not reachable from those roots, including prelude helpers and constructor wrappers.
+- Each backend in `src/Awsum/Codegen/*` — per-target dispatch on `CCall (CBuiltIn name) args` keyed by the name string, e.g. `@__showInt32`, `@__predInt32`, `@__print` for `BuiltIn.internalStdoutPrint`. Each backend's entry-point glue calls `v_runIO(v_main(input))` to walk the IO tree returned by `main`.

@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Property-based tests across all backends** (`just test-property`); 40 starter properties covering integer arithmetic (commutativity / associativity / identities / no-overflow agreement / distributivity), succ/pred (round-trip + boundary), equality, parse/show round-trip, string monoid laws, splitOnFirst, boolean laws.
 - **Prelude** — `Tuple2`, `Tuple3`, `parseInt32`, `parseUInt8`, `splitOnFirst`, `addInt32`, `addUInt8`, `subInt32`, `subUInt8`, `negInt32`, `mulInt32`, `mulUInt8`, range constants `minInt32` / `maxInt32` / `minUInt8` / `maxUInt8`; new types `ParseError`, `UnderflowError`, `OverflowError`.
 - **Three explicit string-length functions** — `lengthCodePoints`, `lengthUtf16CodeUnits`, `lengthBytesAsUtf8`, all `String -> UInt32`. No `length` alias by design: the unit being counted is meaningful (a supplementary character is 1 code point, 2 UTF-16 code units, 4 UTF-8 bytes), and a call site that picked the wrong default would silently produce wrong answers.
+- **`type Never`** in the prelude — empty type, no constructors. Used as the error row of `IO Never a` to declare an IO action that cannot fail; doubles as a phantom type and an unreachable-position marker.
+- **Lazy IO.** `IO e a` is now a sum type in the prelude (`IOPure | IOFail | IOStdoutPrint`); `IO.Stdout.print "x"` builds an `IOStdoutPrint` cell instead of performing the print. Only the IO returned from `main` runs — `let _ = IO.Stdout.print "ignored" in IO.Stdout.print "real"` prints just `real`.
+- **`bindIO` / `pureIO` / `mapIO` / `mapIOError`** in the prelude — IO compositors mirroring `bindEither` / `pureEither` / `mapRight` / `mapLeft`.
 
 ### Fixed
 
@@ -37,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cross-module shadow scoping** — same-module shadowing remains an error; cross-module is allowed.
 - **Property tests** rewritten to a uniform `parseInput / property / main` skeleton with `let res : T = do { … }` directly in `main`; pattern do-bind inlines the previous `parsed <- … case parsed of …` envelopes.
 - **`IOUnit` renamed to `IO Unit`** (`IO` is now a unary type constructor).
+- **`IO` is now `IO e a`** — gains an explicit error-row parameter, mirroring `Either e a`. `main` now returns `IO Never Unit` and `IO.Stdout.print : String -> IO Never Unit` — `Never` declares "no errors possible at this site". When primitives later gain real errors (e.g. `BrokenPipe` for `print`), the type widens and forces every site to handle the new error explicitly. Signature-only change: IO actions are still executed eagerly at construction; lazy IO follows in a separate change.
 - **Symbol visibility tightened** — every backend exposes only the platform-mandated entry point externally; user top-levels and runtime helpers are private.
 - **`RowCatchAllPattern` diagnostic** points at the `_` itself, not the surrounding `case` arm.
 - **JVM target floor: Java 11 (LTS)** — emitted class file version bumped from 51.0 (Java 7) to 55.0 (Java 11), aligning with the documented platform-version policy. CI's pinned JDK on all four matrix runners is now Zulu 11. Generated `.class` files run on any JVM ≥ 11.

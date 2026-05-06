@@ -17,6 +17,7 @@ User-facing description of Awsum's type system — concepts and examples of prog
 | Type-ascription patterns `(x : T)`   | done                                                          |
 | Implicit injection into a row        | done                                                          |
 | `do`-notation for `Either`           | done                                                          |
+| `IO e a` as lazy data + `bindIO`/`mapIO` | done                                                       |
 | Lambda expressions `\x -> e`         | done — closed lambdas, `do`-block continuations, and closures over outer parameters |
 | Open-row `(A \| r) ~ (A \| B \| r')` | partial — singleton tyvar / row only                          |
 | Row-typed `let`-generalisation       | not yet — every top-level def needs a signature               |
@@ -28,7 +29,7 @@ User-facing description of Awsum's type system — concepts and examples of prog
 
 ### Primitives
 
-`String`, `Int32`, `UInt8`, `IO a` are built-in. Everything else is in the prelude (see [docs/prelude.md](prelude.md)).
+`String`, `Int32`, `UInt8`, `UInt32` are built-in. `IO e a` is declared in the prelude (see [docs/prelude.md](prelude.md) and [IO](#io) below); everything else is in the prelude too.
 
 ```awsum
 greeting : String
@@ -552,6 +553,53 @@ pad s = let p = "[" ++ s in let q = p ++ "]" in q ++ q
 - **The RHS is evaluated once.** Multiple references to `n` in `body` do not re-evaluate `e`.
 
 The same form appears inside `do` blocks (see [`let` inside `do`](#let-inside-do)); both desugar identically.
+
+---
+
+## IO
+
+`IO e a` is a sum type declared in the prelude:
+
+```awsum
+type IO e a = IOPure a | IOFail e | IOStdoutPrint String (IO e a)
+```
+
+An `IO` value is **data**, not an effect. Constructing `IO.Stdout.print "x"` builds an `IOStdoutPrint` cell; the print does not happen at construction. The runtime walks the IO tree returned from `main` and performs the corresponding effects in order. Code that builds an `IO` value but never lets it reach the runtime walker produces no output:
+
+```awsum
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input =
+  let unit = IO.Stdout.print "💩"
+   in IO.Stdout.print "🔥"
+-- prints `🔥`, not `💩🔥` — the first IO is constructed and discarded
+```
+
+The error row `e` works exactly like the error row of `Either`: each primitive declares its failure type explicitly. Currently every built-in IO primitive uses `Never`, meaning it cannot fail; this tightens as real error sources (broken pipe, disk full, …) are added. `main`'s required signature is `… -> IO Never Unit`: any non-`Never` error row must be eliminated by the user before `main` returns it (handle the failure value, don't pretend it can't happen).
+
+### `bindIO` / `pureIO` / `mapIO` / `mapIOError`
+
+Compose `IO` values through the prelude functions, exactly mirroring the `Either` family:
+
+| Either                                           | IO                                            |
+| ------------------------------------------------ | --------------------------------------------- |
+| `bindEither : Either e1 a -> (a -> Either e2 b) -> Either (e1 \| e2) b` | `bindIO : IO e1 a -> (a -> IO e2 b) -> IO (e1 \| e2) b` |
+| `pureEither : a -> Either e a`                   | `pureIO : a -> IO e a`                        |
+| `mapRight : Either e a -> (a -> b) -> Either e b` | `mapIO : IO e a -> (a -> b) -> IO e b`        |
+| `mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a` | `mapIOError : IO e1 a -> (e1 -> e2) -> IO e2 a` |
+
+Sequencing two prints:
+
+```awsum
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = bindIO (IO.Stdout.print "a") (\_u -> IO.Stdout.print "b")
+-- prints `ab`
+```
+
+`do`-notation is hard-coded to `Either` and does not work for `IO`. Sequencing `IO` actions is explicit through `bindIO`. (When type classes land, `do` becomes polymorphic; until then, the lack of overloading is what keeps `do`'s desugaring purely syntactic.)
+
+### Pattern-matching on `IO` constructors
+
+Pattern-matching on `IOPure` / `IOFail` / `IOStdoutPrint` is technically allowed but **not part of the stable API**: new effects will add new constructors, breaking existing `case`-matches (no catch-all by language design). For ordinary composition, use `bindIO` / `mapIO` / `pureIO` / `mapIOError`. Direct matching is for first-party tooling (e.g. a future test framework's mock interpreter) that updates in lockstep with the compiler. When modules land, `IO`'s constructors will move into a privileged module inaccessible to user code.
 
 ---
 
