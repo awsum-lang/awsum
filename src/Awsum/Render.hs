@@ -183,24 +183,36 @@ renderExprPrec ctx indent e =
       parens (renderExprPrec 0 indent e')
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
-      -- Scrutinee is rendered at ctx=1 because the parser's scrutinee
-      -- grammar ('pConcatNoLineComments') only accepts atoms, applications
-      -- and '++' chains — block forms (ELet / ELam / ECase / EDo) must be
-      -- wrapped in parens or they don't reparse. The block-form renderers
-      -- already add parens at any ctx > 0.
+      -- Arm column is established by the first arm itself
+      -- (`pCaseNoLineComments` reads `L.indentLevel` after `of`), so
+      -- placing arms at indent+2 works regardless of where the 'case'
+      -- keyword lands on the line. Scrutinee is rendered at ctx=1 because
+      -- the parser's scrutinee grammar ('pConcatNoLineComments') only
+      -- accepts atoms, applications and '++' chains — block forms
+      -- (ELet / ELam / ECase / EDo) must be wrapped in parens or they
+      -- don't reparse. When wrapping in parens, close ')' on a fresh
+      -- line so a trailing '--' on the last arm doesn't swallow it.
       let s = "case " <> renderExprPrec 1 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
-       in if 0 < ctx then parens s else s
+       in if 0 < ctx then "(" <> s <> "\n" <> T.replicate indent " " <> ")" else s
     ELam _sp params body ->
       -- Lambda body extends as far right as possible — same precedence
-      -- as 'case', so nested usage adds parens.
+      -- as 'case', so nested usage adds parens. When the lambda is
+      -- itself wrapped in parens, render the body at ctx=1 so any
+      -- block-form body (ECase/EDo) gets its own paren wrapping,
+      -- preventing a trailing '--' on a nested case arm from eating
+      -- the lambda's closing paren.
       let paramsText = T.intercalate " " (map renderParam params)
-          s = "\\" <> paramsText <> " -> " <> renderExprPrec 0 indent body
+          bodyCtx = if 0 < ctx then 1 else 0
+          s = "\\" <> paramsText <> " -> " <> renderExprPrec bodyCtx indent body
        in if 0 < ctx then parens s else s
     EDo _sp stmts ->
+      -- Same close-paren-on-newline trick as 'ECase' — the last
+      -- DoStmt (typically a DoExpr containing a case) might end on
+      -- a trailing comment that would otherwise swallow the ')'.
       let stmtLines = map (renderDoStmt (indent + 2)) stmts
           inner = T.intercalate ("\n" <> T.replicate (indent + 2) " ") stmtLines
           s = "do\n" <> T.replicate (indent + 2) " " <> inner
-       in if 0 < ctx then parens s else s
+       in if 0 < ctx then "(" <> s <> "\n" <> T.replicate indent " " <> ")" else s
     ELet {} ->
       -- Nested 'let' (i.e., not the function-body position handled
       -- in 'renderDecl FunDef'). Single-binding renders as a 2-line

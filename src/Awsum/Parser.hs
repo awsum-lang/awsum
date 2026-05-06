@@ -692,6 +692,15 @@ pParensNoLineComments = do
   start <- P.getSourcePos
   _ <- symNoLine "("
   e <- pExprNoLineComments
+  -- Allow optional newline + indent before ')' so a multi-line block
+  -- form inside parens can close on a fresh line. The renderer needs
+  -- this whenever wrapping ECase / EDo, because a trailing '--' on
+  -- the last arm of a nested case would otherwise eat the ')' (line
+  -- comments extend to end-of-line).
+  _ <- P.optional $ try $ do
+    void C.eol
+    skipBlankLinesNoComments
+    hspaceNoComments
   _ <- symNoLine ")"
   end <- P.getSourcePos
   pure (EParens (toSrcSpan start end) e)
