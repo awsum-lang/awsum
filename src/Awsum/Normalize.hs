@@ -1,21 +1,17 @@
 -- | /Surface-level/ normalization.
 --
--- This pass works on 'Awsum.Syntax' (the user-facing AST) and performs
--- only safe, structure-preserving cleanups that do **not** require types
--- and do **not** change semantics:
+-- Works on 'Awsum.Syntax' (user-facing AST). Safe, structure-preserving
+-- cleanups; no type info, no semantic change:
 --
 --   • recursively normalizes subexpressions,
---   • drops explicit parentheses ('EParens') — they are syntactic sugar,
---   • keeps declaration and import order intact (no reordering/deduping here).
+--   • drops explicit parentheses ('EParens'),
+--   • keeps declaration and import order intact.
 --
--- Things this module deliberately does **not** do:
---   • beta/eta reductions, inlining, or any evaluation;
---   • re-association beyond what the parser already guarantees
---     (application is left-assoc; '++' is left-assoc with its precedence);
---   • name resolution or qualification changes.
+-- Deliberately /not/ done: beta/eta, inlining, evaluation; re-association
+-- beyond what the parser guarantees; name resolution.
 --
--- If you add new expression forms in 'Awsum.Syntax', extend 'normalizeExpr'
--- with a structurally recursive case (no cleverness).
+-- New 'Awsum.Syntax' expression forms get a structurally recursive case
+-- in 'normalizeExpr' (no cleverness).
 module Awsum.Normalize
   ( normalizeProgram,
     normalizeDecl,

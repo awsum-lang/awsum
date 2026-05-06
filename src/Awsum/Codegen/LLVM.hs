@@ -13,7 +13,15 @@
 --   * Zero-arg surface defs ('CValDef') become zero-arg LLVM functions.
 --     Pure expressions, so recomputation is safe.
 --   * The C @main@ entry point reads @argv[1]@ and calls @v_main@.
-module Awsum.Codegen.LLVM (codegenLLVM) where
+module Awsum.Codegen.LLVM
+  ( codegenLLVM,
+    LLVMHost,
+    allLLVMHosts,
+    llvmHostName,
+    llvmHostFromSystem,
+    llvmHostLinkerFlags,
+  )
+where
 
 import Awsum.Core
 import Awsum.HM (rowTag)
@@ -24,14 +32,55 @@ import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
+import System.Info qualified as Info
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Public API
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | Produce a complete LLVM IR module from a Core program.
-codegenLLVM :: CoreProgram -> Text
-codegenLLVM prog@(CoreProgram decls) =
+-- | The host environment the emitted IR is meant to be linked and run on.
+--   Decides which @main@ entry point shape we generate (POSIX argv vs the
+--   Windows GetCommandLineW path) and which extra @-l@ flags clang needs at
+--   link time. The CLI derives this from 'System.Info.os' once via
+--   'llvmHostFromSystem'; the snapshot test framework iterates all values
+--   so per-host IR is asserted on every CI host.
+data LLVMHost = LLVMPosix | LLVMWindows
+  deriving stock (Eq, Ord, Show, Enum, Bounded)
+
+-- | Every supported host, used by snapshot tests to assert one IR file
+--   per host on every test run regardless of which host is doing the run.
+allLLVMHosts :: [LLVMHost]
+allLLVMHosts = universe
+
+-- | Stable lowercase name suitable for snapshot file paths
+--   (@compiled.posix.ll@, @compiled.windows.ll@).
+llvmHostName :: LLVMHost -> Text
+llvmHostName = \case
+  LLVMPosix -> "posix"
+  LLVMWindows -> "windows"
+
+-- | Detect the natural host for the awsum binary running this code.
+--   GHC reports @"mingw32"@ for any Windows build regardless of which
+--   external clang/linker the user has installed.
+llvmHostFromSystem :: LLVMHost
+llvmHostFromSystem
+  | Info.os == "mingw32" = LLVMWindows
+  | otherwise = LLVMPosix
+
+-- | Extra clang flags required to actually link the IR for a given host.
+--   Windows needs explicit @-lshell32 -lkernel32@ because @footerWindows@
+--   calls 'CommandLineToArgvW' and friends — mingw-w64 auto-links those,
+--   but MSVC's CRT only carries kernel32, so the explicit flag is what
+--   closes @LNK2019: unresolved external symbol CommandLineToArgvW@.
+--   Harmless on mingw-w64 (already in the auto-link line).
+llvmHostLinkerFlags :: LLVMHost -> [String]
+llvmHostLinkerFlags = \case
+  LLVMPosix -> []
+  LLVMWindows -> ["-lshell32", "-lkernel32"]
+
+-- | Produce a complete LLVM IR module from a Core program for a given host.
+codegenLLVM :: LLVMHost -> CoreProgram -> Text
+codegenLLVM host prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
       ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing}
@@ -43,7 +92,7 @@ codegenLLVM prog@(CoreProgram decls) =
           emitStringConstants pool,
           runtime builtIns,
           userCode,
-          footer
+          footer host
         ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1317,8 +1366,20 @@ runtime builtIns =
 -- Footer: C main entry point
 -- ════════════════════════════════════════════════════════════════════════════
 
-footer :: Text
-footer =
+-- | Choice of @main@ entry point per host. We don't yet support
+--   cross-compilation, so the target triple of the emitted IR is whatever
+--   clang infers from the host running the build. On Windows MSVCRT's
+--   @argv@ goes through the ANSI code page and silently mangles
+--   supplementary code points to @?@; the Windows entry replaces it with
+--   a UTF-16-clean path that pulls the command line from shell32 and
+--   converts to UTF-8 before handing off to @v_main@.
+footer :: LLVMHost -> Text
+footer = \case
+  LLVMPosix -> footerPosix
+  LLVMWindows -> footerWindows
+
+footerPosix :: Text
+footerPosix =
   unlines
     [ "",
       "define i32 @main(i32 %argc, ptr %argv) {",
@@ -1336,6 +1397,70 @@ footer =
       -- Layout matches CCon emit: malloc(8 * (1 + nFields)), tag at offset 0,
       -- fields at offsets 1.. — both stored as `ptr` slots. Tag is encoded as
       -- `inttoptr` to match how CCase reads it back via `ptrtoint`.
+      "  %right_box = call ptr @malloc(i64 16)",
+      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
+      "  %right_tag = inttoptr i64 1 to ptr",
+      "  store ptr %right_tag, ptr %right_tag_ptr",
+      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
+      "  store ptr %input, ptr %right_payload_ptr",
+      "  call ptr @v_main(ptr %right_box)",
+      "  ret i32 0",
+      "}"
+    ]
+
+-- | Windows entry: ignore the POSIX-shape @argc@/@argv@ that MSVCRT
+--   hands us (those are ANSI-code-page-mangled), and re-fetch the
+--   command line through @GetCommandLineW@ + @CommandLineToArgvW@,
+--   then convert @argv[1]@ from UTF-16 to UTF-8 with
+--   @WideCharToMultiByte (CP_UTF8)@. The UTF-8 buffer takes the place
+--   the POSIX path's @%arg@ filled, so the rest of the entry (Right-box
+--   wrap + call @v_main@) is identical.
+--
+--   The IR references symbols from kernel32 (GetCommandLineW,
+--   WideCharToMultiByte) and shell32 (CommandLineToArgvW). The
+--   mingw-w64 default link line auto-pulls both, but MSVC's linker
+--   only auto-links what's in /DEFAULTLIB and CRT carries kernel32
+--   only. The clang invocations in awsum/Main.hs and the test
+--   harness pass @-lshell32 -lkernel32@ on a Windows host so
+--   CommandLineToArgvW resolves under MSVC too (no-op on mingw-w64).
+--
+--   We skip @LocalFree@ on the argv array — main returns immediately
+--   after, so the OS reclaims it.
+footerWindows :: Text
+footerWindows =
+  unlines
+    [ "",
+      "declare ptr @GetCommandLineW()",
+      "declare ptr @CommandLineToArgvW(ptr, ptr)",
+      "declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)",
+      "",
+      "define i32 @main(i32 %argc_posix, ptr %argv_posix) {",
+      "entry:",
+      "  %cmdline = call ptr @GetCommandLineW()",
+      "  %argc_slot = alloca i32",
+      "  %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)",
+      "  %argc_w = load i32, ptr %argc_slot",
+      "  %has_arg = icmp sgt i32 %argc_w, 1",
+      "  br i1 %has_arg, label %with_arg, label %no_arg",
+      "with_arg:",
+      "  %arg_w_slot = getelementptr ptr, ptr %argv_w, i64 1",
+      "  %arg_w = load ptr, ptr %arg_w_slot",
+      -- First call queries required UTF-8 byte count (incl. terminating NUL,
+      -- because cchWideChar = -1 means "process the null-terminator too").
+      -- 65001 = CP_UTF8.
+      "  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr null, i32 0, ptr null, ptr null)",
+      "  %need_ok = icmp sgt i32 %needed, 0",
+      "  br i1 %need_ok, label %do_convert, label %no_arg",
+      "do_convert:",
+      "  %needed64 = sext i32 %needed to i64",
+      "  %buf = call ptr @malloc(i64 %needed64)",
+      "  %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)",
+      "  br label %call_main",
+      "no_arg:",
+      "  br label %call_main",
+      "call_main:",
+      "  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]",
+      -- Same Right-box wrap as the POSIX path; see footerPosix for the layout note.
       "  %right_box = call ptr @malloc(i64 16)",
       "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
       "  %right_tag = inttoptr i64 1 to ptr",

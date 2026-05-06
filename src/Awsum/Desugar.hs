@@ -22,27 +22,23 @@
 --
 -- Inlining the bind pattern at this stage means @do@ continuations
 -- never appear as surface lambdas, so multi-bind blocks where later
--- steps reference earlier-bound variables — the common shape —
--- compile end-to-end without the runtime needing first-class
--- closures. Each synthetic @$do_e_…@ name is suffixed with the
--- bind's source position so nested do-blocks don't trip the
--- same-module no-shadowing rule.
+-- steps reference earlier-bound variables compile end-to-end without
+-- the runtime needing first-class closures. Each synthetic @$do_e_…@
+-- name is suffixed with the bind's source position so nested do-blocks
+-- don't trip the same-module no-shadowing rule.
 --
 -- The trailing expression is the user's verbatim — typically a
--- 'pureEither' application, which is just an ordinary prelude
--- function. There is no @pure@ soft keyword: writing @pure x@ in a
--- @do@ block is a plain unbound-name error like anywhere else, and
--- once type classes land 'pure' will return as a polymorphic
--- function rather than as a syntactic rewrite.
+-- 'pureEither' call, which is an ordinary prelude function. There is
+-- no @pure@ soft keyword; once type classes land, 'pure' will return
+-- as a polymorphic function rather than as a syntactic rewrite.
 --
--- @let@ statements inside @do@ are rewritten to 'ELet' wrapping the
--- rest of the block — i.e. @do { let n = e; rest }@ becomes
--- @ELet n e (go rest)@. The standalone @let n = e in body@ form
--- (an 'ELet' parsed directly as an expression) flows through
--- unchanged; both forms reach lowering as the same 'ELet' node.
+-- @let@ inside @do@ rewrites to 'ELet' wrapping the rest of the block:
+-- @do { let n = e; rest }@ → @ELet n e (go rest)@. The standalone
+-- @let n = e in body@ form parses directly to 'ELet' and flows through
+-- unchanged.
 --
--- The rewrite is purely syntactic and hard-coded to the @Either@
--- shape — there is no type-class dispatch yet.
+-- Purely syntactic and hard-coded to 'Either' — no type-class dispatch
+-- yet.
 module Awsum.Desugar (desugarProgram, DesugarError (..)) where
 
 import Awsum.Syntax

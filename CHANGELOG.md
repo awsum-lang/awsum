@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **LLVM `argv[1]` on Windows** now reaches `v_main` as UTF-8 instead of an ANSI-code-page-mangled string. The footer used to emit POSIX `int main(int argc, char** argv)`, which on Windows had MSVCRT decode the command line through the host's ANSI code page — supplementary code points like `\u{C8E2D}` collapsed to `?` per UTF-16 unit before user code ran. On a `mingw32` host the codegen now emits a Windows-specific entry that re-fetches the command line via `GetCommandLineW` + `CommandLineToArgvW` and converts `argv[1]` to UTF-8 with `WideCharToMultiByte (CP_UTF8)`. The POSIX path is unchanged on non-Windows hosts.
+- **LLVM `argv[1]` on Windows** now reaches `v_main` as UTF-8 instead of an ANSI-code-page-mangled string. The footer used to emit POSIX `int main(int argc, char** argv)`, which on Windows had MSVCRT decode the command line through the host's ANSI code page — supplementary code points like `\u{C8E2D}` collapsed to `?` per UTF-16 unit before user code ran. On a `mingw32` host the codegen now emits a Windows-specific entry that re-fetches the command line via `GetCommandLineW` + `CommandLineToArgvW` and converts `argv[1]` to UTF-8 with `WideCharToMultiByte (CP_UTF8)`. The clang invocation in [awsum/Main.hs](awsum/Main.hs) and the test harness in [test/Awsum/RunBackend.hs](test/Awsum/RunBackend.hs) pass `-lshell32 -lkernel32` on a Windows host so `CommandLineToArgvW` resolves under both the mingw-w64 and MSVC linkers (mingw-w64 auto-links these; MSVC's CRT carries kernel32 only, so the explicit flag is what closes `LNK2019: unresolved external symbol CommandLineToArgvW`). The POSIX path is unchanged on non-Windows hosts.
 - **Non-ASCII string literals** now compile correctly on the LLVM, JVM, and WASM backends. Previously LLVM declared `[N x i8]` based on Haskell `T.length` (code-point count) but emitted UTF-8 bytes (4 bytes for `🔥`, not 1), failing `clang` with a constant-expression type mismatch; JVM emitted standard UTF-8 into the constant pool where the verifier expects "modified UTF-8" (surrogate-pair-encoded), failing class load with `ClassFormatError`; WASM mis-sized the data-section offset for each pool entry, allowing later strings to overlap. CLR and JS were already correct because they store strings as UTF-16 natively.
 
 ### Changed
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Issues
 
-- **String properties on Windows (LLVM, JVM)** — `concat-left-identity`, `concat-right-identity`, `concat-associative`, and `lengths-three-functions` diverge from CLR / WASM / JS on Windows for the LLVM and JVM backends. The property test runner now carries a `temporarilyBroken :: Set (OS, Backend, Text)` registry in [test/Awsum/PropertySpec.hs](test/Awsum/PropertySpec.hs) and excludes the listed (OS, backend, prop) cells from the cross-backend assertion, so the same properties keep providing signal on the three unaffected backends. Removing an entry once the bug is fixed re-enables assertion automatically. Stdout-encoding workarounds did not help; root cause still under investigation.
+- **String properties on Windows (JVM)** — `concat-left-identity`, `concat-right-identity`, `concat-associative`, and `lengths-three-functions` diverge from LLVM / CLR / WASM / JS on Windows for the JVM backend. The property test runner carries a `temporarilyBroken :: Set (OS, Backend, Text)` registry in [test/Awsum/PropertySpec.hs](test/Awsum/PropertySpec.hs) and excludes the listed (OS, backend, prop) cells from the cross-backend assertion, so the same properties keep providing signal on the four unaffected backends. Removing an entry once the bug is fixed re-enables assertion automatically.
 
 ### Fixed
 
@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Build provenance** — Sigstore attestations on every release asset.
 - **`CONTRIBUTING.md`** — dev-loop commands, signed-commits requirement, PR/CHANGELOG conventions.
+- **Second Windows CI axis** — `windows-x86_64-mingw` job runs the snapshot + property suites against a [WinLibs](https://winlibs.com) GCC 14.2.0 + LLVM 19.1.7 + mingw-w64 + UCRT bundle, in addition to the existing MSVC-flavored `LLVM-15.0.7-win64.exe`. The intentional version skew (15.0.7 vs 19.1.7) means both LLVM lines must accept our IR. The mingw job catches accidental toolchain-coupling in the LLVM codegen / clang invocation. The mingw job is CI-only — release artifacts continue to ship from the MSVC build, since the awsum.exe binary is GHC output and identical across the two runners.
+- **`AWSUM_CLANG`** — optional environment variable that pins the clang executable path used by `awsum run -t llvm` and the test harness. Empty/unset falls back to PATH lookup (`clang`). Useful on hosts where PATH-resolved `clang` is the wrong LLVM — most prominently the Windows case, where Stack prepends GHC's bundled mingw clang (an older LLVM that predates opaque-pointers default) to child-process PATH.
+- **Clang compile-failure messages now include stdout** in addition to stderr, with the exit code; previously a non-zero exit with empty stderr produced a content-free `clang failed during compile:` and hid the actual diagnostic. Applies to both the test harness and `awsum run -t llvm`.
 
 ## [0.0.3] - 2026-04-25
 

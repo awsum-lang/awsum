@@ -9,7 +9,7 @@ import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Codegen.LLVM (codegenLLVM)
+import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram)
@@ -286,7 +286,7 @@ runCommand = \case
 --   depends on it.
 codegenText :: ProgramType -> Target -> CoreProgram -> Text
 codegenText progType = \case
-  TargetLLVM -> codegenLLVM
+  TargetLLVM -> codegenLLVM llvmHostFromSystem
   TargetJVM -> codegenJVM
   TargetCLR -> codegenCLR
   TargetWASM -> codegenWASM
@@ -299,10 +299,28 @@ runOnTarget progType target core input = case target of
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
           binPath = dir </> "out"
-      writeFileText llPath (codegenLLVM core)
-      (exitClang, _, stderrClang) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llPath, "-o", binPath] ""
+      let host = llvmHostFromSystem
+      writeFileText llPath (codegenLLVM host core)
+      -- AWSUM_CLANG: optional absolute path to clang. Useful on hosts where
+      -- the PATH-resolved 'clang' points at an outdated LLVM (e.g. GHC's
+      -- bundled mingw clang on Windows when invoked through Stack).
+      clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
+      -- Linker flags must match the IR's footer choice: footerWindows
+      -- references CommandLineToArgvW (shell32) and WideCharToMultiByte
+      -- (kernel32), so the Windows host needs explicit -l flags for the
+      -- MSVC linker (no-op on mingw-w64). 'llvmHostLinkerFlags' keeps
+      -- IR shape and link line in lockstep behind the same enum.
+      (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llPath, "-o", binPath] <> llvmHostLinkerFlags host) ""
       case exitClang of
-        ExitFailure _ -> die $ toString ("clang error:\n" <> toText stderrClang)
+        ExitFailure n ->
+          die
+            $ toString
+            $ "clang error (exit "
+            <> show n
+            <> ")\nstderr:\n"
+            <> toText stderrClang
+            <> "\nstdout:\n"
+            <> toText stdoutClang
         ExitSuccess -> do
           (exit, stdoutS, stderrS) <- readProcessWithExitCode binPath [toString input] ""
           case exit of

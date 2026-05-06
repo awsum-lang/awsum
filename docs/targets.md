@@ -1,6 +1,6 @@
 # Target Implementation Details
 
-How the same Awsum program maps to each compilation target. All targets produce identical stdout for the same input — this is a compiler invariant, verified by the test suite.
+How the same Awsum program maps to each compilation target. All targets produce identical stdout for the same input — a compiler invariant, verified by the test suite.
 
 ## Overview
 
@@ -22,7 +22,7 @@ How the same Awsum program maps to each compilation target. All targets produce 
 
 ## String Concatenation
 
-All five backends guarantee identical results because the type checker ensures both operands are `String`.
+All five backends guarantee identical results — the type checker ensures both operands are `String`.
 
 **LLVM** — runtime helper allocates a new buffer and copies both strings:
 
@@ -71,7 +71,7 @@ call object AwsumMain::__concat(object, object)
 
 Four of five backends defer to a native substring search; WASM hand-rolls a byte scan because no such primitive is available there.
 
-**LLVM** — `strstr` from libc returns a pointer to the first match (or `NULL`); the helper then `memcpy`s into two freshly `malloc`'d buffers (owning copies, not aliases). `strstr(s, "")` returns `s` per POSIX, so the empty-separator case is correct without special handling.
+**LLVM** — `strstr` from libc returns a pointer to the first match (or `NULL`); the helper `memcpy`s into two freshly `malloc`'d buffers (owning copies, not aliases). `strstr(s, "")` returns `s` per POSIX, so the empty-separator case is correct without special handling.
 
 **JVM** — `String.indexOf(String)I` (returns `-1` on miss, `0` on empty separator) plus the two `String.substring` overloads:
 
@@ -89,7 +89,7 @@ callvirt instance string [System.Runtime]System.String::Substring(int32, int32)
 callvirt instance string [System.Runtime]System.String::Substring(int32)
 ```
 
-**WASM** — outer loop over candidate positions `i ∈ 0..str_len - sep_len`, inner loop compares `str[i+j]` against `sep[j]` byte by byte; on match, `__memcpy` builds two fresh null-terminated buffers (the same allocator the rest of the runtime uses). Empty separator and separator-longer-than-`str` are handled implicitly by the loop bounds — no special cases in code.
+**WASM** — outer loop over candidate positions `i ∈ 0..str_len - sep_len`, inner loop compares `str[i+j]` against `sep[j]` byte by byte; on match, `__memcpy` builds two fresh null-terminated buffers (the same allocator the rest of the runtime uses). Empty separator and separator-longer-than-`str` are handled by the loop bounds — no special cases.
 
 **JS** — `String.prototype.indexOf` plus `substring`:
 
@@ -112,7 +112,7 @@ Matching is byte-level on every backend — a multi-byte UTF-8 sequence can be s
 - CLR `Int32.TryParse` (with default `NumberStyles`) accepts whitespace and signs.
 - JS `Number(s)` accepts whitespace, scientific notation, and the empty string (silently → `0`).
 
-Stripping these affordances reliably across five runtimes is the same amount of code as just doing the parse byte-by-byte. The hand-rolled algorithm is identical on every target:
+Stripping these affordances reliably across five runtimes is the same amount of code as parsing byte-by-byte. The hand-rolled algorithm is identical on every target:
 
 ```
 parseInt32(s):
@@ -175,13 +175,13 @@ All backends print without a trailing newline — `IO.Stdout.print` outputs exac
 
 Zero-argument definitions like `greeting = "Hello"` are compiled differently per target:
 
-**LLVM**: Zero-arg function `define ptr @v_greeting() { ... }` — called each time the value is referenced. Safe because all expressions are pure (same result every time). Avoids the complexity of LLVM global initializers for non-constant expressions.
+**LLVM**: Zero-arg function `define ptr @v_greeting() { ... }` — called each reference. Safe because all expressions are pure. Avoids the complexity of LLVM global initializers for non-constant expressions.
 
-**JVM**: Zero-arg static method `static Object v_greeting() { ... }` — same approach as LLVM, called each time. The JVM JIT compiler can inline these.
+**JVM**: Zero-arg static method `static Object v_greeting() { ... }` — called each time; the JIT can inline.
 
-**CLR**: Zero-arg static method `static object v_greeting() { ... }` — same approach as JVM. The .NET JIT can inline these.
+**CLR**: Zero-arg static method `static object v_greeting() { ... }` — same shape as JVM; the .NET JIT can inline.
 
-**WASM**: Zero-arg function `(func $v_greeting (result i32) ...)` — same approach as LLVM and JVM.
+**WASM**: Zero-arg function `(func $v_greeting (result i32) ...)`.
 
 **JS**: `const v_greeting = "Hello";` — evaluated once, hoisted by the runner.
 
@@ -195,9 +195,9 @@ Three builtins render integers as strings:
 - `showUInt8 : UInt8 -> String`
 - `showUInt32 : UInt32 -> String`
 
-These are unqualified top-level names (no `import` required), because the types themselves are prelude-visible and a faked `Int32.show` quote would imply a module that does not exist. When polymorphic `show` arrives (type classes), these three specialised helpers go away in favour of it.
+These are unqualified top-level names (no `import` required), because the types themselves are prelude-visible and a faked `Int32.show` would imply a module that does not exist. When polymorphic `show` arrives (type classes), these three helpers go away in favour of it.
 
-All five backends produce identical decimal output for the same value — this is verified by the cross-backend tests `int32_show`, `uint8_show`, and `uint32_show`, which render the full range (min, negatives where applicable, zero, mid-range, max) as a comma-separated list. The `uint32_show` test specifically pins values ≥ 2^31 (`2147483648`, `4000000000`) where a naive signed-`Int32::ToString` would render them as negative.
+All five backends produce identical decimal output for the same value — verified by the cross-backend tests `int32_show`, `uint8_show`, `uint32_show`, which render the full range (min, negatives where applicable, zero, mid-range, max) as a comma-separated list. `uint32_show` specifically pins values ≥ 2^31 (`2147483648`, `4000000000`) where a naive signed-`Int32::ToString` would render them as negative.
 
 ### Representation
 
@@ -262,11 +262,11 @@ box [System.Runtime]System.UInt32
 callvirt instance string [System.Runtime]System.Object::ToString()
 ```
 
-The bit pattern of `Int32 -1` and `UInt32 4294967295` is identical, so `unbox.any Int32 + box UInt32` is a re-tagging operation, not a value transformation. CLR's native `unsigned int32` type makes this far simpler than the JVM workaround above — calling `System.UInt32::ToString` directly via `Convert.ToString(uint32)` would also work, but the re-box + `Object::ToString()` route lets us reuse the virtual-dispatch machinery already used for `Int32` / `UInt8`.
+The bit pattern of `Int32 -1` and `UInt32 4294967295` is identical, so `unbox.any Int32 + box UInt32` is a re-tagging operation, not a value transformation. CLR's native `unsigned int32` type makes this simpler than the JVM workaround — `Convert.ToString(uint32)` would also work, but the re-box + `Object::ToString()` route reuses the virtual-dispatch machinery already used for `Int32` / `UInt8`.
 
 **WASM**: Integers are boxed in linear memory — `__box_i32(v)` allocates 4 bytes via `__alloc`, stores `v`, and returns the pointer. Show is implemented by hand because WASM has no stdlib: `__show_i32` reads the value, writes digits into a 16-byte buffer from the end, and prepends `-` if the value is negative. The same routine handles `UInt8`: values 0..255 are always positive in the signed interpretation, so `i32.lt_s (x) 0` is false and no `-` is written.
 
-`UInt32` is the only type that cannot share `__show_i32` — values 2^31..2^32-1 would test as negative under `i32.lt_s 0` and erroneously get a `-` prefix. So WASM emits a separate `__show_u32` that omits the sign branch entirely and starts the digit loop directly. The body is otherwise identical to `__show_i32` (both already use `i32.div_u` / `i32.rem_u` for the digit extraction).
+`UInt32` cannot share `__show_i32` — values 2^31..2^32-1 would test as negative under `i32.lt_s 0` and erroneously get a `-` prefix. WASM emits a separate `__show_u32` that omits the sign branch and starts the digit loop directly. The body is otherwise identical to `__show_i32` (both use `i32.div_u` / `i32.rem_u`).
 
 `i32.div_u` / `i32.rem_u` are used on the magnitude — this sidesteps the `INT_MIN` corner case where `0 - INT_MIN` is `INT_MIN` again in two's complement: the unsigned reading of `0x80000000` is `2147483648`, which is the correct magnitude. The same unsigned-division behaviour makes `__show_u32` correct across the full `0..2^32-1` range without further special-casing.
 
@@ -279,7 +279,7 @@ The bit pattern of `Int32 -1` and `UInt32 4294967295` is identical, so `unbox.an
 // showInt32 / showUInt8 / showUInt32 → String(x)
 ```
 
-The `>>> 0` coercion produces the unsigned 32-bit interpretation directly — `((-1) >>> 0)` is `4294967295`, not `-1`, so `String(x)` then prints the correct unsigned decimal. `(N | 0)` would wrap values 2^31..2^32-1 to negative, which is exactly what we want for `Int32` and not at all what we want for `UInt32`. JS numbers hold `Int32`, `UInt8`, and `UInt32` ranges exactly (all fit in the 53-bit IEEE-754 mantissa), so no precision loss at the literal site.
+`>>> 0` produces the unsigned 32-bit interpretation directly — `((-1) >>> 0)` is `4294967295`, so `String(x)` prints the correct unsigned decimal. `(N | 0)` would wrap values 2^31..2^32-1 to negative, which is what we want for `Int32` and not for `UInt32`. JS numbers hold `Int32`, `UInt8`, and `UInt32` ranges exactly (all fit in the 53-bit IEEE-754 mantissa), so no precision loss at the literal site.
 
 Signedness and width are mostly invisible at the show layer because every backend widens to a representation big enough to hold the full UInt8 / Int32 / UInt32 range — JVM `Integer` (32-bit container) for the first two via masking; JVM `Long.toString` after `& 0xFFFFFFFFL` for `UInt32`; CLR `System.UInt32::ToString` for `UInt32` via re-boxing; WASM `__show_u32` (separate hand-rolled helper); JS `>>> 0` then `String`. Where the unsigned interpretation has to be wired through arithmetic the divergence is more visible — see the next subsection.
 
@@ -317,7 +317,7 @@ if (s < -2147483648) return Left Underflow;
 return Right (s | 0);
 ```
 
-For `addUInt8` the picture is uniform: every backend widens both operands into a representation that holds at least 9 bits (i32 / Integer / number), sums, compares against 255, and either returns `Left OverflowError` or boxes the truncated low byte as `Right`. No native u8 add is used anywhere — even where the platform has one (LLVM `i8`), promoting first sidesteps the wrap-on-overflow that the Either-returning signature is designed to forbid.
+For `addUInt8` every backend widens both operands into ≥9 bits (i32 / Integer / number), sums, compares against 255, and returns `Left OverflowError` or boxes the truncated low byte as `Right`. No native u8 add is used — even where the platform has one (LLVM `i8`), promoting first sidesteps the wrap-on-overflow that the Either-returning signature forbids.
 
 For `addUInt32` the same lift goes one level higher — into a 64-bit-wide unsigned domain — because the unmasked sum of two u32 values can be up to `2 * (2^32 - 1) ≈ 2^33 − 2`, which doesn't fit in i32:
 
@@ -407,7 +407,7 @@ function v_compose(v_g, v_f, v_x) {
 
 `type Lookup a = Found a | NotFound` — constructors with fields, matched via `case`/`of`.
 
-All five backends use the same container representation: an array/block where index 0 is the constructor tag (integer) and subsequent indices hold constructor fields. Nullary constructors (no fields) also allocate a container with just a tag — this keeps the representation uniform and simplifies pattern matching.
+All five backends use the same container representation: an array/block where index 0 is the constructor tag (integer) and subsequent indices hold the fields. Nullary constructors also allocate a container with just a tag — uniform representation, simpler pattern matching.
 
 **LLVM**: Container is a `malloc`'d array of `ptr`. Tag is stored as an `i64` cast to `ptr` at index 0. Fields are `ptr` values at indices 1, 2, ...:
 
@@ -590,9 +590,9 @@ The difference: LLVM, JVM, CLR, and WASM mangle `main` to `v_main` because `main
 
 ## Recursion and tail calls
 
-Every recursion shape in Awsum is normalized at Core level into self-tail-calls, which the backends lower as a jump to the top of the enclosing method / function / loop. The normalization itself (SCC merge for mutual recursion, CPS + defunctionalization for non-tail recursion) is backend-agnostic and lives in [`Awsum.Scc`](../src/Awsum/Scc.hs) and [`Awsum.Cps`](../src/Awsum/Cps.hs); the last pass, [`Awsum.Tco`](../src/Awsum/Tco.hs), wraps the body in a `CLoop` and turns each surviving self-call into a `CContinue`. See [`docs/recursion.md`](recursion.md) for the full pipeline story.
+Every recursion shape in Awsum is normalized at Core level into self-tail-calls, which backends lower as a jump to the top of the enclosing method / function / loop. The normalization (SCC merge for mutual, CPS + defunctionalization for non-tail) is backend-agnostic and lives in [`Awsum.Scc`](../src/Awsum/Scc.hs) and [`Awsum.Cps`](../src/Awsum/Cps.hs); the last pass, [`Awsum.Tco`](../src/Awsum/Tco.hs), wraps the body in a `CLoop` and turns each surviving self-call into a `CContinue`. See [`docs/recursion.md`](recursion.md) for the full pipeline story.
 
-This section is about the last step — how each backend maps `CLoop` + `CContinue` to native code. The shape is the same everywhere: allocate the loop label once at the top of the method, evaluate each `CContinue`'s new arguments into temporaries so mid-update reads of the old parameters aren't corrupted, then overwrite the parameter slots and jump back.
+This section covers the last step — how each backend maps `CLoop` + `CContinue` to native code. The shape is the same everywhere: allocate the loop label once at the top of the method, evaluate each `CContinue`'s new arguments into temporaries so mid-update reads of the old parameters aren't corrupted, then overwrite the parameter slots and jump back.
 
 **LLVM** — `%tco.loop` block; parameters live in `alloca` slots, `CContinue` stores new values and `br`s to `%tco.loop`. A trailing `%tco.exit` block owns the single `ret` via another `alloca`. `mem2reg` at `-O2` erases every `alloca` into real SSA `phi` nodes, so the final binary is indistinguishable from one written with phi by hand.
 
@@ -604,7 +604,7 @@ This section is about the last step — how each backend maps `CLoop` + `CContin
 
 **JavaScript** — `while (true) { … }` wrapper; `CContinue` computes new values into `__t0`, `__t1`, … `const`s, assigns them to the parameter `let`s, and `continue`s. The two-step is deliberate: computing new args can still reference the old parameter values, which the `const` temps preserve.
 
-Mutual recursion and non-tail recursion never reach the backend — by the time the codegen runs, the Core IR has only self-recursion, and only in tail position. The test matrix in [`docs/recursion.md`](recursion.md#stack-safety-test-matrix) runs the stress programs on all five backends at depths up to 1 000 000 with identical stdout.
+Mutual recursion and non-tail recursion never reach the backend — by codegen time, the Core IR has only self-recursion in tail position. The test matrix in [`docs/recursion.md`](recursion.md#stack-safety-test-matrix) runs the stress programs on all five backends at depths up to 1 000 000 with identical stdout.
 
 ## LLVM-Specific Details
 
@@ -614,59 +614,59 @@ Mutual recursion and non-tail recursion never reach the backend — by the time 
 
 **SSA form**: LLVM IR requires Static Single Assignment — each variable is assigned exactly once. The codegen uses a counter to generate unique temporaries (`%t0`, `%t1`, `%t2`, ...), reset per function.
 
-**Memory management**: `__concat`, integer box cells, and `__showInt32` / `__showUInt8` buffers all allocate with `malloc` and never free. For short-lived programs this is acceptable — the OS reclaims all memory on exit. A future GC or arena allocator would address this.
+**Memory management**: `__concat`, integer box cells, and `__showInt32` / `__showUInt8` buffers allocate with `malloc` and never free. For short-lived programs this is acceptable — the OS reclaims all memory on exit. A future GC or arena allocator would address this.
 
-**Compilation**: The `awsum run -t llvm` command writes a `.ll` file, compiles it with `clang -O2`, and executes the resulting binary. We use `-O2` because runtime performance is prioritized over compilation speed (see [Design Principles](../README.md#priority-order)).
+**Compilation**: `awsum run -t llvm` writes a `.ll` file, compiles it with `clang -O2`, and runs the binary. `-O2` because runtime performance is prioritized over compilation speed (see [Design Principles](../README.md#priority-order)).
 
 ## Why LLVM IR, Not C
 
-A natural question: why emit LLVM IR directly instead of generating C and compiling with a C compiler?
+Why emit LLVM IR directly instead of generating C and compiling with a C compiler?
 
-C is a _specification_ with multiple implementations (GCC, Clang, MSVC, TCC, ...). These implementations don't try to produce equivalent output — and the C standard doesn't ask them to. The language has three categories of behavior that differ across compilers and platforms:
+C is a _specification_ with multiple implementations (GCC, Clang, MSVC, TCC, ...). These implementations don't try to produce equivalent output — the C standard doesn't ask them to. C has three categories of behavior that differ across compilers and platforms:
 
 - **Undefined behavior** — the compiler may do anything (reorder, delete, or transform code). Example: signed integer overflow.
 - **Implementation-defined behavior** — each compiler chooses a behavior and documents it, but different compilers choose differently. Example: right-shifting a negative integer.
 - **Unspecified behavior** — the standard allows multiple outcomes and the compiler doesn't have to be consistent. Example: evaluation order of function arguments.
 
-This is fundamentally incompatible with Awsum's core invariant: _if the same pure function compiles for two targets, the results are identical._ If we targeted C, we'd be promising equivalence on top of a language that was designed to allow divergence.
+This is incompatible with Awsum's core invariant: _if the same pure function compiles for two targets, the results are identical._ Targeting C would promise equivalence on top of a language designed to allow divergence.
 
-LLVM IR, by contrast, is _one implementation_ with deterministic semantics. There's exactly one LLVM, and its behavior for any given IR is defined. When we emit LLVM IR and compile with Clang, the path from our IR to a binary is a single, known pipeline — not a specification interpreted differently by competing vendors.
+LLVM IR is _one implementation_ with deterministic semantics. There's exactly one LLVM, and its behavior for any given IR is defined. Emitting LLVM IR and compiling with Clang is a single, known pipeline — not a specification interpreted differently by competing vendors.
 
-There's also a practical argument: if we generated C and then mandated "use Clang", we'd be going through LLVM anyway — just with an extra layer of C semantics in between that we'd have to carefully navigate around.
+Also practical: if we generated C and mandated "use Clang", we'd go through LLVM anyway — with an extra layer of C semantics to navigate around.
 
 ## JVM-Specific Details
 
-**Class file version**: 55.0 (Java 11). Matches the documented JVM target floor (see [docs/platform-version-policy.md](platform-version-policy.md)). Generated `.class` files run on any JVM 11+; modern Android `D8` accepts class files well past this version.
+**Class file version**: 55.0 (Java 11). Matches the JVM target floor (see [docs/platform-version-policy.md](platform-version-policy.md)). Generated `.class` files run on any JVM 11+; modern Android `D8` accepts class files well past this version.
 
-**Binary assembler**: The `.class` file is generated directly in Haskell (`Awsum.Codegen.JVM.Assemble`), with no external tools — no Jasmin, no javac. Only `java` is needed to run. The assembler emits a single `AwsumMain.class` with ~25 JVM instructions.
+**Binary assembler**: The `.class` file is generated directly in Haskell (`Awsum.Codegen.JVM.Assemble`), no external tools — no Jasmin, no javac. Only `java` is needed to run. The assembler emits a single `AwsumMain.class` with ~25 JVM instructions.
 
 **Value representation**: All values are `java/lang/Object`. Strings are `java/lang/String` (a subtype of Object). Function references are `java/lang/invoke/MethodHandle`. Integers (`Int32`, `UInt8`) are boxed `java/lang/Integer`. `IO Unit` is `null`.
 
-**MethodHandle for higher-order functions**: When a function is used as a value (passed as an argument), it is loaded via `ldc` with a `CONSTANT_MethodHandle` constant pool entry (kind `REF_invokeStatic = 6`). The callee uses `invokevirtual MethodHandle.invoke(...)` for the indirect call. Direct calls to known functions skip the MethodHandle and use `invokestatic` directly.
+**MethodHandle for higher-order functions**: When a function is used as a value, it is loaded via `ldc` with a `CONSTANT_MethodHandle` constant pool entry (kind `REF_invokeStatic = 6`). The callee uses `invokevirtual MethodHandle.invoke(...)` for the indirect call. Direct calls to known functions use `invokestatic` directly.
 
-**StackMapTable**: JVM 7+ requires `StackMapTable` attributes for methods with branches. The generated `main(String[])` has branches for argument handling. User-defined methods with `case`/`of` pattern matching also have branches (if/else chain over constructor tags) and require StackMapTable entries.
+**StackMapTable**: JVM 7+ requires `StackMapTable` attributes for methods with branches. The generated `main(String[])` has branches for argument handling. User-defined methods with `case`/`of` also have branches (if/else over constructor tags) and require StackMapTable entries.
 
-**Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode. This is used for `awsum asm -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for `awsum build -t jvm` (outputs `.class`) and `awsum run -t jvm`.
+**Text codegen**: `Awsum.Codegen.JVM` produces a Jasmin-like textual representation of the bytecode, used for `awsum asm -t jvm` output and golden snapshot tests. The binary assembler (`assembleJVM`) is used for `awsum build -t jvm` and `awsum run -t jvm`.
 
 ## CLR-Specific Details
 
-**Binary format**: The `.dll` is a PE (Portable Executable) file generated directly in Haskell (`Awsum.Codegen.CLR.Assemble`), with no external tools — no `ilasm`, no `csc`. Only `dotnet` is needed to run. The assembler emits DOS header, PE/COFF headers, a `.text` section with CLR metadata and CIL method bodies.
+**Binary format**: The `.dll` is a PE (Portable Executable) file generated directly in Haskell (`Awsum.Codegen.CLR.Assemble`), no external tools — no `ilasm`, no `csc`. Only `dotnet` is needed to run. The assembler emits DOS header, PE/COFF headers, and a `.text` section with CLR metadata and CIL method bodies.
 
 **Metadata**: The PE file contains 9 CLR metadata tables (Module, TypeRef, TypeDef, MethodDef, Param, MemberRef, StandAloneSig, TypeSpec, Assembly, AssemblyRef) and 4 metadata heaps (#Strings, #US for user strings in UTF-16LE, #Blob for signatures, #GUID). The StandAloneSig table declares local variables for methods that use `stloc`/`ldloc` (e.g. pattern matching).
 
 **Value representation**: All values are `object` (System.Object). Strings are `System.String`. Function references are `System.Func<object,...,object>` generic delegates. Integers (`Int32`, `UInt8`) are boxed `System.Int32`. `IO Unit` is `null`.
 
-**Func delegates for higher-order functions**: When a function is used as a value (passed as an argument), it is wrapped in a `System.Func` delegate via `ldftn` + `newobj`. The arity determines the generic instantiation: a 1-arg function becomes `Func<object, object>`, a 2-arg function becomes `Func<object, object, object>`, etc. Indirect calls use `callvirt Invoke(...)` on the delegate. Direct calls to known functions use `call` directly — no delegate overhead.
+**Func delegates for higher-order functions**: When a function is used as a value, it is wrapped in a `System.Func` delegate via `ldftn` + `newobj`. Arity determines the generic instantiation: 1-arg → `Func<object, object>`, 2-arg → `Func<object, object, object>`, etc. Indirect calls use `callvirt Invoke(...)` on the delegate. Direct calls to known functions use `call` directly — no delegate overhead.
 
 **Generic type variables in signatures**: MemberRef signatures for `Invoke` on generic Func TypeSpec instantiations use `ELEMENT_TYPE_VAR` (0x13) for type parameters, not concrete `object` types. This is required by the CLR metadata specification.
 
 **Runtime configuration**: Running with `dotnet` requires an `AwsumMain.runtimeconfig.json` alongside the DLL. The compiler generates a fixed template targeting .NET 9.0 with `"rollForward": "LatestMajor"` for forward-compatibility with newer .NET versions.
 
-**Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode. This is used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` (outputs `.dll`) and `awsum run -t clr`.
+**Text codegen**: `Awsum.Codegen.CLR` produces an ilasm-like textual representation of the CIL bytecode, used for `awsum asm -t clr` output and golden snapshot tests. The binary assembler (`assembleCLR`) is used for `awsum build -t clr` and `awsum run -t clr`.
 
 ## WASM-Specific Details
 
-**Binary format**: The `.wasm` binary is generated directly in Haskell (`Awsum.Codegen.WASM.Assemble`), with no external tools — no `wat2wasm`, no WABT. Only `wasmtime` is needed to run. Uses LEB128 encoding (unlike JVM's big-endian fixed-width integers).
+**Binary format**: The `.wasm` binary is generated directly in Haskell (`Awsum.Codegen.WASM.Assemble`), no external tools — no `wat2wasm`, no WABT. Only `wasmtime` is needed to run. Uses LEB128 encoding (unlike JVM's big-endian fixed-width integers).
 
 **WASI imports**: Three WASI functions are imported from `wasi_snapshot_preview1`: `fd_write` (stdout), `args_sizes_get` and `args_get` (CLI arguments).
 
@@ -676,4 +676,4 @@ There's also a practical argument: if we generated C and then mandated "use Clan
 
 **Runtime helpers**: Implemented in WASM itself, no host imports beyond WASI. Three structural: `__strlen` (null-byte scan), `__alloc` (4-byte-aligned bump allocator), `__memcpy` (byte-by-byte copy). Two I/O: `__concat` (strlen + alloc + memcpy + null-terminate) and `__print` (iovec + `fd_write`). Three boxing/show: `__box_i32` (allocate 4 bytes, store value, return pointer), `__show_i32` (render decimal into a 16-byte buffer — handles sign, zero, and the `INT_MIN` corner case via unsigned division on the magnitude; shared by `Int32` and `UInt8`), and `__show_u32` (same shape with the sign branch removed, so values 2^31..2^32-1 render correctly). One argv: `__get_arg` (WASI args_sizes_get + args_get, returns argv[1] or empty string). One string-manipulation: `__splitOnFirst` (hand-rolled byte scan because WASM has no native substring search). The remainder are honest-arithmetic and parse primitives — `__predInt32` / `__predUInt8` / `__predUInt32`, `__succInt32` / `__succUInt8` / `__succUInt32`, `__eq_i32` (shared by all three equality builtins since the types flow as i32 cells with bit-pattern-comparable equality), `__addInt32` / `__subInt32` / `__mulInt32` / `__negInt32`, `__addUInt8` / `__subUInt8` / `__mulUInt8`, `__addUInt32` / `__subUInt32` / `__mulUInt32`, `__parseInt32` / `__parseUInt8` / `__parseUInt32` — each returning a pointer to a freshly allocated `Either` container in the same `[i32 tag, i32 fields…]` layout that user constructors use. `__parseInt32`, `__parseUInt32`, `__addUInt32`, `__mulUInt32`, and `__mulInt32` need i64 locals; `__addUInt32` and `__mulUInt32` use the new `opI64GtU = 0x56` opcode (mandatory for `__mulUInt32` since `(2^32-1)^2` exceeds `Int64.MaxValue`, optional for `__addUInt32` but kept for symmetry). The new `encodeSLEB128I64 :: Int64 -> [Word8]` helper widens the SLEB128 encoder so 4294967295 fits — the existing `encodeSLEB128 :: Int32` would silently wrap.
 
-**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions. This is used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` (outputs `.wasm`) and `awsum run -t wasm`.
+**Text codegen**: `Awsum.Codegen.WASM` produces WAT (WebAssembly Text Format) S-expressions, used for `awsum asm -t wasm` output and golden snapshot tests. The binary assembler (`assembleWASM`) is used for `awsum build -t wasm` and `awsum run -t wasm`.

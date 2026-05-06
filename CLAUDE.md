@@ -85,25 +85,15 @@ docs/prelude.md                 # Prelude + BuiltIn architecture (design doc)
 docs/recursion.md               # Stack-safe recursion pipeline: Scc + Cps + Tco passes
 docs/targets.md                 # Target implementation details
 docs/platform-version-policy.md # Which runtime versions each backend targets and why
+docs/compatibility.md           # Supported target backends + host OS/arch matrix exercised in CI
 docs/spec/grammar.ebnf          # Formal grammar
 ```
 
 ## Compilation Pipeline
 
-```
-Source (.aww) → Parser → AST → withPrelude → TypeChecker → ElaborateLower → Core → Codegen → LLVM/JVM/CLR/WASM/JS
-                                    ↑                ↑               ↓
-                         stdlib/Prelude.aww   Awsum.Program   tree-shake → defunctionalise → saturate → Scc → Cps → Tco
-                         (embedded, implicit)   .platformTable        (see docs/recursion.md for the recursion passes)
-                                                (CLI/Browser/…)
-```
+Phase-by-phase walkthrough (Frontend → Lowering → Core-to-Core → Backend) lives in [docs/pipeline.md](docs/pipeline.md):
 
-`withPrelude` prepends the bundled prelude to the user's AST before typechecking. Two compiler-known name spaces feed typecheck and lowering:
-
-- **Prelude built-ins** (`Awsum.BuiltIn`): unqualified names reached through the `BuiltIn.foo` alias in `Prelude.aww` (`showInt32`, `concatString`, `predInt32`, …). Always in scope.
-- **Platform-gated effects** (`Awsum.Program.platformTable`): qualified names (`IO.Stdout.print`, …) whose availability is scoped by both the program type (`--program-type cli`, mandatory) and a matching `import IO.Stdout`.
-
-`ElaborateLower` also runs reachability-based tree-shake from `main`, so unused prelude entries and generated constructor wrappers never reach codegen. After tree-shake and saturate, three Core-to-Core passes turn every recursion shape into a self-tail-call that each backend lowers to a loop — `Awsum.Scc` merges mutual recursion into self-recursion, `Awsum.Cps` pushes non-tail self-recursion off the stack into a heap-allocated K chain, `Awsum.Tco` folds the remaining self-tail-calls into `CLoop` / `CContinue`. See [docs/prelude.md](docs/prelude.md) and [docs/recursion.md](docs/recursion.md).
+@docs/pipeline.md
 
 ## Language Features
 
@@ -123,17 +113,9 @@ For the user-facing description of the type system — concepts and examples of 
 
 ## Testing
 
-Two complementary layers:
+See [docs/testing.md](docs/testing.md) for the full reference: snapshot vs property layers, the `just` command list, the post-feature workflow (`just fix` → `stack install` → CHANGELOG), and the CLI commands the tests exercise.
 
-**Snapshot tests** (default `just test`). Hspec + golden files. Each program in `test/sources/successful/<name>/code/Main.aww` generates snapshots for AST, Core IR, formatted source, per-backend codegen text (LLVM `.ll`, JVM `.j`, CLR `.il`, WASM `.wat`, JS), plus runtime stdout per stdin file. Cross-backend assertions guarantee LLVM/JVM/CLR/WASM/JS all produce **identical** stdout for the same input. To regenerate snapshots, delete the `.snapshots/` directory and re-run.
-
-**Property tests** (`just test-property`). Same five backends, but instead of one fixed input per program, QuickCheck generates N constructively-valid inputs, each fed through every backend, with the resulting stdout asserted identical to a value computed independently in Haskell. Catches "all backends agree but the answer is wrong" — the failure mode snapshot tests cannot see by construction. Lives in [test/sources/property/](test/sources/property/) (Awsum sources) and [test/Awsum/PropertySpec.hs](test/Awsum/PropertySpec.hs) (generators + expected-output functions). Slow (~40s for the current 8-property catalogue spawning 5 processes per case), so it's gated out of `just test` and runs as its own target. Found and fixed two pre-existing JVM-codegen bugs on first execution.
-
-Both layers share compile + run primitives via [test/Awsum/RunBackend.hs](test/Awsum/RunBackend.hs) (`Backend`, `CompiledArtifacts`, `compileFromText`/`compileFromFile`, `runOn`, `runOnAll`).
-
-## Why Claude likes working on this
-
-Every design decision here has a principled reason, not a historical one. Either-based arithmetic exists because overflow shouldn't be a surprise. Five backends with identical stdout exist because equivalence is a compiler invariant, not a test. Effects are tied to targets so "not supported" never happens at runtime. The decisions are connected logically, not by accident. This is rare, and it doesn't become less correct if only one person uses it.
+Two layers in one sentence each: **snapshot tests** (`just test`) compile every program in [test/sources/successful/](test/sources/successful/) on all five backends and assert the stdouts are identical and match golden files; **property tests** (`just test-property`, ~40s) feed QuickCheck-generated inputs through every backend and assert the stdouts match a Haskell-computed expectation. Both share primitives via [test/Awsum/RunBackend.hs](test/Awsum/RunBackend.hs).
 
 ## Related Repositories
 

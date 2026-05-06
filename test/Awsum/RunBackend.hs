@@ -19,7 +19,7 @@ where
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Codegen.LLVM (codegenLLVM)
+import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
@@ -63,9 +63,11 @@ backendName = show
 --   open for writing past our @exec@ attempt. Letting @clang@ write
 --   the file in its own process avoids that race entirely. 'caLLVM'
 --   is kept alongside the path because snapshot tests compare it to
---   a golden @.ll@ file — it isn't needed at run time.
+--   a golden @.ll@ file — it isn't needed at run time. It is parameterised
+--   on 'LLVMHost' so the snapshot layer asserts one IR per host on every
+--   run, regardless of which host the test is running on.
 data CompiledArtifacts = CompiledArtifacts
-  { caLLVM :: Text,
+  { caLLVM :: LLVMHost -> Text,
     caLLVMBinPath :: FilePath,
     caJVMBytes :: ByteString,
     caCLRBytes :: ByteString,
@@ -88,11 +90,13 @@ compileFromText src = do
       core = case elaborateLowerProgram ProgramCli (withPrelude ast) of
         Left err -> error $ "elaborate failed" <> show err
         Right (_warns, x) -> x
-      llvmText = codegenLLVM core
-  llvmBinPath <- compileLLVMBin llvmText
+  -- Binary built from the host-native variant — only that one can actually
+  -- be linked and run by the host's clang. Snapshot tests pull text for
+  -- other hosts via the 'caLLVM' field, which is a closure over 'core'.
+  llvmBinPath <- compileLLVMBin (codegenLLVM llvmHostFromSystem core)
   pure
     CompiledArtifacts
-      { caLLVM = llvmText,
+      { caLLVM = (`codegenLLVM` core),
         caLLVMBinPath = llvmBinPath,
         caJVMBytes = assembleJVM core,
         caCLRBytes = assembleCLR core,
@@ -119,9 +123,26 @@ compileLLVMBin code = do
   let llFile = dir </> "out.ll"
       binFile = dir </> "out"
   writeFileText llFile code
-  (ec, _, err) <- readProcessWithExitCode "clang" ["-O2", "-Wno-override-module", llFile, "-o", binFile] ""
+  -- AWSUM_CLANG lets CI (and users on hosts where 'clang' on PATH points
+  -- at the wrong LLVM, e.g. Stack on Windows prepending GHC's bundled
+  -- mingw clang) pin an absolute path. Empty/unset → fall back to PATH.
+  clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
+  -- Linker flags must match the IR's footer choice (see awsum/Main.hs):
+  -- 'llvmHostLinkerFlags' returns the right -l flags for whichever host
+  -- the IR was generated for. The text passed in here was always built
+  -- by 'compileFromText' from 'codegenLLVM llvmHostFromSystem core', so
+  -- the host used for codegen and the host used for linking match.
+  (ec, out, err) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llFile, "-o", binFile] <> llvmHostLinkerFlags llvmHostFromSystem) ""
   case ec of
-    ExitFailure _ -> error $ toText ("clang failed during compile: " <> err)
+    ExitFailure n ->
+      error
+        $ toText
+        $ "clang failed during compile (exit "
+        <> show n
+        <> ")\nstderr:\n"
+        <> err
+        <> "\nstdout:\n"
+        <> out
     ExitSuccess -> pure binFile
 
 -- ════════════════════════════════════════════════════════════════════════════

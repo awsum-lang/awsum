@@ -1,6 +1,6 @@
 # Prelude and built-in functions
 
-This document describes how Awsum lets types and functions written in the language itself (the prelude) coexist with per-target implementations the compiler substitutes at code generation (built-ins). It is a design document — not a plan — and covers how the mechanism works now, what it enables, and which alternatives were considered and rejected.
+How Awsum lets types and functions written in the language itself (the prelude) coexist with per-target implementations the compiler substitutes at codegen (built-ins). Design doc — covers how the mechanism works, what it enables, and which alternatives were rejected.
 
 ## The problem
 
@@ -39,19 +39,19 @@ Category-1 and category-2 bodies are ordinary Awsum — `BuiltIn` does not appea
 
 `BuiltIn.foo` is **not** a qualified module reference. The parser recognises this form directly and lowers it to a Core `CBuiltIn "foo"`. There is no `BuiltIn.aww` file, `awsum ast BuiltIn.aww` is meaningless, and the user cannot declare their own `BuiltIn.bar`. The `BuiltIn` namespace is reserved.
 
-The alternative — making `BuiltIn` a real module — would have required either shipping a physical file with placeholder bodies or generating one at build time, and would have forced us to explain to the user why that particular module is special. Calling the construct a separate syntactic category (like `case`/`of`) is simpler than calling it a name in scope.
+Making `BuiltIn` a real module would have required either shipping a physical file with placeholder bodies or generating one at build time, plus explaining to the user why that module is special. A separate syntactic category (like `case`/`of`) is simpler than a name in scope.
 
 ### Type checking
 
 When the type-checker meets `= BuiltIn.foo` in the alias form `foo = BuiltIn.bar` at top level, it checks:
 
 1. The compiler's built-in table has an entry named `bar`.
-2. The entry's type **equals** the type declared in the signature on the left. No coercion, no unification slack — equality only. Agreement is accepted, any difference is a compile error.
+2. The entry's type **equals** the type declared on the left. No coercion, no unification slack — equality only. Any difference is a compile error.
 3. If the table has no entry for `bar`, compilation fails with `UnknownBuiltIn` pointing at `BuiltIn.bar`.
 
 This keeps the compiler's table and `Prelude.aww` in lock-step: any drift between them is a compile error — either when the compiler type-checks the bundled prelude itself at startup (surfaced as "Internal compiler error"), or on the first user compilation that resolves the name.
 
-The alias form — zero parameters on the left of `=`, a bare `BuiltIn.bar` on the right — is the only place where the type-checker waives its usual arity rule. For every other zero-parameter definition the right-hand side is checked against the _result_ type of the signature, not the full arrow type, so a user who writes `foo = someFunction` with a function-typed signature still gets an arity-mismatch error. Aliasing a built-in is the one case where the right-hand side carries the whole arrow type itself.
+The alias form — zero parameters on the left of `=`, a bare `BuiltIn.bar` on the right — is the only place the type-checker waives its usual arity rule. For every other zero-parameter definition the RHS is checked against the _result_ type of the signature, so a user who writes `foo = someFunction` with a function-typed signature still gets an arity-mismatch error. Aliasing a built-in is the one case where the RHS carries the whole arrow type.
 
 ### Bootstrap order and the apparent cycle
 
@@ -65,7 +65,7 @@ The cycle is on values, not on types. The sequence is:
 4. The type-checker processes function bodies. When it hits `= BuiltIn.bar`, it looks up `bar` in the compiler's table and compares types.
 5. The table's entry for `predInt32` also refers to `Either` — and resolves through the same environment that step 2 populated. There is no second copy of `Either` hiding in the compiler's Haskell.
 
-The key is that the built-in table stores types as `Core.Type` values, not as Haskell types. Name resolution for `Either` in the table goes through the same `TypeEnv` into which `Prelude.aww` just injected it. The table is visited twice through one environment, not two environments pretending to be the same.
+The built-in table stores types as `Core.Type` values, not Haskell types. Name resolution for `Either` in the table goes through the same `TypeEnv` `Prelude.aww` just populated. One environment, visited twice — not two pretending to be the same.
 
 ### What the user sees
 
@@ -100,7 +100,7 @@ not : Bool -> Bool
 not = BuiltIn.not
 ```
 
-The user sees no change — the signature is identical, go-to-definition lands in the same place. Internally the compiler's table grows a `not` entry with per-target implementations. Migrating back is symmetric.
+The user sees no change — signature identical, go-to-definition lands in the same place. The compiler's table grows a `not` entry with per-target implementations. Migrating back is symmetric.
 
 ## Program type and platform-gated effects
 
@@ -120,7 +120,7 @@ Both gates are enforced in `Awsum.Typing.builtinEnvFromImports` — it computes 
 
 The CLI flag is mandatory to force an explicit choice rather than a silent default that could typecheck a program against the wrong effect set.
 
-Core-level uniformity is deliberate: both classes of names collapse to `CBuiltIn`. The backends don't care which table a name came from — they dispatch on the key string alone. The distinction is a typing / availability concern, not an IR concern. This makes migrations symmetric: a function can move between `BuiltIn` and a program's platform table, or between program types, without touching any backend.
+Core-level uniformity is deliberate: both classes collapse to `CBuiltIn`. Backends don't care which table a name came from — they dispatch on the key string alone. The distinction is a typing / availability concern, not an IR concern. Migrations are symmetric: a function can move between `BuiltIn` and a program's platform table, or between program types, without touching any backend.
 
 ## Tradeoffs
 
@@ -130,9 +130,9 @@ Core-level uniformity is deliberate: both classes of names collapse to `CBuiltIn
 
 ## Rejected alternatives
 
-1. **Hard-coded entries in `TypeEnv`**, as it was for `showInt32` and `showUInt8` before this design. Fine for two or three entries. Doesn't scale to dozens: the prelude disappears into Haskell, there's nothing for hover to show, and the user has no single entry point to read.
-2. **`Prelude.aww` without `BuiltIn`, primitives as bodiless signatures** (`showInt32 : Int32 -> String` and nothing more). The parser would have to accept "signature only" as a valid top-level form, and any user typo ("I forgot to write the body") would become indistinguishable from "this is a built-in". An explicit marker is clearer.
-3. **FFI-style syntax** (`foreign import showInt32 : Int32 -> String`). Brings lexical and syntactic changes plus C-FFI connotations that do not apply here. `= BuiltIn.foo` fits the existing "function definition" shape with no new grammar.
+1. **Hard-coded entries in `TypeEnv`**, as for `showInt32` / `showUInt8` before this design. Fine for two or three entries. Doesn't scale to dozens: the prelude disappears into Haskell, hover has nothing to show, and the user has no single entry point to read.
+2. **`Prelude.aww` without `BuiltIn`, primitives as bodiless signatures** (`showInt32 : Int32 -> String` and nothing more). The parser would have to accept "signature only" as a valid top-level form, and a user typo ("I forgot to write the body") would become indistinguishable from "this is a built-in". An explicit marker is clearer.
+3. **FFI-style syntax** (`foreign import showInt32 : Int32 -> String`). Brings lexical and syntactic changes plus C-FFI connotations that don't apply. `= BuiltIn.foo` fits the existing "function definition" shape with no new grammar.
 
 ## Where this lives in the code
 

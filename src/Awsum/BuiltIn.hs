@@ -21,10 +21,8 @@ import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.Map.Strict qualified as M
 import Relude
 
--- | Surface type of every compiler-known built-in, keyed by the name that
---   appears after @BuiltIn.@ in source. Grows as more prelude-visible
---   functions migrate off their hardcoded implementations; step 5 seeds
---   this with 'showInt32'.
+-- | Surface type of every compiler-known built-in, keyed by the name
+--   after @BuiltIn.@ in source.
 builtIns :: Map Name Type'
 builtIns =
   M.fromList
