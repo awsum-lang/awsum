@@ -66,17 +66,32 @@ renderDecl = \case
     let header = case args of
           [] -> renderDeclName name
           _ -> renderDeclName name <> " " <> T.intercalate " " (map renderParam args)
-        body = case e of
-          -- 'let' bodies are always multi-line: break the '=' to a
-          -- new line and render the let block at indent 2 so the
-          -- bindings, the dedented 'in', and the body-after-'in'
-          -- all align with predictable columns. Same shape Haskell
-          -- uses for top-of-function 'let'.
+        -- Multi-line body forms (ECase / ELet / EDo) cannot carry a
+        -- trailing comment after the body — the parser would not see
+        -- it on the FunDef's '=' line and would promote it to a
+        -- sibling 'CommentDecl'. When 'mc' is present and the body is
+        -- multi-line, render the comment on the '=' line and start the
+        -- body on the following indented line; the parser accepts this
+        -- shape via 'tcomBeforeBody' in 'pFunDefWithEnd'.
+        bodyAndComment = case e of
           ELet {} ->
             let (binds, finalBody) = collectLetChain e
-             in " =\n  " <> renderLetBlock 2 binds finalBody
-          _ -> " = " <> renderExpr e
-     in header <> body <> renderTrailingComment mc
+                blk = renderLetBlock 2 binds finalBody
+             in " =" <> renderTrailingComment mc <> "\n  " <> blk
+          ECase {} ->
+            -- Without a comment, keep the keyword on the '=' line
+            -- ('f x = case … of …') for compatibility with the
+            -- existing layout. With a comment, push the body to the
+            -- next line so the '=' line is free for the comment.
+            case mc of
+              Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
+              Nothing -> " = " <> renderExpr e
+          EDo {} ->
+            case mc of
+              Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
+              Nothing -> " = " <> renderExpr e
+          _ -> " = " <> renderExpr e <> renderTrailingComment mc
+     in header <> bodyAndComment
   TypeDecl _sp name tvars cons mc ->
     "type "
       <> name

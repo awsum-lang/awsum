@@ -345,19 +345,7 @@ instance Arbitrary Decl where
         k <- chooseInt (0, min 3 (max 0 n))
         ps <- vectorOf k genParam
         body <- genFunBody (max 0 (n - k))
-        -- Trailing '--' comments on a 'FunDef' whose body is a
-        -- multi-line construct don't round-trip: the renderer
-        -- appends '--…' after the final body line, and the parser
-        -- then promotes that comment to a sibling 'CommentDecl'
-        -- because it is no longer on the same line as the '=' header.
-        -- Multi-line bodies in this generator: 'ELet' (renderLetBlock),
-        -- 'ECase', 'EDo'.
-        mc <- case body of
-          ELet {} -> pure Nothing
-          ECase {} -> pure Nothing
-          EDo {} -> pure Nothing
-          _ -> genComment
-        pure (FunDef noSpan name ps body mc)
+        FunDef noSpan name ps body <$> genComment
       -- Function bodies may additionally be 'ECase' or 'EDo' at the
       -- top level — these are layout-sensitive and only round-trip
       -- when the keyword sits at the head of the right-hand side,
@@ -409,12 +397,7 @@ instance Arbitrary Decl where
         tvars <- vectorOf kTv (Param noSpan <$> genLIdent)
         kCon <- chooseInt (0, min 3 (max 0 n))
         cons <- vectorOf kCon (resize (n `div` 2) arbitrary)
-        -- Trailing '--' comments don't round-trip on 'TypeDecl': the
-        -- parser's 'uident' for the type name uses the line-comment-
-        -- aware space consumer ('sc'), so any '--…' after the type
-        -- header is absorbed before 'pTrailingLineCommentMaybe' runs.
-        -- Always emit 'Nothing' here.
-        pure (TypeDecl noSpan name tvars cons Nothing)
+        TypeDecl noSpan name tvars cons <$> genComment
   shrink = \case
     Sig _sp n t mc ->
       [Sig noSpan n' t mc | n' <- shrinkIdent n] <> [Sig noSpan n t' mc | t' <- shrink t]

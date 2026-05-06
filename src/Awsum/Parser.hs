@@ -149,7 +149,9 @@ declName = parenOp <|> lident
         _ <- C.char ')'
         pure op
 
--- | Upper-case identifier (module/type constructor name).
+-- | Upper-case identifier (module/type constructor name), without the
+--   lexeme/whitespace handling — wrapped by 'uidentNoLine' or used
+--   directly by callers that have their own whitespace strategy.
 --   Accepts:
 --     • @Foo@ — the normal shape;
 --     • @_Foo@ — explicitly marked as intentionally unused;
@@ -157,10 +159,6 @@ declName = parenOp <|> lident
 --       with a friendlier message than Megaparsec's default.
 --   Does NOT accept @_foo@ (underscore + lowercase): that's a value-style
 --   name and would be ambiguous as a type/constructor.
-uident :: Parser Name
-uident = (lexeme . try) uidentBody
-
--- | Inner shape of 'uident', without the lexeme/whitespace handling.
 uidentBody :: Parser Name
 uidentBody = do
   underscore <- P.option "" (T.singleton <$> C.char '_')
@@ -388,7 +386,11 @@ pTypeDeclWithEnd :: Parser Decl
 pTypeDeclWithEnd = do
   start <- P.getSourcePos
   rwordS "type"
-  name <- uident
+  -- 'uidentNoLine' (not the line-comment-aware variant) so a
+  -- trailing '-- …' on the declaration's line stays for
+  -- 'pTrailingLineCommentMaybe' to pick up; otherwise the
+  -- line-comment-aware 'lexeme' would consume it as whitespace.
+  name <- uidentNoLine
   tvars <- P.many paramBinderNoLine
   cons <- P.option [] $ do
     _ <- sym "="
@@ -418,7 +420,19 @@ pFunDefWithEnd = do
   start <- P.getSourcePos
   name <- declName
   args <- P.many paramBinder
-  _ <- sym "="
+  -- 'symNoLine' (not 'sym') so a trailing '-- …' immediately after
+  -- '=' is left for 'pTrailingLineCommentMaybe' below; the
+  -- line-comment-aware 'lexeme' inside plain 'sym' would otherwise
+  -- absorb it as whitespace (along with the following indent line),
+  -- and the comment would be silently dropped on multi-line bodies.
+  _ <- symNoLine "="
+  -- Optional trailing comment on the '=' line. Only meaningful when
+  -- the body is a multi-line form (ECase / ELet / EDo) — for
+  -- single-line bodies the canonical comment position is /after/ the
+  -- body, captured by 'tcomAfterBody' below. We try here too so that
+  -- a hand-written single-line shape with a comment in this position
+  -- (e.g. @f x = -- weird\n  body@) doesn't lose the comment.
+  tcomBeforeBody <- pTrailingLineCommentMaybe
   -- Allow the body to start on the following indented line — the
   -- formatter emits this shape for any 'let' body so the
   -- 'let'/'in' columns line up predictably; a '_' optional newline
@@ -435,18 +449,25 @@ pFunDefWithEnd = do
       end <- P.getSourcePos
       -- Multi-line case expression already consumed trailing newlines.
       -- We may be at the start of the next content line or EOF.
-      pure (FunDef (toSrcSpan start end) name args e Nothing)
+      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody)
     ELet {} -> do
       -- Same as 'ECase': a 'let' block may span multiple lines, so
       -- 'endLineOrEOF' below would mis-fire. The let parser has
       -- already consumed through the trailing body expression.
       end <- P.getSourcePos
-      pure (FunDef (toSrcSpan start end) name args e Nothing)
+      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody)
+    EDo {} -> do
+      -- Same multi-line layout as ECase/ELet.
+      end <- P.getSourcePos
+      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody)
     _ -> do
-      tcom <- pTrailingLineCommentMaybe
+      tcomAfterBody <- pTrailingLineCommentMaybe
       end <- P.getSourcePos
       endLineOrEOF
-      pure (FunDef (toSrcSpan start end) name args e tcom)
+      -- Single-line bodies: prefer the after-body comment when both
+      -- positions are filled. The renderer only ever fills one; the
+      -- '<|>' fallback is for unusual hand-written input.
+      pure (FunDef (toSrcSpan start end) name args e (tcomAfterBody <|> tcomBeforeBody))
 
 -- | Consume spaces (not comments), then an optional trailing line comment.
 pTrailingLineCommentMaybe :: Parser (Maybe Text)
