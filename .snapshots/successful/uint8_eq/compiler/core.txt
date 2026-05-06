@@ -54,24 +54,22 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CVar "render" )
                             [ CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt8" )
-                                    [ CVar "minUInt8"
-                                    , CVar "minUInt8"
-                                    ]
+                                ( CBuiltIn "eqUInt8" )
+                                [ CVar "minUInt8"
+                                , CVar "minUInt8"
                                 ]
-                            , CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt8" )
-                                    [ CVar "maxUInt8"
-                                    , CVar "maxUInt8"
-                                    ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqUInt8" )
+                                [ CVar "maxUInt8"
+                                , CVar "maxUInt8"
                                 ]
                             ]
                         ]
@@ -86,17 +84,15 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "render" )
-                                        [ CCall
-                                            ( CBuiltIn "eqUInt8" )
-                                            [ CVar "maxUInt8"
-                                            , CVar "minUInt8"
-                                            ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "render" )
+                                    [ CCall
+                                        ( CBuiltIn "eqUInt8" )
+                                        [ CVar "maxUInt8"
+                                        , CVar "minUInt8"
                                         ]
                                     ]
                                 ]
@@ -110,17 +106,15 @@ CoreProgram
                             ,
                                 ( 1
                                 , [ "s1" ]
-                                , CCon 1
-                                    [ CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s1"
-                                        , CCall
-                                            ( CVar "render" )
-                                            [ CCall
-                                                ( CBuiltIn "eqUInt8" )
-                                                [ CIntLit 128 TUInt8
-                                                , CIntLit 127 TUInt8
-                                                ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s1"
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "eqUInt8" )
+                                            [ CIntLit 128 TUInt8
+                                            , CIntLit 127 TUInt8
                                             ]
                                         ]
                                     ]

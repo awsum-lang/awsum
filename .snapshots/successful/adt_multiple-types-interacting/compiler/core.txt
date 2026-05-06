@@ -84,16 +84,14 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CVar "showBoxedColor" )
-                                [ CCon 0
-                                    [ CCon 0 [] ]
-                                ]
-                            , CString " "
+                            ( CVar "showBoxedColor" )
+                            [ CCon 0
+                                [ CCon 0 [] ]
                             ]
+                        , CString " "
                         ]
                     )
                     [
@@ -105,16 +103,14 @@ CoreProgram
                     ,
                         ( 1
                         , [ "s0" ]
-                        , CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CCall
-                                    ( CVar "showResult" )
+                        , CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CCall
+                                ( CVar "showResult" )
+                                [ CCon 0
                                     [ CCon 0
-                                        [ CCon 0
-                                            [ CCon 1 [] ]
-                                        ]
+                                        [ CCon 1 [] ]
                                     ]
                                 ]
                             ]

@@ -3,6 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [882564211, [0]]]; if (s < -2147483648) return [0, [3768445577, [0]]]; return [1, s|0]; }
 function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [882564211, [0]]]; if (p < -2147483648) return [0, [3768445577, [0]]]; return [1, p|0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -90,7 +91,7 @@ function v_renderErr(v_e){
         }
         case 1615808600: {
           const v_s = __s[1];
-          return [1, ("err: " + v_s)];
+          return __concat("err: ", v_s);
         }
       }
     }
@@ -134,7 +135,7 @@ function v__let_2(v_a, v_prefix){
         }
         case 1: {
           const v_b = __s[1];
-          return [1, (v_prefix + String(v_b))];
+          return __concat(v_prefix, String(v_b));
         }
       }
     }

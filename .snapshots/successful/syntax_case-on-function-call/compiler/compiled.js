@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -32,7 +33,7 @@ function v_runIO(v_io){
 
 function v_search(v_key){
     {
-      const __s = [1, ("found:" + v_key)];
+      const __s = __concat("found:", v_key);
       switch (__s[0]) {
         case 0: {
           const v__do_e_8_3 = __s[1];

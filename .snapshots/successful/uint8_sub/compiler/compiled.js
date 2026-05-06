@@ -2,6 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __subUInt8(a, b){ const d = a - b; return d < 0 ? [0, [0]] : [1, d & 0xFF]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -45,18 +46,18 @@ function v_render(v_r){
       switch (__s[0]) {
         case 0: {
           const v_e = __s[1];
-          return [1, ("underflow: " + (v_showUnderflowError)(v_e))];
+          return __concat("underflow: ", (v_showUnderflowError)(v_e));
         }
         case 1: {
           const v_v = __s[1];
-          return [1, ("ok: " + String(v_v))];
+          return __concat("ok: ", String(v_v));
         }
       }
     }
 }
 
 function main(v__input){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_12_9 = s[1]; return [0, v__do_e_12_9]; } case 1: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_13_9 = s[1]; return [0, v__do_e_13_9]; } case 1: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_15_9 = s[1]; return [0, v__do_e_15_9]; } case 1: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_16_9 = s[1]; return [0, v__do_e_16_9]; } case 1: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_17_9 = s[1]; return [0, v__do_e_17_9]; } case 1: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_18_9 = s[1]; return [0, v__do_e_18_9]; } case 1: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_19_9 = s[1]; return [0, v__do_e_19_9]; } case 1: { const v_s3 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_20_9 = s[1]; return [0, v__do_e_20_9]; } case 1: { const v_s4 = s[1]; return [1, (v_s4 + v_d)]; } } })([1, (v_s3 + ", ")]); } } })([1, (v_s2 + v_c)]); } } })([1, (v_s1 + ", ")]); } } })([1, (v_s0 + v_b)]); } } })([1, (v_a + ", ")]); } } })((v_render)(__subUInt8(v_minUInt8, v_maxUInt8))); } } })((v_render)(__subUInt8(v_minUInt8, (1 & 0xFF)))); } } })((v_render)(__subUInt8(v_maxUInt8, v_minUInt8))); } } })((v_render)(__subUInt8((5 & 0xFF), (5 & 0xFF)))));
+    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_12_9 = s[1]; return [0, v__do_e_12_9]; } case 1: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_13_9 = s[1]; return [0, v__do_e_13_9]; } case 1: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_15_9 = s[1]; return [0, v__do_e_15_9]; } case 1: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_16_9 = s[1]; return [0, v__do_e_16_9]; } case 1: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_17_9 = s[1]; return [0, v__do_e_17_9]; } case 1: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_18_9 = s[1]; return [0, v__do_e_18_9]; } case 1: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_19_9 = s[1]; return [0, v__do_e_19_9]; } case 1: { const v_s3 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_20_9 = s[1]; return [0, v__do_e_20_9]; } case 1: { const v_s4 = s[1]; return __concat(v_s4, v_d); } } })(__concat(v_s3, ", ")); } } })(__concat(v_s2, v_c)); } } })(__concat(v_s1, ", ")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, ", ")); } } })((v_render)(__subUInt8(v_minUInt8, v_maxUInt8))); } } })((v_render)(__subUInt8(v_minUInt8, (1 & 0xFF)))); } } })((v_render)(__subUInt8(v_maxUInt8, v_minUInt8))); } } })((v_render)(__subUInt8((5 & 0xFF), (5 & 0xFF)))));
 }
 
 function v__let_2(v_res){

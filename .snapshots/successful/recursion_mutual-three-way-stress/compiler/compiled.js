@@ -3,6 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [0] : [1]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -42,11 +43,11 @@ function v_showResult(v_r){
       switch (__s[0]) {
         case 0: {
           const v_e = __s[1];
-          return [1, ("left: " + (v_showUnderflowError)(v_e))];
+          return __concat("left: ", (v_showUnderflowError)(v_e));
         }
         case 1: {
           const v_v = __s[1];
-          return [1, ("right: " + String(v_v))];
+          return __concat("right: ", String(v_v));
         }
       }
     }

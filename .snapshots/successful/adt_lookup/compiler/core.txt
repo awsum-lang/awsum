@@ -50,16 +50,14 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CVar "unwrap" )
-                                [ CCon 0
-                                    [ CString "hello" ]
-                                ]
-                            , CString ", "
+                            ( CVar "unwrap" )
+                            [ CCon 0
+                                [ CString "hello" ]
                             ]
+                        , CString ", "
                         ]
                     )
                     [
@@ -71,14 +69,12 @@ CoreProgram
                     ,
                         ( 1
                         , [ "s0" ]
-                        , CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CCall
-                                    ( CVar "unwrap" )
-                                    [ CCon 1 [] ]
-                                ]
+                        , CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CCall
+                                ( CVar "unwrap" )
+                                [ CCon 1 [] ]
                             ]
                         )
                     ]

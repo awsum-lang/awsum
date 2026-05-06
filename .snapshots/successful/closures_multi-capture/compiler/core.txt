@@ -49,14 +49,12 @@ CoreProgram
             , "b"
             ]
             ( CCase
-                ( CCon 1
+                ( CCall
+                    ( CBuiltIn "concatString" )
                     [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "a" ]
-                        , CString "/"
-                        ]
+                        ( CBuiltIn "showInt32" )
+                        [ CVar "a" ]
+                    , CString "/"
                     ]
                 )
                 [
@@ -68,14 +66,12 @@ CoreProgram
                 ,
                     ( 1
                     , [ "s0" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "s0"
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "b" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CVar "s0"
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "b" ]
                         ]
                     )
                 ]

@@ -33,12 +33,10 @@ CoreProgram
             )
         , CFunDef "pad" [ "s" ]
             ( CCase
-                ( CCon 1
-                    [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "["
-                        , CVar "s"
-                        ]
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CString "["
+                    , CVar "s"
                     ]
                 )
                 [
@@ -51,12 +49,10 @@ CoreProgram
                     ( 1
                     , [ "p" ]
                     , CCase
-                        ( CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "p"
-                                , CString "]"
-                                ]
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "p"
+                            , CString "]"
                             ]
                         )
                         [
@@ -68,12 +64,10 @@ CoreProgram
                         ,
                             ( 1
                             , [ "q" ]
-                            , CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "q"
-                                    , CVar "q"
-                                    ]
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "q"
+                                , CVar "q"
                                 ]
                             )
                         ]
@@ -98,12 +92,10 @@ CoreProgram
                         ( 1
                         , [ "padded" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CString "<"
-                                    , CVar "padded"
-                                    ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "<"
+                                , CVar "padded"
                                 ]
                             )
                             [
@@ -115,12 +107,10 @@ CoreProgram
                             ,
                                 ( 1
                                 , [ "s0" ]
-                                , CCon 1
-                                    [ CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s0"
-                                        , CString ">"
-                                        ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s0"
+                                    , CString ">"
                                     ]
                                 )
                             ]

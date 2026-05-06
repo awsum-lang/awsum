@@ -3,6 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }
 function __eqUInt8(a, b){ return a === b ? [0] : [1]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -97,7 +98,7 @@ function v__apply_countDown(v__k, v__x){
               case 1: {
                 const v_s = __s[1];
                 {
-                  const __s = [1, (String(v_n) + ",")];
+                  const __s = __concat(String(v_n), ",");
                   switch (__s[0]) {
                     case 0: {
                       const v_e = __s[1];
@@ -110,7 +111,7 @@ function v__apply_countDown(v__k, v__x){
                     case 1: {
                       const v_s0 = __s[1];
                       const __t0 = v__pk_1;
-                      const __t1 = [1, (v_s0 + v_s)];
+                      const __t1 = __concat(v_s0, v_s);
                       v__k = __t0;
                       v__x = __t1;
                       continue;
@@ -141,14 +142,14 @@ function v_showResult(v_r){
               }
               case 3768445577: {
                 const v_u = __s[1];
-                return [1, ("left: " + (v_showUnderflowError)(v_u))];
+                return __concat("left: ", (v_showUnderflowError)(v_u));
               }
             }
           }
         }
         case 1: {
           const v_s = __s[1];
-          return [1, ("right: " + v_s)];
+          return __concat("right: ", v_s);
         }
       }
     }

@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_const(v_x, v__y){
     return v_x;
@@ -43,11 +44,11 @@ function v_identity(v_x){
 }
 
 function v_appendX(v_s){
-    return [1, (v_s + "x")];
+    return __concat(v_s, "x");
 }
 
 function v_appendY(v_s){
-    return [1, (v_s + "y")];
+    return __concat(v_s, "y");
 }
 
 function v__let_2(v_res){

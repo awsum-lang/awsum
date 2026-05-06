@@ -33,12 +33,10 @@ CoreProgram
             )
         , CFunDef "search" [ "key" ]
             ( CCase
-                ( CCon 1
-                    [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "found:"
-                        , CVar "key"
-                        ]
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CString "found:"
+                    , CVar "key"
                     ]
                 )
                 [

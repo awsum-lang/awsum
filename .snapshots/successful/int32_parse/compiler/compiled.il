@@ -16,9 +16,55 @@
 
   .method private hidebysig static object __concat(object, object) cil managed
   {
+    .maxstack 5
+    .locals init (object V_0)
+    ldarg.0
+    castclass [System.Runtime]System.String
+    callvirt instance int32 [System.Runtime]System.String::get_Length()
+    conv.i8
+    ldarg.1
+    castclass [System.Runtime]System.String
+    callvirt instance int32 [System.Runtime]System.String::get_Length()
+    conv.i8
+    add
+    ldc.i8 134217728
+    bgt.un IL_concat_too_long
     ldarg.0
     ldarg.1
     call string [System.Runtime]System.String::Concat(object, object)
+    stloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.1
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    ret
+  IL_concat_too_long:
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stloc.0
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
     ret
   }
 
@@ -228,20 +274,10 @@
     ldelem.ref
     stloc.0
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldstr "ok:"
     ldloc.0
     callvirt instance string [System.Runtime]System.Object::ToString()
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     br.s IL_join
   IL_join:
     ret
@@ -634,19 +670,9 @@
     ldelem.ref
     stloc.s 11
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.0
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -676,19 +702,9 @@
     ldelem.ref
     stloc.s 12
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 12
     ldloc.1
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -718,19 +734,9 @@
     ldelem.ref
     stloc.s 13
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 13
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -760,19 +766,9 @@
     ldelem.ref
     stloc.s 14
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 14
     ldloc.2
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -802,19 +798,9 @@
     ldelem.ref
     stloc.s 15
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 15
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -844,19 +830,9 @@
     ldelem.ref
     stloc.s 16
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 16
     ldloc.3
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -886,19 +862,9 @@
     ldelem.ref
     stloc.s 17
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 17
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -928,19 +894,9 @@
     ldelem.ref
     stloc.s 18
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 18
     ldloc.s 4
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -970,19 +926,9 @@
     ldelem.ref
     stloc.s 19
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 19
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1012,19 +958,9 @@
     ldelem.ref
     stloc.s 20
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 20
     ldloc.s 5
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1054,19 +990,9 @@
     ldelem.ref
     stloc.s 21
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 21
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1096,19 +1022,9 @@
     ldelem.ref
     stloc.s 22
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 22
     ldloc.s 6
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1138,19 +1054,9 @@
     ldelem.ref
     stloc.s 23
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 23
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1180,19 +1086,9 @@
     ldelem.ref
     stloc.s 24
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 24
     ldloc.s 7
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1222,19 +1118,9 @@
     ldelem.ref
     stloc.s 25
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 25
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1264,19 +1150,9 @@
     ldelem.ref
     stloc.s 26
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 26
     ldloc.s 8
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1306,19 +1182,9 @@
     ldelem.ref
     stloc.s 27
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 27
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1348,19 +1214,9 @@
     ldelem.ref
     stloc.s 28
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 28
     ldloc.s 9
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1390,19 +1246,9 @@
     ldelem.ref
     stloc.s 29
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 29
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1432,19 +1278,9 @@
     ldelem.ref
     stloc.s 30
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 30
     ldloc.s 10
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1474,19 +1310,9 @@
     ldelem.ref
     stloc.s 31
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 31
     ldstr ", "
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     dup
     ldc.i4.0
     ldelem.ref
@@ -1516,19 +1342,9 @@
     ldelem.ref
     stloc.s 32
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4.1
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldloc.s 32
     ldloc.s 11
     call object AwsumMain::__concat(object, object)
-    stelem.ref
     br.s IL_join
   IL_join:
     br.s IL_join

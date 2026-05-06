@@ -179,14 +179,12 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "n" ]
-                            , CString " / "
-                            ]
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
+                        , CString " / "
                         ]
                     )
                     [
@@ -198,14 +196,12 @@ CoreProgram
                     ,
                         ( 1
                         , [ "s0" ]
-                        , CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CCall
-                                    ( CBuiltIn "showInt32" )
-                                    [ CVar "m" ]
-                                ]
+                        , CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CCall
+                                ( CBuiltIn "showInt32" )
+                                [ CVar "m" ]
                             ]
                         )
                     ]

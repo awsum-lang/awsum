@@ -39,14 +39,12 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CBuiltIn "showUInt32" )
-                                [ CVar "minUInt32" ]
-                            , CString ", "
-                            ]
+                            ( CBuiltIn "showUInt32" )
+                            [ CVar "minUInt32" ]
+                        , CString ", "
                         ]
                     )
                     [
@@ -59,14 +57,12 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CBuiltIn "showUInt32" )
-                                        [ CIntLit 42 TUInt32 ]
-                                    ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CBuiltIn "showUInt32" )
+                                    [ CIntLit 42 TUInt32 ]
                                 ]
                             )
                             [
@@ -79,12 +75,10 @@ CoreProgram
                                 ( 1
                                 , [ "s1" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s1"
-                                            , CString ", "
-                                            ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CString ", "
                                         ]
                                     )
                                     [
@@ -97,14 +91,12 @@ CoreProgram
                                         ( 1
                                         , [ "s2" ]
                                         , CCase
-                                            ( CCon 1
-                                                [ CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CVar "s2"
-                                                    , CCall
-                                                        ( CBuiltIn "showUInt32" )
-                                                        [ CIntLit 2147483648 TUInt32 ]
-                                                    ]
+                                            ( CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "s2"
+                                                , CCall
+                                                    ( CBuiltIn "showUInt32" )
+                                                    [ CIntLit 2147483648 TUInt32 ]
                                                 ]
                                             )
                                             [
@@ -117,12 +109,10 @@ CoreProgram
                                                 ( 1
                                                 , [ "s3" ]
                                                 , CCase
-                                                    ( CCon 1
-                                                        [ CCall
-                                                            ( CBuiltIn "concatString" )
-                                                            [ CVar "s3"
-                                                            , CString ", "
-                                                            ]
+                                                    ( CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CVar "s3"
+                                                        , CString ", "
                                                         ]
                                                     )
                                                     [
@@ -135,14 +125,12 @@ CoreProgram
                                                         ( 1
                                                         , [ "s4" ]
                                                         , CCase
-                                                            ( CCon 1
-                                                                [ CCall
-                                                                    ( CBuiltIn "concatString" )
-                                                                    [ CVar "s4"
-                                                                    , CCall
-                                                                        ( CBuiltIn "showUInt32" )
-                                                                        [ CIntLit 4000000000 TUInt32 ]
-                                                                    ]
+                                                            ( CCall
+                                                                ( CBuiltIn "concatString" )
+                                                                [ CVar "s4"
+                                                                , CCall
+                                                                    ( CBuiltIn "showUInt32" )
+                                                                    [ CIntLit 4000000000 TUInt32 ]
                                                                 ]
                                                             )
                                                             [
@@ -155,12 +143,10 @@ CoreProgram
                                                                 ( 1
                                                                 , [ "s5" ]
                                                                 , CCase
-                                                                    ( CCon 1
-                                                                        [ CCall
-                                                                            ( CBuiltIn "concatString" )
-                                                                            [ CVar "s5"
-                                                                            , CString ", "
-                                                                            ]
+                                                                    ( CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CVar "s5"
+                                                                        , CString ", "
                                                                         ]
                                                                     )
                                                                     [
@@ -172,14 +158,12 @@ CoreProgram
                                                                     ,
                                                                         ( 1
                                                                         , [ "s6" ]
-                                                                        , CCon 1
-                                                                            [ CCall
-                                                                                ( CBuiltIn "concatString" )
-                                                                                [ CVar "s6"
-                                                                                , CCall
-                                                                                    ( CBuiltIn "showUInt32" )
-                                                                                    [ CVar "maxUInt32" ]
-                                                                                ]
+                                                                        , CCall
+                                                                            ( CBuiltIn "concatString" )
+                                                                            [ CVar "s6"
+                                                                            , CCall
+                                                                                ( CBuiltIn "showUInt32" )
+                                                                                [ CVar "maxUInt32" ]
                                                                             ]
                                                                         )
                                                                     ]

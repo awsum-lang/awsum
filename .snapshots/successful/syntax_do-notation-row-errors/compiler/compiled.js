@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_pureEither(v_x){
     return [1, v_x];
@@ -68,7 +69,7 @@ function v_describe(v_r){
         }
         case 1: {
           const v_n = __s[1];
-          return [1, ("Ok " + String(v_n))];
+          return __concat("Ok ", String(v_n));
         }
       }
     }

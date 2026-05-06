@@ -32,12 +32,10 @@ CoreProgram
                 )
             )
         , CFunDef "shout" [ "s" ]
-            ( CCon 1
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CVar "s"
-                    , CString "!"
-                    ]
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CVar "s"
+                , CString "!"
                 ]
             )
         , CFunDef "main" [ "_input" ]
@@ -268,12 +266,10 @@ CoreProgram
                                 ( 1
                                 , [ "rest" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "hStr"
-                                            , CString ","
-                                            ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "hStr"
+                                        , CString ","
                                         ]
                                     )
                                     [
@@ -290,12 +286,10 @@ CoreProgram
                                         , [ "comma" ]
                                         , CContinue
                                             [ CVar "$pk_1"
-                                            , CCon 1
-                                                [ CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CVar "comma"
-                                                    , CVar "rest"
-                                                    ]
+                                            , CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "comma"
+                                                , CVar "rest"
                                                 ]
                                             ]
                                         )

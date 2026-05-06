@@ -88,9 +88,13 @@ builtIns =
       -- Underflow is unreachable for unsigned multiplication (product of
       -- two non-negative values is non-negative). Symmetric to 'addUInt8'.
       ("mulUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty))),
-      -- concatString : String -> String -> String
+      -- concatString : String -> String -> Either StringTooLong String
       -- The '++' operator is parser sugar for a call to this built-in.
-      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy)),
+      -- Returns 'Right (a ++ b)' when the result would fit in
+      -- 'maxStringLengthUtf16CodeUnits' (134_217_728) UTF-16 code units;
+      -- otherwise 'Left StringTooLong' with no buffer allocated. Each
+      -- backend's runtime helper performs the cap check before copying.
+      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy (eitherTy stringTooLongTy stringTy))),
       -- splitOnFirst : String -> String -> Maybe (Tuple2 String String)
       -- Splits 'str' at the first occurrence of 'separator'; see
       -- 'stdlib/Prelude.aww' for the full edge-case spec.
@@ -172,6 +176,7 @@ builtIns =
     -- error side of the signed-integer arithmetic builtins.
     arithRowTy = TyOr noSpan underflowErrorTy overflowErrorTy
     parseErrorTy = TyCon noSpan "ParseError"
+    stringTooLongTy = TyCon noSpan "StringTooLong"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

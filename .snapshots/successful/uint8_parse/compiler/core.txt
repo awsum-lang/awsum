@@ -43,14 +43,12 @@ CoreProgram
                 ,
                     ( 1
                     , [ "v" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "ok:"
-                            , CCall
-                                ( CBuiltIn "showUInt8" )
-                                [ CVar "v" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "ok:"
+                        , CCall
+                            ( CBuiltIn "showUInt8" )
+                            [ CVar "v" ]
                         ]
                     )
                 ]
@@ -195,12 +193,10 @@ CoreProgram
                                                                                 ( 1
                                                                                 , [ "h" ]
                                                                                 , CCase
-                                                                                    ( CCon 1
-                                                                                        [ CCall
-                                                                                            ( CBuiltIn "concatString" )
-                                                                                            [ CVar "a"
-                                                                                            , CString ", "
-                                                                                            ]
+                                                                                    ( CCall
+                                                                                        ( CBuiltIn "concatString" )
+                                                                                        [ CVar "a"
+                                                                                        , CString ", "
                                                                                         ]
                                                                                     )
                                                                                     [
@@ -213,12 +209,10 @@ CoreProgram
                                                                                         ( 1
                                                                                         , [ "r0" ]
                                                                                         , CCase
-                                                                                            ( CCon 1
-                                                                                                [ CCall
-                                                                                                    ( CBuiltIn "concatString" )
-                                                                                                    [ CVar "r0"
-                                                                                                    , CVar "b"
-                                                                                                    ]
+                                                                                            ( CCall
+                                                                                                ( CBuiltIn "concatString" )
+                                                                                                [ CVar "r0"
+                                                                                                , CVar "b"
                                                                                                 ]
                                                                                             )
                                                                                             [
@@ -231,12 +225,10 @@ CoreProgram
                                                                                                 ( 1
                                                                                                 , [ "r1" ]
                                                                                                 , CCase
-                                                                                                    ( CCon 1
-                                                                                                        [ CCall
-                                                                                                            ( CBuiltIn "concatString" )
-                                                                                                            [ CVar "r1"
-                                                                                                            , CString ", "
-                                                                                                            ]
+                                                                                                    ( CCall
+                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                        [ CVar "r1"
+                                                                                                        , CString ", "
                                                                                                         ]
                                                                                                     )
                                                                                                     [
@@ -249,12 +241,10 @@ CoreProgram
                                                                                                         ( 1
                                                                                                         , [ "r2" ]
                                                                                                         , CCase
-                                                                                                            ( CCon 1
-                                                                                                                [ CCall
-                                                                                                                    ( CBuiltIn "concatString" )
-                                                                                                                    [ CVar "r2"
-                                                                                                                    , CVar "c"
-                                                                                                                    ]
+                                                                                                            ( CCall
+                                                                                                                ( CBuiltIn "concatString" )
+                                                                                                                [ CVar "r2"
+                                                                                                                , CVar "c"
                                                                                                                 ]
                                                                                                             )
                                                                                                             [
@@ -267,12 +257,10 @@ CoreProgram
                                                                                                                 ( 1
                                                                                                                 , [ "r3" ]
                                                                                                                 , CCase
-                                                                                                                    ( CCon 1
-                                                                                                                        [ CCall
-                                                                                                                            ( CBuiltIn "concatString" )
-                                                                                                                            [ CVar "r3"
-                                                                                                                            , CString ", "
-                                                                                                                            ]
+                                                                                                                    ( CCall
+                                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                                        [ CVar "r3"
+                                                                                                                        , CString ", "
                                                                                                                         ]
                                                                                                                     )
                                                                                                                     [
@@ -285,12 +273,10 @@ CoreProgram
                                                                                                                         ( 1
                                                                                                                         , [ "r4" ]
                                                                                                                         , CCase
-                                                                                                                            ( CCon 1
-                                                                                                                                [ CCall
-                                                                                                                                    ( CBuiltIn "concatString" )
-                                                                                                                                    [ CVar "r4"
-                                                                                                                                    , CVar "d"
-                                                                                                                                    ]
+                                                                                                                            ( CCall
+                                                                                                                                ( CBuiltIn "concatString" )
+                                                                                                                                [ CVar "r4"
+                                                                                                                                , CVar "d"
                                                                                                                                 ]
                                                                                                                             )
                                                                                                                             [
@@ -303,12 +289,10 @@ CoreProgram
                                                                                                                                 ( 1
                                                                                                                                 , [ "r5" ]
                                                                                                                                 , CCase
-                                                                                                                                    ( CCon 1
-                                                                                                                                        [ CCall
-                                                                                                                                            ( CBuiltIn "concatString" )
-                                                                                                                                            [ CVar "r5"
-                                                                                                                                            , CString ", "
-                                                                                                                                            ]
+                                                                                                                                    ( CCall
+                                                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                                                        [ CVar "r5"
+                                                                                                                                        , CString ", "
                                                                                                                                         ]
                                                                                                                                     )
                                                                                                                                     [
@@ -321,12 +305,10 @@ CoreProgram
                                                                                                                                         ( 1
                                                                                                                                         , [ "r6" ]
                                                                                                                                         , CCase
-                                                                                                                                            ( CCon 1
-                                                                                                                                                [ CCall
-                                                                                                                                                    ( CBuiltIn "concatString" )
-                                                                                                                                                    [ CVar "r6"
-                                                                                                                                                    , CVar "e"
-                                                                                                                                                    ]
+                                                                                                                                            ( CCall
+                                                                                                                                                ( CBuiltIn "concatString" )
+                                                                                                                                                [ CVar "r6"
+                                                                                                                                                , CVar "e"
                                                                                                                                                 ]
                                                                                                                                             )
                                                                                                                                             [
@@ -339,12 +321,10 @@ CoreProgram
                                                                                                                                                 ( 1
                                                                                                                                                 , [ "r7" ]
                                                                                                                                                 , CCase
-                                                                                                                                                    ( CCon 1
-                                                                                                                                                        [ CCall
-                                                                                                                                                            ( CBuiltIn "concatString" )
-                                                                                                                                                            [ CVar "r7"
-                                                                                                                                                            , CString ", "
-                                                                                                                                                            ]
+                                                                                                                                                    ( CCall
+                                                                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                                                                        [ CVar "r7"
+                                                                                                                                                        , CString ", "
                                                                                                                                                         ]
                                                                                                                                                     )
                                                                                                                                                     [
@@ -357,12 +337,10 @@ CoreProgram
                                                                                                                                                         ( 1
                                                                                                                                                         , [ "r8" ]
                                                                                                                                                         , CCase
-                                                                                                                                                            ( CCon 1
-                                                                                                                                                                [ CCall
-                                                                                                                                                                    ( CBuiltIn "concatString" )
-                                                                                                                                                                    [ CVar "r8"
-                                                                                                                                                                    , CVar "f"
-                                                                                                                                                                    ]
+                                                                                                                                                            ( CCall
+                                                                                                                                                                ( CBuiltIn "concatString" )
+                                                                                                                                                                [ CVar "r8"
+                                                                                                                                                                , CVar "f"
                                                                                                                                                                 ]
                                                                                                                                                             )
                                                                                                                                                             [
@@ -375,12 +353,10 @@ CoreProgram
                                                                                                                                                                 ( 1
                                                                                                                                                                 , [ "r9" ]
                                                                                                                                                                 , CCase
-                                                                                                                                                                    ( CCon 1
-                                                                                                                                                                        [ CCall
-                                                                                                                                                                            ( CBuiltIn "concatString" )
-                                                                                                                                                                            [ CVar "r9"
-                                                                                                                                                                            , CString ", "
-                                                                                                                                                                            ]
+                                                                                                                                                                    ( CCall
+                                                                                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                                                                                        [ CVar "r9"
+                                                                                                                                                                        , CString ", "
                                                                                                                                                                         ]
                                                                                                                                                                     )
                                                                                                                                                                     [
@@ -393,12 +369,10 @@ CoreProgram
                                                                                                                                                                         ( 1
                                                                                                                                                                         , [ "r10" ]
                                                                                                                                                                         , CCase
-                                                                                                                                                                            ( CCon 1
-                                                                                                                                                                                [ CCall
-                                                                                                                                                                                    ( CBuiltIn "concatString" )
-                                                                                                                                                                                    [ CVar "r10"
-                                                                                                                                                                                    , CVar "g"
-                                                                                                                                                                                    ]
+                                                                                                                                                                            ( CCall
+                                                                                                                                                                                ( CBuiltIn "concatString" )
+                                                                                                                                                                                [ CVar "r10"
+                                                                                                                                                                                , CVar "g"
                                                                                                                                                                                 ]
                                                                                                                                                                             )
                                                                                                                                                                             [
@@ -411,12 +385,10 @@ CoreProgram
                                                                                                                                                                                 ( 1
                                                                                                                                                                                 , [ "r11" ]
                                                                                                                                                                                 , CCase
-                                                                                                                                                                                    ( CCon 1
-                                                                                                                                                                                        [ CCall
-                                                                                                                                                                                            ( CBuiltIn "concatString" )
-                                                                                                                                                                                            [ CVar "r11"
-                                                                                                                                                                                            , CString ", "
-                                                                                                                                                                                            ]
+                                                                                                                                                                                    ( CCall
+                                                                                                                                                                                        ( CBuiltIn "concatString" )
+                                                                                                                                                                                        [ CVar "r11"
+                                                                                                                                                                                        , CString ", "
                                                                                                                                                                                         ]
                                                                                                                                                                                     )
                                                                                                                                                                                     [
@@ -428,12 +400,10 @@ CoreProgram
                                                                                                                                                                                     ,
                                                                                                                                                                                         ( 1
                                                                                                                                                                                         , [ "r12" ]
-                                                                                                                                                                                        , CCon 1
-                                                                                                                                                                                            [ CCall
-                                                                                                                                                                                                ( CBuiltIn "concatString" )
-                                                                                                                                                                                                [ CVar "r12"
-                                                                                                                                                                                                , CVar "h"
-                                                                                                                                                                                                ]
+                                                                                                                                                                                        , CCall
+                                                                                                                                                                                            ( CBuiltIn "concatString" )
+                                                                                                                                                                                            [ CVar "r12"
+                                                                                                                                                                                            , CVar "h"
                                                                                                                                                                                             ]
                                                                                                                                                                                         )
                                                                                                                                                                                     ]

@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -38,7 +39,7 @@ const v_greeting = "Hello";
 
 function v_addGreeting(v_name){
     {
-      const __s = [1, (v_greeting + ", ")];
+      const __s = __concat(v_greeting, ", ");
       switch (__s[0]) {
         case 0: {
           const v__do_e_22_3 = __s[1];
@@ -47,7 +48,7 @@ function v_addGreeting(v_name){
         case 1: {
           const v_s0 = __s[1];
           {
-            const __s = [1, (v_s0 + v_name)];
+            const __s = __concat(v_s0, v_name);
             switch (__s[0]) {
               case 0: {
                 const v__do_e_23_3 = __s[1];
@@ -55,7 +56,7 @@ function v_addGreeting(v_name){
               }
               case 1: {
                 const v_s1 = __s[1];
-                return [1, (v_s1 + "!")];
+                return __concat(v_s1, "!");
               }
             }
           }

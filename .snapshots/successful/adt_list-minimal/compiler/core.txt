@@ -124,12 +124,10 @@ CoreProgram
                             , "t"
                             ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "h"
-                                    , CString ","
-                                    ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "h"
+                                , CString ","
                                 ]
                             )
                             [
@@ -193,12 +191,10 @@ CoreProgram
                                 , [ "rest" ]
                                 , CContinue
                                     [ CVar "$pk_1"
-                                    , CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "hc"
-                                            , CVar "rest"
-                                            ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "hc"
+                                        , CVar "rest"
                                         ]
                                     ]
                                 )

@@ -201,12 +201,10 @@ CoreProgram
                                 , [ "rest" ]
                                 , CContinue
                                     [ CVar "$pk_1"
-                                    , CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CString "A"
-                                            , CVar "rest"
-                                            ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "A"
+                                        , CVar "rest"
                                         ]
                                     ]
                                 )
@@ -231,12 +229,10 @@ CoreProgram
                                 , [ "rest" ]
                                 , CContinue
                                     [ CVar "$pk_2"
-                                    , CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CString "B"
-                                            , CVar "rest"
-                                            ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "B"
+                                        , CVar "rest"
                                         ]
                                     ]
                                 )
@@ -261,12 +257,10 @@ CoreProgram
                                 , [ "rest" ]
                                 , CContinue
                                     [ CVar "$pk_3"
-                                    , CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CString "C"
-                                            , CVar "rest"
-                                            ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CString "C"
+                                        , CVar "rest"
                                         ]
                                     ]
                                 )

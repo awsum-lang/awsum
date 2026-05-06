@@ -130,15 +130,80 @@ initMethod =
       ".end method"
     ]
 
+-- | __concat: implements 'BuiltIn.concatString'. Pre-checks the combined
+--   UTF-16 length of both inputs against the language-fixed cap; returns
+--   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise (no
+--   String.concat call on the rejection path). The cap value (134217728)
+--   must stay in sync with 'maxStringLengthUtf16CodeUnits' in
+--   'stdlib/Prelude.aww'.
 concatMethod :: Text
 concatMethod =
   unlines
     [ ".method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 3",
+      -- Compute UTF-16 length of each input. java.lang.String.length()
+      -- is exactly UTF-16 code units (JVM stores strings as UTF-16),
+      -- so this is the right unit for the cap check directly.
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/length()I",
+      "  i2l",
+      "  aload_1",
+      "  checkcast java/lang/String",
+      "  invokevirtual java/lang/String/length()I",
+      "  i2l",
+      "  ladd",
+      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
+      -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+      -- 'stdlib/Prelude.aww'.
+      "  ldc2_w 134217728",
+      "  lcmp",
+      "  ifgt L_concat_too_long",
+      -- Length OK: do String.concat and wrap in Right.
       "  aload_0",
       "  checkcast java/lang/String",
       "  aload_1",
       "  checkcast java/lang/String",
       "  invokevirtual java/lang/String/concat(Ljava/lang/String;)Ljava/lang/String;",
+      "  astore_2",
+      -- Build Right(result): Object[2] = [Integer(1), result].
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
+      "  areturn",
+      "L_concat_too_long:",
+      -- Build Left(StringTooLong). StringTooLong is a single-constructor
+      -- type so its tag is 0; Either's Left tag is 0.
+      -- StringTooLong cell: Object[1] = [Integer(0)].
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore_2",
+      -- Left cell: Object[2] = [Integer(0), stl].
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_2",
+      "  aastore",
       "  areturn",
       ".end method"
     ]

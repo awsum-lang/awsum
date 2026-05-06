@@ -305,20 +305,68 @@ runtime builtIns =
         if Set.member "mulUInt32" builtIns then rtMulUInt32 else "",
         if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
         if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
-        if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
+        -- '__concat' calls '__lengthUtf16CodeUnits' for the cap pre-check,
+        -- so emit the helper whenever 'concatString' is referenced even if
+        -- the user did not call 'lengthUtf16CodeUnits' directly.
+        if Set.member "lengthUtf16CodeUnits" builtIns || Set.member "concatString" builtIns then rtLengthUtf16CodeUnits else "",
         if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else ""
       ]
+    -- '__concat' implements 'BuiltIn.concatString'.
+    -- Returns 'Either StringTooLong String' as a heap cell. Pre-checks
+    -- the combined UTF-16 code unit length against the language-fixed
+    -- cap and returns 'Left StringTooLong' with no buffer allocated when
+    -- the result would overflow. The cap value (134217728) must stay in
+    -- sync with 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
     rtConcat =
       unlines
         [ "define internal ptr @__concat(ptr %a, ptr %b) {",
-          "  %la = call i64 @strlen(ptr %a)",
-          "  %lb = call i64 @strlen(ptr %b)",
-          "  %sum = add i64 %la, %lb",
-          "  %total = add i64 %sum, 1",
+          -- UTF-16 length pre-check. Storage is UTF-8 bytes, but the cap
+          -- is on UTF-16 code units (cross-runtime invariant), so we must
+          -- count code units, not bytes.
+          "  %la_box = call ptr @__lengthUtf16CodeUnits(ptr %a)",
+          "  %la = load i32, ptr %la_box",
+          "  %lb_box = call ptr @__lengthUtf16CodeUnits(ptr %b)",
+          "  %lb = load i32, ptr %lb_box",
+          -- Widen to i64 before summing. Awsum-internal strings respect
+          -- the cap so the i32 sum can't overflow (max 2*134217728 fits
+          -- in i32), but the widen costs nothing.
+          "  %la64 = zext i32 %la to i64",
+          "  %lb64 = zext i32 %lb to i64",
+          "  %sum64 = add i64 %la64, %lb64",
+          -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
+          -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+          -- 'stdlib/Prelude.aww'.
+          "  %over = icmp ugt i64 %sum64, 134217728",
+          "  br i1 %over, label %too_long, label %ok",
+          "too_long:",
+          -- Build 'Left StringTooLong'. StringTooLong is a single-
+          -- constructor type so its tag is 0; Either's Left tag is 0.
+          "  %stl = call ptr @malloc(i64 8)",
+          "  %stl_tag = inttoptr i64 0 to ptr",
+          "  store ptr %stl_tag, ptr %stl",
+          "  %left = call ptr @malloc(i64 16)",
+          "  %left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %left_tag, ptr %left",
+          "  %left_f = getelementptr ptr, ptr %left, i32 1",
+          "  store ptr %stl, ptr %left_f",
+          "  ret ptr %left",
+          "ok:",
+          -- Length fits — do the actual concat. UTF-8 byte count via
+          -- 'strlen' is the right unit for the malloc/strcpy/strcat path.
+          "  %ba = call i64 @strlen(ptr %a)",
+          "  %bb = call i64 @strlen(ptr %b)",
+          "  %bsum = add i64 %ba, %bb",
+          "  %total = add i64 %bsum, 1",
           "  %buf = call ptr @malloc(i64 %total)",
           "  call ptr @strcpy(ptr %buf, ptr %a)",
           "  call ptr @strcat(ptr %buf, ptr %b)",
-          "  ret ptr %buf",
+          -- Wrap in 'Right'. Either's Right tag is 1.
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %buf, ptr %right_f",
+          "  ret ptr %right",
           "}"
         ]
     rtPrint =

@@ -2,6 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [882564211, [0]]]; if (s < -2147483648) return [0, [3768445577, [0]]]; return [1, s|0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -132,7 +133,7 @@ function v__lam_3(v__arg_28_19){
 }
 
 function v__let_4(v_n, v_m){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_30_9 = s[1]; return [0, v__do_e_30_9]; } case 1: { const v_s0 = s[1]; return [1, (v_s0 + String(v_m))]; } } })([1, (String(v_n) + " / ")]));
+    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_30_9 = s[1]; return [0, v__do_e_30_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
 }
 
 function v__let_5(v_n){

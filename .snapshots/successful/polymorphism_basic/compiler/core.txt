@@ -71,21 +71,17 @@ CoreProgram
         , CFunDef "identity" [ "x" ]
             ( CVar "x" )
         , CFunDef "appendX" [ "s" ]
-            ( CCon 1
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CVar "s"
-                    , CString "x"
-                    ]
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CVar "s"
+                , CString "x"
                 ]
             )
         , CFunDef "appendY" [ "s" ]
-            ( CCon 1
-                [ CCall
-                    ( CBuiltIn "concatString" )
-                    [ CVar "s"
-                    , CString "y"
-                    ]
+            ( CCall
+                ( CBuiltIn "concatString" )
+                [ CVar "s"
+                , CString "y"
                 ]
             )
         , CFunDef "$let$2" [ "res" ]

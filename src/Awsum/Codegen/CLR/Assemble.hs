@@ -696,13 +696,87 @@ mkInit = do
   let code = cilLdarg 0 <> cilCall (tokMR 1) <> cilRet -- MemberRef 1 = Object::.ctor
   pure MInfo {mImplFlags = 0, mFlags = 0x1881, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
+-- | __concat: implements 'BuiltIn.concatString'. Pre-checks the combined
+--   UTF-16 length of both inputs against the language-fixed cap; returns
+--   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise. The cap
+--   value (134217728 = 2^27) must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'. Binary
+--   counterpart of 'Awsum.Codegen.CLR.concatMethod'. Locals: V_0 object
+--   (concat result, or StringTooLong cell across the Left build).
 mkConcat :: AsmM MInfo
 mkConcat = do
   ni <- w16 <$> addStr "__concat"
   si <- w16 <$> addBlob (sigStatic etObject 2)
   ps <- addParams 2
-  let code = cilLdarg 0 <> cilLdarg 1 <> cilCall (tokMR 2) <> cilRet -- MemberRef 2 = String.Concat
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
+  -- LocalVarSig: 0x07, count=1, ELEMENT_TYPE_OBJECT (0x1C)
+  localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
+  let castStr = cilCastclass (tokTR trStr)
+      callLen = cilCallvirt (tokMR lengthRef)
+      boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      preamble =
+        cilLdarg 0
+          <> castStr
+          <> callLen
+          <> cilConvI8
+          <> cilLdarg 1
+          <> castStr
+          <> callLen
+          <> cilConvI8
+          <> [0x58] -- add
+          -- maxStringLengthUtf16CodeUnits = 134217728 = 2^27.
+          -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+          -- 'stdlib/Prelude.aww' and the matching constants in
+          -- 'Awsum.Codegen.{LLVM,JVM,WASM,JS}'.
+          <> cilLdcI8 134217728
+      okBlock =
+        cilLdarg 0
+          <> cilLdarg 1
+          <> cilCall (tokMR 2) -- MemberRef 2 = String.Concat
+          <> cilStloc 0
+          -- Right(result): object[2] = [box(1), result]
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilStelemRef
+          <> cilRet
+      tooLongBlock =
+        -- StringTooLong cell: object[1] = [box(0)]
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 0
+          -- Left cell: object[2] = [box(0), StringTooLong cell]
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 0
+          <> cilStelemRef
+          <> cilRet
+      bgtOff = fromIntegral (length okBlock) :: Word8
+      code = preamble <> cilBgtUnS bgtOff <> okBlock <> tooLongBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | __print: low-level platform primitive driven by the prelude's
 --   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value

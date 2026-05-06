@@ -18,14 +18,39 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.4 = private unnamed_addr constant [16 x i8] c"STRING_TOO_LONG\00"
 
 define internal ptr @__concat(ptr %a, ptr %b) {
-  %la = call i64 @strlen(ptr %a)
-  %lb = call i64 @strlen(ptr %b)
-  %sum = add i64 %la, %lb
-  %total = add i64 %sum, 1
+  %la_box = call ptr @__lengthUtf16CodeUnits(ptr %a)
+  %la = load i32, ptr %la_box
+  %lb_box = call ptr @__lengthUtf16CodeUnits(ptr %b)
+  %lb = load i32, ptr %lb_box
+  %la64 = zext i32 %la to i64
+  %lb64 = zext i32 %lb to i64
+  %sum64 = add i64 %la64, %lb64
+  %over = icmp ugt i64 %sum64, 134217728
+  br i1 %over, label %too_long, label %ok
+too_long:
+  %stl = call ptr @malloc(i64 8)
+  %stl_tag = inttoptr i64 0 to ptr
+  store ptr %stl_tag, ptr %stl
+  %left = call ptr @malloc(i64 16)
+  %left_tag = inttoptr i64 0 to ptr
+  store ptr %left_tag, ptr %left
+  %left_f = getelementptr ptr, ptr %left, i32 1
+  store ptr %stl, ptr %left_f
+  ret ptr %left
+ok:
+  %ba = call i64 @strlen(ptr %a)
+  %bb = call i64 @strlen(ptr %b)
+  %bsum = add i64 %ba, %bb
+  %total = add i64 %bsum, 1
   %buf = call ptr @malloc(i64 %total)
   call ptr @strcpy(ptr %buf, ptr %a)
   call ptr @strcat(ptr %buf, ptr %b)
-  ret ptr %buf
+  %right = call ptr @malloc(i64 16)
+  %right_tag = inttoptr i64 1 to ptr
+  store ptr %right_tag, ptr %right
+  %right_f = getelementptr ptr, ptr %right, i32 1
+  store ptr %buf, ptr %right_f
+  ret ptr %right
 }
 
 
@@ -36,6 +61,50 @@ define internal ptr @__print(ptr %s) {
   %unit_tag = inttoptr i64 0 to ptr
   store ptr %unit_tag, ptr %unit_tag_ptr
   ret ptr %unit
+}
+
+
+define internal ptr @__lengthUtf16CodeUnits(ptr %s) {
+entry:
+  %i_p = alloca i64, align 8
+  store i64 0, ptr %i_p
+  %n_p = alloca i32, align 4
+  store i32 0, ptr %n_p
+  br label %head
+head:
+  %i = load i64, ptr %i_p
+  %bp = getelementptr i8, ptr %s, i64 %i
+  %b = load i8, ptr %bp
+  %is_nul = icmp eq i8 %b, 0
+  br i1 %is_nul, label %done, label %body
+body:
+  %bz = zext i8 %b to i32
+  %top2 = and i32 %bz, 192
+  %is_cont = icmp eq i32 %top2, 128
+  br i1 %is_cont, label %step, label %check4
+check4:
+  %top5 = and i32 %bz, 248
+  %is_4 = icmp eq i32 %top5, 240
+  br i1 %is_4, label %add2, label %add1
+add2:
+  %n2_0 = load i32, ptr %n_p
+  %n2_1 = add i32 %n2_0, 2
+  store i32 %n2_1, ptr %n_p
+  br label %step
+add1:
+  %n1_0 = load i32, ptr %n_p
+  %n1_1 = add i32 %n1_0, 1
+  store i32 %n1_1, ptr %n_p
+  br label %step
+step:
+  %i1 = add i64 %i, 1
+  store i64 %i1, ptr %i_p
+  br label %head
+done:
+  %nf = load i32, ptr %n_p
+  %box = call ptr @malloc(i64 4)
+  store i32 %nf, ptr %box
+  ret ptr %box
 }
 
 
@@ -124,27 +193,15 @@ define internal ptr @v_identity(ptr %v_x) {
 }
 
 define internal ptr @v_appendX(ptr %v_s) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 1 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr [2 x i8], ptr @.str.2, i64 0, i64 0
-  %t4 = call ptr @__concat(ptr %v_s, ptr %t3)
-  %t5 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t4, ptr %t5
-  ret ptr %t0
+  %t0 = getelementptr [2 x i8], ptr @.str.2, i64 0, i64 0
+  %t1 = call ptr @__concat(ptr %v_s, ptr %t0)
+  ret ptr %t1
 }
 
 define internal ptr @v_appendY(ptr %v_s) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 1 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr [2 x i8], ptr @.str.3, i64 0, i64 0
-  %t4 = call ptr @__concat(ptr %v_s, ptr %t3)
-  %t5 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t4, ptr %t5
-  ret ptr %t0
+  %t0 = getelementptr [2 x i8], ptr @.str.3, i64 0, i64 0
+  %t1 = call ptr @__concat(ptr %v_s, ptr %t0)
+  ret ptr %t1
 }
 
 define internal ptr @v__let_2(ptr %v_res) {

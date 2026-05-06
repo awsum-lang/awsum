@@ -134,14 +134,12 @@ CoreProgram
                                 ( 1
                                 , [ "s" ]
                                 , CCase
-                                    ( CCon 1
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
                                         [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CCall
-                                                ( CBuiltIn "showUInt8" )
-                                                [ CVar "n" ]
-                                            , CString ","
-                                            ]
+                                            ( CBuiltIn "showUInt8" )
+                                            [ CVar "n" ]
+                                        , CString ","
                                         ]
                                     )
                                     [
@@ -160,12 +158,10 @@ CoreProgram
                                         , [ "s0" ]
                                         , CContinue
                                             [ CVar "$pk_1"
-                                            , CCon 1
-                                                [ CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CVar "s0"
-                                                    , CVar "s"
-                                                    ]
+                                            , CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "s0"
+                                                , CVar "s"
                                                 ]
                                             ]
                                         )
@@ -193,14 +189,12 @@ CoreProgram
                         ,
                             ( 3768445577
                             , "u"
-                            , CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CString "left: "
-                                    , CCall
-                                        ( CVar "showUnderflowError" )
-                                        [ CVar "u" ]
-                                    ]
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "left: "
+                                , CCall
+                                    ( CVar "showUnderflowError" )
+                                    [ CVar "u" ]
                                 ]
                             )
                         ]
@@ -208,12 +202,10 @@ CoreProgram
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "right: "
-                            , CVar "s"
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "right: "
+                        , CVar "s"
                         ]
                     )
                 ]

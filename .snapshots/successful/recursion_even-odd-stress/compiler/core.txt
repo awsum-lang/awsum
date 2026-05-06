@@ -54,27 +54,23 @@ CoreProgram
                 [
                     ( 0
                     , [ "e" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "left: "
-                            , CCall
-                                ( CVar "showUnderflowError" )
-                                [ CVar "e" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "left: "
+                        , CCall
+                            ( CVar "showUnderflowError" )
+                            [ CVar "e" ]
                         ]
                     )
                 ,
                     ( 1
                     , [ "b" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "right: "
-                            , CCall
-                                ( CVar "showBool" )
-                                [ CVar "b" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "right: "
+                        , CCall
+                            ( CVar "showBool" )
+                            [ CVar "b" ]
                         ]
                     )
                 ]

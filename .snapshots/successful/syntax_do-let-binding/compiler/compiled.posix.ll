@@ -19,14 +19,39 @@ declare {i32, i1} @llvm.smul.with.overflow.i32(i32, i32)
 @.str.3 = private unnamed_addr constant [6 x i8] c"err: \00"
 
 define internal ptr @__concat(ptr %a, ptr %b) {
-  %la = call i64 @strlen(ptr %a)
-  %lb = call i64 @strlen(ptr %b)
-  %sum = add i64 %la, %lb
-  %total = add i64 %sum, 1
+  %la_box = call ptr @__lengthUtf16CodeUnits(ptr %a)
+  %la = load i32, ptr %la_box
+  %lb_box = call ptr @__lengthUtf16CodeUnits(ptr %b)
+  %lb = load i32, ptr %lb_box
+  %la64 = zext i32 %la to i64
+  %lb64 = zext i32 %lb to i64
+  %sum64 = add i64 %la64, %lb64
+  %over = icmp ugt i64 %sum64, 134217728
+  br i1 %over, label %too_long, label %ok
+too_long:
+  %stl = call ptr @malloc(i64 8)
+  %stl_tag = inttoptr i64 0 to ptr
+  store ptr %stl_tag, ptr %stl
+  %left = call ptr @malloc(i64 16)
+  %left_tag = inttoptr i64 0 to ptr
+  store ptr %left_tag, ptr %left
+  %left_f = getelementptr ptr, ptr %left, i32 1
+  store ptr %stl, ptr %left_f
+  ret ptr %left
+ok:
+  %ba = call i64 @strlen(ptr %a)
+  %bb = call i64 @strlen(ptr %b)
+  %bsum = add i64 %ba, %bb
+  %total = add i64 %bsum, 1
   %buf = call ptr @malloc(i64 %total)
   call ptr @strcpy(ptr %buf, ptr %a)
   call ptr @strcat(ptr %buf, ptr %b)
-  ret ptr %buf
+  %right = call ptr @malloc(i64 16)
+  %right_tag = inttoptr i64 1 to ptr
+  store ptr %right_tag, ptr %right
+  %right_f = getelementptr ptr, ptr %right, i32 1
+  store ptr %buf, ptr %right_f
+  ret ptr %right
 }
 
 
@@ -118,6 +143,50 @@ ok:
   %right_f = getelementptr ptr, ptr %right, i32 1
   store ptr %box, ptr %right_f
   ret ptr %right
+}
+
+
+define internal ptr @__lengthUtf16CodeUnits(ptr %s) {
+entry:
+  %i_p = alloca i64, align 8
+  store i64 0, ptr %i_p
+  %n_p = alloca i32, align 4
+  store i32 0, ptr %n_p
+  br label %head
+head:
+  %i = load i64, ptr %i_p
+  %bp = getelementptr i8, ptr %s, i64 %i
+  %b = load i8, ptr %bp
+  %is_nul = icmp eq i8 %b, 0
+  br i1 %is_nul, label %done, label %body
+body:
+  %bz = zext i8 %b to i32
+  %top2 = and i32 %bz, 192
+  %is_cont = icmp eq i32 %top2, 128
+  br i1 %is_cont, label %step, label %check4
+check4:
+  %top5 = and i32 %bz, 248
+  %is_4 = icmp eq i32 %top5, 240
+  br i1 %is_4, label %add2, label %add1
+add2:
+  %n2_0 = load i32, ptr %n_p
+  %n2_1 = add i32 %n2_0, 2
+  store i32 %n2_1, ptr %n_p
+  br label %step
+add1:
+  %n1_0 = load i32, ptr %n_p
+  %n1_1 = add i32 %n1_0, 1
+  store i32 %n1_1, ptr %n_p
+  br label %step
+step:
+  %i1 = add i64 %i, 1
+  store i64 %i1, ptr %i_p
+  br label %head
+done:
+  %nf = load i32, ptr %n_p
+  %box = call ptr @malloc(i64 4)
+  store i32 %nf, ptr %box
+  ret ptr %box
 }
 
 
@@ -300,22 +369,16 @@ case.end.589989748.6:
 case.arm.1615808600.14:
   %t16 = getelementptr ptr, ptr %v_e, i32 1
   %t17 = load ptr, ptr %t16
-  %t18 = call ptr @malloc(i64 16)
-  %t19 = inttoptr i64 1 to ptr
-  %t20 = getelementptr ptr, ptr %t18, i32 0
-  store ptr %t19, ptr %t20
-  %t21 = getelementptr [6 x i8], ptr @.str.3, i64 0, i64 0
-  %t22 = call ptr @__concat(ptr %t21, ptr %t17)
-  %t23 = getelementptr ptr, ptr %t18, i32 1
-  store ptr %t22, ptr %t23
+  %t18 = getelementptr [6 x i8], ptr @.str.3, i64 0, i64 0
+  %t19 = call ptr @__concat(ptr %t18, ptr %t17)
   br label %case.end.1615808600.15
 case.end.1615808600.15:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t24 = phi ptr [%t9, %case.end.589989748.6], [%t18, %case.end.1615808600.15]
-  ret ptr %t24
+  %t20 = phi ptr [%t9, %case.end.589989748.6], [%t19, %case.end.1615808600.15]
+  ret ptr %t20
 }
 
 define internal ptr @v_main(ptr %v__input) {
@@ -448,22 +511,16 @@ case.end.0.7:
 case.arm.1.18:
   %t20 = getelementptr ptr, ptr %t0, i32 1
   %t21 = load ptr, ptr %t20
-  %t22 = call ptr @malloc(i64 16)
-  %t23 = inttoptr i64 1 to ptr
-  %t24 = getelementptr ptr, ptr %t22, i32 0
-  store ptr %t23, ptr %t24
-  %t25 = call ptr @__showInt32(ptr %t21)
-  %t26 = call ptr @__concat(ptr %v_prefix, ptr %t25)
-  %t27 = getelementptr ptr, ptr %t22, i32 1
-  store ptr %t26, ptr %t27
+  %t22 = call ptr @__showInt32(ptr %t21)
+  %t23 = call ptr @__concat(ptr %v_prefix, ptr %t22)
   br label %case.end.1.19
 case.end.1.19:
   br label %case.join.5
 case.default.4:
   unreachable
 case.join.5:
-  %t28 = phi ptr [%t10, %case.end.0.7], [%t22, %case.end.1.19]
-  ret ptr %t28
+  %t24 = phi ptr [%t10, %case.end.0.7], [%t23, %case.end.1.19]
+  ret ptr %t24
 }
 
 define i32 @main(i32 %argc, ptr %argv) {

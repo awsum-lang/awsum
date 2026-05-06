@@ -54,24 +54,22 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CVar "render" )
                             [ CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt32" )
-                                    [ CVar "minUInt32"
-                                    , CVar "minUInt32"
-                                    ]
+                                ( CBuiltIn "eqUInt32" )
+                                [ CVar "minUInt32"
+                                , CVar "minUInt32"
                                 ]
-                            , CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt32" )
-                                    [ CVar "maxUInt32"
-                                    , CVar "maxUInt32"
-                                    ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqUInt32" )
+                                [ CVar "maxUInt32"
+                                , CVar "maxUInt32"
                                 ]
                             ]
                         ]
@@ -86,17 +84,15 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "render" )
-                                        [ CCall
-                                            ( CBuiltIn "eqUInt32" )
-                                            [ CVar "maxUInt32"
-                                            , CVar "minUInt32"
-                                            ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "render" )
+                                    [ CCall
+                                        ( CBuiltIn "eqUInt32" )
+                                        [ CVar "maxUInt32"
+                                        , CVar "minUInt32"
                                         ]
                                     ]
                                 ]
@@ -111,17 +107,15 @@ CoreProgram
                                 ( 1
                                 , [ "s1" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s1"
-                                            , CCall
-                                                ( CVar "render" )
-                                                [ CCall
-                                                    ( CBuiltIn "eqUInt32" )
-                                                    [ CIntLit 2147483648 TUInt32
-                                                    , CIntLit 2147483648 TUInt32
-                                                    ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CCall
+                                            ( CVar "render" )
+                                            [ CCall
+                                                ( CBuiltIn "eqUInt32" )
+                                                [ CIntLit 2147483648 TUInt32
+                                                , CIntLit 2147483648 TUInt32
                                                 ]
                                             ]
                                         ]
@@ -135,17 +129,15 @@ CoreProgram
                                     ,
                                         ( 1
                                         , [ "s2" ]
-                                        , CCon 1
-                                            [ CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "s2"
-                                                , CCall
-                                                    ( CVar "render" )
-                                                    [ CCall
-                                                        ( CBuiltIn "eqUInt32" )
-                                                        [ CIntLit 2147483648 TUInt32
-                                                        , CIntLit 2147483647 TUInt32
-                                                        ]
+                                        , CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "eqUInt32" )
+                                                    [ CIntLit 2147483648 TUInt32
+                                                    , CIntLit 2147483647 TUInt32
                                                     ]
                                                 ]
                                             ]

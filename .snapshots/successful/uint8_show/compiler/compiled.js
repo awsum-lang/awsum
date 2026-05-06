@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -35,7 +36,7 @@ const v_minUInt8 = (0 & 0xFF);
 const v_maxUInt8 = (255 & 0xFF);
 
 function main(v__input){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_7_9 = s[1]; return [0, v__do_e_7_9]; } case 1: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_8_9 = s[1]; return [0, v__do_e_8_9]; } case 1: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_9_9 = s[1]; return [0, v__do_e_9_9]; } case 1: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_10_9 = s[1]; return [0, v__do_e_10_9]; } case 1: { const v_s3 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_11_9 = s[1]; return [0, v__do_e_11_9]; } case 1: { const v_s4 = s[1]; return [1, (v_s4 + String(v_maxUInt8))]; } } })([1, (v_s3 + ", ")]); } } })([1, (v_s2 + String((200 & 0xFF)))]); } } })([1, (v_s1 + ", ")]); } } })([1, (v_s0 + String((42 & 0xFF)))]); } } })([1, (String(v_minUInt8) + ", ")]));
+    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_7_9 = s[1]; return [0, v__do_e_7_9]; } case 1: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_8_9 = s[1]; return [0, v__do_e_8_9]; } case 1: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_9_9 = s[1]; return [0, v__do_e_9_9]; } case 1: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_10_9 = s[1]; return [0, v__do_e_10_9]; } case 1: { const v_s3 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_11_9 = s[1]; return [0, v__do_e_11_9]; } case 1: { const v_s4 = s[1]; return __concat(v_s4, String(v_maxUInt8)); } } })(__concat(v_s3, ", ")); } } })(__concat(v_s2, String((200 & 0xFF)))); } } })(__concat(v_s1, ", ")); } } })(__concat(v_s0, String((42 & 0xFF)))); } } })(__concat(String(v_minUInt8), ", ")));
 }
 
 function v__let_2(v_res){

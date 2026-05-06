@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -46,7 +47,7 @@ function v_unwrap(v_x){
 }
 
 function main(v__input){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_s0 = s[1]; return [1, (v_s0 + (v_unwrap)([1]))]; } } })([1, ((v_unwrap)([0, "hello"]) + ", ")]));
+    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)([1])); } } })(__concat((v_unwrap)([0, "hello"]), ", ")));
 }
 
 function v__let_2(v_res){

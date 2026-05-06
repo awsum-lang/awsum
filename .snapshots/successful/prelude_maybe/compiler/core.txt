@@ -43,12 +43,10 @@ CoreProgram
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "just: "
-                            , CVar "s"
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "just: "
+                        , CVar "s"
                         ]
                     )
                 ]
@@ -87,12 +85,10 @@ CoreProgram
                                 ( 1
                                 , [ "b" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "a"
-                                            , CString ", "
-                                            ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "a"
+                                        , CString ", "
                                         ]
                                     )
                                     [
@@ -104,12 +100,10 @@ CoreProgram
                                     ,
                                         ( 1
                                         , [ "s0" ]
-                                        , CCon 1
-                                            [ CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "s0"
-                                                , CVar "b"
-                                                ]
+                                        , CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s0"
+                                            , CVar "b"
                                             ]
                                         )
                                     ]

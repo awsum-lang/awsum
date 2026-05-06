@@ -18,14 +18,39 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.4 = private unnamed_addr constant [16 x i8] c"STRING_TOO_LONG\00"
 
 define internal ptr @__concat(ptr %a, ptr %b) {
-  %la = call i64 @strlen(ptr %a)
-  %lb = call i64 @strlen(ptr %b)
-  %sum = add i64 %la, %lb
-  %total = add i64 %sum, 1
+  %la_box = call ptr @__lengthUtf16CodeUnits(ptr %a)
+  %la = load i32, ptr %la_box
+  %lb_box = call ptr @__lengthUtf16CodeUnits(ptr %b)
+  %lb = load i32, ptr %lb_box
+  %la64 = zext i32 %la to i64
+  %lb64 = zext i32 %lb to i64
+  %sum64 = add i64 %la64, %lb64
+  %over = icmp ugt i64 %sum64, 134217728
+  br i1 %over, label %too_long, label %ok
+too_long:
+  %stl = call ptr @malloc(i64 8)
+  %stl_tag = inttoptr i64 0 to ptr
+  store ptr %stl_tag, ptr %stl
+  %left = call ptr @malloc(i64 16)
+  %left_tag = inttoptr i64 0 to ptr
+  store ptr %left_tag, ptr %left
+  %left_f = getelementptr ptr, ptr %left, i32 1
+  store ptr %stl, ptr %left_f
+  ret ptr %left
+ok:
+  %ba = call i64 @strlen(ptr %a)
+  %bb = call i64 @strlen(ptr %b)
+  %bsum = add i64 %ba, %bb
+  %total = add i64 %bsum, 1
   %buf = call ptr @malloc(i64 %total)
   call ptr @strcpy(ptr %buf, ptr %a)
   call ptr @strcat(ptr %buf, ptr %b)
-  ret ptr %buf
+  %right = call ptr @malloc(i64 16)
+  %right_tag = inttoptr i64 1 to ptr
+  store ptr %right_tag, ptr %right
+  %right_f = getelementptr ptr, ptr %right, i32 1
+  store ptr %buf, ptr %right_f
+  ret ptr %right
 }
 
 
@@ -36,6 +61,50 @@ define internal ptr @__print(ptr %s) {
   %unit_tag = inttoptr i64 0 to ptr
   store ptr %unit_tag, ptr %unit_tag_ptr
   ret ptr %unit
+}
+
+
+define internal ptr @__lengthUtf16CodeUnits(ptr %s) {
+entry:
+  %i_p = alloca i64, align 8
+  store i64 0, ptr %i_p
+  %n_p = alloca i32, align 4
+  store i32 0, ptr %n_p
+  br label %head
+head:
+  %i = load i64, ptr %i_p
+  %bp = getelementptr i8, ptr %s, i64 %i
+  %b = load i8, ptr %bp
+  %is_nul = icmp eq i8 %b, 0
+  br i1 %is_nul, label %done, label %body
+body:
+  %bz = zext i8 %b to i32
+  %top2 = and i32 %bz, 192
+  %is_cont = icmp eq i32 %top2, 128
+  br i1 %is_cont, label %step, label %check4
+check4:
+  %top5 = and i32 %bz, 248
+  %is_4 = icmp eq i32 %top5, 240
+  br i1 %is_4, label %add2, label %add1
+add2:
+  %n2_0 = load i32, ptr %n_p
+  %n2_1 = add i32 %n2_0, 2
+  store i32 %n2_1, ptr %n_p
+  br label %step
+add1:
+  %n1_0 = load i32, ptr %n_p
+  %n1_1 = add i32 %n1_0, 1
+  store i32 %n1_1, ptr %n_p
+  br label %step
+step:
+  %i1 = add i64 %i, 1
+  store i64 %i1, ptr %i_p
+  br label %head
+done:
+  %nf = load i32, ptr %n_p
+  %box = call ptr @malloc(i64 4)
+  store i32 %nf, ptr %box
+  ret ptr %box
 }
 
 
@@ -117,83 +186,65 @@ define internal ptr @v_greeting() {
 }
 
 define internal ptr @v_addGreeting(ptr %v_name) {
-  %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 1 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = call ptr @v_greeting()
-  %t4 = getelementptr [3 x i8], ptr @.str.1, i64 0, i64 0
-  %t5 = call ptr @__concat(ptr %t3, ptr %t4)
-  %t6 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t5, ptr %t6
-  %t7 = getelementptr ptr, ptr %t0, i32 0
-  %t8 = load ptr, ptr %t7
-  %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %case.default.10 [ i64 0, label %case.arm.0.12 i64 1, label %case.arm.1.20 ]
-case.arm.0.12:
-  %t14 = getelementptr ptr, ptr %t0, i32 1
-  %t15 = load ptr, ptr %t14
-  %t16 = call ptr @malloc(i64 16)
-  %t17 = inttoptr i64 0 to ptr
-  %t18 = getelementptr ptr, ptr %t16, i32 0
-  store ptr %t17, ptr %t18
-  %t19 = getelementptr ptr, ptr %t16, i32 1
-  store ptr %t15, ptr %t19
-  br label %case.end.0.13
-case.end.0.13:
-  br label %case.join.11
-case.arm.1.20:
-  %t22 = getelementptr ptr, ptr %t0, i32 1
-  %t23 = load ptr, ptr %t22
-  %t24 = call ptr @malloc(i64 16)
-  %t25 = inttoptr i64 1 to ptr
-  %t26 = getelementptr ptr, ptr %t24, i32 0
-  store ptr %t25, ptr %t26
-  %t27 = call ptr @__concat(ptr %t23, ptr %v_name)
-  %t28 = getelementptr ptr, ptr %t24, i32 1
-  store ptr %t27, ptr %t28
-  %t29 = getelementptr ptr, ptr %t24, i32 0
-  %t30 = load ptr, ptr %t29
-  %t31 = ptrtoint ptr %t30 to i64
-  switch i64 %t31, label %case.default.32 [ i64 0, label %case.arm.0.34 i64 1, label %case.arm.1.42 ]
-case.arm.0.34:
-  %t36 = getelementptr ptr, ptr %t24, i32 1
+  %t0 = call ptr @v_greeting()
+  %t1 = getelementptr [3 x i8], ptr @.str.1, i64 0, i64 0
+  %t2 = call ptr @__concat(ptr %t0, ptr %t1)
+  %t3 = getelementptr ptr, ptr %t2, i32 0
+  %t4 = load ptr, ptr %t3
+  %t5 = ptrtoint ptr %t4 to i64
+  switch i64 %t5, label %case.default.6 [ i64 0, label %case.arm.0.8 i64 1, label %case.arm.1.16 ]
+case.arm.0.8:
+  %t10 = getelementptr ptr, ptr %t2, i32 1
+  %t11 = load ptr, ptr %t10
+  %t12 = call ptr @malloc(i64 16)
+  %t13 = inttoptr i64 0 to ptr
+  %t14 = getelementptr ptr, ptr %t12, i32 0
+  store ptr %t13, ptr %t14
+  %t15 = getelementptr ptr, ptr %t12, i32 1
+  store ptr %t11, ptr %t15
+  br label %case.end.0.9
+case.end.0.9:
+  br label %case.join.7
+case.arm.1.16:
+  %t18 = getelementptr ptr, ptr %t2, i32 1
+  %t19 = load ptr, ptr %t18
+  %t20 = call ptr @__concat(ptr %t19, ptr %v_name)
+  %t21 = getelementptr ptr, ptr %t20, i32 0
+  %t22 = load ptr, ptr %t21
+  %t23 = ptrtoint ptr %t22 to i64
+  switch i64 %t23, label %case.default.24 [ i64 0, label %case.arm.0.26 i64 1, label %case.arm.1.34 ]
+case.arm.0.26:
+  %t28 = getelementptr ptr, ptr %t20, i32 1
+  %t29 = load ptr, ptr %t28
+  %t30 = call ptr @malloc(i64 16)
+  %t31 = inttoptr i64 0 to ptr
+  %t32 = getelementptr ptr, ptr %t30, i32 0
+  store ptr %t31, ptr %t32
+  %t33 = getelementptr ptr, ptr %t30, i32 1
+  store ptr %t29, ptr %t33
+  br label %case.end.0.27
+case.end.0.27:
+  br label %case.join.25
+case.arm.1.34:
+  %t36 = getelementptr ptr, ptr %t20, i32 1
   %t37 = load ptr, ptr %t36
-  %t38 = call ptr @malloc(i64 16)
-  %t39 = inttoptr i64 0 to ptr
-  %t40 = getelementptr ptr, ptr %t38, i32 0
-  store ptr %t39, ptr %t40
-  %t41 = getelementptr ptr, ptr %t38, i32 1
-  store ptr %t37, ptr %t41
-  br label %case.end.0.35
-case.end.0.35:
-  br label %case.join.33
-case.arm.1.42:
-  %t44 = getelementptr ptr, ptr %t24, i32 1
-  %t45 = load ptr, ptr %t44
-  %t46 = call ptr @malloc(i64 16)
-  %t47 = inttoptr i64 1 to ptr
-  %t48 = getelementptr ptr, ptr %t46, i32 0
-  store ptr %t47, ptr %t48
-  %t49 = getelementptr [2 x i8], ptr @.str.2, i64 0, i64 0
-  %t50 = call ptr @__concat(ptr %t45, ptr %t49)
-  %t51 = getelementptr ptr, ptr %t46, i32 1
-  store ptr %t50, ptr %t51
-  br label %case.end.1.43
-case.end.1.43:
-  br label %case.join.33
-case.default.32:
+  %t38 = getelementptr [2 x i8], ptr @.str.2, i64 0, i64 0
+  %t39 = call ptr @__concat(ptr %t37, ptr %t38)
+  br label %case.end.1.35
+case.end.1.35:
+  br label %case.join.25
+case.default.24:
   unreachable
-case.join.33:
-  %t52 = phi ptr [%t38, %case.end.0.35], [%t46, %case.end.1.43]
-  br label %case.end.1.21
-case.end.1.21:
-  br label %case.join.11
-case.default.10:
+case.join.25:
+  %t40 = phi ptr [%t30, %case.end.0.27], [%t39, %case.end.1.35]
+  br label %case.end.1.17
+case.end.1.17:
+  br label %case.join.7
+case.default.6:
   unreachable
-case.join.11:
-  %t53 = phi ptr [%t16, %case.end.0.13], [%t52, %case.end.1.21]
-  ret ptr %t53
+case.join.7:
+  %t41 = phi ptr [%t12, %case.end.0.9], [%t40, %case.end.1.17]
+  ret ptr %t41
 }
 
 define internal ptr @v__lift_2(ptr %v___input) {

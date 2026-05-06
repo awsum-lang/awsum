@@ -112,12 +112,10 @@ CoreProgram
                 ,
                     ( 1615808600
                     , "s"
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "err: "
-                            , CVar "s"
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "err: "
+                        , CVar "s"
                         ]
                     )
                 ]
@@ -187,14 +185,12 @@ CoreProgram
                 ,
                     ( 1
                     , [ "b" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "prefix"
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "b" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CVar "prefix"
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "b" ]
                         ]
                     )
                 ]

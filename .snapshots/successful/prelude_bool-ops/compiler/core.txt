@@ -101,21 +101,19 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CVar "showBool" )
                             [ CCall
-                                ( CVar "showBool" )
-                                [ CCall
-                                    ( CVar "not" )
-                                    [ CCon 0 [] ]
-                                ]
-                            , CCall
-                                ( CVar "showBool" )
-                                [ CCall
-                                    ( CVar "not" )
-                                    [ CCon 1 [] ]
-                                ]
+                                ( CVar "not" )
+                                [ CCon 0 [] ]
+                            ]
+                        , CCall
+                            ( CVar "showBool" )
+                            [ CCall
+                                ( CVar "not" )
+                                [ CCon 1 [] ]
                             ]
                         ]
                     )
@@ -129,17 +127,15 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "showBool" )
-                                        [ CCall
-                                            ( CVar "and" )
-                                            [ CCon 0 []
-                                            , CCon 1 []
-                                            ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "showBool" )
+                                    [ CCall
+                                        ( CVar "and" )
+                                        [ CCon 0 []
+                                        , CCon 1 []
                                         ]
                                     ]
                                 ]
@@ -154,17 +150,15 @@ CoreProgram
                                 ( 1
                                 , [ "s1" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s1"
-                                            , CCall
-                                                ( CVar "showBool" )
-                                                [ CCall
-                                                    ( CVar "and" )
-                                                    [ CCon 0 []
-                                                    , CCon 0 []
-                                                    ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CCall
+                                            ( CVar "showBool" )
+                                            [ CCall
+                                                ( CVar "and" )
+                                                [ CCon 0 []
+                                                , CCon 0 []
                                                 ]
                                             ]
                                         ]
@@ -179,17 +173,15 @@ CoreProgram
                                         ( 1
                                         , [ "s2" ]
                                         , CCase
-                                            ( CCon 1
-                                                [ CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CVar "s2"
-                                                    , CCall
-                                                        ( CVar "showBool" )
-                                                        [ CCall
-                                                            ( CVar "or" )
-                                                            [ CCon 1 []
-                                                            , CCon 1 []
-                                                            ]
+                                            ( CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "s2"
+                                                , CCall
+                                                    ( CVar "showBool" )
+                                                    [ CCall
+                                                        ( CVar "or" )
+                                                        [ CCon 1 []
+                                                        , CCon 1 []
                                                         ]
                                                     ]
                                                 ]
@@ -203,17 +195,15 @@ CoreProgram
                                             ,
                                                 ( 1
                                                 , [ "s3" ]
-                                                , CCon 1
-                                                    [ CCall
-                                                        ( CBuiltIn "concatString" )
-                                                        [ CVar "s3"
-                                                        , CCall
-                                                            ( CVar "showBool" )
-                                                            [ CCall
-                                                                ( CVar "or" )
-                                                                [ CCon 0 []
-                                                                , CCon 1 []
-                                                                ]
+                                                , CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CVar "s3"
+                                                    , CCall
+                                                        ( CVar "showBool" )
+                                                        [ CCall
+                                                            ( CVar "or" )
+                                                            [ CCon 0 []
+                                                            , CCon 1 []
                                                             ]
                                                         ]
                                                     ]

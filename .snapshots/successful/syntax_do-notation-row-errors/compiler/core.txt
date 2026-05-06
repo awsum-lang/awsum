@@ -128,14 +128,12 @@ CoreProgram
                 ,
                     ( 1
                     , [ "n" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "Ok "
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "n" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
                         ]
                     )
                 ]

@@ -1,0 +1,257 @@
+CoreProgram
+    { cdecls =
+        [ CValDef "maxStringLengthUtf16CodeUnits"
+            ( CIntLit 134217728 TUInt32 )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "block"
+            ( CString "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界" )
+        , CValDef "runTest"
+            ( CCase
+                ( CCall
+                    ( CVar "build" )
+                    [ CIntLit 20 TUInt32
+                    , CVar "block"
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CString "FAIL: build returned Left at the cap"
+                    )
+                ,
+                    ( 1
+                    , [ "capStr" ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "eqUInt32" )
+                            [ CCall
+                                ( CBuiltIn "lengthUtf16CodeUnits" )
+                                [ CVar "capStr" ]
+                            , CVar "maxStringLengthUtf16CodeUnits"
+                            ]
+                        )
+                        [
+                            ( 0
+                            , []
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "capStr"
+                                    , CString "!"
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "__w0" ]
+                                    , CString "OK"
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "__w0" ]
+                                    , CString "FAIL: cap + 1 returned Right"
+                                    )
+                                ]
+                            )
+                        ,
+                            ( 1
+                            , []
+                            , CString "FAIL: built string length is not at cap"
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCon 2
+                [ CVar "runTest"
+                , CCon 0
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lift$0" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 0
+                    , [ "__f0" ]
+                    , CCon 0
+                        [ CVar "__f0" ]
+                    )
+                ,
+                    ( 1
+                    , [ "__f0" ]
+                    , CCon 1
+                        [ CVar "__f0" ]
+                    )
+                ]
+            )
+        , CFunDef "$scc$$df$bindEither$0_$lam$2_build" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$$df$bindEither$0_$lam$2_build" )
+                [ CVar "$args"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$scc$$df$bindEither$0_$lam$2_build"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 0
+                        ,
+                            [ "x"
+                            , "$df$bindEither$0$cap1$0"
+                            ]
+                        , CCase
+                            ( CVar "x" )
+                            [
+                                ( 0
+                                , [ "e" ]
+                                , CCall
+                                    ( CVar "$apply$$scc$$df$bindEither$0_$lam$2_build" )
+                                    [ CVar "$k"
+                                    , CCon 0
+                                        [ CVar "e" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "a" ]
+                                , CContinue
+                                    [ CCon 1
+                                        [ CVar "$df$bindEither$0$cap1$0"
+                                        , CVar "a"
+                                        ]
+                                    , CCon 1
+                                        [ CVar "$k" ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "m"
+                            , "doubled"
+                            ]
+                        , CContinue
+                            [ CCon 2
+                                [ CVar "m"
+                                , CVar "doubled"
+                                ]
+                            , CVar "$k"
+                            ]
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "n"
+                            , "acc"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predUInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 0
+                                , [ "__w0" ]
+                                , CCall
+                                    ( CVar "$apply$$scc$$df$bindEither$0_$lam$2_build" )
+                                    [ CVar "$k"
+                                    , CCon 1
+                                        [ CVar "acc" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "m" ]
+                                , CContinue
+                                    [ CCon 0
+                                        [ CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "acc"
+                                            , CVar "acc"
+                                            ]
+                                        , CVar "m"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$scc$$df$bindEither$0_$lam$2_build"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        , [ "$pk_1" ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCall
+                                ( CVar "$lift$0" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "build"
+            [ "n"
+            , "acc"
+            ]
+            ( CCall
+                ( CVar "$scc$$df$bindEither$0_$lam$2_build" )
+                [ CCon 2
+                    [ CVar "n"
+                    , CVar "acc"
+                    ]
+                ]
+            )
+        ]
+    }

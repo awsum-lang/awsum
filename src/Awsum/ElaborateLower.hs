@@ -759,17 +759,17 @@ lowerExprM env locals expected = \case
     Just (TyCon _ "UInt32") -> pure (CIntLit n TUInt32)
     _ -> liftEither $ Left (TELowering ("integer literal without a known numeric type at " <> show (spanStartLine sp) <> ":" <> show (spanStartCol sp)))
   EInfix _sp OpConcat l r ->
-    -- (a ++ b) lowers to `Right (concatString a b)`, matching Prelude's
-    -- `(++) : String -> String -> Either StringTooLong String` claim.
-    -- Phase 1 always produces Right; the Left branch becomes reachable in
-    -- phase 2.x when length validation lands in the runtime.
+    -- (a ++ b) lowers to a direct call to 'BuiltIn.concatString', which
+    -- itself returns 'Either StringTooLong String'. Each backend's
+    -- runtime helper pre-checks the combined UTF-16 length against
+    -- 'maxStringLengthUtf16CodeUnits' (134_217_728) and either allocates
+    -- the result and returns 'Right' or returns 'Left StringTooLong'
+    -- with no buffer allocated.
     let strExpected = Just (TyCon noSpan "String")
      in do
           l' <- lowerExprM env locals strExpected l
           r' <- lowerExprM env locals strExpected r
-          let concatCall = CCall (CBuiltIn "concatString") [l', r']
-          -- 'Right' has tag 1 in `type Either a b = Left a | Right b`.
-          pure (CCon 1 [concatCall])
+          pure (CCall (CBuiltIn "concatString") [l', r'])
   ECon _sp name -> case M.lookup name (leConInfo env) of
     Just ci
       | ciArity ci == 0 -> do

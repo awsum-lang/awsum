@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -38,7 +39,7 @@ function v_both(v_a, v_b){
 
 function v_bothBody(v_a, v_b){
     {
-      const __s = [1, (String(v_a) + "/")];
+      const __s = __concat(String(v_a), "/");
       switch (__s[0]) {
         case 0: {
           const v__do_e_15_3 = __s[1];
@@ -46,7 +47,7 @@ function v_bothBody(v_a, v_b){
         }
         case 1: {
           const v_s0 = __s[1];
-          return [1, (v_s0 + String(v_b))];
+          return __concat(v_s0, String(v_b));
         }
       }
     }

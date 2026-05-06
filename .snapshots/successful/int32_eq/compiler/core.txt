@@ -54,24 +54,22 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CVar "render" )
                             [ CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqInt32" )
-                                    [ CIntLit 42 TInt32
-                                    , CIntLit 42 TInt32
-                                    ]
+                                ( CBuiltIn "eqInt32" )
+                                [ CIntLit 42 TInt32
+                                , CIntLit 42 TInt32
                                 ]
-                            , CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqInt32" )
-                                    [ CIntLit 42 TInt32
-                                    , CIntLit 7 TInt32
-                                    ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqInt32" )
+                                [ CIntLit 42 TInt32
+                                , CIntLit 7 TInt32
                                 ]
                             ]
                         ]
@@ -86,17 +84,15 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "render" )
-                                        [ CCall
-                                            ( CBuiltIn "eqInt32" )
-                                            [ CVar "minInt32"
-                                            , CVar "minInt32"
-                                            ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "render" )
+                                    [ CCall
+                                        ( CBuiltIn "eqInt32" )
+                                        [ CVar "minInt32"
+                                        , CVar "minInt32"
                                         ]
                                     ]
                                 ]
@@ -110,17 +106,15 @@ CoreProgram
                             ,
                                 ( 1
                                 , [ "s1" ]
-                                , CCon 1
-                                    [ CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s1"
-                                        , CCall
-                                            ( CVar "render" )
-                                            [ CCall
-                                                ( CBuiltIn "eqInt32" )
-                                                [ CIntLit 0 TInt32
-                                                , CIntLit 1 TInt32
-                                                ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s1"
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "eqInt32" )
+                                            [ CIntLit 0 TInt32
+                                            , CIntLit 1 TInt32
                                             ]
                                         ]
                                     ]

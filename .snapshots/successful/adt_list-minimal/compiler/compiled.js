@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -83,7 +84,7 @@ function v__cps__scc_show_showCons(v__args, v__k){
           const v_h = __s[1];
           const v_t = __s[2];
           {
-            const __s = [1, (v_h + ",")];
+            const __s = __concat(v_h, ",");
             switch (__s[0]) {
               case 0: {
                 const v__do_e_13_3 = __s[1];
@@ -130,7 +131,7 @@ function v__apply__scc_show_showCons(v__k, v__x){
               case 1: {
                 const v_rest = __s[1];
                 const __t0 = v__pk_1;
-                const __t1 = [1, (v_hc + v_rest)];
+                const __t1 = __concat(v_hc, v_rest);
                 v__k = __t0;
                 v__x = __t1;
                 continue;

@@ -59,12 +59,10 @@ CoreProgram
             ( CString "Hello" )
         , CFunDef "addGreeting" [ "name" ]
             ( CCase
-                ( CCon 1
-                    [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CVar "greeting"
-                        , CString ", "
-                        ]
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "greeting"
+                    , CString ", "
                     ]
                 )
                 [
@@ -77,12 +75,10 @@ CoreProgram
                     ( 1
                     , [ "s0" ]
                     , CCase
-                        ( CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CVar "name"
-                                ]
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CVar "name"
                             ]
                         )
                         [
@@ -94,12 +90,10 @@ CoreProgram
                         ,
                             ( 1
                             , [ "s1" ]
-                            , CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s1"
-                                    , CString "!"
-                                    ]
+                            , CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s1"
+                                , CString "!"
                                 ]
                             )
                         ]

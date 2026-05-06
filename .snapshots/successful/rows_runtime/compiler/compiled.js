@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -36,11 +37,11 @@ function v_describe(v_x){
       switch (__s[0]) {
         case 1615808600: {
           const v_s = __s[1];
-          return [1, ("String " + v_s)];
+          return __concat("String ", v_s);
         }
         case 2711245919: {
           const v_n = __s[1];
-          return [1, ("Int32 " + String(v_n))];
+          return __concat("Int32 ", String(v_n));
         }
       }
     }

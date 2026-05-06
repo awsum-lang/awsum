@@ -39,14 +39,12 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CBuiltIn "showUInt8" )
-                                [ CVar "minUInt8" ]
-                            , CString ", "
-                            ]
+                            ( CBuiltIn "showUInt8" )
+                            [ CVar "minUInt8" ]
+                        , CString ", "
                         ]
                     )
                     [
@@ -59,14 +57,12 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CBuiltIn "showUInt8" )
-                                        [ CIntLit 42 TUInt8 ]
-                                    ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CBuiltIn "showUInt8" )
+                                    [ CIntLit 42 TUInt8 ]
                                 ]
                             )
                             [
@@ -79,12 +75,10 @@ CoreProgram
                                 ( 1
                                 , [ "s1" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s1"
-                                            , CString ", "
-                                            ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CString ", "
                                         ]
                                     )
                                     [
@@ -97,14 +91,12 @@ CoreProgram
                                         ( 1
                                         , [ "s2" ]
                                         , CCase
-                                            ( CCon 1
-                                                [ CCall
-                                                    ( CBuiltIn "concatString" )
-                                                    [ CVar "s2"
-                                                    , CCall
-                                                        ( CBuiltIn "showUInt8" )
-                                                        [ CIntLit 200 TUInt8 ]
-                                                    ]
+                                            ( CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "s2"
+                                                , CCall
+                                                    ( CBuiltIn "showUInt8" )
+                                                    [ CIntLit 200 TUInt8 ]
                                                 ]
                                             )
                                             [
@@ -117,12 +109,10 @@ CoreProgram
                                                 ( 1
                                                 , [ "s3" ]
                                                 , CCase
-                                                    ( CCon 1
-                                                        [ CCall
-                                                            ( CBuiltIn "concatString" )
-                                                            [ CVar "s3"
-                                                            , CString ", "
-                                                            ]
+                                                    ( CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CVar "s3"
+                                                        , CString ", "
                                                         ]
                                                     )
                                                     [
@@ -134,14 +124,12 @@ CoreProgram
                                                     ,
                                                         ( 1
                                                         , [ "s4" ]
-                                                        , CCon 1
-                                                            [ CCall
-                                                                ( CBuiltIn "concatString" )
-                                                                [ CVar "s4"
-                                                                , CCall
-                                                                    ( CBuiltIn "showUInt8" )
-                                                                    [ CVar "maxUInt8" ]
-                                                                ]
+                                                        , CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CVar "s4"
+                                                            , CCall
+                                                                ( CBuiltIn "showUInt8" )
+                                                                [ CVar "maxUInt8" ]
                                                             ]
                                                         )
                                                     ]

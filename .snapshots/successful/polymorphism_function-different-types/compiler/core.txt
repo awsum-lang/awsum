@@ -60,16 +60,14 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CVar "unwrap" )
-                                [ CCon 0
-                                    [ CString "from box" ]
-                                ]
-                            , CString " "
+                            ( CVar "unwrap" )
+                            [ CCon 0
+                                [ CString "from box" ]
                             ]
+                        , CString " "
                         ]
                     )
                     [
@@ -81,18 +79,16 @@ CoreProgram
                     ,
                         ( 1
                         , [ "s0" ]
-                        , CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CCall
-                                    ( CVar "showResult" )
-                                    [ CCall
-                                        ( CVar "unwrap" )
+                        , CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CCall
+                                ( CVar "showResult" )
+                                [ CCall
+                                    ( CVar "unwrap" )
+                                    [ CCon 0
                                         [ CCon 0
-                                            [ CCon 0
-                                                [ CString "nested" ]
-                                            ]
+                                            [ CString "nested" ]
                                         ]
                                     ]
                                 ]

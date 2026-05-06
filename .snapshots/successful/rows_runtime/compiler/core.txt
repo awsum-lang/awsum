@@ -37,25 +37,21 @@ CoreProgram
                 [
                     ( 1615808600
                     , "s"
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "String "
-                            , CVar "s"
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "String "
+                        , CVar "s"
                         ]
                     )
                 ,
                     ( 2711245919
                     , "n"
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "Int32 "
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "n" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Int32 "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
                         ]
                     )
                 ]

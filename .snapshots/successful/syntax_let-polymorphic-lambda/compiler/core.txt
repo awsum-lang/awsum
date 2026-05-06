@@ -105,17 +105,15 @@ CoreProgram
             , "s"
             ]
             ( CCase
-                ( CCon 1
+                ( CCall
+                    ( CBuiltIn "concatString" )
                     [ CCall
-                        ( CBuiltIn "concatString" )
+                        ( CBuiltIn "showInt32" )
                         [ CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CCall
-                                ( CVar "$lam$2" )
-                                [ CVar "n" ]
-                            ]
-                        , CString "/"
+                            ( CVar "$lam$2" )
+                            [ CVar "n" ]
                         ]
+                    , CString "/"
                     ]
                 )
                 [
@@ -128,14 +126,12 @@ CoreProgram
                     ( 1
                     , [ "s0" ]
                     , CCase
-                        ( CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CCall
-                                    ( CVar "$lam$2" )
-                                    [ CVar "s" ]
-                                ]
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CCall
+                                ( CVar "$lam$2" )
+                                [ CVar "s" ]
                             ]
                         )
                         [
@@ -148,12 +144,10 @@ CoreProgram
                             ( 1
                             , [ "s1" ]
                             , CCase
-                                ( CCon 1
-                                    [ CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s1"
-                                        , CString "/"
-                                        ]
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s1"
+                                    , CString "/"
                                     ]
                                 )
                                 [
@@ -165,16 +159,14 @@ CoreProgram
                                 ,
                                     ( 1
                                     , [ "s2" ]
-                                    , CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s2"
-                                            , CCall
-                                                ( CVar "showTri" )
-                                                [ CCall
-                                                    ( CVar "$lam$2" )
-                                                    [ CVar "b" ]
-                                                ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s2"
+                                        , CCall
+                                            ( CVar "showTri" )
+                                            [ CCall
+                                                ( CVar "$lam$2" )
+                                                [ CVar "b" ]
                                             ]
                                         ]
                                     )

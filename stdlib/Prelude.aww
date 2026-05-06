@@ -12,7 +12,7 @@
 -- ---------------------- String
 
 (++) : String -> String -> Either StringTooLong String
-(++) a b = Right (BuiltIn.concatString a b)
+(++) a b = BuiltIn.concatString a b
 
 {- Split a string at the first occurrence of `separator`. Returns
    `Just (Tuple2 prefix suffix)` such that

@@ -2,6 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __succInt32(x){ return x === 2147483647 ? [0, [0]] : [1, ((x + 1)|0)]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -43,18 +44,18 @@ function v_render(v_r){
       switch (__s[0]) {
         case 0: {
           const v_e = __s[1];
-          return [1, ("overflow: " + (v_showOverflowError)(v_e))];
+          return __concat("overflow: ", (v_showOverflowError)(v_e));
         }
         case 1: {
           const v_v = __s[1];
-          return [1, ("ok: " + String(v_v))];
+          return __concat("ok: ", String(v_v));
         }
       }
     }
 }
 
 function main(v__input){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_12_9 = s[1]; return [0, v__do_e_12_9]; } case 1: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_13_9 = s[1]; return [0, v__do_e_13_9]; } case 1: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_s0 = s[1]; return [1, (v_s0 + v_b)]; } } })([1, (v_a + ", ")]); } } })((v_render)(__succInt32(v_maxInt32))); } } })((v_render)(__succInt32((42|0)))));
+    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_12_9 = s[1]; return [0, v__do_e_12_9]; } case 1: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_13_9 = s[1]; return [0, v__do_e_13_9]; } case 1: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_14_9 = s[1]; return [0, v__do_e_14_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, v_b); } } })(__concat(v_a, ", ")); } } })((v_render)(__succInt32(v_maxInt32))); } } })((v_render)(__succInt32((42|0)))));
 }
 
 function v__let_2(v_res){

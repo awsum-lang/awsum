@@ -55,14 +55,12 @@ CoreProgram
             ( CCall
                 ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CCall
-                                ( CVar "show" )
-                                [ CCon 0 [] ]
-                            , CString ", "
-                            ]
+                            ( CVar "show" )
+                            [ CCon 0 [] ]
+                        , CString ", "
                         ]
                     )
                     [
@@ -75,14 +73,12 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "show" )
-                                        [ CCon 1 [] ]
-                                    ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "show" )
+                                    [ CCon 1 [] ]
                                 ]
                             )
                             [
@@ -95,12 +91,10 @@ CoreProgram
                                 ( 1
                                 , [ "s1" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s1"
-                                            , CString ", "
-                                            ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CString ", "
                                         ]
                                     )
                                     [
@@ -112,14 +106,12 @@ CoreProgram
                                     ,
                                         ( 1
                                         , [ "s2" ]
-                                        , CCon 1
-                                            [ CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "s2"
-                                                , CCall
-                                                    ( CVar "show" )
-                                                    [ CCon 2 [] ]
-                                                ]
+                                        , CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CCall
+                                                ( CVar "show" )
+                                                [ CCon 2 [] ]
                                             ]
                                         )
                                     ]

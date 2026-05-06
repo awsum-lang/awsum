@@ -1,6 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -77,7 +78,7 @@ function v__let_4(v_res){
 
 function v__df__let_3_0(v_b, v_n, v_s){
     {
-      const __s = [1, (String((v__lam_2)(v_n)) + "/")];
+      const __s = __concat(String((v__lam_2)(v_n)), "/");
       switch (__s[0]) {
         case 0: {
           const v__do_e_17_9 = __s[1];
@@ -86,7 +87,7 @@ function v__df__let_3_0(v_b, v_n, v_s){
         case 1: {
           const v_s0 = __s[1];
           {
-            const __s = [1, (v_s0 + (v__lam_2)(v_s))];
+            const __s = __concat(v_s0, (v__lam_2)(v_s));
             switch (__s[0]) {
               case 0: {
                 const v__do_e_18_9 = __s[1];
@@ -95,7 +96,7 @@ function v__df__let_3_0(v_b, v_n, v_s){
               case 1: {
                 const v_s1 = __s[1];
                 {
-                  const __s = [1, (v_s1 + "/")];
+                  const __s = __concat(v_s1, "/");
                   switch (__s[0]) {
                     case 0: {
                       const v__do_e_19_9 = __s[1];
@@ -103,7 +104,7 @@ function v__df__let_3_0(v_b, v_n, v_s){
                     }
                     case 1: {
                       const v_s2 = __s[1];
-                      return [1, (v_s2 + (v_showTri)((v__lam_2)(v_b)))];
+                      return __concat(v_s2, (v_showTri)((v__lam_2)(v_b)));
                     }
                   }
                 }
