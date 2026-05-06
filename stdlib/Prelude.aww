@@ -73,6 +73,21 @@ lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
 lengthBytesAsUtf8 : String -> UInt32
 lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
 
+{- Maximum length of an Awsum `String` in UTF-16 code units, identical
+   on every backend (LLVM, JVM, CLR, WASM, JS). Operations that would
+   produce a longer string return `Left StringTooLong`.
+
+   Value: `2^27 = 134217728` UTF-16 code units. In UTF-8 bytes the
+   worst case (BMP CJK content, 3 bytes per UTF-16 code unit) is
+   `3 × 2^27 = 402653184` ≈ 384 MiB; ASCII is `1 × 2^27` ≈ 128 MiB.
+
+   The cap is fixed by the WASM-32 backend, not by the smallest UTF-16
+   runtime — see docs/targets.md for the cross-runtime budget that
+   determines this value. -}
+
+maxStringLengthUtf16CodeUnits : UInt32
+maxStringLengthUtf16CodeUnits = 134217728
+
 -- ---------------------- Unit
 
 {- Single-constructor type carrying no information. Useful as a

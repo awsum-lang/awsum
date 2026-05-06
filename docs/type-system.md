@@ -31,6 +31,8 @@ User-facing description of Awsum's type system — concepts and examples of prog
 
 `String`, `Int32`, `UInt8`, `UInt32` are built-in. `IO e a` is declared in the prelude (see [docs/prelude.md](prelude.md) and [IO](#io) below); everything else is in the prelude too.
 
+`String` has a fixed maximum length, identical on every backend: `maxStringLengthUtf16CodeUnits = 134217728` (`2^27`) UTF-16 code units. In UTF-8 bytes the worst case (BMP CJK content, 3 bytes per UTF-16 code unit) is `3 × 2^27 = 402653184` ≈ 384 MiB; ASCII is `1 × 2^27` ≈ 128 MiB. Operations that would produce a longer string return `Left StringTooLong`. The cap is fixed by the WASM-32 backend, not by the smallest UTF-16 runtime — see [targets.md](targets.md) for why.
+
 ```awsum
 greeting : String
 greeting = "hello"
