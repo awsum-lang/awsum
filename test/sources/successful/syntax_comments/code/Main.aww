@@ -9,7 +9,7 @@ Block comment 2
 
 -- Line comment 3
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit -- Signature comment
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit -- Signature comment
 
 -- Line comment 4
 

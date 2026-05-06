@@ -9,7 +9,7 @@ property x = case predInt32 x of
   Left _ -> eqInt32 x minInt32
   Right _ -> not (eqInt32 x minInt32)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
         raw <- rawArg

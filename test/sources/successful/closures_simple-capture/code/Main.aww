@@ -12,5 +12,5 @@ answer = 42
 captureFn : Int32 -> Int32
 captureFn k = apply (\_n -> k) answer
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showInt32 (captureFn 7))

@@ -25,7 +25,7 @@ run = do
   s2 <- s1 ++ ", "
   s2 ++ c
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = case run of
   Right s -> IO.Stdout.print s
   Left _ -> IO.Stdout.print "STRING_TOO_LONG"

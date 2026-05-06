@@ -22,7 +22,7 @@ triple = Tuple3 10 20 30
 pair : Tuple2 Int32 Int32
 pair = Tuple2 100 200
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let n = sumTriple triple
       m = apply (\(Tuple2 a b) -> sumPair (Tuple2 a b)) pair

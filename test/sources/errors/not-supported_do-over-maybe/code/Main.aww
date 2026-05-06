@@ -11,5 +11,5 @@ result = do
   x <- Just 1
   pureEither x
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print "ok"

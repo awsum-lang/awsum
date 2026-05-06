@@ -6,7 +6,7 @@ showBool b = case b of
   True -> "T"
   False -> "F"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         s0 <- showBool (not True) ++ showBool (not False)

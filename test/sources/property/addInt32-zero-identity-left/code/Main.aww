@@ -8,7 +8,7 @@ property a = do
   r <- addInt32 0 a
   pureEither (eqInt32 r a)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
         raw <- rawArg

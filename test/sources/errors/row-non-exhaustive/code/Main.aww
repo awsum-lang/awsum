@@ -7,5 +7,5 @@ _f : (Int32 | String) -> String
 _f x = case x of
   (n : Int32) -> showInt32 n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print "ok"

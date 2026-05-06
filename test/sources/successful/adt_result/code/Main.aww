@@ -8,7 +8,7 @@ unwrap r = case r of
   Ok value -> value
   Err value -> value
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         s0 <- unwrap (Ok "1") ++ ","

@@ -8,7 +8,7 @@ pad s = do
   q <- p ++ "]"
   q ++ q
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         padded <- pad "hi"

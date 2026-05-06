@@ -20,7 +20,7 @@ showResult r = case r of
     (_ : StringTooLong) -> Right "STRING_TOO_LONG"
   Right s -> "right: " ++ s
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = showResult (countDown 255)
    in case res of

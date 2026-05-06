@@ -8,7 +8,7 @@ property x = case predUInt8 x of
   Left _ -> eqUInt8 x minUInt8
   Right _ -> not (eqUInt8 x minUInt8)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
         raw <- rawArg

@@ -1,7 +1,7 @@
 -- Error: BuiltIn.nonexistent is not provided by the compiler.
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _ = IO.Stdout.print "ok"
 
 bogus : String

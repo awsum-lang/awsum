@@ -17,7 +17,7 @@ boolToStr b = case b of
 property : UInt8 -> String
 property n = boolToStr (not (not (intToBool n)))
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
         raw <- rawArg

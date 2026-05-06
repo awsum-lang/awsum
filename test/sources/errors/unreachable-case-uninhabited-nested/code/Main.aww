@@ -1,8 +1,6 @@
 -- Error: pattern on nested uninhabited constructor (Err (Box Never) is unreachable)
 import IO.Stdout
 
-type Never
-
 type Box a = Box a
 
 type Result a e = Ok a | Err e
@@ -12,5 +10,5 @@ unwrap r = case r of
   Ok value -> value
   Err value -> ""
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main input = IO.Stdout.print (unwrap (Ok "hello"))

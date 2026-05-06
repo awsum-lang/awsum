@@ -20,7 +20,7 @@ property a b = do
   addResult <- addInt32 a negB
   pureEither (eqInt32 subResult addResult)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
         raw <- rawArg

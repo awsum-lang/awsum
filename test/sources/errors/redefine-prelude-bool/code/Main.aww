@@ -6,5 +6,5 @@ import IO.Stdout
 
 type Bool = MyTrue | MyFalse
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main input = IO.Stdout.print input

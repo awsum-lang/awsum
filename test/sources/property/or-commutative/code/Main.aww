@@ -29,7 +29,7 @@ property na nb =
       b = intToBool nb
    in boolToStr (or a b) ++ boolToStr (or b a)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
         raw <- rawArg

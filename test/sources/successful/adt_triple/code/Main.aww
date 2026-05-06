@@ -7,7 +7,7 @@ showTriple : Triple String String String -> Either StringTooLong String
 showTriple t = case t of
   Triple a b c -> h0 a b c
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = showTriple (Triple "one" "two" "three")
    in case res of

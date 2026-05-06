@@ -32,7 +32,7 @@ describe r = case r of
     (_ : ErrorC) -> Right "ErrorC"
   Right n -> "Ok " ++ showInt32 n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = describe f
    in case res of

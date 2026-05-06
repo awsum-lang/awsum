@@ -7,7 +7,7 @@ describe x = case x of
   (n : Int32) -> "Int32 " ++ showInt32 n
   (s : String) -> "String " ++ s
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = describe "hello"
    in case res of

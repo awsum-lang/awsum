@@ -14,7 +14,7 @@ showCons h t = do
   rest <- show t
   hc ++ rest
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = show (Cons "a" (Cons "b" (Cons "c" Nil)))
    in case res of

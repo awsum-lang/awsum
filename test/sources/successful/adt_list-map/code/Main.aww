@@ -23,7 +23,7 @@ showCons h t = do
 shout : String -> Either StringTooLong String
 shout s = s ++ "!"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = show (map shout (Cons "a" (Cons "b" (Cons "c" Nil))))
    in case res of

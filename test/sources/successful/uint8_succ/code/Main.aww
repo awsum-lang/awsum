@@ -6,7 +6,7 @@ render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         a <- render (succUInt8 maxUInt8)

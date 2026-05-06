@@ -1,7 +1,7 @@
 {- Smoke: string concat, helper function, `IO.Stdout.print`. -}
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main inputArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = do
         input <- inputArg

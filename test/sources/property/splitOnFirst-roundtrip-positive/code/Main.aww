@@ -19,7 +19,7 @@ property sep s = case splitOnFirst sep s of
     s0 <- a ++ sep
     s0 ++ b
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | NoMatch) String = do
         raw <- rawArg

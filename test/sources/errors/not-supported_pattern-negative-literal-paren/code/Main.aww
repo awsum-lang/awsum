@@ -11,5 +11,5 @@ describe n = case n of
   (-1) -> "minus one"
   m -> showInt32 m
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (describe 0)

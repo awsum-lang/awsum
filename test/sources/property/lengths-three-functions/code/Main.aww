@@ -24,7 +24,7 @@ property s = do
   s2 <- s1 ++ ":"
   s2 ++ b
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = do
         raw <- rawArg

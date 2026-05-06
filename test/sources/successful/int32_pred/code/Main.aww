@@ -6,7 +6,7 @@ render r = case r of
   Left e -> "underflow: " ++ showUnderflowError e
   Right v -> "ok: " ++ showInt32 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         a <- render (predInt32 42)

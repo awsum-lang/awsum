@@ -12,7 +12,7 @@ whatsThat x = case x of
     False -> Right "Just False"
   Just (u : Unit) -> "Just " ++ showUnit u
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = whatsThat (Just True)
    in case res of

@@ -23,7 +23,7 @@ handleB step = case step of
     "C" ++ rest
   Done -> Right ""
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = handleA StepA
    in case res of

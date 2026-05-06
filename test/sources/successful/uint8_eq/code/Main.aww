@@ -6,7 +6,7 @@ render b = case b of
   True -> "T"
   False -> "F"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         s0 <- render (eqUInt8 minUInt8 minUInt8) ++ render (eqUInt8 maxUInt8 maxUInt8)

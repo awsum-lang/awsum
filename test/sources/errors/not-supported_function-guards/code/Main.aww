@@ -9,5 +9,5 @@ describe x
   | x = "true"
   | True = "false"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (describe True)

@@ -1,10 +1,10 @@
 {- Eta-reduced (point-free) alias for a function-typed value. -}
 import IO.Stdout
 
-say : String -> IO Unit
+say : String -> IO Never Unit
 say = IO.Stdout.print
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main inputArg = case inputArg of
   Left _ -> IO.Stdout.print "INPUT_ERROR"
   Right input -> say input
