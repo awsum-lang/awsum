@@ -87,7 +87,14 @@ renderDecl = \case
     renderComment c
   where
     renderConDef (ConDef _ n []) = n
-    renderConDef (ConDef _ n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
+    -- Constructor fields are parsed by 'pTypeAtomNoLineComments' — only
+    -- atomic types (TyVar / TyCon / parenthesised). Anything more
+    -- complex (TyApp like @IO e a@, TyArrow, TyOr) MUST be parenthesised
+    -- on output, otherwise @parse . render@ produces a different AST
+    -- (e.g. @Con String IO e a@ would become four single-token fields
+    -- instead of @[String, IO e a]@). Using precedence 4 (atom) here
+    -- forces the renderer to wrap any non-atom in parens.
+    renderConDef (ConDef _ n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 4) fs)
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 -- | Wrap a top-level declaration name in parens when it's an operator

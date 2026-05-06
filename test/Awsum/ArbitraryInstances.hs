@@ -194,24 +194,15 @@ instance Arbitrary Pattern where
           <> [PCon noSpan n ps' | ps' <- shrinkList shrink ps]
     PAscribe _ p t -> p : [PAscribe noSpan p' t | p' <- shrink p] <> [PAscribe noSpan p t' | t' <- shrink t]
 
--- | A single-line constructor field type. The 'TypeDecl' renderer
---   prints fields at precedence 3 (application), but a 'TyApp' field
---   requires precedence 4 (atom) to round-trip — otherwise
---   @Z (Q e)@ renders as @Z Q e@ and reparses as two nullary fields.
---   Until that gap is closed in the renderer, restrict fields to
---   atomic types only.
-genConFieldType :: Gen Type'
-genConFieldType =
-  oneof
-    [ TyVar noSpan <$> genLIdent,
-      TyCon noSpan <$> genUIdent
-    ]
-
 instance Arbitrary ConDef where
   arbitrary = sized $ \n -> do
     name <- genUIdent
     k <- chooseInt (0, min 2 (max 0 n))
-    fs <- vectorOf k genConFieldType
+    -- The full 'Type'' arbitrary (including TyApp / TyArrow / TyOr).
+    -- The renderer parenthesises non-atomic fields ('renderConDef'
+    -- uses precedence 4), so the parse∘render round-trip survives
+    -- arbitrary nested types in field position.
+    fs <- vectorOf k (resize (n `div` 2) arbitrary)
     pure (ConDef noSpan name fs)
   shrink (ConDef _ n fs) =
     [ConDef noSpan n' fs | n' <- shrinkIdent n]

@@ -144,7 +144,20 @@ builtIns =
       -- Number of bytes the string would occupy when serialised as
       -- (standard, not modified) UTF-8. ASCII characters count as 1,
       -- 2/3/4 bytes for the higher ranges per RFC 3629.
-      ("lengthBytesAsUtf8", TyArrow noSpan stringTy uint32Ty)
+      ("lengthBytesAsUtf8", TyArrow noSpan stringTy uint32Ty),
+      -- internalStdoutPrint : String -> Unit
+      -- Privileged low-level platform primitive: writes the argument to
+      -- stdout (no newline), returns the Unit constructor. Used
+      -- exclusively by the prelude's `runIO` to perform the effect of
+      -- an `IOStdoutPrint` arm during IO-tree walking. Not exposed to
+      -- user code via any prelude alias — there is no module/visibility
+      -- system in Awsum yet, so the contract is convention only:
+      -- user code uses `IO.Stdout.print` (a platform built-in that
+      -- elaborates to an `IOStdoutPrint` constructor); only `runIO`
+      -- reaches into `BuiltIn.internalStdoutPrint` directly. When
+      -- modules land, this and the IO type's constructors move into a
+      -- privileged module inaccessible to user code.
+      ("internalStdoutPrint", TyArrow noSpan stringTy unitTy)
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -152,6 +165,7 @@ builtIns =
     uint32Ty = TyCon noSpan "UInt32"
     stringTy = TyCon noSpan "String"
     boolTy = TyCon noSpan "Bool"
+    unitTy = TyCon noSpan "Unit"
     underflowErrorTy = TyCon noSpan "UnderflowError"
     overflowErrorTy = TyCon noSpan "OverflowError"
     -- Structural row of the two single-constructor error labels — the

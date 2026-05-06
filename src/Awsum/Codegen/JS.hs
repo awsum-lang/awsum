@@ -76,8 +76,14 @@ header builtIns =
       lns =
         filter
           (not . T.null)
-          [ if Set.member "IO.Stdout.print" builtIns
-              then "function __print(s){ process.stdout.write(String(s)); return undefined; }"
+          [ -- '__print' writes a string to stdout (no newline) and
+            -- returns the Unit constructor `[0]`. Driven by the
+            -- prelude's `runIO` walking an 'IOStdoutPrint' arm via
+            -- `BuiltIn.internalStdoutPrint`. Returning a real Unit
+            -- value lets the prelude `case … of Unit -> next`
+            -- dispatch through the standard CCase tag check.
+            if Set.member "internalStdoutPrint" builtIns
+              then "function __print(s){ process.stdout.write(String(s)); return [0]; }"
               else "",
             -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
             -- Left=0, Right=1, UnderflowError=0 — matches user-code tag assignment
@@ -259,8 +265,12 @@ cliFooter =
       "if (typeof require !== 'undefined' && require.main === module) {",
       "  const arg = process.argv[2] ?? \"\";",
       -- Wrap input in `Right arg` (tag=1) before handing to user's main. Layout
-      -- matches CCon emit: `[tag, ...fields]`.
-      "  if (typeof main === 'function') main([1, arg]);",
+      -- matches CCon emit: `[tag, ...fields]`. The IO tree returned by main is
+      -- handed to `runIO` (defined in the prelude as a regular Awsum
+      -- function), which walks it to perform any effects via
+      -- `BuiltIn.internalStdoutPrint`. Naming follows the same
+      -- 'v_' mangling rule as user top-levels.
+      "  if (typeof main === 'function') v_runIO(main([1, arg]));",
       "}"
     ]
 
@@ -415,7 +425,12 @@ emitExpr = \case
       <> ")"
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print" ->
+      -- Internal print primitive used by the prelude's `runIO`. Returns
+      -- the Unit constructor `[0]` so the surrounding `case … of Unit ->
+      -- next` arm dispatches through the standard tag check. Not exposed
+      -- to user code (no prelude alias); this is a privileged channel
+      -- between `runIO` and the host stdout.
+      CBuiltIn "internalStdoutPrint" ->
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"

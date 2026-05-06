@@ -611,7 +611,7 @@ doAssemble (CoreProgram decls) = do
           <> [ n
              | (n, keep) <-
                  [ ("__concat", Set.member "concatString" builtIns),
-                   ("__print", Set.member "IO.Stdout.print" builtIns),
+                   ("__print", Set.member "internalStdoutPrint" builtIns),
                    ("__predInt32", Set.member "predInt32" builtIns),
                    ("__predUInt8", Set.member "predUInt8" builtIns),
                    ("__predUInt32", Set.member "predUInt32" builtIns),
@@ -652,7 +652,7 @@ doAssemble (CoreProgram decls) = do
 
   m0 <- mkInit
   m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
+  m2s <- if Set.member "internalStdoutPrint" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
   m3u32p <- if Set.member "predUInt32" builtIns then (: []) <$> mkPredUInt32 else pure []
@@ -704,12 +704,30 @@ mkConcat = do
   let code = cilLdarg 0 <> cilLdarg 1 <> cilCall (tokMR 2) <> cilRet -- MemberRef 2 = String.Concat
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (object[1] = [boxed Int32 0]) so the surrounding `case … of Unit
+--   -> next` arm in `runIO` dispatches through the standard CCase
+--   tag check.
 mkPrint :: AsmM MInfo
 mkPrint = do
   ni <- w16 <$> addStr "__print"
   si <- w16 <$> addBlob (sigStatic etObject 1)
   ps <- addParams 1
-  let code = cilLdarg 0 <> cilCall (tokMR 3) <> cilLdnull <> cilRet -- MemberRef 3 = Console.Write
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      -- Build Unit value: object[1] = [boxed Int32(0)]
+      buildUnit =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+      code = cilLdarg 0 <> cilCall (tokMR 3) <> buildUnit <> cilRet -- MemberRef 3 = Console.Write
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 -- | predInt32: Int32 -> Either UnderflowError Int32.
@@ -2624,6 +2642,7 @@ mkMain tokMap = do
   -- argv[1] while we build the Right-wrapper array.
   localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
   let vMainTok = fromMaybe (error "no v_main") (Map.lookup (mangle "main") tokMap)
+      vRunIOTok = fromMaybe (error "no v_runIO") (Map.lookup (mangle "runIO") tokMap)
       boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
@@ -2661,6 +2680,10 @@ mkMain tokMap = do
           <> cilLdloc 0 -- arr,arr,1,input
           <> cilStelemRef -- arr   (arr[1]=input)
           <> cilCall vMainTok
+          -- v_main returned an IO tree on the stack; hand it to runIO
+          -- to walk and execute the effects. runIO returns Unit which
+          -- we discard before returning from main.
+          <> cilCall vRunIOTok
           <> cilPop
           <> cilRet
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
@@ -2855,7 +2878,7 @@ emitExpr ctx = \case
         chainCode = buildChain (zip tags armCodes)
     pure (scrutCode <> extractAndStore <> chainCode)
   CCall f xs -> case f of
-    CBuiltIn "IO.Stdout.print" | [x] <- xs -> do
+    CBuiltIn "internalStdoutPrint" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__print"))
     CBuiltIn name

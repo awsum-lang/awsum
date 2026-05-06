@@ -337,19 +337,35 @@ elaborateLowerProgram progType progIn = do
   -- against adversarial label names where the runtime would otherwise
   -- silently confuse one alternative for another at row-case dispatch.
   checkRowTagCollisions typeDeclSpans rowTags
-  -- 3) Tree-shake: drop Core declarations unreachable from 'main'.
+  -- 3) Lower platform-effect built-ins to constructors of the prelude's
+  --    `IO` type. After this pass, `CCall (CBuiltIn "IO.Stdout.print")
+  --    [arg]` no longer appears in Core; it is replaced by
+  --    `CCon ioStdoutPrintTag [arg, IOPure Unit]`. The actual print
+  --    happens later, when the per-target runtime-loop (`__runIO`,
+  --    emitted by codegen) walks the IO tree returned from `main`.
+  --    Done before tree-shake so that the IO type's constructors enter
+  --    reachability analysis as ordinary `CCon` references.
+  let userDecls = catMaybes mds
+      allWrappers = genConWrappers conInfo
+      allDeclsRaw = userDecls <> liftedHelpers <> allWrappers
+      allDecls = map (lowerIOPlatformBuiltinsDecl conInfo) allDeclsRaw
+  -- 4) Tree-shake: drop Core declarations unreachable from 'main'.
   --    Covers both user functions that no one calls and prelude
   --    helpers the user program does not touch (e.g.
   --    @showUnderflowError@ in a program that never uses @predInt32@).
   --    Constructor wrappers are generated after this reachability is
   --    known so they're only materialised for constructors still
   --    present in the surviving code.
-  let userDecls = catMaybes mds
-      allWrappers = genConWrappers conInfo
-      allDecls = userDecls <> liftedHelpers <> allWrappers
-      callGraph = M.fromList [(declName' d, declFreeVars d) | d <- allDecls]
-      reachableFromMain = reachableCore "main" callGraph
-      live = filter (\d -> Set.member (declName' d) reachableFromMain) allDecls
+  --
+  --    Roots: 'main' (the user entry point) plus 'runIO' (the prelude
+  --    runtime that walks the IO tree returned by `main`). 'runIO' is
+  --    not called from `main` in Core — the codegen entry-point glue
+  --    wires `v_runIO(v_main(input))` as a string template — so the
+  --    call-graph analysis must treat it as a separate root or it
+  --    would shake away.
+  let callGraph = M.fromList [(declName' d, declFreeVars d) | d <- allDecls]
+      reachable = reachableCore "main" callGraph <> reachableCore "runIO" callGraph
+      live = filter (\d -> Set.member (declName' d) reachable) allDecls
       core = CoreProgram live
   -- 4) Defunctionalise: specialise each higher-order-function call
   --    site for the closure statically flowing in. After this pass
@@ -436,14 +452,79 @@ reachableCore root graph = go (Set.singleton root) [root]
           fresh = Set.filter (`Set.notMember` visited) neighbours
        in go (visited <> fresh) (rest <> Set.toList fresh)
 
--- | Drop declarations that are no longer reachable from @main@. Used
--- after passes that rewrite call sites to fresh targets (like SCC
--- merge, which routes every cross-call through @$scc$...@ and can
--- leave the original member's wrapper dead).
+-- | Rewrite every @CCall (CBuiltIn "IO.Stdout.print") [arg]@ into the
+--   constructor expression @CCon ioStdoutPrintTag [arg, CCon ioPureTag
+--   [CCon unitTag []]]@ (where the tags are looked up from
+--   'ConInfoEnv' rather than hard-coded so the rewrite stays in
+--   lockstep with the prelude's declaration order).
+--
+--   After this pass the platform built-in's call site is gone from
+--   Core; in its place is a heap-allocated description that the
+--   per-target runtime-loop (`__runIO`, emitted by codegen) walks at
+--   runtime. This is what makes IO lazy: the construction of
+--   `IO.Stdout.print "x"` no longer performs the print — it merely
+--   builds an @IOStdoutPrint@ cell — so a value bound by `let _ = …`
+--   that never reaches `__runIO` produces no output.
+lowerIOPlatformBuiltinsDecl :: ConInfoEnv -> CDecl -> CDecl
+lowerIOPlatformBuiltinsDecl conInfo = \case
+  CFunDef n args body -> CFunDef n args (rewriteExpr body)
+  CValDef n body -> CValDef n (rewriteExpr body)
+  where
+    tagFor :: Name -> Int
+    tagFor n = case M.lookup n conInfo of
+      Just ci -> ciTag ci
+      Nothing ->
+        error
+          $ "lowerIOPlatformBuiltinsDecl: prelude is missing constructor '"
+          <> n
+          <> "' — IO type or Unit was edited inconsistently."
+
+    ioPureTag = tagFor "IOPure"
+    ioStdoutPrintTag = tagFor "IOStdoutPrint"
+    unitTag = tagFor "Unit"
+
+    -- The terminator for a single `IO.Stdout.print s` call: after the
+    -- print, the chain returns Unit. Built once and shared at every
+    -- rewrite site for tidier Core; backends emit the structure at
+    -- each construction site regardless.
+    pureUnit = CCon ioPureTag [CCon unitTag []]
+
+    rewriteExpr :: CExpr -> CExpr
+    rewriteExpr = \case
+      CCall (CBuiltIn "IO.Stdout.print") [arg] ->
+        CCon ioStdoutPrintTag [rewriteExpr arg, pureUnit]
+      CCall f args -> CCall (rewriteExpr f) (map rewriteExpr args)
+      CCon t fields -> CCon t (map rewriteExpr fields)
+      CCase scrut alts ->
+        CCase
+          (rewriteExpr scrut)
+          [(t, vs, rewriteExpr e) | (t, vs, e) <- alts]
+      CRow t v -> CRow t (rewriteExpr v)
+      CRowCase scrut alts ->
+        CRowCase
+          (rewriteExpr scrut)
+          [(t, v, rewriteExpr e) | (t, v, e) <- alts]
+      CLoop body -> CLoop (rewriteExpr body)
+      CContinue args -> CContinue (map rewriteExpr args)
+      e@CVar {} -> e
+      e@CString {} -> e
+      e@CIntLit {} -> e
+      e@CBuiltIn {} -> e
+
+-- | Drop declarations that are no longer reachable from the program's
+-- roots. Used after passes that rewrite call sites to fresh targets
+-- (like SCC merge, which routes every cross-call through @$scc$...@
+-- and can leave the original member's wrapper dead).
+--
+-- Roots are 'main' and 'runIO': the latter is the prelude's IO-tree
+-- walker which the codegen entry-point glue calls on @main@'s result.
+-- Because that call lives in a string template (not in Core), the
+-- call-graph analysis would otherwise lose track of @runIO@ and
+-- shake it away.
 treeShakeFromMain :: CoreProgram -> CoreProgram
 treeShakeFromMain (CoreProgram ds) =
   let graph = M.fromList [(declName' d, declFreeVars d) | d <- ds]
-      reached = reachableCore "main" graph
+      reached = reachableCore "main" graph <> reachableCore "runIO" graph
       live = [d | d <- ds, Set.member (declName' d) reached]
    in CoreProgram live
 

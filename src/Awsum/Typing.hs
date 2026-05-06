@@ -970,12 +970,16 @@ requireMain Program {decls} =
     Nothing -> Left MainMissing
     Just ty ->
       let stringTy = TyCon noSpan "String"
-          ioUnit = TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit")
+          ioNeverUnit =
+            TyApp
+              noSpan
+              (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never"))
+              (TyCon noSpan "Unit")
           tooLong = TyCon noSpan "StringTooLong"
           unpaired = TyCon noSpan "UnpairedUtf16Surrogate"
           errSum = TyOr noSpan tooLong unpaired
           eitherErr = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") errSum) stringTy
-          want = TyArrow noSpan eitherErr ioUnit
+          want = TyArrow noSpan eitherErr ioNeverUnit
        in unless (ty == want) (Left (MainWrongType ty))
 
 -- | Reject a fresh list of binders if any of them are already in scope or

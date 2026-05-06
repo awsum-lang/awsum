@@ -34,7 +34,7 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "concatString" builtIns) concatMethod,
             "",
-            gate (Set.member "IO.Stdout.print" builtIns) printMethod,
+            gate (Set.member "internalStdoutPrint" builtIns) printMethod,
             "",
             gate (Set.member "predInt32" builtIns) predInt32Method,
             "",
@@ -143,6 +143,11 @@ concatMethod =
       ".end method"
     ]
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (Object[1] = [Integer(0)]) so the surrounding `case … of Unit ->
+--   next` arm in `runIO` dispatches through the standard CCase tag
+--   check.
 printMethod :: Text
 printMethod =
   unlines
@@ -150,7 +155,14 @@ printMethod =
       "  getstatic java/lang/System/out Ljava/io/PrintStream;",
       "  aload_0",
       "  invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V",
-      "  aconst_null",
+      -- Build Unit value: Object[1] = [Integer(0)]
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
       "  areturn",
       ".end method"
     ]
@@ -1771,6 +1783,10 @@ mainMethod =
       "  aload_1",
       "  aastore",
       "  invokestatic AwsumMain/" <> mangle "main" <> "(" <> objDesc <> ")" <> objDesc,
+      -- Hand the IO tree to `runIO`, which walks it and performs the
+      -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns
+      -- Unit (the IOPure terminator's payload); we discard it.
+      "  invokestatic AwsumMain/" <> mangle "runIO" <> "(" <> objDesc <> ")" <> objDesc,
       "  pop",
       "  return",
       ".end method"
@@ -1904,7 +1920,10 @@ emitExprText ctx paramMap = \case
           <> [joinLabel <> ":"]
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      -- Internal print primitive used by the prelude's `runIO`.
+      -- Emits the same `__print` invocation the legacy
+      -- `IO.Stdout.print` arm used to call directly.
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             T.intercalate
               "\n"

@@ -318,7 +318,7 @@ doAssemble prog@(CoreProgram decls) = do
   -- Runtime helpers are emitted only when referenced in Core, so hello-world
   -- style programs that never call 'showInt32' or 'predInt32' don't pay for them.
   m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
+  m2s <- if Set.member "internalStdoutPrint" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
   m3u32p <- if Set.member "predUInt32" builtIns then (: []) <$> mkPredUInt32 else pure []
@@ -398,12 +398,19 @@ mkConcat = do
         mMaxLocals = 256
       }
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (Object[1] = [Integer(0)]) so the surrounding `case … of Unit ->
+--   next` arm in `runIO` dispatches through the standard CCase tag
+--   check.
 mkPrint :: AsmM MInfo
 mkPrint = do
   ni <- addUtf8 "__print"
   di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
   outRef <- addFRef "java/lang/System" "out" "Ljava/io/PrintStream;"
   printRef <- addMRef "java/io/PrintStream" "print" "(Ljava/lang/Object;)V"
+  objCls <- addClass "java/lang/Object"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   pure
     MInfo
       { mFlags = 0x0008,
@@ -413,7 +420,15 @@ mkPrint = do
           bcGetStatic outRef
             <> bcAload 0
             <> bcInvokeVirtual printRef
-            <> [0x01, 0xB0], -- aconst_null, areturn
+            -- Build Unit value: Object[1] = [Integer(0)]
+            <> [0x04] -- iconst_1 (array length)
+            <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+            <> [0x59] -- dup
+            <> [0x03] -- iconst_0 (index)
+            <> [0x03] -- iconst_0 (Unit tag)
+            <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- valueOf(I)Integer
+            <> [0x53] -- aastore
+            <> [0xB0], -- areturn
         mCodeAttrCount = 0,
         mCodeAttrs = [],
         mMaxStack = 256,
@@ -3126,6 +3141,10 @@ mkMain = do
   di <- addUtf8 "([Ljava/lang/String;)V"
   emptyIdx <- addStr ""
   vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 1)
+  -- `runIO` is the prelude's IO-tree walker; we hand `v_main`'s return
+  -- value to it so any effects are performed. It returns Unit which we
+  -- discard.
+  vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
@@ -3222,6 +3241,10 @@ mkMain = do
             <> [0x2B] -- aload_1
             <> [0x53] -- aastore
             <> bcInvokeStatic vMainRef
+            -- v_main returned an IO tree on the stack; hand it to runIO
+            -- to walk and execute the effects. runIO returns Unit which
+            -- we discard before returning from main.
+            <> bcInvokeStatic vRunIORef
             <> [0x57] -- pop
             <> [0xB1], -- return
         mCodeAttrCount = 1,
@@ -3643,7 +3666,7 @@ emitExpr ctx = \case
     pure CodeWithMeta {cwCode = finalCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print" | [x] <- xs -> do
+      CBuiltIn "internalStdoutPrint" | [x] <- xs -> do
         xMeta <- emitExpr ctx x
         ref <- addMRef "AwsumMain" "__print" "(Ljava/lang/Object;)Ljava/lang/Object;"
         pure $ cwmWrap (bcInvokeStatic ref) [xMeta]

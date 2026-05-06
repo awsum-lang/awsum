@@ -804,11 +804,14 @@ codeConcat _info =
       ]
 
 -- __print(s: i32) -> i32
--- local: $len (slot 1)
+-- locals: $len (slot 1), $unit (slot 2)
+-- Returns a Unit value (alloc(4); store tag 0) so the surrounding
+-- `case … of Unit -> next` arm in the prelude's `runIO` dispatches
+-- through the standard CCase tag check.
 codePrint :: WasmInfo -> [Word8]
 codePrint _info =
   encodeBody
-    (encodeLocals 1)
+    (encodeLocals 2)
     $ concat
       [ -- len = __strlen(s)
         [opLocalGet],
@@ -841,9 +844,20 @@ codePrint _info =
         [opCall],
         encodeULEB128 0, -- fd_write (import index 0)
         [opDrop],
-        -- return 0
+        -- Build Unit value: unit = __alloc(4); i32.store(unit, 0); return unit
         [opI32Const],
-        encodeSLEB128 0
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 2,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 2
       ]
 
 -- __predInt32(p: i32) -> i32
@@ -4279,6 +4293,7 @@ codeUserDecl info typeMap = \case
 codeStart :: WasmInfo -> [Word8]
 codeStart info =
   let mainIdx = fromMaybe 0 (Map.lookup "main" info.wiFuncIdx)
+      runIOIdx = fromMaybe (error "no v_runIO") (Map.lookup "runIO" info.wiFuncIdx)
    in encodeBody
         (encodeLocals 2)
         $ concat
@@ -4297,7 +4312,11 @@ codeStart info =
             [opI32Store, 0x02, 0x04], -- mem[box+4] = input
             [opLocalGet, 0x01], -- stack: [box]
             [opCall],
-            encodeULEB128 mainIdx, -- stack: [result]
+            encodeULEB128 mainIdx, -- stack: [io_tree]
+            -- Hand the IO tree to runIO to walk and execute the
+            -- effects. runIO returns Unit which we discard.
+            [opCall],
+            encodeULEB128 runIOIdx,
             [opDrop]
           ]
 
@@ -4391,7 +4410,7 @@ emitExpr ctx = \case
     emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             emitExpr ctx x
               <> [opCall]

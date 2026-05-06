@@ -270,7 +270,14 @@ runtime builtIns =
     overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
     parts =
       [ if Set.member "concatString" builtIns then rtConcat else "",
-        if Set.member "IO.Stdout.print" builtIns then rtPrint else "",
+        -- '__print' is the low-level platform primitive driven by the
+        -- prelude's `runIO`, which walks the IO tree returned from
+        -- `v_main` and calls `BuiltIn.internalStdoutPrint` on each
+        -- 'IOStdoutPrint' arm. Returning a real Unit value
+        -- (`malloc(8); store i64 0`) lets the surrounding
+        -- `case … of Unit -> next` arm in `runIO` pattern-match
+        -- through the standard CCase tag check.
+        if Set.member "internalStdoutPrint" builtIns then rtPrint else "",
         if Set.member "showInt32" builtIns then rtShowInt32 else "",
         if Set.member "showUInt8" builtIns then rtShowUInt8 else "",
         if Set.member "predInt32" builtIns then rtPredInt32 else "",
@@ -318,7 +325,15 @@ runtime builtIns =
       unlines
         [ "define internal ptr @__print(ptr %s) {",
           "  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)",
-          "  ret ptr null",
+          -- Allocate a Unit constructor cell: a single ptr slot holding
+          -- the tag (`inttoptr 0`). Mirrors how every other CCon is
+          -- emitted, so `runIO`'s `case … of Unit -> next` reads the
+          -- tag through the same path.
+          "  %unit = call ptr @malloc(i64 8)",
+          "  %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0",
+          "  %unit_tag = inttoptr i64 0 to ptr",
+          "  store ptr %unit_tag, ptr %unit_tag_ptr",
+          "  ret ptr %unit",
           "}"
         ]
     -- Integers are boxed: each CIntLit allocates a heap cell holding
@@ -1403,7 +1418,14 @@ footerPosix =
       "  store ptr %right_tag, ptr %right_tag_ptr",
       "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
       "  store ptr %input, ptr %right_payload_ptr",
-      "  call ptr @v_main(ptr %right_box)",
+      -- v_main returns an IO tree (lazy IO); the prelude's `runIO`
+      -- walks it to execute any effects. `runIO` is a regular Awsum
+      -- function emitted via the standard CFunDef path, so it goes
+      -- through TCO and ends up as a bounded-stack loop. The IO
+      -- value itself is a heap-allocated ptr-tagged ADT cell, same
+      -- shape as user ADTs.
+      "  %io = call ptr @v_main(ptr %right_box)",
+      "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
     ]
@@ -1467,7 +1489,9 @@ footerWindows =
       "  store ptr %right_tag, ptr %right_tag_ptr",
       "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
       "  store ptr %input, ptr %right_payload_ptr",
-      "  call ptr @v_main(ptr %right_box)",
+      -- Same IO-tree handoff as the POSIX path; see footerPosix.
+      "  %io = call ptr @v_main(ptr %right_box)",
+      "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
     ]
@@ -1888,7 +1912,11 @@ emitExpr ctx = \case
       )
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print" ->
+      -- Internal print primitive used by the prelude's `runIO`.
+      -- Emits the same `__print` syscall the legacy `IO.Stdout.print`
+      -- arm used to call directly; the difference is that this is now
+      -- driven by the IO-tree walker rather than by user code.
+      CBuiltIn "internalStdoutPrint" ->
         case xs of
           [x] -> do
             (instrX, resX) <- emitExpr ctx x

@@ -253,7 +253,7 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             rtAlloc,
             rtMemcpy,
             if Set.member "concatString" builtIns then rtConcat else "",
-            if Set.member "IO.Stdout.print" builtIns then rtPrint else "",
+            if Set.member "internalStdoutPrint" builtIns then rtPrint else "",
             if hasIntLit then rtBoxI32 else "",
             if any (`Set.member` builtIns) ["showInt32", "showUInt8"]
               then rtShowI32
@@ -355,16 +355,25 @@ rtConcat =
       "    (local.get $buf))"
     ]
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (alloc(4); store tag 0) so the surrounding `case … of Unit ->
+--   next` arm in `runIO` dispatches through the standard CCase tag
+--   check.
 rtPrint :: Text
 rtPrint =
   unlines
     [ "  (func $__print (param $s i32) (result i32)",
       "    (local $len i32)",
+      "    (local $unit i32)",
       "    (local.set $len (call $__strlen (local.get $s)))",
       "    (i32.store (i32.const 0) (local.get $s))",
       "    (i32.store (i32.const 4) (local.get $len))",
       "    (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))",
-      "    (i32.const 0))"
+      -- Build Unit value: alloc(4) + store tag 0 at offset 0.
+      "    (local.set $unit (call $__alloc (i32.const 4)))",
+      "    (i32.store (local.get $unit) (i32.const 0))",
+      "    (local.get $unit))"
     ]
 
 -- | Box a 32-bit value as a heap cell; the returned pointer is the uniform
@@ -1331,7 +1340,9 @@ startFunc =
       "    (local.set $right_box (call $__alloc (i32.const 8)))",
       "    (i32.store (local.get $right_box) (i32.const 1))",
       "    (i32.store offset=4 (local.get $right_box) (local.get $input))",
-      "    (drop (call $" <> mangle "main" <> " (local.get $right_box))))"
+      -- v_main returns an IO tree; hand it to runIO to walk and execute
+      -- the effects. runIO returns Unit which we discard.
+      "    (drop (call $" <> mangle "runIO" <> " (call $" <> mangle "main" <> " (local.get $right_box)))))"
     ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1487,7 +1498,7 @@ emitExpr ctx = \case
     emitCaseExpr ctx scrut alts
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             "(call $__print " <> emitExpr ctx x <> ")"
       CBuiltIn name

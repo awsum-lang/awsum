@@ -36,7 +36,7 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "concatString" builtIns) concatMethod,
             "",
-            gate (Set.member "IO.Stdout.print" builtIns) printMethod,
+            gate (Set.member "internalStdoutPrint" builtIns) printMethod,
             "",
             gate (Set.member "predInt32" builtIns) predInt32Method,
             "",
@@ -151,14 +151,27 @@ concatMethod =
       "  }"
     ]
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (object[1] = [boxed Int32 0]) so the surrounding `case … of Unit
+--   -> next` arm in `runIO` dispatches through the standard CCase
+--   tag check.
 printMethod :: Text
 printMethod =
   unlines
     [ "  .method private hidebysig static object __print(object) cil managed",
       "  {",
+      "    .maxstack 4",
       "    ldarg.0",
       "    call void [System.Console]System.Console::Write(object)",
-      "    ldnull",
+      -- Build Unit value: object[1] = [boxed Int32 0]
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
       "    ret",
       "  }"
     ]
@@ -1747,6 +1760,10 @@ mainMethod =
       "    ldloc.0",
       "    stelem.ref",
       "    call object AwsumMain::" <> mangle "main" <> "(object)",
+      -- Hand the IO tree to `runIO`, which walks it and performs the
+      -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns
+      -- Unit; we discard it.
+      "    call object AwsumMain::" <> mangle "runIO" <> "(object)",
       "    pop",
       "    ret",
       "  }"
@@ -1897,7 +1914,7 @@ emitExprText ctx varMap = \case
           <> ["  " <> joinLabel <> ":"]
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             T.intercalate
               "\n"

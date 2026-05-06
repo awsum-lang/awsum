@@ -25,9 +25,13 @@ cliPlatformTable =
       -- on CLR, WASI fd_write on WASM, process.stdout.write on
       -- Node.
       ( QName ["IO", "Stdout"] "print",
-        TyArrow noSpan stringTy ioUnitTy
+        TyArrow noSpan stringTy ioNeverUnitTy
       )
     ]
   where
     stringTy = TyCon noSpan "String"
-    ioUnitTy = TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit")
+    ioNeverUnitTy =
+      TyApp
+        noSpan
+        (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never"))
+        (TyCon noSpan "Unit")
