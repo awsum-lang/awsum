@@ -15,9 +15,8 @@ main _input =
         Right s -> IO.Stdout.print s
 
 h0 : String -> String -> String -> Either StringTooLong String
-h0 a b c =
-  do
-    s0 <- a ++ " "
-    s1 <- s0 ++ b
-    s2 <- s1 ++ " "
-    s2 ++ c
+h0 a b c = do
+  s0 <- a ++ " "
+  s1 <- s0 ++ b
+  s2 <- s1 ++ " "
+  s2 ++ c

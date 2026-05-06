@@ -316,4 +316,3 @@ res = (and (un T1) (and (un T2) (and (un T3) (and (un T4) (and (un T5) (and (un 
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showBool res)
-

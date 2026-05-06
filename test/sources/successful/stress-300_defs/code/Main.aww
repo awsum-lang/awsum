@@ -911,4 +911,3 @@ res = (and b1 (and b2 (and b3 (and b4 (and b5 (and b6 (and b7 (and b8 (and b9 (a
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showBool res)
-

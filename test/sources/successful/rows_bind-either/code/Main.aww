@@ -5,6 +5,7 @@
 import IO.Stdout
 
 type ErrA = ErrA
+
 type ErrB = ErrB
 
 opA : Int32 -> Either ErrA Int32

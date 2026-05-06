@@ -74,7 +74,7 @@ shrinkNonEmpty sh (x :| xs) =
 -- ───────────────────────── Arbitrary instances ─────────────────────────
 
 instance Arbitrary ImportDecl where
-  arbitrary = ImportDecl [] <$> genNonEmpty genUIdent <*> genComment
+  arbitrary = ImportDecl <$> genLeadingComments <*> genNonEmpty genUIdent <*> genComment
   shrink (ImportDecl _ ne _) = ImportDecl [] <$> shrinkNonEmpty shrinkIdent ne <*> pure Nothing
 
 -- | Prefer producing useful types for tests:
@@ -153,6 +153,28 @@ genCommentText = genStr `suchThat` (not . T.null)
 genComment :: Gen (Maybe Text)
 genComment = frequency [(3, pure Nothing), (1, Just <$> genCommentText)]
 
+-- | Single-line comment node generator. Only 'LineComment' for now —
+--   'BlockComment' goes through 'T.strip' in the renderer but the
+--   parser captures everything between the @{-@ and @-}@ delimiters,
+--   so a 'BlockComment "abc"' round-trips to 'BlockComment " abc "'.
+--   Generating only 'LineComment' sidesteps that mismatch; teaching
+--   the generator a leading/trailing-space discipline for block
+--   comments is a separate exercise.
+genCommentNode :: Gen Comment
+genCommentNode = LineComment <$> genCommentText
+
+-- | Leading-comments list for positions that accept any number of
+--   comments before the syntactic element they attach to. Mostly empty
+--   so the round-trip property keeps exercising the comment-free
+--   shapes too.
+genLeadingComments :: Gen [Comment]
+genLeadingComments =
+  frequency
+    [ (4, pure []),
+      (2, vectorOf 1 genCommentNode),
+      (1, vectorOf 2 genCommentNode)
+    ]
+
 genInt :: Gen Integer
 genInt =
   frequency
@@ -208,16 +230,13 @@ instance Arbitrary ConDef where
     [ConDef noSpan n' fs | n' <- shrinkIdent n]
       <> [ConDef noSpan n (take i fs) | i <- [0 .. length fs - 1]]
 
--- | A single case alternative. Leading/trailing comments left empty
---   to avoid pulling 'Comment' generation into the surface AST until
---   the parser/renderer interaction with comment placement is
---   exercised under property testing in its own right.
 instance Arbitrary CaseAlt where
   arbitrary = sized $ \n ->
-    CaseAlt []
-      <$> resize (n `div` 2) arbitrary
+    CaseAlt
+      <$> genLeadingComments
       <*> resize (n `div` 2) arbitrary
-      <*> pure Nothing
+      <*> resize (n `div` 2) arbitrary
+      <*> genComment
   shrink (CaseAlt _ p e _) =
     [CaseAlt [] p' e Nothing | p' <- shrink p]
       <> [CaseAlt [] p e' Nothing | e' <- shrink e]
@@ -306,19 +325,18 @@ instance Arbitrary Expr where
     ELet _sp _ _ e body -> [e, body] <> [ELet noSpan (PVar noSpan "x") Nothing e' body | e' <- shrink e] <> [ELet noSpan (PVar noSpan "x") Nothing e body' | body' <- shrink body]
 
 -- | Top-level declarations.
---
---   What is /not/ generated:
---     * 'CommentDecl' — top-level comments interact with the
---       declaration grouping pass ('groupDeclBlocks') that joins a
---       'Sig' with its matching 'FunDef'; inserting a comment between
---       them would split the block in a way the parser does not
---       round-trip cleanly.
 instance Arbitrary Decl where
   arbitrary =
     frequency
       [ (4, Sig noSpan <$> genLIdent <*> arbitrary <*> genComment),
         (4, genFunDef),
-        (1, genTypeDecl)
+        (1, genTypeDecl),
+        -- Top-level comment as a standalone declaration. When sandwiched
+        -- between a 'Sig' and a 'FunDef' of the same name, it breaks the
+        -- 'groupDeclBlocks' pairing — both ends still round-trip, just
+        -- as two separate blocks with the comment between, which is
+        -- exactly what the parser produces.
+        (1, CommentDecl <$> genCommentNode)
       ]
     where
       -- Mostly plain-name parameters; an occasional destructuring
@@ -354,41 +372,19 @@ instance Arbitrary Decl where
       genFunBody n =
         frequency
           [ (6, resize n arbitrary),
-            (1, ECase noSpan <$> genCaseScrutinee (n `div` 2) <*> resize (n `div` 2) (genNonEmpty arbitrary) <*> pure []),
+            (1, ECase noSpan <$> resize (n `div` 2) arbitrary <*> resize (n `div` 2) (genNonEmpty arbitrary) <*> pure []),
             (1, EDo noSpan <$> resize (n `div` 2) (genDoBlock n))
           ]
-      -- The case scrutinee in the parser uses 'pConcatNoLineComments'
-      -- — it accepts atoms, applications, and '++' chains, but not
-      -- 'let' / lambda / 'do' / 'case' as the head form. Wrap any
-      -- such scrutinee in explicit parens so it parses as an atom on
-      -- the way back.
-      genCaseScrutinee n = do
-        e <- resize n arbitrary
-        pure $ case e of
-          ELet {} -> EParens noSpan e
-          ELam {} -> EParens noSpan e
-          _ -> e
-      -- A 'do' block must end with a 'DoExpr' (the trailing
-      -- expression of the chain). Generate ≥ 1 leading
-      -- bind/let/expr statements followed by a final 'DoExpr'.
-      --
-      -- 'DoExpr' bodies that begin with @let@ collide with the
-      -- do-block-'let' form: the parser's 'pDoLet' matches
-      -- @let pat = expr@ as a 'DoLet' and stops before @in body@,
-      -- leaving the @in@ stranded. Wrap such bodies in 'EParens'
-      -- so the parser sees an atom and routes back through the
-      -- full expression parser (which handles 'let-in').
+      -- A 'do' block must end with a 'DoExpr' (the trailing expression
+      -- of the chain). Generate ≥ 1 leading bind/let/expr statements
+      -- followed by a final 'DoExpr'. No special handling for
+      -- ELet-headed DoExpr — the renderer wraps it in parens
+      -- automatically (see 'renderDoStmt' in Render.hs).
       genDoBlock n = do
         k <- chooseInt (0, min 3 (max 0 n))
-        leading <- vectorOf k (resize (n `div` (k + 1)) (mapDoExpr <$> arbitrary))
-        finalE <- DoExpr noSpan . wrapHeadLet <$> resize (n `div` (k + 1)) arbitrary
+        leading <- vectorOf k (resize (n `div` (k + 1)) arbitrary)
+        finalE <- DoExpr noSpan <$> resize (n `div` (k + 1)) arbitrary
         pure (leading <> [finalE])
-      mapDoExpr stmt = case stmt of
-        DoExpr sp e -> DoExpr sp (wrapHeadLet e)
-        _ -> stmt
-      wrapHeadLet e = case e of
-        ELet {} -> EParens noSpan e
-        _ -> e
       genTypeDecl = sized $ \n -> do
         name <- genUIdent
         kTv <- chooseInt (0, min 2 (max 0 n))

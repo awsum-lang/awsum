@@ -183,7 +183,12 @@ renderExprPrec ctx indent e =
       parens (renderExprPrec 0 indent e')
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
-      let s = "case " <> renderExprPrec 0 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
+      -- Scrutinee is rendered at ctx=1 because the parser's scrutinee
+      -- grammar ('pConcatNoLineComments') only accepts atoms, applications
+      -- and '++' chains — block forms (ELet / ELam / ECase / EDo) must be
+      -- wrapped in parens or they don't reparse. The block-form renderers
+      -- already add parens at any ctx > 0.
+      let s = "case " <> renderExprPrec 1 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
        in if 0 < ctx then parens s else s
     ELam _sp params body ->
       -- Lambda body extends as far right as possible — same precedence
@@ -262,7 +267,14 @@ renderDoStmt indent = \case
   DoLet _ pat mAnnot e ->
     let annot = maybe "" (\t -> " : " <> renderType t) mAnnot
      in "let " <> renderPatternAtom pat <> annot <> " = " <> renderExprPrec 0 indent e
-  DoExpr _ e -> renderExprPrec 0 indent e
+  -- ctx=1 so block forms at the head of a DoExpr (specifically ELet)
+  -- get wrapped in parens. Without that wrap, the parser's 'pDoLet'
+  -- greedily consumes 'let pat = expr' as a do-block-let and leaves
+  -- the trailing 'in body' stranded; explicit parens force the full
+  -- expression parser to handle 'let pat = expr in body' as one atom.
+  -- Wrapping ELam too is benign (no parser ambiguity, just extra parens
+  -- in output) and keeps the rule uniform with the other ctx>0 sites.
+  DoExpr _ e -> renderExprPrec 1 indent e
 
 -- ── Let-block helpers ───────────────────────────────────────────────────────
 
