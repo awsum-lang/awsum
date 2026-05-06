@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "showTri" [ "t" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "showTri" [ "t" ]
             ( CCase
                 ( CVar "t" )
                 [
@@ -26,7 +57,7 @@ CoreProgram
             , "b"
             ]
             ( CCall
-                ( CVar "$df$$let$2$0" )
+                ( CVar "$df$$let$3$0" )
                 [ CVar "b"
                 , CVar "n"
                 , CVar "s"
@@ -34,7 +65,7 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$3" )
+                ( CVar "$let$4" )
                 [ CCall
                     ( CVar "threeTypes" )
                     [ CIntLit 42 TInt32
@@ -43,28 +74,32 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$1" [ "x" ]
+        , CFunDef "$lam$2" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$let$3" [ "res" ]
+        , CFunDef "$let$4" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )
-        , CFunDef "$df$$let$2$0"
+        , CFunDef "$df$$let$3$0"
             [ "b"
             , "n"
             , "s"
@@ -76,7 +111,7 @@ CoreProgram
                         [ CCall
                             ( CBuiltIn "showInt32" )
                             [ CCall
-                                ( CVar "$lam$1" )
+                                ( CVar "$lam$2" )
                                 [ CVar "n" ]
                             ]
                         , CString "/"
@@ -98,7 +133,7 @@ CoreProgram
                                 ( CBuiltIn "concatString" )
                                 [ CVar "s0"
                                 , CCall
-                                    ( CVar "$lam$1" )
+                                    ( CVar "$lam$2" )
                                     [ CVar "s" ]
                                 ]
                             ]
@@ -137,7 +172,7 @@ CoreProgram
                                             , CCall
                                                 ( CVar "showTri" )
                                                 [ CCall
-                                                    ( CVar "$lam$1" )
+                                                    ( CVar "$lam$2" )
                                                     [ CVar "b" ]
                                                 ]
                                             ]

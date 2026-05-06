@@ -17,7 +17,7 @@ Program
                 { spanStartLine = 12
                 , spanStartCol = 1
                 , spanEndLine = 12
-                , spanEndCol = 94
+                , spanEndCol = 100
                 }
             ) "main"
             ( TyArrow
@@ -25,7 +25,7 @@ Program
                     { spanStartLine = 12
                     , spanStartCol = 8
                     , spanEndLine = 12
-                    , spanEndCol = 73
+                    , spanEndCol = 79
                     }
                 )
                 ( TyApp
@@ -96,24 +96,42 @@ Program
                         { spanStartLine = 12
                         , spanStartCol = 66
                         , spanEndLine = 12
-                        , spanEndCol = 73
+                        , spanEndCol = 79
                         }
                     )
-                    ( TyCon
+                    ( TyApp
                         ( SrcSpan
                             { spanStartLine = 12
                             , spanStartCol = 66
                             , spanEndLine = 12
-                            , spanEndCol = 68
+                            , spanEndCol = 74
                             }
-                        ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 66
+                                , spanEndLine = 12
+                                , spanEndCol = 68
+                                }
+                            ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 69
+                                , spanEndLine = 12
+                                , spanEndCol = 74
+                                }
+                            ) "Never"
+                        )
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 12
-                            , spanStartCol = 69
+                            , spanStartCol = 75
                             , spanEndLine = 12
-                            , spanEndCol = 73
+                            , spanEndCol = 79
                             }
                         ) "Unit"
                     )

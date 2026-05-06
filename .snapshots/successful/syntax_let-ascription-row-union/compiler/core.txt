@@ -4,6 +4,37 @@ CoreProgram
             ( CCon 1
                 [ CVar "x" ]
             )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
         , CValDef "opA"
             ( CCon 1
                 [ CIntLit 1 TInt32 ]
@@ -14,7 +45,7 @@ CoreProgram
             )
         , CFunDef "main" [ "$wild0" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CCase
                     ( CVar "opA" )
                     [
@@ -50,7 +81,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$1" [ "res" ]
+        , CFunDef "$let$2" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -61,34 +92,41 @@ CoreProgram
                         [
                             ( 2252990199
                             , "__rw"
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CString "ERR_A" ]
+                            , CCon 2
+                                [ CString "ERR_A"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ,
                             ( 2269767818
                             , "__rw"
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CString "ERR_B" ]
+                            , CCon 2
+                                [ CString "ERR_B"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ,
                             ( 2448244154
                             , "__rw"
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CString "PARSE_ERROR" ]
+                            , CCon 2
+                                [ CString "PARSE_ERROR"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ]
                     )
                 ,
                     ( 1
                     , [ "n" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
+                    , CCon 2
                         [ CCall
                             ( CBuiltIn "showInt32" )
                             [ CVar "n" ]
+                        , CCon 0
+                            [ CCon 0 [] ]
                         ]
                     )
                 ]

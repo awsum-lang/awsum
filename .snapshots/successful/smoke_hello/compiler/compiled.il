@@ -24,11 +24,60 @@
 
   .method private hidebysig static object __print(object) cil managed
   {
+    .maxstack 4
     ldarg.0
     call void [System.Console]System.Console::Write(object)
-    ldnull
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
     ret
   }
+
+  .method private hidebysig static object v_runIO(object) cil managed
+  {
+  IL_tco_loop:
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_2)
+  IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    ret
+  IL_tco_arm_2:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    dup
+    ldc.i4.2
+    ldelem.ref
+    stloc.1
+    pop
+    ldloc.0
+    call object AwsumMain::__print(object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0)
+  IL_tco_arm_0:
+    pop
+    ldloc.1
+    starg.s 0
+    br IL_tco_loop
+  }
+
 
   .method private hidebysig static object v_main(object) cil managed
   {
@@ -64,10 +113,10 @@
     pop
     ldloc.0
     call object AwsumMain::v_addGreeting(object)
-    call object AwsumMain::v__lift_1(object)
+    call object AwsumMain::v__lift_2(object)
     br.s IL_join
   IL_join:
-    call object AwsumMain::v__let_2(object)
+    call object AwsumMain::v__let_3(object)
     ret
   }
 
@@ -186,7 +235,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_1(object) cil managed
+  .method private hidebysig static object v__lift_2(object) cil managed
   {
     ldarg.0
     dup
@@ -245,7 +294,7 @@
   }
 
 
-  .method private hidebysig static object v__let_2(object) cil managed
+  .method private hidebysig static object v__let_3(object) cil managed
   {
     ldarg.0
     dup
@@ -271,8 +320,37 @@
     ldelem.ref
     stloc.1
     pop
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.2
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "UNPAIRED_UTF16_SURROGATE"
-    call object AwsumMain::__print(object)
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stelem.ref
+    stelem.ref
     br.s IL_join
   IL_arm_589989748:
     dup
@@ -280,8 +358,37 @@
     ldelem.ref
     stloc.1
     pop
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.2
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "STRING_TOO_LONG"
-    call object AwsumMain::__print(object)
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stelem.ref
+    stelem.ref
     br.s IL_join
   IL_join:
     br.s IL_join
@@ -291,8 +398,37 @@
     ldelem.ref
     stloc.0
     pop
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.2
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldloc.0
-    call object AwsumMain::__print(object)
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stelem.ref
+    stelem.ref
     br.s IL_join
   IL_join:
     ret
@@ -329,6 +465,7 @@
     ldloc.0
     stelem.ref
     call object AwsumMain::v_main(object)
+    call object AwsumMain::v_runIO(object)
     pop
     ret
   }

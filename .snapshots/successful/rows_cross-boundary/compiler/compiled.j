@@ -23,13 +23,67 @@
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
-  aconst_null
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
   areturn
 .end method
 
 .method static v_showUnit(Ljava/lang/Object;)Ljava/lang/Object;
   ldc "Unit"
   areturn
+.end method
+
+
+.method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    2: L_tco_arm_2
+    default: L_tco_arm_0
+L_tco_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  aload_1
+  areturn
+L_tco_arm_2:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  dup
+  iconst_2
+  aaload
+  astore_2
+  pop
+  aload_1
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    default: L_tco_arm_0
+L_tco_arm_0:
+  pop
+  aload_2
+  astore_0
+  goto L_tco_loop
 .end method
 
 
@@ -444,7 +498,7 @@ L_join:
 
 .method static v_summary()Ljava/lang/Object;
   invokestatic AwsumMain/v_defaultJust()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_2(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_describeMaybe(Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -480,7 +534,7 @@ L_arm_1:
   astore_0
   pop
   invokestatic AwsumMain/v_defaultBools()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_describeLst(Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -516,7 +570,7 @@ L_arm_1:
   astore_1
   pop
   invokestatic AwsumMain/v_defaultRight()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_4(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_describeEither(Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -720,67 +774,24 @@ L_join:
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_summary()Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_4(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  dup
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
-  pop
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  goto L_join
-L_arm_1:
-  dup
-  iconst_1
-  aaload
-  astore_1
-  pop
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  sipush 796142685
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_1
-  aastore
-  aastore
-  goto L_join
-L_join:
+  invokestatic AwsumMain/v__let_5(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v__lift_2(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  pop
   iconst_1
   anewarray java/lang/Object
   dup
@@ -788,12 +799,55 @@ L_join:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__lift_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_arm_1:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  sipush 796142685
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  aastore
+  goto L_join
+L_join:
   areturn
 .end method
 
 
-.method static v__cps__lift_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  invokestatic AwsumMain/v__cps__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method static v__cps__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -815,7 +869,7 @@ L_tco_arm_0:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__apply__lift_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tco_arm_1:
   dup
@@ -849,7 +903,7 @@ L_tco_arm_1:
 .end method
 
 
-.method static v__apply__lift_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply__lift_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -907,7 +961,7 @@ L_tco_arm_1:
 .end method
 
 
-.method static v__lift_3(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_4(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -952,7 +1006,7 @@ L_arm_1:
   dup
   iconst_1
   aload_1
-  invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_2(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   goto L_join
 L_join:
@@ -960,7 +1014,7 @@ L_join:
 .end method
 
 
-.method static v__let_4(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_5(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -977,8 +1031,37 @@ L_arm_0:
   aaload
   astore_1
   pop
+  iconst_3
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_2
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
   ldc "STRING_TOO_LONG"
-  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  aastore
+  dup
+  iconst_2
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  aastore
+  aastore
   goto L_join
 L_arm_1:
   dup
@@ -986,8 +1069,37 @@ L_arm_1:
   aaload
   astore_1
   pop
+  iconst_3
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_2
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
   aload_1
-  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  aastore
+  dup
+  iconst_2
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  aastore
+  aastore
   goto L_join
 L_join:
   areturn
@@ -1028,6 +1140,7 @@ call_main:
   aload_1
   aastore
   invokestatic AwsumMain/v_main(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop
   return
 .end method

@@ -1,0 +1,299 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CVar "$df$bindIO$0" )
+                [ CCall
+                    ( CVar "$lift$2" )
+                    [ CCon 2
+                        [ CString "a"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    ]
+                ]
+            )
+        , CFunDef "$lift$1" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$1" )
+                [ CVar "__input"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$lift$1"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 0
+                        , [ "__f0" ]
+                        , CCall
+                            ( CVar "$apply$$lift$1" )
+                            [ CVar "$k"
+                            , CCon 0
+                                [ CVar "__f0" ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , [ "__f0" ]
+                        , CCall
+                            ( CVar "$apply$$lift$1" )
+                            [ CVar "$k"
+                            , CCon 1
+                                [ CVar "__f0" ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CContinue
+                            [ CVar "__f1"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "__f0"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$1"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "__f0"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCon 2
+                                [ CVar "__f0"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$lift$2" [ "__input" ]
+            ( CCall
+                ( CVar "$cps$$lift$2" )
+                [ CVar "__input"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$lift$2"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
+                    [
+                        ( 0
+                        , [ "__f0" ]
+                        , CCall
+                            ( CVar "$apply$$lift$2" )
+                            [ CVar "$k"
+                            , CCon 0
+                                [ CVar "__f0" ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , [ "__f0" ]
+                        , CCall
+                            ( CVar "$apply$$lift$2" )
+                            [ CVar "$k"
+                            , CCon 1
+                                [ CVar "__f0" ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CContinue
+                            [ CVar "__f1"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "__f0"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$lift$2"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "__f0"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCon 2
+                                [ CVar "__f0"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$lam$3" [ "_u" ]
+            ( CCon 2
+                [ CString "b"
+                , CCon 0
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$df$bindIO$0" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$bindIO$0" )
+                [ CVar "io"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$df$bindIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$bindIO$0" )
+                            [ CVar "$k"
+                            , CCall
+                                ( CVar "$lift$1" )
+                                [ CCall
+                                    ( CVar "$lam$3" )
+                                    [ CVar "a" ]
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$bindIO$0" )
+                            [ CVar "$k"
+                            , CCon 1
+                                [ CVar "e" ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CContinue
+                            [ CVar "next"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "s"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$bindIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "s"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCon 2
+                                [ CVar "s"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        ]
+    }

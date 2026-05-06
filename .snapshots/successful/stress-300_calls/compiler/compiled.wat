@@ -11,8 +11,8 @@
   (data (i32.const 64) "\00")
   (data (i32.const 65) "True\00")
   (data (i32.const 70) "False\00")
-  (table 303 funcref)
-  (elem (i32.const 0) $v_and $v_showBool $v_main $v_f1 $v_f2 $v_f3 $v_f4 $v_f5 $v_f6 $v_f7 $v_f8 $v_f9 $v_f10 $v_f11 $v_f12 $v_f13 $v_f14 $v_f15 $v_f16 $v_f17 $v_f18 $v_f19 $v_f20 $v_f21 $v_f22 $v_f23 $v_f24 $v_f25 $v_f26 $v_f27 $v_f28 $v_f29 $v_f30 $v_f31 $v_f32 $v_f33 $v_f34 $v_f35 $v_f36 $v_f37 $v_f38 $v_f39 $v_f40 $v_f41 $v_f42 $v_f43 $v_f44 $v_f45 $v_f46 $v_f47 $v_f48 $v_f49 $v_f50 $v_f51 $v_f52 $v_f53 $v_f54 $v_f55 $v_f56 $v_f57 $v_f58 $v_f59 $v_f60 $v_f61 $v_f62 $v_f63 $v_f64 $v_f65 $v_f66 $v_f67 $v_f68 $v_f69 $v_f70 $v_f71 $v_f72 $v_f73 $v_f74 $v_f75 $v_f76 $v_f77 $v_f78 $v_f79 $v_f80 $v_f81 $v_f82 $v_f83 $v_f84 $v_f85 $v_f86 $v_f87 $v_f88 $v_f89 $v_f90 $v_f91 $v_f92 $v_f93 $v_f94 $v_f95 $v_f96 $v_f97 $v_f98 $v_f99 $v_f100 $v_f101 $v_f102 $v_f103 $v_f104 $v_f105 $v_f106 $v_f107 $v_f108 $v_f109 $v_f110 $v_f111 $v_f112 $v_f113 $v_f114 $v_f115 $v_f116 $v_f117 $v_f118 $v_f119 $v_f120 $v_f121 $v_f122 $v_f123 $v_f124 $v_f125 $v_f126 $v_f127 $v_f128 $v_f129 $v_f130 $v_f131 $v_f132 $v_f133 $v_f134 $v_f135 $v_f136 $v_f137 $v_f138 $v_f139 $v_f140 $v_f141 $v_f142 $v_f143 $v_f144 $v_f145 $v_f146 $v_f147 $v_f148 $v_f149 $v_f150 $v_f151 $v_f152 $v_f153 $v_f154 $v_f155 $v_f156 $v_f157 $v_f158 $v_f159 $v_f160 $v_f161 $v_f162 $v_f163 $v_f164 $v_f165 $v_f166 $v_f167 $v_f168 $v_f169 $v_f170 $v_f171 $v_f172 $v_f173 $v_f174 $v_f175 $v_f176 $v_f177 $v_f178 $v_f179 $v_f180 $v_f181 $v_f182 $v_f183 $v_f184 $v_f185 $v_f186 $v_f187 $v_f188 $v_f189 $v_f190 $v_f191 $v_f192 $v_f193 $v_f194 $v_f195 $v_f196 $v_f197 $v_f198 $v_f199 $v_f200 $v_f201 $v_f202 $v_f203 $v_f204 $v_f205 $v_f206 $v_f207 $v_f208 $v_f209 $v_f210 $v_f211 $v_f212 $v_f213 $v_f214 $v_f215 $v_f216 $v_f217 $v_f218 $v_f219 $v_f220 $v_f221 $v_f222 $v_f223 $v_f224 $v_f225 $v_f226 $v_f227 $v_f228 $v_f229 $v_f230 $v_f231 $v_f232 $v_f233 $v_f234 $v_f235 $v_f236 $v_f237 $v_f238 $v_f239 $v_f240 $v_f241 $v_f242 $v_f243 $v_f244 $v_f245 $v_f246 $v_f247 $v_f248 $v_f249 $v_f250 $v_f251 $v_f252 $v_f253 $v_f254 $v_f255 $v_f256 $v_f257 $v_f258 $v_f259 $v_f260 $v_f261 $v_f262 $v_f263 $v_f264 $v_f265 $v_f266 $v_f267 $v_f268 $v_f269 $v_f270 $v_f271 $v_f272 $v_f273 $v_f274 $v_f275 $v_f276 $v_f277 $v_f278 $v_f279 $v_f280 $v_f281 $v_f282 $v_f283 $v_f284 $v_f285 $v_f286 $v_f287 $v_f288 $v_f289 $v_f290 $v_f291 $v_f292 $v_f293 $v_f294 $v_f295 $v_f296 $v_f297 $v_f298 $v_f299 $v_f300)
+  (table 304 funcref)
+  (elem (i32.const 0) $v_and $v_runIO $v_showBool $v_main $v_f1 $v_f2 $v_f3 $v_f4 $v_f5 $v_f6 $v_f7 $v_f8 $v_f9 $v_f10 $v_f11 $v_f12 $v_f13 $v_f14 $v_f15 $v_f16 $v_f17 $v_f18 $v_f19 $v_f20 $v_f21 $v_f22 $v_f23 $v_f24 $v_f25 $v_f26 $v_f27 $v_f28 $v_f29 $v_f30 $v_f31 $v_f32 $v_f33 $v_f34 $v_f35 $v_f36 $v_f37 $v_f38 $v_f39 $v_f40 $v_f41 $v_f42 $v_f43 $v_f44 $v_f45 $v_f46 $v_f47 $v_f48 $v_f49 $v_f50 $v_f51 $v_f52 $v_f53 $v_f54 $v_f55 $v_f56 $v_f57 $v_f58 $v_f59 $v_f60 $v_f61 $v_f62 $v_f63 $v_f64 $v_f65 $v_f66 $v_f67 $v_f68 $v_f69 $v_f70 $v_f71 $v_f72 $v_f73 $v_f74 $v_f75 $v_f76 $v_f77 $v_f78 $v_f79 $v_f80 $v_f81 $v_f82 $v_f83 $v_f84 $v_f85 $v_f86 $v_f87 $v_f88 $v_f89 $v_f90 $v_f91 $v_f92 $v_f93 $v_f94 $v_f95 $v_f96 $v_f97 $v_f98 $v_f99 $v_f100 $v_f101 $v_f102 $v_f103 $v_f104 $v_f105 $v_f106 $v_f107 $v_f108 $v_f109 $v_f110 $v_f111 $v_f112 $v_f113 $v_f114 $v_f115 $v_f116 $v_f117 $v_f118 $v_f119 $v_f120 $v_f121 $v_f122 $v_f123 $v_f124 $v_f125 $v_f126 $v_f127 $v_f128 $v_f129 $v_f130 $v_f131 $v_f132 $v_f133 $v_f134 $v_f135 $v_f136 $v_f137 $v_f138 $v_f139 $v_f140 $v_f141 $v_f142 $v_f143 $v_f144 $v_f145 $v_f146 $v_f147 $v_f148 $v_f149 $v_f150 $v_f151 $v_f152 $v_f153 $v_f154 $v_f155 $v_f156 $v_f157 $v_f158 $v_f159 $v_f160 $v_f161 $v_f162 $v_f163 $v_f164 $v_f165 $v_f166 $v_f167 $v_f168 $v_f169 $v_f170 $v_f171 $v_f172 $v_f173 $v_f174 $v_f175 $v_f176 $v_f177 $v_f178 $v_f179 $v_f180 $v_f181 $v_f182 $v_f183 $v_f184 $v_f185 $v_f186 $v_f187 $v_f188 $v_f189 $v_f190 $v_f191 $v_f192 $v_f193 $v_f194 $v_f195 $v_f196 $v_f197 $v_f198 $v_f199 $v_f200 $v_f201 $v_f202 $v_f203 $v_f204 $v_f205 $v_f206 $v_f207 $v_f208 $v_f209 $v_f210 $v_f211 $v_f212 $v_f213 $v_f214 $v_f215 $v_f216 $v_f217 $v_f218 $v_f219 $v_f220 $v_f221 $v_f222 $v_f223 $v_f224 $v_f225 $v_f226 $v_f227 $v_f228 $v_f229 $v_f230 $v_f231 $v_f232 $v_f233 $v_f234 $v_f235 $v_f236 $v_f237 $v_f238 $v_f239 $v_f240 $v_f241 $v_f242 $v_f243 $v_f244 $v_f245 $v_f246 $v_f247 $v_f248 $v_f249 $v_f250 $v_f251 $v_f252 $v_f253 $v_f254 $v_f255 $v_f256 $v_f257 $v_f258 $v_f259 $v_f260 $v_f261 $v_f262 $v_f263 $v_f264 $v_f265 $v_f266 $v_f267 $v_f268 $v_f269 $v_f270 $v_f271 $v_f272 $v_f273 $v_f274 $v_f275 $v_f276 $v_f277 $v_f278 $v_f279 $v_f280 $v_f281 $v_f282 $v_f283 $v_f284 $v_f285 $v_f286 $v_f287 $v_f288 $v_f289 $v_f290 $v_f291 $v_f292 $v_f293 $v_f294 $v_f295 $v_f296 $v_f297 $v_f298 $v_f299 $v_f300)
 
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -61,11 +61,14 @@
 
   (func $__print (param $s i32) (result i32)
     (local $len i32)
+    (local $unit i32)
     (local.set $len (call $__strlen (local.get $s)))
     (i32.store (i32.const 0) (local.get $s))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
-    (i32.const 0))
+    (local.set $unit (call $__alloc (i32.const 4)))
+    (i32.store (local.get $unit) (i32.const 0))
+    (local.get $unit))
 
 
   (func $__get_arg (result i32)
@@ -84,13 +87,23 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_a)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v_b)) (else (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))))
 
+  (func $v_runIO (param $v_io i32) (result i32)
+    (local $v_next i32)
+    (local $v_s i32)
+    (local $v_u i32)
+    (local $__scrut i32)
+    (local $__k0 i32)
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
+
   (func $v_showBool (param $v_b i32) (result i32)
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 70)))))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
-    (call $__print (call $v_showBool (call $v_f1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))))
+    (local $__con_1 i32)
+    (local $__con_2 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (call $v_showBool (call $v_f1 (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_1))))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
 
   (func $v_f1 (param $v_acc i32) (result i32)
     (local $__con_0 i32)
@@ -1299,6 +1312,6 @@
     (local.set $right_box (call $__alloc (i32.const 8)))
     (i32.store (local.get $right_box) (i32.const 1))
     (i32.store offset=4 (local.get $right_box) (local.get $input))
-    (drop (call $v_main (local.get $right_box))))
+    (drop (call $v_runIO (call $v_main (local.get $right_box)))))
 
 )

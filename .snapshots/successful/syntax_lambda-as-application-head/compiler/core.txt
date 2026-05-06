@@ -1,26 +1,58 @@
 CoreProgram
     { cdecls =
-        [ CValDef "runMe"
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "runMe"
             ( CCall
-                ( CVar "$lam$1" )
+                ( CVar "$lam$2" )
                 [ CIntLit 5 TInt32 ]
             )
         , CValDef "doubled"
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$3" )
                 [ CVar "runMe" ]
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+            ( CCon 2
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CVar "doubled" ]
+                , CCon 0
+                    [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$1" [ "x" ]
+        , CFunDef "$lam$2" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$lam$2" [ "n" ]
+        , CFunDef "$lam$3" [ "n" ]
             ( CVar "n" )
         ]
     }

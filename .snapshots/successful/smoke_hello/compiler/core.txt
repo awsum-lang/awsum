@@ -1,8 +1,39 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "inputArg" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "main" [ "inputArg" ]
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$3" )
                 [ CCase
                     ( CVar "inputArg" )
                     [
@@ -15,7 +46,7 @@ CoreProgram
                         ( 1
                         , [ "input" ]
                         , CCall
-                            ( CVar "$lift$1" )
+                            ( CVar "$lift$2" )
                             [ CCall
                                 ( CVar "addGreeting" )
                                 [ CVar "input" ]
@@ -75,7 +106,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$1" [ "__input" ]
+        , CFunDef "$lift$2" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -94,7 +125,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$3" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -105,25 +136,31 @@ CoreProgram
                         [
                             ( 502975519
                             , "__rw"
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CString "UNPAIRED_UTF16_SURROGATE" ]
+                            , CCon 2
+                                [ CString "UNPAIRED_UTF16_SURROGATE"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ,
                             ( 589989748
                             , "__rw"
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CString "STRING_TOO_LONG" ]
+                            , CCon 2
+                                [ CString "STRING_TOO_LONG"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )

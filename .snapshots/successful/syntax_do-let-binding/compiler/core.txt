@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "step1" [ "n" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "step1" [ "n" ]
             ( CCase
                 ( CCall
                     ( CBuiltIn "addInt32" )
@@ -62,7 +93,7 @@ CoreProgram
                     ( 1
                     , [ "a" ]
                     , CCall
-                        ( CVar "$let$1" )
+                        ( CVar "$let$2" )
                         [ CVar "a"
                         , CString "answer="
                         ]
@@ -108,29 +139,35 @@ CoreProgram
                         [
                             ( 0
                             , [ "__w0" ]
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CString "STRING_TOO_LONG" ]
+                            , CCon 2
+                                [ CString "STRING_TOO_LONG"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ,
                             ( 1
                             , [ "out" ]
-                            , CCall
-                                ( CBuiltIn "IO.Stdout.print" )
-                                [ CVar "out" ]
+                            , CCon 2
+                                [ CVar "out"
+                                , CCon 0
+                                    [ CCon 0 [] ]
+                                ]
                             )
                         ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )
-        , CFunDef "$let$1"
+        , CFunDef "$let$2"
             [ "a"
             , "prefix"
             ]

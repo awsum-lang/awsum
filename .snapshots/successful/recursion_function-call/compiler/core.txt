@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "advanceStep" [ "x" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "advanceStep" [ "x" ]
             ( CLoop
                 ( CCase
                     ( CVar "x" )
@@ -25,10 +56,11 @@ CoreProgram
                 )
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+            ( CCon 2
                 [ CCall
                     ( CVar "advanceStep" )
+                    [ CCon 0 [] ]
+                , CCon 0
                     [ CCon 0 [] ]
                 ]
             )
