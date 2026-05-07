@@ -623,6 +623,20 @@ instance Arbitrary Utf16TripleNoColon where
     where
       genUtf16NoColon = toText <$> listOf (genValidUtf16Char `QC.suchThat` (/= ':'))
 
+-- | Pair of any-valid-UTF-16 strings, colon-excluded for the same
+--   reason as 'Utf16TripleNoColon': the additive-length property
+--   encodes the pair as @"a:b"@ in @argv[1]@ and splits on ':' inside
+--   Awsum.
+newtype Utf16PairNoColon = Utf16PairNoColon (Text, Text) deriving stock (Show)
+
+instance Arbitrary Utf16PairNoColon where
+  arbitrary = do
+    a <- genUtf16NoColon
+    b <- genUtf16NoColon
+    pure (Utf16PairNoColon (a, b))
+    where
+      genUtf16NoColon = toText <$> listOf (genValidUtf16Char `QC.suchThat` (/= ':'))
+
 -- | (sep, a, b): sep ∈ [A-Z]+, a, b ∈ [a-z]*.
 --   Disjoint alphabets ⇒ neither a nor b can contain sep as a substring.
 newtype SplitRoundtripCase = SplitRoundtripCase (Text, Text, Text) deriving stock (Show)
@@ -729,6 +743,7 @@ properties =
     SomeProperty splitOnFirstRoundtripNegativeProp,
     -- ── String length (three explicit functions) ──
     SomeProperty lengthsThreeFunctionsProp,
+    SomeProperty concatLengthAdditiveProp,
     -- ── Boolean laws ──
     SomeProperty notInvolutiveProp,
     SomeProperty andCommutativeProp,
@@ -1277,6 +1292,30 @@ lengthsThreeFunctionsProp =
           <> show (lengthUtf16CodeUnitsHs s)
           <> ":"
           <> show (lengthUtf8BytesHs s)
+    }
+
+-- | All three string-length functions are additive under @(++)@: the
+--   length of @a ++ b@ equals the sum of the individual lengths, in
+--   each of the three units. Awsum prints @cp:cu:b@ computed from
+--   @a ++ b@ on the @Right@ path; Haskell computes the same triple
+--   from @T.append a b@. A backend whose @__concat@ produced a buffer
+--   of wrong size, or which miscounted at the join when one operand
+--   ends in a high surrogate and the other starts in a low surrogate,
+--   would diverge from at least one peer and from the oracle.
+concatLengthAdditiveProp :: Property Utf16PairNoColon
+concatLengthAdditiveProp =
+  Property
+    { propName = "concat-length-additive",
+      propSourceDir = "concat-length-additive",
+      propGen = arbitrary,
+      propEncode = \(Utf16PairNoColon (a, b)) -> a <> ":" <> b,
+      propExpectedOutput = \(Utf16PairNoColon (a, b)) ->
+        let ab = a <> b
+         in show (lengthCodePointsHs ab)
+              <> ":"
+              <> show (lengthUtf16CodeUnitsHs ab)
+              <> ":"
+              <> show (lengthUtf8BytesHs ab)
     }
 
 -- ── Boolean laws ──
