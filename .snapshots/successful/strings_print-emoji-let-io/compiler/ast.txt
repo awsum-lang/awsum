@@ -1,0 +1,235 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Lazy IO: an `IO` value bound by `let` but never reached by `runIO`
+               produces no output. Output: `🔥`, not `💩🔥`. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 5
+            , spanStartCol = 1
+            , spanEndLine = 5
+            , spanEndCol = 79
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 8
+                , spanEndLine = 5
+                , spanEndCol = 79
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 8
+                    , spanEndLine = 5
+                    , spanEndCol = 62
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 8
+                        , spanEndLine = 5
+                        , spanEndCol = 56
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 8
+                            , spanEndLine = 5
+                            , spanEndCol = 14
+                            }
+                        ) "Either"
+                    )
+                    ( TyOr
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 15
+                            , spanEndLine = 5
+                            , spanEndCol = 56
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 16
+                                , spanEndLine = 5
+                                , spanEndCol = 29
+                                }
+                            ) "StringTooLong"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 5
+                                , spanStartCol = 32
+                                , spanEndLine = 5
+                                , spanEndCol = 54
+                                }
+                            ) "UnpairedUtf16Surrogate"
+                        )
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 56
+                        , spanEndLine = 5
+                        , spanEndCol = 62
+                        }
+                    ) "String"
+                )
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 66
+                    , spanEndLine = 5
+                    , spanEndCol = 79
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 66
+                        , spanEndLine = 5
+                        , spanEndCol = 74
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 66
+                            , spanEndLine = 5
+                            , spanEndCol = 68
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 5
+                            , spanStartCol = 69
+                            , spanEndLine = 5
+                            , spanEndCol = 74
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 75
+                        , spanEndLine = 5
+                        , spanEndCol = 79
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 27
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 6
+                    , spanEndLine = 6
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( ELet
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 7
+                    , spanEndLine = 7
+                    , spanEndCol = 34
+                    }
+                )
+                ( PVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 7
+                        , spanEndLine = 7
+                        , spanEndCol = 11
+                        }
+                    ) "unit"
+                ) Nothing
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 14
+                        , spanEndLine = 7
+                        , spanEndCol = 34
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 14
+                            , spanEndLine = 7
+                            , spanEndCol = 30
+                            }
+                        )
+                        ( QName
+                            [ "IO"
+                            , "Stdout"
+                            ] "print"
+                        )
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 30
+                            , spanEndLine = 7
+                            , spanEndCol = 34
+                            }
+                        )
+                        ( LString "💩" )
+                    )
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 7
+                        , spanEndLine = 8
+                        , spanEndCol = 27
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 7
+                            , spanEndLine = 8
+                            , spanEndCol = 23
+                            }
+                        )
+                        ( QName
+                            [ "IO"
+                            , "Stdout"
+                            ] "print"
+                        )
+                    )
+                    ( ELit
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 23
+                            , spanEndLine = 8
+                            , spanEndCol = 27
+                            }
+                        )
+                        ( LString "🔥" )
+                    )
+                )
+            ) Nothing
+        ]
+    }

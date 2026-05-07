@@ -17,5 +17,5 @@ apply f x = f x
 compose : (b -> c) -> (a -> b) -> a -> c
 compose f g x = f (g x)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (apply (compose unwrap wrap) "chain")

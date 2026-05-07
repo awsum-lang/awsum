@@ -1,9 +1,42 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "_input" ]
-            ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
-                [ CString "🔥" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCon 2
+                [ CString "🔥"
+                , CCon 0
+                    [ CCon 0 [] ]
+                ]
             )
         ]
     }

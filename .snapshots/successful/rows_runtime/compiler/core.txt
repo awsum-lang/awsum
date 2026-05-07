@@ -1,37 +1,64 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "describe" [ "x" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "describe" [ "x" ]
             ( CRowCase
                 ( CVar "x" )
                 [
                     ( 1615808600
                     , "s"
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "String "
-                            , CVar "s"
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "String "
+                        , CVar "s"
                         ]
                     )
                 ,
                     ( 2711245919
                     , "n"
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "Int32 "
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "n" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Int32 "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CCall
                     ( CVar "describe" )
                     [ CRow 1615808600
@@ -39,22 +66,26 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$1" [ "res" ]
+        , CFunDef "$let$2" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )

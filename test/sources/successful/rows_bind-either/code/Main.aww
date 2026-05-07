@@ -5,6 +5,7 @@
 import IO.Stdout
 
 type ErrA = ErrA
+
 type ErrB = ErrB
 
 opA : Int32 -> Either ErrA Int32
@@ -25,7 +26,7 @@ describe r = case r of
     (_ : ErrB) -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = describe (run 5)
    in case res of

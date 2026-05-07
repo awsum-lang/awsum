@@ -1,13 +1,11 @@
 {- Uninhabited type as `Err` branch; exhaustiveness skips empty constructors. -}
 import IO.Stdout
 
-type Never
-
 type Result a e = Ok a | Err e
 
 unwrap : Result String Never -> String
 unwrap r = case r of
   Ok value -> value
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (unwrap (Ok "hello"))

@@ -36,7 +36,7 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             gate (Set.member "concatString" builtIns) concatMethod,
             "",
-            gate (Set.member "IO.Stdout.print" builtIns) printMethod,
+            gate (Set.member "internalStdoutPrint" builtIns) printMethod,
             "",
             gate (Set.member "predInt32" builtIns) predInt32Method,
             "",
@@ -139,26 +139,103 @@ initMethod =
       "  }"
     ]
 
+-- | __concat: implements 'BuiltIn.concatString'. Pre-checks the combined
+--   UTF-16 length of both inputs against the language-fixed cap; returns
+--   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise. The cap
+--   value (134217728 = 2^27) must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+--   System.String::get_Length() returns UTF-16 code units (CLR strings
+--   are UTF-16 natively), so the check unit matches the language-level
+--   cap directly. Both lengths are widened to int64 before summing to
+--   stay defensive against any input that overshoots the invariant.
 concatMethod :: Text
 concatMethod =
   unlines
     [ "  .method private hidebysig static object __concat(object, object) cil managed",
       "  {",
+      "    .maxstack 5",
+      "    .locals init (object V_0)",
+      -- UTF-16 length of arg 0 (widened to i8).
+      "    ldarg.0",
+      "    castclass [System.Runtime]System.String",
+      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+      "    conv.i8",
+      -- UTF-16 length of arg 1 (widened to i8).
+      "    ldarg.1",
+      "    castclass [System.Runtime]System.String",
+      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+      "    conv.i8",
+      "    add",
+      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
+      -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+      -- 'stdlib/Prelude.aww'.
+      "    ldc.i8 134217728",
+      "    bgt.un IL_concat_too_long",
+      -- Length OK: do String.Concat and wrap in Right.
       "    ldarg.0",
       "    ldarg.1",
       "    call string [System.Runtime]System.String::Concat(object, object)",
+      "    stloc.0",
+      -- Build Right(result): object[2] = [box(1), result]
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.1",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    stelem.ref",
+      "    ret",
+      "  IL_concat_too_long:",
+      -- StringTooLong cell: object[1] = [box(0)]
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    stloc.0",
+      -- Left cell: object[2] = [box(0), StringTooLong cell]
+      "    ldc.i4.2",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
+      "    dup",
+      "    ldc.i4.1",
+      "    ldloc.0",
+      "    stelem.ref",
       "    ret",
       "  }"
     ]
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (object[1] = [boxed Int32 0]) so the surrounding `case … of Unit
+--   -> next` arm in `runIO` dispatches through the standard CCase
+--   tag check.
 printMethod :: Text
 printMethod =
   unlines
     [ "  .method private hidebysig static object __print(object) cil managed",
       "  {",
+      "    .maxstack 4",
       "    ldarg.0",
       "    call void [System.Console]System.Console::Write(object)",
-      "    ldnull",
+      -- Build Unit value: object[1] = [boxed Int32 0]
+      "    ldc.i4.1",
+      "    newarr [System.Runtime]System.Object",
+      "    dup",
+      "    ldc.i4.0",
+      "    ldc.i4.0",
+      "    box [System.Runtime]System.Int32",
+      "    stelem.ref",
       "    ret",
       "  }"
     ]
@@ -1747,6 +1824,10 @@ mainMethod =
       "    ldloc.0",
       "    stelem.ref",
       "    call object AwsumMain::" <> mangle "main" <> "(object)",
+      -- Hand the IO tree to `runIO`, which walks it and performs the
+      -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns
+      -- Unit; we discard it.
+      "    call object AwsumMain::" <> mangle "runIO" <> "(object)",
       "    pop",
       "    ret",
       "  }"
@@ -1897,7 +1978,7 @@ emitExprText ctx varMap = \case
           <> ["  " <> joinLabel <> ":"]
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             T.intercalate
               "\n"

@@ -14,41 +14,124 @@
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
-  aconst_null
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
   areturn
 .end method
+
+.method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
+L_tco_loop:
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    2: L_tco_arm_2
+    default: L_tco_arm_0
+L_tco_arm_0:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  aload_1
+  areturn
+L_tco_arm_2:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  dup
+  iconst_2
+  aaload
+  astore_2
+  pop
+  aload_1
+  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_tco_arm_0
+    default: L_tco_arm_0
+L_tco_arm_0:
+  pop
+  aload_2
+  astore_0
+  goto L_tco_loop
+.end method
+
 
 .method static v_runMe()Ljava/lang/Object;
   iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_2(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v_doubled()Ljava/lang/Object;
   invokestatic AwsumMain/v_runMe()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lam_2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_3(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_3
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_2
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
   invokestatic AwsumMain/v_doubled()Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
-  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  areturn
-.end method
-
-
-.method static v__lam_1(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
+  aastore
+  dup
+  iconst_2
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  aastore
+  aastore
   areturn
 .end method
 
 
 .method static v__lam_2(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  areturn
+.end method
+
+
+.method static v__lam_3(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
@@ -88,6 +171,7 @@ call_main:
   aload_1
   aastore
   invokestatic AwsumMain/v_main(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop
   return
 .end method

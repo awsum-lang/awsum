@@ -15,7 +15,7 @@ import IO.Stdout
 opMaybe : String -> Either ParseError (Maybe Int32)
 opMaybe _ = Right (Just 1)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = do
         raw <- rawArg

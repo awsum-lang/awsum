@@ -20,6 +20,30 @@ How the same Awsum program maps to each compilation target. All targets produce 
 | **Memory**                 | Manual (`malloc`, no `free`)                      | GC                                                                                                  | GC                                                                   | Bump allocator (no free)                                      | GC                                                          |
 | **Name mangling**          | `v_` prefix for all (including `main` → `v_main`) | `v_` prefix for all (including `main` → `v_main`)                                                   | `v_` prefix for all (including `main` → `v_main`)                    | `v_` prefix for all (`_start` is WASI entry)                  | `v_` prefix, `main` unchanged                               |
 
+## Maximum string length
+
+`maxStringLengthUtf16CodeUnits = 134217728` (`2^27`) UTF-16 code units, identical on every backend. Operations that would produce a longer string return `Left StringTooLong`. This is well below every backend's native cap — the binding constraint is **WASM-32's linear memory budget**, not the smallest UTF-16 runtime (V8's `String::kMaxLength = 536870888` is ~4× higher).
+
+**Why WASM-32 binds.** WASM-32 has a 4 GiB spec cap (`2^16` × 64 KiB pages), reduced to ~2–3 GiB practical by runtime overhead (V8/Wasmtime/Wasmer). UTF-16 code units expand into UTF-8 bytes at up to 3 bytes per code unit (BMP CJK content, the worst case). The cap is sized so that three concurrent demands on the WASM-32 budget all fit:
+
+- **`(++)` peak** — two inputs whose lengths sum to ≤ `2^27`, plus an output buffer of ≤ `2^27` code units, all alive simultaneously during the copy. Worst-case bytes: `6 × 2^27 = 2 GiB`.
+- **Multiple concurrent string values** — at the cap, ~5 max-length CJK strings fit in 2 GiB worst case (single string = `3 × 2^27 = 384 MiB`); for mixed/ASCII content the count is ~16 (single string = 128 MiB).
+- **Other program data** — runtime structures, intermediate buffers, user data: hundreds of MiB on a 3 GiB practical WASM-32 runtime.
+
+If the cap matched V8's 536870888, the `(++)` peak alone would be ~3 GiB — exceeding practical WASM-32 budget. A program would compile and run on LLVM/JVM/CLR/JS but OOM on WASM-32, breaking the cross-target identity invariant.
+
+**Per-backend native cap (UTF-16 code units), for reference:**
+
+| Backend     | Native cap                              | Headroom over `2^27` |
+| ----------- | --------------------------------------- | -------------------- |
+| LLVM-64     | RAM-bounded                             | unbounded            |
+| JVM         | `~2^31 − 8` (array header)              | ~16×                 |
+| CLR         | `~1.07 × 10^9` (`string` internal cap)  | ~8×                  |
+| JS / V8     | `536870888 = 2^29 − 24`                 | ~4×                  |
+| JS / SpiderMonkey | `~2^30`                            | ~8×                  |
+| JS / JSC    | `~2^31 − 1`                             | ~16×                 |
+| WASM-32     | 4 GiB linear memory (bytes)             | binding via UTF-8 expansion + (++) peak |
+
 ## String Concatenation
 
 All five backends guarantee identical results — the type checker ensures both operands are `String`.

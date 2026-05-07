@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CValDef "minUInt32"
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "minUInt32"
             ( CIntLit 0 TUInt32 )
         , CValDef "maxUInt32"
             ( CIntLit 4294967295 TUInt32 )
@@ -21,26 +52,24 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CVar "render" )
                             [ CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt32" )
-                                    [ CVar "minUInt32"
-                                    , CVar "minUInt32"
-                                    ]
+                                ( CBuiltIn "eqUInt32" )
+                                [ CVar "minUInt32"
+                                , CVar "minUInt32"
                                 ]
-                            , CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt32" )
-                                    [ CVar "maxUInt32"
-                                    , CVar "maxUInt32"
-                                    ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqUInt32" )
+                                [ CVar "maxUInt32"
+                                , CVar "maxUInt32"
                                 ]
                             ]
                         ]
@@ -55,17 +84,15 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "render" )
-                                        [ CCall
-                                            ( CBuiltIn "eqUInt32" )
-                                            [ CVar "maxUInt32"
-                                            , CVar "minUInt32"
-                                            ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "render" )
+                                    [ CCall
+                                        ( CBuiltIn "eqUInt32" )
+                                        [ CVar "maxUInt32"
+                                        , CVar "minUInt32"
                                         ]
                                     ]
                                 ]
@@ -80,17 +107,15 @@ CoreProgram
                                 ( 1
                                 , [ "s1" ]
                                 , CCase
-                                    ( CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s1"
-                                            , CCall
-                                                ( CVar "render" )
-                                                [ CCall
-                                                    ( CBuiltIn "eqUInt32" )
-                                                    [ CIntLit 2147483648 TUInt32
-                                                    , CIntLit 2147483648 TUInt32
-                                                    ]
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CCall
+                                            ( CVar "render" )
+                                            [ CCall
+                                                ( CBuiltIn "eqUInt32" )
+                                                [ CIntLit 2147483648 TUInt32
+                                                , CIntLit 2147483648 TUInt32
                                                 ]
                                             ]
                                         ]
@@ -104,17 +129,15 @@ CoreProgram
                                     ,
                                         ( 1
                                         , [ "s2" ]
-                                        , CCon 1
-                                            [ CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "s2"
-                                                , CCall
-                                                    ( CVar "render" )
-                                                    [ CCall
-                                                        ( CBuiltIn "eqUInt32" )
-                                                        [ CIntLit 2147483648 TUInt32
-                                                        , CIntLit 2147483647 TUInt32
-                                                        ]
+                                        , CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "eqUInt32" )
+                                                    [ CIntLit 2147483648 TUInt32
+                                                    , CIntLit 2147483647 TUInt32
                                                     ]
                                                 ]
                                             ]
@@ -126,22 +149,26 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$1" [ "res" ]
+        , CFunDef "$let$2" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )

@@ -1,8 +1,37 @@
 "use strict";
 (function () {
-function __print(s){ process.stdout.write(String(s)); return undefined; }
+function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [0] : [1]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
+
+function v_runIO(v_io){
+  while (true) {
+    {
+      const __s = v_io;
+      switch (__s[0]) {
+        case 0: {
+          const v_u = __s[1];
+          return v_u;
+        }
+        case 2: {
+          const v_s = __s[1];
+          const v_next = __s[2];
+          {
+            const __s = __print(v_s);
+            switch (__s[0]) {
+              case 0: {
+                const __t0 = v_next;
+                v_io = __t0;
+                continue;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 function v_showUnderflowError(v__wild0){
     return "UnderflowError";
@@ -14,31 +43,31 @@ function v_showResult(v_r){
       switch (__s[0]) {
         case 0: {
           const v_e = __s[1];
-          return [1, ("left: " + (v_showUnderflowError)(v_e))];
+          return __concat("left: ", (v_showUnderflowError)(v_e));
         }
         case 1: {
           const v_v = __s[1];
-          return [1, ("right: " + String(v_v))];
+          return __concat("right: ", String(v_v));
         }
       }
     }
 }
 
 function main(v__input){
-    return (v__let_1)((v_showResult)((v_stepA)((1000000|0))));
+    return (v__let_2)((v_showResult)((v_stepA)((1000000|0))));
 }
 
-function v__let_1(v_res){
+function v__let_2(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
         case 0: {
           const v___w0 = __s[1];
-          return __print("STRING_TOO_LONG");
+          return [2, "STRING_TOO_LONG", [0, [0]]];
         }
         case 1: {
           const v_s = __s[1];
-          return __print(v_s);
+          return [2, v_s, [0, [0]]];
         }
       }
     }
@@ -144,7 +173,7 @@ function v_stepA(v_n){
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') main([1, arg]);
+  if (typeof main === 'function') v_runIO(main([1, arg]));
 }
 
 })();

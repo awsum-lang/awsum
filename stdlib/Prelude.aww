@@ -12,7 +12,7 @@
 -- ---------------------- String
 
 (++) : String -> String -> Either StringTooLong String
-(++) a b = Right (BuiltIn.concatString a b)
+(++) a b = BuiltIn.concatString a b
 
 {- Split a string at the first occurrence of `separator`. Returns
    `Just (Tuple2 prefix suffix)` such that
@@ -73,6 +73,21 @@ lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
 lengthBytesAsUtf8 : String -> UInt32
 lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
 
+{- Maximum length of an Awsum `String` in UTF-16 code units, identical
+   on every backend (LLVM, JVM, CLR, WASM, JS). Operations that would
+   produce a longer string return `Left StringTooLong`.
+
+   Value: `2^27 = 134217728` UTF-16 code units. In UTF-8 bytes the
+   worst case (BMP CJK content, 3 bytes per UTF-16 code unit) is
+   `3 × 2^27 = 402653184` ≈ 384 MiB; ASCII is `1 × 2^27` ≈ 128 MiB.
+
+   The cap is fixed by the WASM-32 backend, not by the smallest UTF-16
+   runtime — see docs/targets.md for the cross-runtime budget that
+   determines this value. -}
+
+maxStringLengthUtf16CodeUnits : UInt32
+maxStringLengthUtf16CodeUnits = 134217728
+
 -- ---------------------- Unit
 
 {- Single-constructor type carrying no information. Useful as a
@@ -83,6 +98,19 @@ type Unit = Unit
 
 showUnit : Unit -> String
 showUnit _ = "Unit"
+
+-- ---------------------- Never
+
+{- Empty type — no constructors, no values. Useful as a phantom
+   parameter and to mark a type-level position the program guarantees
+   is unreachable. Most visible occurrence: the error row of
+   `IO Never a` declares an IO action that cannot fail. When a
+   primitive whose error row is currently `Never` later gains a real
+   error (e.g. `BrokenPipe` for `IO.Stdout.print`), every existing
+   site stops compiling until the new error is handled — which is the
+   intended behaviour. -}
+
+type Never
 
 -- ---------------------- Bool
 
@@ -164,6 +192,96 @@ mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a
 mapLeft x f = case x of
   Left e -> Left (f e)
   Right a -> Right a
+
+-- ---------------------- IO
+
+{- The IO type represents a description of an effect that the runtime
+   may execute. An `IO e a` value is **data** — constructing it does
+   not perform any effect; the effect happens only when the runtime
+   walks the IO tree returned from `main`. This is what makes
+   `let unit = IO.Stdout.print "ignored" in IO.Stdout.print "real"`
+   print only `real`: the first `IO` value is built and discarded.
+
+   The error row `e` works like the error row of `Either`: primitives
+   that may fail report the failure type explicitly. Currently every
+   built-in IO primitive uses `Never`, meaning it cannot fail; this
+   tightens as real error sources (broken pipe, disk full, ...) are
+   added.
+
+   `IO Never Unit` is the type required by `main`. Any `IO e _` with
+   non-empty `e` must be reduced to `IO Never _` before main returns
+   it — handle errors via `bindIO … (\result -> case result of Left e
+   -> … | Right v -> …)`.
+
+   Pattern-matching on the constructors directly is permitted today
+   but **not part of the stable API**: new effects will add new
+   constructors over time, breaking existing case-matches (no
+   catch-all by language design). For ordinary composition, use
+   `bindIO` / `mapIO` / `pureIO` and the platform built-ins
+   (`IO.Stdout.print`, ...). Direct matching is for first-party
+   tooling (e.g. `awsum test`'s mock interpreter) that updates in
+   lockstep with the compiler. When modules land, the constructors
+   move to a privileged module and become inaccessible to user code. -}
+
+type IO e a = IOPure a | IOFail e | IOStdoutPrint String (IO e a)
+
+{- Lift a pure value into IO. The error row `e` stays free and gets
+   pinned by the surrounding context. -}
+
+pureIO : a -> IO e a
+pureIO x = IOPure x
+
+{- Sequence two IO actions: run the first, feed its success value into
+   a continuation that produces the second. The error rows union,
+   same shape as `bindEither`. Failure of the first action propagates
+   without invoking `k`; this is what makes `IOFail` a terminal
+   constructor at the chain level. -}
+
+bindIO : IO e1 a -> (a -> IO e2 b) -> IO (e1 | e2) b
+bindIO io k = case io of
+  IOPure a -> k a
+  IOFail e -> IOFail e
+  IOStdoutPrint s next -> IOStdoutPrint s (bindIO next k)
+
+{- Apply `f` to the success value of an IO action, leaving the error
+   row untouched. Same shape as `mapRight` for `Either`. -}
+
+mapIO : IO e a -> (a -> b) -> IO e b
+mapIO io f = case io of
+  IOPure a -> IOPure (f a)
+  IOFail e -> IOFail e
+  IOStdoutPrint s next -> IOStdoutPrint s (mapIO next f)
+
+{- `mapIOError` rebuilds an IO with `f` applied to the failure value
+   and the success / effect tree left untouched. Same shape as
+   `mapLeft` for `Either`, used to widen / narrow / rename the error
+   row of an IO computation without inspecting its success side. -}
+
+mapIOError : IO e1 a -> (e1 -> e2) -> IO e2 a
+mapIOError io f = case io of
+  IOPure a -> IOPure a
+  IOFail e -> IOFail (f e)
+  IOStdoutPrint s next -> IOStdoutPrint s (mapIOError next f)
+
+{- `runIO` walks the IO tree returned from `main` and performs the
+   corresponding effects in order. `main` returns `IO Never Unit`, so
+   the `IOFail` arm is unreachable (its field type is uninhabited)
+   and exhaustiveness skips it.
+
+   Intended caller is the per-target entry-point glue (`v_runIO` is
+   wired into the runtime startup that the codegens emit). User code
+   never calls this directly; once modules land, `runIO` will move
+   into a privileged module inaccessible from user code, alongside
+   `IO`'s constructors. The `case … of Unit -> runIO next` form
+   threads the recursive call as a tail call so the existing TCO
+   pass folds the whole walker into a bounded-stack loop on every
+   backend. -}
+
+runIO : IO Never Unit -> Unit
+runIO io = case io of
+  IOPure u -> u
+  IOStdoutPrint s next -> case BuiltIn.internalStdoutPrint s of
+    Unit -> runIO next
 
 -- ---------------------- Maybe
 

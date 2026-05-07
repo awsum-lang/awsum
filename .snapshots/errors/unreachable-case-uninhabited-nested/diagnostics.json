@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":11,"startCol":12,"endLine":13,"endCol":18,"message":"Unreachable case: Err can never match because Box Never has no constructors","fixes":[]}]
+[{"severity":"error","startLine":9,"startCol":12,"endLine":11,"endCol":18,"message":"Unreachable case: Err can never match because Box Never has no constructors","fixes":[]}]

@@ -1,0 +1,52 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CVar "$let$2" )
+                [ CCon 2
+                    [ CString "💩"
+                    , CCon 0
+                        [ CCon 0 [] ]
+                    ]
+                ]
+            )
+        , CFunDef "$let$2" [ "unit" ]
+            ( CCon 2
+                [ CString "🔥"
+                , CCon 0
+                    [ CCon 0 [] ]
+                ]
+            )
+        ]
+    }

@@ -1,14 +1,46 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "main" [ "_input" ]
-            ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCon 2
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "parseExpr" )
                         [ CCon 1 [] ]
                     ]
+                , CCon 0
+                    [ CCon 0 [] ]
                 ]
             )
         , CFunDef "$scc$parseBinary_parseExpr" [ "$args" ]

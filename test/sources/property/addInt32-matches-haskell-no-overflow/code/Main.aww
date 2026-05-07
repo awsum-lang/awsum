@@ -19,7 +19,7 @@ property a b = do
   r <- addInt32 a b
   pureEither (showInt32 r)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) String = do
         raw <- rawArg

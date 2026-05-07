@@ -24,7 +24,7 @@ property a b c = do
   aBc <- mulInt32 a bc
   pureEither (eqInt32 abc aBc)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
         raw <- rawArg

@@ -21,7 +21,7 @@ property a b c = do
   delim <- abc ++ ":"
   delim ++ aBc
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
         raw <- rawArg

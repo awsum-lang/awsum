@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "wrap" [ "s" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "wrap" [ "s" ]
             ( CCon 0
                 [ CVar "s" ]
             )
@@ -27,14 +58,15 @@ CoreProgram
                 ]
             )
         , CFunDef "main" [ "_input" ]
-            ( CCall
-                ( CBuiltIn "IO.Stdout.print" )
+            ( CCon 2
                 [ CCall
                     ( CVar "$df$apply$0" )
                     [ CString "chain"
                     , CVar "unwrap"
                     , CVar "wrap"
                     ]
+                , CCon 0
+                    [ CCon 0 [] ]
                 ]
             )
         , CFunDef "$df$apply$0"

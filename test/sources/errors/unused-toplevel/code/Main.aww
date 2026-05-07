@@ -9,7 +9,7 @@ greeting s = "hi " ++ s
 orphan : String -> String
 orphan s = s
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg = case rawArg of
   Left _ -> IO.Stdout.print "INPUT_ERROR"
   Right input -> case greeting input of

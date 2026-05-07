@@ -732,31 +732,103 @@ codeMemcpy =
       ]
 
 -- __concat(a: i32, b: i32) -> i32
--- locals: $la, $lb, $buf (slots 2,3,4)
+-- Implements 'BuiltIn.concatString'. Pre-checks the combined UTF-16
+-- code unit length against the language-fixed cap (134217728 = 2^27;
+-- keep in sync with 'maxStringLengthUtf16CodeUnits' in
+-- 'stdlib/Prelude.aww'). Returns 'Right (a + b)' if the combined
+-- length fits; 'Left StringTooLong' otherwise (no buffer alloc on the
+-- rejection path). Either cells are 8 bytes [tag i32, field_ptr i32];
+-- StringTooLong cell is 4 bytes [tag i32], same shape as user CCons.
+-- Locals: $lau16(2) $lbu16(3) $sum(4) $stl(5) $cell(6) $ba(7) $bb(8) $buf(9).
 codeConcat :: WasmInfo -> [Word8]
 codeConcat _info =
   encodeBody
-    (encodeLocals 3)
+    (encodeLocals 8)
     $ concat
-      [ -- la = __strlen(a)
+      [ -- lau16 = i32.load(__lengthUtf16CodeUnits(a))
+        [opLocalGet],
+        encodeULEB128 0,
+        [opCall],
+        encodeULEB128 idxLengthUtf16CodeUnits,
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 2,
+        -- lbu16 = i32.load(__lengthUtf16CodeUnits(b))
+        [opLocalGet],
+        encodeULEB128 1,
+        [opCall],
+        encodeULEB128 idxLengthUtf16CodeUnits,
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- sum = lau16 + lbu16
+        [opLocalGet],
+        encodeULEB128 2,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 4,
+        -- if (sum >u 134217728)
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 134217728,
+        [opI32GtU],
+        [opIf, blocktypeI32],
+        -- then: Left StringTooLong
+        --   stl = __alloc(4); store stl 0
+        [opI32Const],
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        --   cell = __alloc(8); store cell 0; store offset=4 cell stl
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Store, 0x02, 0x04],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opElse],
+        -- else: do the actual concat (UTF-8 byte counts for the copy)
+        --   ba = __strlen(a)
         [opLocalGet],
         encodeULEB128 0,
         [opCall],
         encodeULEB128 idxStrlen,
         [opLocalSet],
-        encodeULEB128 2,
-        -- lb = __strlen(b)
+        encodeULEB128 7,
+        --   bb = __strlen(b)
         [opLocalGet],
         encodeULEB128 1,
         [opCall],
         encodeULEB128 idxStrlen,
         [opLocalSet],
-        encodeULEB128 3,
-        -- buf = __alloc(la + lb + 1)
+        encodeULEB128 8,
+        --   buf = __alloc(ba + bb + 1)
         [opLocalGet],
-        encodeULEB128 2,
+        encodeULEB128 7,
         [opLocalGet],
-        encodeULEB128 3,
+        encodeULEB128 8,
         [opI32Add],
         [opI32Const],
         encodeSLEB128 1,
@@ -764,51 +836,71 @@ codeConcat _info =
         [opCall],
         encodeULEB128 idxAlloc,
         [opLocalSet],
-        encodeULEB128 4,
-        -- __memcpy(buf, a, la)
+        encodeULEB128 9,
+        --   __memcpy(buf, a, ba)
         [opLocalGet],
-        encodeULEB128 4,
+        encodeULEB128 9,
         [opLocalGet],
         encodeULEB128 0,
         [opLocalGet],
-        encodeULEB128 2,
+        encodeULEB128 7,
         [opCall],
         encodeULEB128 idxMemcpy,
-        -- __memcpy(buf+la, b, lb)
+        --   __memcpy(buf+ba, b, bb)
         [opLocalGet],
-        encodeULEB128 4,
+        encodeULEB128 9,
         [opLocalGet],
-        encodeULEB128 2,
+        encodeULEB128 7,
         [opI32Add],
         [opLocalGet],
         encodeULEB128 1,
         [opLocalGet],
-        encodeULEB128 3,
+        encodeULEB128 8,
         [opCall],
         encodeULEB128 idxMemcpy,
-        -- i32.store8 (buf+la+lb) 0
+        --   i32.store8 (buf+ba+bb) 0
         [opLocalGet],
-        encodeULEB128 4,
+        encodeULEB128 9,
         [opLocalGet],
-        encodeULEB128 2,
+        encodeULEB128 7,
         [opI32Add],
         [opLocalGet],
-        encodeULEB128 3,
+        encodeULEB128 8,
         [opI32Add],
         [opI32Const],
         encodeSLEB128 0,
         [opI32Store8, 0x00, 0x00],
-        -- return buf
+        --   cell = __alloc(8); store cell 1; store offset=4 cell buf
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
         [opLocalGet],
-        encodeULEB128 4
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 9,
+        [opI32Store, 0x02, 0x04],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opEnd]
       ]
 
 -- __print(s: i32) -> i32
--- local: $len (slot 1)
+-- locals: $len (slot 1), $unit (slot 2)
+-- Returns a Unit value (alloc(4); store tag 0) so the surrounding
+-- `case … of Unit -> next` arm in the prelude's `runIO` dispatches
+-- through the standard CCase tag check.
 codePrint :: WasmInfo -> [Word8]
 codePrint _info =
   encodeBody
-    (encodeLocals 1)
+    (encodeLocals 2)
     $ concat
       [ -- len = __strlen(s)
         [opLocalGet],
@@ -841,9 +933,20 @@ codePrint _info =
         [opCall],
         encodeULEB128 0, -- fd_write (import index 0)
         [opDrop],
-        -- return 0
+        -- Build Unit value: unit = __alloc(4); i32.store(unit, 0); return unit
         [opI32Const],
-        encodeSLEB128 0
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 2,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 2
       ]
 
 -- __predInt32(p: i32) -> i32
@@ -4279,6 +4382,7 @@ codeUserDecl info typeMap = \case
 codeStart :: WasmInfo -> [Word8]
 codeStart info =
   let mainIdx = fromMaybe 0 (Map.lookup "main" info.wiFuncIdx)
+      runIOIdx = fromMaybe (error "no v_runIO") (Map.lookup "runIO" info.wiFuncIdx)
    in encodeBody
         (encodeLocals 2)
         $ concat
@@ -4297,7 +4401,11 @@ codeStart info =
             [opI32Store, 0x02, 0x04], -- mem[box+4] = input
             [opLocalGet, 0x01], -- stack: [box]
             [opCall],
-            encodeULEB128 mainIdx, -- stack: [result]
+            encodeULEB128 mainIdx, -- stack: [io_tree]
+            -- Hand the IO tree to runIO to walk and execute the
+            -- effects. runIO returns Unit which we discard.
+            [opCall],
+            encodeULEB128 runIOIdx,
             [opDrop]
           ]
 
@@ -4391,7 +4499,7 @@ emitExpr ctx = \case
     emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             emitExpr ctx x
               <> [opCall]

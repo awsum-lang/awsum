@@ -1,20 +1,49 @@
-{- Block and line comments preserved through parsing and formatting. -}
-import IO.Stdout
+{- File-leading block comment. -}
+import IO.Stdout -- Import trailing comment
 
-{- Block comment 1
-Block comment 2
--}
+{- Block comment between import and the first decl. -}
+
+-- Line comment 1
 
 -- Line comment 2
 
--- Line comment 3
+type Color = Red | Green | Blue -- TypeDecl with constructors trailing
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit -- Signature comment
+-- Line comment between top-level decls
 
--- Line comment 4
+type Phantom -- TypeDecl uninhabited trailing
+
+{- Block comment introducing a function. -}
+
+showColor : Color -> String -- Sig trailing on a non-main decl
+
+-- Line comment between sig and def
+
+showColor c = case c of
+  Red -> "Red" -- CaseAlt trailing Red
+  Green -> "Green" -- CaseAlt trailing Green
+  Blue -> "Blue" -- CaseAlt trailing Blue
+
+-- Block + line comments stacked between defs
+
+{- Multi-line
+   block comment. -}
+
+-- Line comment after the block
+
+withBrackets : String -> Either StringTooLong String
+withBrackets s = -- FunDef multi-line let body, trailing on '=' line
+  let withOpen = "[" ++ s
+   in withOpen
+
+-- Line comment before main
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit -- Sig trailing
+
+-- Line comment between sig and def
 
 main inputArg = case inputArg of
-  Left _ -> IO.Stdout.print "INPUT_ERROR"
-  Right input -> IO.Stdout.print input -- Definition comment
+  Left _ -> IO.Stdout.print "INPUT_ERROR" -- CaseAlt with effect
+  Right input -> IO.Stdout.print input -- CaseAlt with effect 2
 
--- Line comment 5
+-- Trailing line comment at EOF

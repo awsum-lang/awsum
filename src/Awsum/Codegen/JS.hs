@@ -60,9 +60,11 @@ emitCliScript prog@(CoreProgram decls) =
 -- | Minimal runtime, tree-shaken: only helpers whose primitive / built-in
 --   is actually referenced from Core are emitted.
 --   • '__print' writes without a newline (Awsum's 'IO.Stdout.print' is "print exactly").
---   Note: we intentionally skip a '__concat' helper — '+' is fine because both operands
---   are statically strings under our typechecker. Integer stringification also
---   doesn't need a helper; @String(x)@ is inlined at each show call site.
+--   • '__concat' is a tiny helper that wraps native '+' with the
+--     language-fixed length cap (see 'BuiltIn.concatString'); inlining
+--     '+' at each site would duplicate the cap check inline at every '++'.
+--   Integer stringification doesn't need a helper; @String(x)@ is
+--   inlined at each show call site.
 header :: Set Name -> Text
 header builtIns =
   let -- FNV-1a 32-bit row tags for the prelude's nominal labels used
@@ -76,8 +78,14 @@ header builtIns =
       lns =
         filter
           (not . T.null)
-          [ if Set.member "IO.Stdout.print" builtIns
-              then "function __print(s){ process.stdout.write(String(s)); return undefined; }"
+          [ -- '__print' writes a string to stdout (no newline) and
+            -- returns the Unit constructor `[0]`. Driven by the
+            -- prelude's `runIO` walking an 'IOStdoutPrint' arm via
+            -- `BuiltIn.internalStdoutPrint`. Returning a real Unit
+            -- value lets the prelude `case … of Unit -> next`
+            -- dispatch through the standard CCase tag check.
+            if Set.member "internalStdoutPrint" builtIns
+              then "function __print(s){ process.stdout.write(String(s)); return [0]; }"
               else "",
             -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
             -- Left=0, Right=1, UnderflowError=0 — matches user-code tag assignment
@@ -166,6 +174,16 @@ header builtIns =
             -- single '> 255' check picks the overflow branch.
             if Set.member "mulUInt8" builtIns
               then "function __mulUInt8(a, b){ const p = a * b; return p > 255 ? [0, [0]] : [1, p & 0xFF]; }"
+              else "",
+            -- concatString: implements 'BuiltIn.concatString'. Pre-checks
+            -- the combined UTF-16 length against the language-fixed cap
+            -- (134217728 = 2^27, must stay in sync with
+            -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww').
+            -- JS String.length is UTF-16 code units exactly (matches the
+            -- cap unit directly), so the check is one i32 comparison.
+            -- Encoding: Left=0, Right=1, StringTooLong=0 (single ctor).
+            if Set.member "concatString" builtIns
+              then "function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }"
               else "",
             -- splitOnFirst: 'indexOf("")' returns 0 in JS, so empty separator
             -- naturally yields ["", str]. 'substring' creates fresh strings
@@ -259,8 +277,12 @@ cliFooter =
       "if (typeof require !== 'undefined' && require.main === module) {",
       "  const arg = process.argv[2] ?? \"\";",
       -- Wrap input in `Right arg` (tag=1) before handing to user's main. Layout
-      -- matches CCon emit: `[tag, ...fields]`.
-      "  if (typeof main === 'function') main([1, arg]);",
+      -- matches CCon emit: `[tag, ...fields]`. The IO tree returned by main is
+      -- handed to `runIO` (defined in the prelude as a regular Awsum
+      -- function), which walks it to perform any effects via
+      -- `BuiltIn.internalStdoutPrint`. Naming follows the same
+      -- 'v_' mangling rule as user top-levels.
+      "  if (typeof main === 'function') v_runIO(main([1, arg]));",
       "}"
     ]
 
@@ -415,7 +437,12 @@ emitExpr = \case
       <> ")"
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print" ->
+      -- Internal print primitive used by the prelude's `runIO`. Returns
+      -- the Unit constructor `[0]` so the surrounding `case … of Unit ->
+      -- next` arm dispatches through the standard tag check. Not exposed
+      -- to user code (no prelude alias); this is a privileged channel
+      -- between `runIO` and the host stdout.
+      CBuiltIn "internalStdoutPrint" ->
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
@@ -480,7 +507,7 @@ emitExpr = \case
           _ -> error "BuiltIn.negInt32: arity mismatch"
       CBuiltIn "concatString" ->
         case xs of
-          [a, b] -> "(" <> emitExpr a <> " + " <> emitExpr b <> ")"
+          [a, b] -> "__concat(" <> emitExpr a <> ", " <> emitExpr b <> ")"
           _ -> error "BuiltIn.concatString: arity mismatch"
       CBuiltIn "splitOnFirst" ->
         case xs of

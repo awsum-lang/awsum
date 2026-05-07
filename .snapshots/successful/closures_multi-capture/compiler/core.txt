@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CValDef "zero"
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "zero"
             ( CIntLit 0 TInt32 )
         , CFunDef "both"
             [ "a"
@@ -18,14 +49,12 @@ CoreProgram
             , "b"
             ]
             ( CCase
-                ( CCon 1
+                ( CCall
+                    ( CBuiltIn "concatString" )
                     [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "a" ]
-                        , CString "/"
-                        ]
+                        ( CBuiltIn "showInt32" )
+                        [ CVar "a" ]
+                    , CString "/"
                     ]
                 )
                 [
@@ -37,21 +66,19 @@ CoreProgram
                 ,
                     ( 1
                     , [ "s0" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "s0"
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "b" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CVar "s0"
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "b" ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$3" )
                 [ CCall
                     ( CVar "both" )
                     [ CIntLit 11 TInt32
@@ -59,7 +86,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$1"
+        , CFunDef "$lam$2"
             [ "a"
             , "b"
             , "_n"
@@ -70,22 +97,26 @@ CoreProgram
                 , CVar "b"
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$3" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )
@@ -95,7 +126,7 @@ CoreProgram
             , "$df$apply$0$cap0$1"
             ]
             ( CCall
-                ( CVar "$lam$1" )
+                ( CVar "$lam$2" )
                 [ CVar "$df$apply$0$cap0$0"
                 , CVar "$df$apply$0$cap0$1"
                 , CVar "x"

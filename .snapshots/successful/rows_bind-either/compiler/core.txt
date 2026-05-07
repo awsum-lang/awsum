@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "opA" [ "n" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "opA" [ "n" ]
             ( CCon 1
                 [ CVar "n" ]
             )
@@ -16,17 +47,17 @@ CoreProgram
                 )
                 [
                     ( 0
-                    , [ "$do_e_18_3" ]
+                    , [ "$do_e_19_3" ]
                     , CCon 0
                         [ CRow 2252990199
-                            ( CVar "$do_e_18_3" )
+                            ( CVar "$do_e_19_3" )
                         ]
                     )
                 ,
                     ( 1
                     , [ "a" ]
                     , CCall
-                        ( CVar "$lift$1" )
+                        ( CVar "$lift$2" )
                         [ CCall
                             ( CVar "opB" )
                             [ CVar "a" ]
@@ -59,21 +90,19 @@ CoreProgram
                 ,
                     ( 1
                     , [ "n" ]
-                    , CCon 1
-                        [ CCall
-                            ( CBuiltIn "concatString" )
-                            [ CString "Ok "
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "n" ]
-                            ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "Ok "
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "n" ]
                         ]
                     )
                 ]
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$3" )
                 [ CCall
                     ( CVar "describe" )
                     [ CCall
@@ -82,7 +111,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$1" [ "__input" ]
+        , CFunDef "$lift$2" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -101,22 +130,26 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$3" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )

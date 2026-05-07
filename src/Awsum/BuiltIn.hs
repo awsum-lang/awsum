@@ -88,9 +88,13 @@ builtIns =
       -- Underflow is unreachable for unsigned multiplication (product of
       -- two non-negative values is non-negative). Symmetric to 'addUInt8'.
       ("mulUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty (eitherTy overflowErrorTy uint8Ty))),
-      -- concatString : String -> String -> String
+      -- concatString : String -> String -> Either StringTooLong String
       -- The '++' operator is parser sugar for a call to this built-in.
-      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy stringTy)),
+      -- Returns 'Right (a ++ b)' when the result would fit in
+      -- 'maxStringLengthUtf16CodeUnits' (134_217_728) UTF-16 code units;
+      -- otherwise 'Left StringTooLong' with no buffer allocated. Each
+      -- backend's runtime helper performs the cap check before copying.
+      ("concatString", TyArrow noSpan stringTy (TyArrow noSpan stringTy (eitherTy stringTooLongTy stringTy))),
       -- splitOnFirst : String -> String -> Maybe (Tuple2 String String)
       -- Splits 'str' at the first occurrence of 'separator'; see
       -- 'stdlib/Prelude.aww' for the full edge-case spec.
@@ -144,7 +148,20 @@ builtIns =
       -- Number of bytes the string would occupy when serialised as
       -- (standard, not modified) UTF-8. ASCII characters count as 1,
       -- 2/3/4 bytes for the higher ranges per RFC 3629.
-      ("lengthBytesAsUtf8", TyArrow noSpan stringTy uint32Ty)
+      ("lengthBytesAsUtf8", TyArrow noSpan stringTy uint32Ty),
+      -- internalStdoutPrint : String -> Unit
+      -- Privileged low-level platform primitive: writes the argument to
+      -- stdout (no newline), returns the Unit constructor. Used
+      -- exclusively by the prelude's `runIO` to perform the effect of
+      -- an `IOStdoutPrint` arm during IO-tree walking. Not exposed to
+      -- user code via any prelude alias — there is no module/visibility
+      -- system in Awsum yet, so the contract is convention only:
+      -- user code uses `IO.Stdout.print` (a platform built-in that
+      -- elaborates to an `IOStdoutPrint` constructor); only `runIO`
+      -- reaches into `BuiltIn.internalStdoutPrint` directly. When
+      -- modules land, this and the IO type's constructors move into a
+      -- privileged module inaccessible to user code.
+      ("internalStdoutPrint", TyArrow noSpan stringTy unitTy)
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -152,12 +169,14 @@ builtIns =
     uint32Ty = TyCon noSpan "UInt32"
     stringTy = TyCon noSpan "String"
     boolTy = TyCon noSpan "Bool"
+    unitTy = TyCon noSpan "Unit"
     underflowErrorTy = TyCon noSpan "UnderflowError"
     overflowErrorTy = TyCon noSpan "OverflowError"
     -- Structural row of the two single-constructor error labels — the
     -- error side of the signed-integer arithmetic builtins.
     arithRowTy = TyOr noSpan underflowErrorTy overflowErrorTy
     parseErrorTy = TyCon noSpan "ParseError"
+    stringTooLongTy = TyCon noSpan "StringTooLong"
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

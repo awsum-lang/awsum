@@ -16,11 +16,60 @@
 
   .method private hidebysig static object __print(object) cil managed
   {
+    .maxstack 4
     ldarg.0
     call void [System.Console]System.Console::Write(object)
-    ldnull
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
     ret
   }
+
+  .method private hidebysig static object v_runIO(object) cil managed
+  {
+  IL_tco_loop:
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0, IL_tco_arm_2)
+  IL_tco_arm_0:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    ret
+  IL_tco_arm_2:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    dup
+    ldc.i4.2
+    ldelem.ref
+    stloc.1
+    pop
+    ldloc.0
+    call object AwsumMain::__print(object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_tco_arm_0)
+  IL_tco_arm_0:
+    pop
+    ldloc.1
+    starg.s 0
+    br IL_tco_loop
+  }
+
 
   .method private hidebysig static object v_wrap(object) cil managed
   {
@@ -75,13 +124,42 @@
 
   .method private hidebysig static object v_main(object) cil managed
   {
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.2
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
     ldstr "chain"
     ldftn object AwsumMain::v_unwrap(object)
     newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
     ldftn object AwsumMain::v_wrap(object)
     newobj instance void class [System.Runtime]System.Func`2<object, object>::.ctor(object, native int)
     call object AwsumMain::v__df_apply_0(object, object, object)
-    call object AwsumMain::__print(object)
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stelem.ref
+    stelem.ref
     ret
   }
 
@@ -126,6 +204,7 @@
     ldloc.0
     stelem.ref
     call object AwsumMain::v_main(object)
+    call object AwsumMain::v_runIO(object)
     pop
     ret
   }

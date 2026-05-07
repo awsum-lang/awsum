@@ -253,7 +253,7 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             rtAlloc,
             rtMemcpy,
             if Set.member "concatString" builtIns then rtConcat else "",
-            if Set.member "IO.Stdout.print" builtIns then rtPrint else "",
+            if Set.member "internalStdoutPrint" builtIns then rtPrint else "",
             if hasIntLit then rtBoxI32 else "",
             if any (`Set.member` builtIns) ["showInt32", "showUInt8"]
               then rtShowI32
@@ -282,7 +282,10 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
             if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
-            if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
+            -- '__concat' calls '__lengthUtf16CodeUnits' for the cap pre-check,
+            -- so emit the helper whenever 'concatString' is referenced even if
+            -- the user did not call 'lengthUtf16CodeUnits' directly.
+            if Set.member "lengthUtf16CodeUnits" builtIns || Set.member "concatString" builtIns then rtLengthUtf16CodeUnits else "",
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -341,30 +344,72 @@ rtMemcpy =
       "        (br $loop))))"
     ]
 
+-- | __concat implements 'BuiltIn.concatString'. Pre-checks the combined
+--   UTF-16 length of both inputs against the language-fixed cap; returns
+--   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise (no
+--   buffer allocated on the rejection path). The cap value (134217728 =
+--   2^27) must stay in sync with 'maxStringLengthUtf16CodeUnits' in
+--   'stdlib/Prelude.aww'.
+--   '__lengthUtf16CodeUnits' returns a boxed pointer; load through it
+--   to get the i32 code-unit count. UTF-8 byte length via '__strlen' is
+--   only used for the actual copy on the ok path.
 rtConcat :: Text
 rtConcat =
   unlines
     [ "  (func $__concat (param $a i32) (param $b i32) (result i32)",
-      "    (local $la i32) (local $lb i32) (local $buf i32)",
-      "    (local.set $la (call $__strlen (local.get $a)))",
-      "    (local.set $lb (call $__strlen (local.get $b)))",
-      "    (local.set $buf (call $__alloc (i32.add (i32.add (local.get $la) (local.get $lb)) (i32.const 1))))",
-      "    (call $__memcpy (local.get $buf) (local.get $a) (local.get $la))",
-      "    (call $__memcpy (i32.add (local.get $buf) (local.get $la)) (local.get $b) (local.get $lb))",
-      "    (i32.store8 (i32.add (local.get $buf) (i32.add (local.get $la) (local.get $lb))) (i32.const 0))",
-      "    (local.get $buf))"
+      "    (local $lau16 i32) (local $lbu16 i32) (local $sum i32)",
+      "    (local $stl i32) (local $cell i32)",
+      "    (local $ba i32) (local $bb i32) (local $buf i32)",
+      "    (local.set $lau16 (i32.load (call $__lengthUtf16CodeUnits (local.get $a))))",
+      "    (local.set $lbu16 (i32.load (call $__lengthUtf16CodeUnits (local.get $b))))",
+      "    (local.set $sum (i32.add (local.get $lau16) (local.get $lbu16)))",
+      "    ;; maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).",
+      "    ;; Keep in sync with 'maxStringLengthUtf16CodeUnits' in",
+      "    ;; 'stdlib/Prelude.aww'.",
+      "    (if (result i32) (i32.gt_u (local.get $sum) (i32.const 134217728))",
+      "      (then",
+      "        ;; Build StringTooLong cell (alloc 4, tag 0).",
+      "        (local.set $stl (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $stl) (i32.const 0))",
+      "        ;; Left cell: alloc 8, tag 0 + ptr to stl.",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $stl))",
+      "        (local.get $cell))",
+      "      (else",
+      "        ;; UTF-8 byte counts for the actual copy.",
+      "        (local.set $ba (call $__strlen (local.get $a)))",
+      "        (local.set $bb (call $__strlen (local.get $b)))",
+      "        (local.set $buf (call $__alloc (i32.add (i32.add (local.get $ba) (local.get $bb)) (i32.const 1))))",
+      "        (call $__memcpy (local.get $buf) (local.get $a) (local.get $ba))",
+      "        (call $__memcpy (i32.add (local.get $buf) (local.get $ba)) (local.get $b) (local.get $bb))",
+      "        (i32.store8 (i32.add (local.get $buf) (i32.add (local.get $ba) (local.get $bb))) (i32.const 0))",
+      "        ;; Right cell: alloc 8, tag 1 + ptr to buf.",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $buf))",
+      "        (local.get $cell))))"
     ]
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (alloc(4); store tag 0) so the surrounding `case … of Unit ->
+--   next` arm in `runIO` dispatches through the standard CCase tag
+--   check.
 rtPrint :: Text
 rtPrint =
   unlines
     [ "  (func $__print (param $s i32) (result i32)",
       "    (local $len i32)",
+      "    (local $unit i32)",
       "    (local.set $len (call $__strlen (local.get $s)))",
       "    (i32.store (i32.const 0) (local.get $s))",
       "    (i32.store (i32.const 4) (local.get $len))",
       "    (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))",
-      "    (i32.const 0))"
+      -- Build Unit value: alloc(4) + store tag 0 at offset 0.
+      "    (local.set $unit (call $__alloc (i32.const 4)))",
+      "    (i32.store (local.get $unit) (i32.const 0))",
+      "    (local.get $unit))"
     ]
 
 -- | Box a 32-bit value as a heap cell; the returned pointer is the uniform
@@ -1331,7 +1376,9 @@ startFunc =
       "    (local.set $right_box (call $__alloc (i32.const 8)))",
       "    (i32.store (local.get $right_box) (i32.const 1))",
       "    (i32.store offset=4 (local.get $right_box) (local.get $input))",
-      "    (drop (call $" <> mangle "main" <> " (local.get $right_box))))"
+      -- v_main returns an IO tree; hand it to runIO to walk and execute
+      -- the effects. runIO returns Unit which we discard.
+      "    (drop (call $" <> mangle "runIO" <> " (call $" <> mangle "main" <> " (local.get $right_box)))))"
     ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1487,7 +1534,7 @@ emitExpr ctx = \case
     emitCaseExpr ctx scrut alts
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print"
+      CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             "(call $__print " <> emitExpr ctx x <> ")"
       CBuiltIn name

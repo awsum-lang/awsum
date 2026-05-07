@@ -9,7 +9,7 @@ import IO.Stdout
 property : Int32 -> String
 property v = showInt32 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
         raw <- rawArg

@@ -22,7 +22,7 @@ showResult r = case r of
   Ok box -> showBoxedColor box
   Err e -> e
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let res : Either StringTooLong String = do
         s0 <- showBoxedColor (Box Red) ++ " "

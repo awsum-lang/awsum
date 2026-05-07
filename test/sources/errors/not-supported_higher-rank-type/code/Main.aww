@@ -8,5 +8,5 @@ import IO.Stdout
 weird : (forall a. a -> a) -> Int32
 weird f = f 1
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print "ok"

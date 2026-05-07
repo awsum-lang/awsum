@@ -8,7 +8,7 @@ property x = case succUInt32 x of
   Left _ -> eqUInt32 x maxUInt32
   Right _ -> not (eqUInt32 x maxUInt32)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
         raw <- rawArg

@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "showTriple" [ "t" ]
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "showTriple" [ "t" ]
             ( CCase
                 ( CVar "t" )
                 [
@@ -21,7 +52,7 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CCall
                     ( CVar "showTriple" )
                     [ CCon 0
@@ -38,65 +69,57 @@ CoreProgram
             , "c"
             ]
             ( CCase
-                ( CCon 1
-                    [ CCall
-                        ( CBuiltIn "concatString" )
-                        [ CVar "a"
-                        , CString " "
-                        ]
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "a"
+                    , CString " "
                     ]
                 )
                 [
                     ( 0
-                    , [ "$do_e_20_5" ]
+                    , [ "$do_e_19_3" ]
                     , CCon 0
-                        [ CVar "$do_e_20_5" ]
+                        [ CVar "$do_e_19_3" ]
                     )
                 ,
                     ( 1
                     , [ "s0" ]
                     , CCase
-                        ( CCon 1
-                            [ CCall
-                                ( CBuiltIn "concatString" )
-                                [ CVar "s0"
-                                , CVar "b"
-                                ]
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "s0"
+                            , CVar "b"
                             ]
                         )
                         [
                             ( 0
-                            , [ "$do_e_21_5" ]
+                            , [ "$do_e_20_3" ]
                             , CCon 0
-                                [ CVar "$do_e_21_5" ]
+                                [ CVar "$do_e_20_3" ]
                             )
                         ,
                             ( 1
                             , [ "s1" ]
                             , CCase
-                                ( CCon 1
-                                    [ CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s1"
-                                        , CString " "
-                                        ]
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s1"
+                                    , CString " "
                                     ]
                                 )
                                 [
                                     ( 0
-                                    , [ "$do_e_22_5" ]
+                                    , [ "$do_e_21_3" ]
                                     , CCon 0
-                                        [ CVar "$do_e_22_5" ]
+                                        [ CVar "$do_e_21_3" ]
                                     )
                                 ,
                                     ( 1
                                     , [ "s2" ]
-                                    , CCon 1
-                                        [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "s2"
-                                            , CVar "c"
-                                            ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s2"
+                                        , CVar "c"
                                         ]
                                     )
                                 ]
@@ -105,22 +128,26 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$1" [ "res" ]
+        , CFunDef "$let$2" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )

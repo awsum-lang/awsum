@@ -52,7 +52,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
               "main _e = IO.Stdout.print \"hi\""
             ]
     case parseProgram src of
@@ -70,7 +70,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : String -> IO Unit",
+              "main : String -> IO Never Unit",
               "main input = IO.Stdout.print input"
             ]
     case parseProgram src of
@@ -90,14 +90,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main input = IO.Stdout.print input"
               ]
           expected =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -117,14 +117,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main input = IO.Stdout.print (input ++ input)"
               ]
           expected =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -180,7 +180,7 @@ parserSpec = do
                 "f x = case x of",
                 "  (n : Int32) -> showInt32 n",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main _input = IO.Stdout.print (f T)"
               ]
       case parseProgram src of
@@ -212,7 +212,7 @@ parserSpec = do
                 "f x = case x of",
                 "  (n : Int32) -> showInt32 n",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main _input = IO.Stdout.print (f T)"
               ]
       case parseProgram src of
@@ -258,14 +258,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main input = IO.Stdout.print input"
               ]
           ast =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -285,14 +285,14 @@ parserSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main input = IO.Stdout.print (input ++ input)"
               ]
           ast =
             Program
               { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -324,6 +324,22 @@ parserPropSpec = do
         fmap normalizeProgram (parseProgram (renderProgram p))
           === Right (normalizeProgram (p :: Program))
 
+  describe "format idempotency" $ do
+    -- 'render . parse . render p == render p' for any 'p'. The
+    -- 'parse . render == id' property above already ensures the AST
+    -- round-trips; this one ensures the *text* produced by the
+    -- formatter is itself in canonical form. Catches drift like
+    -- comment placement that shifts on the second pass, or layout
+    -- that isn't a fixed point of the formatter.
+    it "render . parse . render == render"
+      $ property
+      $ \p ->
+        let firstPass = renderProgram (p :: Program)
+            secondPass = case parseProgram firstPass of
+              Left e -> "<parse failed: " <> e <> ">"
+              Right q -> renderProgram q
+         in secondPass === firstPass
+
 typecheckerSpec :: Spec
 typecheckerSpec = do
   describe "Typing.typecheckProgram" $ do
@@ -332,7 +348,7 @@ typecheckerSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main input = IO.Stdout.print input"
               ]
       case parseProgram src of
@@ -344,7 +360,7 @@ typecheckerSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
                 "main e = case e of",
                 "  Left _ -> IO.Stdout.print \"err\"",
                 "  Right input -> case input ++ input of",
@@ -402,7 +418,7 @@ typecheckerSpec = do
                 "  (n : Int32) -> showInt32 n",
                 "  (s : String) -> s",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main _input = IO.Stdout.print (f \"hi\")"
               ]
       case parseProgram src of
@@ -422,7 +438,7 @@ typecheckerSpec = do
                 "  (n : Int32) -> showInt32 n",
                 "  (s : String) -> s",
                 "",
-                "main : String -> IO Unit",
+                "main : String -> IO Never Unit",
                 "main _input = IO.Stdout.print (f 42)"
               ]
       case parseProgram src of
@@ -479,12 +495,12 @@ typecheckerSpec = do
           Left (MainWrongType _) -> pass
           other -> expectationFailure ("expected MainWrongType, got: " <> show other)
 
-    it "accepts a module with 'main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit'" $ do
+    it "accepts a module with 'main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit'" $ do
       let src =
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
                 "main _e = IO.Stdout.print \"hi\""
               ]
       case parseProgram src of
@@ -502,7 +518,7 @@ elaborateSpec = do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit",
+              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
               "main _e = case \"a\" ++ \"b\" of",
               "  Left _ -> IO.Stdout.print \"err\"",
               "  Right s -> IO.Stdout.print s"

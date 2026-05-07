@@ -53,7 +53,9 @@ function list_files_to_check {
   # And exclude some specific patterns (directories and extensions)
   git ls-files |
     # Note: script itself contains regex with cyrillic characters
-    grep -v 'detect-cyrillic.sh$'
+    grep -v 'detect-cyrillic.sh$' |
+    # Test fixtures and their golden-output snapshots may legitimately contain cyrillic
+    grep -vE '^(test/sources|\.snapshots)/'
 }
 
 function run_check {

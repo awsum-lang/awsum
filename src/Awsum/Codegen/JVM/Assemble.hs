@@ -318,7 +318,7 @@ doAssemble prog@(CoreProgram decls) = do
   -- Runtime helpers are emitted only when referenced in Core, so hello-world
   -- style programs that never call 'showInt32' or 'predInt32' don't pay for them.
   m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member "IO.Stdout.print" builtIns then (: []) <$> mkPrint else pure []
+  m2s <- if Set.member "internalStdoutPrint" builtIns then (: []) <$> mkPrint else pure []
   m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
   m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
   m3u32p <- if Set.member "predUInt32" builtIns then (: []) <$> mkPredUInt32 else pure []
@@ -374,36 +374,144 @@ mkInit = do
         mMaxLocals = 256
       }
 
+-- | __concat: implements 'BuiltIn.concatString'. Pre-checks the combined
+--   UTF-16 length of both inputs against the language-fixed cap; returns
+--   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise. The cap
+--   value (134217728 = 2^27) must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+--
+--   Bytecode layout:
+--     preamble (22 bytes): unbox both args via String.length(), widen
+--       both to long, ladd, materialise 134217728L via
+--       'lconst_1; bipush 27; lshl' (no CPLong slot needed), lcmp
+--     ifgt L_too_long (3 bytes)
+--     ok block (28 bytes): String.concat → wrap in Right (Object[2])
+--     too_long block: build StringTooLong cell + Left wrapper
+--     L_too_long offset = 22 + 3 + 28 = 53; SMT same_frame at 53.
 mkConcat :: AsmM MInfo
 mkConcat = do
   ni <- addUtf8 "__concat"
   di <- addUtf8 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
   strCls <- addClass "java/lang/String"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
   concatRef <- addMRef "java/lang/String" "concat" "(Ljava/lang/String;)Ljava/lang/String;"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  let unboxLen :: [Word8]
+      unboxLen =
+        bcCheckCast strCls
+          <> [0xB6, hi8 lengthRef, lo8 lengthRef] -- invokevirtual String.length()I
+          <> [0x85] -- i2l
+          -- maxStringLengthUtf16CodeUnits = 134217728 = 2^27. Materialised via
+          -- 'lconst_1; bipush 27; lshl' to avoid adding a CPLong slot. Keep
+          -- this in sync with 'maxStringLengthUtf16CodeUnits' in
+          -- 'stdlib/Prelude.aww' and the matching constants in
+          -- 'Awsum.Codegen.{LLVM,CLR,WASM,JS}'.
+      capAsLong :: [Word8]
+      capAsLong =
+        [ 0x0A, -- lconst_1
+          0x10, -- bipush
+          0x1B, --   27
+          0x79 -- lshl   → 1L << 27 = 134217728L
+        ]
+      preamble =
+        bcAload 0
+          <> unboxLen
+          <> bcAload 1
+          <> unboxLen
+          <> [0x61] -- ladd
+          <> capAsLong
+          <> [0x94] -- lcmp
+      ifGtAt = length preamble
+      okBlock =
+        bcAload 0
+          <> bcCheckCast strCls
+          <> bcAload 1
+          <> bcCheckCast strCls
+          <> [0xB6, hi8 concatRef, lo8 concatRef] -- invokevirtual String.concat
+          <> bcAstore 2
+          -- Build Right(result): Object[2] = [Integer(1), result]
+          <> bcIconst 2
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59] -- dup
+          <> bcIconst 0
+          <> bcIconst 1
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- invokestatic Integer.valueOf
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> bcIconst 1
+          <> bcAload 2
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      tooLongBlock =
+        -- StringTooLong cell: Object[1] = [Integer(0)]
+        bcIconst 1
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 0
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> bcAstore 2
+          -- Left cell: Object[2] = [Integer(0), StringTooLong cell]
+          <> bcIconst 2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> bcIconst 0
+          <> bcIconst 0
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> bcIconst 1
+          <> bcAload 2
+          <> [0x53]
+          <> [0xB0] -- areturn
+      tooLongAt = ifGtAt + 3 + length okBlock
+      ifGtRel = tooLongAt - ifGtAt
+      ifGtBytes = [0x9D, hi8 (fromIntegral ifGtRel), lo8 (fromIntegral ifGtRel)] :: [Word8]
+      code = preamble <> ifGtBytes <> okBlock <> tooLongBlock
+      -- StackMapTable: one entry at L_too_long. Locals there are still
+      -- the initial [Object, Object] (slot 2 only set inside each branch),
+      -- stack is empty. With offset 53 (< 64) this is a same_frame entry
+      -- — frame_type byte equals offset_delta directly.
+      smtEntries = [fromIntegral tooLongAt :: Word8]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1]
+                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
-        mCode =
-          bcAload 0
-            <> bcCheckCast strCls
-            <> bcAload 1
-            <> bcCheckCast strCls
-            <> bcInvokeVirtual concatRef
-            <> [0xB0], -- areturn
-        mCodeAttrCount = 0,
-        mCodeAttrs = [],
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr,
         mMaxStack = 256,
         mMaxLocals = 256
       }
 
+-- | __print: low-level platform primitive driven by the prelude's
+--   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
+--   (Object[1] = [Integer(0)]) so the surrounding `case … of Unit ->
+--   next` arm in `runIO` dispatches through the standard CCase tag
+--   check.
 mkPrint :: AsmM MInfo
 mkPrint = do
   ni <- addUtf8 "__print"
   di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
   outRef <- addFRef "java/lang/System" "out" "Ljava/io/PrintStream;"
   printRef <- addMRef "java/io/PrintStream" "print" "(Ljava/lang/Object;)V"
+  objCls <- addClass "java/lang/Object"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   pure
     MInfo
       { mFlags = 0x0008,
@@ -413,7 +521,15 @@ mkPrint = do
           bcGetStatic outRef
             <> bcAload 0
             <> bcInvokeVirtual printRef
-            <> [0x01, 0xB0], -- aconst_null, areturn
+            -- Build Unit value: Object[1] = [Integer(0)]
+            <> [0x04] -- iconst_1 (array length)
+            <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+            <> [0x59] -- dup
+            <> [0x03] -- iconst_0 (index)
+            <> [0x03] -- iconst_0 (Unit tag)
+            <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- valueOf(I)Integer
+            <> [0x53] -- aastore
+            <> [0xB0], -- areturn
         mCodeAttrCount = 0,
         mCodeAttrs = [],
         mMaxStack = 256,
@@ -3126,6 +3242,10 @@ mkMain = do
   di <- addUtf8 "([Ljava/lang/String;)V"
   emptyIdx <- addStr ""
   vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 1)
+  -- `runIO` is the prelude's IO-tree walker; we hand `v_main`'s return
+  -- value to it so any effects are performed. It returns Unit which we
+  -- discard.
+  vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
@@ -3222,6 +3342,10 @@ mkMain = do
             <> [0x2B] -- aload_1
             <> [0x53] -- aastore
             <> bcInvokeStatic vMainRef
+            -- v_main returned an IO tree on the stack; hand it to runIO
+            -- to walk and execute the effects. runIO returns Unit which
+            -- we discard before returning from main.
+            <> bcInvokeStatic vRunIORef
             <> [0x57] -- pop
             <> [0xB1], -- return
         mCodeAttrCount = 1,
@@ -3643,7 +3767,7 @@ emitExpr ctx = \case
     pure CodeWithMeta {cwCode = finalCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
   CCall f xs ->
     case f of
-      CBuiltIn "IO.Stdout.print" | [x] <- xs -> do
+      CBuiltIn "internalStdoutPrint" | [x] <- xs -> do
         xMeta <- emitExpr ctx x
         ref <- addMRef "AwsumMain" "__print" "(Ljava/lang/Object;)Ljava/lang/Object;"
         pure $ cwmWrap (bcInvokeStatic ref) [xMeta]

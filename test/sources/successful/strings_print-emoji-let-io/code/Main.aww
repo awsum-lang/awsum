@@ -1,0 +1,8 @@
+{- Lazy IO: an `IO` value bound by `let` but never reached by `runIO`
+   produces no output. Output: `🔥`, not `💩🔥`. -}
+import IO.Stdout
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input =
+  let unit = IO.Stdout.print "💩"
+   in IO.Stdout.print "🔥"

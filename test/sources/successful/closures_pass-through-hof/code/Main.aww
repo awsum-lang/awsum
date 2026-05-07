@@ -10,5 +10,5 @@ applyTwice f x = apply f (apply f x)
 incr : Int32 -> Int32
 incr n = n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showInt32 (applyTwice incr 7))

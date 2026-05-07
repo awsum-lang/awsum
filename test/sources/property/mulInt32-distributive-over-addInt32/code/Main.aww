@@ -26,7 +26,7 @@ property a b c = do
   rhs <- addInt32 ab ac
   pureEither (eqInt32 lhs rhs)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
         raw <- rawArg

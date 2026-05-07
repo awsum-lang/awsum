@@ -1,6 +1,6 @@
 -- Error: same type signature declared twice
-foo : String -> IO Unit
-foo : String -> IO Unit
+foo : String -> IO Never Unit
+foo : String -> IO Never Unit
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main input = input

@@ -9,7 +9,7 @@ Source (.aww)
 [ Parse  →  withPrelude  →  desugar do-blocks  →  Typecheck ]
   │
   ▼  Lowering
-[ Surface AST → Core IR  (+ row-tag collision check)  →  tree-shake from main ]
+[ Surface AST → Core IR  (+ row-tag collision check)  →  lazy-IO lowering  →  tree-shake from main, runIO ]
   │
   ▼  Core-to-Core passes
 [ Defunctionalize → tree-shake
@@ -38,7 +38,8 @@ Every phase below is orchestrated by `elaborateLowerProgram` in [../src/Awsum/El
 ## Lowering
 
 - **Lower to Core** (`Awsum.ElaborateLower`) — Drops signatures, converts surface defs and exprs into the smaller Core IR (`Awsum.Core`), generates constructor wrappers, lambda-lifts capturing lambdas. A row-tag collision check rejects programs whose structural-sum labels would canonicalise to the same FNV-1a 32-bit hash at runtime.
-- **Tree-shake from `main`** — Reachability analysis over every top-level declaration (user code, prelude helpers, generated constructor wrappers). Anything unreachable is dropped — the prelude can grow without inflating program size, and constructor wrappers are only materialised for constructors still in use. Tree-shake re-runs after every later pass that can produce new dead code.
+- **Lower IO platform built-ins** (`Awsum.ElaborateLower.lowerIOPlatformBuiltinsDecl`) — Rewrites `CCall (CBuiltIn "IO.Stdout.print") [arg]` into the constructor expression `CCon ioStdoutPrintTag [arg, IOPure Unit]`. After this pass the platform built-in's call site is gone from Core; in its place is a heap-allocated description that the prelude's `runIO` walks at runtime. This is what makes IO lazy. See [prelude.md](prelude.md) for the full story.
+- **Tree-shake from `main` and `runIO`** — Reachability analysis over every top-level declaration (user code, prelude helpers, generated constructor wrappers). Roots are `main` (the user entry point) plus `runIO` (the prelude's IO-tree walker, which the codegen entry-point glue calls on `main`'s result through a string template — not a Core call edge). Anything unreachable from those two roots is dropped — the prelude can grow without inflating program size. Tree-shake re-runs after every later pass that can produce new dead code.
 
 ## Core-to-Core passes
 

@@ -66,17 +66,32 @@ renderDecl = \case
     let header = case args of
           [] -> renderDeclName name
           _ -> renderDeclName name <> " " <> T.intercalate " " (map renderParam args)
-        body = case e of
-          -- 'let' bodies are always multi-line: break the '=' to a
-          -- new line and render the let block at indent 2 so the
-          -- bindings, the dedented 'in', and the body-after-'in'
-          -- all align with predictable columns. Same shape Haskell
-          -- uses for top-of-function 'let'.
+        -- Multi-line body forms (ECase / ELet / EDo) cannot carry a
+        -- trailing comment after the body — the parser would not see
+        -- it on the FunDef's '=' line and would promote it to a
+        -- sibling 'CommentDecl'. When 'mc' is present and the body is
+        -- multi-line, render the comment on the '=' line and start the
+        -- body on the following indented line; the parser accepts this
+        -- shape via 'tcomBeforeBody' in 'pFunDefWithEnd'.
+        bodyAndComment = case e of
           ELet {} ->
             let (binds, finalBody) = collectLetChain e
-             in " =\n  " <> renderLetBlock 2 binds finalBody
-          _ -> " = " <> renderExpr e
-     in header <> body <> renderTrailingComment mc
+                blk = renderLetBlock 2 binds finalBody
+             in " =" <> renderTrailingComment mc <> "\n  " <> blk
+          ECase {} ->
+            -- Without a comment, keep the keyword on the '=' line
+            -- ('f x = case … of …') for compatibility with the
+            -- existing layout. With a comment, push the body to the
+            -- next line so the '=' line is free for the comment.
+            case mc of
+              Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
+              Nothing -> " = " <> renderExpr e
+          EDo {} ->
+            case mc of
+              Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
+              Nothing -> " = " <> renderExpr e
+          _ -> " = " <> renderExpr e <> renderTrailingComment mc
+     in header <> bodyAndComment
   TypeDecl _sp name tvars cons mc ->
     "type "
       <> name
@@ -87,7 +102,14 @@ renderDecl = \case
     renderComment c
   where
     renderConDef (ConDef _ n []) = n
-    renderConDef (ConDef _ n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 3) fs)
+    -- Constructor fields are parsed by 'pTypeAtomNoLineComments' — only
+    -- atomic types (TyVar / TyCon / parenthesised). Anything more
+    -- complex (TyApp like @IO e a@, TyArrow, TyOr) MUST be parenthesised
+    -- on output, otherwise @parse . render@ produces a different AST
+    -- (e.g. @Con String IO e a@ would become four single-token fields
+    -- instead of @[String, IO e a]@). Using precedence 4 (atom) here
+    -- forces the renderer to wrap any non-atom in parens.
+    renderConDef (ConDef _ n fs) = n <> " " <> T.intercalate " " (map (renderTypePrec 4) fs)
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
 -- | Wrap a top-level declaration name in parens when it's an operator
@@ -161,19 +183,36 @@ renderExprPrec ctx indent e =
       parens (renderExprPrec 0 indent e')
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
-      let s = "case " <> renderExprPrec 0 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
-       in if 0 < ctx then parens s else s
+      -- Arm column is established by the first arm itself
+      -- (`pCaseNoLineComments` reads `L.indentLevel` after `of`), so
+      -- placing arms at indent+2 works regardless of where the 'case'
+      -- keyword lands on the line. Scrutinee is rendered at ctx=1 because
+      -- the parser's scrutinee grammar ('pConcatNoLineComments') only
+      -- accepts atoms, applications and '++' chains — block forms
+      -- (ELet / ELam / ECase / EDo) must be wrapped in parens or they
+      -- don't reparse. When wrapping in parens, close ')' on a fresh
+      -- line so a trailing '--' on the last arm doesn't swallow it.
+      let s = "case " <> renderExprPrec 1 indent scrut <> " of\n" <> renderCaseAlts (indent + 2) alts trailingComments
+       in if 0 < ctx then "(" <> s <> "\n" <> T.replicate indent " " <> ")" else s
     ELam _sp params body ->
       -- Lambda body extends as far right as possible — same precedence
-      -- as 'case', so nested usage adds parens.
+      -- as 'case', so nested usage adds parens. When the lambda is
+      -- itself wrapped in parens, render the body at ctx=1 so any
+      -- block-form body (ECase/EDo) gets its own paren wrapping,
+      -- preventing a trailing '--' on a nested case arm from eating
+      -- the lambda's closing paren.
       let paramsText = T.intercalate " " (map renderParam params)
-          s = "\\" <> paramsText <> " -> " <> renderExprPrec 0 indent body
+          bodyCtx = if 0 < ctx then 1 else 0
+          s = "\\" <> paramsText <> " -> " <> renderExprPrec bodyCtx indent body
        in if 0 < ctx then parens s else s
     EDo _sp stmts ->
+      -- Same close-paren-on-newline trick as 'ECase' — the last
+      -- DoStmt (typically a DoExpr containing a case) might end on
+      -- a trailing comment that would otherwise swallow the ')'.
       let stmtLines = map (renderDoStmt (indent + 2)) stmts
           inner = T.intercalate ("\n" <> T.replicate (indent + 2) " ") stmtLines
           s = "do\n" <> T.replicate (indent + 2) " " <> inner
-       in if 0 < ctx then parens s else s
+       in if 0 < ctx then "(" <> s <> "\n" <> T.replicate indent " " <> ")" else s
     ELet {} ->
       -- Nested 'let' (i.e., not the function-body position handled
       -- in 'renderDecl FunDef'). Single-binding renders as a 2-line
@@ -240,7 +279,14 @@ renderDoStmt indent = \case
   DoLet _ pat mAnnot e ->
     let annot = maybe "" (\t -> " : " <> renderType t) mAnnot
      in "let " <> renderPatternAtom pat <> annot <> " = " <> renderExprPrec 0 indent e
-  DoExpr _ e -> renderExprPrec 0 indent e
+  -- ctx=1 so block forms at the head of a DoExpr (specifically ELet)
+  -- get wrapped in parens. Without that wrap, the parser's 'pDoLet'
+  -- greedily consumes 'let pat = expr' as a do-block-let and leaves
+  -- the trailing 'in body' stranded; explicit parens force the full
+  -- expression parser to handle 'let pat = expr in body' as one atom.
+  -- Wrapping ELam too is benign (no parser ambiguity, just extra parens
+  -- in output) and keeps the rule uniform with the other ctx>0 sites.
+  DoExpr _ e -> renderExprPrec 1 indent e
 
 -- ── Let-block helpers ───────────────────────────────────────────────────────
 
@@ -332,6 +378,10 @@ renderPatternAtom p = renderPattern p
 --   parameters.
 renderParam :: Param -> Text
 renderParam (Param _ n) = n
+-- 'ParamPat (PVar n)' is equivalent to 'Param n' (the parser
+-- canonicalises @(x)@ back to a bare binder); render it without
+-- parens so the formatter is idempotent at the text level.
+renderParam (ParamPat _ (PVar _ n)) = n
 renderParam (ParamPat _ pat) = "(" <> renderPattern pat <> ")"
 
 -- | Utility: surround text with parentheses.

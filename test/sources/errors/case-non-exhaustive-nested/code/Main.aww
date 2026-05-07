@@ -8,7 +8,7 @@ import IO.Stdout
 opMaybe : String -> Either ParseError (Maybe Int32)
 opMaybe _ = Right Nothing
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg = case rawArg of
   Left _ -> IO.Stdout.print "INPUT_ERROR"
   Right raw -> case opMaybe raw of

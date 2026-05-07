@@ -9,5 +9,5 @@ type Wrap = Wrap Int32
 bump : Wrap -> Wrap
 bump w = w { field = 1 }
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print "ok"

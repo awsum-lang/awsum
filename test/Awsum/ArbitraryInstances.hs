@@ -74,7 +74,7 @@ shrinkNonEmpty sh (x :| xs) =
 -- ───────────────────────── Arbitrary instances ─────────────────────────
 
 instance Arbitrary ImportDecl where
-  arbitrary = ImportDecl [] <$> genNonEmpty genUIdent <*> genComment
+  arbitrary = ImportDecl <$> genLeadingComments <*> genNonEmpty genUIdent <*> genComment
   shrink (ImportDecl _ ne _) = ImportDecl [] <$> shrinkNonEmpty shrinkIdent ne <*> pure Nothing
 
 -- | Prefer producing useful types for tests:
@@ -144,14 +144,47 @@ genStr = do
   let ok c = isAlphaNum c || c == ' ' || c == '_' || c == '-' -- avoid quotes/backslash
   toText <$> vectorOf k (suchThat arbitrary ok)
 
--- | Non-empty single-line comment text — empty trailing comments
---   render as a bare @--@ that the parser canonicalises back to
---   'Nothing'.
+-- | Single-line comment text. Empty texts are valid in the AST but
+--   the renderer emits them as a bare @--@ that the parser
+--   canonicalises back to 'Nothing'; the property's normaliser
+--   ('normalizeTrailing') matches that on both sides, so empty
+--   texts round-trip too.
 genCommentText :: Gen Text
-genCommentText = genStr `suchThat` (not . T.null)
+genCommentText = genStr
 
 genComment :: Gen (Maybe Text)
 genComment = frequency [(3, pure Nothing), (1, Just <$> genCommentText)]
+
+-- | Generator for the text inside a 'BlockComment' that survives the
+--   render→parse round-trip. The renderer wraps the trimmed body as
+--   @{- body -}@ (single spaces around it), and the parser captures
+--   everything between the delimiters verbatim — so the AST text
+--   must be @" body "@ (one space, no-whitespace-on-edges body, one
+--   space). Force that shape here.
+genBlockCommentText :: Gen Text
+genBlockCommentText = do
+  inner <- genCommentText `suchThat` (not . T.null . T.strip)
+  pure (" " <> T.strip inner <> " ")
+
+-- | A single comment node — line or block.
+genCommentNode :: Gen Comment
+genCommentNode =
+  oneof
+    [ LineComment <$> genCommentText,
+      BlockComment <$> genBlockCommentText
+    ]
+
+-- | Leading-comments list for positions that accept any number of
+--   comments before the syntactic element they attach to. Mostly empty
+--   so the round-trip property keeps exercising the comment-free
+--   shapes too.
+genLeadingComments :: Gen [Comment]
+genLeadingComments =
+  frequency
+    [ (4, pure []),
+      (2, vectorOf 1 genCommentNode),
+      (1, vectorOf 2 genCommentNode)
+    ]
 
 genInt :: Gen Integer
 genInt =
@@ -194,52 +227,67 @@ instance Arbitrary Pattern where
           <> [PCon noSpan n ps' | ps' <- shrinkList shrink ps]
     PAscribe _ p t -> p : [PAscribe noSpan p' t | p' <- shrink p] <> [PAscribe noSpan p t' | t' <- shrink t]
 
--- | A single-line constructor field type. The 'TypeDecl' renderer
---   prints fields at precedence 3 (application), but a 'TyApp' field
---   requires precedence 4 (atom) to round-trip — otherwise
---   @Z (Q e)@ renders as @Z Q e@ and reparses as two nullary fields.
---   Until that gap is closed in the renderer, restrict fields to
---   atomic types only.
-genConFieldType :: Gen Type'
-genConFieldType =
-  oneof
-    [ TyVar noSpan <$> genLIdent,
-      TyCon noSpan <$> genUIdent
-    ]
-
 instance Arbitrary ConDef where
   arbitrary = sized $ \n -> do
     name <- genUIdent
     k <- chooseInt (0, min 2 (max 0 n))
-    fs <- vectorOf k genConFieldType
+    -- The full 'Type'' arbitrary (including TyApp / TyArrow / TyOr).
+    -- The renderer parenthesises non-atomic fields ('renderConDef'
+    -- uses precedence 4), so the parse∘render round-trip survives
+    -- arbitrary nested types in field position.
+    fs <- vectorOf k (resize (n `div` 2) arbitrary)
     pure (ConDef noSpan name fs)
   shrink (ConDef _ n fs) =
     [ConDef noSpan n' fs | n' <- shrinkIdent n]
       <> [ConDef noSpan n (take i fs) | i <- [0 .. length fs - 1]]
 
--- | A single case alternative. Leading/trailing comments left empty
---   to avoid pulling 'Comment' generation into the surface AST until
---   the parser/renderer interaction with comment placement is
---   exercised under property testing in its own right.
 instance Arbitrary CaseAlt where
-  arbitrary = sized $ \n ->
-    CaseAlt []
-      <$> resize (n `div` 2) arbitrary
-      <*> resize (n `div` 2) arbitrary
-      <*> pure Nothing
+  arbitrary = sized $ \n -> do
+    pat <- resize (n `div` 2) arbitrary
+    body <- resize (n `div` 2) arbitrary
+    -- Two restrictions, both rooted in how comments dock at end of
+    -- line in the rendered text:
+    --   * Leading comments on a CaseAlt round-trip in isolation but
+    --     interact poorly with deeply nested case-in-case shapes —
+    --     the renderer prints them at the arm's indent, which the
+    --     outer parser then mis-attributes when both cases share
+    --     that column.
+    --   * Trailing '--' comment lands on the body's last line; if the
+    --     body is itself a multi-line block form (ECase/EDo/ELet),
+    --     the comment looks like a trailing comment of an inner
+    --     last-arm / last-statement / let-body and gets re-attached
+    --     there on parse.
+    -- Both shapes do round-trip when isolated; the failures only
+    -- appear in the cross-product. Until that's untangled, only
+    -- generate trailing comments next to single-line bodies.
+    mc <- if isMultiLineBody body then pure Nothing else genComment
+    pure (CaseAlt [] pat body mc)
+    where
+      isMultiLineBody = \case
+        ECase {} -> True
+        EDo {} -> True
+        ELet {} -> True
+        _ -> False
   shrink (CaseAlt _ p e _) =
     [CaseAlt [] p' e Nothing | p' <- shrink p]
       <> [CaseAlt [] p e' Nothing | e' <- shrink e]
 
--- | A 'do'-block statement. 'DoLet' uses a simple 'PVar' binder
---   (the renderer goes through 'renderPatternAtom', which only
---   parenthesises constructor applications — anything more elaborate
---   risks colliding with the @=@ on the same line).
+-- | A 'do'-block statement. The renderer goes through
+--   'renderPatternAtom' for the LHS, which parenthesises constructor
+--   applications and leaves PAscribe self-parenthesised — so any
+--   pattern shape works on a single line with the '='. The optional
+--   type ascription mirrors the standalone 'let n : T = e' form.
 instance Arbitrary DoStmt where
   arbitrary = sized $ \n ->
     frequency
       [ (3, DoBind noSpan <$> resize (n `div` 2) arbitrary <*> resize (n `div` 2) arbitrary),
-        (2, DoLet noSpan . PVar noSpan <$> genLIdent <*> pure Nothing <*> resize (n `div` 2) arbitrary),
+        ( 2,
+          do
+            pat <- resize (n `div` 2) arbitrary
+            mAnnot <- frequency [(3, pure Nothing), (1, Just <$> resize (n `div` 2) arbitrary)]
+            e <- resize (n `div` 2) arbitrary
+            pure (DoLet noSpan pat mAnnot e)
+        ),
         (3, DoExpr noSpan <$> resize (n `div` 2) arbitrary)
       ]
   shrink = \case
@@ -249,14 +297,16 @@ instance Arbitrary DoStmt where
 
 -- | Surface expressions.
 --
---   What is /not/ generated here, and why:
---     * 'ECase' / 'EDo' — both are layout-sensitive and the renderer
---       does not track the absolute column of the keyword, only an
---       indent counter threaded through subexpressions. Generating
---       them as nested operands of 'EApp' \/ 'EInfix' would put the
---       arms at columns to the left of the keyword that triggered
---       them, which the parser's layout rule rejects. They /are/
---       generated as the direct body of a 'FunDef' (see 'Decl').
+--   What is /not/ generated here, and why: 'ECase' / 'EDo' as nested
+--   subexpressions (operands of 'EApp' / 'EInfix' / 'EParens', body of
+--   'ELet' / 'ELam', etc.). Each individual round-trip works, but
+--   their cross-product creates a nest of comment-position ambiguities
+--   the parser can't disentangle without context — e.g. a trailing
+--   '--' on a 'CaseAlt' whose body is itself a multi-line block ends
+--   up on the inner block's last line on parse-back. Closing those
+--   needs a context-sensitive generator (or a comment-placement
+--   normaliser); both are bigger moves than this pass.  Block forms
+--   /are/ generated as the direct body of a 'FunDef' (see 'Decl').
 instance Arbitrary Expr where
   arbitrary = sized go
     where
@@ -315,27 +365,26 @@ instance Arbitrary Expr where
     ELet _sp _ _ e body -> [e, body] <> [ELet noSpan (PVar noSpan "x") Nothing e' body | e' <- shrink e] <> [ELet noSpan (PVar noSpan "x") Nothing e body' | body' <- shrink body]
 
 -- | Top-level declarations.
---
---   What is /not/ generated:
---     * 'CommentDecl' — top-level comments interact with the
---       declaration grouping pass ('groupDeclBlocks') that joins a
---       'Sig' with its matching 'FunDef'; inserting a comment between
---       them would split the block in a way the parser does not
---       round-trip cleanly.
 instance Arbitrary Decl where
   arbitrary =
     frequency
       [ (4, Sig noSpan <$> genLIdent <*> arbitrary <*> genComment),
         (4, genFunDef),
-        (1, genTypeDecl)
+        (1, genTypeDecl),
+        -- Top-level comment as a standalone declaration. When sandwiched
+        -- between a 'Sig' and a 'FunDef' of the same name, it breaks the
+        -- 'groupDeclBlocks' pairing — both ends still round-trip, just
+        -- as two separate blocks with the comment between, which is
+        -- exactly what the parser produces.
+        (1, CommentDecl <$> genCommentNode)
       ]
     where
       -- Mostly plain-name parameters; an occasional destructuring
       -- 'ParamPat'. The parser canonicalises @(x)@ back to a bare
-      -- 'Param' (see 'paramBinderG' in the parser) — so 'ParamPat'
-      -- only round-trips when its inner pattern is something the
-      -- canonicaliser does /not/ collapse: 'PCon' (with or without
-      -- fields) and 'PAscribe'.
+      -- 'Param' (see 'paramBinderG' in the parser); the normaliser
+      -- ('normalizeParam') matches that on the AST side, so any
+      -- 'ParamPat' shape — including @PVar@ or @PWild@ — round-trips
+      -- through @parse∘render@ once both sides are normalised.
       genParam =
         frequency
           [ (8, Param noSpan <$> genLIdent),
@@ -343,7 +392,9 @@ instance Arbitrary Decl where
           ]
       genParamPat =
         oneof
-          [ PCon noSpan <$> genUIdent <*> pure [],
+          [ PVar noSpan <$> genLIdent,
+            pure (PWild noSpan),
+            PCon noSpan <$> genUIdent <*> pure [],
             do
               k <- chooseInt (1, 2)
               PCon noSpan <$> genUIdent <*> vectorOf k (resize 1 arbitrary),
@@ -354,19 +405,7 @@ instance Arbitrary Decl where
         k <- chooseInt (0, min 3 (max 0 n))
         ps <- vectorOf k genParam
         body <- genFunBody (max 0 (n - k))
-        -- Trailing '--' comments on a 'FunDef' whose body is a
-        -- multi-line construct don't round-trip: the renderer
-        -- appends '--…' after the final body line, and the parser
-        -- then promotes that comment to a sibling 'CommentDecl'
-        -- because it is no longer on the same line as the '=' header.
-        -- Multi-line bodies in this generator: 'ELet' (renderLetBlock),
-        -- 'ECase', 'EDo'.
-        mc <- case body of
-          ELet {} -> pure Nothing
-          ECase {} -> pure Nothing
-          EDo {} -> pure Nothing
-          _ -> genComment
-        pure (FunDef noSpan name ps body mc)
+        FunDef noSpan name ps body <$> genComment
       -- Function bodies may additionally be 'ECase' or 'EDo' at the
       -- top level — these are layout-sensitive and only round-trip
       -- when the keyword sits at the head of the right-hand side,
@@ -375,41 +414,19 @@ instance Arbitrary Decl where
       genFunBody n =
         frequency
           [ (6, resize n arbitrary),
-            (1, ECase noSpan <$> genCaseScrutinee (n `div` 2) <*> resize (n `div` 2) (genNonEmpty arbitrary) <*> pure []),
+            (1, ECase noSpan <$> resize (n `div` 2) arbitrary <*> resize (n `div` 2) (genNonEmpty arbitrary) <*> pure []),
             (1, EDo noSpan <$> resize (n `div` 2) (genDoBlock n))
           ]
-      -- The case scrutinee in the parser uses 'pConcatNoLineComments'
-      -- — it accepts atoms, applications, and '++' chains, but not
-      -- 'let' / lambda / 'do' / 'case' as the head form. Wrap any
-      -- such scrutinee in explicit parens so it parses as an atom on
-      -- the way back.
-      genCaseScrutinee n = do
-        e <- resize n arbitrary
-        pure $ case e of
-          ELet {} -> EParens noSpan e
-          ELam {} -> EParens noSpan e
-          _ -> e
-      -- A 'do' block must end with a 'DoExpr' (the trailing
-      -- expression of the chain). Generate ≥ 1 leading
-      -- bind/let/expr statements followed by a final 'DoExpr'.
-      --
-      -- 'DoExpr' bodies that begin with @let@ collide with the
-      -- do-block-'let' form: the parser's 'pDoLet' matches
-      -- @let pat = expr@ as a 'DoLet' and stops before @in body@,
-      -- leaving the @in@ stranded. Wrap such bodies in 'EParens'
-      -- so the parser sees an atom and routes back through the
-      -- full expression parser (which handles 'let-in').
+      -- A 'do' block must end with a 'DoExpr' (the trailing expression
+      -- of the chain). Generate ≥ 1 leading bind/let/expr statements
+      -- followed by a final 'DoExpr'. No special handling for
+      -- ELet-headed DoExpr — the renderer wraps it in parens
+      -- automatically (see 'renderDoStmt' in Render.hs).
       genDoBlock n = do
         k <- chooseInt (0, min 3 (max 0 n))
-        leading <- vectorOf k (resize (n `div` (k + 1)) (mapDoExpr <$> arbitrary))
-        finalE <- DoExpr noSpan . wrapHeadLet <$> resize (n `div` (k + 1)) arbitrary
+        leading <- vectorOf k (resize (n `div` (k + 1)) arbitrary)
+        finalE <- DoExpr noSpan <$> resize (n `div` (k + 1)) arbitrary
         pure (leading <> [finalE])
-      mapDoExpr stmt = case stmt of
-        DoExpr sp e -> DoExpr sp (wrapHeadLet e)
-        _ -> stmt
-      wrapHeadLet e = case e of
-        ELet {} -> EParens noSpan e
-        _ -> e
       genTypeDecl = sized $ \n -> do
         name <- genUIdent
         kTv <- chooseInt (0, min 2 (max 0 n))
@@ -418,12 +435,7 @@ instance Arbitrary Decl where
         tvars <- vectorOf kTv (Param noSpan <$> genLIdent)
         kCon <- chooseInt (0, min 3 (max 0 n))
         cons <- vectorOf kCon (resize (n `div` 2) arbitrary)
-        -- Trailing '--' comments don't round-trip on 'TypeDecl': the
-        -- parser's 'uident' for the type name uses the line-comment-
-        -- aware space consumer ('sc'), so any '--…' after the type
-        -- header is absorbed before 'pTrailingLineCommentMaybe' runs.
-        -- Always emit 'Nothing' here.
-        pure (TypeDecl noSpan name tvars cons Nothing)
+        TypeDecl noSpan name tvars cons <$> genComment
   shrink = \case
     Sig _sp n t mc ->
       [Sig noSpan n' t mc | n' <- shrinkIdent n] <> [Sig noSpan n t' mc | t' <- shrink t]

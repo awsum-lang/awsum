@@ -10,8 +10,8 @@
   (global $heap (mut i32) (i32.const 71))
   (data (i32.const 64) "\00")
   (data (i32.const 65) "chain\00")
-  (table 5 funcref)
-  (elem (i32.const 0) $v_wrap $v_unwrap $v_compose $v_main $v__df_apply_0)
+  (table 6 funcref)
+  (elem (i32.const 0) $v_runIO $v_wrap $v_unwrap $v_compose $v_main $v__df_apply_0)
   (type $arity_1 (func (param i32) (result i32)))
   (func $__strlen (param $s i32) (result i32)
     (local $len i32)
@@ -60,11 +60,14 @@
 
   (func $__print (param $s i32) (result i32)
     (local $len i32)
+    (local $unit i32)
     (local.set $len (call $__strlen (local.get $s)))
     (i32.store (i32.const 0) (local.get $s))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
-    (i32.const 0))
+    (local.set $unit (call $__alloc (i32.const 4)))
+    (i32.store (local.get $unit) (i32.const 0))
+    (local.get $unit))
 
 
   (func $__get_arg (result i32)
@@ -77,6 +80,14 @@
         (local.set $ptrs (call $__alloc (i32.mul (i32.load (i32.const 12)) (i32.const 4))))
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
+
+  (func $v_runIO (param $v_io i32) (result i32)
+    (local $v_next i32)
+    (local $v_s i32)
+    (local $v_u i32)
+    (local $__scrut i32)
+    (local $__k0 i32)
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
 
   (func $v_wrap (param $v_s i32) (result i32)
     (local $__con_0 i32)
@@ -91,7 +102,10 @@
     (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_g)) (local.get $v_f)))
 
   (func $v_main (param $v__input i32) (result i32)
-    (call $__print (call $v__df_apply_0 (i32.const 65) (i32.const 1) (i32.const 0))))
+    (local $__con_0 i32)
+    (local $__con_1 i32)
+    (local $__con_2 i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (call $v__df_apply_0 (i32.const 65) (i32.const 2) (i32.const 1))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
 
   (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (param $v__df_apply_0_cap0_1 i32) (result i32)
     (call $v_compose (local.get $v__df_apply_0_cap0_0) (local.get $v__df_apply_0_cap0_1) (local.get $v_x)))
@@ -103,6 +117,6 @@
     (local.set $right_box (call $__alloc (i32.const 8)))
     (i32.store (local.get $right_box) (i32.const 1))
     (i32.store offset=4 (local.get $right_box) (local.get $input))
-    (drop (call $v_main (local.get $right_box))))
+    (drop (call $v_runIO (call $v_main (local.get $right_box)))))
 
 )

@@ -1,6 +1,37 @@
 CoreProgram
     { cdecls =
-        [ CValDef "minUInt8"
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "minUInt8"
             ( CIntLit 0 TUInt8 )
         , CValDef "maxUInt8"
             ( CIntLit 255 TUInt8 )
@@ -21,26 +52,24 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$let$1" )
+                ( CVar "$let$2" )
                 [ CCase
-                    ( CCon 1
+                    ( CCall
+                        ( CBuiltIn "concatString" )
                         [ CCall
-                            ( CBuiltIn "concatString" )
+                            ( CVar "render" )
                             [ CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt8" )
-                                    [ CVar "minUInt8"
-                                    , CVar "minUInt8"
-                                    ]
+                                ( CBuiltIn "eqUInt8" )
+                                [ CVar "minUInt8"
+                                , CVar "minUInt8"
                                 ]
-                            , CCall
-                                ( CVar "render" )
-                                [ CCall
-                                    ( CBuiltIn "eqUInt8" )
-                                    [ CVar "maxUInt8"
-                                    , CVar "maxUInt8"
-                                    ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqUInt8" )
+                                [ CVar "maxUInt8"
+                                , CVar "maxUInt8"
                                 ]
                             ]
                         ]
@@ -55,17 +84,15 @@ CoreProgram
                         ( 1
                         , [ "s0" ]
                         , CCase
-                            ( CCon 1
-                                [ CCall
-                                    ( CBuiltIn "concatString" )
-                                    [ CVar "s0"
-                                    , CCall
-                                        ( CVar "render" )
-                                        [ CCall
-                                            ( CBuiltIn "eqUInt8" )
-                                            [ CVar "maxUInt8"
-                                            , CVar "minUInt8"
-                                            ]
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "render" )
+                                    [ CCall
+                                        ( CBuiltIn "eqUInt8" )
+                                        [ CVar "maxUInt8"
+                                        , CVar "minUInt8"
                                         ]
                                     ]
                                 ]
@@ -79,17 +106,15 @@ CoreProgram
                             ,
                                 ( 1
                                 , [ "s1" ]
-                                , CCon 1
-                                    [ CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "s1"
-                                        , CCall
-                                            ( CVar "render" )
-                                            [ CCall
-                                                ( CBuiltIn "eqUInt8" )
-                                                [ CIntLit 128 TUInt8
-                                                , CIntLit 127 TUInt8
-                                                ]
+                                , CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "s1"
+                                    , CCall
+                                        ( CVar "render" )
+                                        [ CCall
+                                            ( CBuiltIn "eqUInt8" )
+                                            [ CIntLit 128 TUInt8
+                                            , CIntLit 127 TUInt8
                                             ]
                                         ]
                                     ]
@@ -99,22 +124,26 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$1" [ "res" ]
+        , CFunDef "$let$2" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
                     ( 0
                     , [ "__w0" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ,
                     ( 1
                     , [ "s" ]
-                    , CCall
-                        ( CBuiltIn "IO.Stdout.print" )
-                        [ CVar "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
                     )
                 ]
             )
