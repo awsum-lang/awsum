@@ -38,6 +38,7 @@ module Awsum.Typing
     isBareBuiltIn,
     splitArrow,
     intTypeRange,
+    maxStringLitUtf16CodeUnits,
   )
 where
 
@@ -384,9 +385,9 @@ prettyPrintTypeError = \case
   StringLiteralTooLong _ n ->
     "String literal exceeds maximum length: "
       <> show n
-      <> " UTF-16 code units (max: maxStringLengthUtf16CodeUnits = "
+      <> " UTF-16 code units (max: "
       <> show maxStringLitUtf16CodeUnits
-      <> ")."
+      <> ", bounded by JVM's CONSTANT_Utf8_info u2 length field)."
   MissingLetAnnotation _ n _underlying ->
     "Cannot infer the type of let-binding '"
       <> n
@@ -515,13 +516,19 @@ prettyPrintTypeError = \case
       let s = showHex w ""
        in replicate (8 - length s) '0' <> s
 
--- | Maximum length of a string literal in UTF-16 code units (= 2^27).
---   Keep in sync with 'maxStringLengthUtf16CodeUnits' in
---   'stdlib/Prelude.aww' and the matching constants in
---   'Awsum.Codegen.{LLVM,JVM,CLR,WASM,JS}'. Operates on the same scale
---   as the runtime cap enforced by '__entryArgEither' / '__concat'.
+-- | Maximum length of a string literal in UTF-16 code units. Bounded
+--   tighter than the runtime cap ('maxStringLengthUtf16CodeUnits' in
+--   'stdlib/Prelude.aww') by JVM's per-literal ceiling: each
+--   'CONSTANT_Utf8_info' entry in the constant pool stores its length
+--   in a 'u2' field (max 65535 UTF-8 bytes). Worst-case UTF-8
+--   expansion of a UTF-16 code unit is 3 bytes (BMP-3-byte content —
+--   CJK ideographs, hangul, most non-Latin scripts), so
+--   'floor (65535 / 3) = 21845' is the largest UTF-16 code unit count
+--   whose worst-case Modified-UTF-8 encoding still fits 'u2'. Keeping
+--   the cap in code units (same unit as the runtime cap) means the
+--   spec stays in one measure regardless of content.
 maxStringLitUtf16CodeUnits :: Int
-maxStringLitUtf16CodeUnits = 134217728
+maxStringLitUtf16CodeUnits = 21845
 
 -- | Length of 'Text' measured in UTF-16 code units. BMP code points
 --   contribute 1, supplementary (>= U+10000, encoded as a surrogate

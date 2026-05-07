@@ -56,7 +56,7 @@ codegenWASM prog@(CoreProgram decls) =
         "\n"
         [ header,
           imports,
-          memory,
+          memory heapStart,
           global heapStart,
           dataSection pool,
           table (length funDefs),
@@ -183,8 +183,18 @@ imports =
       "  (import \"wasi_snapshot_preview1\" \"args_get\" (func $args_get (param i32 i32) (result i32)))"
     ]
 
-memory :: Text
-memory = "  (memory (export \"memory\") 1)"
+-- | Initial linear-memory pages must cover the scratch + data section
+--   (literals are written at module-instantiate time, before any
+--   'memory.grow' could run). Heap allocations live above 'heapStart'
+--   and grow the memory dynamically through '__alloc'.
+memory :: Int -> Text
+memory heapStart =
+  let initialPages = max 1 ((heapStart + wasmPageSize - 1) `div` wasmPageSize)
+   in "  (memory (export \"memory\") " <> show initialPages <> ")"
+
+-- | A WebAssembly memory page is 64 KiB.
+wasmPageSize :: Int
+wasmPageSize = 65536
 
 global :: Int -> Text
 global heapStart = "  (global $heap (mut i32) (i32.const " <> show heapStart <> "))"

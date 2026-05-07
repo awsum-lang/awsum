@@ -467,14 +467,23 @@ buildTableSection info =
 -- Memory section
 -- ════════════════════════════════════════════════════════════════════════════
 
-buildMemorySection :: [Word8]
-buildMemorySection =
-  let content =
+-- | Initial pages must cover scratch + data section (literals are
+--   written at module-instantiate time, before any 'memory.grow').
+--   Heap allocations live above 'heapStart' and grow dynamically.
+buildMemorySection :: WasmInfo -> [Word8]
+buildMemorySection info =
+  let initialPages :: Word32
+      initialPages = max 1 (fromIntegral ((info.wiHeapStart + wasmPageSize - 1) `div` wasmPageSize))
+      content =
         encodeVec
           [ [0x00] -- limits: no max
-              <> encodeULEB128 1 -- initial: 1 page (64KB)
+              <> encodeULEB128 initialPages
           ]
    in buildSection 5 content
+
+-- | A WebAssembly memory page is 64 KiB.
+wasmPageSize :: Int
+wasmPageSize = 65536
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Global section
@@ -5240,7 +5249,7 @@ buildModule prog =
       importSec = buildImportSection typeMap
       funcSec = buildFunctionSection info typeMap prog
       tableSec = buildTableSection info
-      memorySec = buildMemorySection
+      memorySec = buildMemorySection info
       globalSec = buildGlobalSection info
       exportSec = buildExportSection info
       elemSec = buildElementSection info
