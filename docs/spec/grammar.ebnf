@@ -49,11 +49,23 @@ TypeArrow           = TypeApp , [ "->" , TypeArrow ] ;
 TypeApp             = TypeAtom , { TypeAtom } ;
 TypeAtom            = UIdent | LIdent | "(" , Type , ")" ;
 
-(* Expressions: lambda / let / do / case / ++ chain / application / atoms.
+(* Expressions: lambda / let / do / case / |> chain / ++ chain / application / atoms.
    Lambda, let, do-block and case forms are kept at the lowest
    precedence (same level) so their bodies extend as far right as
-   possible. *)
-Expr                = Lambda | LetIn | DoBlock | CaseExpr | Concat ;
+   possible.
+   The infix operator precedence (lowest to highest):
+     1) |>   (left-assoc) — pure syntactic rewrite to application;
+                            `(|>)` is /not/ a referenceable name.
+     2) ++   (left-assoc) — string concatenation; sugar for the
+                            prelude binding `(++)`.
+     3) application (left-assoc)
+     4) atoms *)
+Expr                = Lambda | LetIn | DoBlock | CaseExpr | Pipe ;
+Pipe                = PipeOp , { "|>" , PipeOp } ;
+(* Right-hand side of '|>' is every Expr alternative /except/ Pipe
+   itself — that's what makes '|>' left-associative without giving up
+   the right-greedy reach of Lambda / LetIn / DoBlock / CaseExpr. *)
+PipeOp              = Lambda | LetIn | DoBlock | CaseExpr | Concat ;
 Lambda              = "\\" , LIdent , { LIdent } , "->" , Expr ;
 (* Two surface shapes are accepted for 'let':
    - Inline single binding:  let n = e in body

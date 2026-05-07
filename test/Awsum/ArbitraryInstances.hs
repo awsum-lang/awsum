@@ -312,6 +312,7 @@ instance Arbitrary Expr where
             (1, EBuiltIn noSpan <$> genLIdent),
             (5, EApp noSpan <$> go (n `div` 2) <*> go (n `div` 2)),
             (5, EInfix noSpan OpConcat <$> go (n `div` 2) <*> go (n `div` 2)),
+            (3, EInfix noSpan OpPipe <$> go (n `div` 2) <*> go (n `div` 2)),
             (2, genLam (n `div` 2)),
             (2, genLet (n `div` 2)),
             -- Block forms in nested position. Lower weight + steeper
@@ -341,6 +342,10 @@ instance Arbitrary Expr where
       [l, r]
         <> [EInfix noSpan OpConcat l' r | l' <- shrink l]
         <> [EInfix noSpan OpConcat l r' | r' <- shrink r]
+    EInfix _sp OpPipe l r ->
+      [l, r]
+        <> [EInfix noSpan OpPipe l' r | l' <- shrink l]
+        <> [EInfix noSpan OpPipe l r' | r' <- shrink r]
     ECase _sp scrut alts cs ->
       [scrut]
         <> map caseAltBody (toList alts)

@@ -81,6 +81,7 @@ normalizeExpr = \case
   ELit sp (LInt n) -> ELit sp (LInt n)
   EApp sp f x -> EApp sp (normalizeExpr f) (normalizeExpr x)
   EInfix sp OpConcat l r -> EInfix sp OpConcat (normalizeExpr l) (normalizeExpr r)
+  EInfix sp OpPipe l r -> EInfix sp OpPipe (normalizeExpr l) (normalizeExpr r)
   EParens _sp e -> normalizeExpr e
   ECon sp n -> ECon sp n
   EBuiltIn sp n -> EBuiltIn sp n

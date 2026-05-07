@@ -8,7 +8,9 @@
 --   FunDef  ::= lident { lident } "=" Expr
 --   Type    ::= Type "->" Type | TypeAtom         -- right-assoc
 --   TypeAtom::= UIdent | "(" Type ")"
---   Expr    ::= Concat
+--   Expr    ::= Lambda | Let | Do | Case | Pipe
+--   Pipe    ::= PipeOp { "|>" PipeOp }            -- left-assoc, lowest infix
+--   PipeOp  ::= Lambda | Let | Do | Case | Concat -- Expr without Pipe (for left-assoc)
 --   Concat  ::= App { "++" App }                  -- left-assoc
 --   App     ::= Atom { Atom }                     -- left-assoc
 --   Atom    ::= QName | "(" Expr ")" | StringLit
@@ -25,9 +27,10 @@
 --     block comments via Megaparsec's block comment consumer.
 --
 -- Operator precedence (lowest to highest):
---   1) "++"   (left-assoc)
---   2) application (left-assoc)
---   3) atoms
+--   1) "|>"   (left-assoc)   — pure syntactic rewrite to application; not a name
+--   2) "++"   (left-assoc)
+--   3) application (left-assoc)
+--   4) atoms
 --
 -- NOTE: We treat a /declaration terminator/ as either an explicit newline or EOF.
 --       This makes multi-decl files unambiguous without semicolons.
@@ -568,10 +571,43 @@ pTypeAtomNoLineComments =
 
 -- Expressions ───────────────────────────────────────────────────────────────
 
--- | Lowest precedence layer: @\\x -> …@, @do …@, @case@ (multi-line),
---   or @++@ chain.
+-- | Lowest precedence layer: @\\x -> …@, @let …@, @do …@, @case …@, or
+--   a @|>@ pipe chain (which itself bottoms out in a @++@ chain).
 pExprNoLineComments :: Parser Expr
 pExprNoLineComments =
+  pLambdaNoLineComments
+    <|> pLetNoLineComments
+    <|> pDoNoLineComments
+    <|> pCaseNoLineComments
+    <|> pPipeNoLineComments
+
+-- | Left-associative chain of @PipeOp@ separated by @|>@. The right-hand
+--   side parses through 'pPipeOpNoLineComments' rather than recursing
+--   into 'pPipeNoLineComments' so that @x |> y |> z@ binds as
+--   @(x |> y) |> z@; using 'pExprNoLineComments' on the right would
+--   make it right-associative.
+--
+--   The right-hand side still admits a lambda / @let@ / @do@ / @case@
+--   (so @x |> \\y -> y@ is @(\\y -> y) x@), since these constructs
+--   have the same precedence rank as the pipe chain itself — they
+--   just don't loop.
+pPipeNoLineComments :: Parser Expr
+pPipeNoLineComments = do
+  x <- pConcatNoLineComments
+  let rest acc =
+        ( do
+            _ <- symNoLine "|>"
+            y <- pPipeOpNoLineComments
+            rest (EInfix (spanBetween (exprSpan acc) (exprSpan y)) OpPipe acc y)
+        )
+          <|> pure acc
+  rest x
+
+-- | RHS of a @|>@: every alternative of 'pExprNoLineComments' /except/
+--   'pPipeNoLineComments' itself. Splitting this layer is what enforces
+--   left-associativity for @|>@.
+pPipeOpNoLineComments :: Parser Expr
+pPipeOpNoLineComments =
   pLambdaNoLineComments
     <|> pLetNoLineComments
     <|> pDoNoLineComments

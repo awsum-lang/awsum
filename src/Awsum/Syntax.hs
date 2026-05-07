@@ -213,8 +213,13 @@ data QName = QName [Name] Name
 -- | Infix operator tags used by the surface syntax.
 --   Extend this when new symbolic ops appear (remember to update parser/render/fixities).
 data Op'
-  = -- | @e1 ++ e2@ (left-associative, lowest precedence among our ops)
+  = -- | @e1 ++ e2@ (left-associative, tighter than @|>@)
     OpConcat
+  | -- | @e1 |> e2@ — left-pipe, left-associative, lowest precedence.
+    --   Pure syntactic rewrite: @x |> f@ lowers to @EApp f x@ in
+    --   'Awsum.ElaborateLower' before any Core-to-Core pass sees it,
+    --   so there is no residual call frame and @(|>)@ is not a name.
+    OpPipe
   deriving stock (Show, Eq)
 
 -- | Literals in the surface language.

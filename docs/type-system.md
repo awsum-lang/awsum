@@ -239,6 +239,24 @@ captureFn k = apply (\n -> k) answer
 
 No backend has a closure runtime. The compiler /defunctionalises/ each HOF call site at lowering time: the static closure flowing into a fn-typed slot is replaced with a specialised first-order copy of the HOF whose parameter list adds the closure's captures up front. After this pass no first-class function value remains in any reachable position. Polymorphic HOFs become a family of monomorphic specialisations, one per distinct closure shape across call sites; pass-through HOFs (`applyTwice f x = applyOnce f (applyOnce f x)`) cascade naturally because each inner call resolves the same closure and reuses the memoised specialisation.
 
+### Pipe operator `|>`
+
+`x |> f` is **syntax** for `f x`. Left-associative, lowest precedence — `++` binds tighter (`a ++ b |> f` is `f (a ++ b)`); a chain `x |> f |> g` is `g (f x)`.
+
+```awsum
+-- Without |>
+shoutLoud : String -> IO Never Unit
+shoutLoud msg = bindIO (IO.Stdout.print msg) (\_u -> IO.Stdout.print "!")
+
+-- With |>
+shoutLoud : String -> IO Never Unit
+shoutLoud msg = IO.Stdout.print msg |> bindIO (\_u -> IO.Stdout.print "!")
+```
+
+The rewrite happens before any Core-to-Core pass: after lowering, the IR for `x |> f` is the same IR you'd get for `f x`, so there is no residual call frame on any backend.
+
+`(|>)` is **not** a referenceable name — there is no `(|>) x f = f x` definition in the prelude, and the parser rejects `(|>)` in any value position. `|>` is a syntactic operator, not a higher-order function. (When type classes and a supercompiler land, a first-class form may be added without losing the zero-cost guarantee; until then, the operator-only form is the only one available.)
+
 ---
 
 ## Integer literals — no defaulting

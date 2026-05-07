@@ -770,6 +770,15 @@ lowerExprM env locals expected = \case
           l' <- lowerExprM env locals strExpected l
           r' <- lowerExprM env locals strExpected r
           pure (CCall (CBuiltIn "concatString") [l', r'])
+  EInfix sp OpPipe l r ->
+    -- @x |> f@ is pure syntax for @f x@. The rewrite happens here, before
+    -- any Core-to-Core pass: the resulting Core IR is byte-identical to
+    -- the IR for @f x@, so Defunctionalize / Saturate / Scc / Cps / Tco /
+    -- codegen never see @|>@. Zero residual call frame on every backend.
+    -- @(|>)@ as a value is intentionally not exposed (the parser rejects
+    -- @(|>)@ as a name) — first-class form is deferred until the
+    -- supercompiler can specialise away the wrapper call.
+    lowerExprM env locals expected (EApp sp r l)
   ECon _sp name -> case M.lookup name (leConInfo env) of
     Just ci
       | ciArity ci == 0 -> do

@@ -1216,6 +1216,11 @@ checkExpr conEnv tcm crossExempt env expected = \case
             actual <- typeOfExpr conEnv tcm env e
             unless (rowSubsume expected actual)
               $ Left (TypeMismatch expected actual e)
+  -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' check
+  -- gives the bidirectional spine logic above for free, so a pipe call
+  -- against a polymorphic head (@x |> apply g@) gets the same
+  -- expected-type propagation as the direct application form.
+  EInfix sp OpPipe l r -> checkExpr conEnv tcm crossExempt env expected (EApp sp r l)
   e -> do
     actual <- typeOfExpr conEnv tcm env e
     -- Boundary acceptance: equality is too strict once 'TyOr' enters
@@ -1370,6 +1375,12 @@ typeOfExpr conEnv tcm env = \case
                   then Right b
                   else Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
+  -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' clause
+  -- means @|>@ inherits all of its bidirectional special-cases (lambda
+  -- argument, integer-literal in argument position, constructor-spine
+  -- check, …) for free. The synthesised @EApp@ keeps the original span,
+  -- so locations in any error remain accurate.
+  EInfix sp OpPipe l r -> typeOfExpr conEnv tcm env (EApp sp r l)
   -- String concatenation `a ++ b` is defined for (String, String) and
   -- returns `Either StringTooLong String`. Phase 1 always produces 'Right';
   -- 'StringTooLong' becomes reachable in phase 2.x when length validation

@@ -278,6 +278,27 @@ renderExprPrec ctx indent e =
               let l' = renderExprPrec 1 indent l
                   r' = renderExprPrec 2 indent r
                in (1, l' <> " ++ " <> r')
+            -- @|>@ is the lowest-precedence binary operator (prec 0).
+            -- Left-assoc: the right operand prints at ctx 1, so a
+            -- nested @|>@ on the right wraps — preserving
+            -- associativity. A nested @++@ on the right (prec 1)
+            -- does /not/ wrap, so @x |> a ++ b@ round-trips
+            -- unchanged.
+            --
+            -- The left operand prints at ctx 1 too, so @\\…@, @let@,
+            -- @do@, @case@ wrap into parens — without that, the
+            -- parser's greedy-rightward rule for those forms would
+            -- swallow the @|> r@ tail and re-parse to a different
+            -- tree. The exception is a nested @|>@ on the left,
+            -- which we want to /not/ wrap (so the left-assoc chain
+            -- stays flat); we render it at ctx 0 explicitly.
+            EInfix _sp' OpPipe l r ->
+              let lCtx = case l of
+                    EInfix _ OpPipe _ _ -> 0
+                    _ -> 1
+                  l' = renderExprPrec lCtx indent l
+                  r' = renderExprPrec 1 indent r
+               in (0, l' <> " |> " <> r')
        in if prec < ctx
             -- Multi-line @s@ wrapped with a flat 'parens' would let
             -- the inner block's last line fuse with the closing ')'
