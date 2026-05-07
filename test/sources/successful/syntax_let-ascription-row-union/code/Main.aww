@@ -21,7 +21,7 @@ main _ =
       )
    in case res of
         Left e -> case e of
-          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
-          (_ : ErrA) -> IO.Stdout.print "ERR_A"
-          (_ : ErrB) -> IO.Stdout.print "ERR_B"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
+          ErrA -> IO.Stdout.print "ERR_A"
+          ErrB -> IO.Stdout.print "ERR_B"
         Right n -> IO.Stdout.print (showInt32 n)

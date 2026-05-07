@@ -1,0 +1,13 @@
+-- `|>` is a syntactic operator, not a referenceable name. Unlike
+-- `(++)`, which the prelude can spell as `(++) = BuiltIn.concatString`
+-- to make hover and go-to-definition land on a binding, `(|>)` has
+-- no first-class form: it lowers in `ElaborateLower` directly to
+-- function application, with no Core symbol to point at. The parser
+-- accordingly rejects `(|>)` in any name position.
+import IO.Stdout
+
+(|>) : a -> (a -> b) -> b
+(|>) x f = f x
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = IO.Stdout.print "unreachable"

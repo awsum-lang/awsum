@@ -17,7 +17,7 @@ showResult : Either (UnderflowError | StringTooLong) String -> Either StringTooL
 showResult r = case r of
   Left e -> case e of
     (u : UnderflowError) -> "left: " ++ showUnderflowError u
-    (_ : StringTooLong) -> Right "STRING_TOO_LONG"
+    StringTooLong -> Right "STRING_TOO_LONG"
   Right s -> "right: " ++ s
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit

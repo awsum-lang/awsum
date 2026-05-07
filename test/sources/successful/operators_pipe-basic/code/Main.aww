@@ -1,0 +1,33 @@
+{- Exercises the `|>` pipe operator. `x |> f` is pure syntax for `f x`,
+   so the IR after lowering is identical to the direct application
+   form. Three shapes appear here: a basic chain, a left-associative
+   chain, and a lambda on the right of `|>`. The program prints one
+   line that combines all three results. -}
+import IO.Stdout
+
+n : Int32
+n = 42
+
+basic : String
+basic = n |> showInt32
+
+chained : String
+chained = n |> showInt32 |> wrap |> wrap
+
+viaLambda : String
+viaLambda = n |> \i -> showInt32 i
+
+wrap : String -> String
+wrap s = s
+
+joined : Either StringTooLong String
+joined = do
+  a <- basic ++ "|"
+  b <- a ++ chained
+  c <- b ++ "|"
+  c ++ viaLambda
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = case joined of
+  Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+  Right s -> s |> IO.Stdout.print

@@ -29,10 +29,10 @@ main rawArg =
       )
    in case res of
         Left e -> case e of
-          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
-          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
-          (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
-          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
+          UnderflowError -> IO.Stdout.print "UNDERFLOW"
+          OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"

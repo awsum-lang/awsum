@@ -9,8 +9,8 @@ main inputArg =
       )
    in case res of
         Left e -> case e of
-          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
         Right s -> IO.Stdout.print s
 
 {- Block comment -}
