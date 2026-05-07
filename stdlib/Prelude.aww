@@ -86,7 +86,7 @@ lengthUtf8Bytes = BuiltIn.lengthUtf8Bytes
    determines this value. -}
 
 maxStringLengthUtf16CodeUnits : UInt32
-maxStringLengthUtf16CodeUnits = 134217728
+maxStringLengthUtf16CodeUnits = 134_217_728
 
 -- ---------------------- Unit
 
@@ -448,7 +448,7 @@ minUInt32 : UInt32
 minUInt32 = 0
 
 maxUInt32 : UInt32
-maxUInt32 = 4294967295
+maxUInt32 = 4_294_967_295
 
 eqUInt32 : UInt32 -> UInt32 -> Bool
 eqUInt32 = BuiltIn.eqUInt32
@@ -499,10 +499,10 @@ parseUInt32 = BuiltIn.parseUInt32
    for boundary checks without spelling out the literal at every call site. -}
 
 minInt32 : Int32
-minInt32 = -2147483648
+minInt32 = -2_147_483_648
 
 maxInt32 : Int32
-maxInt32 = 2147483647
+maxInt32 = 2_147_483_647
 
 eqInt32 : Int32 -> Int32 -> Bool
 eqInt32 = BuiltIn.eqInt32

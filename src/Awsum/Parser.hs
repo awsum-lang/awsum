@@ -726,16 +726,40 @@ pStringLitNoLineComments = lexemeNoLine $ do
   chars <- P.manyTill stringChar (C.char '"')
   pure (toText chars)
 
--- | Integer literal: optional '-' followed by one or more decimal digits.
---   The '-' must be adjacent to the digits (no whitespace), so future binary
---   operators will not collide with negative literals.
---   Range validation happens at the type-check stage against the declared type.
+-- | Integer literal: optional '-' followed by one or more decimal digits,
+--   with optional '_' separators *between* digits (a readability affordance —
+--   '1_000_000' parses to the same Integer as '1000000', '10_00', or '1_0_0_0').
+--
+--   Forbidden positions for '_':
+--     • leading: '_1' is rejected (would clash with underscore-prefixed names)
+--     • trailing: '1_' is rejected
+--     • adjacent to another '_': '1__2' is rejected
+--     • immediately after the sign: '-_1' is rejected
+--
+--   The '-' must be adjacent to the first digit (no whitespace), so future
+--   binary operators will not collide with negative literals. Range validation
+--   happens at the type-check stage against the declared type.
 pIntLitNoLineComments :: Parser Integer
-pIntLitNoLineComments = lexemeNoLine $ try $ do
-  sign <- P.option 1 (C.char '-' $> (-1))
-  digits <- P.takeWhile1P (Just "digit") Char.isDigit
-  pure (sign * readDecimal digits)
+pIntLitNoLineComments = lexemeNoLine $ do
+  -- 'try' is restricted to the [-]?digit prefix so that backtracking
+  -- happens only when this isn't a literal at all (e.g. a bare '-' in a
+  -- different position). Once the first digit is committed, malformed
+  -- '_' placement produces a real parse error rather than rolling back.
+  (sign, firstDigit) <- try $ do
+    s <- P.option 1 (C.char '-' $> (-1))
+    d <- P.satisfy Char.isDigit
+    pure (s, d)
+  rest <- P.many digitOrSepDigit
+  pure (sign * readDecimal (toText (firstDigit : rest)))
   where
+    -- A digit, or '_' immediately followed by a digit. '_' alone is not
+    -- a valid continuation: if '_' matches but the next char isn't a
+    -- digit, we fail with "expected digit" — that's how trailing and
+    -- doubled '_' get rejected.
+    digitOrSepDigit :: Parser Char
+    digitOrSepDigit =
+      P.satisfy Char.isDigit
+        <|> (C.char '_' *> P.satisfy Char.isDigit)
     readDecimal :: Text -> Integer
     readDecimal = T.foldl' (\acc c -> acc * 10 + toInteger (Char.digitToInt c)) 0
 

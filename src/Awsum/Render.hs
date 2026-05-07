@@ -262,7 +262,7 @@ renderExprPrec ctx indent e =
       let (prec, s) = case e of
             EVar _sp' q -> (3, renderQName q)
             ELit _sp' (LString t) -> (3, "\"" <> escape t <> "\"")
-            ELit _sp' (LInt n) -> (3, show n)
+            ELit _sp' (LInt n) -> (3, renderInteger n)
             ECon _sp' n -> (3, n)
             EBuiltIn _sp' n -> (3, "BuiltIn." <> n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
@@ -476,3 +476,32 @@ renderQName (QName mods n) =
   case mods of
     [] -> n
     _ -> T.intercalate "." (mods <> [n])
+
+-- | Canonical form for an integer literal in source.
+--   Decimal digits, grouped by 3 from the right, with '_' between groups.
+--   Grouping kicks in starting at 4 digits — values with 1–3 digits stay bare
+--   ('42', '999'), values from 4 digits up get separators ('1_000',
+--   '1_234_567'). Sign is preserved on the outside ('-1_000_000').
+renderInteger :: Integer -> Text
+renderInteger n
+  | n < 0 = "-" <> renderNonNegative (negate n)
+  | otherwise = renderNonNegative n
+  where
+    renderNonNegative :: Integer -> Text
+    renderNonNegative k =
+      let digits = show k
+       in if T.length digits < 4
+            then digits
+            else
+              let len = T.length digits
+                  -- Size of the leading (possibly short) group: 1, 2, or 3.
+                  firstLen = ((len - 1) `mod` 3) + 1
+                  (lead, rest) = T.splitAt firstLen digits
+               in lead <> chunksOf3 rest
+
+    chunksOf3 :: Text -> Text
+    chunksOf3 t
+      | T.null t = ""
+      | otherwise =
+          let (h, r) = T.splitAt 3 t
+           in "_" <> h <> chunksOf3 r
