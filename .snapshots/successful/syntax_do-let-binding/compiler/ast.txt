@@ -150,7 +150,7 @@ Program
                         ( LInt 10 )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 8
@@ -197,7 +197,7 @@ Program
                             ( LString "overflow" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 9
@@ -391,7 +391,7 @@ Program
                         ( LInt 2 )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 13
@@ -438,7 +438,7 @@ Program
                             ( LString "overflow" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 14
@@ -903,7 +903,7 @@ Program
                     )
                     ( QName [] "e" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PAscribe
                         ( SrcSpan
                             { spanStartLine = 25
@@ -960,7 +960,7 @@ Program
                             ( QName [] "s" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PAscribe
                             ( SrcSpan
                                 { spanStartLine = 26
@@ -1198,7 +1198,7 @@ Program
                         ( LInt 5 )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltBlock []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 30
@@ -1254,7 +1254,7 @@ Program
                                 ( QName [] "e" )
                             )
                         )
-                        ( CaseAlt []
+                        ( CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 31
@@ -1306,7 +1306,7 @@ Program
                                     ( LString "STRING_TOO_LONG" )
                                 )
                             ) Nothing :|
-                            [ CaseAlt []
+                            [ CaseAltLeaf []
                                 ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 32
@@ -1360,8 +1360,8 @@ Program
                                 ) Nothing
                             ]
                         ) []
-                    ) Nothing :|
-                    [ CaseAlt []
+                    ) :|
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 33

@@ -100,7 +100,7 @@ Program
                     )
                     ( QName [] "tok" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 9
@@ -120,7 +120,7 @@ Program
                         )
                         ( LInt 0 )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 10
@@ -277,7 +277,7 @@ Program
                     )
                     ( QName [] "tok" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 14
@@ -297,7 +297,7 @@ Program
                         )
                         ( LInt 0 )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 15

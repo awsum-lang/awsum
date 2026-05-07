@@ -164,7 +164,7 @@ Program
                     )
                     ( QName [] "r" )
                 )
-                ( CaseAlt []
+                ( CaseAltBlock []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 6
@@ -201,7 +201,7 @@ Program
                             )
                             ( QName [] "e" )
                         )
-                        ( CaseAlt []
+                        ( CaseAltLeaf []
                             ( PAscribe
                                 ( SrcSpan
                                     { spanStartLine = 7
@@ -277,7 +277,7 @@ Program
                                     )
                                 )
                             ) Nothing :|
-                            [ CaseAlt []
+                            [ CaseAltLeaf []
                                 ( PAscribe
                                     ( SrcSpan
                                         { spanStartLine = 8
@@ -355,8 +355,8 @@ Program
                                 ) Nothing
                             ]
                         ) []
-                    ) Nothing :|
-                    [ CaseAlt []
+                    ) :|
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 9
@@ -1506,7 +1506,7 @@ Program
                         )
                         ( QName [] "res" )
                     )
-                    ( CaseAlt []
+                    ( CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 28
@@ -1558,7 +1558,7 @@ Program
                                 ( LString "STRING_TOO_LONG" )
                             )
                         ) Nothing :|
-                        [ CaseAlt []
+                        [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 29

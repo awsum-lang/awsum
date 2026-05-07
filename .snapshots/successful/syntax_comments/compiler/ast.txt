@@ -131,7 +131,7 @@ Program
                     )
                     ( QName [] "c" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 23
@@ -152,7 +152,7 @@ Program
                         ( LString "Red" )
                     )
                     ( Just " CaseAlt trailing Red" ) :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 24
@@ -173,7 +173,7 @@ Program
                             ( LString "Green" )
                         )
                         ( Just " CaseAlt trailing Green" )
-                    , CaseAlt []
+                    , CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 25
@@ -515,7 +515,7 @@ Program
                     )
                     ( QName [] "inputArg" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 46
@@ -568,7 +568,7 @@ Program
                         )
                     )
                     ( Just " CaseAlt with effect" ) :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 47

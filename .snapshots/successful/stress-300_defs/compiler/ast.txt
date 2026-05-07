@@ -10274,7 +10274,7 @@ Program
                     )
                     ( QName [] "b" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 906
@@ -10294,7 +10294,7 @@ Program
                         )
                         ( LString "True" )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 907

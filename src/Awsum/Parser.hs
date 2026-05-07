@@ -922,13 +922,27 @@ pCaseNoLineComments = do
 -- | Group flat case items into structured alternatives.
 --   Comments before an arm become its leading @[Comment]@;
 --   comments after the last arm become the trailing @[Comment]@ on 'ECase'.
+--
+--   Constructor choice mirrors the parser-level invariant captured in
+--   'CaseAlt' / 'isBlockBody': a block-form body that ends inside its
+--   own last arm/stmt cannot have outer-arm trailing because the inner
+--   trailing-slot eats it. When the parser observed a trailing comment
+--   ('Just _'), the body must be leaf-form (the parser couldn't have
+--   reached 'pTrailingLineCommentMaybe' otherwise) — emit 'CaseAltLeaf'.
+--   With no trailing, we still emit 'CaseAltLeaf' for leaf-form bodies
+--   (so a future trailing can be added without changing the
+--   constructor) and 'CaseAltBlock' for block-form ones.
 groupCaseItems :: [CaseItem] -> ([CaseAlt], [Comment])
 groupCaseItems = go []
   where
     go pendingComments [] = ([], pendingComments)
     go pendingComments (CaseItemComment c : rest) = go (pendingComments <> [c]) rest
     go pendingComments (CaseItemArm pat body mc : rest) =
-      let alt = CaseAlt pendingComments pat body mc
+      let alt = case mc of
+            Just _ -> CaseAltLeaf pendingComments pat body mc
+            Nothing
+              | isBlockBody body -> CaseAltBlock pendingComments pat body
+              | otherwise -> CaseAltLeaf pendingComments pat body Nothing
           (alts, trailing) = go [] rest
        in (alt : alts, trailing)
 

@@ -578,7 +578,7 @@ Program
                         )
                         ( QName [] "res" )
                     )
-                    ( CaseAlt []
+                    ( CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 22
@@ -615,7 +615,7 @@ Program
                                 )
                                 ( QName [] "e" )
                             )
-                            ( CaseAlt []
+                            ( CaseAltLeaf []
                                 ( PAscribe
                                     ( SrcSpan
                                         { spanStartLine = 23
@@ -676,7 +676,7 @@ Program
                                         ( LString "PARSE_ERROR" )
                                     )
                                 ) Nothing :|
-                                [ CaseAlt []
+                                [ CaseAltLeaf []
                                     ( PAscribe
                                         ( SrcSpan
                                             { spanStartLine = 24
@@ -737,7 +737,7 @@ Program
                                             ( LString "ERR_A" )
                                         )
                                     ) Nothing
-                                , CaseAlt []
+                                , CaseAltLeaf []
                                     ( PAscribe
                                         ( SrcSpan
                                             { spanStartLine = 25
@@ -800,8 +800,8 @@ Program
                                     ) Nothing
                                 ]
                             ) []
-                        ) Nothing :|
-                        [ CaseAlt []
+                        ) :|
+                        [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 26

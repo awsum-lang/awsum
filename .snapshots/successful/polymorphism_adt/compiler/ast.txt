@@ -337,7 +337,7 @@ Program
                                 )
                             )
                         )
-                        ( CaseAlt []
+                        ( CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 11

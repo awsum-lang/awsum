@@ -204,7 +204,7 @@ Program
                         ( QName [] "actual" )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 10
@@ -243,7 +243,7 @@ Program
                             ( LString "=ok" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 11
@@ -521,7 +521,7 @@ Program
                                     )
                                 )
                             ]
-                        ) Nothing
+                        )
                     ]
                 ) []
             ) Nothing
@@ -1267,7 +1267,7 @@ Program
                     )
                     ( QName [] "run" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 30
@@ -1319,7 +1319,7 @@ Program
                             ( QName [] "s" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 31

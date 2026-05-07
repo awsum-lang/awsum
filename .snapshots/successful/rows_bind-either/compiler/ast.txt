@@ -631,7 +631,7 @@ Program
                     )
                     ( QName [] "r" )
                 )
-                ( CaseAlt []
+                ( CaseAltBlock []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 24
@@ -668,7 +668,7 @@ Program
                             )
                             ( QName [] "e" )
                         )
-                        ( CaseAlt []
+                        ( CaseAltLeaf []
                             ( PAscribe
                                 ( SrcSpan
                                     { spanStartLine = 25
@@ -724,7 +724,7 @@ Program
                                     ( LString "ErrA" )
                                 )
                             ) Nothing :|
-                            [ CaseAlt []
+                            [ CaseAltLeaf []
                                 ( PAscribe
                                     ( SrcSpan
                                         { spanStartLine = 26
@@ -782,8 +782,8 @@ Program
                                 ) Nothing
                             ]
                         ) []
-                    ) Nothing :|
-                    [ CaseAlt []
+                    ) :|
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 27
@@ -1134,7 +1134,7 @@ Program
                         )
                         ( QName [] "res" )
                     )
-                    ( CaseAlt []
+                    ( CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 33
@@ -1186,7 +1186,7 @@ Program
                                 ( LString "STRING_TOO_LONG" )
                             )
                         ) Nothing :|
-                        [ CaseAlt []
+                        [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 34

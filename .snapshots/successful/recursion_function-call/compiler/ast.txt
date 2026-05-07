@@ -107,7 +107,7 @@ Program
                     )
                     ( QName [] "x" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 8
@@ -145,7 +145,7 @@ Program
                             ) "Step2"
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 9
@@ -183,7 +183,7 @@ Program
                                 ) "Step3"
                             )
                         ) Nothing
-                    , CaseAlt []
+                    , CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 10

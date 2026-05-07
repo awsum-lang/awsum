@@ -1545,35 +1545,37 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
           _ -> Right ()
       pure armResults
 
-    handleArm caseSp envLocal scrutSubst (results, patterns) (CaseAlt _ (PCon patSp cName pats) body _) = do
-      -- Reject @_X@ constructor references at any depth in the pattern.
-      mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats)
-      -- Verify the constructor belongs to the scrutinee type.
-      ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
-      -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
-      let currentPattern = (cName, pats)
-      when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
-      -- Reject shadowing: pattern variables (including those in nested patterns)
-      -- must not duplicate each other and must not collide with anything
-      -- already visible in the arm. Each binder carries its own span so the
-      -- error arrow lands on the offending identifier, not on a usage site.
-      checkNoShadow envLocal crossExempt (collectPatternVars pats)
-      -- Compute field types with proper freshening and substitution.
-      -- First freshen the constructor's field types with the same suffix used for scrutSubst,
-      -- then apply the matched substitution.
-      let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
-          fieldTys = map (applySubst scrutSubst) freshFieldTys
-      -- Reject patterns on uninhabited constructors (unreachable).
-      case find (not . isTypeInhabited conEnv tcm) fieldTys of
-        Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
-        Nothing -> pass
-      -- Bind pattern variables from constructor fields.
-      let bindings = patternBindings conEnv pats fieldTys
-          envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
-      result <- runBody envWithBindings body
-      pure (results <> [result], patterns <> [currentPattern])
-    handleArm _ _ _ _ CaseAlt {} =
-      Left (TELowering "only constructor patterns are supported")
+    handleArm caseSp envLocal scrutSubst (results, patterns) alt = case caseAltPattern alt of
+      PCon patSp cName pats -> do
+        let body = caseAltBody alt
+        -- Reject @_X@ constructor references at any depth in the pattern.
+        mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats)
+        -- Verify the constructor belongs to the scrutinee type.
+        ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
+        -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
+        let currentPattern = (cName, pats)
+        when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
+        -- Reject shadowing: pattern variables (including those in nested patterns)
+        -- must not duplicate each other and must not collide with anything
+        -- already visible in the arm. Each binder carries its own span so the
+        -- error arrow lands on the offending identifier, not on a usage site.
+        checkNoShadow envLocal crossExempt (collectPatternVars pats)
+        -- Compute field types with proper freshening and substitution.
+        -- First freshen the constructor's field types with the same suffix used for scrutSubst,
+        -- then apply the matched substitution.
+        let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
+            fieldTys = map (applySubst scrutSubst) freshFieldTys
+        -- Reject patterns on uninhabited constructors (unreachable).
+        case find (not . isTypeInhabited conEnv tcm) fieldTys of
+          Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
+          Nothing -> pass
+        -- Bind pattern variables from constructor fields.
+        let bindings = patternBindings conEnv pats fieldTys
+            envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
+        result <- runBody envWithBindings body
+        pure (results <> [result], patterns <> [currentPattern])
+      _ ->
+        Left (TELowering "only constructor patterns are supported")
 
 -- | Specialised case-arm handling for structural-sum scrutinees. A row
 --   case accepts 'PAscribe' arms (one per row label, exhaustive) and
@@ -1621,8 +1623,9 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
     findLabel tyName =
       find (\l -> extractTyCon l == Just tyName) labels
 
-    handleRowArm (results, ascribed, perCon) (CaseAlt _ pat body _) = case pat of
+    handleRowArm (results, ascribed, perCon) alt = case caseAltPattern alt of
       PAscribe patSp inner ascrTy -> do
+        let body = caseAltBody alt
         unless (ascrTy `elem` labels)
           $ Left (RowLabelNotInScrut patSp ascrTy scrutTy)
         when (ascrTy `elem` ascribed)
@@ -1640,6 +1643,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
         result <- runBody envWithBindings body
         pure (results <> [result], ascribed <> [ascrTy], perCon)
       PCon patSp cName innerPats -> do
+        let body = caseAltBody alt
         ci <- maybeToRight (UnknownConstructor patSp cName) (M.lookup cName conEnv)
         let cTyName = ciTypeName ci
         label <-
@@ -1952,7 +1956,7 @@ freeNames = go
       ECon _ _ -> S.empty
       EBuiltIn _ _ -> S.empty
       ECase _ scrut alts _ ->
-        go scrut <> foldMap (\(CaseAlt _ _ body _) -> go body) (toList alts)
+        go scrut <> foldMap (go . caseAltBody) (toList alts)
       ELam _ params body ->
         go body `S.difference` S.fromList (map paramName params)
       EDo _ stmts -> goDoStmts stmts

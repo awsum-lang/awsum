@@ -207,7 +207,7 @@ Program
                         ( QName [] "n" )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 26
@@ -254,7 +254,7 @@ Program
                             ( QName [] "acc" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 27
@@ -506,7 +506,7 @@ Program
                         ( QName [] "block" )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 38
@@ -535,7 +535,7 @@ Program
                         )
                         ( LString "FAIL: build returned Left at the cap" )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 39
@@ -638,7 +638,7 @@ Program
                                     ( QName [] "maxStringLengthUtf16CodeUnits" )
                                 )
                             )
-                            ( CaseAlt []
+                            ( CaseAltLeaf []
                                 ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 40
@@ -658,7 +658,7 @@ Program
                                     )
                                     ( LString "FAIL: built string length is not at cap" )
                                 ) Nothing :|
-                                [ CaseAlt []
+                                [ CaseAltBlock []
                                     ( PCon
                                         ( SrcSpan
                                             { spanStartLine = 41
@@ -705,7 +705,7 @@ Program
                                                 ( LString "!" )
                                             )
                                         )
-                                        ( CaseAlt []
+                                        ( CaseAltLeaf []
                                             ( PCon
                                                 ( SrcSpan
                                                     { spanStartLine = 42
@@ -734,7 +734,7 @@ Program
                                                 )
                                                 ( LString "FAIL: cap + 1 returned Right" )
                                             ) Nothing :|
-                                            [ CaseAlt []
+                                            [ CaseAltLeaf []
                                                 ( PCon
                                                     ( SrcSpan
                                                         { spanStartLine = 43
@@ -765,10 +765,10 @@ Program
                                                 ) Nothing
                                             ]
                                         ) []
-                                    ) Nothing
+                                    )
                                 ]
                             ) []
-                        ) Nothing
+                        )
                     ]
                 ) []
             ) Nothing

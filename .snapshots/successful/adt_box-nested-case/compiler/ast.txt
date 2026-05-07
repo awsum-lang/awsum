@@ -163,7 +163,7 @@ Program
                     )
                     ( QName [] "b" )
                 )
-                ( CaseAlt []
+                ( CaseAltBlock []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 8
@@ -200,7 +200,7 @@ Program
                             )
                             ( QName [] "b2" )
                         )
-                        ( CaseAlt []
+                        ( CaseAltBlock []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 9
@@ -237,7 +237,7 @@ Program
                                     )
                                     ( QName [] "b3" )
                                 )
-                                ( CaseAlt []
+                                ( CaseAltLeaf []
                                     ( PCon
                                         ( SrcSpan
                                             { spanStartLine = 10
@@ -267,9 +267,9 @@ Program
                                         ( QName [] "value" )
                                     ) Nothing :| []
                                 ) []
-                            ) Nothing :| []
+                            ) :| []
                         ) []
-                    ) Nothing :| []
+                    ) :| []
                 ) []
             ) Nothing
         , Sig

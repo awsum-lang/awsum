@@ -89,7 +89,10 @@ normalizeExpr = \case
   EDo sp stmts -> EDo sp (map normalizeDoStmt stmts)
   ELet sp pat mAnnot e body -> ELet sp pat mAnnot (normalizeExpr e) (normalizeExpr body)
   where
-    normalizeAlt (CaseAlt lc pat body mc) = CaseAlt lc pat (normalizeExpr body) (normalizeTrailing mc)
+    -- 'mkCaseAlt' re-derives the constructor from the normalized body,
+    -- so a body that changed shape (rare — normalization is structural)
+    -- still ends up in the right variant.
+    normalizeAlt alt = mkCaseAlt (caseAltLeading alt) (caseAltPattern alt) (normalizeExpr (caseAltBody alt)) (normalizeTrailing (caseAltTrailing alt))
     normalizeDoStmt = \case
       DoBind sp pat e -> DoBind sp pat (normalizeExpr e)
       DoLet sp pat mAnnot e -> DoLet sp pat mAnnot (normalizeExpr e)

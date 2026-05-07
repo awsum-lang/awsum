@@ -515,7 +515,7 @@ Program
                             ( LString "hello" )
                         )
                     )
-                    ( CaseAlt []
+                    ( CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 14
@@ -562,7 +562,7 @@ Program
                                 ( QName [] "e" )
                             )
                         ) Nothing :|
-                        [ CaseAlt []
+                        [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 15
@@ -618,7 +618,7 @@ Program
                                     ( QName [] "v" )
                                 )
                             ) Nothing
-                        , CaseAlt []
+                        , CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 16
@@ -686,7 +686,7 @@ Program
                         )
                         ( QName [] "res" )
                     )
-                    ( CaseAlt []
+                    ( CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 18
@@ -738,7 +738,7 @@ Program
                                 ( LString "STRING_TOO_LONG" )
                             )
                         ) Nothing :|
-                        [ CaseAlt []
+                        [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 19
