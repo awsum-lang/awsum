@@ -413,16 +413,16 @@ case.join.4:
   ret ptr %t21
 }
 
-define internal ptr @v__scc__df_bindEither_0__lam_2_build(ptr %v__args) {
+define internal ptr @v__scc__df_andThenEither_0__lam_2_build(ptr %v__args) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__scc__df_bindEither_0__lam_2_build(ptr %v__args, ptr %t0)
+  %t3 = call ptr @v__cps__scc__df_andThenEither_0__lam_2_build(ptr %v__args, ptr %t0)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__scc__df_bindEither_0__lam_2_build(ptr %v__args, ptr %v__k) {
+define internal ptr @v__cps__scc__df_andThenEither_0__lam_2_build(ptr %v__args, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -455,7 +455,7 @@ tco.case.arm.0.20:
   store ptr %t24, ptr %t25
   %t26 = getelementptr ptr, ptr %t23, i32 1
   store ptr %t22, ptr %t26
-  %t27 = call ptr @v__apply__scc__df_bindEither_0__lam_2_build(ptr %t6, ptr %t23)
+  %t27 = call ptr @v__apply__scc__df_andThenEither_0__lam_2_build(ptr %t6, ptr %t23)
   store ptr %t27, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.28:
@@ -515,7 +515,7 @@ tco.case.arm.0.60:
   store ptr %t64, ptr %t65
   %t66 = getelementptr ptr, ptr %t63, i32 1
   store ptr %t54, ptr %t66
-  %t67 = call ptr @v__apply__scc__df_bindEither_0__lam_2_build(ptr %t6, ptr %t63)
+  %t67 = call ptr @v__apply__scc__df_andThenEither_0__lam_2_build(ptr %t6, ptr %t63)
   store ptr %t67, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.68:
@@ -542,7 +542,7 @@ tco.exit.1:
   ret ptr %t77
 }
 
-define internal ptr @v__apply__scc__df_bindEither_0__lam_2_build(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__scc__df_andThenEither_0__lam_2_build(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -583,7 +583,7 @@ define internal ptr @v_build(ptr %v_n, ptr %v_acc) {
   store ptr %v_n, ptr %t3
   %t4 = getelementptr ptr, ptr %t0, i32 2
   store ptr %v_acc, ptr %t4
-  %t5 = call ptr @v__scc__df_bindEither_0__lam_2_build(ptr %t0)
+  %t5 = call ptr @v__scc__df_andThenEither_0__lam_2_build(ptr %t0)
   ret ptr %t5
 }
 

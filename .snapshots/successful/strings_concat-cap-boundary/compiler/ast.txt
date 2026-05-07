@@ -53,7 +53,7 @@ Program
             ) Nothing
         , CommentDecl
             ( BlockComment " Doubles `acc` `n` times via `acc ++ acc`. Threading through
-               `bindEither` propagates a `Left StringTooLong` from any
+               `andThenEither` propagates a `Left StringTooLong` from any
                intermediate `(++)` overflow. With `n = 20` and a 128-code-unit
                block the result is exactly `cap`. " )
         , Sig
@@ -150,7 +150,7 @@ Program
                 { spanStartLine = 25
                 , spanStartCol = 1
                 , spanEndLine = 27
-                , spanEndCol = 67
+                , spanEndCol = 71
                 }
             ) "build"
             [ Param
@@ -175,7 +175,7 @@ Program
                     { spanStartLine = 25
                     , spanStartCol = 15
                     , spanEndLine = 27
-                    , spanEndCol = 67
+                    , spanEndCol = 71
                     }
                 )
                 ( EApp
@@ -273,142 +273,133 @@ Program
                                 ) "m"
                             ]
                         )
-                        ( EApp
+                        ( EInfix
                             ( SrcSpan
                                 { spanStartLine = 27
                                 , spanStartCol = 14
                                 , spanEndLine = 27
-                                , spanEndCol = 67
+                                , spanEndCol = 71
                                 }
-                            )
-                            ( EApp
+                            ) OpPipe
+                            ( EInfix
                                 ( SrcSpan
                                     { spanStartLine = 27
                                     , spanStartCol = 14
                                     , spanEndLine = 27
-                                    , spanEndCol = 38
+                                    , spanEndCol = 25
                                     }
-                                )
+                                ) OpConcat
                                 ( EVar
                                     ( SrcSpan
                                         { spanStartLine = 27
                                         , spanStartCol = 14
                                         , spanEndLine = 27
+                                        , spanEndCol = 18
+                                        }
+                                    )
+                                    ( QName [] "acc" )
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 27
+                                        , spanStartCol = 21
+                                        , spanEndLine = 27
                                         , spanEndCol = 25
                                         }
                                     )
-                                    ( QName [] "bindEither" )
+                                    ( QName [] "acc" )
+                                )
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 27
+                                    , spanStartCol = 28
+                                    , spanEndLine = 27
+                                    , spanEndCol = 71
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 27
+                                        , spanStartCol = 28
+                                        , spanEndLine = 27
+                                        , spanEndCol = 42
+                                        }
+                                    )
+                                    ( QName [] "andThenEither" )
                                 )
                                 ( EParens
                                     ( SrcSpan
                                         { spanStartLine = 27
-                                        , spanStartCol = 25
+                                        , spanStartCol = 42
                                         , spanEndLine = 27
-                                        , spanEndCol = 38
+                                        , spanEndCol = 71
                                         }
                                     )
-                                    ( EInfix
+                                    ( ELam
                                         ( SrcSpan
                                             { spanStartLine = 27
-                                            , spanStartCol = 26
+                                            , spanStartCol = 43
                                             , spanEndLine = 27
-                                            , spanEndCol = 36
+                                            , spanEndCol = 70
                                             }
-                                        ) OpConcat
-                                        ( EVar
+                                        )
+                                        [ Param
                                             ( SrcSpan
                                                 { spanStartLine = 27
-                                                , spanStartCol = 26
+                                                , spanStartCol = 44
                                                 , spanEndLine = 27
-                                                , spanEndCol = 30
+                                                , spanEndCol = 51
                                                 }
-                                            )
-                                            ( QName [] "acc" )
-                                        )
-                                        ( EVar
-                                            ( SrcSpan
-                                                { spanStartLine = 27
-                                                , spanStartCol = 33
-                                                , spanEndLine = 27
-                                                , spanEndCol = 36
-                                                }
-                                            )
-                                            ( QName [] "acc" )
-                                        )
-                                    )
-                                )
-                            )
-                            ( EParens
-                                ( SrcSpan
-                                    { spanStartLine = 27
-                                    , spanStartCol = 38
-                                    , spanEndLine = 27
-                                    , spanEndCol = 67
-                                    }
-                                )
-                                ( ELam
-                                    ( SrcSpan
-                                        { spanStartLine = 27
-                                        , spanStartCol = 39
-                                        , spanEndLine = 27
-                                        , spanEndCol = 66
-                                        }
-                                    )
-                                    [ Param
-                                        ( SrcSpan
-                                            { spanStartLine = 27
-                                            , spanStartCol = 40
-                                            , spanEndLine = 27
-                                            , spanEndCol = 47
-                                            }
-                                        ) "doubled"
-                                    ]
-                                    ( EApp
-                                        ( SrcSpan
-                                            { spanStartLine = 27
-                                            , spanStartCol = 51
-                                            , spanEndLine = 27
-                                            , spanEndCol = 66
-                                            }
-                                        )
+                                            ) "doubled"
+                                        ]
                                         ( EApp
                                             ( SrcSpan
                                                 { spanStartLine = 27
-                                                , spanStartCol = 51
+                                                , spanStartCol = 55
                                                 , spanEndLine = 27
-                                                , spanEndCol = 59
+                                                , spanEndCol = 70
                                                 }
+                                            )
+                                            ( EApp
+                                                ( SrcSpan
+                                                    { spanStartLine = 27
+                                                    , spanStartCol = 55
+                                                    , spanEndLine = 27
+                                                    , spanEndCol = 63
+                                                    }
+                                                )
+                                                ( EVar
+                                                    ( SrcSpan
+                                                        { spanStartLine = 27
+                                                        , spanStartCol = 55
+                                                        , spanEndLine = 27
+                                                        , spanEndCol = 61
+                                                        }
+                                                    )
+                                                    ( QName [] "build" )
+                                                )
+                                                ( EVar
+                                                    ( SrcSpan
+                                                        { spanStartLine = 27
+                                                        , spanStartCol = 61
+                                                        , spanEndLine = 27
+                                                        , spanEndCol = 63
+                                                        }
+                                                    )
+                                                    ( QName [] "m" )
+                                                )
                                             )
                                             ( EVar
                                                 ( SrcSpan
                                                     { spanStartLine = 27
-                                                    , spanStartCol = 51
+                                                    , spanStartCol = 63
                                                     , spanEndLine = 27
-                                                    , spanEndCol = 57
+                                                    , spanEndCol = 70
                                                     }
                                                 )
-                                                ( QName [] "build" )
+                                                ( QName [] "doubled" )
                                             )
-                                            ( EVar
-                                                ( SrcSpan
-                                                    { spanStartLine = 27
-                                                    , spanStartCol = 57
-                                                    , spanEndLine = 27
-                                                    , spanEndCol = 59
-                                                    }
-                                                )
-                                                ( QName [] "m" )
-                                            )
-                                        )
-                                        ( EVar
-                                            ( SrcSpan
-                                                { spanStartLine = 27
-                                                , spanStartCol = 59
-                                                , spanEndLine = 27
-                                                , spanEndCol = 66
-                                                }
-                                            )
-                                            ( QName [] "doubled" )
                                         )
                                     )
                                 )

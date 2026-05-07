@@ -32,7 +32,7 @@ function v_runIO(v_io){
 }
 
 function main(v__input){
-    return (v__df_bindIO_0)((v__lift_2)([2, "a", [0, [0]]]));
+    return (v__df_andThenIO_0)((v__lift_3)([2, "a", [0, [0]]]));
 }
 
 function v__lift_1(v___input){
@@ -88,22 +88,26 @@ function v__apply__lift_1(v__k, v__x){
   }
 }
 
-function v__lift_2(v___input){
-    return (v__cps__lift_2)(v___input, [0]);
+function v__lam_2(v__u){
+    return [2, "b", [0, [0]]];
 }
 
-function v__cps__lift_2(v___input, v__k){
+function v__lift_3(v___input){
+    return (v__cps__lift_3)(v___input, [0]);
+}
+
+function v__cps__lift_3(v___input, v__k){
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 0: {
           const v___f0 = __s[1];
-          return (v__apply__lift_2)(v__k, [0, v___f0]);
+          return (v__apply__lift_3)(v__k, [0, v___f0]);
         }
         case 1: {
           const v___f0 = __s[1];
-          return (v__apply__lift_2)(v__k, [1, v___f0]);
+          return (v__apply__lift_3)(v__k, [1, v___f0]);
         }
         case 2: {
           const v___f0 = __s[1];
@@ -119,7 +123,7 @@ function v__cps__lift_2(v___input, v__k){
   }
 }
 
-function v__apply__lift_2(v__k, v__x){
+function v__apply__lift_3(v__k, v__x){
   while (true) {
     {
       const __s = v__k;
@@ -141,26 +145,22 @@ function v__apply__lift_2(v__k, v__x){
   }
 }
 
-function v__lam_3(v__u){
-    return [2, "b", [0, [0]]];
+function v__df_andThenIO_0(v_io){
+    return (v__cps__df_andThenIO_0)(v_io, [0]);
 }
 
-function v__df_bindIO_0(v_io){
-    return (v__cps__df_bindIO_0)(v_io, [0]);
-}
-
-function v__cps__df_bindIO_0(v_io, v__k){
+function v__cps__df_andThenIO_0(v_io, v__k){
   while (true) {
     {
       const __s = v_io;
       switch (__s[0]) {
         case 0: {
           const v_a = __s[1];
-          return (v__apply__df_bindIO_0)(v__k, (v__lift_1)((v__lam_3)(v_a)));
+          return (v__apply__df_andThenIO_0)(v__k, (v__lift_1)((v__lam_2)(v_a)));
         }
         case 1: {
           const v_e = __s[1];
-          return (v__apply__df_bindIO_0)(v__k, [1, v_e]);
+          return (v__apply__df_andThenIO_0)(v__k, [1, v_e]);
         }
         case 2: {
           const v_s = __s[1];
@@ -176,7 +176,7 @@ function v__cps__df_bindIO_0(v_io, v__k){
   }
 }
 
-function v__apply__df_bindIO_0(v__k, v__x){
+function v__apply__df_andThenIO_0(v__k, v__x){
   while (true) {
     {
       const __s = v__k;

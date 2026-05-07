@@ -399,7 +399,7 @@ L_join:
 .end method
 
 
-.method static v__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   iconst_1
   anewarray java/lang/Object
@@ -408,12 +408,12 @@ L_join:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -464,7 +464,7 @@ L_tco_arm_0:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tco_arm_1:
   dup
@@ -569,7 +569,7 @@ L_tco_arm_0:
   iconst_1
   aload_3
   aastore
-  invokestatic AwsumMain/v__apply__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 L_tco_arm_1:
   dup
@@ -601,7 +601,7 @@ L_tco_arm_1:
 .end method
 
 
-.method static v__apply__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -648,7 +648,7 @@ L_tco_arm_1:
   iconst_2
   aload_1
   aastore
-  invokestatic AwsumMain/v__scc__df_bindEither_0__lam_2_build(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__scc__df_andThenEither_0__lam_2_build(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

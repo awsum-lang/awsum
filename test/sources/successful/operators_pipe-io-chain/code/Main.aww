@@ -1,13 +1,10 @@
 {- The motivating use case for `|>`: chaining IO operations so the
-   reading order matches the execution order. `bindIO` itself takes
-   the IO action first and the continuation second, which reads
-   naturally only at one level of nesting. With `|>` plus a tiny
-   `seqIO` helper, three actions in execution order chain
-   left-to-right without nested lambdas. -}
+   reading order matches the execution order. `andThenIO` takes the
+   continuation first and the IO action second — exactly the shape
+   `|>` wants on its right-hand side, so three actions chain
+   left-to-right in execution order without nested lambdas and
+   without a user-defined helper. -}
 import IO.Stdout
 
-seqIO : IO e Unit -> IO e Unit -> IO e Unit
-seqIO next prev = bindIO prev (\_u -> next)
-
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "a" |> seqIO (IO.Stdout.print "b") |> seqIO (IO.Stdout.print "c")
+main _input = IO.Stdout.print "a" |> andThenIO (\_u -> IO.Stdout.print "b") |> andThenIO (\_u -> IO.Stdout.print "c")

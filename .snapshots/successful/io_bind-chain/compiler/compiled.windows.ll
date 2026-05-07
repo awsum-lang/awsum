@@ -195,8 +195,8 @@ define internal ptr @v_main(ptr %v__input) {
   store ptr %t7, ptr %t10
   %t11 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t4, ptr %t11
-  %t12 = call ptr @v__lift_2(ptr %t0)
-  %t13 = call ptr @v__df_bindIO_0(ptr %t12)
+  %t12 = call ptr @v__lift_3(ptr %t0)
+  %t13 = call ptr @v__df_andThenIO_0(ptr %t12)
   ret ptr %t13
 }
 
@@ -312,16 +312,38 @@ tco.exit.1:
   ret ptr %t22
 }
 
-define internal ptr @v__lift_2(ptr %v___input) {
+define internal ptr @v__lam_2(ptr %v__u) {
+  %t0 = call ptr @malloc(i64 24)
+  %t1 = inttoptr i64 2 to ptr
+  %t2 = getelementptr ptr, ptr %t0, i32 0
+  store ptr %t1, ptr %t2
+  %t3 = getelementptr ptr, ptr %t0, i32 1
+  store ptr @.str.1, ptr %t3
+  %t4 = call ptr @malloc(i64 16)
+  %t5 = inttoptr i64 0 to ptr
+  %t6 = getelementptr ptr, ptr %t4, i32 0
+  store ptr %t5, ptr %t6
+  %t7 = call ptr @malloc(i64 8)
+  %t8 = inttoptr i64 0 to ptr
+  %t9 = getelementptr ptr, ptr %t7, i32 0
+  store ptr %t8, ptr %t9
+  %t10 = getelementptr ptr, ptr %t4, i32 1
+  store ptr %t7, ptr %t10
+  %t11 = getelementptr ptr, ptr %t0, i32 2
+  store ptr %t4, ptr %t11
+  ret ptr %t0
+}
+
+define internal ptr @v__lift_3(ptr %v___input) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__lift_2(ptr %v___input, ptr %t0)
+  %t3 = call ptr @v__cps__lift_3(ptr %v___input, ptr %t0)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__lift_2(ptr %v___input, ptr %v__k) {
+define internal ptr @v__cps__lift_3(ptr %v___input, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v___input, ptr %t3
@@ -345,7 +367,7 @@ tco.case.arm.0.11:
   store ptr %t15, ptr %t16
   %t17 = getelementptr ptr, ptr %t14, i32 1
   store ptr %t13, ptr %t17
-  %t18 = call ptr @v__apply__lift_2(ptr %t6, ptr %t14)
+  %t18 = call ptr @v__apply__lift_3(ptr %t6, ptr %t14)
   store ptr %t18, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.19:
@@ -357,7 +379,7 @@ tco.case.arm.1.19:
   store ptr %t23, ptr %t24
   %t25 = getelementptr ptr, ptr %t22, i32 1
   store ptr %t21, ptr %t25
-  %t26 = call ptr @v__apply__lift_2(ptr %t6, ptr %t22)
+  %t26 = call ptr @v__apply__lift_3(ptr %t6, ptr %t22)
   store ptr %t26, ptr %t2
   br label %tco.exit.1
 tco.case.arm.2.27:
@@ -383,7 +405,7 @@ tco.exit.1:
   ret ptr %t37
 }
 
-define internal ptr @v__apply__lift_2(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__lift_3(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -424,38 +446,16 @@ tco.exit.1:
   ret ptr %t22
 }
 
-define internal ptr @v__lam_3(ptr %v__u) {
-  %t0 = call ptr @malloc(i64 24)
-  %t1 = inttoptr i64 2 to ptr
-  %t2 = getelementptr ptr, ptr %t0, i32 0
-  store ptr %t1, ptr %t2
-  %t3 = getelementptr ptr, ptr %t0, i32 1
-  store ptr @.str.1, ptr %t3
-  %t4 = call ptr @malloc(i64 16)
-  %t5 = inttoptr i64 0 to ptr
-  %t6 = getelementptr ptr, ptr %t4, i32 0
-  store ptr %t5, ptr %t6
-  %t7 = call ptr @malloc(i64 8)
-  %t8 = inttoptr i64 0 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = getelementptr ptr, ptr %t4, i32 1
-  store ptr %t7, ptr %t10
-  %t11 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t4, ptr %t11
-  ret ptr %t0
-}
-
-define internal ptr @v__df_bindIO_0(ptr %v_io) {
+define internal ptr @v__df_andThenIO_0(ptr %v_io) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__df_bindIO_0(ptr %v_io, ptr %t0)
+  %t3 = call ptr @v__cps__df_andThenIO_0(ptr %v_io, ptr %t0)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__df_bindIO_0(ptr %v_io, ptr %v__k) {
+define internal ptr @v__cps__df_andThenIO_0(ptr %v_io, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v_io, ptr %t3
@@ -473,9 +473,9 @@ tco.loop.0:
 tco.case.arm.0.11:
   %t12 = getelementptr ptr, ptr %t5, i32 1
   %t13 = load ptr, ptr %t12
-  %t14 = call ptr @v__lam_3(ptr %t13)
+  %t14 = call ptr @v__lam_2(ptr %t13)
   %t15 = call ptr @v__lift_1(ptr %t14)
-  %t16 = call ptr @v__apply__df_bindIO_0(ptr %t6, ptr %t15)
+  %t16 = call ptr @v__apply__df_andThenIO_0(ptr %t6, ptr %t15)
   store ptr %t16, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.17:
@@ -487,7 +487,7 @@ tco.case.arm.1.17:
   store ptr %t21, ptr %t22
   %t23 = getelementptr ptr, ptr %t20, i32 1
   store ptr %t19, ptr %t23
-  %t24 = call ptr @v__apply__df_bindIO_0(ptr %t6, ptr %t20)
+  %t24 = call ptr @v__apply__df_andThenIO_0(ptr %t6, ptr %t20)
   store ptr %t24, ptr %t2
   br label %tco.exit.1
 tco.case.arm.2.25:
@@ -513,7 +513,7 @@ tco.exit.1:
   ret ptr %t35
 }
 
-define internal ptr @v__apply__df_bindIO_0(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__df_andThenIO_0(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3

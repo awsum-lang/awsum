@@ -17,14 +17,14 @@ block : String
 block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界"
 
 {- Doubles `acc` `n` times via `acc ++ acc`. Threading through
-   `bindEither` propagates a `Left StringTooLong` from any
+   `andThenEither` propagates a `Left StringTooLong` from any
    intermediate `(++)` overflow. With `n = 20` and a 128-code-unit
    block the result is exactly `cap`. -}
 
 build : UInt32 -> String -> Either StringTooLong String
 build n acc = case predUInt32 n of
   Left _ -> Right acc
-  Right m -> bindEither (acc ++ acc) (\doubled -> build m doubled)
+  Right m -> acc ++ acc |> andThenEither (\doubled -> build m doubled)
 
 {- The program-level outcome:
    - `OK` if `build 20 block` returns `Right s` with

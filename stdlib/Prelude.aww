@@ -169,6 +169,19 @@ bindEither x k = case x of
 pureEither : a -> Either e a
 pureEither x = Right x
 
+{- `andThenEither` is `bindEither` with the arguments flipped: the
+   continuation comes first, the `Either` value second. The shape is
+   `value |> andThenEither k`, so a chain of fallible steps reads
+   left-to-right in execution order without nested lambdas. The error
+   rows union the same way as in `bindEither`. The body is a direct
+   `case` rather than a wrapper around `bindEither` so no extra
+   tail-call survives at Core level. -}
+
+andThenEither : (a -> Either e2 b) -> Either e1 a -> Either (e1 | e2) b
+andThenEither k x = case x of
+  Left e -> Left e
+  Right a -> k a
+
 {- `const` returns its first argument and ignores the second. Used by
    the `do`-notation desugarer to express continuations whose bound
    variable is unused: a chain like `do { a <- e1; e2 }` desugars to
@@ -247,6 +260,20 @@ bindIO io k = case io of
   IOPure a -> k a
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (bindIO next k)
+
+{- `andThenIO` is `bindIO` with the arguments flipped: the continuation
+   comes first, the IO value second. The shape is
+   `io |> andThenIO k`, so a chain of IO actions reads left-to-right
+   in execution order without nested lambdas. The error rows union the
+   same way as in `bindIO`. The body is a direct `case` rather than a
+   wrapper around `bindIO` so no extra tail-call survives at Core
+   level. -}
+
+andThenIO : (a -> IO e2 b) -> IO e1 a -> IO (e1 | e2) b
+andThenIO k io = case io of
+  IOPure a -> k a
+  IOFail e -> IOFail e
+  IOStdoutPrint s next -> IOStdoutPrint s (andThenIO k next)
 
 {- Apply `f` to the success value of an IO action, leaving the error
    row untouched. Same shape as `mapRight` for `Either`. -}
