@@ -7,4 +7,6 @@
 import IO.Stdout
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "a" |> andThenIO (\_u -> IO.Stdout.print "b") |> andThenIO (\_u -> IO.Stdout.print "c")
+main _input = IO.Stdout.print "a"
+  |> andThenIO (\_u -> IO.Stdout.print "b")
+  |> andThenIO (\_u -> IO.Stdout.print "c")

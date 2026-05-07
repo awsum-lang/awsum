@@ -292,13 +292,29 @@ renderExprPrec ctx indent e =
             -- tree. The exception is a nested @|>@ on the left,
             -- which we want to /not/ wrap (so the left-assoc chain
             -- stays flat); we render it at ctx 0 explicitly.
-            EInfix _sp' OpPipe l r ->
-              let lCtx = case l of
-                    EInfix _ OpPipe _ _ -> 0
-                    _ -> 1
-                  l' = renderExprPrec lCtx indent l
-                  r' = renderExprPrec 1 indent r
-               in (0, l' <> " |> " <> r')
+            --
+            -- Chains of two or more @|>@ operators render multi-line
+            -- (one operator per line, leading the continuation), so
+            -- pipelines read top-down in execution order. A single
+            -- operator stays inline.
+            e'@(EInfix _ OpPipe _ _) ->
+              let chain = collectPipeChain e'
+               in if length chain >= 3
+                    then
+                      let pipePad = T.replicate (indent + 2) " "
+                          headExpr :| tailExprs = chain
+                          firstStr = renderExprPrec 1 indent headExpr
+                          stepStr step = "\n" <> pipePad <> "|> " <> renderExprPrec 1 indent step
+                          chainStr = firstStr <> mconcat (map stepStr tailExprs)
+                       in (0, chainStr)
+                    else
+                      let EInfix _ _ l r = e'
+                          lCtx = case l of
+                            EInfix _ OpPipe _ _ -> 0
+                            _ -> 1
+                          l' = renderExprPrec lCtx indent l
+                          r' = renderExprPrec 1 indent r
+                       in (0, l' <> " |> " <> r')
        in if prec < ctx
             -- Multi-line @s@ wrapped with a flat 'parens' would let
             -- the inner block's last line fuse with the closing ')'
@@ -484,12 +500,23 @@ rendersMultiLine = \case
   ELet {} -> True
   ELam _ _ body -> rendersMultiLine body
   EApp _ f x -> rendersMultiLine f || rendersMultiLine x
+  e@(EInfix _ OpPipe _ _) | length (collectPipeChain e) >= 3 -> True
   EInfix _ _ a b -> rendersMultiLine a || rendersMultiLine b
   EParens _ inner -> rendersMultiLine inner
   EVar {} -> False
   ELit {} -> False
   ECon {} -> False
   EBuiltIn {} -> False
+
+-- | Flatten a left-associative @|>@ chain into the spine of operands
+--   (leftmost first). For an expression that is not a pipe at the
+--   top, returns the singleton list. The chain is reconstructed so
+--   the multi-line renderer can emit one operator per line.
+collectPipeChain :: Expr -> NonEmpty Expr
+collectPipeChain (EInfix _ OpPipe l r) =
+  let lhsHead :| lhsTail = collectPipeChain l
+   in lhsHead :| (lhsTail <> [r])
+collectPipeChain e = e :| []
 
 -- | Render a qualified or unqualified name.
 renderQName :: QName -> Text

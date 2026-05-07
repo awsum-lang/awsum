@@ -591,12 +591,25 @@ pExprNoLineComments =
 --   (so @x |> \\y -> y@ is @(\\y -> y) x@), since these constructs
 --   have the same precedence rank as the pipe chain itself — they
 --   just don't loop.
+--
+--   A @|>@ may appear either on the same line as the previous
+--   'PipeOp' or on a new indented line. The new-line form requires
+--   strictly positive indent so a top-level declaration starting at
+--   column 1 cannot be mistaken for a chain continuation. The
+--   formatter normalises to the multi-line form for chains of two or
+--   more operators; chains of one operator stay inline.
 pPipeNoLineComments :: Parser Expr
 pPipeNoLineComments = do
   x <- pConcatNoLineComments
-  let rest acc =
+  let pipeOnNewLine = do
+        void C.eol
+        skipBlankLinesNoComments
+        hspaceNoComments
+        lvl <- L.indentLevel
+        guard (lvl > P.pos1)
+      rest acc =
         ( do
-            _ <- symNoLine "|>"
+            _ <- try (P.optional (try pipeOnNewLine) *> symNoLine "|>")
             y <- pPipeOpNoLineComments
             rest (EInfix (spanBetween (exprSpan acc) (exprSpan y)) OpPipe acc y)
         )

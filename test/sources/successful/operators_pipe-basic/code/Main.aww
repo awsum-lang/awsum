@@ -12,10 +12,13 @@ basic : String
 basic = n |> showInt32
 
 chained : String
-chained = n |> showInt32 |> wrap |> wrap
+chained = n
+  |> showInt32
+  |> wrap
+  |> wrap
 
 viaLambda : String
-viaLambda = n |> \i -> showInt32 i
+viaLambda = n |> (\i -> showInt32 i)
 
 wrap : String -> String
 wrap s = s
