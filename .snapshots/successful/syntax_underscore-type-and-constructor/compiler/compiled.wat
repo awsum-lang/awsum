@@ -7,23 +7,12 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 73))
-  (data (i32.const 64) "\00")
-  (data (i32.const 65) "one\00")
-  (data (i32.const 69) "two\00")
+  (global $heap (mut i32) (i32.const 94))
+  (data (i32.const 64) "\00\00\00\00\00\00\00\00")
+  (data (i32.const 72) "\03\00\00\00\03\00\00\00one")
+  (data (i32.const 83) "\03\00\00\00\03\00\00\00two")
   (table 3 funcref)
   (elem (i32.const 0) $v_runIO $v_show $v_main)
-
-  (func $__strlen (param $s i32) (result i32)
-    (local $len i32)
-    (local.set $len (i32.const 0))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $s) (local.get $len)))))
-        (local.set $len (i32.add (local.get $len) (i32.const 1)))
-        (br $loop)))
-    (local.get $len))
-
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -62,8 +51,8 @@
   (func $__print (param $s i32) (result i32)
     (local $len i32)
     (local $unit i32)
-    (local.set $len (call $__strlen (local.get $s)))
-    (i32.store (i32.const 0) (local.get $s))
+    (local.set $len (i32.load (local.get $s)))
+    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
     (local.set $unit (call $__alloc (i32.const 4)))
@@ -74,6 +63,7 @@
   (func $__entryArgEither (param $arg i32) (result i32)
     (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
     (local $inner i32) (local $row i32) (local $cell i32)
+    (local $wrapped i32)
     (local.set $i (i32.const 0))
     (local.set $n (i32.const 0))
     (local.set $surr (i32.const 0))
@@ -99,8 +89,8 @@
             (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br $scan_loop)))
-    ;; Cap-check has priority: if length exceeded the cap, return
-    ;; 'Left StringTooLong' regardless of the surrogate flag.
+    ;; $i now equals byte_count (position of NUL or break).
+    ;; Cap-check has priority over surrogate-flag.
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
         ;; Build Left(StringTooLong row-wrapped).
@@ -127,10 +117,15 @@
             (i32.store offset=4 (local.get $cell) (local.get $row))
             (local.get $cell))
           (else
-            ;; Build Right(arg).
+            ;; Build a length-prefixed copy of the C-string and wrap
+            ;; in Right. byte_count = $i, utf16_count = $n.
+            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
+            (i32.store (local.get $wrapped) (local.get $i))
+            (i32.store offset=4 (local.get $wrapped) (local.get $n))
+            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
             (local.set $cell (call $__alloc (i32.const 8)))
             (i32.store (local.get $cell) (i32.const 1))
-            (i32.store offset=4 (local.get $cell) (local.get $arg))
+            (i32.store offset=4 (local.get $cell) (local.get $wrapped))
             (local.get $cell))))))
 
 
@@ -155,7 +150,7 @@
 
   (func $v_show (param $v_x i32) (result i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 69)))))
+    (block (result i32) (local.set $__scrut (local.get $v_x)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 72)) (else (i32.const 83)))))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)

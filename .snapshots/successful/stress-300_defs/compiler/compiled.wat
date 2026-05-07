@@ -7,23 +7,12 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 76))
-  (data (i32.const 64) "\00")
-  (data (i32.const 65) "True\00")
-  (data (i32.const 70) "False\00")
+  (global $heap (mut i32) (i32.const 97))
+  (data (i32.const 64) "\00\00\00\00\00\00\00\00")
+  (data (i32.const 72) "\04\00\00\00\04\00\00\00True")
+  (data (i32.const 84) "\05\00\00\00\05\00\00\00False")
   (table 4 funcref)
   (elem (i32.const 0) $v_and $v_runIO $v_showBool $v_main)
-
-  (func $__strlen (param $s i32) (result i32)
-    (local $len i32)
-    (local.set $len (i32.const 0))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $s) (local.get $len)))))
-        (local.set $len (i32.add (local.get $len) (i32.const 1)))
-        (br $loop)))
-    (local.get $len))
-
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -62,8 +51,8 @@
   (func $__print (param $s i32) (result i32)
     (local $len i32)
     (local $unit i32)
-    (local.set $len (call $__strlen (local.get $s)))
-    (i32.store (i32.const 0) (local.get $s))
+    (local.set $len (i32.load (local.get $s)))
+    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
     (local.set $unit (call $__alloc (i32.const 4)))
@@ -74,6 +63,7 @@
   (func $__entryArgEither (param $arg i32) (result i32)
     (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
     (local $inner i32) (local $row i32) (local $cell i32)
+    (local $wrapped i32)
     (local.set $i (i32.const 0))
     (local.set $n (i32.const 0))
     (local.set $surr (i32.const 0))
@@ -99,8 +89,8 @@
             (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br $scan_loop)))
-    ;; Cap-check has priority: if length exceeded the cap, return
-    ;; 'Left StringTooLong' regardless of the surrogate flag.
+    ;; $i now equals byte_count (position of NUL or break).
+    ;; Cap-check has priority over surrogate-flag.
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
         ;; Build Left(StringTooLong row-wrapped).
@@ -127,10 +117,15 @@
             (i32.store offset=4 (local.get $cell) (local.get $row))
             (local.get $cell))
           (else
-            ;; Build Right(arg).
+            ;; Build a length-prefixed copy of the C-string and wrap
+            ;; in Right. byte_count = $i, utf16_count = $n.
+            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
+            (i32.store (local.get $wrapped) (local.get $i))
+            (i32.store offset=4 (local.get $wrapped) (local.get $n))
+            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
             (local.set $cell (call $__alloc (i32.const 8)))
             (i32.store (local.get $cell) (i32.const 1))
-            (i32.store offset=4 (local.get $cell) (local.get $arg))
+            (i32.store offset=4 (local.get $cell) (local.get $wrapped))
             (local.get $cell))))))
 
 
@@ -1360,7 +1355,7 @@
 
   (func $v_showBool (param $v_b i32) (result i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 70)))))
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 72)) (else (i32.const 84)))))
 
   (func $v_res (result i32)
     (call $v_and (call $v_b1) (call $v_and (call $v_b2) (call $v_and (call $v_b3) (call $v_and (call $v_b4) (call $v_and (call $v_b5) (call $v_and (call $v_b6) (call $v_and (call $v_b7) (call $v_and (call $v_b8) (call $v_and (call $v_b9) (call $v_and (call $v_b10) (call $v_and (call $v_b11) (call $v_and (call $v_b12) (call $v_and (call $v_b13) (call $v_and (call $v_b14) (call $v_and (call $v_b15) (call $v_and (call $v_b16) (call $v_and (call $v_b17) (call $v_and (call $v_b18) (call $v_and (call $v_b19) (call $v_and (call $v_b20) (call $v_and (call $v_b21) (call $v_and (call $v_b22) (call $v_and (call $v_b23) (call $v_and (call $v_b24) (call $v_and (call $v_b25) (call $v_and (call $v_b26) (call $v_and (call $v_b27) (call $v_and (call $v_b28) (call $v_and (call $v_b29) (call $v_and (call $v_b30) (call $v_and (call $v_b31) (call $v_and (call $v_b32) (call $v_and (call $v_b33) (call $v_and (call $v_b34) (call $v_and (call $v_b35) (call $v_and (call $v_b36) (call $v_and (call $v_b37) (call $v_and (call $v_b38) (call $v_and (call $v_b39) (call $v_and (call $v_b40) (call $v_and (call $v_b41) (call $v_and (call $v_b42) (call $v_and (call $v_b43) (call $v_and (call $v_b44) (call $v_and (call $v_b45) (call $v_and (call $v_b46) (call $v_and (call $v_b47) (call $v_and (call $v_b48) (call $v_and (call $v_b49) (call $v_and (call $v_b50) (call $v_and (call $v_b51) (call $v_and (call $v_b52) (call $v_and (call $v_b53) (call $v_and (call $v_b54) (call $v_and (call $v_b55) (call $v_and (call $v_b56) (call $v_and (call $v_b57) (call $v_and (call $v_b58) (call $v_and (call $v_b59) (call $v_and (call $v_b60) (call $v_and (call $v_b61) (call $v_and (call $v_b62) (call $v_and (call $v_b63) (call $v_and (call $v_b64) (call $v_and (call $v_b65) (call $v_and (call $v_b66) (call $v_and (call $v_b67) (call $v_and (call $v_b68) (call $v_and (call $v_b69) (call $v_and (call $v_b70) (call $v_and (call $v_b71) (call $v_and (call $v_b72) (call $v_and (call $v_b73) (call $v_and (call $v_b74) (call $v_and (call $v_b75) (call $v_and (call $v_b76) (call $v_and (call $v_b77) (call $v_and (call $v_b78) (call $v_and (call $v_b79) (call $v_and (call $v_b80) (call $v_and (call $v_b81) (call $v_and (call $v_b82) (call $v_and (call $v_b83) (call $v_and (call $v_b84) (call $v_and (call $v_b85) (call $v_and (call $v_b86) (call $v_and (call $v_b87) (call $v_and (call $v_b88) (call $v_and (call $v_b89) (call $v_and (call $v_b90) (call $v_and (call $v_b91) (call $v_and (call $v_b92) (call $v_and (call $v_b93) (call $v_and (call $v_b94) (call $v_and (call $v_b95) (call $v_and (call $v_b96) (call $v_and (call $v_b97) (call $v_and (call $v_b98) (call $v_and (call $v_b99) (call $v_and (call $v_b100) (call $v_and (call $v_b101) (call $v_and (call $v_b102) (call $v_and (call $v_b103) (call $v_and (call $v_b104) (call $v_and (call $v_b105) (call $v_and (call $v_b106) (call $v_and (call $v_b107) (call $v_and (call $v_b108) (call $v_and (call $v_b109) (call $v_and (call $v_b110) (call $v_and (call $v_b111) (call $v_and (call $v_b112) (call $v_and (call $v_b113) (call $v_and (call $v_b114) (call $v_and (call $v_b115) (call $v_and (call $v_b116) (call $v_and (call $v_b117) (call $v_and (call $v_b118) (call $v_and (call $v_b119) (call $v_and (call $v_b120) (call $v_and (call $v_b121) (call $v_and (call $v_b122) (call $v_and (call $v_b123) (call $v_and (call $v_b124) (call $v_and (call $v_b125) (call $v_and (call $v_b126) (call $v_and (call $v_b127) (call $v_and (call $v_b128) (call $v_and (call $v_b129) (call $v_and (call $v_b130) (call $v_and (call $v_b131) (call $v_and (call $v_b132) (call $v_and (call $v_b133) (call $v_and (call $v_b134) (call $v_and (call $v_b135) (call $v_and (call $v_b136) (call $v_and (call $v_b137) (call $v_and (call $v_b138) (call $v_and (call $v_b139) (call $v_and (call $v_b140) (call $v_and (call $v_b141) (call $v_and (call $v_b142) (call $v_and (call $v_b143) (call $v_and (call $v_b144) (call $v_and (call $v_b145) (call $v_and (call $v_b146) (call $v_and (call $v_b147) (call $v_and (call $v_b148) (call $v_and (call $v_b149) (call $v_and (call $v_b150) (call $v_and (call $v_b151) (call $v_and (call $v_b152) (call $v_and (call $v_b153) (call $v_and (call $v_b154) (call $v_and (call $v_b155) (call $v_and (call $v_b156) (call $v_and (call $v_b157) (call $v_and (call $v_b158) (call $v_and (call $v_b159) (call $v_and (call $v_b160) (call $v_and (call $v_b161) (call $v_and (call $v_b162) (call $v_and (call $v_b163) (call $v_and (call $v_b164) (call $v_and (call $v_b165) (call $v_and (call $v_b166) (call $v_and (call $v_b167) (call $v_and (call $v_b168) (call $v_and (call $v_b169) (call $v_and (call $v_b170) (call $v_and (call $v_b171) (call $v_and (call $v_b172) (call $v_and (call $v_b173) (call $v_and (call $v_b174) (call $v_and (call $v_b175) (call $v_and (call $v_b176) (call $v_and (call $v_b177) (call $v_and (call $v_b178) (call $v_and (call $v_b179) (call $v_and (call $v_b180) (call $v_and (call $v_b181) (call $v_and (call $v_b182) (call $v_and (call $v_b183) (call $v_and (call $v_b184) (call $v_and (call $v_b185) (call $v_and (call $v_b186) (call $v_and (call $v_b187) (call $v_and (call $v_b188) (call $v_and (call $v_b189) (call $v_and (call $v_b190) (call $v_and (call $v_b191) (call $v_and (call $v_b192) (call $v_and (call $v_b193) (call $v_and (call $v_b194) (call $v_and (call $v_b195) (call $v_and (call $v_b196) (call $v_and (call $v_b197) (call $v_and (call $v_b198) (call $v_and (call $v_b199) (call $v_and (call $v_b200) (call $v_and (call $v_b201) (call $v_and (call $v_b202) (call $v_and (call $v_b203) (call $v_and (call $v_b204) (call $v_and (call $v_b205) (call $v_and (call $v_b206) (call $v_and (call $v_b207) (call $v_and (call $v_b208) (call $v_and (call $v_b209) (call $v_and (call $v_b210) (call $v_and (call $v_b211) (call $v_and (call $v_b212) (call $v_and (call $v_b213) (call $v_and (call $v_b214) (call $v_and (call $v_b215) (call $v_and (call $v_b216) (call $v_and (call $v_b217) (call $v_and (call $v_b218) (call $v_and (call $v_b219) (call $v_and (call $v_b220) (call $v_and (call $v_b221) (call $v_and (call $v_b222) (call $v_and (call $v_b223) (call $v_and (call $v_b224) (call $v_and (call $v_b225) (call $v_and (call $v_b226) (call $v_and (call $v_b227) (call $v_and (call $v_b228) (call $v_and (call $v_b229) (call $v_and (call $v_b230) (call $v_and (call $v_b231) (call $v_and (call $v_b232) (call $v_and (call $v_b233) (call $v_and (call $v_b234) (call $v_and (call $v_b235) (call $v_and (call $v_b236) (call $v_and (call $v_b237) (call $v_and (call $v_b238) (call $v_and (call $v_b239) (call $v_and (call $v_b240) (call $v_and (call $v_b241) (call $v_and (call $v_b242) (call $v_and (call $v_b243) (call $v_and (call $v_b244) (call $v_and (call $v_b245) (call $v_and (call $v_b246) (call $v_and (call $v_b247) (call $v_and (call $v_b248) (call $v_and (call $v_b249) (call $v_and (call $v_b250) (call $v_and (call $v_b251) (call $v_and (call $v_b252) (call $v_and (call $v_b253) (call $v_and (call $v_b254) (call $v_and (call $v_b255) (call $v_and (call $v_b256) (call $v_and (call $v_b257) (call $v_and (call $v_b258) (call $v_and (call $v_b259) (call $v_and (call $v_b260) (call $v_and (call $v_b261) (call $v_and (call $v_b262) (call $v_and (call $v_b263) (call $v_and (call $v_b264) (call $v_and (call $v_b265) (call $v_and (call $v_b266) (call $v_and (call $v_b267) (call $v_and (call $v_b268) (call $v_and (call $v_b269) (call $v_and (call $v_b270) (call $v_and (call $v_b271) (call $v_and (call $v_b272) (call $v_and (call $v_b273) (call $v_and (call $v_b274) (call $v_and (call $v_b275) (call $v_and (call $v_b276) (call $v_and (call $v_b277) (call $v_and (call $v_b278) (call $v_and (call $v_b279) (call $v_and (call $v_b280) (call $v_and (call $v_b281) (call $v_and (call $v_b282) (call $v_and (call $v_b283) (call $v_and (call $v_b284) (call $v_and (call $v_b285) (call $v_and (call $v_b286) (call $v_and (call $v_b287) (call $v_and (call $v_b288) (call $v_and (call $v_b289) (call $v_and (call $v_b290) (call $v_and (call $v_b291) (call $v_and (call $v_b292) (call $v_and (call $v_b293) (call $v_and (call $v_b294) (call $v_and (call $v_b295) (call $v_and (call $v_b296) (call $v_and (call $v_b297) (call $v_and (call $v_b298) (call $v_and (call $v_b299) (call $v_b300)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))

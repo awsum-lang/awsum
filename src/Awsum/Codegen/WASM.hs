@@ -6,7 +6,10 @@
 --
 -- Design:
 --   * All values are @i32@ (pointers into linear memory).
---   * Strings are null-terminated bytes in linear memory (like LLVM).
+--   * Strings are length-prefixed: 8-byte header
+--     (utf8_bytes : i32 LE, utf16_units : i32 LE) followed by UTF-8 payload,
+--     no NUL terminator. Pointers address the header start; runtime helpers
+--     load the length fields at offsets 0/4 and reach the payload at offset 8.
 --   * WASI provides I\/O: @fd_write@ for stdout, @args_get@ for CLI args.
 --   * Bump allocator for dynamic memory (concat results).
 --   * @funcref@ table + @call_indirect@ for higher-order functions.
@@ -15,6 +18,7 @@ module Awsum.Codegen.WASM (codegenWASM) where
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Syntax (Name, Type' (..), noSpan)
+import Data.Bits (shiftR, (.&.))
 import Data.ByteString qualified as BS
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
@@ -89,24 +93,36 @@ data WasmCtx = WasmCtx
 scratchSize :: Int
 scratchSize = 64
 
--- | Build a string pool with byte offsets.
+-- | Build a string pool with byte offsets. Each pool entry occupies an
+--   8-byte header (utf8_bytes : i32, utf16_units : i32, both LE)
+--   followed by 'byteLen s' payload bytes — no NUL terminator.
+--   Pointer into the pool == start of header; runtime helpers load the
+--   length fields with @i32.load@ at offset 0 / 4 and reach the payload
+--   at offset 8.
 --   Always includes "" for __get_arg fallback.
 --   Returns (pool, empty_string_offset, heap_start).
 buildStringPool :: CoreProgram -> (Map Text Int, Int, Int)
 buildStringPool (CoreProgram decls) =
   let strs = ordNub $ "" : concatMap stringsInDecl decls
-      offsets = scanl (\off s -> off + byteLen s + 1) scratchSize strs
+      entrySize s = stringHeaderSize + byteLen s
+      offsets = scanl (\off s -> off + entrySize s) scratchSize strs
       pool = Map.fromList (zip strs offsets)
       emptyOff = fromMaybe scratchSize (Map.lookup "" pool)
-      heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last (zipWith (\s o -> o + byteLen s + 1) strs offsets)
+      heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last (zipWith (\s o -> o + entrySize s) strs offsets)
    in (pool, emptyOff, heapStart)
 
--- | Byte length of a string in UTF-8 — the encoding used by the data
---   section and by every runtime helper that walks bytes through linear
---   memory. T.length would count code points, which diverges from the
---   on-the-wire byte count as soon as a non-ASCII character appears.
+-- | Byte length of a string's UTF-8 payload (excluding the header).
 byteLen :: Text -> Int
 byteLen = BS.length . encodeUtf8
+
+-- | UTF-16 code unit count of a string. BMP code points contribute 1;
+--   supplementary (>= U+10000) contribute 2 (surrogate pair).
+utf16CountOfText :: Text -> Int
+utf16CountOfText = T.foldl' (\n c -> n + if Char.ord c > 0xFFFF then 2 else 1) 0
+
+-- | Size of the per-string header in linear memory: two LE i32s.
+stringHeaderSize :: Int
+stringHeaderSize = 8
 
 stringsInDecl :: CDecl -> [Text]
 stringsInDecl = \case
@@ -181,11 +197,33 @@ dataSection pool
         $ map emitData (sortWith snd $ Map.toList pool)
   where
     emitData (s, off) =
-      "  (data (i32.const " <> show off <> ") " <> watString s <> ")"
+      "  (data (i32.const " <> show off <> ") " <> watLengthPrefixed s <> ")"
 
--- | Format a string for WAT data section (includes null terminator).
-watString :: Text -> Text
-watString s = "\"" <> watEscape s <> "\\00\""
+-- | Format a length-prefixed string for the WAT data section. The
+--   header is two little-endian i32s — utf8_bytes, then utf16_units —
+--   followed by the UTF-8 payload (no NUL terminator).
+watLengthPrefixed :: Text -> Text
+watLengthPrefixed s =
+  let bc = byteLen s
+      uc = utf16CountOfText s
+   in "\"" <> i32LeEsc bc <> i32LeEsc uc <> watEscape s <> "\""
+
+-- | Escape an Int as 4 little-endian bytes in @\\XX@ form for WAT data.
+i32LeEsc :: Int -> Text
+i32LeEsc n =
+  T.concat
+    [ "\\" <> hexByte ((n `shiftR` (8 * i)) .&. 0xFF)
+    | i <- [0 .. 3 :: Int]
+    ]
+  where
+    hexByte :: Int -> Text
+    hexByte b =
+      let hi = b `div` 16
+          lo = b `mod` 16
+          hexChar x
+            | x < 10 = chr (0x30 + x)
+            | otherwise = chr (0x61 + x - 10)
+       in toText [hexChar hi, hexChar lo]
 
 -- | Escape a string for WAT syntax. Encodes the string to UTF-8 first
 --   and emits each byte: ASCII printable bytes pass through, everything
@@ -240,17 +278,16 @@ typeDecls arities
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Emit only the runtime helpers referenced in Core. @__alloc@ /
---   @__strlen@ / @__memcpy@ / @__get_arg@ are always needed (the last
---   feeds argv into main; the rest are small infrastructure), the
---   higher-level helpers (@__concat@, @__print@, @__box_i32@,
---   @__show_i32@, @__predInt32@) are gated on usage.
+--   @__memcpy@ / @__get_arg@ are always needed (the last feeds argv
+--   into main; the rest are small infrastructure), the higher-level
+--   helpers (@__concat@, @__print@, @__box_i32@, @__show_i32@,
+--   @__predInt32@) are gated on usage.
 runtimeHelpers :: Int -> Set Name -> Bool -> Text
 runtimeHelpers emptyOff builtIns hasIntLit =
   let lns =
         filter
           (not . T.null)
-          [ rtStrlen,
-            rtAlloc,
+          [ rtAlloc,
             rtMemcpy,
             if Set.member "concatString" builtIns then rtConcat else "",
             if Set.member "internalStdoutPrint" builtIns then rtPrint else "",
@@ -277,15 +314,16 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "subUInt32" builtIns then rtSubU32 else "",
             if Set.member "mulUInt32" builtIns then rtMulU32 else "",
             if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
+            -- '__splitOnFirst' computes utf16 prefixes for both halves via
+            -- '__utf16_of_range', so emit the helper whenever splitOnFirst
+            -- is referenced.
+            if Set.member "splitOnFirst" builtIns then rtUtf16OfRange else "",
             if Set.member "parseInt32" builtIns then rtParseInt32 else "",
             if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
             if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
             if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
-            -- '__concat' calls '__lengthUtf16CodeUnits' for the cap pre-check,
-            -- so emit the helper whenever 'concatString' is referenced even if
-            -- the user did not call 'lengthUtf16CodeUnits' directly.
-            if Set.member "lengthUtf16CodeUnits" builtIns || Set.member "concatString" builtIns then rtLengthUtf16CodeUnits else "",
+            if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
             -- '__entryArgEither' is always emitted: every program has a
             -- '_start', and the entry-point glue calls this helper to wrap
             -- argv[1] in 'Either (StringTooLong | …) String'.
@@ -293,20 +331,6 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
-
-rtStrlen :: Text
-rtStrlen =
-  unlines
-    [ "  (func $__strlen (param $s i32) (result i32)",
-      "    (local $len i32)",
-      "    (local.set $len (i32.const 0))",
-      "    (block $break",
-      "      (loop $loop",
-      "        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $s) (local.get $len)))))",
-      "        (local.set $len (i32.add (local.get $len) (i32.const 1)))",
-      "        (br $loop)))",
-      "    (local.get $len))"
-    ]
 
 rtAlloc :: Text
 rtAlloc =
@@ -348,29 +372,57 @@ rtMemcpy =
       "        (br $loop))))"
     ]
 
--- | __concat implements 'BuiltIn.concatString'. Pre-checks the combined
---   UTF-16 length of both inputs against the language-fixed cap; returns
---   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise (no
---   buffer allocated on the rejection path). The cap value (134217728 =
---   2^27) must stay in sync with 'maxStringLengthUtf16CodeUnits' in
---   'stdlib/Prelude.aww'.
---   '__lengthUtf16CodeUnits' returns a boxed pointer; load through it
---   to get the i32 code-unit count. UTF-8 byte length via '__strlen' is
---   only used for the actual copy on the ok path.
+-- | Counts UTF-16 code units in a UTF-8 byte range. Used by
+--   '__splitOnFirst' to compute the utf16 prefix for the two output
+--   substrings. Walks bytes, treating only non-continuation bytes as
+--   characters; bytes whose top bits are @11110xxx@ (4-byte UTF-8 lead,
+--   i.e. supplementary plane) contribute 2 UTF-16 code units, all
+--   others contribute 1.
+rtUtf16OfRange :: Text
+rtUtf16OfRange =
+  unlines
+    [ "  (func $__utf16_of_range (param $p i32) (param $len i32) (result i32)",
+      "    (local $i i32) (local $n i32) (local $b i32)",
+      "    (local.set $i (i32.const 0))",
+      "    (local.set $n (i32.const 0))",
+      "    (block $break",
+      "      (loop $loop",
+      "        (br_if $break (i32.ge_u (local.get $i) (local.get $len)))",
+      "        (local.set $b (i32.load8_u (i32.add (local.get $p) (local.get $i))))",
+      "        (if (i32.ne (i32.and (local.get $b) (i32.const 192)) (i32.const 128))",
+      "          (then",
+      "            (if (i32.eq (i32.and (local.get $b) (i32.const 248)) (i32.const 240))",
+      "              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))",
+      "              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $loop)))",
+      "    (local.get $n))"
+    ]
+
+-- | __concat implements 'BuiltIn.concatString' on the length-prefixed
+--   string layout. Cap-check is O(1) (load both UTF-16 lengths from
+--   headers, sum, compare) — no byte scan, no short-circuit needed.
+--   The cap value (134217728 = 2^27) must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+--
+--   Output: alloc(8 + ba + bb), write byte/utf16 sums in the header,
+--   memcpy a's payload then b's payload to offset 8.
 rtConcat :: Text
 rtConcat =
   unlines
     [ "  (func $__concat (param $a i32) (param $b i32) (result i32)",
-      "    (local $lau16 i32) (local $lbu16 i32) (local $sum i32)",
-      "    (local $stl i32) (local $cell i32)",
-      "    (local $ba i32) (local $bb i32) (local $buf i32)",
-      "    (local.set $lau16 (i32.load (call $__lengthUtf16CodeUnits (local.get $a))))",
-      "    (local.set $lbu16 (i32.load (call $__lengthUtf16CodeUnits (local.get $b))))",
-      "    (local.set $sum (i32.add (local.get $lau16) (local.get $lbu16)))",
+      "    (local $ba i32) (local $bb i32) (local $ua i32) (local $ub i32)",
+      "    (local $usum i32) (local $bsum i32)",
+      "    (local $stl i32) (local $cell i32) (local $buf i32)",
+      "    (local.set $ba (i32.load (local.get $a)))",
+      "    (local.set $ua (i32.load offset=4 (local.get $a)))",
+      "    (local.set $bb (i32.load (local.get $b)))",
+      "    (local.set $ub (i32.load offset=4 (local.get $b)))",
+      "    (local.set $usum (i32.add (local.get $ua) (local.get $ub)))",
       "    ;; maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).",
       "    ;; Keep in sync with 'maxStringLengthUtf16CodeUnits' in",
       "    ;; 'stdlib/Prelude.aww'.",
-      "    (if (result i32) (i32.gt_u (local.get $sum) (i32.const 134217728))",
+      "    (if (result i32) (i32.gt_u (local.get $usum) (i32.const 134217728))",
       "      (then",
       "        ;; Build StringTooLong cell (alloc 4, tag 0).",
       "        (local.set $stl (call $__alloc (i32.const 4)))",
@@ -381,13 +433,21 @@ rtConcat =
       "        (i32.store offset=4 (local.get $cell) (local.get $stl))",
       "        (local.get $cell))",
       "      (else",
-      "        ;; UTF-8 byte counts for the actual copy.",
-      "        (local.set $ba (call $__strlen (local.get $a)))",
-      "        (local.set $bb (call $__strlen (local.get $b)))",
-      "        (local.set $buf (call $__alloc (i32.add (i32.add (local.get $ba) (local.get $bb)) (i32.const 1))))",
-      "        (call $__memcpy (local.get $buf) (local.get $a) (local.get $ba))",
-      "        (call $__memcpy (i32.add (local.get $buf) (local.get $ba)) (local.get $b) (local.get $bb))",
-      "        (i32.store8 (i32.add (local.get $buf) (i32.add (local.get $ba) (local.get $bb))) (i32.const 0))",
+      "        ;; Allocate header (8 bytes) + ba + bb payload.",
+      "        (local.set $bsum (i32.add (local.get $ba) (local.get $bb)))",
+      "        (local.set $buf (call $__alloc (i32.add (local.get $bsum) (i32.const 8))))",
+      "        ;; Write header.",
+      "        (i32.store (local.get $buf) (local.get $bsum))",
+      "        (i32.store offset=4 (local.get $buf) (local.get $usum))",
+      "        ;; memcpy a's payload then b's payload to offset 8.",
+      "        (call $__memcpy",
+      "          (i32.add (local.get $buf) (i32.const 8))",
+      "          (i32.add (local.get $a) (i32.const 8))",
+      "          (local.get $ba))",
+      "        (call $__memcpy",
+      "          (i32.add (local.get $buf) (i32.add (i32.const 8) (local.get $ba)))",
+      "          (i32.add (local.get $b) (i32.const 8))",
+      "          (local.get $bb))",
       "        ;; Right cell: alloc 8, tag 1 + ptr to buf.",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $cell) (i32.const 1))",
@@ -406,8 +466,9 @@ rtPrint =
     [ "  (func $__print (param $s i32) (result i32)",
       "    (local $len i32)",
       "    (local $unit i32)",
-      "    (local.set $len (call $__strlen (local.get $s)))",
-      "    (i32.store (i32.const 0) (local.get $s))",
+      -- length-prefixed: byte_count at offset 0, payload starts at offset 8.
+      "    (local.set $len (i32.load (local.get $s)))",
+      "    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))",
       "    (i32.store (i32.const 4) (local.get $len))",
       "    (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))",
       -- Build Unit value: alloc(4) + store tag 0 at offset 0.
@@ -429,15 +490,18 @@ rtBoxI32 =
       "    (local.get $p))"
     ]
 
--- | Render a boxed integer as a decimal null-terminated string.
+-- | Render a boxed integer as a length-prefixed string.
 --
 --   The input pointer holds a 32-bit value; we treat it as signed (@i32.lt_s@)
 --   for the minus-sign check. UInt8 values 0..255 are always positive in the
 --   signed interpretation, so the same routine renders them correctly.
 --
---   Algorithm: write digits into a 16-byte scratch buffer starting at the
---   second-to-last byte and moving left. 11 digits (@-2147483648@) + null
---   terminator is the worst case, which comfortably fits.
+--   Algorithm: alloc(24) = 8-byte header + 16-byte scratch (offsets 8..23).
+--   Write digits backwards starting at offset 23 and moving left; the leftmost
+--   character ends up at offset @pos+1@, the rightmost at offset 23.
+--   Worst case is @-2147483648@ (11 chars) so 16 scratch bytes are sufficient.
+--   After rendering, copy the rendered run forward to start at offset 8 (the
+--   payload), then write byte_count and utf16_count into the header.
 --
 --   Negation of @INT_MIN@ is a no-op in two's complement, but since we use
 --   @i32.div_u@ / @i32.rem_u@ on the magnitude, the unsigned reading of
@@ -446,11 +510,10 @@ rtShowI32 :: Text
 rtShowI32 =
   unlines
     [ "  (func $__show_i32 (param $p i32) (result i32)",
-      "    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32)",
+      "    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32) (local $blen i32)",
       "    (local.set $v (i32.load (local.get $p)))",
-      "    (local.set $buf (call $__alloc (i32.const 16)))",
-      "    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))",
-      "    (local.set $pos (i32.const 14))",
+      "    (local.set $buf (call $__alloc (i32.const 24)))",
+      "    (local.set $pos (i32.const 23))",
       "    (if (i32.lt_s (local.get $v) (i32.const 0))",
       "      (then",
       "        (local.set $neg (i32.const 1))",
@@ -475,7 +538,14 @@ rtShowI32 =
       "      (then",
       "        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 45))",
       "        (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))))",
-      "    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))"
+      -- byte_count = 23 - pos. ASCII only → utf16_count == byte_count.
+      "    (local.set $blen (i32.sub (i32.const 23) (local.get $pos)))",
+      "    (call $__memcpy (i32.add (local.get $buf) (i32.const 8))",
+      "                    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1)))",
+      "                    (local.get $blen))",
+      "    (i32.store (local.get $buf) (local.get $blen))",
+      "    (i32.store offset=4 (local.get $buf) (local.get $blen))",
+      "    (local.get $buf))"
     ]
 
 -- | predInt32: Int32 -> Either UnderflowError Int32.
@@ -864,11 +934,14 @@ rtSplitOnFirst =
   unlines
     [ "  (func $__splitOnFirst (param $sep i32) (param $str i32) (result i32)",
       "    (local $sep_len i32) (local $str_len i32)",
+      "    (local $sep_payload i32) (local $str_payload i32)",
       "    (local $i i32) (local $j i32) (local $pos i32) (local $match i32)",
       "    (local $prefix i32) (local $suffix i32) (local $tuple i32) (local $cell i32)",
-      "    (local $suf_len i32)",
-      "    (local.set $sep_len (call $__strlen (local.get $sep)))",
-      "    (local.set $str_len (call $__strlen (local.get $str)))",
+      "    (local $suf_len i32) (local $u16 i32)",
+      "    (local.set $sep_len (i32.load (local.get $sep)))",
+      "    (local.set $str_len (i32.load (local.get $str)))",
+      "    (local.set $sep_payload (i32.add (local.get $sep) (i32.const 8)))",
+      "    (local.set $str_payload (i32.add (local.get $str) (i32.const 8)))",
       "    (local.set $pos (i32.const -1))",
       "    (local.set $i (i32.const 0))",
       "    (block $break",
@@ -885,8 +958,8 @@ rtSplitOnFirst =
       "          (loop $check_loop",
       "            (br_if $check_break (i32.eq (local.get $j) (local.get $sep_len)))",
       "            (if (i32.ne",
-      "                  (i32.load8_u (i32.add (local.get $str) (i32.add (local.get $i) (local.get $j))))",
-      "                  (i32.load8_u (i32.add (local.get $sep) (local.get $j))))",
+      "                  (i32.load8_u (i32.add (local.get $str_payload) (i32.add (local.get $i) (local.get $j))))",
+      "                  (i32.load8_u (i32.add (local.get $sep_payload) (local.get $j))))",
       "              (then",
       "                (local.set $match (i32.const 0))",
       "                (br $check_break)))",
@@ -904,18 +977,25 @@ rtSplitOnFirst =
       "        (i32.store (local.get $cell) (i32.const 0))",
       "        (local.get $cell))",
       "      (else",
-      "        ;; prefix = str[0..pos], freshly allocated, null-terminated",
-      "        (local.set $prefix (call $__alloc (i32.add (local.get $pos) (i32.const 1))))",
-      "        (call $__memcpy (local.get $prefix) (local.get $str) (local.get $pos))",
-      "        (i32.store8 (i32.add (local.get $prefix) (local.get $pos)) (i32.const 0))",
-      "        ;; suffix = str[pos + sep_len..], freshly allocated, null-terminated",
+      "        ;; prefix = str[0..pos] as length-prefixed: alloc(8 + pos),",
+      "        ;; header = byte_count, utf16_count, payload memcpy'd",
+      "        (local.set $prefix (call $__alloc (i32.add (local.get $pos) (i32.const 8))))",
+      "        (i32.store (local.get $prefix) (local.get $pos))",
+      "        (local.set $u16 (call $__utf16_of_range (local.get $str_payload) (local.get $pos)))",
+      "        (i32.store offset=4 (local.get $prefix) (local.get $u16))",
+      "        (call $__memcpy (i32.add (local.get $prefix) (i32.const 8)) (local.get $str_payload) (local.get $pos))",
+      "        ;; suffix = str[pos + sep_len..]; same length-prefixed shape",
       "        (local.set $suf_len (i32.sub (i32.sub (local.get $str_len) (local.get $pos)) (local.get $sep_len)))",
-      "        (local.set $suffix (call $__alloc (i32.add (local.get $suf_len) (i32.const 1))))",
+      "        (local.set $suffix (call $__alloc (i32.add (local.get $suf_len) (i32.const 8))))",
+      "        (i32.store (local.get $suffix) (local.get $suf_len))",
+      "        (local.set $u16 (call $__utf16_of_range",
+      "                            (i32.add (local.get $str_payload) (i32.add (local.get $pos) (local.get $sep_len)))",
+      "                            (local.get $suf_len)))",
+      "        (i32.store offset=4 (local.get $suffix) (local.get $u16))",
       "        (call $__memcpy",
-      "          (local.get $suffix)",
-      "          (i32.add (local.get $str) (i32.add (local.get $pos) (local.get $sep_len)))",
+      "          (i32.add (local.get $suffix) (i32.const 8))",
+      "          (i32.add (local.get $str_payload) (i32.add (local.get $pos) (local.get $sep_len)))",
       "          (local.get $suf_len))",
-      "        (i32.store8 (i32.add (local.get $suffix) (local.get $suf_len)) (i32.const 0))",
       "        ;; Tuple2 cell: [tag=0, prefix, suffix]",
       "        (local.set $tuple (call $__alloc (i32.const 12)))",
       "        (i32.store (local.get $tuple) (i32.const 0))",
@@ -928,32 +1008,37 @@ rtSplitOnFirst =
       "        (local.get $cell))))"
     ]
 
--- | lengthBytesAsUtf8 : String -> UInt32. Strings are null-terminated
---   UTF-8 byte buffers in linear memory, so '__strlen' is the answer.
+-- | lengthBytesAsUtf8 : String -> UInt32. O(1) load from the header at
+--   offset 0 (was an O(n) byte scan via '__strlen' on the old null-term
+--   layout).
 rtLengthBytesAsUtf8 :: Text
 rtLengthBytesAsUtf8 =
   unlines
     [ "  (func $__lengthBytesAsUtf8 (param $s i32) (result i32)",
       "    (local $box i32)",
       "    (local.set $box (call $__alloc (i32.const 4)))",
-      "    (i32.store (local.get $box) (call $__strlen (local.get $s)))",
+      "    (i32.store (local.get $box) (i32.load (local.get $s)))",
       "    (local.get $box))"
     ]
 
--- | lengthCodePoints : String -> UInt32. Walk UTF-8 bytes counting
---   non-continuation start bytes (top two bits != 10). One increment
---   per Unicode scalar regardless of how wide its UTF-8 encoding is.
+-- | lengthCodePoints : String -> UInt32. Still O(n) — code-point count
+--   needs a byte walk (one increment per non-continuation byte). The
+--   walk is now bounded by the byte_count from the header rather than
+--   terminated by NUL, so a payload containing NUL is counted correctly.
 rtLengthCodePoints :: Text
 rtLengthCodePoints =
   unlines
     [ "  (func $__lengthCodePoints (param $s i32) (result i32)",
+      "    (local $bytes i32) (local $payload i32)",
       "    (local $i i32) (local $n i32) (local $b i32) (local $box i32)",
+      "    (local.set $bytes (i32.load (local.get $s)))",
+      "    (local.set $payload (i32.add (local.get $s) (i32.const 8)))",
       "    (local.set $i (i32.const 0))",
       "    (local.set $n (i32.const 0))",
       "    (block $break",
       "      (loop $loop",
-      "        (local.set $b (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
-      "        (br_if $break (i32.eqz (local.get $b)))",
+      "        (br_if $break (i32.ge_u (local.get $i) (local.get $bytes)))",
+      "        (local.set $b (i32.load8_u (i32.add (local.get $payload) (local.get $i))))",
       "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
       "          (then (local.set $n (i32.add (local.get $n) (i32.const 1)))))",
       "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
@@ -963,31 +1048,16 @@ rtLengthCodePoints =
       "    (local.get $box))"
     ]
 
--- | lengthUtf16CodeUnits : String -> UInt32. Walk codepoint starts; a
---   4-byte UTF-8 sequence (start byte 11110xxx) corresponds to a
---   supplementary code point that needs a UTF-16 surrogate pair, so it
---   contributes 2 units. Continuation bytes are skipped, every other
---   start byte contributes 1.
+-- | lengthUtf16CodeUnits : String -> UInt32. O(1) load from the header
+--   at offset 4 (was an O(n) byte scan with surrogate-pair counting on
+--   the old null-term layout).
 rtLengthUtf16CodeUnits :: Text
 rtLengthUtf16CodeUnits =
   unlines
     [ "  (func $__lengthUtf16CodeUnits (param $s i32) (result i32)",
-      "    (local $i i32) (local $n i32) (local $b i32) (local $box i32)",
-      "    (local.set $i (i32.const 0))",
-      "    (local.set $n (i32.const 0))",
-      "    (block $break",
-      "      (loop $loop",
-      "        (local.set $b (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
-      "        (br_if $break (i32.eqz (local.get $b)))",
-      "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
-      "          (then",
-      "            (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))",
-      "              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))",
-      "              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))))",
-      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
-      "        (br $loop)))",
+      "    (local $box i32)",
       "    (local.set $box (call $__alloc (i32.const 4)))",
-      "    (i32.store (local.get $box) (local.get $n))",
+      "    (i32.store (local.get $box) (i32.load offset=4 (local.get $s)))",
       "    (local.get $box))"
     ]
 
@@ -1003,18 +1073,19 @@ rtParseInt32 :: Text
 rtParseInt32 =
   unlines
     [ "  (func $__parseInt32 (param $s i32) (result i32)",
-      "    (local $len i32) (local $i i32) (local $neg i32)",
+      "    (local $len i32) (local $i i32) (local $neg i32) (local $payload i32)",
       "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
       "    (local $failed i32) (local $acc i64)",
       "    (local.set $failed (i32.const 0))",
       "    (local.set $acc (i64.const 0))",
-      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (local.set $len (i32.load (local.get $s)))",
+      "    (local.set $payload (i32.add (local.get $s) (i32.const 8)))",
       "    (block $exit",
       "      (if (i32.eqz (local.get $len))",
       "        (then (local.set $failed (i32.const 1)) (br $exit)))",
       "      (local.set $i (i32.const 0))",
       "      (local.set $neg (i32.const 0))",
-      "      (if (i32.eq (i32.load8_u (local.get $s)) (i32.const 45))",
+      "      (if (i32.eq (i32.load8_u (local.get $payload)) (i32.const 45))",
       "        (then",
       "          (local.set $neg (i32.const 1))",
       "          (local.set $i (i32.const 1))",
@@ -1023,7 +1094,7 @@ rtParseInt32 =
       "      (block $loop_break",
       "        (loop $loop",
       "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
-      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $payload) (local.get $i))))",
       "          (if (i32.lt_u (local.get $c) (i32.const 48))",
       "            (then (local.set $failed (i32.const 1)) (br $exit)))",
       "          (if (i32.gt_u (local.get $c) (i32.const 57))",
@@ -1066,12 +1137,13 @@ rtParseUInt8 :: Text
 rtParseUInt8 =
   unlines
     [ "  (func $__parseUInt8 (param $s i32) (result i32)",
-      "    (local $len i32) (local $i i32) (local $acc i32)",
+      "    (local $len i32) (local $i i32) (local $acc i32) (local $payload i32)",
       "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
       "    (local $failed i32)",
       "    (local.set $failed (i32.const 0))",
       "    (local.set $acc (i32.const 0))",
-      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (local.set $len (i32.load (local.get $s)))",
+      "    (local.set $payload (i32.add (local.get $s) (i32.const 8)))",
       "    (block $exit",
       "      (if (i32.eqz (local.get $len))",
       "        (then (local.set $failed (i32.const 1)) (br $exit)))",
@@ -1079,7 +1151,7 @@ rtParseUInt8 =
       "      (block $loop_break",
       "        (loop $loop",
       "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
-      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $payload) (local.get $i))))",
       "          (if (i32.lt_u (local.get $c) (i32.const 48))",
       "            (then (local.set $failed (i32.const 1)) (br $exit)))",
       "          (if (i32.gt_u (local.get $c) (i32.const 57))",
@@ -1109,20 +1181,19 @@ rtParseUInt8 =
       "        (local.get $cell))))"
     ]
 
--- | showUInt32: render an unsigned 32-bit value as decimal. Mirrors
---   'rtShowI32' but skips the negative-sign branch — the input bit
---   pattern is treated as unsigned end-to-end (i32.div_u / i32.rem_u),
---   so values 2147483648..4294967295 render correctly without an
---   erroneous '-' prefix.
+-- | showUInt32: render an unsigned 32-bit value as decimal length-prefixed
+--   string. Mirrors 'rtShowI32' but skips the negative-sign branch — the
+--   input bit pattern is treated as unsigned end-to-end (i32.div_u /
+--   i32.rem_u), so values 2147483648..4294967295 render correctly
+--   without an erroneous '-' prefix.
 rtShowU32 :: Text
 rtShowU32 =
   unlines
     [ "  (func $__show_u32 (param $p i32) (result i32)",
-      "    (local $v i32) (local $buf i32) (local $pos i32) (local $digit i32)",
+      "    (local $v i32) (local $buf i32) (local $pos i32) (local $digit i32) (local $blen i32)",
       "    (local.set $v (i32.load (local.get $p)))",
-      "    (local.set $buf (call $__alloc (i32.const 16)))",
-      "    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))",
-      "    (local.set $pos (i32.const 14))",
+      "    (local.set $buf (call $__alloc (i32.const 24)))",
+      "    (local.set $pos (i32.const 23))",
       "    (if (i32.eqz (local.get $v))",
       "      (then",
       "        (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 48))",
@@ -1136,7 +1207,13 @@ rtShowU32 =
       "            (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))",
       "            (local.set $v (i32.div_u (local.get $v) (i32.const 10)))",
       "            (br $loop)))))",
-      "    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))"
+      "    (local.set $blen (i32.sub (i32.const 23) (local.get $pos)))",
+      "    (call $__memcpy (i32.add (local.get $buf) (i32.const 8))",
+      "                    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1)))",
+      "                    (local.get $blen))",
+      "    (i32.store (local.get $buf) (local.get $blen))",
+      "    (i32.store offset=4 (local.get $buf) (local.get $blen))",
+      "    (local.get $buf))"
     ]
 
 -- | predUInt32: Either UnderflowError UInt32. Mirrors 'rtPredU8' since
@@ -1288,12 +1365,13 @@ rtParseUInt32 :: Text
 rtParseUInt32 =
   unlines
     [ "  (func $__parseUInt32 (param $s i32) (result i32)",
-      "    (local $len i32) (local $i i32) (local $acc i64)",
+      "    (local $len i32) (local $i i32) (local $acc i64) (local $payload i32)",
       "    (local $c i32) (local $box i32) (local $cell i32) (local $pe i32)",
       "    (local $failed i32)",
       "    (local.set $failed (i32.const 0))",
       "    (local.set $acc (i64.const 0))",
-      "    (local.set $len (call $__strlen (local.get $s)))",
+      "    (local.set $len (i32.load (local.get $s)))",
+      "    (local.set $payload (i32.add (local.get $s) (i32.const 8)))",
       "    (block $exit",
       "      (if (i32.eqz (local.get $len))",
       "        (then (local.set $failed (i32.const 1)) (br $exit)))",
@@ -1301,7 +1379,7 @@ rtParseUInt32 =
       "      (block $loop_break",
       "        (loop $loop",
       "          (br_if $loop_break (i32.ge_u (local.get $i) (local.get $len)))",
-      "          (local.set $c (i32.load8_u (i32.add (local.get $s) (local.get $i))))",
+      "          (local.set $c (i32.load8_u (i32.add (local.get $payload) (local.get $i))))",
       "          (if (i32.lt_u (local.get $c) (i32.const 48))",
       "            (then (local.set $failed (i32.const 1)) (br $exit)))",
       "          (if (i32.gt_u (local.get $c) (i32.const 57))",
@@ -1393,6 +1471,7 @@ rtEntryArgEither =
     [ "  (func $__entryArgEither (param $arg i32) (result i32)",
       "    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)",
       "    (local $inner i32) (local $row i32) (local $cell i32)",
+      "    (local $wrapped i32)",
       "    (local.set $i (i32.const 0))",
       "    (local.set $n (i32.const 0))",
       "    (local.set $surr (i32.const 0))",
@@ -1418,8 +1497,8 @@ rtEntryArgEither =
       "            (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))",
       "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
       "        (br $scan_loop)))",
-      "    ;; Cap-check has priority: if length exceeded the cap, return",
-      "    ;; 'Left StringTooLong' regardless of the surrogate flag.",
+      "    ;; $i now equals byte_count (position of NUL or break).",
+      "    ;; Cap-check has priority over surrogate-flag.",
       "    (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))",
       "      (then",
       "        ;; Build Left(StringTooLong row-wrapped).",
@@ -1446,10 +1525,15 @@ rtEntryArgEither =
       "            (i32.store offset=4 (local.get $cell) (local.get $row))",
       "            (local.get $cell))",
       "          (else",
-      "            ;; Build Right(arg).",
+      "            ;; Build a length-prefixed copy of the C-string and wrap",
+      "            ;; in Right. byte_count = $i, utf16_count = $n.",
+      "            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))",
+      "            (i32.store (local.get $wrapped) (local.get $i))",
+      "            (i32.store offset=4 (local.get $wrapped) (local.get $n))",
+      "            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))",
       "            (local.set $cell (call $__alloc (i32.const 8)))",
       "            (i32.store (local.get $cell) (i32.const 1))",
-      "            (i32.store offset=4 (local.get $cell) (local.get $arg))",
+      "            (i32.store offset=4 (local.get $cell) (local.get $wrapped))",
       "            (local.get $cell))))))"
     ]
   where

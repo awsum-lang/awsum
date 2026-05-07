@@ -1,20 +1,22 @@
 ; External C declarations
 declare ptr @malloc(i64)
-declare ptr @strcpy(ptr, ptr)
-declare ptr @strcat(ptr, ptr)
+declare ptr @memcpy(ptr, ptr, i64)
 declare i64 @strlen(ptr)
+declare i64 @write(i32, ptr, i64)
 declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 
-@.fmt = private unnamed_addr constant [3 x i8] c"%s\00"
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant [1 x i8] c"\00"
+@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
 
-@.str.0 = private unnamed_addr constant [4 x i8] c"one\00"
+@.str.0 = private unnamed_addr constant {i32, i32, [3 x i8]} { i32 3, i32 3, [3 x i8] c"one" }
 
 define internal ptr @__print(ptr %s) {
-  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
+  %byte_count = load i32, ptr %s
+  %byte_count_64 = zext i32 %byte_count to i64
+  %payload = getelementptr i8, ptr %s, i64 8
+  call i64 @write(i32 1, ptr %payload, i64 %byte_count_64)
   %unit = call ptr @malloc(i64 8)
   %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0
   %unit_tag = inttoptr i64 0 to ptr
@@ -86,11 +88,20 @@ check_surr:
   %is_surr_set = icmp ne i32 %surr_final, 0
   br i1 %is_surr_set, label %unpaired, label %fits
 fits:
+  %byte_count_64 = load i64, ptr %i_p
+  %byte_count_32 = trunc i64 %byte_count_64 to i32
+  %alloc_size_64 = add i64 %byte_count_64, 8
+  %wrapped = call ptr @malloc(i64 %alloc_size_64)
+  store i32 %byte_count_32, ptr %wrapped
+  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4
+  store i32 %n_final, ptr %wrapped_u16p
+  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8
+  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)
   %right = call ptr @malloc(i64 16)
   %right_tag = inttoptr i64 1 to ptr
   store ptr %right_tag, ptr %right
   %right_f = getelementptr ptr, ptr %right, i32 1
-  store ptr %arg, ptr %right_f
+  store ptr %wrapped, ptr %right_f
   ret ptr %right
 too_long:
   %tl_inner = call ptr @malloc(i64 8)
@@ -177,38 +188,37 @@ define internal ptr @v_main(ptr %v__input) {
   %t4 = inttoptr i64 0 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
-  %t6 = getelementptr [4 x i8], ptr @.str.0, i64 0, i64 0
-  %t7 = getelementptr ptr, ptr %t3, i32 1
-  store ptr %t6, ptr %t7
-  %t8 = call ptr @v_identity(ptr %t3)
-  %t9 = getelementptr ptr, ptr %t8, i32 0
-  %t10 = load ptr, ptr %t9
-  %t11 = ptrtoint ptr %t10 to i64
-  switch i64 %t11, label %case.default.12 [ i64 0, label %case.arm.0.14 ]
-case.arm.0.14:
-  %t16 = getelementptr ptr, ptr %t8, i32 1
-  %t17 = load ptr, ptr %t16
-  br label %case.end.0.15
-case.end.0.15:
-  br label %case.join.13
-case.default.12:
+  %t6 = getelementptr ptr, ptr %t3, i32 1
+  store ptr @.str.0, ptr %t6
+  %t7 = call ptr @v_identity(ptr %t3)
+  %t8 = getelementptr ptr, ptr %t7, i32 0
+  %t9 = load ptr, ptr %t8
+  %t10 = ptrtoint ptr %t9 to i64
+  switch i64 %t10, label %case.default.11 [ i64 0, label %case.arm.0.13 ]
+case.arm.0.13:
+  %t15 = getelementptr ptr, ptr %t7, i32 1
+  %t16 = load ptr, ptr %t15
+  br label %case.end.0.14
+case.end.0.14:
+  br label %case.join.12
+case.default.11:
   unreachable
-case.join.13:
-  %t18 = phi ptr [%t17, %case.end.0.15]
-  %t19 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t18, ptr %t19
-  %t20 = call ptr @malloc(i64 16)
-  %t21 = inttoptr i64 0 to ptr
-  %t22 = getelementptr ptr, ptr %t20, i32 0
-  store ptr %t21, ptr %t22
-  %t23 = call ptr @malloc(i64 8)
-  %t24 = inttoptr i64 0 to ptr
-  %t25 = getelementptr ptr, ptr %t23, i32 0
-  store ptr %t24, ptr %t25
-  %t26 = getelementptr ptr, ptr %t20, i32 1
-  store ptr %t23, ptr %t26
-  %t27 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t20, ptr %t27
+case.join.12:
+  %t17 = phi ptr [%t16, %case.end.0.14]
+  %t18 = getelementptr ptr, ptr %t0, i32 1
+  store ptr %t17, ptr %t18
+  %t19 = call ptr @malloc(i64 16)
+  %t20 = inttoptr i64 0 to ptr
+  %t21 = getelementptr ptr, ptr %t19, i32 0
+  store ptr %t20, ptr %t21
+  %t22 = call ptr @malloc(i64 8)
+  %t23 = inttoptr i64 0 to ptr
+  %t24 = getelementptr ptr, ptr %t22, i32 0
+  store ptr %t23, ptr %t24
+  %t25 = getelementptr ptr, ptr %t19, i32 1
+  store ptr %t22, ptr %t25
+  %t26 = getelementptr ptr, ptr %t0, i32 2
+  store ptr %t19, ptr %t26
   ret ptr %t0
 }
 

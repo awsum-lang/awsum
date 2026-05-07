@@ -1,18 +1,15 @@
 {- Cross-backend snapshot test for the parser's string-literal escape
-   sequences. The parser supports six escapes (see 'Awsum.Parser'): five
-   are exercised here verbatim — `\n \t \r \" \\`. The sixth, `\0`
-   (NUL), is intentionally omitted: LLVM and WASM treat strings as
-   null-terminated bytes (their `__concat` and `__print` runtime helpers
-   call `strlen` / `printf("%s", …)`), so a NUL inside a literal
-   truncates the printed output, while JVM, CLR, and JS preserve the
-   NUL — this is a known cross-backend divergence tracked separately.
+   sequences. All six escapes (see 'Awsum.Parser') are exercised here
+   verbatim — `\n \t \r \" \\ \0`.
 
-   The literal below packs each remaining escape inline. Identical
-   stdout bytes on every backend confirm both the parser's escape
-   handling and the runtime's "print exactly" semantics; the
-   no-stdin snapshot pins the exact byte sequence (including CR / LF
-   / TAB characters that look unusual in text editors). -}
+   Identical stdout bytes on every backend confirm both the parser's
+   escape handling and the runtime's "print exactly" semantics; the
+   no-stdin snapshot pins the exact byte sequence (including CR / LF /
+   TAB / NUL characters that look unusual in text editors). The NUL
+   case in particular verifies that strings are length-prefixed end-to-
+   end on every backend — including LLVM and WASM, which moved off
+   C-style null-terminated layout. -}
 import IO.Stdout
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "BS=\\ DQ=\" CR=\r LF=\n TAB=\t end"
+main _input = IO.Stdout.print "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 end"

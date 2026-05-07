@@ -34,7 +34,7 @@ CoreProgram
         , CFunDef "main" [ "_input" ]
             ( CCon 2
                 [ CString "BS=\ DQ=" CR=\xd LF=
-                   TAB=\x9 end"
+                   TAB=\x9 NUL=\x0 end"
                 , CCon 0
                     [ CCon 0 [] ]
                 ]

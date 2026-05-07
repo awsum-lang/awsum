@@ -1,20 +1,22 @@
 ; External C declarations
 declare ptr @malloc(i64)
-declare ptr @strcpy(ptr, ptr)
-declare ptr @strcat(ptr, ptr)
+declare ptr @memcpy(ptr, ptr, i64)
 declare i64 @strlen(ptr)
+declare i64 @write(i32, ptr, i64)
 declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 
-@.fmt = private unnamed_addr constant [3 x i8] c"%s\00"
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant [1 x i8] c"\00"
+@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
 
-@.str.0 = private unnamed_addr constant [8 x i8] c"wrapped\00"
+@.str.0 = private unnamed_addr constant {i32, i32, [7 x i8]} { i32 7, i32 7, [7 x i8] c"wrapped" }
 
 define internal ptr @__print(ptr %s) {
-  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
+  %byte_count = load i32, ptr %s
+  %byte_count_64 = zext i32 %byte_count to i64
+  %payload = getelementptr i8, ptr %s, i64 8
+  call i64 @write(i32 1, ptr %payload, i64 %byte_count_64)
   %unit = call ptr @malloc(i64 8)
   %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0
   %unit_tag = inttoptr i64 0 to ptr
@@ -86,11 +88,20 @@ check_surr:
   %is_surr_set = icmp ne i32 %surr_final, 0
   br i1 %is_surr_set, label %unpaired, label %fits
 fits:
+  %byte_count_64 = load i64, ptr %i_p
+  %byte_count_32 = trunc i64 %byte_count_64 to i32
+  %alloc_size_64 = add i64 %byte_count_64, 8
+  %wrapped = call ptr @malloc(i64 %alloc_size_64)
+  store i32 %byte_count_32, ptr %wrapped
+  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4
+  store i32 %n_final, ptr %wrapped_u16p
+  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8
+  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)
   %right = call ptr @malloc(i64 16)
   %right_tag = inttoptr i64 1 to ptr
   store ptr %right_tag, ptr %right
   %right_f = getelementptr ptr, ptr %right, i32 1
-  store ptr %arg, ptr %right_f
+  store ptr %wrapped, ptr %right_f
   ret ptr %right
 too_long:
   %tl_inner = call ptr @malloc(i64 8)
@@ -187,23 +198,22 @@ define internal ptr @v_main(ptr %v__input) {
   %t1 = inttoptr i64 2 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = getelementptr [8 x i8], ptr @.str.0, i64 0, i64 0
-  %t4 = call ptr @v__df_wrap_0(ptr %t3)
-  %t5 = call ptr @v_unwrap(ptr %t4)
-  %t6 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t5, ptr %t6
-  %t7 = call ptr @malloc(i64 16)
-  %t8 = inttoptr i64 0 to ptr
-  %t9 = getelementptr ptr, ptr %t7, i32 0
-  store ptr %t8, ptr %t9
-  %t10 = call ptr @malloc(i64 8)
-  %t11 = inttoptr i64 0 to ptr
-  %t12 = getelementptr ptr, ptr %t10, i32 0
-  store ptr %t11, ptr %t12
-  %t13 = getelementptr ptr, ptr %t7, i32 1
-  store ptr %t10, ptr %t13
-  %t14 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t7, ptr %t14
+  %t3 = call ptr @v__df_wrap_0(ptr @.str.0)
+  %t4 = call ptr @v_unwrap(ptr %t3)
+  %t5 = getelementptr ptr, ptr %t0, i32 1
+  store ptr %t4, ptr %t5
+  %t6 = call ptr @malloc(i64 16)
+  %t7 = inttoptr i64 0 to ptr
+  %t8 = getelementptr ptr, ptr %t6, i32 0
+  store ptr %t7, ptr %t8
+  %t9 = call ptr @malloc(i64 8)
+  %t10 = inttoptr i64 0 to ptr
+  %t11 = getelementptr ptr, ptr %t9, i32 0
+  store ptr %t10, ptr %t11
+  %t12 = getelementptr ptr, ptr %t6, i32 1
+  store ptr %t9, ptr %t12
+  %t13 = getelementptr ptr, ptr %t0, i32 2
+  store ptr %t6, ptr %t13
   ret ptr %t0
 }
 

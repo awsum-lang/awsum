@@ -82,7 +82,7 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldstr "BS=\\ DQ=\" CR=\r LF=\n TAB=\t end"
+    ldstr "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\NUL end"
     stelem.ref
     dup
     ldc.i4.2

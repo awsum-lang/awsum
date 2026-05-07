@@ -82,7 +82,7 @@ L_tco_arm_0:
   aastore
   dup
   iconst_1
-  ldc "BS=\\ DQ=\" CR=\r LF=\n TAB=\t end"
+  ldc "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\NUL end"
   aastore
   dup
   iconst_2

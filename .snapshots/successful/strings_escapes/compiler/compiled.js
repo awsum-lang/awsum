@@ -32,7 +32,7 @@ function v_runIO(v_io){
 }
 
 function main(v__input){
-    return [2, "BS=\\ DQ=\" CR=\r LF=\n TAB=\t end", [0, [0]]];
+    return [2, "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 end", [0, [0]]];
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

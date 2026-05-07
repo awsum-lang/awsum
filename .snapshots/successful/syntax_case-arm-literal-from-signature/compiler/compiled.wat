@@ -7,21 +7,10 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 65))
-  (data (i32.const 64) "\00")
+  (global $heap (mut i32) (i32.const 72))
+  (data (i32.const 64) "\00\00\00\00\00\00\00\00")
   (table 3 funcref)
   (elem (i32.const 0) $v_runIO $v_firstZero $v_main)
-
-  (func $__strlen (param $s i32) (result i32)
-    (local $len i32)
-    (local.set $len (i32.const 0))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $s) (local.get $len)))))
-        (local.set $len (i32.add (local.get $len) (i32.const 1)))
-        (br $loop)))
-    (local.get $len))
-
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -60,8 +49,8 @@
   (func $__print (param $s i32) (result i32)
     (local $len i32)
     (local $unit i32)
-    (local.set $len (call $__strlen (local.get $s)))
-    (i32.store (i32.const 0) (local.get $s))
+    (local.set $len (i32.load (local.get $s)))
+    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
     (local.set $unit (call $__alloc (i32.const 4)))
@@ -77,11 +66,10 @@
 
 
   (func $__show_i32 (param $p i32) (result i32)
-    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32)
+    (local $v i32) (local $buf i32) (local $pos i32) (local $neg i32) (local $mag i32) (local $digit i32) (local $blen i32)
     (local.set $v (i32.load (local.get $p)))
-    (local.set $buf (call $__alloc (i32.const 16)))
-    (i32.store8 (i32.add (local.get $buf) (i32.const 15)) (i32.const 0))
-    (local.set $pos (i32.const 14))
+    (local.set $buf (call $__alloc (i32.const 24)))
+    (local.set $pos (i32.const 23))
     (if (i32.lt_s (local.get $v) (i32.const 0))
       (then
         (local.set $neg (i32.const 1))
@@ -106,12 +94,19 @@
       (then
         (i32.store8 (i32.add (local.get $buf) (local.get $pos)) (i32.const 45))
         (local.set $pos (i32.sub (local.get $pos) (i32.const 1)))))
-    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1))))
+    (local.set $blen (i32.sub (i32.const 23) (local.get $pos)))
+    (call $__memcpy (i32.add (local.get $buf) (i32.const 8))
+                    (i32.add (local.get $buf) (i32.add (local.get $pos) (i32.const 1)))
+                    (local.get $blen))
+    (i32.store (local.get $buf) (local.get $blen))
+    (i32.store offset=4 (local.get $buf) (local.get $blen))
+    (local.get $buf))
 
 
   (func $__entryArgEither (param $arg i32) (result i32)
     (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
     (local $inner i32) (local $row i32) (local $cell i32)
+    (local $wrapped i32)
     (local.set $i (i32.const 0))
     (local.set $n (i32.const 0))
     (local.set $surr (i32.const 0))
@@ -137,8 +132,8 @@
             (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br $scan_loop)))
-    ;; Cap-check has priority: if length exceeded the cap, return
-    ;; 'Left StringTooLong' regardless of the surrogate flag.
+    ;; $i now equals byte_count (position of NUL or break).
+    ;; Cap-check has priority over surrogate-flag.
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
         ;; Build Left(StringTooLong row-wrapped).
@@ -165,10 +160,15 @@
             (i32.store offset=4 (local.get $cell) (local.get $row))
             (local.get $cell))
           (else
-            ;; Build Right(arg).
+            ;; Build a length-prefixed copy of the C-string and wrap
+            ;; in Right. byte_count = $i, utf16_count = $n.
+            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
+            (i32.store (local.get $wrapped) (local.get $i))
+            (i32.store offset=4 (local.get $wrapped) (local.get $n))
+            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
             (local.set $cell (call $__alloc (i32.const 8)))
             (i32.store (local.get $cell) (i32.const 1))
-            (i32.store offset=4 (local.get $cell) (local.get $arg))
+            (i32.store offset=4 (local.get $cell) (local.get $wrapped))
             (local.get $cell))))))
 
 
