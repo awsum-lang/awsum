@@ -93,11 +93,25 @@ function v__let_3(v_res){
             switch (__s[0]) {
               case 502975519: {
                 const v___rw = __s[1];
-                return [2, "UNPAIRED_UTF16_SURROGATE", [0, [0]]];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [2, "UNPAIRED_UTF16_SURROGATE", [0, [0]]];
+                    }
+                  }
+                }
               }
               case 589989748: {
                 const v___rw = __s[1];
-                return [2, "STRING_TOO_LONG", [0, [0]]];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [2, "STRING_TOO_LONG", [0, [0]]];
+                    }
+                  }
+                }
               }
             }
           }

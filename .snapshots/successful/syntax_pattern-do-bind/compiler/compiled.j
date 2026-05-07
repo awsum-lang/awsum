@@ -412,6 +412,17 @@ L_arm_502975519:
   aaload
   astore_2
   pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
+  pop
   iconst_3
   anewarray java/lang/Object
   dup
@@ -444,11 +455,24 @@ L_arm_502975519:
   aastore
   aastore
   goto L_join
+L_join:
+  goto L_join
 L_arm_589989748:
   dup
   iconst_1
   aaload
   astore_2
+  pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
   pop
   iconst_3
   anewarray java/lang/Object
@@ -482,11 +506,24 @@ L_arm_589989748:
   aastore
   aastore
   goto L_join
+L_join:
+  goto L_join
 L_arm_2448244154:
   dup
   iconst_1
   aaload
   astore_2
+  pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
   pop
   iconst_3
   anewarray java/lang/Object
@@ -519,6 +556,8 @@ L_arm_2448244154:
   aastore
   aastore
   aastore
+  goto L_join
+L_join:
   goto L_join
 L_join:
   goto L_join

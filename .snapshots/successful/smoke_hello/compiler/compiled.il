@@ -336,6 +336,14 @@
     ldelem.ref
     stloc.1
     pop
+    ldloc.1
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0)
+  IL_arm_0:
+    pop
     ldc.i4.3
     newarr [System.Runtime]System.Object
     dup
@@ -368,11 +376,21 @@
     stelem.ref
     stelem.ref
     br.s IL_join
+  IL_join:
+    br.s IL_join
   IL_arm_589989748:
     dup
     ldc.i4.1
     ldelem.ref
     stloc.1
+    pop
+    ldloc.1
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0)
+  IL_arm_0:
     pop
     ldc.i4.3
     newarr [System.Runtime]System.Object
@@ -405,6 +423,8 @@
     stelem.ref
     stelem.ref
     stelem.ref
+    br.s IL_join
+  IL_join:
     br.s IL_join
   IL_join:
     br.s IL_join

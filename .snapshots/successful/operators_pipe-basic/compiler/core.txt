@@ -1,0 +1,149 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "n"
+            ( CIntLit 42 TInt32 )
+        , CValDef "basic"
+            ( CCall
+                ( CBuiltIn "showInt32" )
+                [ CVar "n" ]
+            )
+        , CValDef "chained"
+            ( CCall
+                ( CVar "wrap" )
+                [ CCall
+                    ( CVar "wrap" )
+                    [ CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CVar "n" ]
+                    ]
+                ]
+            )
+        , CValDef "viaLambda"
+            ( CCall
+                ( CVar "$lam$2" )
+                [ CVar "n" ]
+            )
+        , CFunDef "wrap" [ "s" ]
+            ( CVar "s" )
+        , CValDef "joined"
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "basic"
+                    , CString "|"
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_25_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_25_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "a" ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "a"
+                            , CVar "chained"
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_26_3" ]
+                            , CCon 0
+                                [ CVar "$do_e_26_3" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "b" ]
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "b"
+                                    , CString "|"
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "$do_e_27_3" ]
+                                    , CCon 0
+                                        [ CVar "$do_e_27_3" ]
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "c" ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "c"
+                                        , CVar "viaLambda"
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCase
+                ( CVar "joined" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCon 2
+                        [ CString "STRING_TOO_LONG"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$lam$2" [ "i" ]
+            ( CCall
+                ( CBuiltIn "showInt32" )
+                [ CVar "i" ]
+            )
+        ]
+    }

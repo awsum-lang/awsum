@@ -873,7 +873,7 @@ Program
                 { spanStartLine = 24
                 , spanStartCol = 1
                 , spanEndLine = 26
-                , spanEndCol = 49
+                , spanEndCol = 43
                 }
             ) "renderErr"
             [ Param
@@ -890,7 +890,7 @@ Program
                     { spanStartLine = 24
                     , spanStartCol = 15
                     , spanEndLine = 26
-                    , spanEndCol = 49
+                    , spanEndCol = 43
                     }
                 )
                 ( EVar
@@ -961,56 +961,38 @@ Program
                         )
                     ) Nothing :|
                     [ CaseAltLeaf []
-                        ( PAscribe
+                        ( PCon
                             ( SrcSpan
                                 { spanStartLine = 26
                                 , spanStartCol = 3
                                 , spanEndLine = 26
-                                , spanEndCol = 23
+                                , spanEndCol = 16
                                 }
-                            )
-                            ( PWild
-                                ( SrcSpan
-                                    { spanStartLine = 26
-                                    , spanStartCol = 4
-                                    , spanEndLine = 26
-                                    , spanEndCol = 5
-                                    }
-                                )
-                            )
-                            ( TyCon
-                                ( SrcSpan
-                                    { spanStartLine = 26
-                                    , spanStartCol = 8
-                                    , spanEndLine = 26
-                                    , spanEndCol = 21
-                                    }
-                                ) "StringTooLong"
-                            )
+                            ) "StringTooLong" []
                         )
                         ( EApp
                             ( SrcSpan
                                 { spanStartLine = 26
-                                , spanStartCol = 26
+                                , spanStartCol = 20
                                 , spanEndLine = 26
-                                , spanEndCol = 49
+                                , spanEndCol = 43
                                 }
                             )
                             ( ECon
                                 ( SrcSpan
                                     { spanStartLine = 26
-                                    , spanStartCol = 26
+                                    , spanStartCol = 20
                                     , spanEndLine = 26
-                                    , spanEndCol = 32
+                                    , spanEndCol = 26
                                     }
                                 ) "Right"
                             )
                             ( ELit
                                 ( SrcSpan
                                     { spanStartLine = 26
-                                    , spanStartCol = 32
+                                    , spanStartCol = 26
                                     , spanEndLine = 26
-                                    , spanEndCol = 49
+                                    , spanEndCol = 43
                                     }
                                 )
                                 ( LString "STRING_TOO_LONG" )

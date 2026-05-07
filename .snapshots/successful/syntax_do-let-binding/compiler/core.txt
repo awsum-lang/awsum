@@ -106,8 +106,15 @@ CoreProgram
                 [
                     ( 589989748
                     , "__rw"
-                    , CCon 1
-                        [ CString "STRING_TOO_LONG" ]
+                    , CCase
+                        ( CVar "__rw" )
+                        [
+                            ( 0
+                            , []
+                            , CCon 1
+                                [ CString "STRING_TOO_LONG" ]
+                            )
+                        ]
                     )
                 ,
                     ( 1615808600

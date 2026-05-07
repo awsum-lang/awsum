@@ -139,7 +139,14 @@ function v_showResult(v_r){
             switch (__s[0]) {
               case 589989748: {
                 const v___rw = __s[1];
-                return [1, "STRING_TOO_LONG"];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [1, "STRING_TOO_LONG"];
+                    }
+                  }
+                }
               }
               case 3768445577: {
                 const v_u = __s[1];

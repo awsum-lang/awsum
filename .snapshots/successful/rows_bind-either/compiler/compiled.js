@@ -67,11 +67,25 @@ function v_describe(v_r){
             switch (__s[0]) {
               case 2252990199: {
                 const v___rw = __s[1];
-                return [1, "ErrA"];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [1, "ErrA"];
+                    }
+                  }
+                }
               }
               case 2269767818: {
                 const v___rw = __s[1];
-                return [1, "ErrB"];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [1, "ErrB"];
+                    }
+                  }
+                }
               }
             }
           }

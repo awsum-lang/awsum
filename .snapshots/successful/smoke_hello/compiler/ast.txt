@@ -353,7 +353,7 @@ Program
                                 { spanStartLine = 11
                                 , spanStartCol = 19
                                 , spanEndLine = 13
-                                , spanEndCol = 85
+                                , spanEndCol = 79
                                 }
                             )
                             ( EVar
@@ -367,47 +367,29 @@ Program
                                 ( QName [] "e" )
                             )
                             ( CaseAltLeaf []
-                                ( PAscribe
+                                ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 12
                                         , spanStartCol = 11
                                         , spanEndLine = 12
-                                        , spanEndCol = 31
+                                        , spanEndCol = 24
                                         }
-                                    )
-                                    ( PWild
-                                        ( SrcSpan
-                                            { spanStartLine = 12
-                                            , spanStartCol = 12
-                                            , spanEndLine = 12
-                                            , spanEndCol = 13
-                                            }
-                                        )
-                                    )
-                                    ( TyCon
-                                        ( SrcSpan
-                                            { spanStartLine = 12
-                                            , spanStartCol = 16
-                                            , spanEndLine = 12
-                                            , spanEndCol = 29
-                                            }
-                                        ) "StringTooLong"
-                                    )
+                                    ) "StringTooLong" []
                                 )
                                 ( EApp
                                     ( SrcSpan
                                         { spanStartLine = 12
-                                        , spanStartCol = 34
+                                        , spanStartCol = 28
                                         , spanEndLine = 12
-                                        , spanEndCol = 67
+                                        , spanEndCol = 61
                                         }
                                     )
                                     ( EVar
                                         ( SrcSpan
                                             { spanStartLine = 12
-                                            , spanStartCol = 34
+                                            , spanStartCol = 28
                                             , spanEndLine = 12
-                                            , spanEndCol = 50
+                                            , spanEndCol = 44
                                             }
                                         )
                                         ( QName
@@ -419,56 +401,38 @@ Program
                                     ( ELit
                                         ( SrcSpan
                                             { spanStartLine = 12
-                                            , spanStartCol = 50
+                                            , spanStartCol = 44
                                             , spanEndLine = 12
-                                            , spanEndCol = 67
+                                            , spanEndCol = 61
                                             }
                                         )
                                         ( LString "STRING_TOO_LONG" )
                                     )
                                 ) Nothing :|
                                 [ CaseAltLeaf []
-                                    ( PAscribe
+                                    ( PCon
                                         ( SrcSpan
                                             { spanStartLine = 13
                                             , spanStartCol = 11
                                             , spanEndLine = 13
-                                            , spanEndCol = 40
+                                            , spanEndCol = 33
                                             }
-                                        )
-                                        ( PWild
-                                            ( SrcSpan
-                                                { spanStartLine = 13
-                                                , spanStartCol = 12
-                                                , spanEndLine = 13
-                                                , spanEndCol = 13
-                                                }
-                                            )
-                                        )
-                                        ( TyCon
-                                            ( SrcSpan
-                                                { spanStartLine = 13
-                                                , spanStartCol = 16
-                                                , spanEndLine = 13
-                                                , spanEndCol = 38
-                                                }
-                                            ) "UnpairedUtf16Surrogate"
-                                        )
+                                        ) "UnpairedUtf16Surrogate" []
                                     )
                                     ( EApp
                                         ( SrcSpan
                                             { spanStartLine = 13
-                                            , spanStartCol = 43
+                                            , spanStartCol = 37
                                             , spanEndLine = 13
-                                            , spanEndCol = 85
+                                            , spanEndCol = 79
                                             }
                                         )
                                         ( EVar
                                             ( SrcSpan
                                                 { spanStartLine = 13
-                                                , spanStartCol = 43
+                                                , spanStartCol = 37
                                                 , spanEndLine = 13
-                                                , spanEndCol = 59
+                                                , spanEndCol = 53
                                                 }
                                             )
                                             ( QName
@@ -480,9 +444,9 @@ Program
                                         ( ELit
                                             ( SrcSpan
                                                 { spanStartLine = 13
-                                                , spanStartCol = 59
+                                                , spanStartCol = 53
                                                 , spanEndLine = 13
-                                                , spanEndCol = 85
+                                                , spanEndCol = 79
                                                 }
                                             )
                                             ( LString "UNPAIRED_UTF16_SURROGATE" )

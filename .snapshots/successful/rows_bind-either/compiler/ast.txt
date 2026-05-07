@@ -655,7 +655,7 @@ Program
                             { spanStartLine = 24
                             , spanStartCol = 13
                             , spanEndLine = 26
-                            , spanEndCol = 31
+                            , spanEndCol = 25
                             }
                         )
                         ( EVar
@@ -669,112 +669,76 @@ Program
                             ( QName [] "e" )
                         )
                         ( CaseAltLeaf []
-                            ( PAscribe
+                            ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 25
                                     , spanStartCol = 5
                                     , spanEndLine = 25
-                                    , spanEndCol = 16
+                                    , spanEndCol = 9
                                     }
-                                )
-                                ( PWild
-                                    ( SrcSpan
-                                        { spanStartLine = 25
-                                        , spanStartCol = 6
-                                        , spanEndLine = 25
-                                        , spanEndCol = 7
-                                        }
-                                    )
-                                )
-                                ( TyCon
-                                    ( SrcSpan
-                                        { spanStartLine = 25
-                                        , spanStartCol = 10
-                                        , spanEndLine = 25
-                                        , spanEndCol = 14
-                                        }
-                                    ) "ErrA"
-                                )
+                                ) "ErrA" []
                             )
                             ( EApp
                                 ( SrcSpan
                                     { spanStartLine = 25
-                                    , spanStartCol = 19
+                                    , spanStartCol = 13
                                     , spanEndLine = 25
-                                    , spanEndCol = 31
+                                    , spanEndCol = 25
                                     }
                                 )
                                 ( ECon
                                     ( SrcSpan
                                         { spanStartLine = 25
-                                        , spanStartCol = 19
+                                        , spanStartCol = 13
                                         , spanEndLine = 25
-                                        , spanEndCol = 25
+                                        , spanEndCol = 19
                                         }
                                     ) "Right"
                                 )
                                 ( ELit
                                     ( SrcSpan
                                         { spanStartLine = 25
-                                        , spanStartCol = 25
+                                        , spanStartCol = 19
                                         , spanEndLine = 25
-                                        , spanEndCol = 31
+                                        , spanEndCol = 25
                                         }
                                     )
                                     ( LString "ErrA" )
                                 )
                             ) Nothing :|
                             [ CaseAltLeaf []
-                                ( PAscribe
+                                ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 26
                                         , spanStartCol = 5
                                         , spanEndLine = 26
-                                        , spanEndCol = 16
+                                        , spanEndCol = 9
                                         }
-                                    )
-                                    ( PWild
-                                        ( SrcSpan
-                                            { spanStartLine = 26
-                                            , spanStartCol = 6
-                                            , spanEndLine = 26
-                                            , spanEndCol = 7
-                                            }
-                                        )
-                                    )
-                                    ( TyCon
-                                        ( SrcSpan
-                                            { spanStartLine = 26
-                                            , spanStartCol = 10
-                                            , spanEndLine = 26
-                                            , spanEndCol = 14
-                                            }
-                                        ) "ErrB"
-                                    )
+                                    ) "ErrB" []
                                 )
                                 ( EApp
                                     ( SrcSpan
                                         { spanStartLine = 26
-                                        , spanStartCol = 19
+                                        , spanStartCol = 13
                                         , spanEndLine = 26
-                                        , spanEndCol = 31
+                                        , spanEndCol = 25
                                         }
                                     )
                                     ( ECon
                                         ( SrcSpan
                                             { spanStartLine = 26
-                                            , spanStartCol = 19
+                                            , spanStartCol = 13
                                             , spanEndLine = 26
-                                            , spanEndCol = 25
+                                            , spanEndCol = 19
                                             }
                                         ) "Right"
                                     )
                                     ( ELit
                                         ( SrcSpan
                                             { spanStartLine = 26
-                                            , spanStartCol = 25
+                                            , spanStartCol = 19
                                             , spanEndLine = 26
-                                            , spanEndCol = 31
+                                            , spanEndCol = 25
                                             }
                                         )
                                         ( LString "ErrB" )

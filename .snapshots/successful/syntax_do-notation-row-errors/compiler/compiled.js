@@ -55,15 +55,36 @@ function v_describe(v_r){
             switch (__s[0]) {
               case 401451280: {
                 const v___rw = __s[1];
-                return [1, "ErrorA"];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [1, "ErrorA"];
+                    }
+                  }
+                }
               }
               case 435006518: {
                 const v___rw = __s[1];
-                return [1, "ErrorC"];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [1, "ErrorC"];
+                    }
+                  }
+                }
               }
               case 451784137: {
                 const v___rw = __s[1];
-                return [1, "ErrorB"];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 0: {
+                      return [1, "ErrorB"];
+                    }
+                  }
+                }
               }
             }
           }

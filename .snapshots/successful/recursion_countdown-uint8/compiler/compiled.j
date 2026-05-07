@@ -485,6 +485,17 @@ L_arm_589989748:
   aaload
   astore_2
   pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
+  pop
   iconst_2
   anewarray java/lang/Object
   dup
@@ -496,6 +507,8 @@ L_arm_589989748:
   iconst_1
   ldc "STRING_TOO_LONG"
   aastore
+  goto L_join
+L_join:
   goto L_join
 L_arm_3768445577:
   dup

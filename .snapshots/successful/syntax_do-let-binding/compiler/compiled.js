@@ -88,7 +88,14 @@ function v_renderErr(v_e){
       switch (__s[0]) {
         case 589989748: {
           const v___rw = __s[1];
-          return [1, "STRING_TOO_LONG"];
+          {
+            const __s = v___rw;
+            switch (__s[0]) {
+              case 0: {
+                return [1, "STRING_TOO_LONG"];
+              }
+            }
+          }
         }
         case 1615808600: {
           const v_s = __s[1];

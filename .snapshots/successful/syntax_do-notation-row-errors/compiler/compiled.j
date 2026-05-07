@@ -379,6 +379,17 @@ L_arm_401451280:
   aaload
   astore_2
   pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
+  pop
   iconst_2
   anewarray java/lang/Object
   dup
@@ -391,11 +402,24 @@ L_arm_401451280:
   ldc "ErrorA"
   aastore
   goto L_join
+L_join:
+  goto L_join
 L_arm_435006518:
   dup
   iconst_1
   aaload
   astore_2
+  pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
   pop
   iconst_2
   anewarray java/lang/Object
@@ -409,11 +433,24 @@ L_arm_435006518:
   ldc "ErrorC"
   aastore
   goto L_join
+L_join:
+  goto L_join
 L_arm_451784137:
   dup
   iconst_1
   aaload
   astore_2
+  pop
+  aload_2
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    default: L_arm_0
+L_arm_0:
   pop
   iconst_2
   anewarray java/lang/Object
@@ -426,6 +463,8 @@ L_arm_451784137:
   iconst_1
   ldc "ErrorB"
   aastore
+  goto L_join
+L_join:
   goto L_join
 L_join:
   goto L_join

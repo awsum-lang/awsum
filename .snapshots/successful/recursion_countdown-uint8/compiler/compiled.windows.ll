@@ -456,53 +456,65 @@ define internal ptr @v_showResult(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.29 ]
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.37 ]
 case.arm.0.5:
   %t7 = getelementptr ptr, ptr %v_r, i32 1
   %t8 = load ptr, ptr %t7
   %t9 = getelementptr ptr, ptr %t8, i32 0
   %t10 = load ptr, ptr %t9
   %t11 = ptrtoint ptr %t10 to i64
-  switch i64 %t11, label %case.default.12 [ i64 589989748, label %case.arm.589989748.14 i64 3768445577, label %case.arm.3768445577.22 ]
+  switch i64 %t11, label %case.default.12 [ i64 589989748, label %case.arm.589989748.14 i64 3768445577, label %case.arm.3768445577.30 ]
 case.arm.589989748.14:
   %t16 = getelementptr ptr, ptr %t8, i32 1
   %t17 = load ptr, ptr %t16
-  %t18 = call ptr @malloc(i64 16)
-  %t19 = inttoptr i64 1 to ptr
-  %t20 = getelementptr ptr, ptr %t18, i32 0
-  store ptr %t19, ptr %t20
-  %t21 = getelementptr ptr, ptr %t18, i32 1
-  store ptr @.str.2, ptr %t21
+  %t18 = getelementptr ptr, ptr %t17, i32 0
+  %t19 = load ptr, ptr %t18
+  %t20 = ptrtoint ptr %t19 to i64
+  switch i64 %t20, label %case.default.21 [ i64 0, label %case.arm.0.23 ]
+case.arm.0.23:
+  %t25 = call ptr @malloc(i64 16)
+  %t26 = inttoptr i64 1 to ptr
+  %t27 = getelementptr ptr, ptr %t25, i32 0
+  store ptr %t26, ptr %t27
+  %t28 = getelementptr ptr, ptr %t25, i32 1
+  store ptr @.str.2, ptr %t28
+  br label %case.end.0.24
+case.end.0.24:
+  br label %case.join.22
+case.default.21:
+  unreachable
+case.join.22:
+  %t29 = phi ptr [%t25, %case.end.0.24]
   br label %case.end.589989748.15
 case.end.589989748.15:
   br label %case.join.13
-case.arm.3768445577.22:
-  %t24 = getelementptr ptr, ptr %t8, i32 1
-  %t25 = load ptr, ptr %t24
-  %t26 = call ptr @v_showUnderflowError(ptr %t25)
-  %t27 = call ptr @__concat(ptr @.str.3, ptr %t26)
-  br label %case.end.3768445577.23
-case.end.3768445577.23:
+case.arm.3768445577.30:
+  %t32 = getelementptr ptr, ptr %t8, i32 1
+  %t33 = load ptr, ptr %t32
+  %t34 = call ptr @v_showUnderflowError(ptr %t33)
+  %t35 = call ptr @__concat(ptr @.str.3, ptr %t34)
+  br label %case.end.3768445577.31
+case.end.3768445577.31:
   br label %case.join.13
 case.default.12:
   unreachable
 case.join.13:
-  %t28 = phi ptr [%t18, %case.end.589989748.15], [%t27, %case.end.3768445577.23]
+  %t36 = phi ptr [%t29, %case.end.589989748.15], [%t35, %case.end.3768445577.31]
   br label %case.end.0.6
 case.end.0.6:
   br label %case.join.4
-case.arm.1.29:
-  %t31 = getelementptr ptr, ptr %v_r, i32 1
-  %t32 = load ptr, ptr %t31
-  %t33 = call ptr @__concat(ptr @.str.4, ptr %t32)
-  br label %case.end.1.30
-case.end.1.30:
+case.arm.1.37:
+  %t39 = getelementptr ptr, ptr %v_r, i32 1
+  %t40 = load ptr, ptr %t39
+  %t41 = call ptr @__concat(ptr @.str.4, ptr %t40)
+  br label %case.end.1.38
+case.end.1.38:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t34 = phi ptr [%t28, %case.end.0.6], [%t33, %case.end.1.30]
-  ret ptr %t34
+  %t42 = phi ptr [%t36, %case.end.0.6], [%t41, %case.end.1.38]
+  ret ptr %t42
 }
 
 define internal ptr @v_main(ptr %v__input) {

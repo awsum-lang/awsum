@@ -433,31 +433,43 @@ define internal ptr @v_renderErr(ptr %v_e) {
   %t0 = getelementptr ptr, ptr %v_e, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 589989748, label %case.arm.589989748.5 i64 1615808600, label %case.arm.1615808600.13 ]
+  switch i64 %t2, label %case.default.3 [ i64 589989748, label %case.arm.589989748.5 i64 1615808600, label %case.arm.1615808600.21 ]
 case.arm.589989748.5:
   %t7 = getelementptr ptr, ptr %v_e, i32 1
   %t8 = load ptr, ptr %t7
-  %t9 = call ptr @malloc(i64 16)
-  %t10 = inttoptr i64 1 to ptr
-  %t11 = getelementptr ptr, ptr %t9, i32 0
-  store ptr %t10, ptr %t11
-  %t12 = getelementptr ptr, ptr %t9, i32 1
-  store ptr @.str.2, ptr %t12
+  %t9 = getelementptr ptr, ptr %t8, i32 0
+  %t10 = load ptr, ptr %t9
+  %t11 = ptrtoint ptr %t10 to i64
+  switch i64 %t11, label %case.default.12 [ i64 0, label %case.arm.0.14 ]
+case.arm.0.14:
+  %t16 = call ptr @malloc(i64 16)
+  %t17 = inttoptr i64 1 to ptr
+  %t18 = getelementptr ptr, ptr %t16, i32 0
+  store ptr %t17, ptr %t18
+  %t19 = getelementptr ptr, ptr %t16, i32 1
+  store ptr @.str.2, ptr %t19
+  br label %case.end.0.15
+case.end.0.15:
+  br label %case.join.13
+case.default.12:
+  unreachable
+case.join.13:
+  %t20 = phi ptr [%t16, %case.end.0.15]
   br label %case.end.589989748.6
 case.end.589989748.6:
   br label %case.join.4
-case.arm.1615808600.13:
-  %t15 = getelementptr ptr, ptr %v_e, i32 1
-  %t16 = load ptr, ptr %t15
-  %t17 = call ptr @__concat(ptr @.str.3, ptr %t16)
-  br label %case.end.1615808600.14
-case.end.1615808600.14:
+case.arm.1615808600.21:
+  %t23 = getelementptr ptr, ptr %v_e, i32 1
+  %t24 = load ptr, ptr %t23
+  %t25 = call ptr @__concat(ptr @.str.3, ptr %t24)
+  br label %case.end.1615808600.22
+case.end.1615808600.22:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t18 = phi ptr [%t9, %case.end.589989748.6], [%t17, %case.end.1615808600.14]
-  ret ptr %t18
+  %t26 = phi ptr [%t20, %case.end.589989748.6], [%t25, %case.end.1615808600.22]
+  ret ptr %t26
 }
 
 define internal ptr @v_main(ptr %v__input) {
