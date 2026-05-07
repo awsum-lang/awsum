@@ -348,7 +348,7 @@ runtime builtIns =
         if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
         if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
         if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
-        if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else "",
+        if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
         -- '__entryArgEither' is always emitted: every program has a 'main',
         -- and 'footerPosix' / 'footerWindows' always call this helper to
         -- wrap argv[1] in 'Right' or in row-tagged 'Left StringTooLong'.
@@ -1437,12 +1437,12 @@ runtime builtIns =
           "  ret ptr %right",
           "}"
         ]
-    -- lengthBytesAsUtf8: O(1) — load the byte count from the string's
+    -- lengthUtf8Bytes: O(1) — load the byte count from the string's
     -- 8-byte header at offset 0. Was 'strlen' over a null-terminated
     -- payload; the new length-prefixed layout caches this directly.
     rtLengthBytesAsUtf8 =
       unlines
-        [ "define internal ptr @__lengthBytesAsUtf8(ptr %s) {",
+        [ "define internal ptr @__lengthUtf8Bytes(ptr %s) {",
           "  %len32 = load i32, ptr %s",
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %len32, ptr %box",
@@ -2431,7 +2431,7 @@ emitExpr ctx = \case
                   )
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8" ->
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes" ->
             case xs of
               [a] -> do
                 (instrA, resA) <- emitExpr ctx a
@@ -2440,7 +2440,7 @@ emitExpr ctx = \case
                     fn = case name of
                       "lengthCodePoints" -> "@__lengthCodePoints"
                       "lengthUtf16CodeUnits" -> "@__lengthUtf16CodeUnits"
-                      _ -> "@__lengthBytesAsUtf8"
+                      _ -> "@__lengthUtf8Bytes"
                 pure
                   ( instrA <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ")\n",
                     tmp

@@ -84,7 +84,7 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "lengthUtf16CodeUnits" builtIns) lengthUtf16CodeUnitsMethod,
             "",
-            gate (Set.member "lengthBytesAsUtf8" builtIns) lengthBytesAsUtf8Method,
+            gate (Set.member "lengthUtf8Bytes" builtIns) lengthUtf8BytesMethod,
             "",
             gate (Set.member "parseInt32" builtIns) parseInt32Method,
             "",
@@ -1560,16 +1560,16 @@ lengthUtf16CodeUnitsMethod =
       ".end method"
     ]
 
--- lengthBytesAsUtf8: String -> UInt32. 'String.getBytes(StandardCharsets.UTF_8)'
+-- lengthUtf8Bytes: String -> UInt32. 'String.getBytes(StandardCharsets.UTF_8)'
 --   produces standard (not modified) UTF-8 — supplementary characters
 --   come out as four bytes, not six. The intermediate byte array is
 --   discarded; if profiling ever flags this, a manual pass over the
 --   chars summing 1/2/3/4-byte contributions per code point would
 --   avoid it.
-lengthBytesAsUtf8Method :: Text
-lengthBytesAsUtf8Method =
+lengthUtf8BytesMethod :: Text
+lengthUtf8BytesMethod =
   unlines
-    [ ".method static __lengthBytesAsUtf8(Ljava/lang/Object;)Ljava/lang/Object;",
+    [ ".method static __lengthUtf8Bytes(Ljava/lang/Object;)Ljava/lang/Object;",
       "  .limit stack 2",
       "  .limit locals 1",
       "  aload_0",
@@ -2294,12 +2294,12 @@ emitExprText ctx paramMap = \case
                     "  invokestatic AwsumMain/" <> fn <> "(Ljava/lang/Object;)Ljava/lang/Object;"
                   ]
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs ->
             let fn = case name of
                   "lengthCodePoints" -> "__lengthCodePoints"
                   "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                  _ -> "__lengthBytesAsUtf8"
+                  _ -> "__lengthUtf8Bytes"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap x,

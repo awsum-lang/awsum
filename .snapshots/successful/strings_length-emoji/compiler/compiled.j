@@ -147,7 +147,7 @@ L_eq_u32_ne:
   areturn
 .end method
 
-.method static __lengthBytesAsUtf8(Ljava/lang/Object;)Ljava/lang/Object;
+.method static __lengthUtf8Bytes(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 2
   .limit locals 1
   aload_0
@@ -473,8 +473,8 @@ L_arm_1:
   iconst_4
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   ldc "\128293"
-  invokestatic AwsumMain/__lengthBytesAsUtf8(Ljava/lang/Object;)Ljava/lang/Object;
-  ldc "lengthBytesAsUtf8"
+  invokestatic AwsumMain/__lengthUtf8Bytes(Ljava/lang/Object;)Ljava/lang/Object;
+  ldc "lengthUtf8Bytes"
   invokestatic AwsumMain/v_check(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0

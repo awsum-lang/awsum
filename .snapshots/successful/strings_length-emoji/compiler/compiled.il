@@ -146,7 +146,7 @@
     ret
   }
 
-  .method private hidebysig static object __lengthBytesAsUtf8(object) cil managed
+  .method private hidebysig static object __lengthUtf8Bytes(object) cil managed
   {
     .maxstack 2
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
@@ -439,8 +439,8 @@
     ldc.i4 4
     box [System.Runtime]System.Int32
     ldstr "\128293"
-    call object AwsumMain::__lengthBytesAsUtf8(object)
-    ldstr "lengthBytesAsUtf8"
+    call object AwsumMain::__lengthUtf8Bytes(object)
+    ldstr "lengthUtf8Bytes"
     call object AwsumMain::v_check(object, object, object)
     dup
     ldc.i4.0

@@ -171,7 +171,7 @@ importCount = 3
 -- __mulInt32, __negInt32, __addUInt8, __subUInt8, __mulUInt8, __addUInt32,
 -- __subUInt32, __mulUInt32, __splitOnFirst, __parseInt32, __parseUInt8,
 -- __parseUInt32, __lengthCodePoints, __lengthUtf16CodeUnits,
--- __lengthBytesAsUtf8, __get_arg, __entryArgEither, __utf16_of_range
+-- __lengthUtf8Bytes, __get_arg, __entryArgEither, __utf16_of_range
 runtimeCount :: Word32
 runtimeCount = 34
 
@@ -433,7 +433,7 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __parseUInt32
           lookupType (FuncType 1 True) typeMap, -- __lengthCodePoints
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf16CodeUnits
-          lookupType (FuncType 1 True) typeMap, -- __lengthBytesAsUtf8
+          lookupType (FuncType 1 True) typeMap, -- __lengthUtf8Bytes
           lookupType (FuncType 0 True) typeMap, -- __get_arg
           lookupType (FuncType 1 True) typeMap, -- __entryArgEither
           lookupType (FuncType 2 True) typeMap -- __utf16_of_range
@@ -4129,7 +4129,7 @@ codeShowU32 _info =
         encodeULEB128 2
       ]
 
--- __lengthBytesAsUtf8(s: i32) -> i32
+-- __lengthUtf8Bytes(s: i32) -> i32
 -- Strings are null-terminated UTF-8 byte buffers, so '__strlen' is the
 -- answer; box the result in a 4-byte cell. Locals: $box(1).
 codeLengthBytesAsUtf8 :: [Word8]
@@ -5032,7 +5032,7 @@ emitExpr ctx = \case
                   <> [opCall]
                   <> encodeULEB128 idx
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs ->
             let idx = case name of
                   "lengthCodePoints" -> idxLengthCodePoints

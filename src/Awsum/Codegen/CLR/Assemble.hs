@@ -653,7 +653,7 @@ doAssemble (CoreProgram decls) = do
                    ("__parseUInt32", Set.member "parseUInt32" builtIns),
                    ("__lengthCodePoints", Set.member "lengthCodePoints" builtIns),
                    ("__lengthUtf16CodeUnits", Set.member "lengthUtf16CodeUnits" builtIns),
-                   ("__lengthBytesAsUtf8", Set.member "lengthBytesAsUtf8" builtIns)
+                   ("__lengthUtf8Bytes", Set.member "lengthUtf8Bytes" builtIns)
                  ],
                keep
              ]
@@ -697,7 +697,7 @@ doAssemble (CoreProgram decls) = do
   m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
   mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
-  mLb <- if Set.member "lengthBytesAsUtf8" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
+  mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   mEntryArg <- mkEntryArgEither
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
@@ -2223,12 +2223,12 @@ mkLengthUtf16CodeUnits = do
           <> cilRet
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
--- | lengthBytesAsUtf8: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
+-- | lengthUtf8Bytes: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
 --   without materialising the bytes. Binary equivalent of
---   'Awsum.Codegen.CLR.lengthBytesAsUtf8Method'.
+--   'Awsum.Codegen.CLR.lengthUtf8BytesMethod'.
 mkLengthBytesAsUtf8 :: AsmM MInfo
 mkLengthBytesAsUtf8 = do
-  ni <- w16 <$> addStr "__lengthBytesAsUtf8"
+  ni <- w16 <$> addStr "__lengthUtf8Bytes"
   si <- w16 <$> addBlob (sigStatic etObject 1)
   ps <- addParams 1
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
@@ -3258,13 +3258,13 @@ emitExpr ctx = \case
                 _ -> "__parseUInt8"
           pure (cx <> cilCall (lkTok ctx fn))
     CBuiltIn name
-      | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+      | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
         [x] <- xs -> do
           cx <- emitExpr ctx x
           let fn = case name of
                 "lengthCodePoints" -> "__lengthCodePoints"
                 "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                _ -> "__lengthBytesAsUtf8"
+                _ -> "__lengthUtf8Bytes"
           pure (cx <> cilCall (lkTok ctx fn))
     CBuiltIn n ->
       error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")

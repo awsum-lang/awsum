@@ -331,7 +331,7 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "parseInt32" builtIns then rtParseInt32 else "",
             if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
             if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
-            if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else "",
+            if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
             if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
             -- '__entryArgEither' is always emitted: every program has a
@@ -1018,13 +1018,13 @@ rtSplitOnFirst =
       "        (local.get $cell))))"
     ]
 
--- | lengthBytesAsUtf8 : String -> UInt32. O(1) load from the header at
+-- | lengthUtf8Bytes : String -> UInt32. O(1) load from the header at
 --   offset 0 (was an O(n) byte scan via '__strlen' on the old null-term
 --   layout).
 rtLengthBytesAsUtf8 :: Text
 rtLengthBytesAsUtf8 =
   unlines
-    [ "  (func $__lengthBytesAsUtf8 (param $s i32) (result i32)",
+    [ "  (func $__lengthUtf8Bytes (param $s i32) (result i32)",
       "    (local $box i32)",
       "    (local.set $box (call $__alloc (i32.const 4)))",
       "    (i32.store (local.get $box) (i32.load (local.get $s)))",
@@ -1778,12 +1778,12 @@ emitExpr ctx = \case
                   _ -> "$__parseUInt8"
              in "(call " <> fn <> " " <> emitExpr ctx x <> ")"
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs ->
             let fn = case name of
                   "lengthCodePoints" -> "$__lengthCodePoints"
                   "lengthUtf16CodeUnits" -> "$__lengthUtf16CodeUnits"
-                  _ -> "$__lengthBytesAsUtf8"
+                  _ -> "$__lengthUtf8Bytes"
              in "(call " <> fn <> " " <> emitExpr ctx x <> ")"
       CBuiltIn "concatString"
         | [a, b] <- xs ->

@@ -70,8 +70,8 @@ lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
    three for U+0800..U+FFFF, four for U+10000..U+10FFFF. Useful when
    sizing a buffer for an API that takes UTF-8. -}
 
-lengthBytesAsUtf8 : String -> UInt32
-lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
+lengthUtf8Bytes : String -> UInt32
+lengthUtf8Bytes = BuiltIn.lengthUtf8Bytes
 
 {- Maximum length of an Awsum `String` in UTF-16 code units, identical
    on every backend (LLVM, JVM, CLR, WASM, JS). Operations that would

@@ -1,1 +1,1 @@
-lengthCodePoints=ok, lengthUtf16CodeUnits=ok, lengthBytesAsUtf8=ok
+lengthCodePoints=ok, lengthUtf16CodeUnits=ok, lengthUtf8Bytes=ok

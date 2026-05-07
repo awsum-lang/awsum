@@ -665,8 +665,8 @@ lengthUtf16CodeUnitsHs = T.foldl' step 0
 
 -- | UTF-8 byte count: encode and ask the bytestring its length.
 --   Allocates the encoded bytes; for a property test that's fine.
-lengthBytesAsUtf8Hs :: Text -> Word32
-lengthBytesAsUtf8Hs = fromIntegral . BS.length . encodeUtf8
+lengthUtf8BytesHs :: Text -> Word32
+lengthUtf8BytesHs = fromIntegral . BS.length . encodeUtf8
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Property catalogue
@@ -1276,7 +1276,7 @@ lengthsThreeFunctionsProp =
           <> ":"
           <> show (lengthUtf16CodeUnitsHs s)
           <> ":"
-          <> show (lengthBytesAsUtf8Hs s)
+          <> show (lengthUtf8BytesHs s)
     }
 
 -- ── Boolean laws ──

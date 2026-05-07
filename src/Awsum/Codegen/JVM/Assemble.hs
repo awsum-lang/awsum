@@ -360,7 +360,7 @@ doAssemble prog@(CoreProgram decls) = do
   m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
   mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
-  mLb <- if Set.member "lengthBytesAsUtf8" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
+  mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntryArg <- mkEntryArgEither
   mEntry <- mkMain
@@ -2739,16 +2739,16 @@ mkLengthUtf16CodeUnits = do
         mMaxLocals = 256
       }
 
--- | lengthBytesAsUtf8: String -> UInt32. Encodes via
+-- | lengthUtf8Bytes: String -> UInt32. Encodes via
 --   'String.getBytes(Charset)' with 'StandardCharsets.UTF_8' (standard,
 --   not modified UTF-8) and reports the resulting array length. The
 --   intermediate byte array is dropped on the next instruction; if
 --   profiling ever flags this, swap in a manual scan over the chars
 --   that sums 1/2/3/4-byte contributions per code point.
---   Binary equivalent of 'Awsum.Codegen.JVM.lengthBytesAsUtf8Method'.
+--   Binary equivalent of 'Awsum.Codegen.JVM.lengthUtf8BytesMethod'.
 mkLengthBytesAsUtf8 :: AsmM MInfo
 mkLengthBytesAsUtf8 = do
-  ni <- addUtf8 "__lengthBytesAsUtf8"
+  ni <- addUtf8 "__lengthUtf8Bytes"
   di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
   strCls <- addClass "java/lang/String"
   utf8FieldRef <- addFRef "java/nio/charset/StandardCharsets" "UTF_8" "Ljava/nio/charset/Charset;"
@@ -4128,13 +4128,13 @@ emitExpr ctx = \case
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
             pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs -> do
             xMeta <- emitExpr ctx x
             let fn = case name of
                   "lengthCodePoints" -> "__lengthCodePoints"
                   "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                  _ -> "__lengthBytesAsUtf8"
+                  _ -> "__lengthUtf8Bytes"
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
             pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
       CBuiltIn n ->

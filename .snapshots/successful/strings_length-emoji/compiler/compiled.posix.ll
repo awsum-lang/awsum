@@ -17,7 +17,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.str.4 = private unnamed_addr constant {i32, i32, [4 x i8]} { i32 4, i32 2, [4 x i8] c"\F0\9F\94\A5" }
 @.str.5 = private unnamed_addr constant {i32, i32, [16 x i8]} { i32 16, i32 16, [16 x i8] c"lengthCodePoints" }
 @.str.6 = private unnamed_addr constant {i32, i32, [20 x i8]} { i32 20, i32 20, [20 x i8] c"lengthUtf16CodeUnits" }
-@.str.7 = private unnamed_addr constant {i32, i32, [17 x i8]} { i32 17, i32 17, [17 x i8] c"lengthBytesAsUtf8" }
+@.str.7 = private unnamed_addr constant {i32, i32, [15 x i8]} { i32 15, i32 15, [15 x i8] c"lengthUtf8Bytes" }
 @.str.8 = private unnamed_addr constant {i32, i32, [2 x i8]} { i32 2, i32 2, [2 x i8] c", " }
 @.str.9 = private unnamed_addr constant {i32, i32, [15 x i8]} { i32 15, i32 15, [15 x i8] c"STRING_TOO_LONG" }
 
@@ -153,7 +153,7 @@ define internal ptr @__lengthUtf16CodeUnits(ptr %s) {
 }
 
 
-define internal ptr @__lengthBytesAsUtf8(ptr %s) {
+define internal ptr @__lengthUtf8Bytes(ptr %s) {
   %len32 = load i32, ptr %s
   %box = call ptr @malloc(i64 4)
   store i32 %len32, ptr %box
@@ -493,7 +493,7 @@ case.arm.1.36:
   %t39 = load ptr, ptr %t38
   %t40 = call ptr @malloc(i64 4)
   store i32 4, ptr %t40
-  %t41 = call ptr @__lengthBytesAsUtf8(ptr @.str.4)
+  %t41 = call ptr @__lengthUtf8Bytes(ptr @.str.4)
   %t42 = call ptr @v_check(ptr %t40, ptr %t41, ptr @.str.7)
   %t43 = getelementptr ptr, ptr %t42, i32 0
   %t44 = load ptr, ptr %t43

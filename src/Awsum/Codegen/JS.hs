@@ -257,13 +257,13 @@ header builtIns =
             if Set.member "lengthUtf16CodeUnits" builtIns
               then "function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }"
               else "",
-            -- lengthBytesAsUtf8: TextEncoder always uses standard (not
+            -- lengthUtf8Bytes: TextEncoder always uses standard (not
             -- modified) UTF-8 — 1 byte for ASCII, 2 for U+0080..U+07FF,
             -- 3 for U+0800..U+FFFF, 4 for U+10000..U+10FFFF.
             -- Allocating one encoder per call keeps the helper stateless;
             -- benchmarks haven't motivated hoisting it.
-            if Set.member "lengthBytesAsUtf8" builtIns
-              then "function __lengthBytesAsUtf8(s){ return (new TextEncoder().encode(s).length >>> 0); }"
+            if Set.member "lengthUtf8Bytes" builtIns
+              then "function __lengthUtf8Bytes(s){ return (new TextEncoder().encode(s).length >>> 0); }"
               else "",
             -- __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
             -- UnpairedUtf16Surrogate) String' for the user's 'main'. Two
@@ -544,13 +544,13 @@ emitExpr = \case
                  in fn <> "(" <> emitExpr a <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8" ->
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes" ->
             case xs of
               [a] ->
                 let fn = case name of
                       "lengthCodePoints" -> "__lengthCodePoints"
                       "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                      _ -> "__lengthBytesAsUtf8"
+                      _ -> "__lengthUtf8Bytes"
                  in fn <> "(" <> emitExpr a <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn n ->

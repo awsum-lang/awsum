@@ -83,7 +83,7 @@ codegenCLR prog@(CoreProgram decls) =
             gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
             gate (Set.member "lengthCodePoints" builtIns) lengthCodePointsMethod,
             gate (Set.member "lengthUtf16CodeUnits" builtIns) lengthUtf16CodeUnitsMethod,
-            gate (Set.member "lengthBytesAsUtf8" builtIns) lengthBytesAsUtf8Method,
+            gate (Set.member "lengthUtf8Bytes" builtIns) lengthUtf8BytesMethod,
             "",
             gate (Set.member "parseInt32" builtIns) parseInt32Method,
             "",
@@ -1766,13 +1766,13 @@ lengthUtf16CodeUnitsMethod =
       "  }"
     ]
 
--- lengthBytesAsUtf8: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
+-- lengthUtf8Bytes: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
 --   returns the standard UTF-8 byte count without materialising the
 --   bytes themselves.
-lengthBytesAsUtf8Method :: Text
-lengthBytesAsUtf8Method =
+lengthUtf8BytesMethod :: Text
+lengthUtf8BytesMethod =
   unlines
-    [ "  .method private hidebysig static object __lengthBytesAsUtf8(object) cil managed",
+    [ "  .method private hidebysig static object __lengthUtf8Bytes(object) cil managed",
       "  {",
       "    .maxstack 2",
       "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
@@ -2269,12 +2269,12 @@ emitExprText ctx varMap = \case
                     "    call object AwsumMain::" <> fn <> "(object)"
                   ]
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs ->
             let fn = case name of
                   "lengthCodePoints" -> "__lengthCodePoints"
                   "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                  _ -> "__lengthBytesAsUtf8"
+                  _ -> "__lengthUtf8Bytes"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap x,
