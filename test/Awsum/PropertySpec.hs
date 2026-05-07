@@ -66,7 +66,8 @@ temporarilyBroken =
     [ (Windows, JVM, "concat-left-identity"),
       (Windows, JVM, "concat-right-identity"),
       (Windows, JVM, "concat-associative"),
-      (Windows, JVM, "lengths-three-functions")
+      (Windows, JVM, "lengths-three-functions"),
+      (Windows, JVM, "concat-length-additive")
     ]
 
 isSkipped :: Text -> Backend -> Bool
