@@ -230,8 +230,8 @@ Program
             ( SrcSpan
                 { spanStartLine = 10
                 , spanStartCol = 1
-                , spanEndLine = 11
-                , spanEndCol = 14
+                , spanEndLine = 12
+                , spanEndCol = 2
                 }
             ) "main"
             [ Param
@@ -247,8 +247,8 @@ Program
                 ( SrcSpan
                     { spanStartLine = 10
                     , spanStartCol = 15
-                    , spanEndLine = 11
-                    , spanEndCol = 14
+                    , spanEndLine = 12
+                    , spanEndCol = 2
                     }
                 )
                 ( EVar
@@ -269,8 +269,8 @@ Program
                     ( SrcSpan
                         { spanStartLine = 10
                         , spanStartCol = 31
-                        , spanEndLine = 11
-                        , spanEndCol = 14
+                        , spanEndLine = 12
+                        , spanEndCol = 2
                         }
                     )
                     ( ECase

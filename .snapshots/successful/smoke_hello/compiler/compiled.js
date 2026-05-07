@@ -43,8 +43,8 @@ function v_addGreeting(v_name){
       const __s = __concat(v_greeting, ", ");
       switch (__s[0]) {
         case 0: {
-          const v__do_e_22_3 = __s[1];
-          return [0, v__do_e_22_3];
+          const v__do_e_23_3 = __s[1];
+          return [0, v__do_e_23_3];
         }
         case 1: {
           const v_s0 = __s[1];
@@ -52,8 +52,8 @@ function v_addGreeting(v_name){
             const __s = __concat(v_s0, v_name);
             switch (__s[0]) {
               case 0: {
-                const v__do_e_23_3 = __s[1];
-                return [0, v__do_e_23_3];
+                const v__do_e_24_3 = __s[1];
+                return [0, v__do_e_24_3];
               }
               case 1: {
                 const v_s1 = __s[1];

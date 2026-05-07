@@ -1,0 +1,93 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "big"
+            ( CIntLit 1234567 TInt32 )
+        , CValDef "negativeBig"
+            ( CIntLit
+                ( -1000000 ) TInt32
+            )
+        , CValDef "sum"
+            ( CCall
+                ( CBuiltIn "addInt32" )
+                [ CVar "big"
+                , CVar "negativeBig"
+                ]
+            )
+        , CValDef "line"
+            ( CCase
+                ( CVar "sum" )
+                [
+                    ( 0
+                    , [ "$do_e_19_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_19_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCall
+                        ( CBuiltIn "concatString" )
+                        [ CString "sum="
+                        , CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "s" ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCase
+                ( CVar "line" )
+                [
+                    ( 0
+                    , [ "__w0" ]
+                    , CCon 2
+                        [ CString "FAIL"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

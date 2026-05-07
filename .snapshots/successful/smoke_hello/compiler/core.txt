@@ -67,9 +67,9 @@ CoreProgram
                 )
                 [
                     ( 0
-                    , [ "$do_e_22_3" ]
+                    , [ "$do_e_23_3" ]
                     , CCon 0
-                        [ CVar "$do_e_22_3" ]
+                        [ CVar "$do_e_23_3" ]
                     )
                 ,
                     ( 1
@@ -83,9 +83,9 @@ CoreProgram
                         )
                         [
                             ( 0
-                            , [ "$do_e_23_3" ]
+                            , [ "$do_e_24_3" ]
                             , CCon 0
-                                [ CVar "$do_e_23_3" ]
+                                [ CVar "$do_e_24_3" ]
                             )
                         ,
                             ( 1

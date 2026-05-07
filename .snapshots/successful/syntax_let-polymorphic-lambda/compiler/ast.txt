@@ -316,7 +316,7 @@ Program
                     { spanStartLine = 15
                     , spanStartCol = 7
                     , spanEndLine = 15
-                    , spanEndCol = 19
+                    , spanEndCol = 21
                     }
                 )
                 ( PVar
@@ -328,32 +328,41 @@ Program
                         }
                     ) "id"
                 ) Nothing
-                ( ELam
+                ( EParens
                     ( SrcSpan
                         { spanStartLine = 15
                         , spanStartCol = 12
                         , spanEndLine = 15
-                        , spanEndCol = 19
+                        , spanEndCol = 21
                         }
                     )
-                    [ Param
+                    ( ELam
                         ( SrcSpan
                             { spanStartLine = 15
                             , spanStartCol = 13
                             , spanEndLine = 15
-                            , spanEndCol = 14
-                            }
-                        ) "x"
-                    ]
-                    ( EVar
-                        ( SrcSpan
-                            { spanStartLine = 15
-                            , spanStartCol = 18
-                            , spanEndLine = 15
-                            , spanEndCol = 19
+                            , spanEndCol = 20
                             }
                         )
-                        ( QName [] "x" )
+                        [ Param
+                            ( SrcSpan
+                                { spanStartLine = 15
+                                , spanStartCol = 14
+                                , spanEndLine = 15
+                                , spanEndCol = 15
+                                }
+                            ) "x"
+                        ]
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 15
+                                , spanStartCol = 19
+                                , spanEndLine = 15
+                                , spanEndCol = 20
+                                }
+                            )
+                            ( QName [] "x" )
+                        )
                     )
                 )
                 ( EDo

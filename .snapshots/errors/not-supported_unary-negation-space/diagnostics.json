@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":9,"startCol":6,"endLine":9,"endCol":6,"message":"unexpected space\nexpecting \"--\", digit, or end of line","fixes":[]}]
+[{"severity":"error","startLine":9,"startCol":6,"endLine":9,"endCol":6,"message":"unexpected space\nexpecting \"--\" or end of line","fixes":[]}]

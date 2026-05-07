@@ -1136,7 +1136,7 @@ Program
                     { spanStartLine = 26
                     , spanStartCol = 7
                     , spanEndLine = 26
-                    , spanEndCol = 70
+                    , spanEndCol = 71
                     }
                 )
                 ( PVar
@@ -1200,7 +1200,7 @@ Program
                         { spanStartLine = 26
                         , spanStartCol = 43
                         , spanEndLine = 26
-                        , spanEndCol = 70
+                        , spanEndCol = 71
                         }
                     )
                     ( EVar
@@ -1218,7 +1218,7 @@ Program
                             { spanStartLine = 26
                             , spanStartCol = 54
                             , spanEndLine = 26
-                            , spanEndCol = 70
+                            , spanEndCol = 71
                             }
                         )
                         ( EApp
@@ -1226,7 +1226,7 @@ Program
                                 { spanStartLine = 26
                                 , spanStartCol = 55
                                 , spanEndLine = 26
-                                , spanEndCol = 69
+                                , spanEndCol = 70
                                 }
                             )
                             ( EVar
@@ -1244,7 +1244,7 @@ Program
                                     { spanStartLine = 26
                                     , spanStartCol = 63
                                     , spanEndLine = 26
-                                    , spanEndCol = 69
+                                    , spanEndCol = 70
                                     }
                                 )
                                 ( LInt 100000 )
