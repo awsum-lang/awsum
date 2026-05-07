@@ -107,6 +107,7 @@ test-suite awsum-test
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec
       Awsum.RunBackend
+      Awsum.StringLiteralCapSpec
       Matchers
       Paths_awsum
   hs-source-dirs:

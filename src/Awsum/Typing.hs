@@ -46,6 +46,7 @@ import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, ro
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
+import Data.Char qualified as Char
 import Data.Graph qualified as G
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
@@ -97,6 +98,13 @@ data TypeError
     IntLiteralOutOfRange SrcSpan Integer Name
   | -- | Integer literal used in a context that does not determine its type.
     AmbiguousIntLiteral SrcSpan
+  | -- | String literal exceeds the language-fixed maximum length
+    --   ('maxStringLengthUtf16CodeUnits' = 2^27 UTF-16 code units).
+    --   Fields: span, literal length in UTF-16 code units.
+    --   Symmetric to 'IntLiteralOutOfRange': both reject literals that
+    --   can't fit in the language's representable range, before the
+    --   value escapes to runtime.
+    StringLiteralTooLong SrcSpan Int
   | -- | A 'let' binding @let n = e in body@ where the typechecker
     --   could not synthesise a type for @e@ on its own and the
     --   user did not provide an annotation. Fields: span of the
@@ -292,6 +300,7 @@ typeErrorSpan = \case
   CaseOnNonSumType sp _ -> Just sp
   IntLiteralOutOfRange sp _ _ -> Just sp
   AmbiguousIntLiteral sp -> Just sp
+  StringLiteralTooLong sp _ -> Just sp
   MissingLetAnnotation sp _ _ -> Just sp
   PatternLetAscription sp -> Just sp
   Shadowing sp _ -> Just sp
@@ -372,6 +381,12 @@ prettyPrintTypeError = \case
   IntLiteralOutOfRange _ n tyName ->
     "Integer literal " <> show n <> " out of range for " <> tyName <> " (valid range: " <> rangeText tyName <> ")"
   AmbiguousIntLiteral _ -> "Ambiguous integer literal: cannot infer type from context. Use an explicit type annotation."
+  StringLiteralTooLong _ n ->
+    "String literal exceeds maximum length: "
+      <> show n
+      <> " UTF-16 code units (max: maxStringLengthUtf16CodeUnits = "
+      <> show maxStringLitUtf16CodeUnits
+      <> ")."
   MissingLetAnnotation _ n _underlying ->
     "Cannot infer the type of let-binding '"
       <> n
@@ -499,6 +514,20 @@ prettyPrintTypeError = \case
     showHex32 w =
       let s = showHex w ""
        in replicate (8 - length s) '0' <> s
+
+-- | Maximum length of a string literal in UTF-16 code units (= 2^27).
+--   Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+--   'stdlib/Prelude.aww' and the matching constants in
+--   'Awsum.Codegen.{LLVM,JVM,CLR,WASM,JS}'. Operates on the same scale
+--   as the runtime cap enforced by '__entryArgEither' / '__concat'.
+maxStringLitUtf16CodeUnits :: Int
+maxStringLitUtf16CodeUnits = 134217728
+
+-- | Length of 'Text' measured in UTF-16 code units. BMP code points
+--   contribute 1, supplementary (>= U+10000, encoded as a surrogate
+--   pair on UTF-16-native runtimes) contribute 2.
+utf16CodeUnits :: Text -> Int
+utf16CodeUnits = T.foldl' (\n c -> n + if Char.ord c > 0xFFFF then 2 else 1) 0
 
 -- | Inclusive (min, max) range for a numeric built-in type.
 --   Returns 'Nothing' for types that are not known integer types.
@@ -1264,7 +1293,10 @@ checkExpr conEnv tcm crossExempt env expected = \case
 --   This function /checks/ consistency; it does not invent polymorphism.
 typeOfExpr :: ConEnv -> TypeConsMap -> Env -> Expr -> Either TypeError Type'
 typeOfExpr conEnv tcm env = \case
-  ELit sp (LString _) -> Right (TyCon sp "String")
+  ELit sp (LString s) -> do
+    let n = utf16CodeUnits s
+    when (n > maxStringLitUtf16CodeUnits) (Left (StringLiteralTooLong sp n))
+    Right (TyCon sp "String")
   ELit sp (LInt _) -> Left (AmbiguousIntLiteral sp)
   EVar sp q ->
     case q of

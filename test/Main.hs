@@ -12,6 +12,7 @@ import Awsum.Program (ProgramType (..))
 import Awsum.ProgramSnapshotsSpec qualified
 import Awsum.PropertySpec qualified
 import Awsum.Render (renderProgram)
+import Awsum.StringLiteralCapSpec qualified
 import Awsum.Syntax
 import Awsum.Typing (TypeError (..), requireMain, typecheckProgram)
 import GHC.IO.Encoding (setLocaleEncoding, utf8)
@@ -39,6 +40,7 @@ main = do
     Awsum.FormattingSnapshotsSpec.spec
     Awsum.ErrorSnapshotsSpec.spec
     Awsum.PropertySpec.spec
+    Awsum.StringLiteralCapSpec.spec
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do

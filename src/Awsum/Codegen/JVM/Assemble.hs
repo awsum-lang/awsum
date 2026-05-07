@@ -3311,9 +3311,15 @@ mkEntryArgEither = do
       scanCharLoadLen = 5 + length ldcMaskFC00 + 1 + 2
       scanDispatchLen = 5 :: Int -- iload 4 (2) + ifne (3)
       noLowExpectedLen =
-        2 + length ldcMaskDC00 + 3 -- iload 5 + ldcDC00 + if_icmpeq
-          + 2 + length ldcMaskD800 + 3 -- iload 5 + ldcD800 + if_icmpne
-          + 1 + 2 + 3 -- iconst_1 + istore 4 + goto
+        2
+          + length ldcMaskDC00
+          + 3 -- iload 5 + ldcDC00 + if_icmpeq
+          + 2
+          + length ldcMaskD800
+          + 3 -- iload 5 + ldcD800 + if_icmpne
+          + 1
+          + 2
+          + 3 -- iconst_1 + istore 4 + goto
       lCheckLow = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen + noLowExpectedLen
       checkLowLen = 2 + length ldcMaskDC00 + 3 + 1 + 2 + 3
       lInc = lCheckLow + checkLowLen
@@ -3462,8 +3468,8 @@ mkEntryArgEither = do
           <> [0, fromIntegral (length locals)]
           <> mconcat locals
           <> [0, 0] -- empty stack
-      -- offset_delta of frame 1 = absolute offset; subsequent frames =
-      -- target - prev - 1 (per JVM Spec § 4.7.4).
+          -- offset_delta of frame 1 = absolute offset; subsequent frames =
+          -- target - prev - 1 (per JVM Spec § 4.7.4).
       f1Delta = fromIntegral lScan :: Word16
       f2Delta = fromIntegral (lCheckLow - lScan - 1) :: Word16
       f3Delta = fromIntegral (lInc - lCheckLow - 1) :: Word16
