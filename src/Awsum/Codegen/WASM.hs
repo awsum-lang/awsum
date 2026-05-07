@@ -286,6 +286,10 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             -- so emit the helper whenever 'concatString' is referenced even if
             -- the user did not call 'lengthUtf16CodeUnits' directly.
             if Set.member "lengthUtf16CodeUnits" builtIns || Set.member "concatString" builtIns then rtLengthUtf16CodeUnits else "",
+            -- '__entryArgEither' is always emitted: every program has a
+            -- '_start', and the entry-point glue calls this helper to wrap
+            -- argv[1] in 'Either (StringTooLong | …) String'.
+            rtEntryArgEither,
             rtGetArg emptyOff
           ]
    in T.intercalate "\n\n" lns
@@ -1362,23 +1366,108 @@ rtGetArg emptyOff =
       "        (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))"
     ]
 
+-- | '__entryArgEither' wraps argv[1] in 'Either (StringTooLong |
+--   UnpairedUtf16Surrogate) String' for the user's 'main'. Single
+--   UTF-8 byte scan that runs both checks:
+--     1. UTF-16 code unit count vs 'maxStringLengthUtf16CodeUnits' (2^27),
+--        with a short-circuit on overflow.
+--     2. Surrogate-encoded byte triplets ('ED A0..BF 80..BF'). Standard
+--        UTF-8 (RFC 3629) forbids these; WTF-8 / CESU-8 / Java modified
+--        UTF-8 emit them. Sets a sticky flag (no early exit, so a
+--        longer-than-cap input still reports 'StringTooLong' — cap-check
+--        has priority).
+--   Mirrors LLVM's helper byte-for-byte semantically; cap value
+--   (134217728 = 2^27) and FNV-1a row tags for "StringTooLong" /
+--   "UnpairedUtf16Surrogate" must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+--
+--   Layout (linear-memory cells; identical for both Left arms, only the
+--   row tag differs):
+--     Right s : alloc(8); [tag=1, ptr=s]
+--     Left e  : alloc(8); [tag=0, ptr=row]
+--               row   : alloc(8); [rowTag, ptr=inner]   (CRow box)
+--               inner : alloc(4); [tag=0]              (singleton CCon)
+rtEntryArgEither :: Text
+rtEntryArgEither =
+  unlines
+    [ "  (func $__entryArgEither (param $arg i32) (result i32)",
+      "    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)",
+      "    (local $inner i32) (local $row i32) (local $cell i32)",
+      "    (local.set $i (i32.const 0))",
+      "    (local.set $n (i32.const 0))",
+      "    (local.set $surr (i32.const 0))",
+      "    (block $break_scan",
+      "      (loop $scan_loop",
+      "        (local.set $b (i32.load8_u (i32.add (local.get $arg) (local.get $i))))",
+      "        (br_if $break_scan (i32.eqz (local.get $b)))",
+      "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
+      "          (then",
+      "            ;; Surrogate-byte detection: 'ED A0..BF' starts a 3-byte",
+      "            ;; UTF-8 encoding of U+D800..U+DFFF (forbidden in standard",
+      "            ;; UTF-8). Sticky flag — keep scanning so cap-exceed wins.",
+      "            (if (i32.eq (local.get $b) (i32.const 0xED))",
+      "              (then",
+      "                (if (i32.eq (i32.and (i32.load8_u (i32.add (local.get $arg) (i32.add (local.get $i) (i32.const 1)))) (i32.const 0xE0)) (i32.const 0xA0))",
+      "                  (then (local.set $surr (i32.const 1))))))",
+      "            (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))",
+      "              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))",
+      "              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))",
+      "            ;; maxStringLengthUtf16CodeUnits = 134217728. Short-circuit",
+      "            ;; out of the scan as soon as the running count exceeds the",
+      "            ;; cap so adversarial inputs don't drive an unbounded walk.",
+      "            (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $scan_loop)))",
+      "    ;; Cap-check has priority: if length exceeded the cap, return",
+      "    ;; 'Left StringTooLong' regardless of the surrogate flag.",
+      "    (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))",
+      "      (then",
+      "        ;; Build Left(StringTooLong row-wrapped).",
+      "        (local.set $inner (call $__alloc (i32.const 4)))",
+      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (local.set $row (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $row) (i32.const " <> show stringTooLongTag <> "))",
+      "        (i32.store offset=4 (local.get $row) (local.get $inner))",
+      "        (local.set $cell (call $__alloc (i32.const 8)))",
+      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store offset=4 (local.get $cell) (local.get $row))",
+      "        (local.get $cell))",
+      "      (else",
+      "        (if (result i32) (local.get $surr)",
+      "          (then",
+      "            ;; Build Left(UnpairedUtf16Surrogate row-wrapped).",
+      "            (local.set $inner (call $__alloc (i32.const 4)))",
+      "            (i32.store (local.get $inner) (i32.const 0))",
+      "            (local.set $row (call $__alloc (i32.const 8)))",
+      "            (i32.store (local.get $row) (i32.const " <> show unpairedSurrogateTag <> "))",
+      "            (i32.store offset=4 (local.get $row) (local.get $inner))",
+      "            (local.set $cell (call $__alloc (i32.const 8)))",
+      "            (i32.store (local.get $cell) (i32.const 0))",
+      "            (i32.store offset=4 (local.get $cell) (local.get $row))",
+      "            (local.get $cell))",
+      "          (else",
+      "            ;; Build Right(arg).",
+      "            (local.set $cell (call $__alloc (i32.const 8)))",
+      "            (i32.store (local.get $cell) (i32.const 1))",
+      "            (i32.store offset=4 (local.get $cell) (local.get $arg))",
+      "            (local.get $cell))))))"
+    ]
+  where
+    stringTooLongTag :: Word32
+    stringTooLongTag = rowTag (TyCon noSpan "StringTooLong")
+    unpairedSurrogateTag :: Word32
+    unpairedSurrogateTag = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
+
 startFunc :: Text
 startFunc =
   unlines
     [ "  (func $_start (export \"_start\")",
-      "    (local $input i32)",
-      "    (local $right_box i32)",
-      "    (local.set $input (call $__get_arg))",
-      -- Wrap input in `Right input` (tag=1, one field) before handing to user's
-      -- main. Layout matches CCon emit on WASM: alloc(4 * (1 + nFields)),
-      -- i32 tag at offset 0, fields at offsets 4..  Tag is a raw i32 at offset
-      -- 0; field is the boxed value pointer at offset 4.
-      "    (local.set $right_box (call $__alloc (i32.const 8)))",
-      "    (i32.store (local.get $right_box) (i32.const 1))",
-      "    (i32.store offset=4 (local.get $right_box) (local.get $input))",
+      -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
+      -- String' (cap pre-check with UTF-8 short-circuit); see
+      -- rtEntryArgEither for the inline scan + Either-build.
       -- v_main returns an IO tree; hand it to runIO to walk and execute
       -- the effects. runIO returns Unit which we discard.
-      "    (drop (call $" <> mangle "runIO" <> " (call $" <> mangle "main" <> " (local.get $right_box)))))"
+      "    (drop (call $" <> mangle "runIO" <> " (call $" <> mangle "main" <> " (call $__entryArgEither (call $__get_arg))))))"
     ]
 
 -- ════════════════════════════════════════════════════════════════════════════

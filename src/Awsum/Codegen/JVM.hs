@@ -6,6 +6,8 @@
 module Awsum.Codegen.JVM (codegenJVM) where
 
 import Awsum.Core
+import Awsum.HM (rowTag)
+import Awsum.Syntax (Type' (..), noSpan)
 import Data.Char qualified as Char
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -91,6 +93,8 @@ codegenJVM prog@(CoreProgram decls) =
             gate (Set.member "parseUInt32" builtIns) parseUInt32Method,
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
+            "",
+            entryArgEitherMethod,
             "",
             mainMethod,
             ""
@@ -1792,6 +1796,187 @@ parseUInt8Method =
       ".end method"
     ]
 
+-- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
+--   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
+--     1. Length cap: 'String.length()' is UTF-16 code units (O(1) on
+--        JVM), compared to 'maxStringLengthUtf16CodeUnits' (2^27).
+--     2. Surrogate pairing: walk code units; high surrogate (D800..DBFF)
+--        must be immediately followed by a low surrogate (DC00..DFFF).
+--        Standalone or trailing high → 'Left UnpairedUtf16Surrogate'.
+--   Cap-check has priority — it short-circuits before the surrogate
+--   walk runs. Cap value and FNV-1a row tags for "StringTooLong" /
+--   "UnpairedUtf16Surrogate" must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww' and the
+--   matching constants in 'Awsum.Codegen.{LLVM,CLR,WASM,JS}'. Row tags
+--   are encoded as signed Int32 (CONSTANT_Integer), wrapping high-bit
+--   FNV values to their negative twos-complement; the user-side
+--   'Awsum.Core.CRowCase' lowering rewrites to a 'CCase' on the same
+--   wrapped value, so the bit patterns match through Integer boxing.
+--
+--   Layout (identical for both Left arms, only the row tag differs):
+--     Right s : Object[2] = [Integer(1), s]
+--     Left  e : Object[2] = [Integer(0), row]
+--               row   : Object[2] = [Integer(rowTag), inner]
+--               inner : Object[1] = [Integer(0)]
+--
+--   Local slots:
+--     V_0 = arg (Object), V_1 = string (after checkcast),
+--     V_2 = length, V_3 = i, V_4 = expecting_low (0/1),
+--     V_5 = c & 0xFC00 (masked code unit, used to dispatch surrogate),
+--     V_6 = inner (transient), V_7 = row (transient).
+entryArgEitherMethod :: Text
+entryArgEitherMethod =
+  unlines
+    [ ".method static __entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;",
+      "  .limit stack 6",
+      "  .limit locals 8",
+      "  aload_0",
+      "  checkcast java/lang/String",
+      "  astore_1",
+      "  aload_1",
+      "  invokevirtual java/lang/String/length()I",
+      "  istore_2",
+      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27). Cap-check first.
+      "  iload_2",
+      "  ldc 134217728",
+      "  if_icmpgt L_entry_too_long",
+      -- Surrogate scan: walk UTF-16 code units, ensure pairing.
+      "  iconst_0",
+      "  istore_3",
+      "  iconst_0",
+      "  istore 4",
+      "L_entry_scan:",
+      "  iload_3",
+      "  iload_2",
+      "  if_icmpge L_entry_scan_done",
+      "  aload_1",
+      "  iload_3",
+      "  invokevirtual java/lang/String/charAt(I)C",
+      -- Mask top 6 bits: surrogate range U+D800..U+DFFF shares prefix,
+      -- with bit 10 distinguishing high (0) from low (1).
+      "  ldc 64512", -- 0xFC00
+      "  iand",
+      "  istore 5",
+      "  iload 4",
+      "  ifne L_entry_check_low",
+      -- !expecting_low: standalone low → fail; high → set flag; else nothing.
+      "  iload 5",
+      "  ldc 56320", -- 0xDC00
+      "  if_icmpeq L_entry_unpaired",
+      "  iload 5",
+      "  ldc 55296", -- 0xD800
+      "  if_icmpne L_entry_inc",
+      "  iconst_1",
+      "  istore 4",
+      "  goto L_entry_inc",
+      "L_entry_check_low:",
+      -- expecting_low: must be low surrogate; else fail.
+      "  iload 5",
+      "  ldc 56320", -- 0xDC00
+      "  if_icmpne L_entry_unpaired",
+      "  iconst_0",
+      "  istore 4",
+      "  goto L_entry_inc",
+      "L_entry_inc:",
+      "  iinc 3 1",
+      "  goto L_entry_scan",
+      "L_entry_scan_done:",
+      -- Trailing high surrogate (last code unit was high, no low followed).
+      "  iload 4",
+      "  ifne L_entry_unpaired",
+      -- Right(input): Object[2] = [Integer(1), input]
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_1",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload_0",
+      "  aastore",
+      "  areturn",
+      "L_entry_too_long:",
+      -- inner: StringTooLong CCon — Object[1] = [Integer(0)]
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore 6",
+      -- row: CRow — Object[2] = [Integer(stringTooLongTag), inner]
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  ldc " <> stringTooLongTag,
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 6",
+      "  aastore",
+      "  astore 7",
+      -- left: Either Left — Object[2] = [Integer(0), row]
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 7",
+      "  aastore",
+      "  areturn",
+      "L_entry_unpaired:",
+      -- inner: UnpairedUtf16Surrogate CCon — Object[1] = [Integer(0)]
+      "  iconst_1",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  astore 6",
+      -- row: CRow — Object[2] = [Integer(unpairedSurrogateTag), inner]
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  ldc " <> unpairedSurrogateTag,
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 6",
+      "  aastore",
+      "  astore 7",
+      -- left: Either Left — Object[2] = [Integer(0), row]
+      "  iconst_2",
+      "  anewarray java/lang/Object",
+      "  dup",
+      "  iconst_0",
+      "  iconst_0",
+      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+      "  aastore",
+      "  dup",
+      "  iconst_1",
+      "  aload 7",
+      "  aastore",
+      "  areturn",
+      ".end method"
+    ]
+  where
+    stringTooLongTag :: Text
+    stringTooLongTag = show (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
+    unpairedSurrogateTag :: Text
+    unpairedSurrogateTag = show (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -1830,23 +2015,11 @@ mainMethod =
       "  iconst_0",
       "  aaload",
       "call_main:",
-      -- Wrap input in `Right input` (tag=1, one field) before handing to user's
-      -- main. Layout matches CCon emit on JVM: Object[1+nFields] with boxed
-      -- Integer tag at index 0, fields at indices 1..  Stack holds the input
-      -- string at this point; we leave the input on the stack as a temp local
-      -- via `astore_1`, then build the Object[2], populate it, and call main.
-      "  astore_1",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_1",
-      "  aastore",
+      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
+      -- user's main. '__entryArgEither' compares 'String.length()' against
+      -- the language-fixed cap and returns either 'Right input' or
+      -- 'Left StringTooLong' (row-tagged); see entryArgEitherMethod above.
+      "  invokestatic AwsumMain/__entryArgEither(" <> objDesc <> ")" <> objDesc,
       "  invokestatic AwsumMain/" <> mangle "main" <> "(" <> objDesc <> ")" <> objDesc,
       -- Hand the IO tree to `runIO`, which walks it and performs the
       -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns

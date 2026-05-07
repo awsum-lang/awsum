@@ -268,6 +268,17 @@ runtime builtIns =
     underflowTag = show (rowTag (TyCon noSpan "UnderflowError"))
     overflowTag :: Text
     overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
+    -- StringTooLong row tag, used when the entry-point glue rejects a
+    -- too-long argv[1] and hands user code 'Left StringTooLong' through
+    -- the row '(StringTooLong | UnpairedUtf16Surrogate)'.
+    stringTooLongTag :: Text
+    stringTooLongTag = show (rowTag (TyCon noSpan "StringTooLong"))
+    -- UnpairedUtf16Surrogate row tag, used when '__entryArgEither'
+    -- detects an ill-formed surrogate-encoded UTF-8 byte triplet
+    -- ('ED A0..BF 80..BF') in argv[1] — standard UTF-8 (RFC 3629)
+    -- forbids these, but WTF-8 / CESU-8 / Java-modified-UTF-8 do not.
+    unpairedSurrogateTag :: Text
+    unpairedSurrogateTag = show (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
     parts =
       [ if Set.member "concatString" builtIns then rtConcat else "",
         -- '__print' is the low-level platform primitive driven by the
@@ -309,7 +320,11 @@ runtime builtIns =
         -- so emit the helper whenever 'concatString' is referenced even if
         -- the user did not call 'lengthUtf16CodeUnits' directly.
         if Set.member "lengthUtf16CodeUnits" builtIns || Set.member "concatString" builtIns then rtLengthUtf16CodeUnits else "",
-        if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else ""
+        if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else "",
+        -- '__entryArgEither' is always emitted: every program has a 'main',
+        -- and 'footerPosix' / 'footerWindows' always call this helper to
+        -- wrap argv[1] in 'Right' or in row-tagged 'Left StringTooLong'.
+        rtEntryArgEither
       ]
     -- '__concat' implements 'BuiltIn.concatString'.
     -- Returns 'Either StringTooLong String' as a heap cell. Pre-checks
@@ -1366,6 +1381,150 @@ runtime builtIns =
           "  ret ptr %box",
           "}"
         ]
+    -- __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
+    -- UnpairedUtf16Surrogate) String' for the user's 'main'. Walks the
+    -- UTF-8 bytes once and runs two checks:
+    --   (1) UTF-16 code unit count vs cap (134217728), with short-circuit
+    --       on overflow — adversarial input no longer drives an unbounded
+    --       walk;
+    --   (2) Surrogate-encoded byte triplets ('ED A0..BF 80..BF'), which
+    --       standard UTF-8 (RFC 3629) forbids but WTF-8 / CESU-8 / Java
+    --       modified UTF-8 do not. When detected, sets a sticky flag and
+    --       continues scanning so a longer-than-cap input still reports
+    --       'StringTooLong' (cap-check has priority).
+    -- Returns:
+    --   * Right(arg)               on fit + no surrogates
+    --   * Left StringTooLong       on cap overflow (regardless of surrogates)
+    --   * Left UnpairedUtf16Surrogate on surrogates with cap respected
+    --
+    -- Cap value (134217728 = 2^27) and FNV-1a row tags for "StringTooLong"
+    -- / "UnpairedUtf16Surrogate" must stay in sync with
+    -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww' and the
+    -- matching constants in 'Awsum.Codegen.{JVM,CLR,WASM,JS}'.
+    --
+    -- Layout of the returned Either cell (identical for both Left arms,
+    -- only the row tag differs):
+    --   Right s     : malloc(16); [tag=1, ptr=s]
+    --   Left  e     : malloc(16); [tag=0, ptr=row]
+    --                 row = malloc(16); [rowTag, ptr=inner]   (CRow box)
+    --                 inner = malloc(8); [tag=0]              (singleton CCon)
+    rtEntryArgEither =
+      unlines
+        [ "define internal ptr @__entryArgEither(ptr %arg) {",
+          "entry:",
+          "  %i_p = alloca i64, align 8",
+          "  store i64 0, ptr %i_p",
+          "  %n_p = alloca i32, align 4",
+          "  store i32 0, ptr %n_p",
+          "  %surr_p = alloca i32, align 4",
+          "  store i32 0, ptr %surr_p",
+          "  br label %head",
+          "head:",
+          "  %i = load i64, ptr %i_p",
+          "  %bp = getelementptr i8, ptr %arg, i64 %i",
+          "  %b = load i8, ptr %bp",
+          "  %is_nul = icmp eq i8 %b, 0",
+          "  br i1 %is_nul, label %scan_done, label %body",
+          "body:",
+          "  %bz = zext i8 %b to i32",
+          "  %top2 = and i32 %bz, 192",
+          "  %is_cont = icmp eq i32 %top2, 128",
+          "  br i1 %is_cont, label %step, label %surrogate_check",
+          -- Surrogate-byte detection: a UTF-8 leading byte 0xED with the
+          -- next byte in 0xA0..0xBF starts a 3-byte sequence encoding a
+          -- code point in the surrogate range U+D800..U+DFFF. Standard
+          -- UTF-8 forbids it; we treat it as 'UnpairedUtf16Surrogate'.
+          -- Sticky flag, no early-exit (cap-check has priority).
+          "surrogate_check:",
+          "  %is_ED = icmp eq i32 %bz, 237",
+          "  br i1 %is_ED, label %peek_next, label %check4",
+          "peek_next:",
+          "  %i_next = add i64 %i, 1",
+          "  %bp_next = getelementptr i8, ptr %arg, i64 %i_next",
+          "  %nxt = load i8, ptr %bp_next",
+          "  %nxt_z = zext i8 %nxt to i32",
+          "  %nxt_top3 = and i32 %nxt_z, 224",
+          "  %is_surr = icmp eq i32 %nxt_top3, 160",
+          "  br i1 %is_surr, label %set_surr, label %check4",
+          "set_surr:",
+          "  store i32 1, ptr %surr_p",
+          "  br label %check4",
+          "check4:",
+          "  %top5 = and i32 %bz, 248",
+          "  %is_4 = icmp eq i32 %top5, 240",
+          "  br i1 %is_4, label %add2, label %add1",
+          "add2:",
+          "  %n2 = load i32, ptr %n_p",
+          "  %n2_new = add i32 %n2, 2",
+          "  store i32 %n2_new, ptr %n_p",
+          -- maxStringLengthUtf16CodeUnits = 134217728. Short-circuit out
+          -- of the scan as soon as the running count exceeds the cap.
+          "  %over2 = icmp ugt i32 %n2_new, 134217728",
+          "  br i1 %over2, label %scan_done, label %step",
+          "add1:",
+          "  %n1 = load i32, ptr %n_p",
+          "  %n1_new = add i32 %n1, 1",
+          "  store i32 %n1_new, ptr %n_p",
+          "  %over1 = icmp ugt i32 %n1_new, 134217728",
+          "  br i1 %over1, label %scan_done, label %step",
+          "step:",
+          "  %i1 = add i64 %i, 1",
+          "  store i64 %i1, ptr %i_p",
+          "  br label %head",
+          "scan_done:",
+          -- Cap-check has priority: if length exceeded the cap, return
+          -- 'Left StringTooLong' regardless of the surrogate flag.
+          "  %n_final = load i32, ptr %n_p",
+          "  %over_final = icmp ugt i32 %n_final, 134217728",
+          "  br i1 %over_final, label %too_long, label %check_surr",
+          "check_surr:",
+          "  %surr_final = load i32, ptr %surr_p",
+          "  %is_surr_set = icmp ne i32 %surr_final, 0",
+          "  br i1 %is_surr_set, label %unpaired, label %fits",
+          "fits:",
+          -- Right(arg): tag=1, payload=arg.
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %arg, ptr %right_f",
+          "  ret ptr %right",
+          "too_long:",
+          -- inner: StringTooLong CCon (single ctor, tag 0).
+          "  %tl_inner = call ptr @malloc(i64 8)",
+          "  %tl_inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %tl_inner_tag, ptr %tl_inner",
+          -- row: CRow box keyed by FNV-1a hash of "StringTooLong".
+          "  %tl_row = call ptr @malloc(i64 16)",
+          "  %tl_row_tag = inttoptr i64 " <> stringTooLongTag <> " to ptr",
+          "  store ptr %tl_row_tag, ptr %tl_row",
+          "  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1",
+          "  store ptr %tl_inner, ptr %tl_row_f",
+          "  %tl_left = call ptr @malloc(i64 16)",
+          "  %tl_left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %tl_left_tag, ptr %tl_left",
+          "  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1",
+          "  store ptr %tl_row, ptr %tl_left_f",
+          "  ret ptr %tl_left",
+          "unpaired:",
+          -- inner: UnpairedUtf16Surrogate CCon (single ctor, tag 0).
+          "  %us_inner = call ptr @malloc(i64 8)",
+          "  %us_inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %us_inner_tag, ptr %us_inner",
+          -- row: CRow box keyed by FNV-1a hash of "UnpairedUtf16Surrogate".
+          "  %us_row = call ptr @malloc(i64 16)",
+          "  %us_row_tag = inttoptr i64 " <> unpairedSurrogateTag <> " to ptr",
+          "  store ptr %us_row_tag, ptr %us_row",
+          "  %us_row_f = getelementptr ptr, ptr %us_row, i32 1",
+          "  store ptr %us_inner, ptr %us_row_f",
+          "  %us_left = call ptr @malloc(i64 16)",
+          "  %us_left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %us_left_tag, ptr %us_left",
+          "  %us_left_f = getelementptr ptr, ptr %us_left, i32 1",
+          "  store ptr %us_row, ptr %us_left_f",
+          "  ret ptr %us_left",
+          "}"
+        ]
     rtParseUInt32 =
       unlines
         [ "define internal ptr @__parseUInt32(ptr %s) {",
@@ -1456,23 +1615,18 @@ footerPosix =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]",
-      -- Wrap input in `Right input` (tag=1, one field) before handing to v_main.
-      -- Layout matches CCon emit: malloc(8 * (1 + nFields)), tag at offset 0,
-      -- fields at offsets 1.. — both stored as `ptr` slots. Tag is encoded as
-      -- `inttoptr` to match how CCase reads it back via `ptrtoint`.
-      "  %right_box = call ptr @malloc(i64 16)",
-      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
-      "  %right_tag = inttoptr i64 1 to ptr",
-      "  store ptr %right_tag, ptr %right_tag_ptr",
-      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
-      "  store ptr %input, ptr %right_payload_ptr",
+      -- '__entryArgEither' walks the UTF-8 input counting UTF-16 code
+      -- units with short-circuit at cap+1, returning a fully-formed
+      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String' cell
+      -- (Right input on fit, row-tagged Left StringTooLong on overflow).
+      "  %either = call ptr @__entryArgEither(ptr %input)",
       -- v_main returns an IO tree (lazy IO); the prelude's `runIO`
       -- walks it to execute any effects. `runIO` is a regular Awsum
       -- function emitted via the standard CFunDef path, so it goes
       -- through TCO and ends up as a bounded-stack loop. The IO
       -- value itself is a heap-allocated ptr-tagged ADT cell, same
       -- shape as user ADTs.
-      "  %io = call ptr @v_main(ptr %right_box)",
+      "  %io = call ptr @v_main(ptr %either)",
       "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
@@ -1530,15 +1684,10 @@ footerWindows =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]",
-      -- Same Right-box wrap as the POSIX path; see footerPosix for the layout note.
-      "  %right_box = call ptr @malloc(i64 16)",
-      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
-      "  %right_tag = inttoptr i64 1 to ptr",
-      "  store ptr %right_tag, ptr %right_tag_ptr",
-      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
-      "  store ptr %input, ptr %right_payload_ptr",
+      -- Same '__entryArgEither' helper as the POSIX path; see footerPosix.
+      "  %either = call ptr @__entryArgEither(ptr %input)",
       -- Same IO-tree handoff as the POSIX path; see footerPosix.
-      "  %io = call ptr @v_main(ptr %right_box)",
+      "  %io = call ptr @v_main(ptr %either)",
       "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"

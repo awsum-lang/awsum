@@ -169,12 +169,12 @@ importCount = 3
 -- __mulInt32, __negInt32, __addUInt8, __subUInt8, __mulUInt8, __addUInt32,
 -- __subUInt32, __mulUInt32, __splitOnFirst, __parseInt32, __parseUInt8,
 -- __parseUInt32, __lengthCodePoints, __lengthUtf16CodeUnits,
--- __lengthBytesAsUtf8, __get_arg
+-- __lengthBytesAsUtf8, __get_arg, __entryArgEither
 runtimeCount :: Word32
-runtimeCount = 33
+runtimeCount = 34
 
 -- Runtime helper function indices (after imports)
-idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg :: Word32
+idxStrlen, idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither :: Word32
 idxStrlen = importCount
 idxAlloc = importCount + 1
 idxMemcpy = importCount + 2
@@ -208,6 +208,7 @@ idxLengthCodePoints = importCount + 29
 idxLengthUtf16CodeUnits = importCount + 30
 idxLengthBytesAsUtf8 = importCount + 31
 idxGetArg = importCount + 32
+idxEntryArgEither = importCount + 33
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -420,7 +421,8 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __lengthCodePoints
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf16CodeUnits
           lookupType (FuncType 1 True) typeMap, -- __lengthBytesAsUtf8
-          lookupType (FuncType 0 True) typeMap -- __get_arg
+          lookupType (FuncType 0 True) typeMap, -- __get_arg
+          lookupType (FuncType 1 True) typeMap -- __entryArgEither
         ]
           -- User declarations
           <> [lookupType (funcTypeOfDecl d) typeMap | d <- decls]
@@ -548,7 +550,8 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeLengthCodePoints,
           codeLengthUtf16CodeUnits,
           codeLengthBytesAsUtf8,
-          codeGetArg info
+          codeGetArg info,
+          codeEntryArgEither
         ]
           -- User declarations
           <> map (codeUserDecl info typeMap) decls
@@ -4227,6 +4230,298 @@ codeGetArg info =
         [opEnd]
       ]
 
+-- __entryArgEither(arg: i32) -> i32
+-- Walks UTF-8 bytes once and runs two checks:
+--   (1) UTF-16 code unit count vs cap (134217728 = 2^27), short-circuit
+--       on overflow.
+--   (2) Surrogate-encoded byte triplets ('ED A0..BF 80..BF') — standard
+--       UTF-8 (RFC 3629) forbids these, but WTF-8 / CESU-8 / Java
+--       modified UTF-8 emit them. Sticky flag, no early exit (cap-check
+--       has priority).
+-- Returns:
+--   * Right(arg)                  on fit + no surrogates
+--   * Left StringTooLong          on cap overflow (regardless of surrogates)
+--   * Left UnpairedUtf16Surrogate on surrogates with cap respected
+-- Mirrors the WAT-text 'rtEntryArgEither' byte-for-byte semantically.
+-- Cap value and FNV-1a row tags for "StringTooLong" /
+-- "UnpairedUtf16Surrogate" must stay in sync with
+-- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+-- Locals: $i(1) $n(2) $b(3) $surr(4) $inner(5) $row(6) $cell(7).
+codeEntryArgEither :: [Word8]
+codeEntryArgEither =
+  encodeBody
+    (encodeLocals 7)
+    $ concat
+      [ -- i = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- n = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 2,
+        -- surr = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 4,
+        -- block $break_scan
+        [opBlock, blocktypeVoid],
+        -- loop $scan_loop
+        [opLoop, blocktypeVoid],
+        -- b = i32.load8_u(arg + i)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- if (b == 0) br $break_scan
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1, -- depth 1 = $break_scan
+        -- if ((b & 0xC0) != 0x80) — not a continuation byte
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 0xC0,
+        [opI32And],
+        [opI32Const],
+        encodeSLEB128 0x80,
+        [opI32Ne],
+        [opIf, blocktypeVoid],
+        -- Surrogate-byte detection: 'ED A0..BF' starts a 3-byte UTF-8
+        -- encoding of U+D800..U+DFFF (forbidden in standard UTF-8).
+        -- Sticky flag — keep scanning so cap-exceed wins.
+        --   if (b == 0xED) {
+        --     if ((arg[i+1] & 0xE0) == 0xA0) surr = 1;
+        --   }
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 0xED,
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        --   peek arg[i+1]
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opI32Const],
+        encodeSLEB128 0xE0,
+        [opI32And],
+        [opI32Const],
+        encodeSLEB128 0xA0,
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        --   surr = 1
+        [opI32Const],
+        encodeSLEB128 1,
+        [opLocalSet],
+        encodeULEB128 4,
+        [opEnd], -- end surr-set if
+        [opEnd], -- end b == 0xED if
+        -- if ((b & 0xF8) == 0xF0) n += 2 else n += 1
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 0xF8,
+        [opI32And],
+        [opI32Const],
+        encodeSLEB128 0xF0,
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        -- then: n += 2
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        [opElse],
+        -- else: n += 1
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        [opEnd], -- end inner if (n increment)
+        -- short-circuit: if (n >u 134217728) br $break_scan
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 134217728,
+        [opI32GtU],
+        [opBrIf],
+        encodeULEB128 2, -- depth 2 = $break_scan (through outer if + loop)
+        [opEnd], -- end outer if (non-continuation)
+        -- i = i + 1
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 1,
+        -- br $scan_loop
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block
+        -- if (n >u 134217728) → Left StringTooLong (cap-check has priority)
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 134217728,
+        [opI32GtU],
+        [opIf, blocktypeI32],
+        -- then: build Left(StringTooLong row-wrapped)
+        --   inner = __alloc(4); store inner 0
+        [opI32Const],
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        --   row = __alloc(8); store row stringTooLongTag; store offset=4 row inner
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 (fromIntegral stringTooLongTagWord),
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Store, 0x02, 0x04],
+        --   cell = __alloc(8); store cell 0; store offset=4 cell row
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 7,
+        [opLocalGet],
+        encodeULEB128 7,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 7,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Store, 0x02, 0x04],
+        [opLocalGet],
+        encodeULEB128 7,
+        [opElse],
+        -- else: nested if (surr) → UnpairedUtf16Surrogate else Right
+        [opLocalGet],
+        encodeULEB128 4,
+        [opIf, blocktypeI32],
+        -- then: build Left(UnpairedUtf16Surrogate row-wrapped)
+        --   inner = __alloc(4); store inner 0
+        [opI32Const],
+        encodeSLEB128 4,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        --   row = __alloc(8); store row unpairedSurrogateTag; store offset=4 row inner
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 (fromIntegral unpairedSurrogateTagWord),
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Store, 0x02, 0x04],
+        --   cell = __alloc(8); store cell 0; store offset=4 cell row
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 7,
+        [opLocalGet],
+        encodeULEB128 7,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 7,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Store, 0x02, 0x04],
+        [opLocalGet],
+        encodeULEB128 7,
+        [opElse],
+        -- else: build Right(arg)
+        --   cell = __alloc(8); store cell 1; store offset=4 cell arg
+        [opI32Const],
+        encodeSLEB128 8,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 7,
+        [opLocalGet],
+        encodeULEB128 7,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 7,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Store, 0x02, 0x04],
+        [opLocalGet],
+        encodeULEB128 7,
+        [opEnd], -- end nested if (surr / Right)
+        [opEnd] -- end outer if (cap)
+      ]
+  where
+    stringTooLongTagWord :: Word32
+    stringTooLongTagWord = rowTag (TyCon noSpan "StringTooLong")
+    unpairedSurrogateTagWord :: Word32
+    unpairedSurrogateTagWord = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration code
 -- ════════════════════════════════════════════════════════════════════════════
@@ -4384,26 +4679,19 @@ codeStart info =
   let mainIdx = fromMaybe 0 (Map.lookup "main" info.wiFuncIdx)
       runIOIdx = fromMaybe (error "no v_runIO") (Map.lookup "runIO" info.wiFuncIdx)
    in encodeBody
-        (encodeLocals 2)
+        (encodeLocals 0)
         $ concat
-          [ [opCall],
-            encodeULEB128 idxGetArg, -- stack: [input]
-            [opLocalSet, 0x00], -- locals[0] = input
-            [opI32Const, 0x08], -- stack: [8]
+          [ -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
+            -- String' (cap pre-check with UTF-8 short-circuit) so the user's
+            -- main receives 'Left StringTooLong' on overflow. v_main returns
+            -- an IO tree which runIO walks for its effects; runIO returns
+            -- Unit which we discard.
             [opCall],
-            encodeULEB128 idxAlloc, -- stack: [box]
-            [opLocalSet, 0x01], -- locals[1] = box
-            [opLocalGet, 0x01], -- stack: [box]
-            [opI32Const, 0x01], -- stack: [box, 1]
-            [opI32Store, 0x02, 0x00], -- mem[box+0] = 1
-            [opLocalGet, 0x01], -- stack: [box]
-            [opLocalGet, 0x00], -- stack: [box, input]
-            [opI32Store, 0x02, 0x04], -- mem[box+4] = input
-            [opLocalGet, 0x01], -- stack: [box]
+            encodeULEB128 idxGetArg,
             [opCall],
-            encodeULEB128 mainIdx, -- stack: [io_tree]
-            -- Hand the IO tree to runIO to walk and execute the
-            -- effects. runIO returns Unit which we discard.
+            encodeULEB128 idxEntryArgEither,
+            [opCall],
+            encodeULEB128 mainIdx,
             [opCall],
             encodeULEB128 runIOIdx,
             [opDrop]
