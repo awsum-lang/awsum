@@ -1,0 +1,2 @@
+BS=\ DQ=" CR= LF=
+ TAB=	 end
