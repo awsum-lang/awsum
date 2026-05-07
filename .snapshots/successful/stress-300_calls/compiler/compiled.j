@@ -54,6 +54,30 @@ L_join:
 .end method
 
 
+.method static v_showBool(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  pop
+  ldc "True"
+  goto L_join
+L_arm_1:
+  pop
+  ldc "False"
+  goto L_join
+L_join:
+  areturn
+.end method
+
+
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
@@ -99,30 +123,6 @@ L_tco_arm_0:
   aload_2
   astore_0
   goto L_tco_loop
-.end method
-
-
-.method static v_showBool(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  dup
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
-  pop
-  ldc "True"
-  goto L_join
-L_arm_1:
-  pop
-  ldc "False"
-  goto L_join
-L_join:
-  areturn
 .end method
 
 

@@ -161,6 +161,26 @@ case.join.4:
   ret ptr %t12
 }
 
+define internal ptr @v_showBool(ptr %v_b) {
+  %t0 = getelementptr ptr, ptr %v_b, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.7 ]
+case.arm.0.5:
+  br label %case.end.0.6
+case.end.0.6:
+  br label %case.join.4
+case.arm.1.7:
+  br label %case.end.1.8
+case.end.1.8:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t9 = phi ptr [@.str.0, %case.end.0.6], [@.str.1, %case.end.1.8]
+  ret ptr %t9
+}
+
 define internal ptr @v_runIO(ptr %v_io) {
 entry:
   %t3 = alloca ptr
@@ -2610,26 +2630,6 @@ case.default.3:
 case.join.4:
   %t1505 = phi ptr [%t7, %case.end.0.6], [%t12, %case.end.1.11], [%t17, %case.end.2.16], [%t22, %case.end.3.21], [%t27, %case.end.4.26], [%t32, %case.end.5.31], [%t37, %case.end.6.36], [%t42, %case.end.7.41], [%t47, %case.end.8.46], [%t52, %case.end.9.51], [%t57, %case.end.10.56], [%t62, %case.end.11.61], [%t67, %case.end.12.66], [%t72, %case.end.13.71], [%t77, %case.end.14.76], [%t82, %case.end.15.81], [%t87, %case.end.16.86], [%t92, %case.end.17.91], [%t97, %case.end.18.96], [%t102, %case.end.19.101], [%t107, %case.end.20.106], [%t112, %case.end.21.111], [%t117, %case.end.22.116], [%t122, %case.end.23.121], [%t127, %case.end.24.126], [%t132, %case.end.25.131], [%t137, %case.end.26.136], [%t142, %case.end.27.141], [%t147, %case.end.28.146], [%t152, %case.end.29.151], [%t157, %case.end.30.156], [%t162, %case.end.31.161], [%t167, %case.end.32.166], [%t172, %case.end.33.171], [%t177, %case.end.34.176], [%t182, %case.end.35.181], [%t187, %case.end.36.186], [%t192, %case.end.37.191], [%t197, %case.end.38.196], [%t202, %case.end.39.201], [%t207, %case.end.40.206], [%t212, %case.end.41.211], [%t217, %case.end.42.216], [%t222, %case.end.43.221], [%t227, %case.end.44.226], [%t232, %case.end.45.231], [%t237, %case.end.46.236], [%t242, %case.end.47.241], [%t247, %case.end.48.246], [%t252, %case.end.49.251], [%t257, %case.end.50.256], [%t262, %case.end.51.261], [%t267, %case.end.52.266], [%t272, %case.end.53.271], [%t277, %case.end.54.276], [%t282, %case.end.55.281], [%t287, %case.end.56.286], [%t292, %case.end.57.291], [%t297, %case.end.58.296], [%t302, %case.end.59.301], [%t307, %case.end.60.306], [%t312, %case.end.61.311], [%t317, %case.end.62.316], [%t322, %case.end.63.321], [%t327, %case.end.64.326], [%t332, %case.end.65.331], [%t337, %case.end.66.336], [%t342, %case.end.67.341], [%t347, %case.end.68.346], [%t352, %case.end.69.351], [%t357, %case.end.70.356], [%t362, %case.end.71.361], [%t367, %case.end.72.366], [%t372, %case.end.73.371], [%t377, %case.end.74.376], [%t382, %case.end.75.381], [%t387, %case.end.76.386], [%t392, %case.end.77.391], [%t397, %case.end.78.396], [%t402, %case.end.79.401], [%t407, %case.end.80.406], [%t412, %case.end.81.411], [%t417, %case.end.82.416], [%t422, %case.end.83.421], [%t427, %case.end.84.426], [%t432, %case.end.85.431], [%t437, %case.end.86.436], [%t442, %case.end.87.441], [%t447, %case.end.88.446], [%t452, %case.end.89.451], [%t457, %case.end.90.456], [%t462, %case.end.91.461], [%t467, %case.end.92.466], [%t472, %case.end.93.471], [%t477, %case.end.94.476], [%t482, %case.end.95.481], [%t487, %case.end.96.486], [%t492, %case.end.97.491], [%t497, %case.end.98.496], [%t502, %case.end.99.501], [%t507, %case.end.100.506], [%t512, %case.end.101.511], [%t517, %case.end.102.516], [%t522, %case.end.103.521], [%t527, %case.end.104.526], [%t532, %case.end.105.531], [%t537, %case.end.106.536], [%t542, %case.end.107.541], [%t547, %case.end.108.546], [%t552, %case.end.109.551], [%t557, %case.end.110.556], [%t562, %case.end.111.561], [%t567, %case.end.112.566], [%t572, %case.end.113.571], [%t577, %case.end.114.576], [%t582, %case.end.115.581], [%t587, %case.end.116.586], [%t592, %case.end.117.591], [%t597, %case.end.118.596], [%t602, %case.end.119.601], [%t607, %case.end.120.606], [%t612, %case.end.121.611], [%t617, %case.end.122.616], [%t622, %case.end.123.621], [%t627, %case.end.124.626], [%t632, %case.end.125.631], [%t637, %case.end.126.636], [%t642, %case.end.127.641], [%t647, %case.end.128.646], [%t652, %case.end.129.651], [%t657, %case.end.130.656], [%t662, %case.end.131.661], [%t667, %case.end.132.666], [%t672, %case.end.133.671], [%t677, %case.end.134.676], [%t682, %case.end.135.681], [%t687, %case.end.136.686], [%t692, %case.end.137.691], [%t697, %case.end.138.696], [%t702, %case.end.139.701], [%t707, %case.end.140.706], [%t712, %case.end.141.711], [%t717, %case.end.142.716], [%t722, %case.end.143.721], [%t727, %case.end.144.726], [%t732, %case.end.145.731], [%t737, %case.end.146.736], [%t742, %case.end.147.741], [%t747, %case.end.148.746], [%t752, %case.end.149.751], [%t757, %case.end.150.756], [%t762, %case.end.151.761], [%t767, %case.end.152.766], [%t772, %case.end.153.771], [%t777, %case.end.154.776], [%t782, %case.end.155.781], [%t787, %case.end.156.786], [%t792, %case.end.157.791], [%t797, %case.end.158.796], [%t802, %case.end.159.801], [%t807, %case.end.160.806], [%t812, %case.end.161.811], [%t817, %case.end.162.816], [%t822, %case.end.163.821], [%t827, %case.end.164.826], [%t832, %case.end.165.831], [%t837, %case.end.166.836], [%t842, %case.end.167.841], [%t847, %case.end.168.846], [%t852, %case.end.169.851], [%t857, %case.end.170.856], [%t862, %case.end.171.861], [%t867, %case.end.172.866], [%t872, %case.end.173.871], [%t877, %case.end.174.876], [%t882, %case.end.175.881], [%t887, %case.end.176.886], [%t892, %case.end.177.891], [%t897, %case.end.178.896], [%t902, %case.end.179.901], [%t907, %case.end.180.906], [%t912, %case.end.181.911], [%t917, %case.end.182.916], [%t922, %case.end.183.921], [%t927, %case.end.184.926], [%t932, %case.end.185.931], [%t937, %case.end.186.936], [%t942, %case.end.187.941], [%t947, %case.end.188.946], [%t952, %case.end.189.951], [%t957, %case.end.190.956], [%t962, %case.end.191.961], [%t967, %case.end.192.966], [%t972, %case.end.193.971], [%t977, %case.end.194.976], [%t982, %case.end.195.981], [%t987, %case.end.196.986], [%t992, %case.end.197.991], [%t997, %case.end.198.996], [%t1002, %case.end.199.1001], [%t1007, %case.end.200.1006], [%t1012, %case.end.201.1011], [%t1017, %case.end.202.1016], [%t1022, %case.end.203.1021], [%t1027, %case.end.204.1026], [%t1032, %case.end.205.1031], [%t1037, %case.end.206.1036], [%t1042, %case.end.207.1041], [%t1047, %case.end.208.1046], [%t1052, %case.end.209.1051], [%t1057, %case.end.210.1056], [%t1062, %case.end.211.1061], [%t1067, %case.end.212.1066], [%t1072, %case.end.213.1071], [%t1077, %case.end.214.1076], [%t1082, %case.end.215.1081], [%t1087, %case.end.216.1086], [%t1092, %case.end.217.1091], [%t1097, %case.end.218.1096], [%t1102, %case.end.219.1101], [%t1107, %case.end.220.1106], [%t1112, %case.end.221.1111], [%t1117, %case.end.222.1116], [%t1122, %case.end.223.1121], [%t1127, %case.end.224.1126], [%t1132, %case.end.225.1131], [%t1137, %case.end.226.1136], [%t1142, %case.end.227.1141], [%t1147, %case.end.228.1146], [%t1152, %case.end.229.1151], [%t1157, %case.end.230.1156], [%t1162, %case.end.231.1161], [%t1167, %case.end.232.1166], [%t1172, %case.end.233.1171], [%t1177, %case.end.234.1176], [%t1182, %case.end.235.1181], [%t1187, %case.end.236.1186], [%t1192, %case.end.237.1191], [%t1197, %case.end.238.1196], [%t1202, %case.end.239.1201], [%t1207, %case.end.240.1206], [%t1212, %case.end.241.1211], [%t1217, %case.end.242.1216], [%t1222, %case.end.243.1221], [%t1227, %case.end.244.1226], [%t1232, %case.end.245.1231], [%t1237, %case.end.246.1236], [%t1242, %case.end.247.1241], [%t1247, %case.end.248.1246], [%t1252, %case.end.249.1251], [%t1257, %case.end.250.1256], [%t1262, %case.end.251.1261], [%t1267, %case.end.252.1266], [%t1272, %case.end.253.1271], [%t1277, %case.end.254.1276], [%t1282, %case.end.255.1281], [%t1287, %case.end.256.1286], [%t1292, %case.end.257.1291], [%t1297, %case.end.258.1296], [%t1302, %case.end.259.1301], [%t1307, %case.end.260.1306], [%t1312, %case.end.261.1311], [%t1317, %case.end.262.1316], [%t1322, %case.end.263.1321], [%t1327, %case.end.264.1326], [%t1332, %case.end.265.1331], [%t1337, %case.end.266.1336], [%t1342, %case.end.267.1341], [%t1347, %case.end.268.1346], [%t1352, %case.end.269.1351], [%t1357, %case.end.270.1356], [%t1362, %case.end.271.1361], [%t1367, %case.end.272.1366], [%t1372, %case.end.273.1371], [%t1377, %case.end.274.1376], [%t1382, %case.end.275.1381], [%t1387, %case.end.276.1386], [%t1392, %case.end.277.1391], [%t1397, %case.end.278.1396], [%t1402, %case.end.279.1401], [%t1407, %case.end.280.1406], [%t1412, %case.end.281.1411], [%t1417, %case.end.282.1416], [%t1422, %case.end.283.1421], [%t1427, %case.end.284.1426], [%t1432, %case.end.285.1431], [%t1437, %case.end.286.1436], [%t1442, %case.end.287.1441], [%t1447, %case.end.288.1446], [%t1452, %case.end.289.1451], [%t1457, %case.end.290.1456], [%t1462, %case.end.291.1461], [%t1467, %case.end.292.1466], [%t1472, %case.end.293.1471], [%t1477, %case.end.294.1476], [%t1482, %case.end.295.1481], [%t1487, %case.end.296.1486], [%t1492, %case.end.297.1491], [%t1497, %case.end.298.1496], [%t1502, %case.end.299.1501]
   ret ptr %t1505
-}
-
-define internal ptr @v_showBool(ptr %v_b) {
-  %t0 = getelementptr ptr, ptr %v_b, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.7 ]
-case.arm.0.5:
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.7:
-  br label %case.end.1.8
-case.end.1.8:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t9 = phi ptr [@.str.0, %case.end.0.6], [@.str.1, %case.end.1.8]
-  ret ptr %t9
 }
 
 define internal ptr @v_res() {

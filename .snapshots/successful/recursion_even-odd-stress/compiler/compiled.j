@@ -157,6 +157,30 @@ L_eq_i32_ne:
   areturn
 .end method
 
+.method static v_showBool(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  pop
+  ldc "True"
+  goto L_join
+L_arm_1:
+  pop
+  ldc "False"
+  goto L_join
+L_join:
+  areturn
+.end method
+
+
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
@@ -207,30 +231,6 @@ L_tco_arm_0:
 
 .method static v_showUnderflowError(Ljava/lang/Object;)Ljava/lang/Object;
   ldc "UnderflowError"
-  areturn
-.end method
-
-
-.method static v_showBool(Ljava/lang/Object;)Ljava/lang/Object;
-  aload_0
-  dup
-  iconst_0
-  aaload
-  checkcast java/lang/Integer
-  invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
-  pop
-  ldc "true"
-  goto L_join
-L_arm_1:
-  pop
-  ldc "false"
-  goto L_join
-L_join:
   areturn
 .end method
 

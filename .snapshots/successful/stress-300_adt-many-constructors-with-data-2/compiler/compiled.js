@@ -17,6 +17,20 @@ function v_and(v_a, v_b){
     }
 }
 
+function v_showBool(v_b){
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 0: {
+          return "True";
+        }
+        case 1: {
+          return "False";
+        }
+      }
+    }
+}
+
 function v_runIO(v_io){
   while (true) {
     {
@@ -1248,20 +1262,6 @@ function v_un(v_c){
         case 299: {
           const v_x = __s[1];
           return v_x;
-        }
-      }
-    }
-}
-
-function v_showBool(v_b){
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 0: {
-          return "True";
-        }
-        case 1: {
-          return "False";
         }
       }
     }

@@ -1,6 +1,21 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "runIO" [ "io" ]
+        [ CFunDef "showBool" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CString "True"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "False"
+                    )
+                ]
+            )
+        , CFunDef "runIO" [ "io" ]
             ( CLoop
                 ( CCase
                     ( CVar "io" )
@@ -33,21 +48,6 @@ CoreProgram
             )
         , CFunDef "showUnderflowError" [ "$wild0" ]
             ( CString "UnderflowError" )
-        , CFunDef "showBool" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 0
-                    , []
-                    , CString "true"
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CString "false"
-                    )
-                ]
-            )
         , CFunDef "showResult" [ "r" ]
             ( CCase
                 ( CVar "r" )

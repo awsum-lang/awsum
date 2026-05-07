@@ -16,11 +16,6 @@ oddInt n = case eqInt32 n 0 of
     Left e -> Left e
     Right m -> evenInt m
 
-showBool : Bool -> String
-showBool b = case b of
-  True -> "true"
-  False -> "false"
-
 showResult : Either UnderflowError Bool -> Either StringTooLong String
 showResult r = case r of
   Left e -> "left: " ++ showUnderflowError e

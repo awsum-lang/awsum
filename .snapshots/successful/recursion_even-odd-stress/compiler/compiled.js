@@ -6,6 +6,20 @@ function __eqInt32(a, b){ return a === b ? [0] : [1]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
 
+function v_showBool(v_b){
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 0: {
+          return "True";
+        }
+        case 1: {
+          return "False";
+        }
+      }
+    }
+}
+
 function v_runIO(v_io){
   while (true) {
     {
@@ -36,20 +50,6 @@ function v_runIO(v_io){
 
 function v_showUnderflowError(v__wild0){
     return "UnderflowError";
-}
-
-function v_showBool(v_b){
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 0: {
-          return "true";
-        }
-        case 1: {
-          return "false";
-        }
-      }
-    }
 }
 
 function v_showResult(v_r){

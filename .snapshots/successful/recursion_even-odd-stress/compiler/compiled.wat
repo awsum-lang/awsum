@@ -9,14 +9,14 @@
   (memory (export "memory") 1)
   (global $heap (mut i32) (i32.const 171))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00")
-  (data (i32.const 72) "\0e\00\00\00\0e\00\00\00UnderflowError")
-  (data (i32.const 94) "\04\00\00\00\04\00\00\00true")
-  (data (i32.const 106) "\05\00\00\00\05\00\00\00false")
+  (data (i32.const 72) "\04\00\00\00\04\00\00\00True")
+  (data (i32.const 84) "\05\00\00\00\05\00\00\00False")
+  (data (i32.const 97) "\0e\00\00\00\0e\00\00\00UnderflowError")
   (data (i32.const 119) "\06\00\00\00\06\00\00\00left: ")
   (data (i32.const 133) "\07\00\00\00\07\00\00\00right: ")
   (data (i32.const 148) "\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 8 funcref)
-  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_showBool $v_showResult $v_main $v__let_2 $v__scc_evenInt_oddInt $v_evenInt)
+  (elem (i32.const 0) $v_showBool $v_runIO $v_showUnderflowError $v_showResult $v_main $v__let_2 $v__scc_evenInt_oddInt $v_evenInt)
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -228,6 +228,10 @@
         (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
         (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
 
+  (func $v_showBool (param $v_b i32) (result i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 72)) (else (i32.const 84)))))
+
   (func $v_runIO (param $v_io i32) (result i32)
     (local $v_next i32)
     (local $v_s i32)
@@ -237,11 +241,7 @@
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
 
   (func $v_showUnderflowError (param $v__wild0 i32) (result i32)
-    (i32.const 72))
-
-  (func $v_showBool (param $v_b i32) (result i32)
-    (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 94)) (else (i32.const 106)))))
+    (i32.const 97))
 
   (func $v_showResult (param $v_r i32) (result i32)
     (local $v_b i32)

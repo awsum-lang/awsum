@@ -1,11 +1,6 @@
 {- Chain of 300 non-recursive function calls. -}
 import IO.Stdout
 
-showBool : Bool -> String
-showBool b = case b of
-  True -> "True"
-  False -> "False"
-
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (showBool (f1 True))
 

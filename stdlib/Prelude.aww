@@ -134,6 +134,11 @@ or a b = case a of
   True -> True
   False -> b
 
+showBool : Bool -> String
+showBool b = case b of
+  True -> "True"
+  False -> "False"
+
 -- ---------------------- Either
 
 {- Two-constructor sum: a `Left` carrying an error / failure value, or a

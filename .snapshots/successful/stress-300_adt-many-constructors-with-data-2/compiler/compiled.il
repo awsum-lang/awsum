@@ -56,6 +56,27 @@
   }
 
 
+  .method private hidebysig static object v_showBool(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_0, IL_arm_1)
+  IL_arm_0:
+    pop
+    ldstr "True"
+    br.s IL_join
+  IL_arm_1:
+    pop
+    ldstr "False"
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
   .method private hidebysig static object v_runIO(object) cil managed
   {
   IL_tco_loop:
@@ -2505,27 +2526,6 @@
     stloc.0
     pop
     ldloc.0
-    br.s IL_join
-  IL_join:
-    ret
-  }
-
-
-  .method private hidebysig static object v_showBool(object) cil managed
-  {
-    ldarg.0
-    dup
-    ldc.i4.0
-    ldelem.ref
-    unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
-    pop
-    ldstr "True"
-    br.s IL_join
-  IL_arm_1:
-    pop
-    ldstr "False"
     br.s IL_join
   IL_join:
     ret

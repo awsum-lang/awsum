@@ -161,6 +161,26 @@ case.join.4:
   ret ptr %t12
 }
 
+define internal ptr @v_showBool(ptr %v_b) {
+  %t0 = getelementptr ptr, ptr %v_b, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.7 ]
+case.arm.0.5:
+  br label %case.end.0.6
+case.end.0.6:
+  br label %case.join.4
+case.arm.1.7:
+  br label %case.end.1.8
+case.end.1.8:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t9 = phi ptr [@.str.0, %case.end.0.6], [@.str.1, %case.end.1.8]
+  ret ptr %t9
+}
+
 define internal ptr @v_runIO(ptr %v_io) {
 entry:
   %t3 = alloca ptr
@@ -2598,26 +2618,6 @@ define internal ptr @v_b300() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   ret ptr %t0
-}
-
-define internal ptr @v_showBool(ptr %v_b) {
-  %t0 = getelementptr ptr, ptr %v_b, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.7 ]
-case.arm.0.5:
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.7:
-  br label %case.end.1.8
-case.end.1.8:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t9 = phi ptr [@.str.0, %case.end.0.6], [@.str.1, %case.end.1.8]
-  ret ptr %t9
 }
 
 define internal ptr @v_res() {

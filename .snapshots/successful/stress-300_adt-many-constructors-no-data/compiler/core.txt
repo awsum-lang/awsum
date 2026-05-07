@@ -18,6 +18,21 @@ CoreProgram
                     )
                 ]
             )
+        , CFunDef "showBool" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CString "True"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "False"
+                    )
+                ]
+            )
         , CFunDef "runIO" [ "io" ]
             ( CLoop
                 ( CCase
@@ -1551,21 +1566,6 @@ CoreProgram
                     ( 299
                     , []
                     , CCon 0 []
-                    )
-                ]
-            )
-        , CFunDef "showBool" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 0
-                    , []
-                    , CString "True"
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CString "False"
                     )
                 ]
             )
