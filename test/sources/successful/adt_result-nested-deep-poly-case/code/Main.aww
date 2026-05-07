@@ -22,7 +22,7 @@ unwrap r = case r of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- unwrap (Ok (Ok (Ok "1"))) ++ ","
         s1 <- s0 ++ unwrap (Ok (Ok (Err "2")))
         s2 <- s1 ++ ","
@@ -37,6 +37,7 @@ main _input =
         s11 <- s10 ++ unwrap (Err (Err (Ok "7")))
         s12 <- s11 ++ ","
         s12 ++ unwrap (Err (Err (Err "8")))
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

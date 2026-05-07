@@ -6,14 +6,16 @@ opTuple _ = Right (Tuple3 1 2 3)
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = (do
         raw <- rawArg
         Tuple3 a b c <- opTuple raw
         pureEither (case addInt32 a b of
           Left _ -> c
           Right ab -> case addInt32 ab c of
             Left _ -> c
-            Right abc -> abc)
+            Right abc -> abc
+        )
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

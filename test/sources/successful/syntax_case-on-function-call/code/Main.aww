@@ -10,10 +10,11 @@ search key = do
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = case search "hello" of
+  let res : Either StringTooLong String = (case search "hello" of
         Left e -> Left e
         Right (Found v) -> Right v
         Right NotFound -> Right "nothing"
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

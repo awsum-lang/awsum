@@ -10,10 +10,11 @@ property x = case succUInt8 x of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
         raw <- rawArg
         x <- parseUInt8 raw
         pureEither (property x)
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

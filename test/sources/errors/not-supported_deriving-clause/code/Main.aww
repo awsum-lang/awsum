@@ -8,7 +8,7 @@
 -- type-class-driven deriving will appear with the type-class system.
 import IO.Stdout
 
-type Foo = MkFoo deriving (Show)
+type Foo = MkFoo deriving Show
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print "ok"

@@ -8,10 +8,11 @@ render b = case b of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- render (eqUInt8 minUInt8 minUInt8) ++ render (eqUInt8 maxUInt8 maxUInt8)
         s1 <- s0 ++ render (eqUInt8 maxUInt8 minUInt8)
         s1 ++ render (eqUInt8 128 127)
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

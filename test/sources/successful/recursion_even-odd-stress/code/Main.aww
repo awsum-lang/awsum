@@ -28,7 +28,7 @@ showResult r = case r of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = showResult (evenInt 1000000)
+  let res : Either StringTooLong String = showResult (evenInt 1_000_000)
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

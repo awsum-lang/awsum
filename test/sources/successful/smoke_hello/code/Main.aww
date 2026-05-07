@@ -3,9 +3,10 @@ import IO.Stdout
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main inputArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = (do
         input <- inputArg
         addGreeting input
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

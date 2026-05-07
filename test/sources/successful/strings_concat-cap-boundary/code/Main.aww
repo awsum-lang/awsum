@@ -11,7 +11,6 @@
    peak resident bytes during the 20th doubling are ~600 MiB. WASM
    handles this through the `__alloc` `memory.grow` loop documented
    in the WASM-Specific Details section of `docs/targets.md`. -}
-
 import IO.Stdout
 
 block : String
@@ -21,6 +20,7 @@ block = "你好世界你好世界你好世界你好世界你好世界你好世�
    `bindEither` propagates a `Left StringTooLong` from any
    intermediate `(++)` overflow. With `n = 20` and a 128-code-unit
    block the result is exactly `cap`. -}
+
 build : UInt32 -> String -> Either StringTooLong String
 build n acc = case predUInt32 n of
   Left _ -> Right acc
@@ -33,6 +33,7 @@ build n acc = case predUInt32 n of
    - Otherwise a labelled `FAIL` so a regression points at the broken
      branch. Cross-backend stdout assertion catches per-target
      divergence. -}
+
 runTest : String
 runTest = case build 20 block of
   Left _ -> "FAIL: build returned Left at the cap"

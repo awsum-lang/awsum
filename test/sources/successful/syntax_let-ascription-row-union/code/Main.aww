@@ -14,10 +14,11 @@ opB = Right 2
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _ =
-  let res : Either (ParseError | ErrA | ErrB) Int32 = do
+  let res : Either (ParseError | ErrA | ErrB) Int32 = (do
         a <- opA
         b <- opB
         pureEither b
+      )
    in case res of
         Left e -> case e of
           (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"

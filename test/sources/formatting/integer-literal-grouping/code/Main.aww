@@ -1,0 +1,31 @@
+{- Integer literal grouping is canonicalised by the formatter:
+   - 1-3 digits → no separator
+   - 4+ digits → groups of 3 from the right, with '_' between groups
+   - sign stays on the outside
+   Below: every form of weird grouping the parser accepts gets
+   normalised to one canonical shape. -}
+import IO.Stdout
+
+short : Int32
+short = 999
+
+exactlyFour : Int32
+exactlyFour = 1_000
+
+oddGrouping : Int32
+oddGrouping = 123_456
+
+denseGrouping : Int32
+denseGrouping = 12_345
+
+bareLong : Int32
+bareLong = 134_217_728
+
+negShort : Int32
+negShort = -42
+
+negLong : Int32
+negLong = -2_000_000_000
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = IO.Stdout.print "ok"

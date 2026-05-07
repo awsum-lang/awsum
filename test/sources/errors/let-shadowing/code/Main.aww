@@ -4,7 +4,9 @@
 import IO.Stdout
 
 f : String -> String
-f x = let x = "shadow" in x
+f x =
+  let x = "shadow"
+   in x
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print (f "hi")

@@ -11,11 +11,12 @@ show c = case c of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- show Red ++ ", "
         s1 <- s0 ++ show Green
         s2 <- s1 ++ ", "
         s2 ++ show Blue
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

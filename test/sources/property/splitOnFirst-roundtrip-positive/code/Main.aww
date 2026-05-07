@@ -21,10 +21,11 @@ property sep s = case splitOnFirst sep s of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | NoMatch) String = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | NoMatch) String = (do
         raw <- rawArg
         Tuple2 sep s <- parseInput raw
         property sep s
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

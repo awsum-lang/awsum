@@ -8,7 +8,7 @@ render r = case r of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         a <- render (parseUInt32 "0")
         b <- render (parseUInt32 "4294967295")
         c <- render (parseUInt32 "4294967296")
@@ -34,6 +34,7 @@ main _input =
         r13 <- r12 ++ h
         r14 <- r13 ++ ", "
         r14 ++ i
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

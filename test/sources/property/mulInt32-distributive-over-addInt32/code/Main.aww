@@ -28,10 +28,11 @@ property a b c = do
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = (do
         raw <- rawArg
         Tuple3 a b c <- parseInput raw
         property a b c
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

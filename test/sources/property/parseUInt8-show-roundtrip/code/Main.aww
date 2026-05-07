@@ -7,10 +7,11 @@ property v = showUInt8 v
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         v <- parseUInt8 raw
         pureEither (property v)
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

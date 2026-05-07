@@ -10,10 +10,11 @@ property a = do
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = (do
         raw <- rawArg
         a <- parseUInt8 raw
         property a
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"

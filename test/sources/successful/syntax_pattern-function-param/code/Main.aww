@@ -26,9 +26,10 @@ main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
   let n = sumTriple triple
       m = apply (\(Tuple2 a b) -> sumPair (Tuple2 a b)) pair
-      res : Either StringTooLong String = do
+      res : Either StringTooLong String = (do
         s0 <- showInt32 n ++ " / "
         s0 ++ showInt32 m
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

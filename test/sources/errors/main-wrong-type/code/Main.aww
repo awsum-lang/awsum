@@ -1,3 +1,4 @@
 -- Error: main returns String instead of required IO Never Unit
+
 main : String -> String
 main input = input

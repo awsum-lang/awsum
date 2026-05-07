@@ -17,10 +17,11 @@ opMaybe _ = Right (Just 1)
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = (do
         raw <- rawArg
         Just x <- opMaybe raw
         pureEither x
+      )
    in case res of
         Left e -> case e of
           (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
