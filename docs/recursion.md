@@ -162,6 +162,8 @@ Each pass has a tightly-defined precondition and postcondition. The precondition
 
 This is what the earlier design document called "applying Reynolds' defunctionalization to two different objects": SCC defunctionalizes **which function is active**, CPS defunctionalizes **what to do after the current call returns**. Both produce ordinary ADTs dispatched by ordinary `case` expressions, which the backends already handle.
 
+When recursion passes through a closure stored in a constructor field, [`Awsum.LowerClosures`](../src/Awsum/LowerClosures.hs) routes the call through a synthetic `$applyN` dispatcher (see [pipeline.md](pipeline.md)); the dispatcher is an ordinary top-level fn, so it participates in the call graph and the SCC + CPS + TCO machinery sees it like any other vertex. Stack safety is preserved across the closure-conversion boundary — verified by [`closures_function-in-constructor-field-non-tail-stress`](../test/sources/successful/closures_function-in-constructor-field-non-tail-stress) and [`closures_function-in-constructor-field-mutual-stress`](../test/sources/successful/closures_function-in-constructor-field-mutual-stress) at depth 1 000 000.
+
 ## Stack-safety test matrix
 
 | Test                                                                                                      | Shape                                             | Depth     | What it verifies                                                                                                                                                     |
