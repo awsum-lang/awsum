@@ -48,15 +48,29 @@ function v_unwrap(v_b){
 }
 
 function v_compose(v_f, v_g, v_x){
-    return (v_f)((v_g)(v_x));
+    return (v__apply1)(v_f, (v__apply1)(v_g, v_x));
 }
 
 function main(v__input){
-    return [2, (v__df_apply_0)("chain", v_unwrap, v_wrap), [0, [0]]];
+    return [2, (v__df_apply_0)("chain", [0], [1]), [0, [0]]];
 }
 
 function v__df_apply_0(v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1){
     return (v_compose)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
+}
+
+function v__apply1(v__cl, v__arg0){
+    {
+      const __s = v__cl;
+      switch (__s[0]) {
+        case 0: {
+          return (v_unwrap)(v__arg0);
+        }
+        case 1: {
+          return (v_wrap)(v__arg0);
+        }
+      }
+    }
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

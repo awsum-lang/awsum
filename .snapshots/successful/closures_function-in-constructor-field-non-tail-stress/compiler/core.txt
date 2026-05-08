@@ -1,0 +1,207 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "identity" [ "n" ]
+            ( CVar "n" )
+        , CFunDef "countWithBox"
+            [ "b"
+            , "n"
+            ]
+            ( CCall
+                ( CVar "$cps$countWithBox" )
+                [ CVar "b"
+                , CVar "n"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$countWithBox"
+            [ "b"
+            , "n"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 0
+                        , []
+                        , CCall
+                            ( CVar "$apply$countWithBox" )
+                            [ CVar "$k"
+                            , CCon 1
+                                [ CIntLit 0 TInt32 ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 0
+                                , [ "e" ]
+                                , CCall
+                                    ( CVar "$apply$countWithBox" )
+                                    [ CVar "$k"
+                                    , CCon 0
+                                        [ CVar "e" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "m" ]
+                                , CContinue
+                                    [ CVar "b"
+                                    , CVar "m"
+                                    , CCon 1
+                                        [ CVar "$k"
+                                        , CVar "b"
+                                        ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$countWithBox"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "b"
+                            ]
+                        , CCase
+                            ( CVar "$x" )
+                            [
+                                ( 0
+                                , [ "e" ]
+                                , CContinue
+                                    [ CVar "$pk_1"
+                                    , CCon 0
+                                        [ CVar "e" ]
+                                    ]
+                                )
+                            ,
+                                ( 1
+                                , [ "v" ]
+                                , CCase
+                                    ( CVar "b" )
+                                    [
+                                        ( 0
+                                        , [ "f" ]
+                                        , CContinue
+                                            [ CVar "$pk_1"
+                                            , CCon 1
+                                                [ CCall
+                                                    ( CVar "$apply1" )
+                                                    [ CVar "f"
+                                                    , CVar "v"
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCase
+                ( CCall
+                    ( CVar "countWithBox" )
+                    [ CCon 0
+                        [ CCon 0 [] ]
+                    , CIntLit 1000000 TInt32
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "_e" ]
+                    , CCon 2
+                        [ CString "underflow"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCon 2
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" )
+                [
+                    ( 0
+                    , []
+                    , CCall
+                        ( CVar "identity" )
+                        [ CVar "$arg0" ]
+                    )
+                ]
+            )
+        ]
+    }

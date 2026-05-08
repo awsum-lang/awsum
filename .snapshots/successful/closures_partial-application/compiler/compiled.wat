@@ -10,9 +10,9 @@
   (global $heap (mut i32) (i32.const 85))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00")
   (data (i32.const 72) "\05\00\00\00\05\00\00\00chain")
-  (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_wrap $v_unwrap $v_compose $v_main $v__df_apply_0)
-  (type $arity_1 (func (param i32) (result i32)))
+  (table 7 funcref)
+  (elem (i32.const 0) $v_runIO $v_wrap $v_unwrap $v_compose $v_main $v__df_apply_0 $v__apply1)
+
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
     (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))
@@ -157,16 +157,20 @@
     (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)))
 
   (func $v_compose (param $v_f i32) (param $v_g i32) (param $v_x i32) (result i32)
-    (call_indirect (type $arity_1) (call_indirect (type $arity_1) (local.get $v_x) (local.get $v_g)) (local.get $v_f)))
+    (call $v__apply1 (local.get $v_f) (call $v__apply1 (local.get $v_g) (local.get $v_x))))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (call $v__df_apply_0 (i32.const 72) (i32.const 2) (i32.const 1))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (call $v__df_apply_0 (i32.const 72) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_1)) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_1)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
 
   (func $v__df_apply_0 (param $v_x i32) (param $v__df_apply_0_cap0_0 i32) (param $v__df_apply_0_cap0_1 i32) (result i32)
     (call $v_compose (local.get $v__df_apply_0_cap0_0) (local.get $v__df_apply_0_cap0_1) (local.get $v_x)))
+
+  (func $v__apply1 (param $v__cl i32) (param $v__arg0 i32) (result i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v__cl)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (call $v_unwrap (local.get $v__arg0))) (else (call $v_wrap (local.get $v__arg0))))))
 
   (func $_start (export "_start")
     (drop (call $v_runIO (call $v_main (call $__entryArgEither (call $__get_arg))))))

@@ -1,0 +1,33 @@
+{- A function-typed value stored in a constructor field, extracted
+   by a `case` arm, then called. The closure flows through `Box`'s
+   field, so `Awsum.LowerClosures` is what makes this work — the
+   call through the case-arm-binder otherwise reaches a backend as
+   a first-class application. Two distinct functions are stored to
+   exercise dispatch (one tag per closure shape). -}
+import IO.Stdout
+
+type Box a = Box a
+
+double : Int32 -> Either (UnderflowError | OverflowError) Int32
+double n = addInt32 n n
+
+triple : Int32 -> Either (UnderflowError | OverflowError) Int32
+triple n = do
+  m <- addInt32 n n
+  addInt32 m n
+
+callBox : Box (Int32 -> Either (UnderflowError | OverflowError) Int32) -> Int32 -> Either (UnderflowError | OverflowError) Int32
+callBox b x = case b of
+  Box f -> f x
+
+formatOutputs : Either (UnderflowError | OverflowError | StringTooLong) String
+formatOutputs = do
+  d <- callBox (Box double) 7
+  t <- callBox (Box triple) 7
+  ds <- showInt32 d ++ " "
+  ds ++ showInt32 t
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = case formatOutputs of
+  Left _e -> IO.Stdout.print "error"
+  Right s -> IO.Stdout.print s

@@ -204,8 +204,8 @@ case.join.4:
 }
 
 define internal ptr @v_compose(ptr %v_f, ptr %v_g, ptr %v_x) {
-  %t0 = call ptr %v_g(ptr %v_x)
-  %t1 = call ptr %v_f(ptr %t0)
+  %t0 = call ptr @v__apply1(ptr %v_g, ptr %v_x)
+  %t1 = call ptr @v__apply1(ptr %v_f, ptr %t0)
   ret ptr %t1
 }
 
@@ -214,27 +214,57 @@ define internal ptr @v_main(ptr %v__input) {
   %t1 = inttoptr i64 2 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__df_apply_0(ptr @.str.0, ptr @v_unwrap, ptr @v_wrap)
-  %t4 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t3, ptr %t4
-  %t5 = call ptr @malloc(i64 16)
-  %t6 = inttoptr i64 0 to ptr
-  %t7 = getelementptr ptr, ptr %t5, i32 0
-  store ptr %t6, ptr %t7
-  %t8 = call ptr @malloc(i64 8)
-  %t9 = inttoptr i64 0 to ptr
-  %t10 = getelementptr ptr, ptr %t8, i32 0
+  %t3 = call ptr @malloc(i64 8)
+  %t4 = inttoptr i64 0 to ptr
+  %t5 = getelementptr ptr, ptr %t3, i32 0
+  store ptr %t4, ptr %t5
+  %t6 = call ptr @malloc(i64 8)
+  %t7 = inttoptr i64 1 to ptr
+  %t8 = getelementptr ptr, ptr %t6, i32 0
+  store ptr %t7, ptr %t8
+  %t9 = call ptr @v__df_apply_0(ptr @.str.0, ptr %t3, ptr %t6)
+  %t10 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t9, ptr %t10
-  %t11 = getelementptr ptr, ptr %t5, i32 1
-  store ptr %t8, ptr %t11
-  %t12 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t5, ptr %t12
+  %t11 = call ptr @malloc(i64 16)
+  %t12 = inttoptr i64 0 to ptr
+  %t13 = getelementptr ptr, ptr %t11, i32 0
+  store ptr %t12, ptr %t13
+  %t14 = call ptr @malloc(i64 8)
+  %t15 = inttoptr i64 0 to ptr
+  %t16 = getelementptr ptr, ptr %t14, i32 0
+  store ptr %t15, ptr %t16
+  %t17 = getelementptr ptr, ptr %t11, i32 1
+  store ptr %t14, ptr %t17
+  %t18 = getelementptr ptr, ptr %t0, i32 2
+  store ptr %t11, ptr %t18
   ret ptr %t0
 }
 
 define internal ptr @v__df_apply_0(ptr %v_x, ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1) {
   %t0 = call ptr @v_compose(ptr %v__df_apply_0_cap0_0, ptr %v__df_apply_0_cap0_1, ptr %v_x)
   ret ptr %t0
+}
+
+define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
+  %t0 = getelementptr ptr, ptr %v__cl, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.8 ]
+case.arm.0.5:
+  %t7 = call ptr @v_unwrap(ptr %v__arg0)
+  br label %case.end.0.6
+case.end.0.6:
+  br label %case.join.4
+case.arm.1.8:
+  %t10 = call ptr @v_wrap(ptr %v__arg0)
+  br label %case.end.1.9
+case.end.1.9:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t11 = phi ptr [%t7, %case.end.0.6], [%t10, %case.end.1.9]
+  ret ptr %t11
 }
 
 declare ptr @GetCommandLineW()

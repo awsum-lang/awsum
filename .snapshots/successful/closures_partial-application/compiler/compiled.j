@@ -113,12 +113,10 @@ L_join:
 
 .method static v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  checkcast java/lang/invoke/MethodHandle
   aload_1
-  checkcast java/lang/invoke/MethodHandle
   aload_2
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
-  invokevirtual java/lang/invoke/MethodHandle/invoke(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -134,8 +132,20 @@ L_join:
   dup
   iconst_1
   ldc "chain"
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;]
-  ldc [MethodHandle REF_invokeStatic AwsumMain.v_wrap(Ljava/lang/Object;)Ljava/lang/Object;]
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_0
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
   invokestatic AwsumMain/v__df_apply_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   dup
@@ -167,6 +177,32 @@ L_join:
   aload_2
   aload_0
   invokestatic AwsumMain/v_compose(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
+
+.method static v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    0: L_arm_0
+    1: L_arm_1
+    default: L_arm_0
+L_arm_0:
+  pop
+  aload_1
+  invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_arm_1:
+  pop
+  aload_1
+  invokestatic AwsumMain/v_wrap(Ljava/lang/Object;)Ljava/lang/Object;
+  goto L_join
+L_join:
   areturn
 .end method
 

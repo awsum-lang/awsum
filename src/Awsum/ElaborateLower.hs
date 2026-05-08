@@ -26,6 +26,7 @@ import Awsum.Defunctionalize (defunctionalizeProgram)
 import Awsum.Desugar (desugarProgram)
 import Awsum.Desugar qualified as Desugar
 import Awsum.HM (Subst, applySubst, canonicalLabel, flattenRow, rowTag, singletonSubst, unify)
+import Awsum.LowerClosures (lowerClosuresProgram)
 import Awsum.Prelude (preludeDefNames)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Scc (sccMergeProgram)
@@ -393,9 +394,17 @@ elaborateLowerProgram progType progIn = do
   --    reachable call site has been replaced by a call to a
   --    specialisation.
   core' <- treeShakeFromMain <$> defunctionalizeProgram core
-  -- 5) Saturate under-applied direct calls via lambda-lifting.
-  core'' <- saturateProgram core'
-  -- 6) SCC-merge for mutual recursion. Every strongly-connected
+  -- 5) Lower residual function values: every closure that survived
+  --    Defunctionalize (because it flowed into a constructor field
+  --    or through a non-statically-resolvable call site) is encoded
+  --    as a tagged 'CCon' and routed through a per-arity '$applyN'
+  --    dispatcher. Without this, Saturate's "no partial application
+  --    with local captures" invariant would fail the moment a Core
+  --    program stores a closure in a constructor field.
+  let lowered = treeShakeFromMain (lowerClosuresProgram core')
+  -- 6) Saturate under-applied direct calls via lambda-lifting.
+  core'' <- saturateProgram lowered
+  -- 7) SCC-merge for mutual recursion. Every strongly-connected
   --    component with more than one function is fused into a single
   --    self-recursive '$scc$' function tagged by "which member is
   --    active"; each original public name becomes a one-line wrapper.
@@ -409,14 +418,14 @@ elaborateLowerProgram progType progIn = do
   --    Re-run reachability from 'main' to prune them (and anything
   --    else that fell out of scope through the rewrite).
   let sccMerged = treeShakeFromMain (sccMergeProgram core'')
-  -- 7) CPS + defunctionalization for non-tail self-recursion. For each
+  -- 8) CPS + defunctionalization for non-tail self-recursion. For each
   --    function with a non-tail self-call, emit a (wrapper, '$cps$f',
   --    '$apply$f') trio; the continuation chain now lives as an ADT on
   --    the heap instead of as frames on the system stack, and '$cps$f'
   --    and '$apply$f' are both self-tail-recursive so the following TCO
   --    pass folds them into loops. See 'Awsum.Cps' and docs/recursion.md.
   let cpsed = cpsProgram sccMerged
-  -- 8) Stack-safety verifier. After SCC merge and CPS there must be
+  -- 9) Stack-safety verifier. After SCC merge and CPS there must be
   --    no non-trivial call-graph cycle and no CFunDef with a non-tail
   --    self-call — both mean a recursion shape that would silently
   --    overflow the system stack at depth on some backend. Any
@@ -426,7 +435,7 @@ elaborateLowerProgram progType progIn = do
   case verifyStackSafety cpsed of
     [] -> pass
     (issue : _) -> Left (toTypeError sigMap issue)
-  -- 9) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
+  -- 10) Self-TCO: rewrite self-recursive tail calls into 'CContinue', and
   --    wrap affected function bodies in 'CLoop'. Backends compile the
   --    wrapped form into a loop + jump rather than a recursive call,
   --    guaranteeing stack safety for tail recursion across all targets.

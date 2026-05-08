@@ -36,6 +36,7 @@ library
       Awsum.ElaborateLower
       Awsum.Format
       Awsum.HM
+      Awsum.LowerClosures
       Awsum.Normalize
       Awsum.Parser
       Awsum.Prelude

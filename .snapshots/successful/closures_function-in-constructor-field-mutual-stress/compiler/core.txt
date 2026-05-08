@@ -1,0 +1,200 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "bBox"
+            ( CCon 0
+                [ CCon 0 [] ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCase
+                ( CCall
+                    ( CVar "a" )
+                    [ CIntLit 1000000 TInt32 ]
+                )
+                [
+                    ( 0
+                    , [ "_e" ]
+                    , CCon 2
+                        [ CString "underflow"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "v" ]
+                    , CCon 2
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CVar "v" ]
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$scc$$apply1_$lam$2_a_b" [ "$args" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 0
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CCase
+                            ( CVar "$cl" )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CCon 1
+                                        [ CVar "$arg0" ]
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , [ "n" ]
+                        , CContinue
+                            [ CCon 3
+                                [ CVar "n" ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        , [ "n" ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "eqInt32" )
+                                [ CVar "n"
+                                , CIntLit 0 TInt32
+                                ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CCon 1
+                                    [ CIntLit 0 TInt32 ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "predInt32" )
+                                        [ CVar "n" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , [ "e" ]
+                                        , CCon 0
+                                            [ CVar "e" ]
+                                        )
+                                    ,
+                                        ( 1
+                                        , [ "m" ]
+                                        , CCase
+                                            ( CVar "bBox" )
+                                            [
+                                                ( 0
+                                                , [ "f" ]
+                                                , CContinue
+                                                    [ CCon 0
+                                                        [ CVar "f"
+                                                        , CVar "m"
+                                                        ]
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 3
+                        , [ "n" ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "eqInt32" )
+                                [ CVar "n"
+                                , CIntLit 0 TInt32
+                                ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CCon 1
+                                    [ CIntLit 0 TInt32 ]
+                                )
+                            ,
+                                ( 1
+                                , []
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "predInt32" )
+                                        [ CVar "n" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , [ "e" ]
+                                        , CCon 0
+                                            [ CVar "e" ]
+                                        )
+                                    ,
+                                        ( 1
+                                        , [ "m" ]
+                                        , CContinue
+                                            [ CCon 2
+                                                [ CVar "m" ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "a" [ "n" ]
+            ( CCall
+                ( CVar "$scc$$apply1_$lam$2_a_b" )
+                [ CCon 2
+                    [ CVar "n" ]
+                ]
+            )
+        ]
+    }

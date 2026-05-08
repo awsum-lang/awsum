@@ -1,0 +1,198 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "double" [ "n" ]
+            ( CCall
+                ( CBuiltIn "addInt32" )
+                [ CVar "n"
+                , CVar "n"
+                ]
+            )
+        , CFunDef "triple" [ "n" ]
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "addInt32" )
+                    [ CVar "n"
+                    , CVar "n"
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_16_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_16_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "m" ]
+                    , CCall
+                        ( CBuiltIn "addInt32" )
+                        [ CVar "m"
+                        , CVar "n"
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "callBox"
+            [ "b"
+            , "x"
+            ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , [ "f" ]
+                    , CCall
+                        ( CVar "$apply1" )
+                        [ CVar "f"
+                        , CVar "x"
+                        ]
+                    )
+                ]
+            )
+        , CValDef "formatOutputs"
+            ( CCase
+                ( CCall
+                    ( CVar "callBox" )
+                    [ CCon 0
+                        [ CCon 0 [] ]
+                    , CIntLit 7 TInt32
+                    ]
+                )
+                [
+                    ( 0
+                    , [ "$do_e_25_3" ]
+                    , CCon 0
+                        [ CVar "$do_e_25_3" ]
+                    )
+                ,
+                    ( 1
+                    , [ "d" ]
+                    , CCase
+                        ( CCall
+                            ( CVar "callBox" )
+                            [ CCon 0
+                                [ CCon 1 [] ]
+                            , CIntLit 7 TInt32
+                            ]
+                        )
+                        [
+                            ( 0
+                            , [ "$do_e_26_3" ]
+                            , CCon 0
+                                [ CVar "$do_e_26_3" ]
+                            )
+                        ,
+                            ( 1
+                            , [ "t" ]
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CCall
+                                        ( CBuiltIn "showInt32" )
+                                        [ CVar "d" ]
+                                    , CString " "
+                                    ]
+                                )
+                                [
+                                    ( 0
+                                    , [ "$do_e_27_3" ]
+                                    , CCon 0
+                                        [ CRow 3768445577
+                                            ( CVar "$do_e_27_3" )
+                                        ]
+                                    )
+                                ,
+                                    ( 1
+                                    , [ "ds" ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "ds"
+                                        , CCall
+                                            ( CBuiltIn "showInt32" )
+                                            [ CVar "t" ]
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCase
+                ( CVar "formatOutputs" )
+                [
+                    ( 0
+                    , [ "_e" ]
+                    , CCon 2
+                        [ CString "error"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 1
+                    , [ "s" ]
+                    , CCon 2
+                        [ CVar "s"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" )
+                [
+                    ( 0
+                    , []
+                    , CCall
+                        ( CVar "double" )
+                        [ CVar "$arg0" ]
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CCall
+                        ( CVar "triple" )
+                        [ CVar "$arg0" ]
+                    )
+                ]
+            )
+        ]
+    }
