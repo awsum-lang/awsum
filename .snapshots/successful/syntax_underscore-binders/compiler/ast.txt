@@ -38,7 +38,7 @@ Program
                     }
                 ) "a"
             ]
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 6
@@ -89,7 +89,7 @@ Program
                         }
                     ) "b"
                 ]
-            ] Nothing
+            ] Nothing NotEmpty
         , Sig
             ( SrcSpan
                 { spanStartLine = 8

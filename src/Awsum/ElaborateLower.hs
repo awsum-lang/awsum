@@ -33,7 +33,7 @@ import Awsum.StackSafety (verifyStackSafety)
 import Awsum.StackSafety qualified as StackSafety
 import Awsum.Syntax
 import Awsum.Tco (tcoProgram)
-import Awsum.Typing (TypeError (..), Warning, intTypeRange, isBareBuiltIn, splitArrow, typecheckProgram)
+import Awsum.Typing (TypeError (..), Warning, emptyTypeNamesInProgram, intTypeRange, isBareBuiltIn, markEmptyTypesInDecl, splitArrow, typecheckProgram)
 import Control.Monad (foldM)
 import Data.List (groupBy)
 import Data.Map.Strict qualified as M
@@ -91,7 +91,7 @@ buildConInfo :: [Decl] -> ConInfoEnv
 buildConInfo ds =
   M.fromList
     [ (cName, ConInfo idx (length cFields) tName [n | Param _ n <- ps] cFields)
-    | TypeDecl _sp tName ps cs _ <- ds,
+    | TypeDecl _sp tName ps cs _ _ <- ds,
       (ConDef _ cName cFields, idx) <- zip cs [0 ..]
     ]
 
@@ -307,7 +307,20 @@ elaborateLowerProgram progType progIn = do
   --    themselves are kept as 'ELam' nodes — the typechecker handles
   --    them bidirectionally; lambda-lifting happens during lowering,
   --    where the type context is available.
-  prog <- first desugarErrorToTypeError (desugarProgram progIn)
+  progDesugared <- first desugarErrorToTypeError (desugarProgram progIn)
+  -- 0.5) Resolve every TyCon reference whose name was declared with
+  --      the @empty type@ keyword into a 'TyEmpty', so the
+  --      typechecker and the lowering pass see the row-identity
+  --      flag uniformly. Without this, a built-in registered as
+  --      @IO Never X@ (which already carries 'TyEmpty') would
+  --      mismatch a user signature still spelled @IO Never X@ as
+  --      'TyCon' downstream of unification.
+  let emptyNames = emptyTypeNamesInProgram progDesugared
+      prog =
+        progDesugared
+          { decls =
+              fmap (markEmptyTypesInDecl emptyNames) (decls progDesugared)
+          }
   -- 1) Elaboration step: just typecheck; no evidence/dictionaries yet.
   warnings <- typecheckProgram progType preludeDefNames prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
@@ -320,7 +333,7 @@ elaborateLowerProgram progType progIn = do
       -- 'AFB4F' rather than the whole 'type AFB4F = MkAFB4F' line.
       -- Same heuristic 'Awsum.Typing.typeNameSubSpan' uses for
       -- 'DuplicateTypeDef' / 'UnnamedType' diagnostics.
-      typeDeclSpans = M.fromList [(n, narrowToName sp n) | TypeDecl sp n _ _ _ <- ds]
+      typeDeclSpans = M.fromList [(n, narrowToName sp n) | TypeDecl sp n _ _ _ _ <- ds]
       narrowToName sp n =
         let nameStartCol = spanStartCol sp + T.length "type "
          in SrcSpan
@@ -437,6 +450,7 @@ toTypeError sigMap = \case
     lookupSpan n = case M.lookup n sigMap of
       Just (TyVar sp _) -> Just sp
       Just (TyCon sp _) -> Just sp
+      Just (TyEmpty sp _) -> Just sp
       Just (TyApp sp _ _) -> Just sp
       Just (TyArrow sp _ _) -> Just sp
       Just (TyOr sp _ _) -> Just sp

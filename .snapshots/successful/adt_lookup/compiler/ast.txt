@@ -46,7 +46,7 @@ Program
                 , spanEndCol = 35
                 }
             ) "NotFound" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

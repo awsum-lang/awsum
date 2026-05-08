@@ -29,7 +29,7 @@ Program
                 , spanEndCol = 27
                 }
             ) "IStep" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 7

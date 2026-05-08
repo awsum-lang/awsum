@@ -39,7 +39,7 @@ Program
                     }
                 ) "a"
             ]
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 7

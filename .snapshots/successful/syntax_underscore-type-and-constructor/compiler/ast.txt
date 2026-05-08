@@ -28,7 +28,7 @@ Program
                 , spanEndCol = 16
                 }
             ) "Y" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 6
@@ -53,7 +53,7 @@ Program
                     , spanEndCol = 19
                     }
                 ) "Two" []
-            ] Nothing
+            ] Nothing NotEmpty
         , Sig
             ( SrcSpan
                 { spanStartLine = 8

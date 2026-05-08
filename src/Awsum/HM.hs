@@ -78,6 +78,7 @@ applySubst (Subst s) = go
     go = \case
       TyVar sp v -> fromMaybe (TyVar sp v) (M.lookup v s)
       TyCon sp c -> TyCon sp c
+      TyEmpty sp n -> TyEmpty sp n
       TyApp sp f x -> TyApp sp (go f) (go x)
       TyArrow sp a b -> TyArrow sp (go a) (go b)
       TyOr sp a b -> TyOr sp (go a) (go b)
@@ -107,6 +108,7 @@ occursIn n = go
     go = \case
       TyVar _ v -> v == n
       TyCon _ _ -> False
+      TyEmpty _ _ -> False
       TyApp _ f x -> go f || go x
       TyArrow _ a b -> go a || go b
       TyOr _ a b -> go a || go b
@@ -174,6 +176,15 @@ unify t1 t2 = case (t1, t2) of
   (TyCon _ c1, TyCon _ c2)
     | c1 == c2 -> Right mempty
     | otherwise -> Left (CannotUnify t1 t2)
+  -- Two 'TyEmpty' references unify regardless of declared name. Every
+  -- @empty type@ declaration introduces the same row-identity type up
+  -- to renaming, so the user-side names ('Never', 'Whatever', ...) are
+  -- diagnostic only — the typechecker treats them as a single
+  -- canonical type. 'canonicalLabel' folds them to "_empty" for the
+  -- same reason. Pairing 'TyEmpty' with anything non-'TyEmpty' (other
+  -- than a free 'TyVar', already handled above) is a real mismatch:
+  -- a populated 'TyCon' or row carries values; an empty type has none.
+  (TyEmpty _ _, TyEmpty _ _) -> Right mempty
   (TyApp _ f1 x1, TyApp _ f2 x2) -> do
     s1 <- unify f1 f2
     s2 <- unify (applySubst s1 x1) (applySubst s1 x2)
@@ -218,6 +229,17 @@ flattenRow = ordNub . go
 --   nominal heads.
 rowSubsume :: Type' -> Type' -> Bool
 rowSubsume expected actual = case (expected, actual) of
+  -- A 'TyEmpty' (any @empty type X@ declaration — 'Never' in the
+  -- prelude, user-defined ones too) is the row identity: it has no
+  -- inhabitants, so a value typed at it fits any expected position
+  -- vacuously. This is what lets @IO Never X <: IO r X@ for any row
+  -- @r@, so 'IO.Stdout.print' (currently @IO Never Unit@) flows into
+  -- a position expecting an IO with errors without a user-written
+  -- wrapper. Plain @type X@ with zero constructors is uninhabited but
+  -- a 'TyCon', not a 'TyEmpty', and remains a distinct row label —
+  -- the @empty@ keyword on the declaration is what opts the type into
+  -- this rule.
+  (_, TyEmpty _ _) -> True
   -- A free tyvar on either side accepts anything: the checker will
   -- have already pinned constraints in the synthesis path; here we
   -- just need a yes/no acceptance.
@@ -386,6 +408,15 @@ canonicalLabel :: Type' -> Text
 canonicalLabel = \case
   TyVar _ n -> n
   TyCon _ n -> n
+  -- Every 'TyEmpty' folds to the same canonical tag regardless of the
+  -- declared name: any two 'empty type' declarations are
+  -- interchangeable in row positions, so their FNV row tags must agree
+  -- as well. Codegen-side row-tag dispatch never targets an 'empty'
+  -- alternative directly (the arm is uninhabited and pruned by
+  -- exhaustiveness), but the canonical form must keep the typechecker's
+  -- "interchangeable" judgment consistent with what 'rowTag' would
+  -- produce.
+  TyEmpty _ _ -> "_empty"
   TyApp _ f x -> "(" <> canonicalLabel f <> " " <> canonicalLabel x <> ")"
   TyArrow _ a b -> "(" <> canonicalLabel a <> "->" <> canonicalLabel b <> ")"
   ty@TyOr {} ->
@@ -425,6 +456,7 @@ collectTypeVars :: Type' -> S.Set Name
 collectTypeVars = \case
   TyVar _ n -> S.singleton n
   TyCon _ _ -> S.empty
+  TyEmpty _ _ -> S.empty
   TyApp _ f x -> collectTypeVars f <> collectTypeVars x
   TyArrow _ a b -> collectTypeVars a <> collectTypeVars b
   TyOr _ a b -> collectTypeVars a <> collectTypeVars b

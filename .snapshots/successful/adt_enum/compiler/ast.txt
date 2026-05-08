@@ -36,7 +36,7 @@ Program
                 , spanEndCol = 32
                 }
             ) "Blue" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

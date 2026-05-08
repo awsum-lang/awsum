@@ -12,6 +12,7 @@ module Awsum.Syntax
     Program (..),
     ImportDecl (..),
     Decl (..),
+    EmptyKind (..),
     ConDef (..),
     Type' (..),
     QName (..),
@@ -149,6 +150,21 @@ paramSpan :: Param -> SrcSpan
 paramSpan (Param sp _) = sp
 paramSpan (ParamPat sp _) = sp
 
+-- | Marker on a 'TypeDecl' distinguishing the two ways an uninhabited
+--   type can be declared. 'NotEmpty' is an ordinary type declaration;
+--   the type may have zero constructors (uninhabited but a distinct
+--   row label) or any positive number. 'Empty' is the @empty type X@
+--   form: explicitly declared empty, treated as the row identity by
+--   the typechecker — any two 'Empty'-declared types are
+--   interchangeable in row positions, and a value of an 'Empty' type
+--   subsumes into any expected type via 'Awsum.HM.rowSubsume'. The
+--   parser rejects @empty type X = …@ (constructors not allowed) and
+--   @empty type X a@ (parameters not allowed); the field on
+--   'TypeDecl' is what the typechecker consults to lift each TyCon
+--   reference to a 'TyEmpty' before unification or row work.
+data EmptyKind = NotEmpty | Empty
+  deriving stock (Show, Eq, Ord)
+
 -- | Top-level declaration.
 data Decl
   = -- | Type signature: @main : τ -- comment@
@@ -157,11 +173,20 @@ data Decl
     --   The argument list may be empty in the /surface/.
     --   Lowering will treat zero-arg defs as /constants/.
     FunDef SrcSpan Name [Param] Expr (Maybe Text)
-  | -- | Sum type declaration: @type Bool = True | False@.
-    --   Empty constructor list means uninhabited type (e.g. @type Never@).
+  | -- | Sum type declaration. Two surface forms:
+    --
+    --   @type Bool = True | False@ — ordinary type, possibly with
+    --   constructors; zero-constructor variant @type Never@ is
+    --   uninhabited but a distinct row label.
+    --
+    --   @empty type Never@ — explicitly empty; row identity per
+    --   'EmptyKind'. Forbidden: constructors and parameters on this
+    --   form.
+    --
     --   Type parameters carry their own span (as 'Param') so the
-    --   unused-type-parameter warning can target precisely the identifier.
-    TypeDecl SrcSpan Name [Param] [ConDef] (Maybe Text)
+    --   unused-type-parameter warning can target precisely the
+    --   identifier.
+    TypeDecl SrcSpan Name [Param] [ConDef] (Maybe Text) EmptyKind
   | CommentDecl Comment
   deriving stock (Show, Eq)
 
@@ -181,6 +206,18 @@ data Type'
     TyVar SrcSpan Name
   | -- | Type constructor, e.g. @\"String\"@, @\"IO\"@.
     TyCon SrcSpan Name
+  | -- | Reference to a type declared with @empty type X@. Distinct
+    --   from 'TyCon' because the typechecker treats every 'TyEmpty'
+    --   as the row identity: two distinct 'TyEmpty' names unify (the
+    --   type system is the same uninhabited type up to renaming),
+    --   any 'TyEmpty' subsumes into any row position, and
+    --   'canonicalLabel' folds them all to a single canonical
+    --   @\"_empty\"@ tag so codegen-side row-tag dispatch agrees with
+    --   type-system equivalence. The original name is preserved for
+    --   diagnostics. Created by the elaborator from a parsed
+    --   'TyCon' once the program's empty-type set is known —
+    --   parser-time output is always 'TyCon'.
+    TyEmpty SrcSpan Name
   | -- | Type application, e.g. @Lookup String@.
     TyApp SrcSpan Type' Type'
   | -- | Arrow type @a -> b@ (right-associative by convention).
@@ -199,6 +236,7 @@ typeSpan :: Type' -> SrcSpan
 typeSpan = \case
   TyVar sp _ -> sp
   TyCon sp _ -> sp
+  TyEmpty sp _ -> sp
   TyApp sp _ _ -> sp
   TyArrow sp _ _ -> sp
   TyOr sp _ _ -> sp

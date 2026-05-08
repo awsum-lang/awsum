@@ -22,7 +22,7 @@ Program
                 , spanEndCol = 17
                 }
             ) "ErrA" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 8
@@ -91,7 +91,7 @@ Program
                         ) "a"
                     )
                 ]
-            ] Nothing
+            ] Nothing NotEmpty
         , Sig
             ( SrcSpan
                 { spanStartLine = 10

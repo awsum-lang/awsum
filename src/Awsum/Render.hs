@@ -86,12 +86,19 @@ renderDecl = \case
                   Nothing -> " = " <> renderExpr e
             | otherwise -> " = " <> renderExpr e <> renderTrailingComment mc
      in header <> bodyAndComment
-  TypeDecl _sp name tvars cons mc ->
-    "type "
-      <> name
-      <> (if null tvars then "" else " " <> T.intercalate " " (map paramName tvars))
-      <> (if null cons then "" else " = " <> T.intercalate " | " (map renderConDef cons))
-      <> renderTrailingComment mc
+  TypeDecl _sp name tvars cons mc emptyKind ->
+    -- 'EmptyKind' = 'Empty' renders the @empty type X@ form, where the
+    -- parser has already enforced that 'tvars' and 'cons' are both
+    -- empty. Plain 'NotEmpty' renders as @type X …@ with whatever
+    -- params and constructors the user wrote (zero or more of each).
+    let prefix = case emptyKind of
+          Empty -> "empty type "
+          NotEmpty -> "type "
+     in prefix
+          <> name
+          <> (if null tvars then "" else " " <> T.intercalate " " (map paramName tvars))
+          <> (if null cons then "" else " = " <> T.intercalate " | " (map renderConDef cons))
+          <> renderTrailingComment mc
   CommentDecl c ->
     renderComment c
   where
@@ -137,6 +144,11 @@ renderTypePrec :: Int -> Type' -> Text
 renderTypePrec ctx = \case
   TyVar _ n -> n
   TyCon _ n -> n
+  -- 'TyEmpty' renders as the user-written name. The @empty@ keyword
+  -- only appears at the type's /declaration/ site (handled by the
+  -- 'TypeDecl' branch above); references in signatures and
+  -- expressions look like ordinary type-constructor references.
+  TyEmpty _ n -> n
   TyApp _ f x ->
     let s = renderTypePrec 3 f <> " " <> renderTypePrec 4 x
      in if 3 < ctx then parens s else s

@@ -62,7 +62,7 @@ Program
                 , spanEndCol = 55
                 }
             ) "EOF" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

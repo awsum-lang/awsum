@@ -37,7 +37,7 @@ Program
                 , spanEndCol = 24
                 }
             ) "TC" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 7

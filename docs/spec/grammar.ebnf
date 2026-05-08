@@ -7,9 +7,17 @@ Program             = { Import }, { TopItem , Terminator }, [ Terminator ] ;
 Import              = { TopComment , Terminator } , "import" , ModulePath , [ TrailingLineComment ] ;
 ModulePath          = UIdent , { "." , UIdent } ;
 
-TopItem             = TopComment | TypeDecl | Sig | FunDef ;
+TopItem             = TopComment | TypeDecl | EmptyTypeDecl | Sig | FunDef ;
 
 TypeDecl            = "type" , UIdent , { LIdent } , [ "=" , ConDef , { "|" , ConDef } ] , [ TrailingLineComment ] ;
+(* `empty type X` declares the row identity: an uninhabited type whose
+   value (none exist) subsumes into any expected position via row
+   subsumption, and where two `empty type` declarations are
+   interchangeable in row positions. The form forbids type parameters
+   and constructors (the parser rejects `empty type X a` and
+   `empty type X = …`); a plain `type X` with zero constructors stays
+   uninhabited but a distinct row label. *)
+EmptyTypeDecl       = "empty" , "type" , UIdent , [ TrailingLineComment ] ;
 ConDef              = UIdent , { TypeAtom } ;
 
 Sig                 = DeclName , ":" , Type , [ TrailingLineComment ] ;

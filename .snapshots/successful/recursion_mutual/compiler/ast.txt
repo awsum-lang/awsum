@@ -44,7 +44,7 @@ Program
                 , spanEndCol = 41
                 }
             ) "Done" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

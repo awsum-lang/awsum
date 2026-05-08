@@ -21,7 +21,7 @@ Program
                 , spanEndCol = 21
                 }
             ) "ErrorA" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 7
@@ -38,7 +38,7 @@ Program
                     , spanEndCol = 21
                     }
                 ) "ErrorB" []
-            ] Nothing
+            ] Nothing NotEmpty
         , TypeDecl
             ( SrcSpan
                 { spanStartLine = 9
@@ -55,7 +55,7 @@ Program
                     , spanEndCol = 21
                     }
                 ) "ErrorC" []
-            ] Nothing
+            ] Nothing NotEmpty
         , Sig
             ( SrcSpan
                 { spanStartLine = 11

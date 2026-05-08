@@ -101,16 +101,26 @@ showUnit _ = "Unit"
 
 -- ---------------------- Never
 
-{- Empty type — no constructors, no values. Useful as a phantom
-   parameter and to mark a type-level position the program guarantees
-   is unreachable. Most visible occurrence: the error row of
-   `IO Never a` declares an IO action that cannot fail. When a
-   primitive whose error row is currently `Never` later gains a real
-   error (e.g. `BrokenPipe` for `IO.Stdout.print`), every existing
-   site stops compiling until the new error is handled — which is the
-   intended behaviour. -}
+{- The canonical empty type — no constructors, no values, declared
+   with the `empty type` keyword to mark it as the row identity. Two
+   `empty type` declarations are interchangeable in row positions,
+   and any `empty type` value (none exist at runtime) flows into any
+   expected position via row-subsumption. Most visible occurrence:
+   the error row of `IO Never a` declares an IO action that cannot
+   fail; an `IO Never Unit` value can be composed with IO actions
+   carrying any error row without an explicit wrapper.
 
-type Never
+   Plain `type X` (without the `empty` keyword) declares a normal
+   nominal type that may happen to be uninhabited (zero constructors)
+   but stays a /distinct row label/ — useful for phantom markers
+   that must not collapse with `Never` in row positions.
+
+   When a primitive whose error row is currently `Never` later gains
+   a real error (e.g. `BrokenPipe` for `IO.Stdout.print`), every
+   existing site stops compiling until the new error is handled —
+   which is the intended behaviour. -}
+
+empty type Never
 
 -- ---------------------- Bool
 
@@ -249,6 +259,16 @@ type IO e a = IOPure a | IOFail e | IOStdoutPrint String (IO e a)
 pureIO : a -> IO e a
 pureIO x = IOPure x
 
+{- Lift a failure value into IO. The success type `a` stays free and
+   gets pinned by the surrounding context. Mirror of `pureIO` on the
+   error side. Useful for re-throwing inside a `handleErrorIO` handler that
+   only closes part of an error row, and for constructing failing IO
+   actions in tests without reaching for the `IOFail` constructor
+   directly. -}
+
+failIO : e -> IO e a
+failIO e = IOFail e
+
 {- Sequence two IO actions: run the first, feed its success value into
    a continuation that produces the second. The error rows union,
    same shape as `bindEither`. Failure of the first action propagates
@@ -294,6 +314,23 @@ mapIOError io f = case io of
   IOPure a -> IOPure a
   IOFail e -> IOFail (f e)
   IOStdoutPrint s next -> IOStdoutPrint s (mapIOError next f)
+
+{- `handleErrorIO` runs an IO computation and routes its `IOFail` through a
+   recovery continuation. The handler may fully recover (returning
+   `IO Never a` via `e2 = Never`), partially handle (returning an IO
+   whose row carries only the labels the handler chose to re-throw),
+   or rename the failure type (any other `e2`). Function-first ordering
+   pairs with `|>` at the tail of an IO chain: `io |> handleErrorIO h`.
+   No value-first sibling today — the dominant use is at the tail of
+   a pipeline. The body is a direct `case` rather than a wrapper,
+   mirroring the `andThenIO` convention of keeping zero overhead at
+   Core level. -}
+
+handleErrorIO : (e1 -> IO e2 a) -> IO e1 a -> IO e2 a
+handleErrorIO h io = case io of
+  IOPure a -> IOPure a
+  IOFail e -> h e
+  IOStdoutPrint s next -> IOStdoutPrint s (handleErrorIO h next)
 
 {- `runIO` walks the IO tree returned from `main` and performs the
    corresponding effects in order. `main` returns `IO Never Unit`, so
@@ -415,6 +452,28 @@ type ParseError = ParseError
 
 showParseError : ParseError -> String
 showParseError _ = "ParseError"
+
+-- ---------------------- BrokenPipe
+
+{- Will be reported by IO primitives that write to a pipe (e.g.
+   `IO.Stdout.print`) when the consumer side closes before the write
+   completes — the canonical SIGPIPE / EPIPE scenario when output is
+   piped into a consumer that exits early (`awsum-program | head`,
+   etc.). Single-constructor sum — there is nothing to pattern-match
+   on beyond the fact that the write failed.
+
+   Declared now as a placeholder: built-in print primitives still
+   carry `IO Never Unit` and never produce this value at runtime, but
+   the type is in place so the eventual signature flip
+   (`String -> IO BrokenPipe Unit`) does not require a rename. The
+   `Never` row identity rule (a value of type `Never` flows into any
+   row position) keeps current `IO.Stdout.print` calls compatible
+   with future signatures composed via `bindIO` / `handleErrorIO` chains. -}
+
+type BrokenPipe = BrokenPipe
+
+showBrokenPipe : BrokenPipe -> String
+showBrokenPipe _ = "BrokenPipe"
 
 -- ---------------------- UInt8
 

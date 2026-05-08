@@ -72,7 +72,7 @@ Program
                 , spanEndCol = 36
                 }
             ) "Nil" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

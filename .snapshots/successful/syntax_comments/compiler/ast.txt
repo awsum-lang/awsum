@@ -44,7 +44,7 @@ Program
                     }
                 ) "Blue" []
             ]
-            ( Just " TypeDecl with constructors trailing" )
+            ( Just " TypeDecl with constructors trailing" ) NotEmpty
         , CommentDecl
             ( LineComment " Line comment between top-level decls" )
         , TypeDecl
@@ -55,7 +55,7 @@ Program
                 , spanEndCol = 46
                 }
             ) "Phantom" [] []
-            ( Just " TypeDecl uninhabited trailing" )
+            ( Just " TypeDecl uninhabited trailing" ) NotEmpty
         , CommentDecl
             ( BlockComment " Block comment introducing a function. " )
         , Sig

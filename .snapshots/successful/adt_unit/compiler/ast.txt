@@ -20,7 +20,7 @@ Program
                 , spanEndCol = 29
                 }
             ) "CustomUnit" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

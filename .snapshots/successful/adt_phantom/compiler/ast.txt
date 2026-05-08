@@ -29,7 +29,7 @@ Program
                 , spanEndCol = 28
                 }
             ) "Phantom" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 6

@@ -1,0 +1,42 @@
+{- `handleErrorIO` lets a handler close one alternative of a structural-sum
+   error row and pass the rest through `failIO`. The result IO carries
+   only the labels still in flight, so two `handleErrorIO` calls in a row
+   reduce a three-label row down to `Never` while keeping each step
+   independently typed. e2 in `handleErrorIO : (e1 -> IO e2 a) -> IO e1 a
+   -> IO e2 a` stays free, so partial handling is just a special
+   instantiation — full recovery is the case e2 = Never.
+
+   The E3 arm of `handleSomeErrors` exercises the row-identity rule:
+   `IO.Stdout.print "got E3"` has type `IO Never Unit`, which flows
+   into the wider `IO (E1 | E2) Unit` position via `rowSubsume`
+   without an explicit wrapper.
+
+   Runtime path: failingComputation fails with E1; handleSomeErrors
+   re-throws E1 via `failIO`; handleRemainingErrors catches E1 and
+   prints. Output: "got E1". -}
+import IO.Stdout
+
+type E1 = E1
+
+type E2 = E2
+
+type E3 = E3
+
+failingComputation : IO (E1 | E2 | E3) Unit
+failingComputation = failIO E1
+
+handleSomeErrors : (E1 | E2 | E3) -> IO (E1 | E2) Unit
+handleSomeErrors e = case e of
+  E1 -> failIO E1
+  E2 -> failIO E2
+  E3 -> IO.Stdout.print "got E3"
+
+handleRemainingErrors : (E1 | E2) -> IO Never Unit
+handleRemainingErrors e = case e of
+  E1 -> IO.Stdout.print "got E1"
+  E2 -> IO.Stdout.print "got E2"
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = failingComputation
+  |> handleErrorIO handleSomeErrors
+  |> handleErrorIO handleRemainingErrors

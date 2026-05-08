@@ -36,7 +36,7 @@ Program
                 , spanEndCol = 32
                 }
             ) "Blue" []
-        ] Nothing :|
+        ] Nothing NotEmpty :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 6
@@ -71,7 +71,7 @@ Program
                         }
                     ) "a"
                 ]
-            ] Nothing
+            ] Nothing NotEmpty
         , TypeDecl
             ( SrcSpan
                 { spanStartLine = 8
@@ -131,7 +131,7 @@ Program
                         }
                     ) "e"
                 ]
-            ] Nothing
+            ] Nothing NotEmpty
         , Sig
             ( SrcSpan
                 { spanStartLine = 10

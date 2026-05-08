@@ -30,8 +30,14 @@ cliPlatformTable =
     ]
   where
     stringTy = TyCon noSpan "String"
+    -- 'Never' is declared as 'empty type Never' in 'Prelude.aww', so
+    -- the row-identity slot here uses 'TyEmpty' rather than 'TyCon'.
+    -- Without this, the typechecker would only know 'Never' as a
+    -- regular nominal label, lose the row-identity rule, and reject
+    -- @IO.Stdout.print "x"@ in any position expecting a wider error
+    -- row (see 'Awsum.HM.rowSubsume').
     ioNeverUnitTy =
       TyApp
         noSpan
-        (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never"))
+        (TyApp noSpan (TyCon noSpan "IO") (TyEmpty noSpan "Never"))
         (TyCon noSpan "Unit")

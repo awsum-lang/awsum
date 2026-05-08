@@ -109,7 +109,7 @@ isBinderStart c = Char.isLower c || c == '_'
 
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
-reserved = ["import", "type", "case", "of", "do", "let", "in"]
+reserved = ["import", "type", "case", "of", "do", "let", "in", "empty"]
 
 -- | Recognize a reserved word /without/ swallowing identifier tails.
 --   e.g. parsing \"import\" will fail on \"importX\".
@@ -383,17 +383,41 @@ pSigWithEnd = do
   endLineOrEOF
   pure (Sig (toSrcSpan start end) name ty tcom)
 
--- | Sum type declaration: @type Lookup a = Found a | NotFound@.
---   Empty constructor list (no @=@) declares an uninhabited type: @type Never@.
+-- | Sum type declaration. Two surface forms:
+--
+--   @type Lookup a = Found a | NotFound@ — ordinary form. Zero
+--   constructors (no @=@) declares an uninhabited type that is still
+--   a /distinct row label/: @type Never@ here would unify only with
+--   itself.
+--
+--   @empty type X@ — declared as the row identity. Forbidden:
+--   parameters and constructors; the parser fails fast with a
+--   dedicated message if either appears. All @empty type@
+--   declarations interchange in row positions; see
+--   'Awsum.HM.rowSubsume' and the @TyEmpty@ constructor in
+--   'Awsum.Syntax.Type''.
 pTypeDeclWithEnd :: Parser Decl
 pTypeDeclWithEnd = do
   start <- P.getSourcePos
+  emptyKind <- P.option NotEmpty (Empty <$ rwordS "empty")
   rwordS "type"
   -- 'uidentNoLine' (not the line-comment-aware variant) so a
   -- trailing '-- …' on the declaration's line stays for
   -- 'pTrailingLineCommentMaybe' to pick up; otherwise the
   -- line-comment-aware 'lexeme' would consume it as whitespace.
   name <- uidentNoLine
+  -- 'empty type' forbids parameters and constructors. Look for them
+  -- in the input and fail with a tailored message rather than letting
+  -- the parser silently reinterpret the declaration.
+  case emptyKind of
+    Empty -> do
+      mTvarStart <- P.optional (P.lookAhead paramBinderNoLine)
+      whenJust mTvarStart $ \_ ->
+        fail "'empty type' must have no type parameters"
+      mEq <- P.optional (P.lookAhead (sym "="))
+      whenJust mEq $ \_ ->
+        fail "'empty type' must have no constructors (drop the '=' clause)"
+    NotEmpty -> pass
   tvars <- P.many paramBinderNoLine
   cons <- P.option [] $ do
     _ <- sym "="
@@ -403,7 +427,7 @@ pTypeDeclWithEnd = do
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
   endLineOrEOF
-  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom)
+  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom emptyKind)
 
 -- | Constructor definition: @Found a@ or @NotFound@. The constructor's
 --   name span (captured before trailing whitespace) is preserved so
@@ -565,6 +589,11 @@ pTypeAtomNoLineComments =
     reSpan sp = \case
       TyVar _ n -> TyVar sp n
       TyCon _ n -> TyCon sp n
+      -- The parser never directly produces 'TyEmpty' (resolution from
+      -- a name to the empty-type marker happens later, in
+      -- 'Awsum.Typing'); this branch is here only so 'reSpan' is
+      -- exhaustive over 'Type''.
+      TyEmpty _ n -> TyEmpty sp n
       TyApp _ f x -> TyApp sp f x
       TyArrow _ a b -> TyArrow sp a b
       TyOr _ a b -> TyOr sp a b

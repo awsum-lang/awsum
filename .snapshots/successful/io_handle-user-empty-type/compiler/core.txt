@@ -1,0 +1,144 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "failIO" [ "e" ]
+            ( CCon 1
+                [ CVar "e" ]
+            )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "failingComputation"
+            ( CCall
+                ( CVar "failIO" )
+                [ CCon 0 [] ]
+            )
+        , CFunDef "handleE1" [ "e" ]
+            ( CCase
+                ( CVar "e" )
+                [
+                    ( 0
+                    , []
+                    , CCon 2
+                        [ CString "got E1"
+                        , CCon 0
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "main" [ "_input" ]
+            ( CCall
+                ( CVar "$df$handleErrorIO$0" )
+                [ CVar "failingComputation" ]
+            )
+        , CFunDef "$df$handleErrorIO$0" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$0" )
+                [ CVar "io"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 0
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 0
+                                [ CVar "a" ]
+                            ]
+                        )
+                    ,
+                        ( 1
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCall
+                                ( CVar "handleE1" )
+                                [ CVar "e" ]
+                            ]
+                        )
+                    ,
+                        ( 2
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CContinue
+                            [ CVar "next"
+                            , CCon 1
+                                [ CVar "$k"
+                                , CVar "s"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "$pk_1"
+                            , "s"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCon 2
+                                [ CVar "s"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        ]
+    }

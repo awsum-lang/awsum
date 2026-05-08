@@ -78,7 +78,7 @@ symbolsOfProgram Program {decls} =
         | otherwise ->
             let sym = mkBindingSymbol args n sp (nameSpanAt sp n)
              in (S.insert n processed, acc <> [sym])
-      TypeDecl sp n _tvars _cons _ ->
+      TypeDecl sp n _tvars _cons _ _ ->
         (processed, acc <> [Symbol SkType n sp (typeNameSpanAt sp n) []])
       CommentDecl _ -> (processed, acc)
 
