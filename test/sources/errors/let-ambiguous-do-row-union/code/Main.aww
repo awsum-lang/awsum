@@ -17,8 +17,8 @@ opA = Right 1
 opB : Either ErrB Int32
 opB = Right 2
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _raw =
+main : IO Never Unit
+main =
   let res = (do
         a <- opA
         b <- opB

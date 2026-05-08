@@ -7,5 +7,5 @@ runMe = (\x -> x) 5
 doubled : Int32
 doubled = (\n -> n) runMe
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (showInt32 doubled)
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 doubled)

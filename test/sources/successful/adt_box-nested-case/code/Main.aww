@@ -9,5 +9,5 @@ unwrap b = case b of
     Box b3 -> case b3 of
       Box value -> value
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (unwrap (Box (Box (Box "hello"))))
+main : IO Never Unit
+main = IO.Stdout.print (unwrap (Box (Box (Box "hello"))))

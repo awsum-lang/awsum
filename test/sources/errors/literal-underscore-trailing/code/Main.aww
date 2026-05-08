@@ -6,5 +6,5 @@ import IO.Stdout
 bad : Int32
 bad = 1_
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "ok"
+main : IO Never Unit
+main = IO.Stdout.print "ok"

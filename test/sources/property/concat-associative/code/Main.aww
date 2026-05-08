@@ -4,6 +4,7 @@
 -- can verify each half against an independently computed
 -- concatenation.
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple3 String String String)
 parseInput raw = case splitOnFirst ":" raw of
@@ -21,8 +22,8 @@ property a b c = do
   delim <- abc ++ ":"
   delim ++ aBc
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         Tuple3 a b c <- parseInput raw
@@ -34,3 +35,9 @@ main rawArg =
           UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

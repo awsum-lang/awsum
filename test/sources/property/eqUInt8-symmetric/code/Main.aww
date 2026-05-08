@@ -3,6 +3,7 @@
 -- has no failable inner ops, so the only error path is a parse
 -- failure.
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple2 UInt8 UInt8)
 parseInput raw = case splitOnFirst ":" raw of
@@ -19,8 +20,8 @@ property a b = case eqUInt8 a b of
     True -> False
     False -> True
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
         raw <- rawArg
         Tuple2 a b <- parseInput raw
@@ -33,3 +34,9 @@ main rawArg =
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

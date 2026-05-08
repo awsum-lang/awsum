@@ -7,5 +7,5 @@ show : CustomUnit -> String
 show u = case u of
   CustomUnit -> "CustomUnit"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (show CustomUnit)
+main : IO Never Unit
+main = IO.Stdout.print (show CustomUnit)

@@ -22,5 +22,5 @@ handleE1 : E1 -> IO SecondNever Unit
 handleE1 e = case e of
   E1 -> IO.Stdout.print "got E1"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = failingComputation |> handleErrorIO handleE1
+main : IO Never Unit
+main = failingComputation |> handleErrorIO handleE1

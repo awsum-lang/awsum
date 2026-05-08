@@ -19,8 +19,8 @@ threeTypes n s b =
         s2 <- s1 ++ "/"
         s2 ++ showTri (id b)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = threeTypes 42 "hello" TA
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"

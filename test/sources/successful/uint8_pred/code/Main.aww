@@ -6,8 +6,8 @@ render r = case r of
   Left e -> "underflow: " ++ showUnderflowError e
   Right v -> "ok: " ++ showUInt8 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- render (predUInt8 minUInt8)
         b <- render (predUInt8 1)

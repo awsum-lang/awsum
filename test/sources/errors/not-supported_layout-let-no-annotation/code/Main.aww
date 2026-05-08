@@ -7,8 +7,8 @@
 -- RHSes. Workaround: annotate each binding individually.
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _rawArg =
+main : IO Never Unit
+main =
   let a = 1
       b = 2
    in IO.Stdout.print "ok"

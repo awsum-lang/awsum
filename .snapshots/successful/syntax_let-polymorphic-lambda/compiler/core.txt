@@ -57,15 +57,15 @@ CoreProgram
             , "b"
             ]
             ( CCall
-                ( CVar "$df$$let$3$0" )
+                ( CVar "$df$$let$8$0" )
                 [ CVar "b"
                 , CVar "n"
                 , CVar "s"
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$4" )
+                ( CVar "$let$9" )
                 [ CCall
                     ( CVar "threeTypes" )
                     [ CIntLit 42 TInt32
@@ -74,9 +74,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$2" [ "x" ]
+        , CFunDef "$lam$7" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$let$4" [ "res" ]
+        , CFunDef "$let$9" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -99,7 +99,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$df$$let$3$0"
+        , CFunDef "$df$$let$8$0"
             [ "b"
             , "n"
             , "s"
@@ -110,7 +110,7 @@ CoreProgram
                     [ CCall
                         ( CBuiltIn "showInt32" )
                         [ CCall
-                            ( CVar "$lam$2" )
+                            ( CVar "$lam$7" )
                             [ CVar "n" ]
                         ]
                     , CString "/"
@@ -130,7 +130,7 @@ CoreProgram
                             ( CBuiltIn "concatString" )
                             [ CVar "s0"
                             , CCall
-                                ( CVar "$lam$2" )
+                                ( CVar "$lam$7" )
                                 [ CVar "s" ]
                             ]
                         )
@@ -165,7 +165,7 @@ CoreProgram
                                         , CCall
                                             ( CVar "showTri" )
                                             [ CCall
-                                                ( CVar "$lam$2" )
+                                                ( CVar "$lam$7" )
                                                 [ CVar "b" ]
                                             ]
                                         ]

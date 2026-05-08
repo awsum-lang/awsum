@@ -6,7 +6,7 @@ type Box a = Box a
 identity : a -> a
 identity x = x
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (case identity (Box "one") of
+main : IO Never Unit
+main = IO.Stdout.print (case identity (Box "one") of
   Box v -> v
 )

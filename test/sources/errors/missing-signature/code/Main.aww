@@ -2,5 +2,5 @@
 
 foo x = x
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = input
+main : IO Never Unit
+main = IO.Stdout.print "ok"

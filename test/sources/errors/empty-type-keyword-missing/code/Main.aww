@@ -16,5 +16,5 @@ source = IO.Stdout.print "x"
 _target : IO Label2 Unit
 _target = source
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "ok"
+main : IO Never Unit
+main = IO.Stdout.print "ok"

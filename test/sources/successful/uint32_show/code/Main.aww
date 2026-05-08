@@ -1,8 +1,8 @@
 {- `showUInt32`: full range; values 2^31..2^32-1 trap signed-int divergence on JVM/CLR. -}
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         s0 <- showUInt32 minUInt32 ++ ", "
         s1 <- s0 ++ showUInt32 42

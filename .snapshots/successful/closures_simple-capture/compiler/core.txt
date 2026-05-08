@@ -40,7 +40,7 @@ CoreProgram
                 , CVar "k"
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCon 2
                 [ CCall
                     ( CBuiltIn "showInt32" )
@@ -52,7 +52,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$2"
+        , CFunDef "$lam$7"
             [ "k"
             , "_n"
             ]
@@ -62,7 +62,7 @@ CoreProgram
             , "$df$apply$0$cap0$0"
             ]
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$7" )
                 [ CVar "$df$apply$0$cap0$0"
                 , CVar "x"
                 ]

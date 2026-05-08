@@ -3,14 +3,15 @@
 -- as data (success-vs-failure), so it doesn't desugar through `do`
 -- — the inner `case` inspects the `Either` directly.
 import IO.Stdout
+import IO.Args
 
 property : Int32 -> Bool
 property x = case predInt32 x of
   Left _ -> eqInt32 x minInt32
   Right _ -> not (eqInt32 x minInt32)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
         raw <- rawArg
         x <- parseInt32 raw
@@ -23,3 +24,9 @@ main rawArg =
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

@@ -9,6 +9,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
+@.cli_arg = internal global ptr null
 
 @.str.0 = private unnamed_addr constant {i32, i32, [15 x i8]} { i32 15, i32 15, [15 x i8] c"STRING_TOO_LONG" }
 @.str.1 = private unnamed_addr constant {i32, i32, [0 x i8]} { i32 0, i32 0, [0 x i8] zeroinitializer }
@@ -188,6 +189,13 @@ unpaired:
 }
 
 
+define internal ptr @__getArgs() {
+  %arg = load ptr, ptr @.cli_arg
+  %either = call ptr @__entryArgEither(ptr %arg)
+  ret ptr %either
+}
+
+
 define internal ptr @v_runIO(ptr %v_io) {
 entry:
   %t3 = alloca ptr
@@ -199,7 +207,7 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 ]
+  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 i64 3, label %tco.case.arm.3.23 ]
 tco.case.arm.0.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
@@ -220,24 +228,31 @@ tco.case.arm.0.22:
   br label %tco.loop.0
 tco.case.default.21:
   unreachable
+tco.case.arm.3.23:
+  %t24 = getelementptr ptr, ptr %t4, i32 1
+  %t25 = load ptr, ptr %t24
+  %t26 = call ptr @__getArgs()
+  %t27 = call ptr @v__apply1(ptr %t25, ptr %t26)
+  store ptr %t27, ptr %t3
+  br label %tco.loop.0
 tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t23 = load ptr, ptr %t2
-  ret ptr %t23
+  %t28 = load ptr, ptr %t2
+  ret ptr %t28
 }
 
-define internal ptr @v_main(ptr %v__input) {
+define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v_handleA(ptr %t0)
-  %t4 = call ptr @v__let_2(ptr %t3)
+  %t4 = call ptr @v__let_7(ptr %t3)
   ret ptr %t4
 }
 
-define internal ptr @v__let_2(ptr %v_res) {
+define internal ptr @v__let_7(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -295,6 +310,18 @@ case.default.3:
 case.join.4:
   %t37 = phi ptr [%t9, %case.end.0.6], [%t25, %case.end.1.22]
   ret ptr %t37
+}
+
+define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
+  %t0 = getelementptr ptr, ptr %v__cl, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ ]
+case.default.3:
+  unreachable
+case.join.4:
+  %t5 = phi ptr 
+  ret ptr %t5
 }
 
 define internal ptr @v__scc_handleA_handleB(ptr %v__args) {
@@ -587,8 +614,8 @@ no_arg:
   br label %call_main
 call_main:
   %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]
-  %either = call ptr @__entryArgEither(ptr %input)
-  %io = call ptr @v_main(ptr %either)
+  store ptr %input, ptr @.cli_arg
+  %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0
 }

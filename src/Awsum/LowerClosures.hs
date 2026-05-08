@@ -92,7 +92,19 @@ lowerClosuresProgram :: CoreProgram -> CoreProgram
 lowerClosuresProgram (CoreProgram decls) =
   let arities = Map.fromList [(n, length args) | CFunDef n args _ <- decls]
       shapeMap = collectShapes arities decls
-      dispatchers = buildDispatchers arities shapeMap
+      residualArities = collectResidualArities arities decls
+      -- Ensure a dispatcher exists for every arity that appears as a
+      -- residual call site, even when no closure shape currently flows
+      -- through it. Without this, 'runIO''s 'IOGetArgs' arm calls
+      -- '$apply1' on programs that never construct an 'IOGetArgs'
+      -- value — the call is dead at runtime, but the codegen still
+      -- needs '$apply1' to be defined for the binary to link.
+      arityKeysWithEmpty =
+        Map.unionWith
+          (<>)
+          shapeMap
+          (Map.fromSet (const []) residualArities)
+      dispatchers = buildDispatchers arities arityKeysWithEmpty
       shapeTagOf = shapeTagOfFn dispatchers
       rewritten = map (rewriteDecl arities shapeTagOf) decls
    in CoreProgram (rewritten <> map dispatcherDecl dispatchers)
@@ -120,6 +132,36 @@ declShapes :: Map Name Int -> CDecl -> Set ClosureShape
 declShapes arities = \case
   CFunDef _ _ body -> exprShapes arities body
   CValDef _ rhs -> exprShapes arities rhs
+
+-- | Set of arities used at residual call sites — calls
+-- @CCall (CVar n) args@ where @n@ is not a top-level fn.
+-- Independent of closure-flow: a residual call may appear in a
+-- function body whose runtime path never executes (e.g. the
+-- 'IOGetArgs' arm of 'runIO' in a program that never constructs
+-- 'IOGetArgs'); the corresponding dispatcher must still exist for
+-- the codegen to emit a valid binary.
+collectResidualArities :: Map Name Int -> [CDecl] -> Set Int
+collectResidualArities arities = foldMap declArities
+  where
+    declArities = \case
+      CFunDef _ _ body -> exprArities body
+      CValDef _ rhs -> exprArities rhs
+
+    exprArities = \case
+      CCall (CVar n) args
+        | Nothing <- Map.lookup n arities ->
+            Set.singleton (length args) <> foldMap exprArities args
+      CCall callee args -> exprArities callee <> foldMap exprArities args
+      CCon _ fs -> foldMap exprArities fs
+      CCase s alts -> exprArities s <> foldMap (\(_, _, b) -> exprArities b) alts
+      CRow _ v -> exprArities v
+      CRowCase s alts -> exprArities s <> foldMap (\(_, _, b) -> exprArities b) alts
+      CLoop b -> exprArities b
+      CContinue xs -> foldMap exprArities xs
+      CVar _ -> mempty
+      CString _ -> mempty
+      CIntLit _ _ -> mempty
+      CBuiltIn _ -> mempty
 
 -- | Closure shapes referenced in an expression. The 'callee'
 -- argument tracks whether the immediately-enclosing expression is a

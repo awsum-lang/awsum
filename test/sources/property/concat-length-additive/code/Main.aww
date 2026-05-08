@@ -15,6 +15,7 @@
    Input: "a:b". The colon is excluded from both operand alphabets
    by the generator (Utf16PairNoColon). -}
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple2 String String)
 parseInput raw = case splitOnFirst ":" raw of
@@ -32,8 +33,8 @@ property a b = do
   s2 <- s1 ++ ":"
   s2 ++ bs
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         Tuple2 a b <- parseInput raw
@@ -45,3 +46,9 @@ main rawArg =
           UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

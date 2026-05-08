@@ -51,7 +51,7 @@ CoreProgram
             )
         , CValDef "viaLambda"
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$7" )
                 [ CVar "n" ]
             )
         , CFunDef "wrap" [ "s" ]
@@ -117,7 +117,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CVar "joined" )
                 [
@@ -140,7 +140,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$2" [ "i" ]
+        , CFunDef "$lam$7" [ "i" ]
             ( CCall
                 ( CBuiltIn "showInt32" )
                 [ CVar "i" ]

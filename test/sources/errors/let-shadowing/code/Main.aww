@@ -8,5 +8,5 @@ f x =
   let x = "shadow"
    in x
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (f "hi")
+main : IO Never Unit
+main = IO.Stdout.print (f "hi")

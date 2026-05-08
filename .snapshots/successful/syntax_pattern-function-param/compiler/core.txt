@@ -122,15 +122,15 @@ CoreProgram
                 , CIntLit 200 TInt32
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$5" )
+                ( CVar "$let$10" )
                 [ CCall
                     ( CVar "sumTriple" )
                     [ CVar "triple" ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -153,7 +153,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$3" [ "$arg_28_19" ]
+        , CFunDef "$lam$8" [ "$arg_28_19" ]
             ( CCase
                 ( CVar "$arg_28_19" )
                 [
@@ -172,12 +172,12 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$4"
+        , CFunDef "$let$9"
             [ "n"
             , "m"
             ]
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -207,9 +207,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$5" [ "n" ]
+        , CFunDef "$let$10" [ "n" ]
             ( CCall
-                ( CVar "$let$4" )
+                ( CVar "$let$9" )
                 [ CVar "n"
                 , CCall
                     ( CVar "$df$apply$0" )
@@ -218,7 +218,7 @@ CoreProgram
             )
         , CFunDef "$df$apply$0" [ "t" ]
             ( CCall
-                ( CVar "$lam$3" )
+                ( CVar "$lam$8" )
                 [ CVar "t" ]
             )
         ]

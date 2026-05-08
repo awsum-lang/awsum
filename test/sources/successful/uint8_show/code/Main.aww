@@ -1,8 +1,8 @@
 {- `showUInt8`: full range; values 128..255 trap signed-byte divergence on JVM. -}
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         s0 <- showUInt8 minUInt8 ++ ", "
         s1 <- s0 ++ showUInt8 42

@@ -1,12 +1,13 @@
 -- Property: `parseUInt8 (showUInt8 x) == Right x` for any UInt8 0..255.
 -- Mirror of `parseInt32-show-roundtrip` for the unsigned 8-bit type.
 import IO.Stdout
+import IO.Args
 
 property : UInt8 -> String
 property v = showUInt8 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         v <- parseUInt8 raw
@@ -18,3 +19,9 @@ main rawArg =
           UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

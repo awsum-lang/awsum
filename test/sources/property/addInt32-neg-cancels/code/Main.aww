@@ -3,6 +3,7 @@
 -- The Haskell-side generator (`NonMinInt32`) excludes `minInt32`,
 -- so neither error branch is expected to fire.
 import IO.Stdout
+import IO.Args
 
 property : Int32 -> Either (UnderflowError | OverflowError) Bool
 property x = do
@@ -10,8 +11,8 @@ property x = do
   s <- addInt32 negX x
   pureEither (eqInt32 s 0)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = (do
         raw <- rawArg
         x <- parseInt32 raw
@@ -26,3 +27,9 @@ main rawArg =
           OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

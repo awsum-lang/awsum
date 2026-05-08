@@ -91,6 +91,7 @@ L_tco_loop:
   lookupswitch
     0: L_tco_arm_0
     2: L_tco_arm_2
+    3: L_tco_arm_3
     default: L_tco_arm_0
 L_tco_arm_0:
   dup
@@ -125,10 +126,21 @@ L_tco_arm_0:
   aload_2
   astore_0
   goto L_tco_loop
+L_tco_arm_3:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  aload_1
+  invokestatic AwsumMain/__getArgs()Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  astore_0
+  goto L_tco_loop
 .end method
 
 
-.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main()Ljava/lang/Object;
   iconst_1
   anewarray java/lang/Object
   dup
@@ -137,12 +149,12 @@ L_tco_arm_0:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_handleA(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -229,6 +241,20 @@ L_arm_1:
   aastore
   aastore
   goto L_join
+L_join:
+  areturn
+.end method
+
+
+.method static v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    default: L_default
 L_join:
   areturn
 .end method
@@ -798,6 +824,15 @@ L_entry_unpaired:
   areturn
 .end method
 
+.method static __getArgs()Ljava/lang/Object;
+  .limit stack 2
+  .limit locals 1
+  ldc "awsum.argv0"
+  invokestatic java/lang/System/getProperty(Ljava/lang/String;)Ljava/lang/String;
+  invokestatic AwsumMain/__entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;
+  areturn
+.end method
+
 .method public static main([Ljava/lang/String;)V
   new java/io/PrintStream
   dup
@@ -820,8 +855,12 @@ has_arg:
   iconst_0
   aaload
 call_main:
-  invokestatic AwsumMain/__entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_main(Ljava/lang/Object;)Ljava/lang/Object;
+  checkcast java/lang/String
+  ldc "awsum.argv0"
+  swap
+  invokestatic java/lang/System/setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  pop
+  invokestatic AwsumMain/v_main()Ljava/lang/Object;
   invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop
   return

@@ -93,7 +93,9 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
-            entryArgEitherMethod,
+            gate (Set.member "internalGetArgs" builtIns) entryArgEitherMethod,
+            "",
+            gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
             "",
             mainMethod,
             "",
@@ -1784,6 +1786,26 @@ lengthUtf8BytesMethod =
       "  }"
     ]
 
+-- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'. Reads
+--   the cached argv[0] from the "awsum.argv0" environment variable
+--   ('Main' stashed it via 'SetEnvironmentVariable' on entry) and
+--   routes it through '__entryArgEither' for strict-UTF-16
+--   validation. Per the no-memoisation decision each call yields a
+--   fresh Either cell; argv is invariant during execution so repeat
+--   calls are deterministically equal.
+getArgsMethod :: Text
+getArgsMethod =
+  unlines
+    [ "  .method private hidebysig static object __getArgs() cil managed",
+      "  {",
+      "    .maxstack 1",
+      "    ldstr \"awsum.argv0\"",
+      "    call string [System.Runtime]System.Environment::GetEnvironmentVariable(string)",
+      "    call object AwsumMain::__entryArgEither(object)",
+      "    ret",
+      "  }"
+    ]
+
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong | …) String'
 --   for the user's 'main'. 'System.String::get_Length' returns UTF-16
 --   code units (CLR strings are UTF-16 natively), so the cap check is a
@@ -1977,12 +1999,20 @@ mainMethod =
       "    ldc.i4.0",
       "    ldelem.ref",
       "  call_main:",
-      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
-      -- user's main. '__entryArgEither' compares 'String::get_Length()'
-      -- against the language-fixed cap and returns either 'Right input' or
-      -- 'Left StringTooLong' (row-tagged); see entryArgEitherMethod above.
-      "    call object AwsumMain::__entryArgEither(object)",
-      "    call object AwsumMain::" <> mangle "main" <> "(object)",
+      -- Cache argv[0] for 'BuiltIn.internalGetArgs' (called from
+      -- 'runIO''s 'IOGetArgs' arm) via a process-wide environment
+      -- variable. 'main' itself takes no arguments (signature
+      -- 'IO Never Unit'); user code reads argv through
+      -- 'IO.Args.getArgs' inside the IO chain. CIL has no direct
+      -- 'swap' opcode so we route through 'input' local: stloc; ldstr;
+      -- ldloc; castclass; call SetEnv (returns void).
+      "    stloc.0",
+      "    ldstr \"awsum.argv0\"",
+      "    ldloc.0",
+      "    castclass string",
+      "    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)",
+      -- v_main is a zero-arg value (CValDef): build the IO tree.
+      "    call object AwsumMain::" <> mangle "main" <> "()",
       -- Hand the IO tree to `runIO`, which walks it and performs the
       -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns
       -- Unit; we discard it.
@@ -2144,6 +2174,12 @@ emitExprText ctx varMap = \case
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__print(object)"
               ]
+      -- 'BuiltIn.internalGetArgs' — call AwsumMain::__getArgs(), which
+      -- reads the cached argv[0] (set in 'Main' via
+      -- 'SetEnvironmentVariable') and routes it through
+      -- '__entryArgEither'.
+      CBuiltIn "internalGetArgs"
+        | [] <- xs -> "    call object AwsumMain::__getArgs()"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

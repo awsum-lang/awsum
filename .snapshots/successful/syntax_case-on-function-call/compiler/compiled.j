@@ -192,7 +192,7 @@ L_join:
 .end method
 
 
-.method static v_main(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v_main()Ljava/lang/Object;
   ldc "hello"
   invokestatic AwsumMain/v_search(Ljava/lang/Object;)Ljava/lang/Object;
   dup
@@ -208,7 +208,7 @@ L_arm_0:
   dup
   iconst_1
   aaload
-  astore_1
+  astore_0
   pop
   iconst_2
   anewarray java/lang/Object
@@ -219,16 +219,16 @@ L_arm_0:
   aastore
   dup
   iconst_1
-  aload_1
+  aload_0
   aastore
   goto L_join
 L_arm_1:
   dup
   iconst_1
   aaload
-  astore_1
+  astore_0
   pop
-  aload_1
+  aload_0
   dup
   iconst_0
   aaload
@@ -242,7 +242,7 @@ L_arm_0:
   dup
   iconst_1
   aaload
-  astore_2
+  astore_1
   pop
   iconst_2
   anewarray java/lang/Object
@@ -253,7 +253,7 @@ L_arm_0:
   aastore
   dup
   iconst_1
-  aload_2
+  aload_1
   aastore
   goto L_join
 L_arm_1:
@@ -273,12 +273,12 @@ L_arm_1:
 L_join:
   goto L_join
 L_join:
-  invokestatic AwsumMain/v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_2(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -369,136 +369,6 @@ L_join:
   areturn
 .end method
 
-.method static __entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
-  .limit locals 8
-  aload_0
-  checkcast java/lang/String
-  astore_1
-  aload_1
-  invokevirtual java/lang/String/length()I
-  istore_2
-  iload_2
-  ldc 134217728
-  if_icmpgt L_entry_too_long
-  iconst_0
-  istore_3
-  iconst_0
-  istore 4
-L_entry_scan:
-  iload_3
-  iload_2
-  if_icmpge L_entry_scan_done
-  aload_1
-  iload_3
-  invokevirtual java/lang/String/charAt(I)C
-  ldc 64512
-  iand
-  istore 5
-  iload 4
-  ifne L_entry_check_low
-  iload 5
-  ldc 56320
-  if_icmpeq L_entry_unpaired
-  iload 5
-  ldc 55296
-  if_icmpne L_entry_inc
-  iconst_1
-  istore 4
-  goto L_entry_inc
-L_entry_check_low:
-  iload 5
-  ldc 56320
-  if_icmpne L_entry_unpaired
-  iconst_0
-  istore 4
-  goto L_entry_inc
-L_entry_inc:
-  iinc 3 1
-  goto L_entry_scan
-L_entry_scan_done:
-  iload 4
-  ifne L_entry_unpaired
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_0
-  aastore
-  areturn
-L_entry_too_long:
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  astore 6
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  ldc 589989748
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 6
-  aastore
-  astore 7
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 7
-  aastore
-  areturn
-L_entry_unpaired:
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  astore 6
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  ldc 502975519
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 6
-  aastore
-  astore 7
-  iconst_2
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_0
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 7
-  aastore
-  areturn
-.end method
-
 .method public static main([Ljava/lang/String;)V
   new java/io/PrintStream
   dup
@@ -521,8 +391,12 @@ has_arg:
   iconst_0
   aaload
 call_main:
-  invokestatic AwsumMain/__entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v_main(Ljava/lang/Object;)Ljava/lang/Object;
+  checkcast java/lang/String
+  ldc "awsum.argv0"
+  swap
+  invokestatic java/lang/System/setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  pop
+  invokestatic AwsumMain/v_main()Ljava/lang/Object;
   invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop
   return

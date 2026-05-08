@@ -41,7 +41,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCon 2
                 [ CCall
                     ( CVar "show" )

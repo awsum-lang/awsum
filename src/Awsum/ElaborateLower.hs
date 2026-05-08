@@ -19,7 +19,7 @@
 --   • Unsupported qualified names fail fast with a clear error.
 module Awsum.ElaborateLower (elaborateLowerProgram) where
 
-import Awsum.BuiltIn (lookupBuiltIn)
+import Awsum.BuiltIn (builtIns, lookupBuiltIn)
 import Awsum.Core
 import Awsum.Cps (cpsProgram)
 import Awsum.Defunctionalize (defunctionalizeProgram)
@@ -361,7 +361,7 @@ elaborateLowerProgram progType progIn = do
   --    reachability analysis as ordinary `CCon` references.
   let userDecls = catMaybes mds
       allWrappers = genConWrappers conInfo
-      allDeclsRaw = userDecls <> liftedHelpers <> allWrappers
+      allDeclsRaw = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo]
       allDecls = map (lowerIOPlatformBuiltinsDecl conInfo) allDeclsRaw
   -- 4) Tree-shake: drop Core declarations unreachable from 'main'.
   --    Covers both user functions that no one calls and prelude
@@ -393,7 +393,7 @@ elaborateLowerProgram progType progIn = do
   --    'main' immediately afterwards drops them, since every
   --    reachable call site has been replaced by a call to a
   --    specialisation.
-  core' <- treeShakeFromMain <$> defunctionalizeProgram core
+  core' <- treeShakeFromMain conInfo <$> defunctionalizeProgram core
   -- 5) Lower residual function values: every closure that survived
   --    Defunctionalize (because it flowed into a constructor field
   --    or through a non-statically-resolvable call site) is encoded
@@ -401,7 +401,7 @@ elaborateLowerProgram progType progIn = do
   --    dispatcher. Without this, Saturate's "no partial application
   --    with local captures" invariant would fail the moment a Core
   --    program stores a closure in a constructor field.
-  let lowered = treeShakeFromMain (lowerClosuresProgram core')
+  let lowered = treeShakeFromMain conInfo (lowerClosuresProgram core')
   -- 6) Saturate under-applied direct calls via lambda-lifting.
   core'' <- saturateProgram lowered
   -- 7) SCC-merge for mutual recursion. Every strongly-connected
@@ -417,7 +417,7 @@ elaborateLowerProgram progType progIn = do
   --    members that were only called from inside the SCC become dead.
   --    Re-run reachability from 'main' to prune them (and anything
   --    else that fell out of scope through the rewrite).
-  let sccMerged = treeShakeFromMain (sccMergeProgram core'')
+  let sccMerged = treeShakeFromMain conInfo (sccMergeProgram core'')
   -- 8) CPS + defunctionalization for non-tail self-recursion. For each
   --    function with a non-tail self-call, emit a (wrapper, '$cps$f',
   --    '$apply$f') trio; the continuation chain now lives as an ADT on
@@ -475,6 +475,32 @@ reachableCore root graph = go (Set.singleton root) [root]
           fresh = Set.filter (`Set.notMember` visited) neighbours
        in go (visited <> fresh) (rest <> Set.toList fresh)
 
+-- | Synthetic top-level helper used by every @IOGetArgs@ rewrite.
+--   Pattern-matches the @Either (StringTooLong | UnpairedUtf16Surrogate)
+--   String@ returned by @BuiltIn.internalGetArgs@ at runtime and
+--   routes @Left@ to @IOFail@, @Right@ to @IOPure@. Always emitted
+--   when @IO.Args.getArgs@ is in the program; tree-shake drops the
+--   helper if no construction site references it (programs that
+--   don't read argv).
+ioGetArgsContDecl :: ConInfoEnv -> CDecl
+ioGetArgsContDecl conInfo =
+  let tagFor n = case M.lookup n conInfo of
+        Just ci -> ciTag ci
+        Nothing -> error $ "ioGetArgsContDecl: prelude missing '" <> n <> "'"
+      leftTag = tagFor "Left"
+      rightTag = tagFor "Right"
+      ioFailTag = tagFor "IOFail"
+      ioPureTag = tagFor "IOPure"
+   in CFunDef
+        "$io_getargs_cont"
+        ["result"]
+        ( CCase
+            (CVar "result")
+            [ (leftTag, ["e"], CCon ioFailTag [CVar "e"]),
+              (rightTag, ["s"], CCon ioPureTag [CVar "s"])
+            ]
+        )
+
 -- | Rewrite every @CCall (CBuiltIn "IO.Stdout.print") [arg]@ into the
 --   constructor expression @CCon ioStdoutPrintTag [arg, CCon ioPureTag
 --   [CCon unitTag []]]@ (where the tags are looked up from
@@ -504,6 +530,7 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
 
     ioPureTag = tagFor "IOPure"
     ioStdoutPrintTag = tagFor "IOStdoutPrint"
+    ioGetArgsTag = tagFor "IOGetArgs"
     unitTag = tagFor "Unit"
 
     -- The terminator for a single `IO.Stdout.print s` call: after the
@@ -516,6 +543,17 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
     rewriteExpr = \case
       CCall (CBuiltIn "IO.Stdout.print") [arg] ->
         CCon ioStdoutPrintTag [rewriteExpr arg, pureUnit]
+      -- 'IO.Args.getArgs' is a zero-arg platform built-in returning
+      -- 'IO (StringTooLong | UnpairedUtf16Surrogate) String'. Rewrite
+      -- to an 'IOGetArgs' constructor whose continuation is the
+      -- shared synthetic helper '$io_getargs_cont' (lifted to a
+      -- top-level CFunDef in 'elaborateLowerProgram'); the helper
+      -- routes 'Left e' to 'IOFail e' and 'Right s' to 'IOPure s',
+      -- which is what makes the platform built-in's user-visible
+      -- type 'IO err String' (errors-in-row) rather than 'IO Never
+      -- (Either err String)'.
+      CCall (CBuiltIn "IO.Args.getArgs") [] ->
+        CCon ioGetArgsTag [CVar "$io_getargs_cont"]
       CCall f args -> CCall (rewriteExpr f) (map rewriteExpr args)
       CCon t fields -> CCon t (map rewriteExpr fields)
       CCase scrut alts ->
@@ -544,12 +582,191 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
 -- Because that call lives in a string template (not in Core), the
 -- call-graph analysis would otherwise lose track of @runIO@ and
 -- shake it away.
-treeShakeFromMain :: CoreProgram -> CoreProgram
-treeShakeFromMain (CoreProgram ds) =
+-- | Whole-program shake: drops top-level decls unreachable from
+-- 'main'/'runIO' and case-arms whose constructor tag is never
+-- actually constructed in the reachable code. Iterates the two until
+-- a fixed point — pruning a dead arm can render a function
+-- unreachable, dropping a function can shrink the live constructor-
+-- tag set, which can enable more arm pruning.
+--
+-- Why arm pruning matters: 'runIO''s IO walker has an arm for every
+-- 'IO' constructor (IOPure / IOFail / IOStdoutPrint / IOGetArgs).
+-- A program that never constructs 'IOGetArgs' (no 'IO.Args.getArgs'
+-- call site) sees the arm as dead code: it references '$apply1'
+-- and 'BuiltIn.internalGetArgs', dragging in the per-arity
+-- dispatcher and the per-target argv decoder. Pruning the arm cuts
+-- that whole tail before it ever reaches codegen.
+--
+-- Generalises beyond 'runIO': any 'case' arm whose tag is not in
+-- the program's reachable construction set is dead. Sum types whose
+-- some constructors are never used produce smaller binaries.
+--
+-- Built-in baseline: built-ins like 'concatString' return values of
+-- ADT types ('Either StringTooLong String') whose constructors are
+-- created by per-target runtime helpers, not by 'CCon' nodes in
+-- Core. To stay sound, we precompute every constructor tag of every
+-- type mentioned in any built-in signature and treat them as always
+-- constructable. Without this, 'Right' / 'Left' / 'Just' / 'Nothing'
+-- (and the row tags inside their error rows) would look unreachable
+-- and 'concat'-ed strings would dispatch through the wrong arm.
+treeShakeFromMain :: ConInfoEnv -> CoreProgram -> CoreProgram
+treeShakeFromMain conInfo =
+  let baselineCon = builtinReachableConTags conInfo
+      baselineRow = builtinReachableRowTags
+   in fixpoint (step baselineCon baselineRow)
+  where
+    fixpoint f x =
+      let x' = f x
+       in if x' == x then x else fixpoint f x'
+    step baselineCon baselineRow prog =
+      let prog' = functionLevelShake prog
+          conTags = baselineCon <> collectConTags prog'
+          rowTags = baselineRow <> collectRowTags prog'
+       in mapBodies (pruneDeadArms conTags rowTags) prog'
+
+-- | Set of constructor tags that built-ins might construct via
+-- their per-target runtime helpers. Computed once per program from
+-- the built-in registry: walk every signature, collect every
+-- 'TyCon' name mentioned (anywhere — argument or result), and emit
+-- each such type's full constructor list.
+--
+-- Over-approximates: a 'TyCon' mentioned only in an argument
+-- position never has its constructors created by the built-in
+-- itself, just consumed. Adding those constructors anyway keeps
+-- the analysis trivially sound (we miss some pruning opportunities
+-- but never drop a live arm). Tightening to "result-position only"
+-- is possible but would need 'splitArrowN'-style application
+-- analysis at every call site.
+builtinReachableConTags :: ConInfoEnv -> Set Int
+builtinReachableConTags conInfo =
+  let typeNames = foldMap typesMentionedInType (M.elems builtIns)
+   in Set.fromList [ciTag ci | (_, ci) <- M.toList conInfo, Set.member (ciTypeName ci) typeNames]
+
+-- | Set of row tags that built-ins might construct. Each 'TyOr'
+-- alternative's canonical label is FNV-hashed exactly the same way
+-- 'CRow' produces tags at construction sites, so the resulting
+-- 'Set Word32' is in the same namespace as 'CRowCase' arm tags.
+builtinReachableRowTags :: Set Word32
+builtinReachableRowTags =
+  Set.fromList [rowTag lbl | t <- M.elems builtIns, lbl <- rowLabelsInType t]
+
+-- | Collect every 'TyCon' name appearing anywhere in a 'Type''.
+typesMentionedInType :: Type' -> Set Name
+typesMentionedInType = \case
+  TyCon _ n -> Set.singleton n
+  TyVar _ _ -> mempty
+  TyArrow _ a b -> typesMentionedInType a <> typesMentionedInType b
+  TyApp _ f x -> typesMentionedInType f <> typesMentionedInType x
+  TyOr _ a b -> typesMentionedInType a <> typesMentionedInType b
+  TyEmpty _ _ -> mempty
+
+-- | Collect every alternative of every 'TyOr' anywhere in a 'Type''
+-- (recursive: rows nested inside 'TyApp' / 'TyArrow' / etc. are
+-- walked). Each returned 'Type'' is a row label that backend
+-- runtime helpers might wrap a 'CRow' tag around.
+rowLabelsInType :: Type' -> [Type']
+rowLabelsInType t = case t of
+  TyOr {} -> flattenRow t <> concatMap rowLabelsInType (flattenRow t)
+  TyArrow _ a b -> rowLabelsInType a <> rowLabelsInType b
+  TyApp _ f x -> rowLabelsInType f <> rowLabelsInType x
+  _ -> []
+
+-- | Drop top-level decls unreachable from 'main' or 'runIO' via the
+-- direct call graph. The two roots are needed because 'runIO' is
+-- not called from 'main' in Core — the codegen entry-point glue
+-- wires `v_runIO(v_main())` as a string template, not an edge in
+-- the IR.
+functionLevelShake :: CoreProgram -> CoreProgram
+functionLevelShake (CoreProgram ds) =
   let graph = M.fromList [(declName' d, declFreeVars d) | d <- ds]
       reached = reachableCore "main" graph <> reachableCore "runIO" graph
       live = [d | d <- ds, Set.member (declName' d) reached]
    in CoreProgram live
+
+-- | Set of every 'CCon' tag that appears anywhere in the program.
+-- Used by 'pruneDeadArms' to decide which 'CCase' arms can be
+-- dropped: an arm whose tag is not in this set is unreachable
+-- because nothing constructs a value carrying that tag.
+collectConTags :: CoreProgram -> Set Int
+collectConTags (CoreProgram ds) = foldMap declConTags ds
+  where
+    declConTags = \case
+      CFunDef _ _ body -> exprConTags body
+      CValDef _ body -> exprConTags body
+
+exprConTags :: CExpr -> Set Int
+exprConTags = \case
+  CCon t fs -> Set.insert t (foldMap exprConTags fs)
+  CCall f xs -> exprConTags f <> foldMap exprConTags xs
+  CCase s alts -> exprConTags s <> foldMap (\(_, _, b) -> exprConTags b) alts
+  CRow _ v -> exprConTags v
+  CRowCase s alts -> exprConTags s <> foldMap (\(_, _, b) -> exprConTags b) alts
+  CLoop b -> exprConTags b
+  CContinue xs -> foldMap exprConTags xs
+  CVar _ -> mempty
+  CString _ -> mempty
+  CIntLit _ _ -> mempty
+  CBuiltIn _ -> mempty
+
+-- | Set of every row tag (FNV-1a hash of a row label) that appears
+-- anywhere in the program. The dual of 'collectConTags' for
+-- structural sums; 'pruneDeadArms' drops 'CRowCase' arms whose tag
+-- is not in this set.
+collectRowTags :: CoreProgram -> Set Word32
+collectRowTags (CoreProgram ds) = foldMap declRowTags ds
+  where
+    declRowTags = \case
+      CFunDef _ _ body -> exprRowTags body
+      CValDef _ body -> exprRowTags body
+
+exprRowTags :: CExpr -> Set Word32
+exprRowTags = \case
+  CRow t v -> Set.insert t (exprRowTags v)
+  CRowCase s alts -> exprRowTags s <> foldMap (\(_, _, b) -> exprRowTags b) alts
+  CCon _ fs -> foldMap exprRowTags fs
+  CCall f xs -> exprRowTags f <> foldMap exprRowTags xs
+  CCase s alts -> exprRowTags s <> foldMap (\(_, _, b) -> exprRowTags b) alts
+  CLoop b -> exprRowTags b
+  CContinue xs -> foldMap exprRowTags xs
+  CVar _ -> mempty
+  CString _ -> mempty
+  CIntLit _ _ -> mempty
+  CBuiltIn _ -> mempty
+
+-- | Map a transformation across every top-level decl's body.
+mapBodies :: (CExpr -> CExpr) -> CoreProgram -> CoreProgram
+mapBodies f (CoreProgram ds) = CoreProgram (map go ds)
+  where
+    go (CFunDef n args body) = CFunDef n args (f body)
+    go (CValDef n body) = CValDef n (f body)
+
+-- | Drop 'CCase' / 'CRowCase' arms whose tag is not in the
+-- reachable-construction set. If filtering would leave zero arms
+-- the case is left untouched: an empty case crashes some backends'
+-- emit logic, and a truly-empty match means the surrounding code
+-- is itself unreachable, which a later iteration of 'treeShakeFromMain'
+-- will catch via function-level reachability anyway.
+pruneDeadArms :: Set Int -> Set Word32 -> CExpr -> CExpr
+pruneDeadArms conTags rowTags = go
+  where
+    go = \case
+      CCase s alts ->
+        let s' = go s
+            kept = [(t, vs, go b) | (t, vs, b) <- alts, Set.member t conTags]
+         in CCase s' (if null kept then map (\(t, vs, b) -> (t, vs, go b)) alts else kept)
+      CRowCase s alts ->
+        let s' = go s
+            kept = [(t, v, go b) | (t, v, b) <- alts, Set.member t rowTags]
+         in CRowCase s' (if null kept then map (\(t, v, b) -> (t, v, go b)) alts else kept)
+      CCall f xs -> CCall (go f) (map go xs)
+      CCon t fs -> CCon t (map go fs)
+      CRow t v -> CRow t (go v)
+      CLoop b -> CLoop (go b)
+      CContinue xs -> CContinue (map go xs)
+      e@(CVar _) -> e
+      e@(CString _) -> e
+      e@(CIntLit _ _) -> e
+      e@(CBuiltIn _) -> e
 
 -- | Top-level name of a Core declaration.
 declName' :: CDecl -> Name
@@ -815,7 +1032,20 @@ lowerExprM env locals expected = \case
             _ -> pure bare
       | otherwise -> pure (CVar (conWrapperName name))
     Nothing -> liftEither $ Left (TELowering ("unknown constructor: " <> name))
-  EBuiltIn _sp name -> pure (CBuiltIn name)
+  EBuiltIn _sp name ->
+    -- Core invariant: 'CBuiltIn' may only appear in 'CCall' callee
+    -- position. For function-typed built-ins this is satisfied by the
+    -- 'EApp' clause below — it lowers @BuiltIn.foo arg@ as
+    -- @CCall (CBuiltIn "foo") [arg]@ and the bare 'CBuiltIn' here flows
+    -- straight into that callee slot. For zero-arg built-ins (e.g.
+    -- 'BuiltIn.internalGetArgs', a value-returning primitive) there is
+    -- no surrounding 'EApp' to provide the wrapping, so saturate the
+    -- call here: 'CCall (CBuiltIn name) []' preserves the invariant
+    -- and matches the codegen contract — backends emit a zero-arg
+    -- invocation of the runtime helper.
+    case lookupBuiltIn name of
+      Just (TyArrow {}) -> pure (CBuiltIn name)
+      _ -> pure (CCall (CBuiltIn name) [])
   ELam sp params body -> liftLambda env locals expected sp params body
   -- After 'Awsum.Desugar', any non-'PVar' / non-'PWild' let-binding
   -- has been rewritten to 'ECase'. The lowering only sees simple
@@ -1239,6 +1469,29 @@ synthCoerce conInfo src tgt
     Just headName' <- tyConHead tgt,
     headName == headName' =
       synthNominalHeadCoerce conInfo headName src tgt
+-- Function-typed coercion: pointwise rebuild via a top-level helper
+-- @$liftFn$N f = \a -> coerceB (f (coerceA a))@ where the per-side
+-- coercions come from recursive 'synthCoerce'. Used when IO-row
+-- widening (or any other nominal-head coercion) walks a constructor
+-- field whose type is a function — e.g. `IOGetArgs (Either err
+-- String -> IO e a)` coerced from `IO e1 a` to `IO (e1|e2) b` widens
+-- the field from `… -> IO e1 a` to `… -> IO (e1|e2) b`. The
+-- post-coercion closure lands in 'CCon' field position; subsequent
+-- 'Awsum.LowerClosures' encodes it as a tagged 'CCon' and routes the
+-- residual call through the right `$applyN` dispatcher.
+synthCoerce conInfo (TyArrow _ srcA srcB) (TyArrow _ tgtA tgtB) = do
+  argCoerce <- synthCoerce conInfo tgtA srcA
+  resCoerce <- synthCoerce conInfo srcB tgtB
+  helper <- freshLiftName
+  let argName :: Name
+      argName = "__arg"
+      fnName :: Name
+      fnName = "__f"
+  argCoerced <- argCoerce (CVar argName)
+  let inner = CCall (CVar fnName) [argCoerced]
+  bodyCoerced <- resCoerce inner
+  emitHelper (CFunDef helper [fnName, argName] bodyCoerced)
+  pure (\v -> pure (CCall (CVar helper) [v]))
 synthCoerce _ src tgt =
   liftEither
     $ Left
@@ -1786,11 +2039,11 @@ collectApps f acc = case f of
 lowerVar :: LowerEnv -> QName -> Either TypeError CExpr
 lowerVar env q@(QName mods n) =
   case mods of
-    [] | Just _ <- lookupBuiltIn n -> Right (CBuiltIn n)
+    [] | Just t <- lookupBuiltIn n -> Right (saturateBuiltIn n t)
     [] -> Right (CVar n)
     _
-      | M.member q (platformTable env.leProgramType) ->
-          Right (CBuiltIn (prettyQName mods n))
+      | Just t <- M.lookup q (platformTable env.leProgramType) ->
+          Right (saturateBuiltIn (prettyQName mods n) t)
     _ ->
       Left
         $ TELowering
@@ -1798,3 +2051,13 @@ lowerVar env q@(QName mods n) =
         <> prettyQName mods n
   where
     prettyQName ms name = T.intercalate "." (ms <> [name])
+    -- Core invariant: 'CBuiltIn' may only appear in 'CCall' callee
+    -- position. For function-typed built-ins this is satisfied by
+    -- the surrounding 'EApp' clause that wraps in 'CCall'. For
+    -- zero-arg built-ins (e.g. 'IO.Args.getArgs', a value-returning
+    -- platform effect) there is no surrounding 'EApp', so saturate
+    -- here: 'CCall (CBuiltIn name) []' preserves the invariant and
+    -- matches the codegen contract.
+    saturateBuiltIn name = \case
+      TyArrow {} -> CBuiltIn name
+      _ -> CCall (CBuiltIn name) []

@@ -3,6 +3,7 @@
 -- builtin and no eqString); the property emits "T" / "F" so Haskell
 -- can compare against its own boolPrint of the original input.
 import IO.Stdout
+import IO.Args
 
 intToBool : UInt8 -> Bool
 intToBool n = case eqUInt8 n 0 of
@@ -17,8 +18,8 @@ boolToStr b = case b of
 property : UInt8 -> String
 property n = boolToStr (not (not (intToBool n)))
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         n <- parseUInt8 raw
@@ -30,3 +31,9 @@ main rawArg =
           UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

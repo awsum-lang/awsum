@@ -2,14 +2,15 @@
 -- multiplication. Single UInt32 input. Multiplying by 1 is always in
 -- range, so OVERFLOW cannot fire on a well-formed input.
 import IO.Stdout
+import IO.Args
 
 property : UInt32 -> Either OverflowError Bool
 property a = do
   r <- mulUInt32 1 a
   pureEither (eqUInt32 r a)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = (do
         raw <- rawArg
         a <- parseUInt32 raw
@@ -23,3 +24,9 @@ main rawArg =
           OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

@@ -2,7 +2,6 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
-function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -50,18 +49,16 @@ function v_showTri(v_t){
 }
 
 function v_threeTypes(v_n, v_s, v_b){
-    return (v__df__let_3_0)(v_b, v_n, v_s);
+    return (v__df__let_8_0)(v_b, v_n, v_s);
 }
 
-function main(v__input){
-    return (v__let_4)((v_threeTypes)((42|0), "hello", [0]));
-}
+const main = (v__let_9)((v_threeTypes)((42|0), "hello", [0]));
 
-function v__lam_2(v_x){
+function v__lam_7(v_x){
     return v_x;
 }
 
-function v__let_4(v_res){
+function v__let_9(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -77,9 +74,9 @@ function v__let_4(v_res){
     }
 }
 
-function v__df__let_3_0(v_b, v_n, v_s){
+function v__df__let_8_0(v_b, v_n, v_s){
     {
-      const __s = __concat(String((v__lam_2)(v_n)), "/");
+      const __s = __concat(String((v__lam_7)(v_n)), "/");
       switch (__s[0]) {
         case 0: {
           const v__do_e_17_9 = __s[1];
@@ -88,7 +85,7 @@ function v__df__let_3_0(v_b, v_n, v_s){
         case 1: {
           const v_s0 = __s[1];
           {
-            const __s = __concat(v_s0, (v__lam_2)(v_s));
+            const __s = __concat(v_s0, (v__lam_7)(v_s));
             switch (__s[0]) {
               case 0: {
                 const v__do_e_18_9 = __s[1];
@@ -105,7 +102,7 @@ function v__df__let_3_0(v_b, v_n, v_s){
                     }
                     case 1: {
                       const v_s2 = __s[1];
-                      return __concat(v_s2, (v_showTri)((v__lam_2)(v_b)));
+                      return __concat(v_s2, (v_showTri)((v__lam_7)(v_b)));
                     }
                   }
                 }
@@ -118,8 +115,7 @@ function v__df__let_3_0(v_b, v_n, v_s){
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
+  if (typeof main !== 'undefined') v_runIO(main);
 }
 
 })();

@@ -6,8 +6,8 @@ unwrap r = case r of
   Left e -> "left: " ++ e
   Right v -> "right: " ++ v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- unwrap (Left "bad")
         b <- unwrap (Right "good")

@@ -22,8 +22,8 @@ showResult r = case r of
   Ok box -> showBoxedColor box
   Err e -> e
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         s0 <- showBoxedColor (Box Red) ++ " "
         s0 ++ showResult (Ok (Box Green))

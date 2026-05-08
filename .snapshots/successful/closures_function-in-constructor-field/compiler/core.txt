@@ -149,7 +149,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CVar "formatOutputs" )
                 [

@@ -1,13 +1,13 @@
 {- Pattern on the LHS of a do-bind: `Tuple3 a b c <- e`. -}
 import IO.Stdout
+import IO.Args
 
 opTuple : String -> Either ParseError (Tuple3 Int32 Int32 Int32)
 opTuple _ = Right (Tuple3 1 2 3)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Int32 = (do
-        raw <- rawArg
+processInput : String -> IO Never Unit
+processInput raw =
+  let res : Either ParseError Int32 = (do
         Tuple3 a b c <- opTuple raw
         pureEither (case addInt32 a b of
           Left _ -> c
@@ -17,8 +17,16 @@ main rawArg =
         )
       )
    in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
-          ParseError -> IO.Stdout.print "PARSE_ERROR"
+        Left _ -> IO.Stdout.print "PARSE_ERROR"
         Right n -> IO.Stdout.print (showInt32 n)
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO processInput
+    |> handleErrorIO handleInputErr

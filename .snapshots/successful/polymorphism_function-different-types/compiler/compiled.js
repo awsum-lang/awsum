@@ -2,7 +2,6 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
-function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -60,11 +59,9 @@ function v_showResult(v_r){
     }
 }
 
-function main(v__input){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_20_9 = s[1]; return [0, v__do_e_20_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)((v_unwrap)([0, [0, "nested"]]))); } } })(__concat((v_unwrap)([0, "from box"]), " ")));
-}
+const main = (v__let_7)(((s) => { switch(s[0]) { case 0: { const v__do_e_20_9 = s[1]; return [0, v__do_e_20_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)((v_unwrap)([0, [0, "nested"]]))); } } })(__concat((v_unwrap)([0, "from box"]), " ")));
 
-function v__let_2(v_res){
+function v__let_7(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -81,8 +78,7 @@ function v__let_2(v_res){
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
+  if (typeof main !== 'undefined') v_runIO(main);
 }
 
 })();

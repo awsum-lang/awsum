@@ -659,8 +659,16 @@ doAssemble (CoreProgram decls) = do
              ]
       -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
       -- String' for the user's 'main' (cap pre-check). Always emitted —
-      -- 'Main' calls it unconditionally on the input.
-      allNames = helperNames <> ["__entryArgEither"] <> userNames <> ["Main"]
+      -- 'Main' calls it unconditionally on the input. '__getArgs' is
+      -- the read side of the argv cache (set by 'Main' via
+      -- SetEnvironmentVariable, read here by 'BuiltIn.internalGetArgs');
+      -- emitted only when 'runIO' or user code references that built-in.
+      allNames =
+        helperNames
+          <> ["__entryArgEither"]
+          <> [n | (n, keep) <- [("__getArgs", Set.member "internalGetArgs" builtIns)], keep]
+          <> userNames
+          <> ["Main"]
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
 
   let valNames = Set.fromList [n | CValDef n _ <- decls]
@@ -699,9 +707,10 @@ doAssemble (CoreProgram decls) = do
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
   mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   mEntryArg <- mkEntryArgEither
+  mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs tokMap else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> mGetArgs <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -2934,6 +2943,30 @@ mkEntryArgEither = do
           <> unpairedBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
+-- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'. Reads
+--   the cached argv[0] from the "awsum.argv0" environment variable
+--   (set by 'mkMain' via SetEnvironmentVariable on entry) and routes
+--   it through '__entryArgEither' for strict-UTF-16 validation.
+mkGetArgs :: Map Text Word32 -> AsmM MInfo
+mkGetArgs tokMap = do
+  ni <- w16 <$> addStr "__getArgs"
+  si <- w16 <$> addBlob (sigStatic etObject 0)
+  ps <- addParams 0
+  trEnvironment <- addTypeRef (resScopeAR 1) "Environment" "System"
+  getEnvVarRef <-
+    addMemberRef
+      (mrpTR trEnvironment)
+      "GetEnvironmentVariable"
+      [0x00, 0x01, etString, etString]
+  argvKeyTok <- addUS "awsum.argv0"
+  let entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
+      code =
+        cilLdstr argvKeyTok
+          <> cilCall (tokMR getEnvVarRef)
+          <> cilCall entryArgEitherTok
+          <> cilRet
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 1}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -2951,17 +2984,28 @@ mkMain tokMap = do
   let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
   getUtf8Ref <- addMemberRef (mrpTR trEncoding) "get_UTF8" ([0x00, 0x00] <> encodingClass)
   setOutEncRef <- addMemberRef (mrpTR trConsole) "set_OutputEncoding" ([0x00, 0x01, etVoid] <> encodingClass)
-  -- '__entryArgEither' returns a fully-formed Either cell, so 'Main' no
-  -- longer needs a local slot to stash argv[1] during inline Right
-  -- construction. Empty LocalVarSig.
-  localTok <- addLocalSigBytes [0x07, 0x00]
+  -- One local slot of type 'object' to hold argv[0] across the
+  -- 'SetEnvironmentVariable' caching call. Stash + reload pattern is
+  -- needed because CIL has no direct 'swap' opcode.
+  localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
+  -- 'SetEnvironmentVariable' caches argv[0] so 'BuiltIn.internalGetArgs'
+  -- can re-read it via 'GetEnvironmentVariable' from inside 'runIO''s
+  -- 'IOGetArgs' arm. See 'mkGetArgs' for the read side.
+  trEnvironment <- addTypeRef (resScopeAR 1) "Environment" "System"
+  setEnvVarRef <-
+    addMemberRef
+      (mrpTR trEnvironment)
+      "SetEnvironmentVariable"
+      [0x00, 0x02, etVoid, etString, etString]
+  argvKeyTok <- addUS "awsum.argv0"
+  trString <- addTypeRef (resScopeAR 1) "String" "System"
+  let stringTypeTok = tokTR trString
   let vMainTok = fromMaybe (error "no v_main") (Map.lookup (mangle "main") tokMap)
       vRunIOTok = fromMaybe (error "no v_runIO") (Map.lookup (mangle "runIO") tokMap)
-      entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
-      -- After the encoding-setup prologue, push argv[1] (or "") onto the
-      -- stack and hand it to '__entryArgEither' which compares its
-      -- 'String::get_Length()' against the language-fixed cap and
-      -- returns 'Right input' or row-tagged 'Left StringTooLong'.
+      -- After the encoding-setup prologue, push argv[0] (or "") onto
+      -- the stack and cache it via SetEnvironmentVariable so
+      -- 'BuiltIn.internalGetArgs' can read it later from inside
+      -- 'runIO''s 'IOGetArgs' arm. 'main' itself takes no arguments.
       code =
         cilCall (tokMR getUtf8Ref) -- push UTF-8 Encoding instance
           <> cilCall (tokMR setOutEncRef) -- Console.OutputEncoding = it
@@ -2975,9 +3019,16 @@ mkMain tokMap = do
           <> cilLdarg 0 -- 13 (has_arg)
           <> cilLdcI4_0 -- 14
           <> cilLdelemRef -- 15
-          -- call_main: input on top of stack; '__entryArgEither' wraps it
-          -- in 'Either (StringTooLong | …) String' (cap pre-check).
-          <> cilCall entryArgEitherTok
+          -- call_main: input on top of stack. Cache it via
+          -- SetEnvironmentVariable. CIL has no direct 'swap' opcode
+          -- so route through local slot 0: stloc.0; ldstr; ldloc.0;
+          -- castclass; call SetEnv (returns void).
+          <> cilStloc 0
+          <> cilLdstr argvKeyTok
+          <> cilLdloc 0
+          <> cilCastclass stringTypeTok
+          <> cilCall (tokMR setEnvVarRef)
+          -- v_main is a zero-arg value (CValDef): build the IO tree.
           <> cilCall vMainTok
           -- v_main returned an IO tree on the stack; hand it to runIO
           -- to walk and execute the effects. runIO returns Unit which
@@ -3180,6 +3231,13 @@ emitExpr ctx = \case
     CBuiltIn "internalStdoutPrint" | [x] <- xs -> do
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__print"))
+    -- 'BuiltIn.internalGetArgs' — call AwsumMain::__getArgs (token
+    -- looked up via the precomputed map). The helper reads the cached
+    -- argv[0] from the "awsum.argv0" environment variable and routes
+    -- it through '__entryArgEither'.
+    CBuiltIn "internalGetArgs"
+      | [] <- xs ->
+          pure (cilCall (lkTok ctx "__getArgs"))
     CBuiltIn name
       | name == "showInt32" || name == "showUInt8",
         [x] <- xs -> do

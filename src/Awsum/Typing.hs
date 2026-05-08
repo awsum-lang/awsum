@@ -371,7 +371,7 @@ prettyPrintTypeError = \case
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
   MainMissing -> "Missing 'main' function"
-  MainWrongType ty -> "Wrong type for 'main': expected Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit, got " <> showType ty
+  MainWrongType ty -> "Wrong type for 'main': expected IO Never Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
   TELowering msg -> msg
   DuplicateTypeDef _ name -> "Duplicate type definition: " <> name
@@ -1054,33 +1054,27 @@ bareBuiltInRef = \case
   _ -> Nothing
 
 -- | Entry-point check: verify the program declares
---   @main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit@.
+--   @main : IO Never Unit@.
 --   Called only from @build@/@run@ — modules without @main@ (libraries,
 --   @Prelude.aww@) pass 'typecheckProgram' but fail here when an executable
 --   is requested.
 --
---   The argument is an 'Either' on a structural sum because the runtime
---   reports two independent failures while decoding @argv[1]@ into an
---   Awsum 'String': length cap exceeded ('StringTooLong') and a stray
---   UTF-16 half surrogate ('UnpairedUtf16Surrogate'). Phase 1 always
---   passes 'Right'; the validators that produce 'Left' move into the
---   per-target entry points incrementally (phase 2.x).
+--   The signature has no parameter: command-line input arrives via
+--   @IO.Args.getArgs@ inside the IO chain (a platform built-in
+--   registered in 'Awsum.Program.Cli'), not as an entry-point
+--   argument. The error row 'Never' means @main@ has handled all
+--   IO failures by the time it is built — typically via
+--   @|> handleErrorIO h@ at the tail of the chain.
 requireMain :: Program -> Either TypeError ()
 requireMain Program {decls} =
   case listToMaybe [t | Sig _ "main" t _ <- toList decls] of
     Nothing -> Left MainMissing
     Just ty ->
-      let stringTy = TyCon noSpan "String"
-          ioNeverUnit =
+      let want =
             TyApp
               noSpan
               (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never"))
               (TyCon noSpan "Unit")
-          tooLong = TyCon noSpan "StringTooLong"
-          unpaired = TyCon noSpan "UnpairedUtf16Surrogate"
-          errSum = TyOr noSpan tooLong unpaired
-          eitherErr = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") errSum) stringTy
-          want = TyArrow noSpan eitherErr ioNeverUnit
        in unless (ty == want) (Left (MainWrongType ty))
 
 -- | Reject a fresh list of binders if any of them are already in scope or

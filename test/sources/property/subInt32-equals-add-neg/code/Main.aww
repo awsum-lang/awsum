@@ -4,6 +4,7 @@
 -- pairs constructively, so neither UNDERFLOW nor OVERFLOW is
 -- expected to fire.
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple2 Int32 Int32)
 parseInput raw = case splitOnFirst ":" raw of
@@ -20,8 +21,8 @@ property a b = do
   addResult <- addInt32 a negB
   pureEither (eqInt32 subResult addResult)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = (do
         raw <- rawArg
         Tuple2 a b <- parseInput raw
@@ -36,3 +37,9 @@ main rawArg =
           OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

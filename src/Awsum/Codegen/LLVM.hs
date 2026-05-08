@@ -277,7 +277,16 @@ header builtIns =
          -- footer). All runtime helpers handle a zero-length payload via
          -- the standard 'load i32' at offset 0 / 4 — no NUL byte, no
          -- special-case path.
-         "@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }"
+         "@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }",
+         -- '@.cli_arg' caches the entry-point's @argv[1]@ pointer (or
+         -- @.empty@ when absent) so 'BuiltIn.internalGetArgs' can re-
+         -- read it from the prelude's 'runIO' arm without threading
+         -- @argc@/@argv@ through the IO tree. Argv is invariant during
+         -- program execution, so a single store at entry is enough —
+         -- the no-memoisation principle is on the Awsum side (each
+         -- 'IO.Args.getArgs' call yields a fresh 'Either' cell), not
+         -- the C-level argv read.
+         "@.cli_arg = internal global ptr null"
        ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -349,10 +358,12 @@ runtime builtIns =
         if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
         if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
         if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
-        -- '__entryArgEither' is always emitted: every program has a 'main',
-        -- and 'footerPosix' / 'footerWindows' always call this helper to
-        -- wrap argv[1] in 'Right' or in row-tagged 'Left StringTooLong'.
-        rtEntryArgEither
+        -- '__entryArgEither' is now used only by '__getArgs'; gated
+        -- on the same built-in. Programs without 'IO.Args.getArgs'
+        -- skip both helpers entirely (the entry-stub no longer
+        -- wraps argv in 'Either' since 'main' takes no parameter).
+        if Set.member "internalGetArgs" builtIns then rtEntryArgEither else "",
+        if Set.member "internalGetArgs" builtIns then rtGetArgs else ""
       ]
     -- '__concat' implements 'BuiltIn.concatString' on the length-
     -- prefixed string layout. Returns 'Either StringTooLong String' as
@@ -1537,6 +1548,20 @@ runtime builtIns =
     --   Left  e     : malloc(16); [tag=0, ptr=row]
     --                 row = malloc(16); [rowTag, ptr=inner]   (CRow box)
     --                 inner = malloc(8); [tag=0]              (singleton CCon)
+    -- '__getArgs' is the zero-arg runtime helper for
+    -- 'BuiltIn.internalGetArgs', called from 'runIO''s 'IOGetArgs' arm.
+    -- Reads the cached argv[1] from '@.cli_arg' and routes it through
+    -- '__entryArgEither' for the strict-UTF-16 validation. Each call
+    -- returns a fresh 'Either' cell — argv is invariant during
+    -- execution, so repeat calls are deterministically equal.
+    rtGetArgs =
+      unlines
+        [ "define internal ptr @__getArgs() {",
+          "  %arg = load ptr, ptr @.cli_arg",
+          "  %either = call ptr @__entryArgEither(ptr %arg)",
+          "  ret ptr %either",
+          "}"
+        ]
     rtEntryArgEither =
       unlines
         [ "define internal ptr @__entryArgEither(ptr %arg) {",
@@ -1759,18 +1784,21 @@ footerPosix =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]",
-      -- '__entryArgEither' walks the UTF-8 input counting UTF-16 code
-      -- units with short-circuit at cap+1, returning a fully-formed
-      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String' cell
-      -- (Right input on fit, row-tagged Left StringTooLong on overflow).
-      "  %either = call ptr @__entryArgEither(ptr %input)",
-      -- v_main returns an IO tree (lazy IO); the prelude's `runIO`
-      -- walks it to execute any effects. `runIO` is a regular Awsum
-      -- function emitted via the standard CFunDef path, so it goes
-      -- through TCO and ends up as a bounded-stack loop. The IO
+      -- Cache argv[1] for 'BuiltIn.internalGetArgs' (called from
+      -- 'runIO''s 'IOGetArgs' arm). 'main' itself takes no arguments
+      -- (its signature is 'IO Never Unit'); user code that wants the
+      -- argv reads it through 'IO.Args.getArgs', which lowers to the
+      -- 'IOGetArgs' constructor and goes through this cached pointer
+      -- when 'runIO' walks the IO tree. Argv is invariant for the
+      -- lifetime of the process, so one store at entry is enough.
+      "  store ptr %input, ptr @.cli_arg",
+      -- v_main is a zero-arg value (CValDef) that builds the IO tree;
+      -- `runIO` walks it to execute the effects. `runIO` is a regular
+      -- Awsum function emitted via the standard CFunDef path, so it
+      -- goes through TCO and ends up as a bounded-stack loop. The IO
       -- value itself is a heap-allocated ptr-tagged ADT cell, same
       -- shape as user ADTs.
-      "  %io = call ptr @v_main(ptr %either)",
+      "  %io = call ptr @v_main()",
       "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
@@ -1828,10 +1856,10 @@ footerWindows =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]",
-      -- Same '__entryArgEither' helper as the POSIX path; see footerPosix.
-      "  %either = call ptr @__entryArgEither(ptr %input)",
+      -- Cache argv[1] for 'BuiltIn.internalGetArgs'; see footerPosix.
+      "  store ptr %input, ptr @.cli_arg",
       -- Same IO-tree handoff as the POSIX path; see footerPosix.
-      "  %io = call ptr @v_main(ptr %either)",
+      "  %io = call ptr @v_main()",
       "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
@@ -2266,6 +2294,18 @@ emitExpr ctx = \case
                 tmp
               )
           _ -> error "__print: arity mismatch"
+      -- Zero-arg primitive driving the prelude's `runIO` 'IOGetArgs'
+      -- arm: re-reads argv[1] (cached at entry in @.cli_arg) and wraps
+      -- it in 'Either (StringTooLong | UnpairedUtf16Surrogate) String'
+      -- via '__entryArgEither'. Per the no-memoisation decision each
+      -- call yields a fresh cell — argv is invariant, so repeat calls
+      -- are deterministically equal.
+      CBuiltIn "internalGetArgs" ->
+        case xs of
+          [] -> do
+            tmp <- freshTemp
+            pure ("  " <> tmp <> " = call ptr @__getArgs()\n", tmp)
+          _ -> error "__getArgs: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of

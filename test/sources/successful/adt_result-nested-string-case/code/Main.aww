@@ -12,8 +12,8 @@ unwrap r = case r of
     Ok value -> value
     Err value -> value
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         s0 <- unwrap (Ok (Ok "1")) ++ ","
         s1 <- s0 ++ unwrap (Ok (Err "2"))

@@ -91,7 +91,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCon 2
                 [ CVar "runTest"
                 , CCon 0
@@ -115,14 +115,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$scc$$df$andThenEither$0_$lam$2_build" [ "$args" ]
+        , CFunDef "$scc$$df$andThenEither$0_$lam$7_build" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$df$andThenEither$0_$lam$2_build" )
+                ( CVar "$cps$$scc$$df$andThenEither$0_$lam$7_build" )
                 [ CVar "$args"
                 , CCon 0 []
                 ]
             )
-        , CFunDef "$cps$$scc$$df$andThenEither$0_$lam$2_build"
+        , CFunDef "$cps$$scc$$df$andThenEither$0_$lam$7_build"
             [ "$args"
             , "$k"
             ]
@@ -141,7 +141,7 @@ CoreProgram
                                 ( 0
                                 , [ "e" ]
                                 , CCall
-                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$2_build" )
+                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$7_build" )
                                     [ CVar "$k"
                                     , CCon 0
                                         [ CVar "e" ]
@@ -190,7 +190,7 @@ CoreProgram
                                 ( 0
                                 , [ "__w0" ]
                                 , CCall
-                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$2_build" )
+                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$7_build" )
                                     [ CVar "$k"
                                     , CCon 1
                                         [ CVar "acc" ]
@@ -216,7 +216,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$scc$$df$andThenEither$0_$lam$2_build"
+        , CFunDef "$apply$$scc$$df$andThenEither$0_$lam$7_build"
             [ "$k"
             , "$x"
             ]
@@ -246,7 +246,7 @@ CoreProgram
             , "acc"
             ]
             ( CCall
-                ( CVar "$scc$$df$andThenEither$0_$lam$2_build" )
+                ( CVar "$scc$$df$andThenEither$0_$lam$7_build" )
                 [ CCon 2
                     [ CVar "n"
                     , CVar "acc"

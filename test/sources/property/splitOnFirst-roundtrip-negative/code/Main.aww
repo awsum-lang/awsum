@@ -3,6 +3,7 @@
 -- `[A-Z]+` and `s` from `[a-z]*` — disjoint alphabets guarantee
 -- non-occurrence by construction.
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple2 String String)
 parseInput raw = case splitOnFirst ":" raw of
@@ -14,8 +15,8 @@ property sep s = case splitOnFirst sep s of
   Nothing -> True
   Just _ -> False
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
         raw <- rawArg
         Tuple2 sep s <- parseInput raw
@@ -28,3 +29,9 @@ main rawArg =
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO (\s -> runMain (Right s))
+    |> handleErrorIO (\e -> runMain (Left e))

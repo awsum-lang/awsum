@@ -282,7 +282,24 @@ header builtIns =
             -- Encoding mirrors the other backends: Right=[1, arg];
             -- Left=[0, [rowTag, [0]]] — three layers (inner CCon, row
             -- wrap, Left).
-            "function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [" <> show stringTooLongTag <> ", [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; } return [1, arg]; }"
+            -- '__entryArgEither' is now used only by '__getArgs' (the
+            -- main-entry stub no longer wraps argv in 'Either' since
+            -- 'main : IO Never Unit' takes no parameter). Gate on the
+            -- same builtin so a program without 'IO.Args.getArgs'
+            -- doesn't ship the validator.
+            if Set.member "internalGetArgs" builtIns
+              then "function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [" <> show stringTooLongTag <> ", [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; } return [1, arg]; }"
+              else "",
+            -- __getArgs: zero-arg helper called by 'runIO''s 'IOGetArgs'
+            -- arm via 'BuiltIn.internalGetArgs'. Reads 'process.argv[2]'
+            -- (same slot as the entry-point glue) and routes through
+            -- '__entryArgEither' for the strict-UTF-16 validation. Per
+            -- the no-memoisation decision each call re-reads argv;
+            -- argv is invariant during execution, so repeat calls
+            -- return the same value deterministically.
+            if Set.member "internalGetArgs" builtIns
+              then "function __getArgs(){ return __entryArgEither(process.argv[2] ?? \"\"); }"
+              else ""
           ]
    in T.intercalate "\n" lns <> "\n"
 
@@ -295,14 +312,14 @@ cliFooter =
   unlines
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",
-      "  const arg = process.argv[2] ?? \"\";",
-      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
-      -- user's main. '__entryArgEither' compares 'arg.length' against the
-      -- language-fixed cap and returns either 'Right arg' or row-tagged
-      -- 'Left StringTooLong'. The IO tree from main is walked by 'runIO'
-      -- (defined in the prelude as a regular Awsum function) which performs
-      -- any effects via 'BuiltIn.internalStdoutPrint'.
-      "  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));",
+      -- v_main is a zero-arg value (CValDef in Core) that the JS
+      -- codegen emits as a top-level 'const main = …' — i.e. the IO
+      -- tree is the value of that binding, not a function. 'v_runIO'
+      -- walks the tree for effects. User code reads argv through
+      -- 'IO.Args.getArgs' inside the chain; that lowers to an
+      -- 'IOGetArgs' constructor whose runIO arm calls '__getArgs'
+      -- (which reads 'process.argv[2]' lazily on each call).
+      "  if (typeof main !== 'undefined') v_runIO(main);",
       "}"
     ]
 
@@ -466,6 +483,10 @@ emitExpr = \case
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
+      CBuiltIn "internalGetArgs" ->
+        case xs of
+          [] -> "__getArgs()"
+          _ -> error "__getArgs: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of

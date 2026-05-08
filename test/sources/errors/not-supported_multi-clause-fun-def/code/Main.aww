@@ -11,5 +11,5 @@ describe (Nothing) = "no"
 
 describe (Just n) = showInt32 n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (describe Nothing)
+main : IO Never Unit
+main = IO.Stdout.print (describe Nothing)

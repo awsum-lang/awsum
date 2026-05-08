@@ -9,6 +9,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
+@.cli_arg = internal global ptr null
 
 @.str.0 = private unnamed_addr constant {i32, i32, [4 x i8]} { i32 4, i32 4, [4 x i8] c"True" }
 @.str.1 = private unnamed_addr constant {i32, i32, [5 x i8]} { i32 5, i32 5, [5 x i8] c"False" }
@@ -137,6 +138,13 @@ unpaired:
 }
 
 
+define internal ptr @__getArgs() {
+  %arg = load ptr, ptr @.cli_arg
+  %either = call ptr @__entryArgEither(ptr %arg)
+  ret ptr %either
+}
+
+
 define internal ptr @v_and(ptr %v_a, ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_a, i32 0
   %t1 = load ptr, ptr %t0
@@ -192,7 +200,7 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 ]
+  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 i64 3, label %tco.case.arm.3.23 ]
 tco.case.arm.0.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
@@ -213,11 +221,18 @@ tco.case.arm.0.22:
   br label %tco.loop.0
 tco.case.default.21:
   unreachable
+tco.case.arm.3.23:
+  %t24 = getelementptr ptr, ptr %t4, i32 1
+  %t25 = load ptr, ptr %t24
+  %t26 = call ptr @__getArgs()
+  %t27 = call ptr @v__apply1(ptr %t25, ptr %t26)
+  store ptr %t27, ptr %t3
+  br label %tco.loop.0
 tco.case.default.8:
   unreachable
 tco.exit.1:
-  %t23 = load ptr, ptr %t2
-  ret ptr %t23
+  %t28 = load ptr, ptr %t2
+  ret ptr %t28
 }
 
 define internal ptr @v_un(ptr %v_x) {
@@ -4435,7 +4450,7 @@ define internal ptr @v_res() {
   ret ptr %t1498
 }
 
-define internal ptr @v_main(ptr %v__input) {
+define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 24)
   %t1 = inttoptr i64 2 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -4457,6 +4472,18 @@ define internal ptr @v_main(ptr %v__input) {
   %t13 = getelementptr ptr, ptr %t0, i32 2
   store ptr %t6, ptr %t13
   ret ptr %t0
+}
+
+define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
+  %t0 = getelementptr ptr, ptr %v__cl, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ ]
+case.default.3:
+  unreachable
+case.join.4:
+  %t5 = phi ptr 
+  ret ptr %t5
 }
 
 declare ptr @GetCommandLineW()
@@ -4486,8 +4513,8 @@ no_arg:
   br label %call_main
 call_main:
   %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]
-  %either = call ptr @__entryArgEither(ptr %input)
-  %io = call ptr @v_main(ptr %either)
+  store ptr %input, ptr @.cli_arg
+  %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0
 }

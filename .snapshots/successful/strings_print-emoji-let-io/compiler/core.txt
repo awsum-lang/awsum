@@ -31,9 +31,9 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCon 2
                     [ CString "💩"
                     , CCon 0
@@ -41,7 +41,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "unit" ]
+        , CFunDef "$let$7" [ "unit" ]
             ( CCon 2
                 [ CString "🔥"
                 , CCon 0

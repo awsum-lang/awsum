@@ -76,9 +76,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$3" )
+                ( CVar "$let$8" )
                 [ CCall
                     ( CVar "both" )
                     [ CIntLit 11 TInt32
@@ -86,7 +86,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$2"
+        , CFunDef "$lam$7"
             [ "a"
             , "b"
             , "_n"
@@ -97,7 +97,7 @@ CoreProgram
                 , CVar "b"
                 ]
             )
-        , CFunDef "$let$3" [ "res" ]
+        , CFunDef "$let$8" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -126,7 +126,7 @@ CoreProgram
             , "$df$apply$0$cap0$1"
             ]
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$7" )
                 [ CVar "$df$apply$0$cap0$0"
                 , CVar "$df$apply$0$cap0$1"
                 , CVar "x"

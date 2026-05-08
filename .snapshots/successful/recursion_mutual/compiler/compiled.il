@@ -91,7 +91,7 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_0, IL_tco_arm_2)
+    switch (IL_tco_arm_0, IL_tco_arm_2, IL_tco_arm_3)
   IL_tco_arm_0:
     dup
     ldc.i4.1
@@ -122,10 +122,21 @@
     ldloc.1
     starg.s 0
     br IL_tco_loop
+  IL_tco_arm_3:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    call object AwsumMain::__getArgs()
+    call object AwsumMain::v__apply1(object, object)
+    starg.s 0
+    br IL_tco_loop
   }
 
 
-  .method private hidebysig static object v_main(object) cil managed
+  .method private hidebysig static object v_main() cil managed
   {
     ldc.i4.1
     newarr [System.Runtime]System.Object
@@ -135,12 +146,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v_handleA(object)
-    call object AwsumMain::v__let_2(object)
+    call object AwsumMain::v__let_7(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_2(object) cil managed
+  .method private hidebysig static object v__let_7(object) cil managed
   {
     ldarg.0
     dup
@@ -224,6 +235,19 @@
     stelem.ref
     stelem.ref
     br.s IL_join
+  IL_join:
+    ret
+  }
+
+
+  .method private hidebysig static object v__apply1(object, object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch ()
   IL_join:
     ret
   }
@@ -768,6 +792,15 @@
     ret
   }
 
+  .method private hidebysig static object __getArgs() cil managed
+  {
+    .maxstack 1
+    ldstr "awsum.argv0"
+    call string [System.Runtime]System.Environment::GetEnvironmentVariable(string)
+    call object AwsumMain::__entryArgEither(object)
+    ret
+  }
+
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
@@ -786,8 +819,12 @@
     ldc.i4.0
     ldelem.ref
   call_main:
-    call object AwsumMain::__entryArgEither(object)
-    call object AwsumMain::v_main(object)
+    stloc.0
+    ldstr "awsum.argv0"
+    ldloc.0
+    castclass string
+    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)
+    call object AwsumMain::v_main()
     call object AwsumMain::v_runIO(object)
     pop
     ret

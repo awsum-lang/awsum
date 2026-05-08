@@ -61,6 +61,18 @@ CoreProgram
                                 )
                             ]
                         )
+                    ,
+                        ( 3
+                        , [ "cont" ]
+                        , CContinue
+                            [ CCall
+                                ( CVar "$apply1" )
+                                [ CVar "cont"
+                                , CCall
+                                    ( CBuiltIn "internalGetArgs" ) []
+                                ]
+                            ]
+                        )
                     ]
                 )
             )
@@ -3968,7 +3980,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCon 2
                 [ CCall
                     ( CVar "showBool" )
@@ -3976,6 +3988,13 @@ CoreProgram
                 , CCon 0
                     [ CCon 0 [] ]
                 ]
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" ) []
             )
         ]
     }

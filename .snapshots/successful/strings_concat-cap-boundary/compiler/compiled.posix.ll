@@ -9,6 +9,7 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
+@.cli_arg = internal global ptr null
 
 @.str.0 = private unnamed_addr constant {i32, i32, [384 x i8]} { i32 384, i32 128, [384 x i8] c"\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C\E4\BD\A0\E5\A5\BD\E4\B8\96\E7\95\8C" }
 @.str.1 = private unnamed_addr constant {i32, i32, [36 x i8]} { i32 36, i32 36, [36 x i8] c"FAIL: build returned Left at the cap" }
@@ -123,117 +124,6 @@ define internal ptr @__lengthUtf16CodeUnits(ptr %s) {
   %box = call ptr @malloc(i64 4)
   store i32 %u16, ptr %box
   ret ptr %box
-}
-
-
-define internal ptr @__entryArgEither(ptr %arg) {
-entry:
-  %i_p = alloca i64, align 8
-  store i64 0, ptr %i_p
-  %n_p = alloca i32, align 4
-  store i32 0, ptr %n_p
-  %surr_p = alloca i32, align 4
-  store i32 0, ptr %surr_p
-  br label %head
-head:
-  %i = load i64, ptr %i_p
-  %bp = getelementptr i8, ptr %arg, i64 %i
-  %b = load i8, ptr %bp
-  %is_nul = icmp eq i8 %b, 0
-  br i1 %is_nul, label %scan_done, label %body
-body:
-  %bz = zext i8 %b to i32
-  %top2 = and i32 %bz, 192
-  %is_cont = icmp eq i32 %top2, 128
-  br i1 %is_cont, label %step, label %surrogate_check
-surrogate_check:
-  %is_ED = icmp eq i32 %bz, 237
-  br i1 %is_ED, label %peek_next, label %check4
-peek_next:
-  %i_next = add i64 %i, 1
-  %bp_next = getelementptr i8, ptr %arg, i64 %i_next
-  %nxt = load i8, ptr %bp_next
-  %nxt_z = zext i8 %nxt to i32
-  %nxt_top3 = and i32 %nxt_z, 224
-  %is_surr = icmp eq i32 %nxt_top3, 160
-  br i1 %is_surr, label %set_surr, label %check4
-set_surr:
-  store i32 1, ptr %surr_p
-  br label %check4
-check4:
-  %top5 = and i32 %bz, 248
-  %is_4 = icmp eq i32 %top5, 240
-  br i1 %is_4, label %add2, label %add1
-add2:
-  %n2 = load i32, ptr %n_p
-  %n2_new = add i32 %n2, 2
-  store i32 %n2_new, ptr %n_p
-  %over2 = icmp ugt i32 %n2_new, 134217728
-  br i1 %over2, label %scan_done, label %step
-add1:
-  %n1 = load i32, ptr %n_p
-  %n1_new = add i32 %n1, 1
-  store i32 %n1_new, ptr %n_p
-  %over1 = icmp ugt i32 %n1_new, 134217728
-  br i1 %over1, label %scan_done, label %step
-step:
-  %i1 = add i64 %i, 1
-  store i64 %i1, ptr %i_p
-  br label %head
-scan_done:
-  %n_final = load i32, ptr %n_p
-  %over_final = icmp ugt i32 %n_final, 134217728
-  br i1 %over_final, label %too_long, label %check_surr
-check_surr:
-  %surr_final = load i32, ptr %surr_p
-  %is_surr_set = icmp ne i32 %surr_final, 0
-  br i1 %is_surr_set, label %unpaired, label %fits
-fits:
-  %byte_count_64 = load i64, ptr %i_p
-  %byte_count_32 = trunc i64 %byte_count_64 to i32
-  %alloc_size_64 = add i64 %byte_count_64, 8
-  %wrapped = call ptr @malloc(i64 %alloc_size_64)
-  store i32 %byte_count_32, ptr %wrapped
-  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4
-  store i32 %n_final, ptr %wrapped_u16p
-  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8
-  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)
-  %right = call ptr @malloc(i64 16)
-  %right_tag = inttoptr i64 1 to ptr
-  store ptr %right_tag, ptr %right
-  %right_f = getelementptr ptr, ptr %right, i32 1
-  store ptr %wrapped, ptr %right_f
-  ret ptr %right
-too_long:
-  %tl_inner = call ptr @malloc(i64 8)
-  %tl_inner_tag = inttoptr i64 0 to ptr
-  store ptr %tl_inner_tag, ptr %tl_inner
-  %tl_row = call ptr @malloc(i64 16)
-  %tl_row_tag = inttoptr i64 589989748 to ptr
-  store ptr %tl_row_tag, ptr %tl_row
-  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1
-  store ptr %tl_inner, ptr %tl_row_f
-  %tl_left = call ptr @malloc(i64 16)
-  %tl_left_tag = inttoptr i64 0 to ptr
-  store ptr %tl_left_tag, ptr %tl_left
-  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1
-  store ptr %tl_row, ptr %tl_left_f
-  ret ptr %tl_left
-unpaired:
-  %us_inner = call ptr @malloc(i64 8)
-  %us_inner_tag = inttoptr i64 0 to ptr
-  store ptr %us_inner_tag, ptr %us_inner
-  %us_row = call ptr @malloc(i64 16)
-  %us_row_tag = inttoptr i64 502975519 to ptr
-  store ptr %us_row_tag, ptr %us_row
-  %us_row_f = getelementptr ptr, ptr %us_row, i32 1
-  store ptr %us_inner, ptr %us_row_f
-  %us_left = call ptr @malloc(i64 16)
-  %us_left_tag = inttoptr i64 0 to ptr
-  store ptr %us_left_tag, ptr %us_left
-  %us_left_f = getelementptr ptr, ptr %us_left, i32 1
-  store ptr %us_row, ptr %us_left_f
-  ret ptr %us_left
 }
 
 
@@ -354,7 +244,7 @@ case.join.7:
   ret ptr %t44
 }
 
-define internal ptr @v_main(ptr %v__input) {
+define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 24)
   %t1 = inttoptr i64 2 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
@@ -413,16 +303,16 @@ case.join.4:
   ret ptr %t21
 }
 
-define internal ptr @v__scc__df_andThenEither_0__lam_2_build(ptr %v__args) {
+define internal ptr @v__scc__df_andThenEither_0__lam_7_build(ptr %v__args) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 0 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
-  %t3 = call ptr @v__cps__scc__df_andThenEither_0__lam_2_build(ptr %v__args, ptr %t0)
+  %t3 = call ptr @v__cps__scc__df_andThenEither_0__lam_7_build(ptr %v__args, ptr %t0)
   ret ptr %t3
 }
 
-define internal ptr @v__cps__scc__df_andThenEither_0__lam_2_build(ptr %v__args, ptr %v__k) {
+define internal ptr @v__cps__scc__df_andThenEither_0__lam_7_build(ptr %v__args, ptr %v__k) {
 entry:
   %t3 = alloca ptr
   store ptr %v__args, ptr %t3
@@ -455,7 +345,7 @@ tco.case.arm.0.20:
   store ptr %t24, ptr %t25
   %t26 = getelementptr ptr, ptr %t23, i32 1
   store ptr %t22, ptr %t26
-  %t27 = call ptr @v__apply__scc__df_andThenEither_0__lam_2_build(ptr %t6, ptr %t23)
+  %t27 = call ptr @v__apply__scc__df_andThenEither_0__lam_7_build(ptr %t6, ptr %t23)
   store ptr %t27, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.28:
@@ -515,7 +405,7 @@ tco.case.arm.0.60:
   store ptr %t64, ptr %t65
   %t66 = getelementptr ptr, ptr %t63, i32 1
   store ptr %t54, ptr %t66
-  %t67 = call ptr @v__apply__scc__df_andThenEither_0__lam_2_build(ptr %t6, ptr %t63)
+  %t67 = call ptr @v__apply__scc__df_andThenEither_0__lam_7_build(ptr %t6, ptr %t63)
   store ptr %t67, ptr %t2
   br label %tco.exit.1
 tco.case.arm.1.68:
@@ -542,7 +432,7 @@ tco.exit.1:
   ret ptr %t77
 }
 
-define internal ptr @v__apply__scc__df_andThenEither_0__lam_2_build(ptr %v__k, ptr %v__x) {
+define internal ptr @v__apply__scc__df_andThenEither_0__lam_7_build(ptr %v__k, ptr %v__x) {
 entry:
   %t3 = alloca ptr
   store ptr %v__k, ptr %t3
@@ -583,7 +473,7 @@ define internal ptr @v_build(ptr %v_n, ptr %v_acc) {
   store ptr %v_n, ptr %t3
   %t4 = getelementptr ptr, ptr %t0, i32 2
   store ptr %v_acc, ptr %t4
-  %t5 = call ptr @v__scc__df_andThenEither_0__lam_2_build(ptr %t0)
+  %t5 = call ptr @v__scc__df_andThenEither_0__lam_7_build(ptr %t0)
   ret ptr %t5
 }
 
@@ -598,8 +488,8 @@ no_arg:
   br label %call_main
 call_main:
   %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]
-  %either = call ptr @__entryArgEither(ptr %input)
-  %io = call ptr @v_main(ptr %either)
+  store ptr %input, ptr @.cli_arg
+  %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0
 }

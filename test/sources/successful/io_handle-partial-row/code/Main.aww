@@ -36,7 +36,7 @@ handleRemainingErrors e = case e of
   E1 -> IO.Stdout.print "got E1"
   E2 -> IO.Stdout.print "got E2"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = failingComputation
+main : IO Never Unit
+main = failingComputation
   |> handleErrorIO handleSomeErrors
   |> handleErrorIO handleRemainingErrors

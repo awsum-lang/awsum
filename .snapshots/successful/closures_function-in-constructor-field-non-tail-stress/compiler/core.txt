@@ -157,7 +157,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CCall
                     ( CVar "countWithBox" )

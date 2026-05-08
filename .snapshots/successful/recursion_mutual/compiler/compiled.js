@@ -3,6 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
 function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
+function __getArgs(){ return __entryArgEither(process.argv[2] ?? ""); }
 
 function v_runIO(v_io){
   while (true) {
@@ -27,16 +28,20 @@ function v_runIO(v_io){
             }
           }
         }
+        case 3: {
+          const v_cont = __s[1];
+          const __t0 = (v__apply1)(v_cont, __getArgs());
+          v_io = __t0;
+          continue;
+        }
       }
     }
   }
 }
 
-function main(v__input){
-    return (v__let_2)((v_handleA)([0]));
-}
+const main = (v__let_7)((v_handleA)([0]));
 
-function v__let_2(v_res){
+function v__let_7(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -48,6 +53,14 @@ function v__let_2(v_res){
           const v_s = __s[1];
           return [2, v_s, [0, [0]]];
         }
+      }
+    }
+}
+
+function v__apply1(v__cl, v__arg0){
+    {
+      const __s = v__cl;
+      switch (__s[0]) {
       }
     }
 }
@@ -220,8 +233,7 @@ function v_handleA(v_step){
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
+  if (typeof main !== 'undefined') v_runIO(main);
 }
 
 })();

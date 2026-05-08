@@ -171,12 +171,13 @@ importCount = 3
 -- __mulInt32, __negInt32, __addUInt8, __subUInt8, __mulUInt8, __addUInt32,
 -- __subUInt32, __mulUInt32, __splitOnFirst, __parseInt32, __parseUInt8,
 -- __parseUInt32, __lengthCodePoints, __lengthUtf16CodeUnits,
--- __lengthUtf8Bytes, __get_arg, __entryArgEither, __utf16_of_range
+-- __lengthUtf8Bytes, __get_arg, __entryArgEither, __utf16_of_range,
+-- __getArgs
 runtimeCount :: Word32
-runtimeCount = 34
+runtimeCount = 35
 
 -- Runtime helper function indices (after imports)
-idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange :: Word32
+idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs :: Word32
 idxAlloc = importCount
 idxMemcpy = importCount + 1
 idxConcat = importCount + 2
@@ -211,6 +212,7 @@ idxLengthBytesAsUtf8 = importCount + 30
 idxGetArg = importCount + 31
 idxEntryArgEither = importCount + 32
 idxUtf16OfRange = importCount + 33
+idxGetArgs = importCount + 34
 
 buildInfo :: CoreProgram -> WasmInfo
 buildInfo prog@(CoreProgram decls) =
@@ -348,6 +350,7 @@ buildTypeSection info (CoreProgram decls) =
                FuncType 2 True, -- __concat (dedup with args_sizes_get)
                FuncType 1 True, -- __print (dedup with __alloc)
                FuncType 0 True, -- __get_arg()->i32
+               FuncType 0 True, -- __getArgs()->i32 (dedup with __get_arg)
                FuncType 2 True -- __utf16_of_range(p, len) (dedup with __concat)
              ]
           -- User functions
@@ -436,7 +439,8 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf8Bytes
           lookupType (FuncType 0 True) typeMap, -- __get_arg
           lookupType (FuncType 1 True) typeMap, -- __entryArgEither
-          lookupType (FuncType 2 True) typeMap -- __utf16_of_range
+          lookupType (FuncType 2 True) typeMap, -- __utf16_of_range
+          lookupType (FuncType 0 True) typeMap -- __getArgs
         ]
           -- User declarations
           <> [lookupType (funcTypeOfDecl d) typeMap | d <- decls]
@@ -574,7 +578,8 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeLengthBytesAsUtf8,
           codeGetArg info,
           codeEntryArgEither,
-          codeUtf16OfRange
+          codeUtf16OfRange,
+          codeGetArgs
         ]
           -- User declarations
           <> map (codeUserDecl info typeMap) decls
@@ -4285,6 +4290,23 @@ codeLengthUtf16CodeUnits =
         encodeULEB128 1
       ]
 
+-- __getArgs() -> i32. Zero-arg helper for 'BuiltIn.internalGetArgs',
+-- called from 'runIO''s 'IOGetArgs' arm. Re-reads argv via WASI
+-- 'args_get' through '__get_arg' and routes it through
+-- '__entryArgEither'. Per the no-memoisation decision each call
+-- yields a fresh 'Either' cell — argv is invariant during execution
+-- so repeat calls are deterministically equal.
+codeGetArgs :: [Word8]
+codeGetArgs =
+  encodeBody
+    (encodeLocals 0)
+    $ concat
+      [ [opCall],
+        encodeULEB128 idxGetArg,
+        [opCall],
+        encodeULEB128 idxEntryArgEither
+      ]
+
 -- __get_arg() -> i32
 -- locals: $argv_buf(0), $ptrs(1)
 codeGetArg :: WasmInfo -> [Word8]
@@ -4834,15 +4856,12 @@ codeStart info =
    in encodeBody
         (encodeLocals 0)
         $ concat
-          [ -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
-            -- String' (cap pre-check with UTF-8 short-circuit) so the user's
-            -- main receives 'Left StringTooLong' on overflow. v_main returns
-            -- an IO tree which runIO walks for its effects; runIO returns
-            -- Unit which we discard.
-            [opCall],
-            encodeULEB128 idxGetArg,
-            [opCall],
-            encodeULEB128 idxEntryArgEither,
+          [ -- v_main is a zero-arg value (CValDef) building the IO tree;
+            -- 'runIO' walks it for effects and returns Unit (discarded).
+            -- User code reads argv through 'IO.Args.getArgs' inside
+            -- the chain; that lowers to an 'IOGetArgs' constructor
+            -- whose runIO arm calls '__getArgs' (re-reads WASI on
+            -- each call).
             [opCall],
             encodeULEB128 mainIdx,
             [opCall],
@@ -4945,6 +4964,12 @@ emitExpr ctx = \case
             emitExpr ctx x
               <> [opCall]
               <> encodeULEB128 idxPrint
+      -- 'BuiltIn.internalGetArgs' — call '__getArgs', which re-reads
+      -- argv via WASI 'args_get' and routes the result through
+      -- '__entryArgEither'.
+      CBuiltIn "internalGetArgs"
+        | [] <- xs ->
+            [opCall] <> encodeULEB128 idxGetArgs
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

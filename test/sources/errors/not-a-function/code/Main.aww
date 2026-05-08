@@ -1,7 +1,8 @@
 -- Error: applying a String value as if it were a function
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg = case rawArg of
-  Left _ -> IO.Stdout.print "x"
-  Right input -> input input
+notAFn : String
+notAFn = "x"
+
+main : IO Never Unit
+main = IO.Stdout.print (notAFn notAFn)

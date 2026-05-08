@@ -33,7 +33,7 @@ CoreProgram
             )
         , CFunDef "identity" [ "x" ]
             ( CVar "x" )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCon 2
                 [ CCase
                     ( CCall

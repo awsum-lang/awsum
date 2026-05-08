@@ -425,16 +425,16 @@ greet x = case x of
   (n : Int32) -> "n=" ++ showInt32 n
   (s : String) -> "s=" ++ s
 
-main : String -> IO Unit
-main _input = IO.Stdout.print (greet "hello")  -- "hello" is a String, fits the row
+main : IO Never Unit
+main = IO.Stdout.print (greet "hello")  -- "hello" is a String, fits the row
 ```
 
 Injection works through nominal heads too: `Maybe Bool` fits where `Maybe (Bool | Unit)` is expected. Values built outside a row context are normalised at the boundary by a per-shape lifting helper, so a top-level `defaultJust : Maybe Bool` flows into a slot expecting `Maybe (Bool | Unit)` with no user-written wrapper.
 
 ```awsum
 -- ok: 'Just True' is constructed directly at the row-typed call site.
-main : String -> IO Unit
-main _input = IO.Stdout.print (whatsThat (Just True))
+main : IO Never Unit
+main = IO.Stdout.print (whatsThat (Just True))
 ```
 
 Row labels dispatch by FNV-1a hash; the lowering rejects programs with `Row tag collision` if two distinct labels hash to the same tag — vanishingly unlikely in hand-written code, but a hard guard against adversarial names.
@@ -584,41 +584,75 @@ The same form appears inside `do` blocks (see [`let` inside `do`](#let-inside-do
 `IO e a` is a sum type declared in the prelude:
 
 ```awsum
-type IO e a = IOPure a | IOFail e | IOStdoutPrint String (IO e a)
+type IO e a
+  = IOPure a
+  | IOFail e
+  | IOStdoutPrint String (IO e a)
+  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 ```
 
 An `IO` value is **data**, not an effect. Constructing `IO.Stdout.print "x"` builds an `IOStdoutPrint` cell; the print does not happen at construction. The runtime walks the IO tree returned from `main` and performs the corresponding effects in order. Code that builds an `IO` value but never lets it reach the runtime walker produces no output:
 
 ```awsum
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let unit = IO.Stdout.print "💩"
    in IO.Stdout.print "🔥"
 -- prints `🔥`, not `💩🔥` — the first IO is constructed and discarded
 ```
 
-The error row `e` works exactly like the error row of `Either`: each primitive declares its failure type explicitly. Currently every built-in IO primitive uses `Never`, meaning it cannot fail; this tightens as real error sources (broken pipe, disk full, …) are added. `main`'s required signature is `… -> IO Never Unit`: any non-`Never` error row must be eliminated by the user before `main` returns it (handle the failure value, don't pretend it can't happen).
+The error row `e` works exactly like the error row of `Either`: each primitive declares its failure type explicitly. `main`'s required signature is `IO Never Unit`: any non-`Never` error row must be eliminated by the user before `main` returns it (handle the failure value, don't pretend it can't happen) — typically via `|> handleErrorIO h` at the tail of the chain.
 
-### `bindIO` / `pureIO` / `mapIO` / `mapIOError`
+### Reading the command-line argument
+
+`IO.Args.getArgs : IO (StringTooLong | UnpairedUtf16Surrogate) String` is a CLI platform built-in (registered when `--program-type cli` and `import IO.Args` are both present). The IO chain reads the program's command-line argument from inside the chain rather than as a `main` parameter:
+
+```awsum
+import IO.Stdout
+import IO.Args
+
+greet : String -> IO Never Unit
+greet name = IO.Stdout.print name
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main =
+  IO.Args.getArgs
+    |> andThenIO greet
+    |> handleErrorIO handleInputErr
+```
+
+Both decoding failures (length cap and unpaired UTF-16 surrogate) live in the IO error row, so they compose with `handleErrorIO` like any other IO failure. There is no entry-point parameter to pattern-match against.
+
+### `bindIO` / `andThenIO` / `pureIO` / `failIO` / `mapIO` / `mapIOError` / `handleErrorIO`
 
 Compose `IO` values through the prelude functions, exactly mirroring the `Either` family:
 
 | Either                                           | IO                                            |
 | ------------------------------------------------ | --------------------------------------------- |
 | `bindEither : Either e1 a -> (a -> Either e2 b) -> Either (e1 \| e2) b` | `bindIO : IO e1 a -> (a -> IO e2 b) -> IO (e1 \| e2) b` |
+| `andThenEither : (a -> Either e2 b) -> Either e1 a -> Either (e1 \| e2) b` | `andThenIO : (a -> IO e2 b) -> IO e1 a -> IO (e1 \| e2) b` |
 | `pureEither : a -> Either e a`                   | `pureIO : a -> IO e a`                        |
+| —                                                | `failIO : e -> IO e a`                        |
 | `mapRight : Either e a -> (a -> b) -> Either e b` | `mapIO : IO e a -> (a -> b) -> IO e b`        |
 | `mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a` | `mapIOError : IO e1 a -> (e1 -> e2) -> IO e2 a` |
+| —                                                | `handleErrorIO : (e1 -> IO e2 a) -> IO e1 a -> IO e2 a` |
 
 Sequencing two prints:
 
 ```awsum
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = bindIO (IO.Stdout.print "a") (\_u -> IO.Stdout.print "b")
+main : IO Never Unit
+main =
+  IO.Stdout.print "a"
+    |> andThenIO (\_u -> IO.Stdout.print "b")
 -- prints `ab`
 ```
 
-`do`-notation is hard-coded to `Either` and does not work for `IO`. Sequencing `IO` actions is explicit through `bindIO`. (When type classes land, `do` becomes polymorphic; until then, the lack of overloading is what keeps `do`'s desugaring purely syntactic.)
+`do`-notation is hard-coded to `Either` and does not work for `IO`. Sequencing `IO` actions is explicit through `andThenIO` / `bindIO`. (When type classes land, `do` becomes polymorphic; until then, the lack of overloading is what keeps `do`'s desugaring purely syntactic.)
 
 ### Pattern-matching on `IO` constructors
 

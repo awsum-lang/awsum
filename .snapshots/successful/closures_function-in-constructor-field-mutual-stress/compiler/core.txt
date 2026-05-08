@@ -35,7 +35,7 @@ CoreProgram
             ( CCon 0
                 [ CCon 0 [] ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CCall
                     ( CVar "a" )
@@ -63,7 +63,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$scc$$apply1_$lam$2_a_b" [ "$args" ]
+        , CFunDef "$scc$$apply1_$lam$7_a_b" [ "$args" ]
             ( CLoop
                 ( CCase
                     ( CVar "$args" )
@@ -191,7 +191,7 @@ CoreProgram
             )
         , CFunDef "a" [ "n" ]
             ( CCall
-                ( CVar "$scc$$apply1_$lam$2_a_b" )
+                ( CVar "$scc$$apply1_$lam$7_a_b" )
                 [ CCon 2
                     [ CVar "n" ]
                 ]

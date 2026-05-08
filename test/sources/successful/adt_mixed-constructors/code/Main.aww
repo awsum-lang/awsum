@@ -10,8 +10,8 @@ showToken token = case token of
   Comma -> Right ","
   EOF -> Right "<eof>"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- showToken (Word "hello")
         b <- showToken Comma

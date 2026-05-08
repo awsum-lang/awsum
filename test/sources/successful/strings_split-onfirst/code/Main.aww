@@ -14,8 +14,8 @@ renderTuple a b = do
   s2 <- s1 ++ b
   s2 ++ ")"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- render (splitOnFirst "," "a,b,c")
         b <- render (splitOnFirst "::" "user::42::admin")

@@ -23,7 +23,7 @@ countWithBox b n = case eqInt32 n 0 of
       Right v -> case b of
         Box f -> Right (f v)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = case countWithBox (Box identity) 1_000_000 of
+main : IO Never Unit
+main = case countWithBox (Box identity) 1_000_000 of
   Left _e -> IO.Stdout.print "underflow"
   Right v -> IO.Stdout.print (showInt32 v)

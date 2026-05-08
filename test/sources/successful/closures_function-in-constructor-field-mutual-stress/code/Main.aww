@@ -27,7 +27,7 @@ b n = case eqInt32 n 0 of
     Left e -> Left e
     Right m -> a m
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = case a 1_000_000 of
+main : IO Never Unit
+main = case a 1_000_000 of
   Left _e -> IO.Stdout.print "underflow"
   Right v -> IO.Stdout.print (showInt32 v)

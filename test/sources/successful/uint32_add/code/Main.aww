@@ -6,8 +6,8 @@ render r = case r of
   Left e -> "overflow: " ++ showOverflowError e
   Right v -> "ok: " ++ showUInt32 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- render (addUInt32 2_147_483_647 2_147_483_647)
         b <- render (addUInt32 2_147_483_647 2_147_483_648)

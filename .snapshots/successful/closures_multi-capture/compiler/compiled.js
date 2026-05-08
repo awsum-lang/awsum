@@ -2,7 +2,6 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
-function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -54,15 +53,13 @@ function v_bothBody(v_a, v_b){
     }
 }
 
-function main(v__input){
-    return (v__let_3)((v_both)((11|0), (22|0)));
-}
+const main = (v__let_8)((v_both)((11|0), (22|0)));
 
-function v__lam_2(v_a, v_b, v__n){
+function v__lam_7(v_a, v_b, v__n){
     return (v_bothBody)(v_a, v_b);
 }
 
-function v__let_3(v_res){
+function v__let_8(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -79,12 +76,11 @@ function v__let_3(v_res){
 }
 
 function v__df_apply_0(v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1){
-    return (v__lam_2)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
+    return (v__lam_7)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
+  if (typeof main !== 'undefined') v_runIO(main);
 }
 
 })();

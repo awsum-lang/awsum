@@ -93,7 +93,7 @@ CoreProgram
                     ( 1
                     , [ "a" ]
                     , CCall
-                        ( CVar "$let$2" )
+                        ( CVar "$let$7" )
                         [ CVar "a"
                         , CString "answer="
                         ]
@@ -127,7 +127,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CCall
                     ( CVar "run" )
@@ -172,7 +172,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$2"
+        , CFunDef "$let$7"
             [ "a"
             , "prefix"
             ]

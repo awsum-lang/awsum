@@ -57,7 +57,7 @@ CoreProgram
                     ( 1
                     , [ "a" ]
                     , CCall
-                        ( CVar "$lift$2" )
+                        ( CVar "$lift$7" )
                         [ CCall
                             ( CVar "opB" )
                             [ CVar "a" ]
@@ -114,9 +114,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$3" )
+                ( CVar "$let$8" )
                 [ CCall
                     ( CVar "describe" )
                     [ CCall
@@ -125,7 +125,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$2" [ "__input" ]
+        , CFunDef "$lift$7" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -144,7 +144,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$3" [ "res" ]
+        , CFunDef "$let$8" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

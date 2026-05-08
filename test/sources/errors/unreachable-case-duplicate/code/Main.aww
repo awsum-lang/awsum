@@ -10,5 +10,5 @@ show c = case c of
   Green -> "even more Green"
   Blue -> "Blue"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = IO.Stdout.print (show Red)
+main : IO Never Unit
+main = IO.Stdout.print (show Red)

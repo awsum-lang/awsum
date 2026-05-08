@@ -334,11 +334,17 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
             if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
-            -- '__entryArgEither' is always emitted: every program has a
-            -- '_start', and the entry-point glue calls this helper to wrap
-            -- argv[1] in 'Either (StringTooLong | …) String'.
+            -- '__entryArgEither' / '__get_arg' / '__getArgs' are
+            -- always emitted in the WASM text codegen because the
+            -- binary assembler emits all 35 runtime helpers
+            -- unconditionally (fixed-arity function indices). Gating
+            -- the text would diverge text/binary snapshots without
+            -- changing the binary footprint. A future WASM-binary
+            -- optimisation can drop them per-program; until then,
+            -- text mirrors binary.
             rtEntryArgEither,
-            rtGetArg emptyOff
+            rtGetArg emptyOff,
+            rtGetArgs
           ]
    in T.intercalate "\n\n" lns
 
@@ -1439,6 +1445,20 @@ rtEqI32 =
       "        (local.get $cell))))"
     ]
 
+-- | '__getArgs' is the zero-arg runtime helper for
+--   'BuiltIn.internalGetArgs', called from 'runIO''s 'IOGetArgs' arm.
+--   Re-reads argv via WASI 'args_get' through '$__get_arg' and routes
+--   it through '$__entryArgEither' for strict-UTF-16 validation. Per
+--   the no-memoisation decision each call yields a fresh 'Either'
+--   cell — argv is invariant during execution so repeat calls are
+--   deterministically equal.
+rtGetArgs :: Text
+rtGetArgs =
+  unlines
+    [ "  (func $__getArgs (result i32)",
+      "    (call $__entryArgEither (call $__get_arg)))"
+    ]
+
 rtGetArg :: Int -> Text
 rtGetArg emptyOff =
   unlines
@@ -1556,12 +1576,13 @@ startFunc :: Text
 startFunc =
   unlines
     [ "  (func $_start (export \"_start\")",
-      -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
-      -- String' (cap pre-check with UTF-8 short-circuit); see
-      -- rtEntryArgEither for the inline scan + Either-build.
-      -- v_main returns an IO tree; hand it to runIO to walk and execute
-      -- the effects. runIO returns Unit which we discard.
-      "    (drop (call $" <> mangle "runIO" <> " (call $" <> mangle "main" <> " (call $__entryArgEither (call $__get_arg))))))"
+      -- v_main is a zero-arg value (CValDef) that builds the IO tree;
+      -- 'runIO' walks it to execute the effects (returns Unit which
+      -- we discard). User code that wants argv reads it through
+      -- 'IO.Args.getArgs' inside the IO chain — that lowers to an
+      -- 'IOGetArgs' constructor whose 'runIO' arm calls '$__getArgs'
+      -- (which re-reads WASI 'args_get' on every call).
+      "    (drop (call $" <> mangle "runIO" <> " (call $" <> mangle "main" <> "))))"
     ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -1720,6 +1741,11 @@ emitExpr ctx = \case
       CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             "(call $__print " <> emitExpr ctx x <> ")"
+      -- 'BuiltIn.internalGetArgs' — call '$__getArgs', which
+      -- re-reads argv via WASI and routes it through
+      -- '$__entryArgEither'.
+      CBuiltIn "internalGetArgs"
+        | [] <- xs -> "(call $__getArgs)"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

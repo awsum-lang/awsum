@@ -27,7 +27,7 @@ formatOutputs = do
   ds <- showInt32 d ++ " "
   ds ++ showInt32 t
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = case formatOutputs of
+main : IO Never Unit
+main = case formatOutputs of
   Left _e -> IO.Stdout.print "error"
   Right s -> IO.Stdout.print s

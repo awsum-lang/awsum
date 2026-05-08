@@ -33,7 +33,7 @@ CoreProgram
             )
         , CFunDef "incr" [ "n" ]
             ( CVar "n" )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCon 2
                 [ CCall
                     ( CBuiltIn "showInt32" )

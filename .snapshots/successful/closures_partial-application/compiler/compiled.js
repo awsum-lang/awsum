@@ -1,7 +1,6 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -51,9 +50,7 @@ function v_compose(v_f, v_g, v_x){
     return (v__apply1)(v_f, (v__apply1)(v_g, v_x));
 }
 
-function main(v__input){
-    return [2, (v__df_apply_0)("chain", [0], [1]), [0, [0]]];
-}
+const main = [2, (v__df_apply_0)("chain", [0], [1]), [0, [0]]];
 
 function v__df_apply_0(v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1){
     return (v_compose)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
@@ -74,8 +71,7 @@ function v__apply1(v__cl, v__arg0){
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
+  if (typeof main !== 'undefined') v_runIO(main);
 }
 
 })();

@@ -50,8 +50,8 @@ mkProgram literal =
   unlines
     [ "import IO.Stdout",
       "",
-      "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
-      "main _e = IO.Stdout.print \"" <> literal <> "\""
+      "main : IO Never Unit",
+      "main = IO.Stdout.print \"" <> literal <> "\""
     ]
 
 -- | Compile a temp 'Main.aww' through the typechecker. Mirrors the

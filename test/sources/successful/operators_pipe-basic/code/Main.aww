@@ -30,7 +30,7 @@ joined = do
   c <- b ++ "|"
   c ++ viaLambda
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = case joined of
+main : IO Never Unit
+main = case joined of
   Left _ -> IO.Stdout.print "STRING_TOO_LONG"
   Right s -> s |> IO.Stdout.print

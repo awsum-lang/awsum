@@ -43,22 +43,11 @@ CoreProgram
                         , CVar "s"
                         ]
                     )
-                ,
-                    ( 2711245919
-                    , "n"
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "Int32 "
-                        , CCall
-                            ( CBuiltIn "showInt32" )
-                            [ CVar "n" ]
-                        ]
-                    )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCall
                     ( CVar "describe" )
                     [ CRow 1615808600
@@ -66,7 +55,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -28,18 +28,30 @@ CoreProgram
                                 )
                             ]
                         )
+                    ,
+                        ( 3
+                        , [ "cont" ]
+                        , CContinue
+                            [ CCall
+                                ( CVar "$apply1" )
+                                [ CVar "cont"
+                                , CCall
+                                    ( CBuiltIn "internalGetArgs" ) []
+                                ]
+                            ]
+                        )
                     ]
                 )
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCall
                     ( CVar "handleA" )
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -61,6 +73,13 @@ CoreProgram
                         ]
                     )
                 ]
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" ) []
             )
         , CFunDef "$scc$handleA_handleB" [ "$args" ]
             ( CCall

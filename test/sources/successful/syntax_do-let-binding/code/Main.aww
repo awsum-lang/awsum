@@ -25,8 +25,8 @@ renderErr e = case e of
   (s : String) -> "err: " ++ s
   StringTooLong -> Right "STRING_TOO_LONG"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = case run 5 of
+main : IO Never Unit
+main = case run 5 of
   Left e -> case renderErr e of
     Left _ -> IO.Stdout.print "STRING_TOO_LONG"
     Right out -> IO.Stdout.print out

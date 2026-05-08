@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":5,"startCol":30,"endLine":5,"endCol":31,"message":"Unknown variable: x","fixes":[]}]
+[{"severity":"error","startLine":5,"startCol":24,"endLine":5,"endCol":25,"message":"Unknown variable: x","fixes":[]}]

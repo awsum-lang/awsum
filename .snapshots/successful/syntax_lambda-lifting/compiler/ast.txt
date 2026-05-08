@@ -1019,15 +1019,15 @@ Program
                 { spanStartLine = 34
                 , spanStartCol = 1
                 , spanEndLine = 34
-                , spanEndCol = 79
+                , spanEndCol = 21
                 }
             ) "main"
-            ( TyArrow
+            ( TyApp
                 ( SrcSpan
                     { spanStartLine = 34
                     , spanStartCol = 8
                     , spanEndLine = 34
-                    , spanEndCol = 79
+                    , spanEndCol = 21
                     }
                 )
                 ( TyApp
@@ -1035,108 +1035,36 @@ Program
                         { spanStartLine = 34
                         , spanStartCol = 8
                         , spanEndLine = 34
-                        , spanEndCol = 62
+                        , spanEndCol = 16
                         }
                     )
-                    ( TyApp
+                    ( TyCon
                         ( SrcSpan
                             { spanStartLine = 34
                             , spanStartCol = 8
                             , spanEndLine = 34
-                            , spanEndCol = 56
+                            , spanEndCol = 10
                             }
-                        )
-                        ( TyCon
-                            ( SrcSpan
-                                { spanStartLine = 34
-                                , spanStartCol = 8
-                                , spanEndLine = 34
-                                , spanEndCol = 14
-                                }
-                            ) "Either"
-                        )
-                        ( TyOr
-                            ( SrcSpan
-                                { spanStartLine = 34
-                                , spanStartCol = 15
-                                , spanEndLine = 34
-                                , spanEndCol = 56
-                                }
-                            )
-                            ( TyCon
-                                ( SrcSpan
-                                    { spanStartLine = 34
-                                    , spanStartCol = 16
-                                    , spanEndLine = 34
-                                    , spanEndCol = 29
-                                    }
-                                ) "StringTooLong"
-                            )
-                            ( TyCon
-                                ( SrcSpan
-                                    { spanStartLine = 34
-                                    , spanStartCol = 32
-                                    , spanEndLine = 34
-                                    , spanEndCol = 54
-                                    }
-                                ) "UnpairedUtf16Surrogate"
-                            )
-                        )
+                        ) "IO"
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 34
-                            , spanStartCol = 56
+                            , spanStartCol = 11
                             , spanEndLine = 34
-                            , spanEndCol = 62
+                            , spanEndCol = 16
                             }
-                        ) "String"
+                        ) "Never"
                     )
                 )
-                ( TyApp
+                ( TyCon
                     ( SrcSpan
                         { spanStartLine = 34
-                        , spanStartCol = 66
+                        , spanStartCol = 17
                         , spanEndLine = 34
-                        , spanEndCol = 79
+                        , spanEndCol = 21
                         }
-                    )
-                    ( TyApp
-                        ( SrcSpan
-                            { spanStartLine = 34
-                            , spanStartCol = 66
-                            , spanEndLine = 34
-                            , spanEndCol = 74
-                            }
-                        )
-                        ( TyCon
-                            ( SrcSpan
-                                { spanStartLine = 34
-                                , spanStartCol = 66
-                                , spanEndLine = 34
-                                , spanEndCol = 68
-                                }
-                            ) "IO"
-                        )
-                        ( TyCon
-                            ( SrcSpan
-                                { spanStartLine = 34
-                                , spanStartCol = 69
-                                , spanEndLine = 34
-                                , spanEndCol = 74
-                                }
-                            ) "Never"
-                        )
-                    )
-                    ( TyCon
-                        ( SrcSpan
-                            { spanStartLine = 34
-                            , spanStartCol = 75
-                            , spanEndLine = 34
-                            , spanEndCol = 79
-                            }
-                        ) "Unit"
-                    )
+                    ) "Unit"
                 )
             ) Nothing
         , FunDef
@@ -1146,16 +1074,7 @@ Program
                 , spanEndLine = 43
                 , spanEndCol = 37
                 }
-            ) "main"
-            [ Param
-                ( SrcSpan
-                    { spanStartLine = 35
-                    , spanStartCol = 6
-                    , spanEndLine = 35
-                    , spanEndCol = 12
-                    }
-                ) "_input"
-            ]
+            ) "main" []
             ( ELet
                 ( SrcSpan
                     { spanStartLine = 36

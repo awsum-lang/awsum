@@ -363,8 +363,9 @@ doAssemble prog@(CoreProgram decls) = do
   mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntryArg <- mkEntryArgEither
+  mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs else pure []
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg, mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg] <> mGetArgs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -3252,6 +3253,36 @@ mkParseUInt8 = do
         mMaxLocals = 256
       }
 
+-- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'.
+--   Reads the cached argv[0] from the "awsum.argv0" system property
+--   ('mkMain' stashed it via 'setProperty' on entry) and routes it
+--   through '__entryArgEither' for strict-UTF-16 validation. Per the
+--   no-memoisation decision each call yields a fresh Either cell;
+--   argv is invariant during execution so repeat calls are
+--   deterministically equal.
+mkGetArgs :: AsmM MInfo
+mkGetArgs = do
+  ni <- addUtf8 "__getArgs"
+  di <- addUtf8 "()Ljava/lang/Object;"
+  argvKeyIdx <- addStr "awsum.argv0"
+  getPropertyRef <- addMRef "java/lang/System" "getProperty" "(Ljava/lang/String;)Ljava/lang/String;"
+  entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode =
+          bcLdc argvKeyIdx
+            <> [0xB8, hi8 getPropertyRef, lo8 getPropertyRef] -- invokestatic getProperty
+            <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
+            <> [0xB0], -- areturn
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
 --   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
 --     1. Length cap (134217728 = 2^27) — short-circuits before the
@@ -3512,15 +3543,19 @@ mkMain = do
   ni <- addUtf8 "main"
   di <- addUtf8 "([Ljava/lang/String;)V"
   emptyIdx <- addStr ""
-  vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 1)
+  vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 0)
   -- `runIO` is the prelude's IO-tree walker; we hand `v_main`'s return
   -- value to it so any effects are performed. It returns Unit which we
   -- discard.
   vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
-  -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …) String':
-  -- 'Right input' on fit, 'Left StringTooLong' (row-tagged) on overflow.
-  -- See 'mkEntryArgEither' for the inline-cap-check + Either-build.
-  entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  -- 'System.setProperty' caches argv[0] so 'BuiltIn.internalGetArgs'
+  -- can re-read it via 'System.getProperty' from inside 'runIO''s
+  -- 'IOGetArgs' arm. See 'mkGetArgs' for the read side. Argv is
+  -- invariant for the JVM process lifetime; one cache at entry is
+  -- enough.
+  setPropertyRef <- addMRef "java/lang/System" "setProperty" "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+  argvKeyIdx <- addStr "awsum.argv0"
+  strClsForArgv <- addClass "java/lang/String"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
   -- Refs for the System.out → UTF-8 swap. See the IL-text 'mainMethod'
@@ -3603,9 +3638,19 @@ mkMain = do
             <> bcAload 0 -- has_arg
             <> [0x03] -- iconst_0
             <> [0x32] -- aaload
-            -- call_main: input on top of stack; '__entryArgEither' replaces it
-            -- with a fully-formed 'Either (StringTooLong | …) String' cell.
-            <> bcInvokeStatic entryArgEitherRef
+            -- call_main: input on top of stack. 'main' itself takes
+            -- no arguments; user code reads argv via 'IO.Args.getArgs'
+            -- inside the IO chain. We just cache the input via
+            -- System.setProperty so 'BuiltIn.internalGetArgs' can
+            -- read it later from 'runIO''s 'IOGetArgs' arm. The
+            -- 'aaload' returned Object — checkcast to String for the
+            -- 'setProperty(String, String)' signature.
+            <> [0xC0, hi8 strClsForArgv, lo8 strClsForArgv] -- checkcast String
+            <> bcLdc argvKeyIdx -- ldc "awsum.argv0"
+            <> [0x5F] -- swap
+            <> [0xB8, hi8 setPropertyRef, lo8 setPropertyRef] -- invokestatic setProperty
+            <> [0x57] -- pop the previous-value return
+            -- v_main is a zero-arg value (CValDef): build the IO tree.
             <> bcInvokeStatic vMainRef
             -- v_main returned an IO tree on the stack; hand it to runIO
             -- to walk and execute the effects. runIO returns Unit which
@@ -4036,6 +4081,12 @@ emitExpr ctx = \case
         xMeta <- emitExpr ctx x
         ref <- addMRef "AwsumMain" "__print" "(Ljava/lang/Object;)Ljava/lang/Object;"
         pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
+      -- 'BuiltIn.internalGetArgs' — invokestatic AwsumMain/__getArgs.
+      -- The helper reads the cached argv[0] (set in 'mkMain' via
+      -- 'System.setProperty') and routes it through '__entryArgEither'.
+      CBuiltIn "internalGetArgs" | [] <- xs -> do
+        ref <- addMRef "AwsumMain" "__getArgs" "()Ljava/lang/Object;"
+        pure CodeWithMeta {cwCode = [0xB8, hi8 ref, lo8 ref], cwBranchTargets = [], cwIntSlots = []}
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs -> do

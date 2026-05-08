@@ -6,6 +6,6 @@
 -- definition, or use `let n = e in body` inside the function body.
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print msg where
+main : IO Never Unit
+main = IO.Stdout.print msg where
   msg = "hello"

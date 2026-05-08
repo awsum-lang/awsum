@@ -8,8 +8,8 @@ search key = do
   found <- "found:" ++ key
   Right (Found found)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (case search "hello" of
         Left e -> Left e
         Right (Found v) -> Right v

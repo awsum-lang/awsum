@@ -32,6 +32,18 @@ CoreProgram
                                 )
                             ]
                         )
+                    ,
+                        ( 3
+                        , [ "cont" ]
+                        , CContinue
+                            [ CCall
+                                ( CVar "$apply1" )
+                                [ CVar "cont"
+                                , CCall
+                                    ( CBuiltIn "internalGetArgs" ) []
+                                ]
+                            ]
+                        )
                     ]
                 )
             )
@@ -54,7 +66,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
                 ( CVar "$df$handleErrorIO$0" )
                 [ CVar "failingComputation" ]
@@ -108,6 +120,18 @@ CoreProgram
                                 ]
                             ]
                         )
+                    ,
+                        ( 3
+                        , [ "cont" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 3
+                                [ CCon 0
+                                    [ CVar "cont" ]
+                                ]
+                            ]
+                        )
                     ]
                 )
             )
@@ -139,6 +163,96 @@ CoreProgram
                         )
                     ]
                 )
+            )
+        , CFunDef "$scc$$apply1_$df$$lam$6$1" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$$apply1_$df$$lam$6$1" )
+                [ CVar "$args"
+                , CCon 0 []
+                ]
+            )
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$6$1"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 0
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CCase
+                            ( CVar "$cl" )
+                            [
+                                ( 0
+                                , [ "$cap0_0" ]
+                                , CContinue
+                                    [ CCon 1
+                                        [ CVar "$cap0_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 1
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CContinue
+                            [ CCon 0
+                                [ CVar "cont"
+                                , CVar "result"
+                                ]
+                            , CCon 1
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$scc$$apply1_$df$$lam$6$1"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 0
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 1
+                        , [ "$pk_1" ]
+                        , CContinue
+                            [ CVar "$pk_1"
+                            , CCall
+                                ( CVar "$df$handleErrorIO$0" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCall
+                ( CVar "$scc$$apply1_$df$$lam$6$1" )
+                [ CCon 0
+                    [ CVar "$cl"
+                    , CVar "$arg0"
+                    ]
+                ]
             )
         ]
     }

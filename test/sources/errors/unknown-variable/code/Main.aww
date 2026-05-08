@@ -1,5 +1,5 @@
 -- Error: reference to undefined variable x
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = IO.Stdout.print x
+main : IO Never Unit
+main = IO.Stdout.print x

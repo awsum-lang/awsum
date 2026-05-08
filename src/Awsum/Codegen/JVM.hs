@@ -94,7 +94,9 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
-            entryArgEitherMethod,
+            gate (Set.member "internalGetArgs" builtIns) entryArgEitherMethod,
+            "",
+            gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
             "",
             mainMethod,
             ""
@@ -1977,6 +1979,26 @@ entryArgEitherMethod =
     unpairedSurrogateTag :: Text
     unpairedSurrogateTag = show (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
 
+-- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs', called
+--   from 'runIO''s 'IOGetArgs' arm. Reads the cached argv[0] from the
+--   "awsum.argv0" system property (set in 'mainMethod' above) and
+--   routes it through '__entryArgEither' for the strict-UTF-16
+--   validation. Per the no-memoisation decision each call returns a
+--   fresh 'Either' cell; argv is invariant during execution so repeat
+--   calls are deterministically equal.
+getArgsMethod :: Text
+getArgsMethod =
+  unlines
+    [ ".method static __getArgs()" <> objDesc,
+      "  .limit stack 2",
+      "  .limit locals 1",
+      "  ldc \"awsum.argv0\"",
+      "  invokestatic java/lang/System/getProperty(Ljava/lang/String;)Ljava/lang/String;",
+      "  invokestatic AwsumMain/__entryArgEither(" <> objDesc <> ")" <> objDesc,
+      "  areturn",
+      ".end method"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -2015,12 +2037,21 @@ mainMethod =
       "  iconst_0",
       "  aaload",
       "call_main:",
-      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
-      -- user's main. '__entryArgEither' compares 'String.length()' against
-      -- the language-fixed cap and returns either 'Right input' or
-      -- 'Left StringTooLong' (row-tagged); see entryArgEitherMethod above.
-      "  invokestatic AwsumMain/__entryArgEither(" <> objDesc <> ")" <> objDesc,
-      "  invokestatic AwsumMain/" <> mangle "main" <> "(" <> objDesc <> ")" <> objDesc,
+      -- Cache argv[0] for 'BuiltIn.internalGetArgs' (called from
+      -- 'runIO''s 'IOGetArgs' arm). 'main' itself takes no arguments
+      -- (its signature is 'IO Never Unit'); user code reads argv via
+      -- 'IO.Args.getArgs' inside the IO chain. Argv is invariant for
+      -- the JVM process lifetime, so one 'setProperty' at entry is
+      -- enough; '__getArgs' below reads the same key. The 'aaload'
+      -- above returned Object; cast to String for the
+      -- 'setProperty(String, String)' signature.
+      "  checkcast java/lang/String",
+      "  ldc \"awsum.argv0\"",
+      "  swap",
+      "  invokestatic java/lang/System/setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+      "  pop",
+      -- v_main is a zero-arg value (CValDef): build the IO tree.
+      "  invokestatic AwsumMain/" <> mangle "main" <> "()" <> objDesc,
       -- Hand the IO tree to `runIO`, which walks it and performs the
       -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns
       -- Unit (the IOPure terminator's payload); we discard it.
@@ -2168,6 +2199,12 @@ emitExprText ctx paramMap = \case
               [ emitExprText ctx paramMap x,
                 "  invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;"
               ]
+      -- Zero-arg primitive driving 'runIO''s 'IOGetArgs' arm: re-reads
+      -- the cached argv[0] (stashed at entry via System.setProperty)
+      -- and wraps it in 'Either (StringTooLong | UnpairedUtf16Surrogate)
+      -- String' via '__entryArgEither'.
+      CBuiltIn "internalGetArgs"
+        | [] <- xs -> "  invokestatic AwsumMain/__getArgs()" <> objDesc
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

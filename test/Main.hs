@@ -54,8 +54,8 @@ preludeSpec = describe "Awsum.Prelude" $ do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
-              "main _e = IO.Stdout.print \"hi\""
+              "main : IO Never Unit",
+              "main = IO.Stdout.print \"hi\""
             ]
     case parseProgram src of
       Left e -> expectationFailure (toString e)
@@ -362,12 +362,15 @@ typecheckerSpec = do
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
-                "main e = case e of",
+                "run : Either StringTooLong String -> IO Never Unit",
+                "run e = case e of",
                 "  Left _ -> IO.Stdout.print \"err\"",
                 "  Right input -> case input ++ input of",
                 "    Left _ -> IO.Stdout.print \"too long\"",
-                "    Right s -> IO.Stdout.print s"
+                "    Right s -> IO.Stdout.print s",
+                "",
+                "main : IO Never Unit",
+                "main = run (Right \"hi\")"
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
@@ -497,13 +500,13 @@ typecheckerSpec = do
           Left (MainWrongType _) -> pass
           other -> expectationFailure ("expected MainWrongType, got: " <> show other)
 
-    it "accepts a module with 'main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit'" $ do
+    it "accepts a module with 'main : IO Never Unit'" $ do
       let src =
             unlines
               [ "import IO.Stdout",
                 "",
-                "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
-                "main _e = IO.Stdout.print \"hi\""
+                "main : IO Never Unit",
+                "main = IO.Stdout.print \"hi\""
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
@@ -511,7 +514,7 @@ typecheckerSpec = do
 
 elaborateSpec :: Spec
 elaborateSpec = do
-  it "elaborates: main _e = case \"a\" ++ \"b\" of ..." $ do
+  it "elaborates: main = case \"a\" ++ \"b\" of ..." $ do
     -- Surface (++) lowers to `Right (concatString a b)` (a CCon 1
     -- wrapping the raw concat). The point of this golden is to lock
     -- in the `Right` wrapper at the lowering level — the same shape
@@ -520,8 +523,8 @@ elaborateSpec = do
           unlines
             [ "import IO.Stdout",
               "",
-              "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
-              "main _e = case \"a\" ++ \"b\" of",
+              "main : IO Never Unit",
+              "main = case \"a\" ++ \"b\" of",
               "  Left _ -> IO.Stdout.print \"err\"",
               "  Right s -> IO.Stdout.print s"
             ]
