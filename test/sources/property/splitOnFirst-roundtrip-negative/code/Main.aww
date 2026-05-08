@@ -16,14 +16,15 @@ property sep s = case splitOnFirst sep s of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
         raw <- rawArg
         Tuple2 sep s <- parseInput raw
         pureEither (property sep s)
+      )
    in case res of
         Left e -> case e of
-          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
-          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"

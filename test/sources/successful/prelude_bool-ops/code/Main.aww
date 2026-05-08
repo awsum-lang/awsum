@@ -1,19 +1,15 @@
 {- Prelude `Bool` ops `not`, `and`, `or`. -}
 import IO.Stdout
 
-showBool : Bool -> String
-showBool b = case b of
-  True -> "T"
-  False -> "F"
-
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- showBool (not True) ++ showBool (not False)
         s1 <- s0 ++ showBool (and True False)
         s2 <- s1 ++ showBool (and True True)
         s3 <- s2 ++ showBool (or False False)
         s3 ++ showBool (or True False)
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

@@ -3,7 +3,7 @@ import IO.Stdout
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- showInt32 minInt32 ++ ", "
         s1 <- s0 ++ showInt32 (-42)
         s2 <- s1 ++ ", "
@@ -11,9 +11,10 @@ main _input =
         s4 <- s3 ++ ", "
         s5 <- s4 ++ showInt32 7
         s6 <- s5 ++ ", "
-        s7 <- s6 ++ showInt32 1234567
+        s7 <- s6 ++ showInt32 1_234_567
         s8 <- s7 ++ ", "
         s8 ++ showInt32 maxInt32
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

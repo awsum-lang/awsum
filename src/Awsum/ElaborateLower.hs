@@ -246,8 +246,8 @@ freeReferences = go
       ECase _ scrut alts _ ->
         go scrut
           <> foldMap
-            ( \(CaseAlt _ pat body _) ->
-                go body `Set.difference` patternBoundNames pat
+            ( \alt ->
+                go (caseAltBody alt) `Set.difference` patternBoundNames (caseAltPattern alt)
             )
             (toList alts)
       ELam _ params body ->
@@ -770,6 +770,15 @@ lowerExprM env locals expected = \case
           l' <- lowerExprM env locals strExpected l
           r' <- lowerExprM env locals strExpected r
           pure (CCall (CBuiltIn "concatString") [l', r'])
+  EInfix sp OpPipe l r ->
+    -- @x |> f@ is pure syntax for @f x@. The rewrite happens here, before
+    -- any Core-to-Core pass: the resulting Core IR is byte-identical to
+    -- the IR for @f x@, so Defunctionalize / Saturate / Scc / Cps / Tco /
+    -- codegen never see @|>@. Zero residual call frame on every backend.
+    -- @(|>)@ as a value is intentionally not exposed (the parser rejects
+    -- @(|>)@ as a name) — first-class form is deferred until the
+    -- supercompiler can specialise away the wrapper call.
+    lowerExprM env locals expected (EApp sp r l)
   ECon _sp name -> case M.lookup name (leConInfo env) of
     Just ci
       | ciArity ci == 0 -> do
@@ -1380,26 +1389,28 @@ collectAppHead = \case
 --     and is propagated to each arm body so integer literals inside
 --     arms get their @IntType@.
 lowerAltM :: LowerEnv -> Locals -> Maybe Type' -> Maybe Type' -> CaseAlt -> LowerM (Int, [Name], CExpr)
-lowerAltM env locals mScrutTy expected (CaseAlt _ (PCon _ cName pats) body _) = do
-  ci <- liftEither $ maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
-  let tag = ciTag ci
-      patBinders = collectPatternBindings (leConInfo env) ci mScrutTy pats
-      env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- patBinders]
-      locals' = Set.union (Set.fromList (map fst patBinders)) locals
-      -- Per-field substituted types — feed into 'desugarPatsM' so a
-      -- 'PAscribe' targeting a row-typed field emits the right
-      -- 'CRowCase' wrapper instead of being silently stripped.
-      subst = case mScrutTy of
-        Just outerTy ->
-          let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
-           in fromRight mempty (unify genericRet outerTy)
-        Nothing -> mempty
-      fieldTys = map (Just . applySubst subst) (ciFieldTypes ci)
-  body' <- lowerExprM env' locals' expected body
-  (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" 0 (zip pats fieldTys) body'
-  pure (tag, topVars, wrappedBody)
-lowerAltM _ _ _ _ CaseAlt {} =
-  liftEither $ Left (TELowering "only constructor patterns are supported in case")
+lowerAltM env locals mScrutTy expected alt = case caseAltPattern alt of
+  PCon _ cName pats -> do
+    let body = caseAltBody alt
+    ci <- liftEither $ maybeToRight (TELowering ("unknown constructor in pattern: " <> cName)) (M.lookup cName (leConInfo env))
+    let tag = ciTag ci
+        patBinders = collectPatternBindings (leConInfo env) ci mScrutTy pats
+        env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- patBinders]
+        locals' = Set.union (Set.fromList (map fst patBinders)) locals
+        -- Per-field substituted types — feed into 'desugarPatsM' so a
+        -- 'PAscribe' targeting a row-typed field emits the right
+        -- 'CRowCase' wrapper instead of being silently stripped.
+        subst = case mScrutTy of
+          Just outerTy ->
+            let genericRet = applyTyParams (ciTypeName ci) (ciTypeParams ci)
+             in fromRight mempty (unify genericRet outerTy)
+          Nothing -> mempty
+        fieldTys = map (Just . applySubst subst) (ciFieldTypes ci)
+    body' <- lowerExprM env' locals' expected body
+    (topVars, wrappedBody) <- desugarPatsM (leConInfo env) "__" 0 (zip pats fieldTys) body'
+    pure (tag, topVars, wrappedBody)
+  _ ->
+    liftEither $ Left (TELowering "only constructor patterns are supported in case")
 
 -- | Walk a pattern list under a known constructor and return
 --   @[(binder, type)]@ entries for each 'PVar' binder reached. The
@@ -1516,43 +1527,46 @@ data RowArmShape
 --   constructor's generic field types, extend the lowering env with
 --   the resulting pattern bindings, and produce 'ConShape'.
 lowerRowArmM :: LowerEnv -> Locals -> Maybe Type' -> Type' -> CaseAlt -> LowerM (Word32, Type', RowArmShape)
-lowerRowArmM env locals expected _scrutTy (CaseAlt _ (PAscribe _ inner ascrTy) body _) = do
-  let var = case inner of
-        PVar _ n -> n
-        _ -> "__rw"
-      env' = extendLowerEnv env [(QName [] var, ascrTy)]
-      locals' = Set.insert var locals
-  body' <- lowerExprM env' locals' expected body
-  tag <- recordRowTag ascrTy
-  pure (tag, ascrTy, AscribeShape var body')
-lowerRowArmM env locals expected scrutTy (CaseAlt _ (PCon _ cName innerPats) body _) = do
-  ci <-
-    liftEither
-      $ maybeToRight
-        (TELowering ("unknown constructor in row pattern: " <> cName))
-        (M.lookup cName (leConInfo env))
-  let cTyName = ciTypeName ci
-      labels = flattenRow scrutTy
-      mLabel = find (\l -> tyConHead l == Just cTyName) labels
-  rowLabel <-
-    liftEither
-      $ maybeToRight
-        ( TELowering
-            ( "row label for constructor '"
-                <> cName
-                <> "' not in scrutinee row (typechecker should have rejected this)"
-            )
-        )
-        mLabel
-  let bindings = collectPatternBindings (leConInfo env) ci (Just rowLabel) innerPats
-      env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- bindings]
-      locals' = Set.union (Set.fromList (map fst bindings)) locals
-  body' <- lowerExprM env' locals' expected body
-  (topVars, wrappedBody) <- lowerRowConInnerPatsM innerPats body'
-  tag <- recordRowTag rowLabel
-  pure (tag, rowLabel, ConShape (ciTag ci) topVars wrappedBody)
-lowerRowArmM _ _ _ _ CaseAlt {} =
-  liftEither $ Left (TELowering "row case arms must be (x : T) or constructor patterns")
+lowerRowArmM env locals expected scrutTy alt =
+  let body = caseAltBody alt
+   in case caseAltPattern alt of
+        PAscribe _ inner ascrTy -> do
+          let var = case inner of
+                PVar _ n -> n
+                _ -> "__rw"
+              env' = extendLowerEnv env [(QName [] var, ascrTy)]
+              locals' = Set.insert var locals
+          body' <- lowerExprM env' locals' expected body
+          tag <- recordRowTag ascrTy
+          pure (tag, ascrTy, AscribeShape var body')
+        PCon _ cName innerPats -> do
+          ci <-
+            liftEither
+              $ maybeToRight
+                (TELowering ("unknown constructor in row pattern: " <> cName))
+                (M.lookup cName (leConInfo env))
+          let cTyName = ciTypeName ci
+              labels = flattenRow scrutTy
+              mLabel = find (\l -> tyConHead l == Just cTyName) labels
+          rowLabel <-
+            liftEither
+              $ maybeToRight
+                ( TELowering
+                    ( "row label for constructor '"
+                        <> cName
+                        <> "' not in scrutinee row (typechecker should have rejected this)"
+                    )
+                )
+                mLabel
+          let bindings = collectPatternBindings (leConInfo env) ci (Just rowLabel) innerPats
+              env' = extendLowerEnv env [(QName [] n, t) | (n, t) <- bindings]
+              locals' = Set.union (Set.fromList (map fst bindings)) locals
+          body' <- lowerExprM env' locals' expected body
+          (topVars, wrappedBody) <- lowerRowConInnerPatsM innerPats body'
+          tag <- recordRowTag rowLabel
+          pure (tag, rowLabel, ConShape (ciTag ci) topVars wrappedBody)
+        _ ->
+          liftEither $ Left (TELowering "row case arms must be (x : T) or constructor patterns")
 
 -- | Translate the inner-pattern list of a 'PCon' arm in a row case.
 --   For each pattern position, return the top-level binder name

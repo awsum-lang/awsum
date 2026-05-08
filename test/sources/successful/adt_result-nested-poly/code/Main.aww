@@ -12,13 +12,14 @@ unwrap r = case r of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- unwrap (Ok (Ok "1")) ++ ","
         s1 <- s0 ++ unwrap (Ok (Err "2"))
         s2 <- s1 ++ ","
         s3 <- s2 ++ unwrap (Err (Ok "3"))
         s4 <- s3 ++ ","
         s4 ++ unwrap (Err (Err "4"))
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

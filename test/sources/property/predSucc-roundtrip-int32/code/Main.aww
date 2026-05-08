@@ -12,16 +12,17 @@ property x = do
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = (do
         raw <- rawArg
         x <- parseInt32 raw
         property x
+      )
    in case res of
         Left e -> case e of
-          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
-          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
-          (_ : UnderflowError) -> IO.Stdout.print "UNDERFLOW"
-          (_ : OverflowError) -> IO.Stdout.print "OVERFLOW"
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
+          UnderflowError -> IO.Stdout.print "UNDERFLOW"
+          OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"

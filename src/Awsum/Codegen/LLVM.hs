@@ -173,6 +173,12 @@ stringsInExpr = \case
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
 
+-- | Emit string-pool constants in the language-fixed length-prefixed
+--   layout: @{i32 utf8_bytes, i32 utf16_units, [N x i8] payload}@. No
+--   NUL terminator. Pointer to the global is the pointer to the
+--   header's first byte; runtime helpers @load i32@ at offset 0 / 4
+--   for byte / UTF-16 length, and @gep i8, ptr s, i64 8@ for the
+--   payload start.
 emitStringConstants :: StringPool -> Text
 emitStringConstants pool
   | Map.null pool = ""
@@ -180,15 +186,25 @@ emitStringConstants pool
       T.intercalate "\n" (map emitOne (sortWith snd $ Map.toList pool)) <> "\n"
   where
     emitOne (s, i) =
-      let escaped = llvmEscapeString s
-          len = BS.length (encodeUtf8 s) + 1
+      let bs = encodeUtf8 s
+          byteCount = BS.length bs
+          utf16Count = T.foldl' (\n c -> n + if Char.ord c > 0xFFFF then 2 else 1) (0 :: Int) s
+          escaped = llvmEscapeString s
+          payloadType = "[" <> show byteCount <> " x i8]"
+          payloadInit
+            | byteCount == 0 = "[0 x i8] zeroinitializer"
+            | otherwise = payloadType <> " c\"" <> escaped <> "\""
        in "@.str."
             <> show i
-            <> " = private unnamed_addr constant ["
-            <> show len
-            <> " x i8] c\""
-            <> escaped
-            <> "\\00\""
+            <> " = private unnamed_addr constant {i32, i32, "
+            <> payloadType
+            <> "} { i32 "
+            <> show byteCount
+            <> ", i32 "
+            <> show utf16Count
+            <> ", "
+            <> payloadInit
+            <> " }"
 
 -- | Escape a string for LLVM IR constant syntax. ASCII printable bytes pass
 --   through; everything else (including non-ASCII codepoints, which encode
@@ -221,9 +237,20 @@ header builtIns =
   unlines
     $ [ "; External C declarations",
         "declare ptr @malloc(i64)",
-        "declare ptr @strcpy(ptr, ptr)",
-        "declare ptr @strcat(ptr, ptr)",
+        "declare ptr @memcpy(ptr, ptr, i64)",
+        -- 'strlen' is used only at the boundary between OS argv[1]
+        -- (a C-string from libc) and our internal length-prefixed layout
+        -- — see 'rtEntryArgEither'. None of the regular runtime helpers
+        -- depend on null termination anymore; they read length from the
+        -- string's 8-byte header.
         "declare i64 @strlen(ptr)",
+        -- 'write(2)' is used by '__print' to stream payload bytes to fd 1
+        -- regardless of NUL bytes inside (which 'printf(\"%s\", …)' /
+        -- 'printf(\"%.*s\", n, …)' would silently truncate at). On macOS
+        -- and Linux libc the symbol is 'write'; mingw libc also exposes
+        -- it. MSVC's CRT exposes '_write' instead — that variant is not
+        -- yet wired through and is tracked as a Windows-host follow-up.
+        "declare i64 @write(i32, ptr, i64)",
         "declare i32 @printf(ptr, ...)",
         "declare i32 @snprintf(ptr, i64, ptr, ...)"
       ]
@@ -236,17 +263,21 @@ header builtIns =
     <> [ "declare {i32, i1} @llvm.smul.with.overflow.i32(i32, i32)"
        | Set.member "mulInt32" builtIns
        ]
-    <> [ "declare ptr @strstr(ptr, ptr)"
-       | Set.member "splitOnFirst" builtIns
-       ]
-    <> [ "declare ptr @memcpy(ptr, ptr, i64)"
-       | Set.member "splitOnFirst" builtIns
-       ]
+    -- 'strstr' / 'memcpy' from the splitOnFirst path are no longer
+    -- needed: 'memcpy' is now in the always-on header (used by every
+    -- string-allocating helper), and 'rtSplitOnFirst' walks the
+    -- length-prefixed payload via i32 loads + index arithmetic instead
+    -- of libc's null-aware 'strstr'.
     <> [ "",
-         "@.fmt = private unnamed_addr constant [3 x i8] c\"%s\\00\"",
          "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
          "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\"",
-         "@.empty = private unnamed_addr constant [1 x i8] c\"\\00\""
+         -- '@.empty' is the language-fixed empty string in length-prefixed
+         -- form: 8-byte header with both lengths zero, no payload. Used as
+         -- the fallback when 'argv[1]' is absent ('with_arg' phi in the
+         -- footer). All runtime helpers handle a zero-length payload via
+         -- the standard 'load i32' at offset 0 / 4 — no NUL byte, no
+         -- special-case path.
+         "@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }"
        ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -268,6 +299,17 @@ runtime builtIns =
     underflowTag = show (rowTag (TyCon noSpan "UnderflowError"))
     overflowTag :: Text
     overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
+    -- StringTooLong row tag, used when the entry-point glue rejects a
+    -- too-long argv[1] and hands user code 'Left StringTooLong' through
+    -- the row '(StringTooLong | UnpairedUtf16Surrogate)'.
+    stringTooLongTag :: Text
+    stringTooLongTag = show (rowTag (TyCon noSpan "StringTooLong"))
+    -- UnpairedUtf16Surrogate row tag, used when '__entryArgEither'
+    -- detects an ill-formed surrogate-encoded UTF-8 byte triplet
+    -- ('ED A0..BF 80..BF') in argv[1] — standard UTF-8 (RFC 3629)
+    -- forbids these, but WTF-8 / CESU-8 / Java-modified-UTF-8 do not.
+    unpairedSurrogateTag :: Text
+    unpairedSurrogateTag = show (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
     parts =
       [ if Set.member "concatString" builtIns then rtConcat else "",
         -- '__print' is the low-level platform primitive driven by the
@@ -305,42 +347,44 @@ runtime builtIns =
         if Set.member "mulUInt32" builtIns then rtMulUInt32 else "",
         if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
         if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
-        -- '__concat' calls '__lengthUtf16CodeUnits' for the cap pre-check,
-        -- so emit the helper whenever 'concatString' is referenced even if
-        -- the user did not call 'lengthUtf16CodeUnits' directly.
-        if Set.member "lengthUtf16CodeUnits" builtIns || Set.member "concatString" builtIns then rtLengthUtf16CodeUnits else "",
-        if Set.member "lengthBytesAsUtf8" builtIns then rtLengthBytesAsUtf8 else ""
+        if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
+        if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
+        -- '__entryArgEither' is always emitted: every program has a 'main',
+        -- and 'footerPosix' / 'footerWindows' always call this helper to
+        -- wrap argv[1] in 'Right' or in row-tagged 'Left StringTooLong'.
+        rtEntryArgEither
       ]
-    -- '__concat' implements 'BuiltIn.concatString'.
-    -- Returns 'Either StringTooLong String' as a heap cell. Pre-checks
-    -- the combined UTF-16 code unit length against the language-fixed
-    -- cap and returns 'Left StringTooLong' with no buffer allocated when
-    -- the result would overflow. The cap value (134217728) must stay in
-    -- sync with 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+    -- '__concat' implements 'BuiltIn.concatString' on the length-
+    -- prefixed string layout. Returns 'Either StringTooLong String' as
+    -- a heap cell. Cap-check is now O(1) (load both UTF-16 lengths
+    -- from headers, add, compare) — no byte-scan, no short-circuit
+    -- needed. The cap value (134217728) must stay in sync with
+    -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+    --
+    -- Output layout: malloc(8 + ba + bb), write {byte_count, utf16_count}
+    -- in the header, memcpy a's payload then b's payload to offset 8.
     rtConcat =
       unlines
         [ "define internal ptr @__concat(ptr %a, ptr %b) {",
-          -- UTF-16 length pre-check. Storage is UTF-8 bytes, but the cap
-          -- is on UTF-16 code units (cross-runtime invariant), so we must
-          -- count code units, not bytes.
-          "  %la_box = call ptr @__lengthUtf16CodeUnits(ptr %a)",
-          "  %la = load i32, ptr %la_box",
-          "  %lb_box = call ptr @__lengthUtf16CodeUnits(ptr %b)",
-          "  %lb = load i32, ptr %lb_box",
-          -- Widen to i64 before summing. Awsum-internal strings respect
-          -- the cap so the i32 sum can't overflow (max 2*134217728 fits
-          -- in i32), but the widen costs nothing.
-          "  %la64 = zext i32 %la to i64",
-          "  %lb64 = zext i32 %lb to i64",
-          "  %sum64 = add i64 %la64, %lb64",
+          -- Load lengths from a / b headers.
+          "  %ba = load i32, ptr %a",
+          "  %ua_p = getelementptr i8, ptr %a, i64 4",
+          "  %ua = load i32, ptr %ua_p",
+          "  %bb = load i32, ptr %b",
+          "  %ub_p = getelementptr i8, ptr %b, i64 4",
+          "  %ub = load i32, ptr %ub_p",
+          -- Cap check on UTF-16 sum (the language-level metric).
+          "  %ua64 = zext i32 %ua to i64",
+          "  %ub64 = zext i32 %ub to i64",
+          "  %usum64 = add i64 %ua64, %ub64",
           -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
           -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
           -- 'stdlib/Prelude.aww'.
-          "  %over = icmp ugt i64 %sum64, 134217728",
+          "  %over = icmp ugt i64 %usum64, 134217728",
           "  br i1 %over, label %too_long, label %ok",
           "too_long:",
-          -- Build 'Left StringTooLong'. StringTooLong is a single-
-          -- constructor type so its tag is 0; Either's Left tag is 0.
+          -- Build 'Left StringTooLong'. StringTooLong is a single-ctor
+          -- type so its tag is 0; Either's Left tag is 0.
           "  %stl = call ptr @malloc(i64 8)",
           "  %stl_tag = inttoptr i64 0 to ptr",
           "  store ptr %stl_tag, ptr %stl",
@@ -351,15 +395,25 @@ runtime builtIns =
           "  store ptr %stl, ptr %left_f",
           "  ret ptr %left",
           "ok:",
-          -- Length fits — do the actual concat. UTF-8 byte count via
-          -- 'strlen' is the right unit for the malloc/strcpy/strcat path.
-          "  %ba = call i64 @strlen(ptr %a)",
-          "  %bb = call i64 @strlen(ptr %b)",
-          "  %bsum = add i64 %ba, %bb",
-          "  %total = add i64 %bsum, 1",
-          "  %buf = call ptr @malloc(i64 %total)",
-          "  call ptr @strcpy(ptr %buf, ptr %a)",
-          "  call ptr @strcat(ptr %buf, ptr %b)",
+          -- Allocate header (8 bytes) + ba + bb byte payload.
+          "  %ba64 = zext i32 %ba to i64",
+          "  %bb64 = zext i32 %bb to i64",
+          "  %bsum64 = add i64 %ba64, %bb64",
+          "  %alloc64 = add i64 %bsum64, 8",
+          "  %buf = call ptr @malloc(i64 %alloc64)",
+          -- Write header: byte count at offset 0, utf16 count at offset 4.
+          "  %bsum32 = trunc i64 %bsum64 to i32",
+          "  store i32 %bsum32, ptr %buf",
+          "  %usum32 = trunc i64 %usum64 to i32",
+          "  %buf_u16p = getelementptr i8, ptr %buf, i64 4",
+          "  store i32 %usum32, ptr %buf_u16p",
+          -- Copy a.payload, then b.payload, into the new payload slot.
+          "  %buf_payload = getelementptr i8, ptr %buf, i64 8",
+          "  %a_payload = getelementptr i8, ptr %a, i64 8",
+          "  call ptr @memcpy(ptr %buf_payload, ptr %a_payload, i64 %ba64)",
+          "  %buf_payload_b = getelementptr i8, ptr %buf_payload, i64 %ba64",
+          "  %b_payload = getelementptr i8, ptr %b, i64 8",
+          "  call ptr @memcpy(ptr %buf_payload_b, ptr %b_payload, i64 %bb64)",
           -- Wrap in 'Right'. Either's Right tag is 1.
           "  %right = call ptr @malloc(i64 16)",
           "  %right_tag = inttoptr i64 1 to ptr",
@@ -369,14 +423,20 @@ runtime builtIns =
           "  ret ptr %right",
           "}"
         ]
+    -- '__print' uses 'write(2)' rather than 'printf("%s", …)' so a NUL
+    -- byte inside the payload is preserved (printf-family stop at NUL
+    -- regardless of '%.*s' precision per POSIX). Reads the byte count
+    -- from the string header at offset 0 — O(1), no scan.
     rtPrint =
       unlines
         [ "define internal ptr @__print(ptr %s) {",
-          "  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)",
-          -- Allocate a Unit constructor cell: a single ptr slot holding
-          -- the tag (`inttoptr 0`). Mirrors how every other CCon is
-          -- emitted, so `runIO`'s `case … of Unit -> next` reads the
-          -- tag through the same path.
+          "  %byte_count = load i32, ptr %s",
+          "  %byte_count_64 = zext i32 %byte_count to i64",
+          "  %payload = getelementptr i8, ptr %s, i64 8",
+          "  call i64 @write(i32 1, ptr %payload, i64 %byte_count_64)",
+          -- Build Unit value (single ptr slot, tag 0) — same shape as
+          -- every other nullary CCon, so 'runIO' reads it via the
+          -- standard CCase tag check.
           "  %unit = call ptr @malloc(i64 8)",
           "  %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0",
           "  %unit_tag = inttoptr i64 0 to ptr",
@@ -386,14 +446,23 @@ runtime builtIns =
         ]
     -- Integers are boxed: each CIntLit allocates a heap cell holding
     -- the native i32/i8 value and the Awsum-level 'ptr' points at it.
-    -- Show reads the cell and snprintf's into a fresh 16-byte buffer
-    -- (enough for @-2147483648@ / @255@ plus a null terminator).
+    -- Show reads the cell and snprintf's the decimal form into the
+    -- payload portion of a length-prefixed string buffer. snprintf
+    -- returns the bytes-written count, which we use as both byte and
+    -- UTF-16 length (decimal output is ASCII-only — 1 byte = 1 UTF-16
+    -- code unit). Allocation is 8 (header) + 16 (max digits + sign +
+    -- NUL); the trailing NUL written by snprintf is harmless because
+    -- consumers read exactly 'byte_count' bytes from the payload.
     rtShowInt32 =
       unlines
         [ "define internal ptr @__showInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
-          "  %buf = call ptr @malloc(i64 16)",
-          "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_i32, i32 %v)",
+          "  %buf = call ptr @malloc(i64 24)",
+          "  %payload = getelementptr i8, ptr %buf, i64 8",
+          "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_i32, i32 %v)",
+          "  store i32 %n, ptr %buf",
+          "  %u16p = getelementptr i8, ptr %buf, i64 4",
+          "  store i32 %n, ptr %u16p",
           "  ret ptr %buf",
           "}"
         ]
@@ -402,8 +471,12 @@ runtime builtIns =
         [ "define internal ptr @__showUInt8(ptr %p) {",
           "  %b = load i8, ptr %p",
           "  %v = zext i8 %b to i32",
-          "  %buf = call ptr @malloc(i64 16)",
-          "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  %buf = call ptr @malloc(i64 24)",
+          "  %payload = getelementptr i8, ptr %buf, i64 8",
+          "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  store i32 %n, ptr %buf",
+          "  %u16p = getelementptr i8, ptr %buf, i64 4",
+          "  store i32 %n, ptr %u16p",
           "  ret ptr %buf",
           "}"
         ]
@@ -853,43 +926,88 @@ runtime builtIns =
           "}"
         ]
     -- splitOnFirst : String -> String -> Maybe (Tuple2 String String).
-    --   Defers the substring search to libc 'strstr'; the empty-separator
-    --   case is correct for free since 'strstr(s, "")' returns 's'. On
-    --   miss returns a 1-slot Maybe container with tag 0 (Nothing). On
-    --   hit allocates two fresh null-terminated buffers (prefix /
-    --   suffix) — owning copies, never aliases into the input — and
-    --   wraps them in `Tuple2 prefix suffix` (3-slot, tag 0) inside
-    --   `Just` (2-slot, tag 1). Tags follow Prelude.aww declaration
-    --   order: Maybe = Nothing | Just (0, 1); Tuple2 has one constructor
-    --   (tag 0).
+    --   Now operates on length-prefixed strings: byte counts come from
+    --   the header (offset 0) directly, no 'strlen'. Empty separator
+    --   matches at position 0 (prefix = "", suffix = str). Both halves
+    --   are owning copies in length-prefixed format with their own
+    --   computed UTF-16 counts via inline byte scans (BMP byte → 1 code
+    --   unit, 4-byte UTF-8 → 2 surrogates).
     rtSplitOnFirst =
       unlines
         [ "define internal ptr @__splitOnFirst(ptr %sep, ptr %str) {",
-          "  %pos = call ptr @strstr(ptr %str, ptr %sep)",
-          "  %is_null = icmp eq ptr %pos, null",
-          "  br i1 %is_null, label %not_found, label %found",
-          "not_found:",
-          "  %nothing = call ptr @malloc(i64 8)",
-          "  %nothing_tag = inttoptr i64 0 to ptr",
-          "  store ptr %nothing_tag, ptr %nothing",
-          "  ret ptr %nothing",
-          "found:",
-          "  %str_int = ptrtoint ptr %str to i64",
-          "  %pos_int = ptrtoint ptr %pos to i64",
-          "  %prefix_len = sub i64 %pos_int, %str_int",
-          "  %sep_len = call i64 @strlen(ptr %sep)",
-          "  %suffix_start = getelementptr i8, ptr %pos, i64 %sep_len",
-          "  %suffix_len = call i64 @strlen(ptr %suffix_start)",
-          "  %prefix_total = add i64 %prefix_len, 1",
-          "  %prefix = call ptr @malloc(i64 %prefix_total)",
-          "  call ptr @memcpy(ptr %prefix, ptr %str, i64 %prefix_len)",
-          "  %prefix_term = getelementptr i8, ptr %prefix, i64 %prefix_len",
-          "  store i8 0, ptr %prefix_term",
-          "  %suffix_total = add i64 %suffix_len, 1",
-          "  %suffix = call ptr @malloc(i64 %suffix_total)",
-          "  call ptr @memcpy(ptr %suffix, ptr %suffix_start, i64 %suffix_len)",
-          "  %suffix_term = getelementptr i8, ptr %suffix, i64 %suffix_len",
-          "  store i8 0, ptr %suffix_term",
+          "entry:",
+          "  %sep_len32 = load i32, ptr %sep",
+          "  %str_len32 = load i32, ptr %str",
+          "  %sep_len = zext i32 %sep_len32 to i64",
+          "  %str_len = zext i32 %str_len32 to i64",
+          "  %sep_payload = getelementptr i8, ptr %sep, i64 8",
+          "  %str_payload = getelementptr i8, ptr %str, i64 8",
+          -- A separator longer than the input can't match.
+          "  %too_long = icmp ugt i64 %sep_len, %str_len",
+          "  br i1 %too_long, label %not_found, label %search_init",
+          "search_init:",
+          -- Last possible start position: str_len - sep_len. The empty
+          -- separator case slips through with %limit = %str_len.
+          "  %limit = sub i64 %str_len, %sep_len",
+          "  %i_p = alloca i64, align 8",
+          "  store i64 0, ptr %i_p",
+          "  br label %outer",
+          "outer:",
+          "  %i = load i64, ptr %i_p",
+          "  %i_done = icmp ugt i64 %i, %limit",
+          "  br i1 %i_done, label %not_found, label %inner_init",
+          "inner_init:",
+          "  %j_p = alloca i64, align 8",
+          "  store i64 0, ptr %j_p",
+          "  br label %inner",
+          "inner:",
+          "  %j = load i64, ptr %j_p",
+          "  %j_done = icmp uge i64 %j, %sep_len",
+          "  br i1 %j_done, label %match, label %inner_step",
+          "inner_step:",
+          "  %ij = add i64 %i, %j",
+          "  %sp = getelementptr i8, ptr %str_payload, i64 %ij",
+          "  %sb = load i8, ptr %sp",
+          "  %sepp = getelementptr i8, ptr %sep_payload, i64 %j",
+          "  %sepb = load i8, ptr %sepp",
+          "  %eq = icmp eq i8 %sb, %sepb",
+          "  br i1 %eq, label %inner_advance, label %outer_advance",
+          "inner_advance:",
+          "  %j1 = add i64 %j, 1",
+          "  store i64 %j1, ptr %j_p",
+          "  br label %inner",
+          "outer_advance:",
+          "  %i1 = add i64 %i, 1",
+          "  store i64 %i1, ptr %i_p",
+          "  br label %outer",
+          "match:",
+          -- Split position = %i. prefix bytes = str[0..i], suffix bytes
+          -- = str[i+sep_len..str_len].
+          "  %prefix_blen = phi i64 [%i, %inner]",
+          "  %prefix_after = add i64 %i, %sep_len",
+          "  %suffix_blen = sub i64 %str_len, %prefix_after",
+          "  %suffix_start = getelementptr i8, ptr %str_payload, i64 %prefix_after",
+          -- Build prefix string with its own UTF-16 count.
+          "  %prefix_u16 = call i32 @__utf16OfRange(ptr %str_payload, i64 %prefix_blen)",
+          "  %prefix_alloc = add i64 %prefix_blen, 8",
+          "  %prefix = call ptr @malloc(i64 %prefix_alloc)",
+          "  %prefix_blen32 = trunc i64 %prefix_blen to i32",
+          "  store i32 %prefix_blen32, ptr %prefix",
+          "  %prefix_u16p = getelementptr i8, ptr %prefix, i64 4",
+          "  store i32 %prefix_u16, ptr %prefix_u16p",
+          "  %prefix_payload = getelementptr i8, ptr %prefix, i64 8",
+          "  call ptr @memcpy(ptr %prefix_payload, ptr %str_payload, i64 %prefix_blen)",
+          -- Build suffix string with its own UTF-16 count.
+          "  %suffix_u16 = call i32 @__utf16OfRange(ptr %suffix_start, i64 %suffix_blen)",
+          "  %suffix_alloc = add i64 %suffix_blen, 8",
+          "  %suffix = call ptr @malloc(i64 %suffix_alloc)",
+          "  %suffix_blen32 = trunc i64 %suffix_blen to i32",
+          "  store i32 %suffix_blen32, ptr %suffix",
+          "  %suffix_u16p = getelementptr i8, ptr %suffix, i64 4",
+          "  store i32 %suffix_u16, ptr %suffix_u16p",
+          "  %suffix_payload = getelementptr i8, ptr %suffix, i64 8",
+          "  call ptr @memcpy(ptr %suffix_payload, ptr %suffix_start, i64 %suffix_blen)",
+          -- Tuple2 prefix suffix → Just (Tuple2 prefix suffix).
           "  %tuple = call ptr @malloc(i64 24)",
           "  %tuple_tag = inttoptr i64 0 to ptr",
           "  store ptr %tuple_tag, ptr %tuple",
@@ -903,6 +1021,56 @@ runtime builtIns =
           "  %just_f = getelementptr ptr, ptr %just, i32 1",
           "  store ptr %tuple, ptr %just_f",
           "  ret ptr %just",
+          "not_found:",
+          "  %nothing = call ptr @malloc(i64 8)",
+          "  %nothing_tag = inttoptr i64 0 to ptr",
+          "  store ptr %nothing_tag, ptr %nothing",
+          "  ret ptr %nothing",
+          "}",
+          "",
+          -- Inline byte-walker: count UTF-16 code units in [%p, %p+%len).
+          -- BMP code points (1/2/3-byte UTF-8 sequences) contribute 1;
+          -- supplementary (4-byte, leading 11110xxx) contribute 2.
+          -- Continuation bytes (10xxxxxx) skipped.
+          "define internal i32 @__utf16OfRange(ptr %p, i64 %len) {",
+          "entry:",
+          "  %i_p = alloca i64, align 8",
+          "  store i64 0, ptr %i_p",
+          "  %n_p = alloca i32, align 4",
+          "  store i32 0, ptr %n_p",
+          "  br label %head",
+          "head:",
+          "  %i = load i64, ptr %i_p",
+          "  %done = icmp uge i64 %i, %len",
+          "  br i1 %done, label %end, label %body",
+          "body:",
+          "  %bp = getelementptr i8, ptr %p, i64 %i",
+          "  %b = load i8, ptr %bp",
+          "  %bz = zext i8 %b to i32",
+          "  %top2 = and i32 %bz, 192",
+          "  %is_cont = icmp eq i32 %top2, 128",
+          "  br i1 %is_cont, label %step, label %check4",
+          "check4:",
+          "  %top5 = and i32 %bz, 248",
+          "  %is_4 = icmp eq i32 %top5, 240",
+          "  br i1 %is_4, label %add2, label %add1",
+          "add2:",
+          "  %n2 = load i32, ptr %n_p",
+          "  %n2_new = add i32 %n2, 2",
+          "  store i32 %n2_new, ptr %n_p",
+          "  br label %step",
+          "add1:",
+          "  %n1 = load i32, ptr %n_p",
+          "  %n1_new = add i32 %n1, 1",
+          "  store i32 %n1_new, ptr %n_p",
+          "  br label %step",
+          "step:",
+          "  %i1 = add i64 %i, 1",
+          "  store i64 %i1, ptr %i_p",
+          "  br label %head",
+          "end:",
+          "  %nf = load i32, ptr %n_p",
+          "  ret i32 %nf",
           "}"
         ]
     -- parseInt32 : String -> Either ParseError Int32.
@@ -923,11 +1091,14 @@ runtime builtIns =
           "  store i64 0, ptr %i_alloca",
           "  %acc_alloca = alloca i64, align 8",
           "  store i64 0, ptr %acc_alloca",
-          "  %len = call i64 @strlen(ptr %s)",
+          -- O(1) length from header; payload starts at offset 8.
+          "  %len32 = load i32, ptr %s",
+          "  %len = zext i32 %len32 to i64",
+          "  %payload = getelementptr i8, ptr %s, i64 8",
           "  %is_empty = icmp eq i64 %len, 0",
           "  br i1 %is_empty, label %fail, label %check_sign",
           "check_sign:",
-          "  %first = load i8, ptr %s",
+          "  %first = load i8, ptr %payload",
           "  %first_i32 = zext i8 %first to i32",
           "  %is_neg = icmp eq i32 %first_i32, 45",
           "  br i1 %is_neg, label %sign_minus, label %loop_head",
@@ -944,7 +1115,7 @@ runtime builtIns =
           "  %cond = icmp ult i64 %i, %len",
           "  br i1 %cond, label %body, label %after",
           "body:",
-          "  %ptr_c = getelementptr i8, ptr %s, i64 %i",
+          "  %ptr_c = getelementptr i8, ptr %payload, i64 %i",
           "  %c = load i8, ptr %ptr_c",
           "  %c_i32 = zext i8 %c to i32",
           "  %low = icmp ult i32 %c_i32, 48",
@@ -1014,7 +1185,10 @@ runtime builtIns =
           "  store i64 0, ptr %i_alloca",
           "  %acc_alloca = alloca i32, align 4",
           "  store i32 0, ptr %acc_alloca",
-          "  %len = call i64 @strlen(ptr %s)",
+          -- O(1) length from header; payload at offset 8.
+          "  %len32 = load i32, ptr %s",
+          "  %len = zext i32 %len32 to i64",
+          "  %payload = getelementptr i8, ptr %s, i64 8",
           "  %is_empty = icmp eq i64 %len, 0",
           "  br i1 %is_empty, label %fail, label %loop_head",
           "loop_head:",
@@ -1023,7 +1197,7 @@ runtime builtIns =
           "  %cond = icmp ult i64 %i, %len",
           "  br i1 %cond, label %body, label %ok",
           "body:",
-          "  %ptr_c = getelementptr i8, ptr %s, i64 %i",
+          "  %ptr_c = getelementptr i8, ptr %payload, i64 %i",
           "  %c = load i8, ptr %ptr_c",
           "  %c_i32 = zext i8 %c to i32",
           "  %low = icmp ult i32 %c_i32, 48",
@@ -1072,8 +1246,12 @@ runtime builtIns =
       unlines
         [ "define internal ptr @__showUInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
-          "  %buf = call ptr @malloc(i64 16)",
-          "  call i32 (ptr, i64, ptr, ...) @snprintf(ptr %buf, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  %buf = call ptr @malloc(i64 24)",
+          "  %payload = getelementptr i8, ptr %buf, i64 8",
+          "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_u8, i32 %v)",
+          "  store i32 %n, ptr %buf",
+          "  %u16p = getelementptr i8, ptr %buf, i64 4",
+          "  store i32 %n, ptr %u16p",
           "  ret ptr %buf",
           "}"
         ]
@@ -1259,32 +1437,30 @@ runtime builtIns =
           "  ret ptr %right",
           "}"
         ]
-    -- parseUInt32: Same grammar as parseUInt8 — no sign accepted, decimal
-    -- digits only — range 0..4294967295. Accumulator is i64 so the
-    -- 'big' fast-fail check (acc > 4294967295) can fire as soon as
-    -- accumulation overshoots; the running magnitude before failing is
-    -- bounded by 4294967295 * 10 + 9 = 42949672959, which fits in i64.
-    -- lengthBytesAsUtf8: strings are stored as null-terminated UTF-8
-    -- byte buffers, so 'strlen' is exactly the answer. Truncated to i32
-    -- because UInt32 boxes always 4 bytes wide.
+    -- lengthUtf8Bytes: O(1) — load the byte count from the string's
+    -- 8-byte header at offset 0. Was 'strlen' over a null-terminated
+    -- payload; the new length-prefixed layout caches this directly.
     rtLengthBytesAsUtf8 =
       unlines
-        [ "define internal ptr @__lengthBytesAsUtf8(ptr %s) {",
-          "  %len64 = call i64 @strlen(ptr %s)",
-          "  %len32 = trunc i64 %len64 to i32",
+        [ "define internal ptr @__lengthUtf8Bytes(ptr %s) {",
+          "  %len32 = load i32, ptr %s",
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %len32, ptr %box",
           "  ret ptr %box",
           "}"
         ]
-    -- lengthCodePoints: walk UTF-8 bytes; every byte that is *not* a
-    -- continuation byte (top two bits are 10) starts a fresh codepoint.
-    -- Works for any well-formed UTF-8: 1/2/3/4-byte sequences each have
-    -- exactly one start byte.
+    -- lengthCodePoints: still O(n) — code-point count requires walking
+    -- the bytes (continuation bytes don't start a code point). The walk
+    -- is now bounded by the byte_count from the header (offset 0)
+    -- rather than terminated by a NUL, so a payload containing NUL is
+    -- counted correctly.
     rtLengthCodePoints =
       unlines
         [ "define internal ptr @__lengthCodePoints(ptr %s) {",
           "entry:",
+          "  %total_bytes = load i32, ptr %s",
+          "  %total_bytes_64 = zext i32 %total_bytes to i64",
+          "  %payload = getelementptr i8, ptr %s, i64 8",
           "  %i_p = alloca i64, align 8",
           "  store i64 0, ptr %i_p",
           "  %n_p = alloca i32, align 4",
@@ -1292,11 +1468,11 @@ runtime builtIns =
           "  br label %head",
           "head:",
           "  %i = load i64, ptr %i_p",
-          "  %bp = getelementptr i8, ptr %s, i64 %i",
-          "  %b = load i8, ptr %bp",
-          "  %is_nul = icmp eq i8 %b, 0",
-          "  br i1 %is_nul, label %done, label %body",
+          "  %at_end = icmp uge i64 %i, %total_bytes_64",
+          "  br i1 %at_end, label %done, label %body",
           "body:",
+          "  %bp = getelementptr i8, ptr %payload, i64 %i",
+          "  %b = load i8, ptr %bp",
           "  %bz = zext i8 %b to i32",
           "  %top2 = and i32 %bz, 192",
           "  %is_cont = icmp eq i32 %top2, 128",
@@ -1324,46 +1500,170 @@ runtime builtIns =
     rtLengthUtf16CodeUnits =
       unlines
         [ "define internal ptr @__lengthUtf16CodeUnits(ptr %s) {",
+          -- O(1) — load UTF-16 code unit count from the string header at
+          -- offset 4. Was an O(n) byte scan over the null-terminated
+          -- payload; the new length-prefixed layout caches this directly.
+          "  %u16p = getelementptr i8, ptr %s, i64 4",
+          "  %u16 = load i32, ptr %u16p",
+          "  %box = call ptr @malloc(i64 4)",
+          "  store i32 %u16, ptr %box",
+          "  ret ptr %box",
+          "}"
+        ]
+    -- __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
+    -- UnpairedUtf16Surrogate) String' for the user's 'main'. Walks the
+    -- UTF-8 bytes once and runs two checks:
+    --   (1) UTF-16 code unit count vs cap (134217728), with short-circuit
+    --       on overflow — adversarial input no longer drives an unbounded
+    --       walk;
+    --   (2) Surrogate-encoded byte triplets ('ED A0..BF 80..BF'), which
+    --       standard UTF-8 (RFC 3629) forbids but WTF-8 / CESU-8 / Java
+    --       modified UTF-8 do not. When detected, sets a sticky flag and
+    --       continues scanning so a longer-than-cap input still reports
+    --       'StringTooLong' (cap-check has priority).
+    -- Returns:
+    --   * Right(arg)               on fit + no surrogates
+    --   * Left StringTooLong       on cap overflow (regardless of surrogates)
+    --   * Left UnpairedUtf16Surrogate on surrogates with cap respected
+    --
+    -- Cap value (134217728 = 2^27) and FNV-1a row tags for "StringTooLong"
+    -- / "UnpairedUtf16Surrogate" must stay in sync with
+    -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww' and the
+    -- matching constants in 'Awsum.Codegen.{JVM,CLR,WASM,JS}'.
+    --
+    -- Layout of the returned Either cell (identical for both Left arms,
+    -- only the row tag differs):
+    --   Right s     : malloc(16); [tag=1, ptr=s]
+    --   Left  e     : malloc(16); [tag=0, ptr=row]
+    --                 row = malloc(16); [rowTag, ptr=inner]   (CRow box)
+    --                 inner = malloc(8); [tag=0]              (singleton CCon)
+    rtEntryArgEither =
+      unlines
+        [ "define internal ptr @__entryArgEither(ptr %arg) {",
           "entry:",
           "  %i_p = alloca i64, align 8",
           "  store i64 0, ptr %i_p",
           "  %n_p = alloca i32, align 4",
           "  store i32 0, ptr %n_p",
+          "  %surr_p = alloca i32, align 4",
+          "  store i32 0, ptr %surr_p",
           "  br label %head",
           "head:",
           "  %i = load i64, ptr %i_p",
-          "  %bp = getelementptr i8, ptr %s, i64 %i",
+          "  %bp = getelementptr i8, ptr %arg, i64 %i",
           "  %b = load i8, ptr %bp",
           "  %is_nul = icmp eq i8 %b, 0",
-          "  br i1 %is_nul, label %done, label %body",
+          "  br i1 %is_nul, label %scan_done, label %body",
           "body:",
           "  %bz = zext i8 %b to i32",
           "  %top2 = and i32 %bz, 192",
           "  %is_cont = icmp eq i32 %top2, 128",
-          "  br i1 %is_cont, label %step, label %check4",
+          "  br i1 %is_cont, label %step, label %surrogate_check",
+          -- Surrogate-byte detection: a UTF-8 leading byte 0xED with the
+          -- next byte in 0xA0..0xBF starts a 3-byte sequence encoding a
+          -- code point in the surrogate range U+D800..U+DFFF. Standard
+          -- UTF-8 forbids it; we treat it as 'UnpairedUtf16Surrogate'.
+          -- Sticky flag, no early-exit (cap-check has priority).
+          "surrogate_check:",
+          "  %is_ED = icmp eq i32 %bz, 237",
+          "  br i1 %is_ED, label %peek_next, label %check4",
+          "peek_next:",
+          "  %i_next = add i64 %i, 1",
+          "  %bp_next = getelementptr i8, ptr %arg, i64 %i_next",
+          "  %nxt = load i8, ptr %bp_next",
+          "  %nxt_z = zext i8 %nxt to i32",
+          "  %nxt_top3 = and i32 %nxt_z, 224",
+          "  %is_surr = icmp eq i32 %nxt_top3, 160",
+          "  br i1 %is_surr, label %set_surr, label %check4",
+          "set_surr:",
+          "  store i32 1, ptr %surr_p",
+          "  br label %check4",
           "check4:",
           "  %top5 = and i32 %bz, 248",
           "  %is_4 = icmp eq i32 %top5, 240",
           "  br i1 %is_4, label %add2, label %add1",
           "add2:",
-          "  %n2_0 = load i32, ptr %n_p",
-          "  %n2_1 = add i32 %n2_0, 2",
-          "  store i32 %n2_1, ptr %n_p",
-          "  br label %step",
+          "  %n2 = load i32, ptr %n_p",
+          "  %n2_new = add i32 %n2, 2",
+          "  store i32 %n2_new, ptr %n_p",
+          -- maxStringLengthUtf16CodeUnits = 134217728. Short-circuit out
+          -- of the scan as soon as the running count exceeds the cap.
+          "  %over2 = icmp ugt i32 %n2_new, 134217728",
+          "  br i1 %over2, label %scan_done, label %step",
           "add1:",
-          "  %n1_0 = load i32, ptr %n_p",
-          "  %n1_1 = add i32 %n1_0, 1",
-          "  store i32 %n1_1, ptr %n_p",
-          "  br label %step",
+          "  %n1 = load i32, ptr %n_p",
+          "  %n1_new = add i32 %n1, 1",
+          "  store i32 %n1_new, ptr %n_p",
+          "  %over1 = icmp ugt i32 %n1_new, 134217728",
+          "  br i1 %over1, label %scan_done, label %step",
           "step:",
           "  %i1 = add i64 %i, 1",
           "  store i64 %i1, ptr %i_p",
           "  br label %head",
-          "done:",
-          "  %nf = load i32, ptr %n_p",
-          "  %box = call ptr @malloc(i64 4)",
-          "  store i32 %nf, ptr %box",
-          "  ret ptr %box",
+          "scan_done:",
+          -- Cap-check has priority: if length exceeded the cap, return
+          -- 'Left StringTooLong' regardless of the surrogate flag.
+          "  %n_final = load i32, ptr %n_p",
+          "  %over_final = icmp ugt i32 %n_final, 134217728",
+          "  br i1 %over_final, label %too_long, label %check_surr",
+          "check_surr:",
+          "  %surr_final = load i32, ptr %surr_p",
+          "  %is_surr_set = icmp ne i32 %surr_final, 0",
+          "  br i1 %is_surr_set, label %unpaired, label %fits",
+          "fits:",
+          -- argv[1] is a C-string from libc; convert it to length-prefixed
+          -- form before handing to user code. 'i' at scan exit is the byte
+          -- count (position of NUL). 'n_final' is the cached UTF-16 count.
+          "  %byte_count_64 = load i64, ptr %i_p",
+          "  %byte_count_32 = trunc i64 %byte_count_64 to i32",
+          "  %alloc_size_64 = add i64 %byte_count_64, 8",
+          "  %wrapped = call ptr @malloc(i64 %alloc_size_64)",
+          "  store i32 %byte_count_32, ptr %wrapped",
+          "  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4",
+          "  store i32 %n_final, ptr %wrapped_u16p",
+          "  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8",
+          "  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)",
+          -- Right(wrapped): tag=1, payload=wrapped length-prefixed string.
+          "  %right = call ptr @malloc(i64 16)",
+          "  %right_tag = inttoptr i64 1 to ptr",
+          "  store ptr %right_tag, ptr %right",
+          "  %right_f = getelementptr ptr, ptr %right, i32 1",
+          "  store ptr %wrapped, ptr %right_f",
+          "  ret ptr %right",
+          "too_long:",
+          -- inner: StringTooLong CCon (single ctor, tag 0).
+          "  %tl_inner = call ptr @malloc(i64 8)",
+          "  %tl_inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %tl_inner_tag, ptr %tl_inner",
+          -- row: CRow box keyed by FNV-1a hash of "StringTooLong".
+          "  %tl_row = call ptr @malloc(i64 16)",
+          "  %tl_row_tag = inttoptr i64 " <> stringTooLongTag <> " to ptr",
+          "  store ptr %tl_row_tag, ptr %tl_row",
+          "  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1",
+          "  store ptr %tl_inner, ptr %tl_row_f",
+          "  %tl_left = call ptr @malloc(i64 16)",
+          "  %tl_left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %tl_left_tag, ptr %tl_left",
+          "  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1",
+          "  store ptr %tl_row, ptr %tl_left_f",
+          "  ret ptr %tl_left",
+          "unpaired:",
+          -- inner: UnpairedUtf16Surrogate CCon (single ctor, tag 0).
+          "  %us_inner = call ptr @malloc(i64 8)",
+          "  %us_inner_tag = inttoptr i64 0 to ptr",
+          "  store ptr %us_inner_tag, ptr %us_inner",
+          -- row: CRow box keyed by FNV-1a hash of "UnpairedUtf16Surrogate".
+          "  %us_row = call ptr @malloc(i64 16)",
+          "  %us_row_tag = inttoptr i64 " <> unpairedSurrogateTag <> " to ptr",
+          "  store ptr %us_row_tag, ptr %us_row",
+          "  %us_row_f = getelementptr ptr, ptr %us_row, i32 1",
+          "  store ptr %us_inner, ptr %us_row_f",
+          "  %us_left = call ptr @malloc(i64 16)",
+          "  %us_left_tag = inttoptr i64 0 to ptr",
+          "  store ptr %us_left_tag, ptr %us_left",
+          "  %us_left_f = getelementptr ptr, ptr %us_left, i32 1",
+          "  store ptr %us_row, ptr %us_left_f",
+          "  ret ptr %us_left",
           "}"
         ]
     rtParseUInt32 =
@@ -1374,7 +1674,10 @@ runtime builtIns =
           "  store i64 0, ptr %i_alloca",
           "  %acc_alloca = alloca i64, align 8",
           "  store i64 0, ptr %acc_alloca",
-          "  %len = call i64 @strlen(ptr %s)",
+          -- O(1) length from header; payload at offset 8.
+          "  %len32 = load i32, ptr %s",
+          "  %len = zext i32 %len32 to i64",
+          "  %payload = getelementptr i8, ptr %s, i64 8",
           "  %is_empty = icmp eq i64 %len, 0",
           "  br i1 %is_empty, label %fail, label %loop_head",
           "loop_head:",
@@ -1383,7 +1686,7 @@ runtime builtIns =
           "  %cond = icmp ult i64 %i, %len",
           "  br i1 %cond, label %body, label %ok",
           "body:",
-          "  %ptr_c = getelementptr i8, ptr %s, i64 %i",
+          "  %ptr_c = getelementptr i8, ptr %payload, i64 %i",
           "  %c = load i8, ptr %ptr_c",
           "  %c_i32 = zext i8 %c to i32",
           "  %low = icmp ult i32 %c_i32, 48",
@@ -1456,23 +1759,18 @@ footerPosix =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]",
-      -- Wrap input in `Right input` (tag=1, one field) before handing to v_main.
-      -- Layout matches CCon emit: malloc(8 * (1 + nFields)), tag at offset 0,
-      -- fields at offsets 1.. — both stored as `ptr` slots. Tag is encoded as
-      -- `inttoptr` to match how CCase reads it back via `ptrtoint`.
-      "  %right_box = call ptr @malloc(i64 16)",
-      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
-      "  %right_tag = inttoptr i64 1 to ptr",
-      "  store ptr %right_tag, ptr %right_tag_ptr",
-      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
-      "  store ptr %input, ptr %right_payload_ptr",
+      -- '__entryArgEither' walks the UTF-8 input counting UTF-16 code
+      -- units with short-circuit at cap+1, returning a fully-formed
+      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String' cell
+      -- (Right input on fit, row-tagged Left StringTooLong on overflow).
+      "  %either = call ptr @__entryArgEither(ptr %input)",
       -- v_main returns an IO tree (lazy IO); the prelude's `runIO`
       -- walks it to execute any effects. `runIO` is a regular Awsum
       -- function emitted via the standard CFunDef path, so it goes
       -- through TCO and ends up as a bounded-stack loop. The IO
       -- value itself is a heap-allocated ptr-tagged ADT cell, same
       -- shape as user ADTs.
-      "  %io = call ptr @v_main(ptr %right_box)",
+      "  %io = call ptr @v_main(ptr %either)",
       "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
@@ -1530,15 +1828,10 @@ footerWindows =
       "  br label %call_main",
       "call_main:",
       "  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]",
-      -- Same Right-box wrap as the POSIX path; see footerPosix for the layout note.
-      "  %right_box = call ptr @malloc(i64 16)",
-      "  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0",
-      "  %right_tag = inttoptr i64 1 to ptr",
-      "  store ptr %right_tag, ptr %right_tag_ptr",
-      "  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1",
-      "  store ptr %input, ptr %right_payload_ptr",
+      -- Same '__entryArgEither' helper as the POSIX path; see footerPosix.
+      "  %either = call ptr @__entryArgEither(ptr %input)",
       -- Same IO-tree handoff as the POSIX path; see footerPosix.
-      "  %io = call ptr @v_main(ptr %right_box)",
+      "  %io = call ptr @v_main(ptr %either)",
       "  call ptr @v_runIO(ptr %io)",
       "  ret i32 0",
       "}"
@@ -1787,12 +2080,11 @@ emitExpr ctx = \case
     let idx = case Map.lookup s ctx.stringPool of
           Just i -> i
           Nothing -> error $ "string not in pool: " <> show s
-        len = T.length s + 1
-    tmp <- freshTemp
-    pure
-      ( "  " <> tmp <> " = getelementptr [" <> show len <> " x i8], ptr @.str." <> show idx <> ", i64 0, i64 0\n",
-        tmp
-      )
+    -- '@.str.N' is the length-prefixed layout (header at offset 0, payload
+    -- at offset 8); the global pointer is exactly the runtime string ptr,
+    -- no GEP / cast needed. With opaque pointers (LLVM 15+) the constant's
+    -- declared aggregate type doesn't bind here.
+    pure ("", "@.str." <> show idx)
   CVar n
     | Just tmp <- Map.lookup n ctx.locals ->
         pure ("", tmp)
@@ -2139,7 +2431,7 @@ emitExpr ctx = \case
                   )
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8" ->
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes" ->
             case xs of
               [a] -> do
                 (instrA, resA) <- emitExpr ctx a
@@ -2148,7 +2440,7 @@ emitExpr ctx = \case
                     fn = case name of
                       "lengthCodePoints" -> "@__lengthCodePoints"
                       "lengthUtf16CodeUnits" -> "@__lengthUtf16CodeUnits"
-                      _ -> "@__lengthBytesAsUtf8"
+                      _ -> "@__lengthUtf8Bytes"
                 pure
                   ( instrA <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ")\n",
                     tmp

@@ -66,31 +66,25 @@ renderDecl = \case
     let header = case args of
           [] -> renderDeclName name
           _ -> renderDeclName name <> " " <> T.intercalate " " (map renderParam args)
-        -- Multi-line body forms (ECase / ELet / EDo) cannot carry a
-        -- trailing comment after the body — the parser would not see
-        -- it on the FunDef's '=' line and would promote it to a
-        -- sibling 'CommentDecl'. When 'mc' is present and the body is
-        -- multi-line, render the comment on the '=' line and start the
-        -- body on the following indented line; the parser accepts this
-        -- shape via 'tcomBeforeBody' in 'pFunDefWithEnd'.
+        -- A FunDef's trailing comment must land on the '=' line, not
+        -- after the body — the parser only looks for it through
+        -- 'tcomBeforeBody'. The hazard isn't only direct ECase / EDo
+        -- bodies: any body whose render ends inside a block-form's
+        -- last arm/stmt (e.g. an ELam whose body is ECase) would
+        -- otherwise let the FunDef comment fuse with the inner arm's
+        -- trailing comment on the same line. 'isBlockBody' captures
+        -- the same predicate the rest of the renderer uses.
         bodyAndComment = case e of
           ELet {} ->
             let (binds, finalBody) = collectLetChain e
-                blk = renderLetBlock 2 binds finalBody
+                blk = renderLetBlock 0 2 binds finalBody
              in " =" <> renderTrailingComment mc <> "\n  " <> blk
-          ECase {} ->
-            -- Without a comment, keep the keyword on the '=' line
-            -- ('f x = case … of …') for compatibility with the
-            -- existing layout. With a comment, push the body to the
-            -- next line so the '=' line is free for the comment.
-            case mc of
-              Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
-              Nothing -> " = " <> renderExpr e
-          EDo {} ->
-            case mc of
-              Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
-              Nothing -> " = " <> renderExpr e
-          _ -> " = " <> renderExpr e <> renderTrailingComment mc
+          _
+            | rendersMultiLine e ->
+                case mc of
+                  Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
+                  Nothing -> " = " <> renderExpr e
+            | otherwise -> " = " <> renderExpr e <> renderTrailingComment mc
      in header <> bodyAndComment
   TypeDecl _sp name tvars cons mc ->
     "type "
@@ -179,8 +173,19 @@ renderExprPrec :: Int -> Int -> Expr -> Text
 renderExprPrec ctx indent e =
   case e of
     EParens _sp e' ->
-      -- Preserve user parentheses exactly as written.
-      parens (renderExprPrec 0 indent e')
+      -- Preserve user parentheses exactly as written. When the
+      -- inner's render is multi-line — ECase / EDo at any depth
+      -- inside, including through nested 'EParens' (which the
+      -- parser inserts whenever the user wrote @(…)@ around any
+      -- subexpression) — close ')' on a fresh line. Otherwise a
+      -- trailing '--' on the inner's last arm would eat the ')',
+      -- and outer renderings would diverge between the original
+      -- AST and the re-parsed (EParens-decorated) AST. The parser
+      -- accepts ')' on a fresh line via 'pParensNoLineComments'.
+      let inner = renderExprPrec 0 indent e'
+       in if rendersMultiLine e'
+            then "(" <> inner <> "\n" <> T.replicate indent " " <> ")"
+            else parens inner
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
       -- Arm column is established by the first arm itself
@@ -201,10 +206,22 @@ renderExprPrec ctx indent e =
       -- block-form body (ECase/EDo) gets its own paren wrapping,
       -- preventing a trailing '--' on a nested case arm from eating
       -- the lambda's closing paren.
+      --
+      -- Closing ')' goes on a fresh line whenever the body itself
+      -- renders multi-line — same pattern as 'ECase' / 'EDo' / 'ELet'
+      -- / 'EParens'. Without this, the re-parsed AST (which gains
+      -- 'EParens' nodes around lambda and body) would re-render with
+      -- a fresh-line ')' while the original AST flat-wrapped, breaking
+      -- format-idempotency.
       let paramsText = T.intercalate " " (map renderParam params)
           bodyCtx = if 0 < ctx then 1 else 0
           s = "\\" <> paramsText <> " -> " <> renderExprPrec bodyCtx indent body
-       in if 0 < ctx then parens s else s
+       in if 0 < ctx
+            then
+              if rendersMultiLine body
+                then "(" <> s <> "\n" <> T.replicate indent " " <> ")"
+                else parens s
+            else s
     EDo _sp stmts ->
       -- Same close-paren-on-newline trick as 'ECase' — the last
       -- DoStmt (typically a DoExpr containing a case) might end on
@@ -220,16 +237,32 @@ renderExprPrec ctx indent e =
       -- chain so it stays compact when embedded inside arguments
       -- or other expressions ('print (let a = e1 in let b = e2 in
       -- body)' stays on one line modulo the body itself).
+      --
+      -- 'bodyCtx' is 1 when this 'ELet' is itself in a nested
+      -- position. Mirrors 'ELam' just below: the let's body sees a
+      -- non-zero ctx, so a block-form body (ECase / EDo) wraps itself
+      -- in its own parens — and that wrapping form puts ')' on a
+      -- fresh line, preventing a trailing '--' on the inner case's
+      -- last arm from eating the let's outer ')'.
+      --
+      -- The wrapping at @ctx > 0@ also closes ')' on a fresh line:
+      -- the let-block body itself ends on its own line, so a flat
+      -- @parens s@ would leave ')' fused to the body's last token
+      -- and a re-parse would re-render it on a fresh line — breaking
+      -- format-idempotency. Same shape as 'EParens' below.
       let (binds, finalBody) = collectLetChain e
+          bodyCtx = if 0 < ctx then 1 else 0
           s = case binds of
-            [single] -> renderLetBlock indent [single] finalBody
-            _ -> renderLetInlineChain indent binds finalBody
-       in if 0 < ctx then parens s else s
+            [single] -> renderLetBlock bodyCtx indent [single] finalBody
+            _ -> renderLetInlineChain bodyCtx indent binds finalBody
+       in if 0 < ctx
+            then "(" <> s <> "\n" <> T.replicate indent " " <> ")"
+            else s
     _ ->
       let (prec, s) = case e of
             EVar _sp' q -> (3, renderQName q)
             ELit _sp' (LString t) -> (3, "\"" <> escape t <> "\"")
-            ELit _sp' (LInt n) -> (3, show n)
+            ELit _sp' (LInt n) -> (3, renderInteger n)
             ECon _sp' n -> (3, n)
             EBuiltIn _sp' n -> (3, "BuiltIn." <> n)
             -- Application is left-assoc: print f at prec 2, arg at atom-precedence
@@ -245,7 +278,55 @@ renderExprPrec ctx indent e =
               let l' = renderExprPrec 1 indent l
                   r' = renderExprPrec 2 indent r
                in (1, l' <> " ++ " <> r')
-       in if prec < ctx then parens s else s
+            -- @|>@ is the lowest-precedence binary operator (prec 0).
+            -- Left-assoc: the right operand prints at ctx 1, so a
+            -- nested @|>@ on the right wraps — preserving
+            -- associativity. A nested @++@ on the right (prec 1)
+            -- does /not/ wrap, so @x |> a ++ b@ round-trips
+            -- unchanged.
+            --
+            -- The left operand prints at ctx 1 too, so @\\…@, @let@,
+            -- @do@, @case@ wrap into parens — without that, the
+            -- parser's greedy-rightward rule for those forms would
+            -- swallow the @|> r@ tail and re-parse to a different
+            -- tree. The exception is a nested @|>@ on the left,
+            -- which we want to /not/ wrap (so the left-assoc chain
+            -- stays flat); we render it at ctx 0 explicitly.
+            --
+            -- Chains of two or more @|>@ operators render multi-line
+            -- (one operator per line, leading the continuation), so
+            -- pipelines read top-down in execution order. A single
+            -- operator stays inline.
+            e'@(EInfix _ OpPipe _ _) ->
+              let chain = collectPipeChain e'
+               in if length chain >= 3
+                    then
+                      let pipePad = T.replicate (indent + 2) " "
+                          headExpr :| tailExprs = chain
+                          firstStr = renderExprPrec 1 indent headExpr
+                          stepStr step = "\n" <> pipePad <> "|> " <> renderExprPrec 1 indent step
+                          chainStr = firstStr <> mconcat (map stepStr tailExprs)
+                       in (0, chainStr)
+                    else
+                      let EInfix _ _ l r = e'
+                          lCtx = case l of
+                            EInfix _ OpPipe _ _ -> 0
+                            _ -> 1
+                          l' = renderExprPrec lCtx indent l
+                          r' = renderExprPrec 1 indent r
+                       in (0, l' <> " |> " <> r')
+       in if prec < ctx
+            -- Multi-line @s@ wrapped with a flat 'parens' would let
+            -- the inner block's last line fuse with the closing ')'
+            -- (and any subsequent ' -- comment'). When the body is
+            -- multi-line, close ')' on a fresh line — same shape as
+            -- 'EParens' / 'ELet' just above, accepted by the parser
+            -- via 'pParensNoLineComments'.
+            then
+              if rendersMultiLine e
+                then "(" <> s <> "\n" <> T.replicate indent " " <> ")"
+                else parens s
+            else s
   where
     -- Matches the parser's escape table.
     escape :: Text -> Text
@@ -263,12 +344,19 @@ renderCaseAlts indent alts trailingComments =
   T.intercalate "\n" (map renderCaseAlt (toList alts) <> map renderIndentedComment trailingComments)
   where
     pad = T.replicate indent " "
-    renderCaseAlt (CaseAlt leadingComments pat body mc) =
-      T.intercalate
-        "\n"
-        ( map renderIndentedComment leadingComments
-            <> [pad <> renderPattern pat <> " -> " <> renderExprPrec 0 indent body <> renderTrailingComment mc]
-        )
+    renderCaseAlt = \case
+      CaseAltLeaf leadingComments pat body mc ->
+        T.intercalate
+          "\n"
+          ( map renderIndentedComment leadingComments
+              <> [pad <> renderPattern pat <> " -> " <> renderExprPrec 0 indent body <> renderTrailingComment mc]
+          )
+      CaseAltBlock leadingComments pat body ->
+        T.intercalate
+          "\n"
+          ( map renderIndentedComment leadingComments
+              <> [pad <> renderPattern pat <> " -> " <> renderExprPrec 0 indent body]
+          )
     renderIndentedComment c = pad <> renderComment c
     renderTrailingComment = maybe ("" :: Text) (" --" <>)
 
@@ -323,34 +411,40 @@ collectLetChain = \case
 --     <indent>    let n = e
 --     <indent+1>   in body
 -- @
-renderLetBlock :: Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Text
-renderLetBlock indent binds finalBody =
+renderLetBlock :: Int -> Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Text
+renderLetBlock bodyCtx indent binds finalBody =
   let bindCol = indent + 4 -- column of the binding name (after "let ")
       inCol = indent + 1 -- column of "in" — one space indented past "let"
       bodyCol = inCol + 3 -- column of the body that follows "in "
       pad k = T.replicate k " "
       annotText = maybe "" (\t -> " : " <> renderType t)
-      bindText (_, pat, mAnnot, rhs) = renderPatternAtom pat <> annotText mAnnot <> " = " <> renderExprPrec 0 bindCol rhs
+      -- Bind RHS at ctx=1 so a block-form RHS (ECase / EDo / ELet
+      -- whose body is block) wraps itself in parens — without that,
+      -- a trailing '--' on the RHS's last line eats the 'in' that
+      -- follows on the next line of the let-block.
+      bindText (_, pat, mAnnot, rhs) = renderPatternAtom pat <> annotText mAnnot <> " = " <> renderExprPrec 1 bindCol rhs
       firstBind = case binds of
         (b : _) -> b
         [] -> error "renderLetBlock called with no bindings"
       restBinds = drop 1 binds
       firstLine = "let " <> bindText firstBind
       restLines = map (\b -> pad bindCol <> bindText b) restBinds
-      inLine = pad inCol <> "in " <> renderExprPrec 0 bodyCol finalBody
+      inLine = pad inCol <> "in " <> renderExprPrec bodyCtx bodyCol finalBody
    in T.intercalate "\n" (firstLine : restLines ++ [inLine])
 
 -- | Render a chain of 'ELet's as a single inline string @let n1 = e1
 --   in let n2 = e2 in body@. Used when the chain appears in a nested
 --   position (function argument, infix operand, etc.) where the
 --   layout form would be hard to align without column tracking.
-renderLetInlineChain :: Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Text
-renderLetInlineChain indent binds finalBody =
+renderLetInlineChain :: Int -> Int -> [(SrcSpan, Pattern, Maybe Type', Expr)] -> Expr -> Text
+renderLetInlineChain bodyCtx indent binds finalBody =
   T.concat
-    [ "let " <> renderPatternAtom pat <> annotText mAnnot <> " = " <> renderExprPrec 0 indent rhs <> " in "
+    -- RHS at ctx=1: block-form RHS wraps itself in parens so a
+    -- trailing '--' on its last line doesn't eat the ' in '.
+    [ "let " <> renderPatternAtom pat <> annotText mAnnot <> " = " <> renderExprPrec 1 indent rhs <> " in "
     | (_, pat, mAnnot, rhs) <- binds
     ]
-    <> renderExprPrec 0 indent finalBody
+    <> renderExprPrec bodyCtx indent finalBody
   where
     annotText = maybe "" (\t -> " : " <> renderType t)
 
@@ -388,9 +482,74 @@ renderParam (ParamPat _ pat) = "(" <> renderPattern pat <> ")"
 parens :: Text -> Text
 parens t = "(" <> t <> ")"
 
+-- | Renderer-side companion to 'isBlockBody': @True@ iff the
+--   rendered text spans multiple lines. Differs from 'isBlockBody'
+--   on 'EParens' — outer parens around a block form still render
+--   multi-line, even though the parser /can/ dock a trailing
+--   comment after @)@ (so 'isBlockBody' on @EParens@ is @False@).
+--
+--   Used to decide where a FunDef's trailing comment lands. Both
+--   @e = EApp f (ECase …)@ and @e = EApp f (EParens (ECase …))@
+--   render multi-line, so the comment must sit on the @=@ line in
+--   both cases — otherwise format-idempotency breaks across the
+--   parser's introduction of @EParens@.
+rendersMultiLine :: Expr -> Bool
+rendersMultiLine = \case
+  ECase {} -> True
+  EDo {} -> True
+  ELet {} -> True
+  ELam _ _ body -> rendersMultiLine body
+  EApp _ f x -> rendersMultiLine f || rendersMultiLine x
+  e@(EInfix _ OpPipe _ _) | length (collectPipeChain e) >= 3 -> True
+  EInfix _ _ a b -> rendersMultiLine a || rendersMultiLine b
+  EParens _ inner -> rendersMultiLine inner
+  EVar {} -> False
+  ELit {} -> False
+  ECon {} -> False
+  EBuiltIn {} -> False
+
+-- | Flatten a left-associative @|>@ chain into the spine of operands
+--   (leftmost first). For an expression that is not a pipe at the
+--   top, returns the singleton list. The chain is reconstructed so
+--   the multi-line renderer can emit one operator per line.
+collectPipeChain :: Expr -> NonEmpty Expr
+collectPipeChain (EInfix _ OpPipe l r) =
+  let lhsHead :| lhsTail = collectPipeChain l
+   in lhsHead :| (lhsTail <> [r])
+collectPipeChain e = e :| []
+
 -- | Render a qualified or unqualified name.
 renderQName :: QName -> Text
 renderQName (QName mods n) =
   case mods of
     [] -> n
     _ -> T.intercalate "." (mods <> [n])
+
+-- | Canonical form for an integer literal in source.
+--   Decimal digits, grouped by 3 from the right, with '_' between groups.
+--   Grouping kicks in starting at 4 digits — values with 1–3 digits stay bare
+--   ('42', '999'), values from 4 digits up get separators ('1_000',
+--   '1_234_567'). Sign is preserved on the outside ('-1_000_000').
+renderInteger :: Integer -> Text
+renderInteger n
+  | n < 0 = "-" <> renderNonNegative (negate n)
+  | otherwise = renderNonNegative n
+  where
+    renderNonNegative :: Integer -> Text
+    renderNonNegative k =
+      let digits = show k
+       in if T.length digits < 4
+            then digits
+            else
+              let len = T.length digits
+                  -- Size of the leading (possibly short) group: 1, 2, or 3.
+                  firstLen = ((len - 1) `mod` 3) + 1
+                  (lead, rest) = T.splitAt firstLen digits
+               in lead <> chunksOf3 rest
+
+    chunksOf3 :: Text -> Text
+    chunksOf3 t
+      | T.null t = ""
+      | otherwise =
+          let (h, r) = T.splitAt 3 t
+           in "_" <> h <> chunksOf3 r

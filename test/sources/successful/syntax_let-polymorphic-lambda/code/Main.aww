@@ -12,7 +12,7 @@ showTri t = case t of
 
 threeTypes : Int32 -> String -> Tri -> Either StringTooLong String
 threeTypes n s b =
-  let id = \x -> x
+  let id = (\x -> x)
    in do
         s0 <- showInt32 (id n) ++ "/"
         s1 <- s0 ++ id s

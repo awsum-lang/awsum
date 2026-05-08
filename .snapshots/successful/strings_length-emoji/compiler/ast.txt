@@ -204,7 +204,7 @@ Program
                         ( QName [] "actual" )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 10
@@ -243,7 +243,7 @@ Program
                             ( LString "=ok" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 11
@@ -521,7 +521,7 @@ Program
                                     )
                                 )
                             ]
-                        ) Nothing
+                        )
                     ]
                 ) []
             ) Nothing
@@ -823,7 +823,7 @@ Program
                         { spanStartLine = 22
                         , spanStartCol = 3
                         , spanEndLine = 22
-                        , spanEndCol = 60
+                        , spanEndCol = 56
                         }
                     )
                     ( PVar
@@ -840,7 +840,7 @@ Program
                             { spanStartLine = 22
                             , spanStartCol = 8
                             , spanEndLine = 22
-                            , spanEndCol = 60
+                            , spanEndCol = 56
                             }
                         )
                         ( EApp
@@ -848,7 +848,7 @@ Program
                                 { spanStartLine = 22
                                 , spanStartCol = 8
                                 , spanEndLine = 22
-                                , spanEndCol = 41
+                                , spanEndCol = 39
                                 }
                             )
                             ( EApp
@@ -885,7 +885,7 @@ Program
                                     { spanStartLine = 22
                                     , spanStartCol = 16
                                     , spanEndLine = 22
-                                    , spanEndCol = 41
+                                    , spanEndCol = 39
                                     }
                                 )
                                 ( EApp
@@ -893,7 +893,7 @@ Program
                                         { spanStartLine = 22
                                         , spanStartCol = 17
                                         , spanEndLine = 22
-                                        , spanEndCol = 39
+                                        , spanEndCol = 37
                                         }
                                     )
                                     ( EVar
@@ -901,17 +901,17 @@ Program
                                             { spanStartLine = 22
                                             , spanStartCol = 17
                                             , spanEndLine = 22
-                                            , spanEndCol = 35
+                                            , spanEndCol = 33
                                             }
                                         )
-                                        ( QName [] "lengthBytesAsUtf8" )
+                                        ( QName [] "lengthUtf8Bytes" )
                                     )
                                     ( ELit
                                         ( SrcSpan
                                             { spanStartLine = 22
-                                            , spanStartCol = 35
+                                            , spanStartCol = 33
                                             , spanEndLine = 22
-                                            , spanEndCol = 39
+                                            , spanEndCol = 37
                                             }
                                         )
                                         ( LString "🔥" )
@@ -922,12 +922,12 @@ Program
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 22
-                                , spanStartCol = 41
+                                , spanStartCol = 39
                                 , spanEndLine = 22
-                                , spanEndCol = 60
+                                , spanEndCol = 56
                                 }
                             )
-                            ( LString "lengthBytesAsUtf8" )
+                            ( LString "lengthUtf8Bytes" )
                         )
                     )
                 , DoBind
@@ -1267,7 +1267,7 @@ Program
                     )
                     ( QName [] "run" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 30
@@ -1319,7 +1319,7 @@ Program
                             ( QName [] "s" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 31

@@ -38,6 +38,7 @@ module Awsum.Typing
     isBareBuiltIn,
     splitArrow,
     intTypeRange,
+    maxStringLitUtf16CodeUnits,
   )
 where
 
@@ -46,6 +47,7 @@ import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, ro
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
+import Data.Char qualified as Char
 import Data.Graph qualified as G
 import Data.Map.Strict qualified as M
 import Data.Set qualified as S
@@ -97,6 +99,13 @@ data TypeError
     IntLiteralOutOfRange SrcSpan Integer Name
   | -- | Integer literal used in a context that does not determine its type.
     AmbiguousIntLiteral SrcSpan
+  | -- | String literal exceeds the language-fixed maximum length
+    --   ('maxStringLengthUtf16CodeUnits' = 2^27 UTF-16 code units).
+    --   Fields: span, literal length in UTF-16 code units.
+    --   Symmetric to 'IntLiteralOutOfRange': both reject literals that
+    --   can't fit in the language's representable range, before the
+    --   value escapes to runtime.
+    StringLiteralTooLong SrcSpan Int
   | -- | A 'let' binding @let n = e in body@ where the typechecker
     --   could not synthesise a type for @e@ on its own and the
     --   user did not provide an annotation. Fields: span of the
@@ -292,6 +301,7 @@ typeErrorSpan = \case
   CaseOnNonSumType sp _ -> Just sp
   IntLiteralOutOfRange sp _ _ -> Just sp
   AmbiguousIntLiteral sp -> Just sp
+  StringLiteralTooLong sp _ -> Just sp
   MissingLetAnnotation sp _ _ -> Just sp
   PatternLetAscription sp -> Just sp
   Shadowing sp _ -> Just sp
@@ -372,6 +382,12 @@ prettyPrintTypeError = \case
   IntLiteralOutOfRange _ n tyName ->
     "Integer literal " <> show n <> " out of range for " <> tyName <> " (valid range: " <> rangeText tyName <> ")"
   AmbiguousIntLiteral _ -> "Ambiguous integer literal: cannot infer type from context. Use an explicit type annotation."
+  StringLiteralTooLong _ n ->
+    "String literal exceeds maximum length: "
+      <> show n
+      <> " UTF-16 code units (max: "
+      <> show maxStringLitUtf16CodeUnits
+      <> ", bounded by JVM's CONSTANT_Utf8_info u2 length field)."
   MissingLetAnnotation _ n _underlying ->
     "Cannot infer the type of let-binding '"
       <> n
@@ -499,6 +515,26 @@ prettyPrintTypeError = \case
     showHex32 w =
       let s = showHex w ""
        in replicate (8 - length s) '0' <> s
+
+-- | Maximum length of a string literal in UTF-16 code units. Bounded
+--   tighter than the runtime cap ('maxStringLengthUtf16CodeUnits' in
+--   'stdlib/Prelude.aww') by JVM's per-literal ceiling: each
+--   'CONSTANT_Utf8_info' entry in the constant pool stores its length
+--   in a 'u2' field (max 65535 UTF-8 bytes). Worst-case UTF-8
+--   expansion of a UTF-16 code unit is 3 bytes (BMP-3-byte content —
+--   CJK ideographs, hangul, most non-Latin scripts), so
+--   'floor (65535 / 3) = 21845' is the largest UTF-16 code unit count
+--   whose worst-case Modified-UTF-8 encoding still fits 'u2'. Keeping
+--   the cap in code units (same unit as the runtime cap) means the
+--   spec stays in one measure regardless of content.
+maxStringLitUtf16CodeUnits :: Int
+maxStringLitUtf16CodeUnits = 21845
+
+-- | Length of 'Text' measured in UTF-16 code units. BMP code points
+--   contribute 1, supplementary (>= U+10000, encoded as a surrogate
+--   pair on UTF-16-native runtimes) contribute 2.
+utf16CodeUnits :: Text -> Int
+utf16CodeUnits = T.foldl' (\n c -> n + if Char.ord c > 0xFFFF then 2 else 1) 0
 
 -- | Inclusive (min, max) range for a numeric built-in type.
 --   Returns 'Nothing' for types that are not known integer types.
@@ -1180,6 +1216,11 @@ checkExpr conEnv tcm crossExempt env expected = \case
             actual <- typeOfExpr conEnv tcm env e
             unless (rowSubsume expected actual)
               $ Left (TypeMismatch expected actual e)
+  -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' check
+  -- gives the bidirectional spine logic above for free, so a pipe call
+  -- against a polymorphic head (@x |> apply g@) gets the same
+  -- expected-type propagation as the direct application form.
+  EInfix sp OpPipe l r -> checkExpr conEnv tcm crossExempt env expected (EApp sp r l)
   e -> do
     actual <- typeOfExpr conEnv tcm env e
     -- Boundary acceptance: equality is too strict once 'TyOr' enters
@@ -1264,7 +1305,10 @@ checkExpr conEnv tcm crossExempt env expected = \case
 --   This function /checks/ consistency; it does not invent polymorphism.
 typeOfExpr :: ConEnv -> TypeConsMap -> Env -> Expr -> Either TypeError Type'
 typeOfExpr conEnv tcm env = \case
-  ELit sp (LString _) -> Right (TyCon sp "String")
+  ELit sp (LString s) -> do
+    let n = utf16CodeUnits s
+    when (n > maxStringLitUtf16CodeUnits) (Left (StringLiteralTooLong sp n))
+    Right (TyCon sp "String")
   ELit sp (LInt _) -> Left (AmbiguousIntLiteral sp)
   EVar sp q ->
     case q of
@@ -1331,6 +1375,12 @@ typeOfExpr conEnv tcm env = \case
                   then Right b
                   else Left (TypeMismatch a tx x)
       _ -> Left (NotAFunction f tf)
+  -- @x |> f@ is pure syntax for @f x@. Delegating to the 'EApp' clause
+  -- means @|>@ inherits all of its bidirectional special-cases (lambda
+  -- argument, integer-literal in argument position, constructor-spine
+  -- check, …) for free. The synthesised @EApp@ keeps the original span,
+  -- so locations in any error remain accurate.
+  EInfix sp OpPipe l r -> typeOfExpr conEnv tcm env (EApp sp r l)
   -- String concatenation `a ++ b` is defined for (String, String) and
   -- returns `Either StringTooLong String`. Phase 1 always produces 'Right';
   -- 'StringTooLong' becomes reachable in phase 2.x when length validation
@@ -1506,35 +1556,37 @@ caseArms conEnv tcm crossExempt env sp scrut alts runBody = do
           _ -> Right ()
       pure armResults
 
-    handleArm caseSp envLocal scrutSubst (results, patterns) (CaseAlt _ (PCon patSp cName pats) body _) = do
-      -- Reject @_X@ constructor references at any depth in the pattern.
-      mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats)
-      -- Verify the constructor belongs to the scrutinee type.
-      ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
-      -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
-      let currentPattern = (cName, pats)
-      when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
-      -- Reject shadowing: pattern variables (including those in nested patterns)
-      -- must not duplicate each other and must not collide with anything
-      -- already visible in the arm. Each binder carries its own span so the
-      -- error arrow lands on the offending identifier, not on a usage site.
-      checkNoShadow envLocal crossExempt (collectPatternVars pats)
-      -- Compute field types with proper freshening and substitution.
-      -- First freshen the constructor's field types with the same suffix used for scrutSubst,
-      -- then apply the matched substitution.
-      let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
-          fieldTys = map (applySubst scrutSubst) freshFieldTys
-      -- Reject patterns on uninhabited constructors (unreachable).
-      case find (not . isTypeInhabited conEnv tcm) fieldTys of
-        Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
-        Nothing -> pass
-      -- Bind pattern variables from constructor fields.
-      let bindings = patternBindings conEnv pats fieldTys
-          envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
-      result <- runBody envWithBindings body
-      pure (results <> [result], patterns <> [currentPattern])
-    handleArm _ _ _ _ CaseAlt {} =
-      Left (TELowering "only constructor patterns are supported")
+    handleArm caseSp envLocal scrutSubst (results, patterns) alt = case caseAltPattern alt of
+      PCon patSp cName pats -> do
+        let body = caseAltBody alt
+        -- Reject @_X@ constructor references at any depth in the pattern.
+        mapM_ (rejectIgnoredConstructor conEnv) (PCon patSp cName pats : pats)
+        -- Verify the constructor belongs to the scrutinee type.
+        ci <- maybeToRight (UnknownConstructor (exprSpan body) cName) (M.lookup cName conEnv)
+        -- Reject duplicate (unreachable) patterns by comparing full pattern structure.
+        let currentPattern = (cName, pats)
+        when (patternMatches conEnv currentPattern patterns) $ Left (UnreachableCase caseSp cName)
+        -- Reject shadowing: pattern variables (including those in nested patterns)
+        -- must not duplicate each other and must not collide with anything
+        -- already visible in the arm. Each binder carries its own span so the
+        -- error arrow lands on the offending identifier, not on a usage site.
+        checkNoShadow envLocal crossExempt (collectPatternVars pats)
+        -- Compute field types with proper freshening and substitution.
+        -- First freshen the constructor's field types with the same suffix used for scrutSubst,
+        -- then apply the matched substitution.
+        let freshFieldTys = map (freshenType "$scrut") (ciFieldTypes ci)
+            fieldTys = map (applySubst scrutSubst) freshFieldTys
+        -- Reject patterns on uninhabited constructors (unreachable).
+        case find (not . isTypeInhabited conEnv tcm) fieldTys of
+          Just emptyTy -> Left (UnreachableCaseUninhabited caseSp cName emptyTy)
+          Nothing -> pass
+        -- Bind pattern variables from constructor fields.
+        let bindings = patternBindings conEnv pats fieldTys
+            envWithBindings = M.union (M.fromList [(qLocal n, t) | (n, t) <- bindings]) envLocal
+        result <- runBody envWithBindings body
+        pure (results <> [result], patterns <> [currentPattern])
+      _ ->
+        Left (TELowering "only constructor patterns are supported")
 
 -- | Specialised case-arm handling for structural-sum scrutinees. A row
 --   case accepts 'PAscribe' arms (one per row label, exhaustive) and
@@ -1582,8 +1634,9 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
     findLabel tyName =
       find (\l -> extractTyCon l == Just tyName) labels
 
-    handleRowArm (results, ascribed, perCon) (CaseAlt _ pat body _) = case pat of
+    handleRowArm (results, ascribed, perCon) alt = case caseAltPattern alt of
       PAscribe patSp inner ascrTy -> do
+        let body = caseAltBody alt
         unless (ascrTy `elem` labels)
           $ Left (RowLabelNotInScrut patSp ascrTy scrutTy)
         when (ascrTy `elem` ascribed)
@@ -1601,6 +1654,7 @@ caseArmsRow conEnv tcm crossExempt env sp scrutTy alts runBody = do
         result <- runBody envWithBindings body
         pure (results <> [result], ascribed <> [ascrTy], perCon)
       PCon patSp cName innerPats -> do
+        let body = caseAltBody alt
         ci <- maybeToRight (UnknownConstructor patSp cName) (M.lookup cName conEnv)
         let cTyName = ciTypeName ci
         label <-
@@ -1913,7 +1967,7 @@ freeNames = go
       ECon _ _ -> S.empty
       EBuiltIn _ _ -> S.empty
       ECase _ scrut alts _ ->
-        go scrut <> foldMap (\(CaseAlt _ _ body _) -> go body) (toList alts)
+        go scrut <> foldMap (go . caseAltBody) (toList alts)
       ELam _ params body ->
         go body `S.difference` S.fromList (map paramName params)
       EDo _ stmts -> goDoStmts stmts

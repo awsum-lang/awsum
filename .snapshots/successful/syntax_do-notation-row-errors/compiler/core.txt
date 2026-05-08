@@ -108,20 +108,41 @@ CoreProgram
                         [
                             ( 401451280
                             , "__rw"
-                            , CCon 1
-                                [ CString "ErrorA" ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 1
+                                        [ CString "ErrorA" ]
+                                    )
+                                ]
                             )
                         ,
                             ( 435006518
                             , "__rw"
-                            , CCon 1
-                                [ CString "ErrorC" ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 1
+                                        [ CString "ErrorC" ]
+                                    )
+                                ]
                             )
                         ,
                             ( 451784137
                             , "__rw"
-                            , CCon 1
-                                [ CString "ErrorB" ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 1
+                                        [ CString "ErrorB" ]
+                                    )
+                                ]
                             )
                         ]
                     )

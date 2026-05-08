@@ -27,16 +27,17 @@ g = do
 describe : Either (ErrA | ErrB) Int32 -> Either StringTooLong String
 describe r = case r of
   Left e -> case e of
-    (_ : ErrA) -> Right "ErrA"
-    (_ : ErrB) -> Right "ErrB"
+    ErrA -> Right "ErrA"
+    ErrB -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         d <- describe g
         s0 <- showInt32 inc42 ++ " / "
         s0 ++ d
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

@@ -20,6 +20,12 @@ module Awsum.Syntax
     Expr (..),
     DoStmt (..),
     CaseAlt (..),
+    caseAltLeading,
+    caseAltPattern,
+    caseAltBody,
+    caseAltTrailing,
+    mkCaseAlt,
+    isBlockBody,
     Pattern (..),
     Comment (..),
     Param (..),
@@ -207,8 +213,13 @@ data QName = QName [Name] Name
 -- | Infix operator tags used by the surface syntax.
 --   Extend this when new symbolic ops appear (remember to update parser/render/fixities).
 data Op'
-  = -- | @e1 ++ e2@ (left-associative, lowest precedence among our ops)
+  = -- | @e1 ++ e2@ (left-associative, tighter than @|>@)
     OpConcat
+  | -- | @e1 |> e2@ — left-pipe, left-associative, lowest precedence.
+    --   Pure syntactic rewrite: @x |> f@ lowers to @EApp f x@ in
+    --   'Awsum.ElaborateLower' before any Core-to-Core pass sees it,
+    --   so there is no residual call frame and @(|>)@ is not a name.
+    OpPipe
   deriving stock (Show, Eq)
 
 -- | Literals in the surface language.
@@ -306,13 +317,104 @@ data DoStmt
   deriving stock (Show, Eq)
 
 -- | A single alternative in a @case@ expression.
---   Leading comments appear before the arm; trailing is an optional inline @-- …@.
+--   Leading comments appear before the arm; trailing is an optional inline
+--   @-- …@ that the parser only encounters when the body's render ends on
+--   the same line as the arm started.
+--
+--   Two constructors split by body shape because of a parser invariant:
+--   when the body is /block-form/ (an @ECase@ or @EDo@ that ends inside
+--   its own last arm/stmt, transitively reachable through @ELet@ / @ELam@
+--   / @EApp@ / @EInfix@ tails), any trailing @--@ on the same line as the
+--   inner last arm is consumed by /that inner arm/, and the outer arm is
+--   left without a trailing comment. The parser therefore never builds
+--   @CaseAlt@ with trailing on a block-form body. Encoding the same
+--   invariant in the type prevents 'Arbitrary Expr' from generating an
+--   unparseable shape and lets nested @ECase@/@EDo@ flow through the
+--   property-test generator.
 --
 --   Preserving comments inside indented blocks (before, between, and after arms)
 --   lets users comment-out / uncomment individual case arms while editing, without
 --   the formatter destroying those comments on save.
-data CaseAlt = CaseAlt [Comment] Pattern Expr (Maybe Text)
+data CaseAlt
+  = -- | Body's render does not /end inside/ a nested case/do — the
+    --   parser can pick up an optional trailing @-- …@ on the same line.
+    CaseAltLeaf [Comment] Pattern Expr (Maybe Text)
+  | -- | Body's render ends inside its own last arm/stmt — a trailing
+    --   @--@ is impossible at the parser level, so the constructor has
+    --   no slot for it.
+    CaseAltBlock [Comment] Pattern Expr
   deriving stock (Show, Eq)
+
+-- | Leading comments of an arm — present on either constructor.
+caseAltLeading :: CaseAlt -> [Comment]
+caseAltLeading = \case
+  CaseAltLeaf c _ _ _ -> c
+  CaseAltBlock c _ _ -> c
+
+-- | Pattern of an arm.
+caseAltPattern :: CaseAlt -> Pattern
+caseAltPattern = \case
+  CaseAltLeaf _ p _ _ -> p
+  CaseAltBlock _ p _ -> p
+
+-- | Body of an arm.
+caseAltBody :: CaseAlt -> Expr
+caseAltBody = \case
+  CaseAltLeaf _ _ b _ -> b
+  CaseAltBlock _ _ b -> b
+
+-- | Trailing comment if present. 'CaseAltBlock' has no trailing slot
+--   by construction, so it always returns 'Nothing'.
+caseAltTrailing :: CaseAlt -> Maybe Text
+caseAltTrailing = \case
+  CaseAltLeaf _ _ _ t -> t
+  CaseAltBlock {} -> Nothing
+
+-- | Smart constructor that picks the right 'CaseAlt' variant based on
+--   trailing-presence and body shape. Mirrors what the parser's
+--   'Awsum.Parser.groupCaseItems' decides — desugaring and other passes
+--   that rebuild arms reuse this so the type-level invariant
+--   (no trailing on block-form body) is upheld in one place.
+--
+--   Discards a 'Just trailing' silently when the body is block-form.
+--   That can only happen if upstream code mis-paired them — the parser
+--   never produces this combination, so on a well-formed AST the
+--   discard is unreachable.
+mkCaseAlt :: [Comment] -> Pattern -> Expr -> Maybe Text -> CaseAlt
+mkCaseAlt lc pat body mc
+  | isBlockBody body = CaseAltBlock lc pat body
+  | otherwise = CaseAltLeaf lc pat body mc
+
+-- | Predicate that classifies an expression by whether its rendered form
+--   ends in a position where the parser would consume a trailing @--@ as
+--   /this/ expression's, rather than as the trailing of some nested
+--   case-arm or do-stmt /inside/ it.
+--
+--   * @ECase@ / @EDo@ at the outermost — block: the last arm/stmt's own
+--     trailing-comment slot eats any subsequent @--@.
+--   * @ELet@ / @ELam@ — recurse into the body (the let-in body / lambda
+--     body /is/ the last syntactic position).
+--   * @EApp@ — recurse into the rightmost argument (right-associative
+--     application; the rightmost arg is the last token rendered).
+--   * @EInfix@ — recurse into the right operand.
+--   * @EParens@ — never block: the closing @)@ ends on its own line for
+--     multi-line inner forms (see 'Awsum.Render'), so the parser is
+--     positioned right after @)@ when looking for trailing.
+--   * Everything else (variables, literals, constructors, builtins) —
+--     leaf, single-token render.
+isBlockBody :: Expr -> Bool
+isBlockBody = \case
+  ECase {} -> True
+  EDo {} -> True
+  ELet _ _ _ _ body -> isBlockBody body
+  ELam _ _ body -> isBlockBody body
+  EApp _ _ x -> isBlockBody x
+  EInfix _ _ _ b -> isBlockBody b
+  EParens {} -> False
+  EVar {} -> False
+  ELit {} -> False
+  ECon {} -> False
+  EBuiltIn {} -> False
 
 -- | Patterns for @case@ alternatives.
 --   Currently only constructor patterns; variable and wildcard are for future use.

@@ -245,32 +245,21 @@ instance Arbitrary CaseAlt where
   arbitrary = sized $ \n -> do
     pat <- resize (n `div` 2) arbitrary
     body <- resize (n `div` 2) arbitrary
-    -- Two restrictions, both rooted in how comments dock at end of
-    -- line in the rendered text:
-    --   * Leading comments on a CaseAlt round-trip in isolation but
-    --     interact poorly with deeply nested case-in-case shapes —
-    --     the renderer prints them at the arm's indent, which the
-    --     outer parser then mis-attributes when both cases share
-    --     that column.
-    --   * Trailing '--' comment lands on the body's last line; if the
-    --     body is itself a multi-line block form (ECase/EDo/ELet),
-    --     the comment looks like a trailing comment of an inner
-    --     last-arm / last-statement / let-body and gets re-attached
-    --     there on parse.
-    -- Both shapes do round-trip when isolated; the failures only
-    -- appear in the cross-product. Until that's untangled, only
-    -- generate trailing comments next to single-line bodies.
-    mc <- if isMultiLineBody body then pure Nothing else genComment
-    pure (CaseAlt [] pat body mc)
-    where
-      isMultiLineBody = \case
-        ECase {} -> True
-        EDo {} -> True
-        ELet {} -> True
-        _ -> False
-  shrink (CaseAlt _ p e _) =
-    [CaseAlt [] p' e Nothing | p' <- shrink p]
-      <> [CaseAlt [] p e' Nothing | e' <- shrink e]
+    -- Trailing '--' on a CaseAlt only round-trips when the body's
+    -- render ends on the same line as the arm (so the parser's
+    -- 'pTrailingLineCommentMaybe' lands on the comment instead of
+    -- finding empty space past a newline). 'isBlockBody' captures
+    -- exactly that distinction; the type-level split into
+    -- 'CaseAltLeaf' / 'CaseAltBlock' upgrades the rule from
+    -- "generator avoids it" to "AST disallows the bad pairing", and
+    -- 'mkCaseAlt' picks the right variant for us.
+    mc <- if isBlockBody body then pure Nothing else genComment
+    pure (mkCaseAlt [] pat body mc)
+  shrink alt =
+    let p = caseAltPattern alt
+        e = caseAltBody alt
+     in [mkCaseAlt [] p' e Nothing | p' <- shrink p]
+          <> [mkCaseAlt [] p e' Nothing | e' <- shrink e]
 
 -- | A 'do'-block statement. The renderer goes through
 --   'renderPatternAtom' for the LHS, which parenthesises constructor
@@ -297,16 +286,10 @@ instance Arbitrary DoStmt where
 
 -- | Surface expressions.
 --
---   What is /not/ generated here, and why: 'ECase' / 'EDo' as nested
---   subexpressions (operands of 'EApp' / 'EInfix' / 'EParens', body of
---   'ELet' / 'ELam', etc.). Each individual round-trip works, but
---   their cross-product creates a nest of comment-position ambiguities
---   the parser can't disentangle without context — e.g. a trailing
---   '--' on a 'CaseAlt' whose body is itself a multi-line block ends
---   up on the inner block's last line on parse-back. Closing those
---   needs a context-sensitive generator (or a comment-placement
---   normaliser); both are bigger moves than this pass.  Block forms
---   /are/ generated as the direct body of a 'FunDef' (see 'Decl').
+--   'ECase' / 'EDo' as nested subexpressions are generated. The
+--   AST-level invariant on 'CaseAlt' (Leaf vs Block, see 'Awsum.Syntax')
+--   guarantees a trailing '--' on an arm whose body is block-form is
+--   not constructible — that was the only round-trip hazard here.
 instance Arbitrary Expr where
   arbitrary = sized go
     where
@@ -329,8 +312,16 @@ instance Arbitrary Expr where
             (1, EBuiltIn noSpan <$> genLIdent),
             (5, EApp noSpan <$> go (n `div` 2) <*> go (n `div` 2)),
             (5, EInfix noSpan OpConcat <$> go (n `div` 2) <*> go (n `div` 2)),
+            (3, EInfix noSpan OpPipe <$> go (n `div` 2) <*> go (n `div` 2)),
             (2, genLam (n `div` 2)),
-            (2, genLet (n `div` 2))
+            (2, genLet (n `div` 2)),
+            -- Block forms in nested position. Lower weight + steeper
+            -- size division (n `div` 3) — they expand into multi-line
+            -- shapes whose parser layout is layout-sensitive; flooding
+            -- the generator with deeply nested blocks blows up the
+            -- average tree size without proportional coverage gain.
+            (1, ECase noSpan <$> go (n `div` 3) <*> resize (n `div` 3) (genNonEmpty arbitrary) <*> pure []),
+            (1, EDo noSpan <$> resize (n `div` 3) (genDoBlockExpr (n `div` 3)))
           ]
       genLam n = do
         k <- chooseInt (1, 2)
@@ -351,8 +342,13 @@ instance Arbitrary Expr where
       [l, r]
         <> [EInfix noSpan OpConcat l' r | l' <- shrink l]
         <> [EInfix noSpan OpConcat l r' | r' <- shrink r]
+    EInfix _sp OpPipe l r ->
+      [l, r]
+        <> [EInfix noSpan OpPipe l' r | l' <- shrink l]
+        <> [EInfix noSpan OpPipe l r' | r' <- shrink r]
     ECase _sp scrut alts cs ->
       [scrut]
+        <> map caseAltBody (toList alts)
         <> [ECase noSpan s' alts cs | s' <- shrink scrut]
     EBuiltIn _sp n -> EBuiltIn noSpan <$> shrinkIdent n
     ELam _sp ps body -> body : [ELam noSpan ps body' | body' <- shrink body]
@@ -363,6 +359,17 @@ instance Arbitrary Expr where
           DoLet _ _ _ e -> [e]
           DoExpr _ e -> [e]
     ELet _sp _ _ e body -> [e, body] <> [ELet noSpan (PVar noSpan "x") Nothing e' body | e' <- shrink e] <> [ELet noSpan (PVar noSpan "x") Nothing e body' | body' <- shrink body]
+
+-- | Body of an 'EDo' block: zero or more leading bind/let/expr
+--   statements followed by a final 'DoExpr'. Shared between
+--   'Arbitrary Expr' (nested @do@) and 'Arbitrary Decl' (function-body
+--   @do@) so both paths obey the same shape constraint.
+genDoBlockExpr :: Int -> Gen [DoStmt]
+genDoBlockExpr n = do
+  k <- chooseInt (0, min 3 (max 0 n))
+  leading <- vectorOf k (resize (n `div` (k + 1)) arbitrary)
+  finalE <- DoExpr noSpan <$> resize (n `div` (k + 1)) arbitrary
+  pure (leading <> [finalE])
 
 -- | Top-level declarations.
 instance Arbitrary Decl where
@@ -415,18 +422,8 @@ instance Arbitrary Decl where
         frequency
           [ (6, resize n arbitrary),
             (1, ECase noSpan <$> resize (n `div` 2) arbitrary <*> resize (n `div` 2) (genNonEmpty arbitrary) <*> pure []),
-            (1, EDo noSpan <$> resize (n `div` 2) (genDoBlock n))
+            (1, EDo noSpan <$> resize (n `div` 2) (genDoBlockExpr n))
           ]
-      -- A 'do' block must end with a 'DoExpr' (the trailing expression
-      -- of the chain). Generate ≥ 1 leading bind/let/expr statements
-      -- followed by a final 'DoExpr'. No special handling for
-      -- ELet-headed DoExpr — the renderer wraps it in parens
-      -- automatically (see 'renderDoStmt' in Render.hs).
-      genDoBlock n = do
-        k <- chooseInt (0, min 3 (max 0 n))
-        leading <- vectorOf k (resize (n `div` (k + 1)) arbitrary)
-        finalE <- DoExpr noSpan <$> resize (n `div` (k + 1)) arbitrary
-        pure (leading <> [finalE])
       genTypeDecl = sized $ \n -> do
         name <- genUIdent
         kTv <- chooseInt (0, min 2 (max 0 n))

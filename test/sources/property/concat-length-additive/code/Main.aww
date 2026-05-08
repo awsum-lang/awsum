@@ -1,0 +1,47 @@
+{- Property: for any pair of valid-UTF-16 inputs, all three
+   string-length functions are additive under (++). On the Right
+   path Awsum prints
+
+     lengthCodePoints     (a ++ b)
+       : lengthUtf16CodeUnits (a ++ b)
+       : lengthUtf8Bytes      (a ++ b)
+
+   and Haskell computes the same triple independently from the
+   concatenation of the two inputs. A backend whose '__concat'
+   produced a buffer of wrong size, or which miscounted at the join
+   between two operands, would diverge from at least one peer and
+   from the oracle.
+
+   Input: "a:b". The colon is excluded from both operand alphabets
+   by the generator (Utf16PairNoColon). -}
+import IO.Stdout
+
+parseInput : String -> Either ParseError (Tuple2 String String)
+parseInput raw = case splitOnFirst ":" raw of
+  Nothing -> Left ParseError
+  Just (Tuple2 a b) -> Right (Tuple2 a b)
+
+property : String -> String -> Either StringTooLong String
+property a b = do
+  ab <- a ++ b
+  let cp = showUInt32 (lengthCodePoints ab)
+  let cu = showUInt32 (lengthUtf16CodeUnits ab)
+  let bs = showUInt32 (lengthUtf8Bytes ab)
+  s0 <- cp ++ ":"
+  s1 <- s0 ++ cu
+  s2 <- s1 ++ ":"
+  s2 ++ bs
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
+        raw <- rawArg
+        Tuple2 a b <- parseInput raw
+        property a b
+      )
+   in case res of
+        Left e -> case e of
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
+        Right s -> IO.Stdout.print s

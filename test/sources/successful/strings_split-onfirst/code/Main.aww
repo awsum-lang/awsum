@@ -16,7 +16,7 @@ renderTuple a b = do
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         a <- render (splitOnFirst "," "a,b,c")
         b <- render (splitOnFirst "::" "user::42::admin")
         c <- render (splitOnFirst "x" "abc")
@@ -39,6 +39,7 @@ main _input =
         r11 <- r10 ++ g
         r12 <- r11 ++ ", "
         r12 ++ h
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

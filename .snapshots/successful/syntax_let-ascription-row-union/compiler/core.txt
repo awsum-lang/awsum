@@ -92,28 +92,49 @@ CoreProgram
                         [
                             ( 2252990199
                             , "__rw"
-                            , CCon 2
-                                [ CString "ERR_A"
-                                , CCon 0
-                                    [ CCon 0 [] ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 2
+                                        [ CString "ERR_A"
+                                        , CCon 0
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
                                 ]
                             )
                         ,
                             ( 2269767818
                             , "__rw"
-                            , CCon 2
-                                [ CString "ERR_B"
-                                , CCon 0
-                                    [ CCon 0 [] ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 2
+                                        [ CString "ERR_B"
+                                        , CCon 0
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
                                 ]
                             )
                         ,
                             ( 2448244154
                             , "__rw"
-                            , CCon 2
-                                [ CString "PARSE_ERROR"
-                                , CCon 0
-                                    [ CCon 0 [] ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 2
+                                        [ CString "PARSE_ERROR"
+                                        , CCon 0
+                                            [ CCon 0 [] ]
+                                        ]
+                                    )
                                 ]
                             )
                         ]

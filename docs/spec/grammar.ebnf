@@ -49,11 +49,23 @@ TypeArrow           = TypeApp , [ "->" , TypeArrow ] ;
 TypeApp             = TypeAtom , { TypeAtom } ;
 TypeAtom            = UIdent | LIdent | "(" , Type , ")" ;
 
-(* Expressions: lambda / let / do / case / ++ chain / application / atoms.
+(* Expressions: lambda / let / do / case / |> chain / ++ chain / application / atoms.
    Lambda, let, do-block and case forms are kept at the lowest
    precedence (same level) so their bodies extend as far right as
-   possible. *)
-Expr                = Lambda | LetIn | DoBlock | CaseExpr | Concat ;
+   possible.
+   The infix operator precedence (lowest to highest):
+     1) |>   (left-assoc) — pure syntactic rewrite to application;
+                            `(|>)` is /not/ a referenceable name.
+     2) ++   (left-assoc) — string concatenation; sugar for the
+                            prelude binding `(++)`.
+     3) application (left-assoc)
+     4) atoms *)
+Expr                = Lambda | LetIn | DoBlock | CaseExpr | Pipe ;
+Pipe                = PipeOp , { "|>" , PipeOp } ;
+(* Right-hand side of '|>' is every Expr alternative /except/ Pipe
+   itself — that's what makes '|>' left-associative without giving up
+   the right-greedy reach of Lambda / LetIn / DoBlock / CaseExpr. *)
+PipeOp              = Lambda | LetIn | DoBlock | CaseExpr | Concat ;
 Lambda              = "\\" , LIdent , { LIdent } , "->" , Expr ;
 (* Two surface shapes are accepted for 'let':
    - Inline single binding:  let n = e in body
@@ -120,10 +132,18 @@ String              = '"' , { stringChar } , '"' ;
 stringChar          = escape | ( any - ['"' | '\\'] ) ;
 escape              = "\\" , ( "n" | "t" | "r" | "\"" | "\\" | "0" ) ;
 
-(* Integer literal: optional leading '-' adjacent to digits.
-   Range validation is performed at typecheck time against the declared type
-   (e.g. Int32 or UInt8); there is no defaulting. *)
-Int                 = [ "-" ] , digit , { digit } ;
+(* Integer literal: optional leading '-' adjacent to digits, plus optional
+   '_' separators *between* digits as a readability affordance — '1_000_000'
+   parses to the same Integer as '1000000', '10_00', or '1_0_0_0'. The
+   formatter canonicalises every literal to one form: groups of 3 digits
+   from the right, separator starting at 4 digits (so '42' stays '42',
+   '1234567' becomes '1_234_567', '-1000000' becomes '-1_000_000').
+
+   Forbidden positions for '_': leading ('_1'), trailing ('1_'), adjacent
+   ('1__2'), and immediately after the sign ('-_1'). Range validation is
+   performed at typecheck time against the declared type (e.g. Int32 or
+   UInt8); there is no defaulting. *)
+Int                 = [ "-" ] , digit , { [ "_" ] , digit } ;
 
 LineText            = { any - ['\n'] } ;
 BlockText           = { any } ;

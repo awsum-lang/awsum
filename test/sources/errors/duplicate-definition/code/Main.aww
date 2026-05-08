@@ -1,5 +1,7 @@
 -- Error: same function name defined twice
+
 foo = foo
+
 foo = foo
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit

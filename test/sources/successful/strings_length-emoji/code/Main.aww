@@ -19,7 +19,7 @@ run : Either StringTooLong String
 run = do
   a <- check 1 (lengthCodePoints "🔥") "lengthCodePoints"
   b <- check 2 (lengthUtf16CodeUnits "🔥") "lengthUtf16CodeUnits"
-  c <- check 4 (lengthBytesAsUtf8 "🔥") "lengthBytesAsUtf8"
+  c <- check 4 (lengthUtf8Bytes "🔥") "lengthUtf8Bytes"
   s0 <- a ++ ", "
   s1 <- s0 ++ b
   s2 <- s1 ++ ", "

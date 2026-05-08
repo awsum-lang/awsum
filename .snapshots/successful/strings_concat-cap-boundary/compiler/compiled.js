@@ -5,6 +5,7 @@ function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [
 function __predUInt32(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) >>> 0)]; }
 function __eqUInt32(a, b){ return a === b ? [0] : [1]; }
 function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }
+function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
 
 const v_maxStringLengthUtf16CodeUnits = (134217728 >>> 0);
 
@@ -60,28 +61,28 @@ function v__lift_0(v___input){
     }
 }
 
-function v__scc__df_bindEither_0__lam_2_build(v__args){
-    return (v__cps__scc__df_bindEither_0__lam_2_build)(v__args, [0]);
+function v__scc__df_andThenEither_0__lam_2_build(v__args){
+    return (v__cps__scc__df_andThenEither_0__lam_2_build)(v__args, [0]);
 }
 
-function v__cps__scc__df_bindEither_0__lam_2_build(v__args, v__k){
+function v__cps__scc__df_andThenEither_0__lam_2_build(v__args, v__k){
   while (true) {
     {
       const __s = v__args;
       switch (__s[0]) {
         case 0: {
           const v_x = __s[1];
-          const v__df_bindEither_0_cap1_0 = __s[2];
+          const v__df_andThenEither_0_cap0_0 = __s[2];
           {
             const __s = v_x;
             switch (__s[0]) {
               case 0: {
                 const v_e = __s[1];
-                return (v__apply__scc__df_bindEither_0__lam_2_build)(v__k, [0, v_e]);
+                return (v__apply__scc__df_andThenEither_0__lam_2_build)(v__k, [0, v_e]);
               }
               case 1: {
                 const v_a = __s[1];
-                const __t0 = [1, v__df_bindEither_0_cap1_0, v_a];
+                const __t0 = [1, v__df_andThenEither_0_cap0_0, v_a];
                 const __t1 = [1, v__k];
                 v__args = __t0;
                 v__k = __t1;
@@ -107,7 +108,7 @@ function v__cps__scc__df_bindEither_0__lam_2_build(v__args, v__k){
             switch (__s[0]) {
               case 0: {
                 const v___w0 = __s[1];
-                return (v__apply__scc__df_bindEither_0__lam_2_build)(v__k, [1, v_acc]);
+                return (v__apply__scc__df_andThenEither_0__lam_2_build)(v__k, [1, v_acc]);
               }
               case 1: {
                 const v_m = __s[1];
@@ -125,7 +126,7 @@ function v__cps__scc__df_bindEither_0__lam_2_build(v__args, v__k){
   }
 }
 
-function v__apply__scc__df_bindEither_0__lam_2_build(v__k, v__x){
+function v__apply__scc__df_andThenEither_0__lam_2_build(v__k, v__x){
   while (true) {
     {
       const __s = v__k;
@@ -147,12 +148,12 @@ function v__apply__scc__df_bindEither_0__lam_2_build(v__k, v__x){
 }
 
 function v_build(v_n, v_acc){
-    return (v__scc__df_bindEither_0__lam_2_build)([2, v_n, v_acc]);
+    return (v__scc__df_andThenEither_0__lam_2_build)([2, v_n, v_acc]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
   const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main([1, arg]));
+  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
 }
 
 })();

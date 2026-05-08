@@ -51,6 +51,21 @@ CoreProgram
                     )
                 ]
             )
+        , CFunDef "showBool" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 0
+                    , []
+                    , CString "True"
+                    )
+                ,
+                    ( 1
+                    , []
+                    , CString "False"
+                    )
+                ]
+            )
         , CFunDef "runIO" [ "io" ]
             ( CLoop
                 ( CCase
@@ -82,21 +97,6 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "showBool" [ "b" ]
-            ( CCase
-                ( CVar "b" )
-                [
-                    ( 0
-                    , []
-                    , CString "T"
-                    )
-                ,
-                    ( 1
-                    , []
-                    , CString "F"
-                    )
-                ]
-            )
         , CFunDef "main" [ "_input" ]
             ( CCall
                 ( CVar "$let$2" )
@@ -119,9 +119,9 @@ CoreProgram
                     )
                     [
                         ( 0
-                        , [ "$do_e_12_9" ]
+                        , [ "$do_e_7_9" ]
                         , CCon 0
-                            [ CVar "$do_e_12_9" ]
+                            [ CVar "$do_e_7_9" ]
                         )
                     ,
                         ( 1
@@ -142,9 +142,9 @@ CoreProgram
                             )
                             [
                                 ( 0
-                                , [ "$do_e_13_9" ]
+                                , [ "$do_e_8_9" ]
                                 , CCon 0
-                                    [ CVar "$do_e_13_9" ]
+                                    [ CVar "$do_e_8_9" ]
                                 )
                             ,
                                 ( 1
@@ -165,9 +165,9 @@ CoreProgram
                                     )
                                     [
                                         ( 0
-                                        , [ "$do_e_14_9" ]
+                                        , [ "$do_e_9_9" ]
                                         , CCon 0
-                                            [ CVar "$do_e_14_9" ]
+                                            [ CVar "$do_e_9_9" ]
                                         )
                                     ,
                                         ( 1
@@ -188,9 +188,9 @@ CoreProgram
                                             )
                                             [
                                                 ( 0
-                                                , [ "$do_e_15_9" ]
+                                                , [ "$do_e_10_9" ]
                                                 , CCon 0
-                                                    [ CVar "$do_e_15_9" ]
+                                                    [ CVar "$do_e_10_9" ]
                                                 )
                                             ,
                                                 ( 1

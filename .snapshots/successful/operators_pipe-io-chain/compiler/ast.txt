@@ -1,0 +1,364 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " The motivating use case for `|>`: chaining IO operations so the
+               reading order matches the execution order. `andThenIO` takes the
+               continuation first and the IO action second — exactly the shape
+               `|>` wants on its right-hand side, so three actions chain
+               left-to-right in execution order without nested lambdas and
+               without a user-defined helper. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 9
+            , spanStartCol = 1
+            , spanEndLine = 9
+            , spanEndCol = 79
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 8
+                , spanEndLine = 9
+                , spanEndCol = 79
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 8
+                    , spanEndLine = 9
+                    , spanEndCol = 62
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 8
+                        , spanEndLine = 9
+                        , spanEndCol = 56
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 8
+                            , spanEndLine = 9
+                            , spanEndCol = 14
+                            }
+                        ) "Either"
+                    )
+                    ( TyOr
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 15
+                            , spanEndLine = 9
+                            , spanEndCol = 56
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 16
+                                , spanEndLine = 9
+                                , spanEndCol = 29
+                                }
+                            ) "StringTooLong"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 9
+                                , spanStartCol = 32
+                                , spanEndLine = 9
+                                , spanEndCol = 54
+                                }
+                            ) "UnpairedUtf16Surrogate"
+                        )
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 56
+                        , spanEndLine = 9
+                        , spanEndCol = 62
+                        }
+                    ) "String"
+                )
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 66
+                    , spanEndLine = 9
+                    , spanEndCol = 79
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 66
+                        , spanEndLine = 9
+                        , spanEndCol = 74
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 66
+                            , spanEndLine = 9
+                            , spanEndCol = 68
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 69
+                            , spanEndLine = 9
+                            , spanEndCol = 74
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 75
+                        , spanEndLine = 9
+                        , spanEndCol = 79
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 12
+                , spanEndCol = 44
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 6
+                    , spanEndLine = 10
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( EInfix
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 15
+                    , spanEndLine = 12
+                    , spanEndCol = 44
+                    }
+                ) OpPipe
+                ( EInfix
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 15
+                        , spanEndLine = 11
+                        , spanEndCol = 44
+                        }
+                    ) OpPipe
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 15
+                            , spanEndLine = 10
+                            , spanEndCol = 34
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 15
+                                , spanEndLine = 10
+                                , spanEndCol = 31
+                                }
+                            )
+                            ( QName
+                                [ "IO"
+                                , "Stdout"
+                                ] "print"
+                            )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 31
+                                , spanEndLine = 10
+                                , spanEndCol = 34
+                                }
+                            )
+                            ( LString "a" )
+                        )
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 11
+                            , spanStartCol = 6
+                            , spanEndLine = 11
+                            , spanEndCol = 44
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 6
+                                , spanEndLine = 11
+                                , spanEndCol = 16
+                                }
+                            )
+                            ( QName [] "andThenIO" )
+                        )
+                        ( EParens
+                            ( SrcSpan
+                                { spanStartLine = 11
+                                , spanStartCol = 16
+                                , spanEndLine = 11
+                                , spanEndCol = 44
+                                }
+                            )
+                            ( ELam
+                                ( SrcSpan
+                                    { spanStartLine = 11
+                                    , spanStartCol = 17
+                                    , spanEndLine = 11
+                                    , spanEndCol = 43
+                                    }
+                                )
+                                [ Param
+                                    ( SrcSpan
+                                        { spanStartLine = 11
+                                        , spanStartCol = 18
+                                        , spanEndLine = 11
+                                        , spanEndCol = 20
+                                        }
+                                    ) "_u"
+                                ]
+                                ( EApp
+                                    ( SrcSpan
+                                        { spanStartLine = 11
+                                        , spanStartCol = 24
+                                        , spanEndLine = 11
+                                        , spanEndCol = 43
+                                        }
+                                    )
+                                    ( EVar
+                                        ( SrcSpan
+                                            { spanStartLine = 11
+                                            , spanStartCol = 24
+                                            , spanEndLine = 11
+                                            , spanEndCol = 40
+                                            }
+                                        )
+                                        ( QName
+                                            [ "IO"
+                                            , "Stdout"
+                                            ] "print"
+                                        )
+                                    )
+                                    ( ELit
+                                        ( SrcSpan
+                                            { spanStartLine = 11
+                                            , spanStartCol = 40
+                                            , spanEndLine = 11
+                                            , spanEndCol = 43
+                                            }
+                                        )
+                                        ( LString "b" )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 12
+                        , spanStartCol = 6
+                        , spanEndLine = 12
+                        , spanEndCol = 44
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 6
+                            , spanEndLine = 12
+                            , spanEndCol = 16
+                            }
+                        )
+                        ( QName [] "andThenIO" )
+                    )
+                    ( EParens
+                        ( SrcSpan
+                            { spanStartLine = 12
+                            , spanStartCol = 16
+                            , spanEndLine = 12
+                            , spanEndCol = 44
+                            }
+                        )
+                        ( ELam
+                            ( SrcSpan
+                                { spanStartLine = 12
+                                , spanStartCol = 17
+                                , spanEndLine = 12
+                                , spanEndCol = 43
+                                }
+                            )
+                            [ Param
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 18
+                                    , spanEndLine = 12
+                                    , spanEndCol = 20
+                                    }
+                                ) "_u"
+                            ]
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 12
+                                    , spanStartCol = 24
+                                    , spanEndLine = 12
+                                    , spanEndCol = 43
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 12
+                                        , spanStartCol = 24
+                                        , spanEndLine = 12
+                                        , spanEndCol = 40
+                                        }
+                                    )
+                                    ( QName
+                                        [ "IO"
+                                        , "Stdout"
+                                        ] "print"
+                                    )
+                                )
+                                ( ELit
+                                    ( SrcSpan
+                                        { spanStartLine = 12
+                                        , spanStartCol = 40
+                                        , spanEndLine = 12
+                                        , spanEndCol = 43
+                                        }
+                                    )
+                                    ( LString "c" )
+                                )
+                            )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

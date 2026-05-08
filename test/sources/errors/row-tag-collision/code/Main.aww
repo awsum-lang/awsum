@@ -9,6 +9,7 @@
 import IO.Stdout
 
 type Puk9 = MkPuk9
+
 type AFB4F = MkAFB4F
 
 _f : (Puk9 | AFB4F) -> String

@@ -1,4 +1,5 @@
 -- Error: function definition without type signature
+
 foo x = x
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit

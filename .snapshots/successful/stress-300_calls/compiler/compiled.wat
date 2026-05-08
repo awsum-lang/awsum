@@ -7,23 +7,12 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 76))
-  (data (i32.const 64) "\00")
-  (data (i32.const 65) "True\00")
-  (data (i32.const 70) "False\00")
+  (global $heap (mut i32) (i32.const 97))
+  (data (i32.const 64) "\00\00\00\00\00\00\00\00")
+  (data (i32.const 72) "\04\00\00\00\04\00\00\00True")
+  (data (i32.const 84) "\05\00\00\00\05\00\00\00False")
   (table 304 funcref)
-  (elem (i32.const 0) $v_and $v_runIO $v_showBool $v_main $v_f1 $v_f2 $v_f3 $v_f4 $v_f5 $v_f6 $v_f7 $v_f8 $v_f9 $v_f10 $v_f11 $v_f12 $v_f13 $v_f14 $v_f15 $v_f16 $v_f17 $v_f18 $v_f19 $v_f20 $v_f21 $v_f22 $v_f23 $v_f24 $v_f25 $v_f26 $v_f27 $v_f28 $v_f29 $v_f30 $v_f31 $v_f32 $v_f33 $v_f34 $v_f35 $v_f36 $v_f37 $v_f38 $v_f39 $v_f40 $v_f41 $v_f42 $v_f43 $v_f44 $v_f45 $v_f46 $v_f47 $v_f48 $v_f49 $v_f50 $v_f51 $v_f52 $v_f53 $v_f54 $v_f55 $v_f56 $v_f57 $v_f58 $v_f59 $v_f60 $v_f61 $v_f62 $v_f63 $v_f64 $v_f65 $v_f66 $v_f67 $v_f68 $v_f69 $v_f70 $v_f71 $v_f72 $v_f73 $v_f74 $v_f75 $v_f76 $v_f77 $v_f78 $v_f79 $v_f80 $v_f81 $v_f82 $v_f83 $v_f84 $v_f85 $v_f86 $v_f87 $v_f88 $v_f89 $v_f90 $v_f91 $v_f92 $v_f93 $v_f94 $v_f95 $v_f96 $v_f97 $v_f98 $v_f99 $v_f100 $v_f101 $v_f102 $v_f103 $v_f104 $v_f105 $v_f106 $v_f107 $v_f108 $v_f109 $v_f110 $v_f111 $v_f112 $v_f113 $v_f114 $v_f115 $v_f116 $v_f117 $v_f118 $v_f119 $v_f120 $v_f121 $v_f122 $v_f123 $v_f124 $v_f125 $v_f126 $v_f127 $v_f128 $v_f129 $v_f130 $v_f131 $v_f132 $v_f133 $v_f134 $v_f135 $v_f136 $v_f137 $v_f138 $v_f139 $v_f140 $v_f141 $v_f142 $v_f143 $v_f144 $v_f145 $v_f146 $v_f147 $v_f148 $v_f149 $v_f150 $v_f151 $v_f152 $v_f153 $v_f154 $v_f155 $v_f156 $v_f157 $v_f158 $v_f159 $v_f160 $v_f161 $v_f162 $v_f163 $v_f164 $v_f165 $v_f166 $v_f167 $v_f168 $v_f169 $v_f170 $v_f171 $v_f172 $v_f173 $v_f174 $v_f175 $v_f176 $v_f177 $v_f178 $v_f179 $v_f180 $v_f181 $v_f182 $v_f183 $v_f184 $v_f185 $v_f186 $v_f187 $v_f188 $v_f189 $v_f190 $v_f191 $v_f192 $v_f193 $v_f194 $v_f195 $v_f196 $v_f197 $v_f198 $v_f199 $v_f200 $v_f201 $v_f202 $v_f203 $v_f204 $v_f205 $v_f206 $v_f207 $v_f208 $v_f209 $v_f210 $v_f211 $v_f212 $v_f213 $v_f214 $v_f215 $v_f216 $v_f217 $v_f218 $v_f219 $v_f220 $v_f221 $v_f222 $v_f223 $v_f224 $v_f225 $v_f226 $v_f227 $v_f228 $v_f229 $v_f230 $v_f231 $v_f232 $v_f233 $v_f234 $v_f235 $v_f236 $v_f237 $v_f238 $v_f239 $v_f240 $v_f241 $v_f242 $v_f243 $v_f244 $v_f245 $v_f246 $v_f247 $v_f248 $v_f249 $v_f250 $v_f251 $v_f252 $v_f253 $v_f254 $v_f255 $v_f256 $v_f257 $v_f258 $v_f259 $v_f260 $v_f261 $v_f262 $v_f263 $v_f264 $v_f265 $v_f266 $v_f267 $v_f268 $v_f269 $v_f270 $v_f271 $v_f272 $v_f273 $v_f274 $v_f275 $v_f276 $v_f277 $v_f278 $v_f279 $v_f280 $v_f281 $v_f282 $v_f283 $v_f284 $v_f285 $v_f286 $v_f287 $v_f288 $v_f289 $v_f290 $v_f291 $v_f292 $v_f293 $v_f294 $v_f295 $v_f296 $v_f297 $v_f298 $v_f299 $v_f300)
-
-  (func $__strlen (param $s i32) (result i32)
-    (local $len i32)
-    (local.set $len (i32.const 0))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $s) (local.get $len)))))
-        (local.set $len (i32.add (local.get $len) (i32.const 1)))
-        (br $loop)))
-    (local.get $len))
-
+  (elem (i32.const 0) $v_and $v_showBool $v_runIO $v_main $v_f1 $v_f2 $v_f3 $v_f4 $v_f5 $v_f6 $v_f7 $v_f8 $v_f9 $v_f10 $v_f11 $v_f12 $v_f13 $v_f14 $v_f15 $v_f16 $v_f17 $v_f18 $v_f19 $v_f20 $v_f21 $v_f22 $v_f23 $v_f24 $v_f25 $v_f26 $v_f27 $v_f28 $v_f29 $v_f30 $v_f31 $v_f32 $v_f33 $v_f34 $v_f35 $v_f36 $v_f37 $v_f38 $v_f39 $v_f40 $v_f41 $v_f42 $v_f43 $v_f44 $v_f45 $v_f46 $v_f47 $v_f48 $v_f49 $v_f50 $v_f51 $v_f52 $v_f53 $v_f54 $v_f55 $v_f56 $v_f57 $v_f58 $v_f59 $v_f60 $v_f61 $v_f62 $v_f63 $v_f64 $v_f65 $v_f66 $v_f67 $v_f68 $v_f69 $v_f70 $v_f71 $v_f72 $v_f73 $v_f74 $v_f75 $v_f76 $v_f77 $v_f78 $v_f79 $v_f80 $v_f81 $v_f82 $v_f83 $v_f84 $v_f85 $v_f86 $v_f87 $v_f88 $v_f89 $v_f90 $v_f91 $v_f92 $v_f93 $v_f94 $v_f95 $v_f96 $v_f97 $v_f98 $v_f99 $v_f100 $v_f101 $v_f102 $v_f103 $v_f104 $v_f105 $v_f106 $v_f107 $v_f108 $v_f109 $v_f110 $v_f111 $v_f112 $v_f113 $v_f114 $v_f115 $v_f116 $v_f117 $v_f118 $v_f119 $v_f120 $v_f121 $v_f122 $v_f123 $v_f124 $v_f125 $v_f126 $v_f127 $v_f128 $v_f129 $v_f130 $v_f131 $v_f132 $v_f133 $v_f134 $v_f135 $v_f136 $v_f137 $v_f138 $v_f139 $v_f140 $v_f141 $v_f142 $v_f143 $v_f144 $v_f145 $v_f146 $v_f147 $v_f148 $v_f149 $v_f150 $v_f151 $v_f152 $v_f153 $v_f154 $v_f155 $v_f156 $v_f157 $v_f158 $v_f159 $v_f160 $v_f161 $v_f162 $v_f163 $v_f164 $v_f165 $v_f166 $v_f167 $v_f168 $v_f169 $v_f170 $v_f171 $v_f172 $v_f173 $v_f174 $v_f175 $v_f176 $v_f177 $v_f178 $v_f179 $v_f180 $v_f181 $v_f182 $v_f183 $v_f184 $v_f185 $v_f186 $v_f187 $v_f188 $v_f189 $v_f190 $v_f191 $v_f192 $v_f193 $v_f194 $v_f195 $v_f196 $v_f197 $v_f198 $v_f199 $v_f200 $v_f201 $v_f202 $v_f203 $v_f204 $v_f205 $v_f206 $v_f207 $v_f208 $v_f209 $v_f210 $v_f211 $v_f212 $v_f213 $v_f214 $v_f215 $v_f216 $v_f217 $v_f218 $v_f219 $v_f220 $v_f221 $v_f222 $v_f223 $v_f224 $v_f225 $v_f226 $v_f227 $v_f228 $v_f229 $v_f230 $v_f231 $v_f232 $v_f233 $v_f234 $v_f235 $v_f236 $v_f237 $v_f238 $v_f239 $v_f240 $v_f241 $v_f242 $v_f243 $v_f244 $v_f245 $v_f246 $v_f247 $v_f248 $v_f249 $v_f250 $v_f251 $v_f252 $v_f253 $v_f254 $v_f255 $v_f256 $v_f257 $v_f258 $v_f259 $v_f260 $v_f261 $v_f262 $v_f263 $v_f264 $v_f265 $v_f266 $v_f267 $v_f268 $v_f269 $v_f270 $v_f271 $v_f272 $v_f273 $v_f274 $v_f275 $v_f276 $v_f277 $v_f278 $v_f279 $v_f280 $v_f281 $v_f282 $v_f283 $v_f284 $v_f285 $v_f286 $v_f287 $v_f288 $v_f289 $v_f290 $v_f291 $v_f292 $v_f293 $v_f294 $v_f295 $v_f296 $v_f297 $v_f298 $v_f299 $v_f300)
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -62,13 +51,82 @@
   (func $__print (param $s i32) (result i32)
     (local $len i32)
     (local $unit i32)
-    (local.set $len (call $__strlen (local.get $s)))
-    (i32.store (i32.const 0) (local.get $s))
+    (local.set $len (i32.load (local.get $s)))
+    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
     (local.set $unit (call $__alloc (i32.const 4)))
     (i32.store (local.get $unit) (i32.const 0))
     (local.get $unit))
+
+
+  (func $__entryArgEither (param $arg i32) (result i32)
+    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
+    (local $inner i32) (local $row i32) (local $cell i32)
+    (local $wrapped i32)
+    (local.set $i (i32.const 0))
+    (local.set $n (i32.const 0))
+    (local.set $surr (i32.const 0))
+    (block $break_scan
+      (loop $scan_loop
+        (local.set $b (i32.load8_u (i32.add (local.get $arg) (local.get $i))))
+        (br_if $break_scan (i32.eqz (local.get $b)))
+        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))
+          (then
+            ;; Surrogate-byte detection: 'ED A0..BF' starts a 3-byte
+            ;; UTF-8 encoding of U+D800..U+DFFF (forbidden in standard
+            ;; UTF-8). Sticky flag — keep scanning so cap-exceed wins.
+            (if (i32.eq (local.get $b) (i32.const 0xED))
+              (then
+                (if (i32.eq (i32.and (i32.load8_u (i32.add (local.get $arg) (i32.add (local.get $i) (i32.const 1)))) (i32.const 0xE0)) (i32.const 0xA0))
+                  (then (local.set $surr (i32.const 1))))))
+            (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))
+              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))
+              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))
+            ;; maxStringLengthUtf16CodeUnits = 134217728. Short-circuit
+            ;; out of the scan as soon as the running count exceeds the
+            ;; cap so adversarial inputs don't drive an unbounded walk.
+            (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
+        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+        (br $scan_loop)))
+    ;; $i now equals byte_count (position of NUL or break).
+    ;; Cap-check has priority over surrogate-flag.
+    (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
+      (then
+        ;; Build Left(StringTooLong row-wrapped).
+        (local.set $inner (call $__alloc (i32.const 4)))
+        (i32.store (local.get $inner) (i32.const 0))
+        (local.set $row (call $__alloc (i32.const 8)))
+        (i32.store (local.get $row) (i32.const 589989748))
+        (i32.store offset=4 (local.get $row) (local.get $inner))
+        (local.set $cell (call $__alloc (i32.const 8)))
+        (i32.store (local.get $cell) (i32.const 0))
+        (i32.store offset=4 (local.get $cell) (local.get $row))
+        (local.get $cell))
+      (else
+        (if (result i32) (local.get $surr)
+          (then
+            ;; Build Left(UnpairedUtf16Surrogate row-wrapped).
+            (local.set $inner (call $__alloc (i32.const 4)))
+            (i32.store (local.get $inner) (i32.const 0))
+            (local.set $row (call $__alloc (i32.const 8)))
+            (i32.store (local.get $row) (i32.const 502975519))
+            (i32.store offset=4 (local.get $row) (local.get $inner))
+            (local.set $cell (call $__alloc (i32.const 8)))
+            (i32.store (local.get $cell) (i32.const 0))
+            (i32.store offset=4 (local.get $cell) (local.get $row))
+            (local.get $cell))
+          (else
+            ;; Build a length-prefixed copy of the C-string and wrap
+            ;; in Right. byte_count = $i, utf16_count = $n.
+            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
+            (i32.store (local.get $wrapped) (local.get $i))
+            (i32.store offset=4 (local.get $wrapped) (local.get $n))
+            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
+            (local.set $cell (call $__alloc (i32.const 8)))
+            (i32.store (local.get $cell) (i32.const 1))
+            (i32.store offset=4 (local.get $cell) (local.get $wrapped))
+            (local.get $cell))))))
 
 
   (func $__get_arg (result i32)
@@ -87,6 +145,10 @@
     (local $__scrut i32)
     (block (result i32) (local.set $__scrut (local.get $v_a)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v_b)) (else (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 1)) (local.get $__con_0))))))
 
+  (func $v_showBool (param $v_b i32) (result i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 72)) (else (i32.const 84)))))
+
   (func $v_runIO (param $v_io i32) (result i32)
     (local $v_next i32)
     (local $v_s i32)
@@ -94,10 +156,6 @@
     (local $__scrut i32)
     (local $__k0 i32)
     (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
-
-  (func $v_showBool (param $v_b i32) (result i32)
-    (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 70)))))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
@@ -1306,12 +1364,6 @@
     (call $v_and (local.get $v_acc) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
 
   (func $_start (export "_start")
-    (local $input i32)
-    (local $right_box i32)
-    (local.set $input (call $__get_arg))
-    (local.set $right_box (call $__alloc (i32.const 8)))
-    (i32.store (local.get $right_box) (i32.const 1))
-    (i32.store offset=4 (local.get $right_box) (local.get $input))
-    (drop (call $v_runIO (call $v_main (local.get $right_box)))))
+    (drop (call $v_runIO (call $v_main (call $__entryArgEither (call $__get_arg))))))
 
 )

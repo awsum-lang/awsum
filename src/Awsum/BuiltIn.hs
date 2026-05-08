@@ -144,11 +144,11 @@ builtIns =
       -- BMP characters count as 1, supplementary characters count as 2
       -- (high + low surrogate). Matches 'String.length' on JVM/JS/CLR.
       ("lengthUtf16CodeUnits", TyArrow noSpan stringTy uint32Ty),
-      -- lengthBytesAsUtf8 : String -> UInt32
+      -- lengthUtf8Bytes : String -> UInt32
       -- Number of bytes the string would occupy when serialised as
       -- (standard, not modified) UTF-8. ASCII characters count as 1,
       -- 2/3/4 bytes for the higher ranges per RFC 3629.
-      ("lengthBytesAsUtf8", TyArrow noSpan stringTy uint32Ty),
+      ("lengthUtf8Bytes", TyArrow noSpan stringTy uint32Ty),
       -- internalStdoutPrint : String -> Unit
       -- Privileged low-level platform primitive: writes the argument to
       -- stdout (no newline), returns the Unit constructor. Used

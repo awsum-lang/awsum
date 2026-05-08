@@ -24,9 +24,10 @@ showResult r = case r of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         s0 <- showBoxedColor (Box Red) ++ " "
         s0 ++ showResult (Ok (Box Green))
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

@@ -7,4 +7,6 @@
 import IO.Stdout
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = let n = 1 in IO.Stdout.print (showInt32 n)
+main _input =
+  let n = 1
+   in IO.Stdout.print (showInt32 n)

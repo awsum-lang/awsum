@@ -97,14 +97,28 @@ CoreProgram
                         [
                             ( 2252990199
                             , "__rw"
-                            , CCon 1
-                                [ CString "ErrA" ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 1
+                                        [ CString "ErrA" ]
+                                    )
+                                ]
                             )
                         ,
                             ( 2269767818
                             , "__rw"
-                            , CCon 1
-                                [ CString "ErrB" ]
+                            , CCase
+                                ( CVar "__rw" )
+                                [
+                                    ( 0
+                                    , []
+                                    , CCon 1
+                                        [ CString "ErrB" ]
+                                    )
+                                ]
                             )
                         ]
                     )

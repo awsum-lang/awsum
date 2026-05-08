@@ -33,9 +33,9 @@ CoreProgram
             )
         , CFunDef "main" [ "_input" ]
             ( CCall
-                ( CVar "$df$bindIO$0" )
+                ( CVar "$df$andThenIO$0" )
                 [ CCall
-                    ( CVar "$lift$2" )
+                    ( CVar "$lift$3" )
                     [ CCon 2
                         [ CString "a"
                         , CCon 0
@@ -124,14 +124,21 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lift$2" [ "__input" ]
+        , CFunDef "$lam$2" [ "_u" ]
+            ( CCon 2
+                [ CString "b"
+                , CCon 0
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lift$3" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$2" )
+                ( CVar "$cps$$lift$3" )
                 [ CVar "__input"
                 , CCon 0 []
                 ]
             )
-        , CFunDef "$cps$$lift$2"
+        , CFunDef "$cps$$lift$3"
             [ "__input"
             , "$k"
             ]
@@ -142,7 +149,7 @@ CoreProgram
                         ( 0
                         , [ "__f0" ]
                         , CCall
-                            ( CVar "$apply$$lift$2" )
+                            ( CVar "$apply$$lift$3" )
                             [ CVar "$k"
                             , CCon 0
                                 [ CVar "__f0" ]
@@ -152,7 +159,7 @@ CoreProgram
                         ( 1
                         , [ "__f0" ]
                         , CCall
-                            ( CVar "$apply$$lift$2" )
+                            ( CVar "$apply$$lift$3" )
                             [ CVar "$k"
                             , CCon 1
                                 [ CVar "__f0" ]
@@ -175,7 +182,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$2"
+        , CFunDef "$apply$$lift$3"
             [ "$k"
             , "$x"
             ]
@@ -204,21 +211,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lam$3" [ "_u" ]
-            ( CCon 2
-                [ CString "b"
-                , CCon 0
-                    [ CCon 0 [] ]
-                ]
-            )
-        , CFunDef "$df$bindIO$0" [ "io" ]
+        , CFunDef "$df$andThenIO$0" [ "io" ]
             ( CCall
-                ( CVar "$cps$$df$bindIO$0" )
+                ( CVar "$cps$$df$andThenIO$0" )
                 [ CVar "io"
                 , CCon 0 []
                 ]
             )
-        , CFunDef "$cps$$df$bindIO$0"
+        , CFunDef "$cps$$df$andThenIO$0"
             [ "io"
             , "$k"
             ]
@@ -229,12 +229,12 @@ CoreProgram
                         ( 0
                         , [ "a" ]
                         , CCall
-                            ( CVar "$apply$$df$bindIO$0" )
+                            ( CVar "$apply$$df$andThenIO$0" )
                             [ CVar "$k"
                             , CCall
                                 ( CVar "$lift$1" )
                                 [ CCall
-                                    ( CVar "$lam$3" )
+                                    ( CVar "$lam$2" )
                                     [ CVar "a" ]
                                 ]
                             ]
@@ -243,7 +243,7 @@ CoreProgram
                         ( 1
                         , [ "e" ]
                         , CCall
-                            ( CVar "$apply$$df$bindIO$0" )
+                            ( CVar "$apply$$df$andThenIO$0" )
                             [ CVar "$k"
                             , CCon 1
                                 [ CVar "e" ]
@@ -266,7 +266,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$df$bindIO$0"
+        , CFunDef "$apply$$df$andThenIO$0"
             [ "$k"
             , "$x"
             ]

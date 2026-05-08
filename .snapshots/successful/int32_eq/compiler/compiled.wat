@@ -7,24 +7,13 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 85))
-  (data (i32.const 64) "\00")
-  (data (i32.const 65) "T\00")
-  (data (i32.const 67) "F\00")
-  (data (i32.const 69) "STRING_TOO_LONG\00")
+  (global $heap (mut i32) (i32.const 113))
+  (data (i32.const 64) "\00\00\00\00\00\00\00\00")
+  (data (i32.const 72) "\01\00\00\00\01\00\00\00T")
+  (data (i32.const 81) "\01\00\00\00\01\00\00\00F")
+  (data (i32.const 90) "\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 4 funcref)
   (elem (i32.const 0) $v_runIO $v_render $v_main $v__let_2)
-
-  (func $__strlen (param $s i32) (result i32)
-    (local $len i32)
-    (local.set $len (i32.const 0))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $s) (local.get $len)))))
-        (local.set $len (i32.add (local.get $len) (i32.const 1)))
-        (br $loop)))
-    (local.get $len))
-
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -61,16 +50,18 @@
 
 
   (func $__concat (param $a i32) (param $b i32) (result i32)
-    (local $lau16 i32) (local $lbu16 i32) (local $sum i32)
-    (local $stl i32) (local $cell i32)
-    (local $ba i32) (local $bb i32) (local $buf i32)
-    (local.set $lau16 (i32.load (call $__lengthUtf16CodeUnits (local.get $a))))
-    (local.set $lbu16 (i32.load (call $__lengthUtf16CodeUnits (local.get $b))))
-    (local.set $sum (i32.add (local.get $lau16) (local.get $lbu16)))
+    (local $ba i32) (local $bb i32) (local $ua i32) (local $ub i32)
+    (local $usum i32) (local $bsum i32)
+    (local $stl i32) (local $cell i32) (local $buf i32)
+    (local.set $ba (i32.load (local.get $a)))
+    (local.set $ua (i32.load offset=4 (local.get $a)))
+    (local.set $bb (i32.load (local.get $b)))
+    (local.set $ub (i32.load offset=4 (local.get $b)))
+    (local.set $usum (i32.add (local.get $ua) (local.get $ub)))
     ;; maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
     ;; Keep in sync with 'maxStringLengthUtf16CodeUnits' in
     ;; 'stdlib/Prelude.aww'.
-    (if (result i32) (i32.gt_u (local.get $sum) (i32.const 134217728))
+    (if (result i32) (i32.gt_u (local.get $usum) (i32.const 134217728))
       (then
         ;; Build StringTooLong cell (alloc 4, tag 0).
         (local.set $stl (call $__alloc (i32.const 4)))
@@ -81,13 +72,21 @@
         (i32.store offset=4 (local.get $cell) (local.get $stl))
         (local.get $cell))
       (else
-        ;; UTF-8 byte counts for the actual copy.
-        (local.set $ba (call $__strlen (local.get $a)))
-        (local.set $bb (call $__strlen (local.get $b)))
-        (local.set $buf (call $__alloc (i32.add (i32.add (local.get $ba) (local.get $bb)) (i32.const 1))))
-        (call $__memcpy (local.get $buf) (local.get $a) (local.get $ba))
-        (call $__memcpy (i32.add (local.get $buf) (local.get $ba)) (local.get $b) (local.get $bb))
-        (i32.store8 (i32.add (local.get $buf) (i32.add (local.get $ba) (local.get $bb))) (i32.const 0))
+        ;; Allocate header (8 bytes) + ba + bb payload.
+        (local.set $bsum (i32.add (local.get $ba) (local.get $bb)))
+        (local.set $buf (call $__alloc (i32.add (local.get $bsum) (i32.const 8))))
+        ;; Write header.
+        (i32.store (local.get $buf) (local.get $bsum))
+        (i32.store offset=4 (local.get $buf) (local.get $usum))
+        ;; memcpy a's payload then b's payload to offset 8.
+        (call $__memcpy
+          (i32.add (local.get $buf) (i32.const 8))
+          (i32.add (local.get $a) (i32.const 8))
+          (local.get $ba))
+        (call $__memcpy
+          (i32.add (local.get $buf) (i32.add (i32.const 8) (local.get $ba)))
+          (i32.add (local.get $b) (i32.const 8))
+          (local.get $bb))
         ;; Right cell: alloc 8, tag 1 + ptr to buf.
         (local.set $cell (call $__alloc (i32.const 8)))
         (i32.store (local.get $cell) (i32.const 1))
@@ -98,8 +97,8 @@
   (func $__print (param $s i32) (result i32)
     (local $len i32)
     (local $unit i32)
-    (local.set $len (call $__strlen (local.get $s)))
-    (i32.store (i32.const 0) (local.get $s))
+    (local.set $len (i32.load (local.get $s)))
+    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))
     (i32.store (i32.const 4) (local.get $len))
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
     (local.set $unit (call $__alloc (i32.const 4)))
@@ -126,24 +125,73 @@
         (local.get $cell))))
 
 
-  (func $__lengthUtf16CodeUnits (param $s i32) (result i32)
-    (local $i i32) (local $n i32) (local $b i32) (local $box i32)
+  (func $__entryArgEither (param $arg i32) (result i32)
+    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
+    (local $inner i32) (local $row i32) (local $cell i32)
+    (local $wrapped i32)
     (local.set $i (i32.const 0))
     (local.set $n (i32.const 0))
-    (block $break
-      (loop $loop
-        (local.set $b (i32.load8_u (i32.add (local.get $s) (local.get $i))))
-        (br_if $break (i32.eqz (local.get $b)))
+    (local.set $surr (i32.const 0))
+    (block $break_scan
+      (loop $scan_loop
+        (local.set $b (i32.load8_u (i32.add (local.get $arg) (local.get $i))))
+        (br_if $break_scan (i32.eqz (local.get $b)))
         (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))
           (then
+            ;; Surrogate-byte detection: 'ED A0..BF' starts a 3-byte
+            ;; UTF-8 encoding of U+D800..U+DFFF (forbidden in standard
+            ;; UTF-8). Sticky flag — keep scanning so cap-exceed wins.
+            (if (i32.eq (local.get $b) (i32.const 0xED))
+              (then
+                (if (i32.eq (i32.and (i32.load8_u (i32.add (local.get $arg) (i32.add (local.get $i) (i32.const 1)))) (i32.const 0xE0)) (i32.const 0xA0))
+                  (then (local.set $surr (i32.const 1))))))
             (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))
               (then (local.set $n (i32.add (local.get $n) (i32.const 2))))
-              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))))
+              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))
+            ;; maxStringLengthUtf16CodeUnits = 134217728. Short-circuit
+            ;; out of the scan as soon as the running count exceeds the
+            ;; cap so adversarial inputs don't drive an unbounded walk.
+            (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
-        (br $loop)))
-    (local.set $box (call $__alloc (i32.const 4)))
-    (i32.store (local.get $box) (local.get $n))
-    (local.get $box))
+        (br $scan_loop)))
+    ;; $i now equals byte_count (position of NUL or break).
+    ;; Cap-check has priority over surrogate-flag.
+    (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
+      (then
+        ;; Build Left(StringTooLong row-wrapped).
+        (local.set $inner (call $__alloc (i32.const 4)))
+        (i32.store (local.get $inner) (i32.const 0))
+        (local.set $row (call $__alloc (i32.const 8)))
+        (i32.store (local.get $row) (i32.const 589989748))
+        (i32.store offset=4 (local.get $row) (local.get $inner))
+        (local.set $cell (call $__alloc (i32.const 8)))
+        (i32.store (local.get $cell) (i32.const 0))
+        (i32.store offset=4 (local.get $cell) (local.get $row))
+        (local.get $cell))
+      (else
+        (if (result i32) (local.get $surr)
+          (then
+            ;; Build Left(UnpairedUtf16Surrogate row-wrapped).
+            (local.set $inner (call $__alloc (i32.const 4)))
+            (i32.store (local.get $inner) (i32.const 0))
+            (local.set $row (call $__alloc (i32.const 8)))
+            (i32.store (local.get $row) (i32.const 502975519))
+            (i32.store offset=4 (local.get $row) (local.get $inner))
+            (local.set $cell (call $__alloc (i32.const 8)))
+            (i32.store (local.get $cell) (i32.const 0))
+            (i32.store offset=4 (local.get $cell) (local.get $row))
+            (local.get $cell))
+          (else
+            ;; Build a length-prefixed copy of the C-string and wrap
+            ;; in Right. byte_count = $i, utf16_count = $n.
+            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
+            (i32.store (local.get $wrapped) (local.get $i))
+            (i32.store offset=4 (local.get $wrapped) (local.get $n))
+            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
+            (local.set $cell (call $__alloc (i32.const 8)))
+            (i32.store (local.get $cell) (i32.const 1))
+            (i32.store offset=4 (local.get $cell) (local.get $wrapped))
+            (local.get $cell))))))
 
 
   (func $__get_arg (result i32)
@@ -170,7 +218,7 @@
 
   (func $v_render (param $v_b i32) (result i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 65)) (else (i32.const 67)))))
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (i32.const 72)) (else (i32.const 81)))))
 
   (func $v_main (param $v__input i32) (result i32)
     (local $__con_0 i32)
@@ -188,15 +236,9 @@
     (local $v___w0 i32)
     (local $v_s i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_res)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (i32.const 69)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v_s)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))))))
+    (block (result i32) (local.set $__scrut (local.get $v_res)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (i32.const 90)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v_s)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))))))
 
   (func $_start (export "_start")
-    (local $input i32)
-    (local $right_box i32)
-    (local.set $input (call $__get_arg))
-    (local.set $right_box (call $__alloc (i32.const 8)))
-    (i32.store (local.get $right_box) (i32.const 1))
-    (i32.store offset=4 (local.get $right_box) (local.get $input))
-    (drop (call $v_runIO (call $v_main (local.get $right_box)))))
+    (drop (call $v_runIO (call $v_main (call $__entryArgEither (call $__get_arg))))))
 
 )

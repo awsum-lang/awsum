@@ -1,26 +1,139 @@
 ; External C declarations
 declare ptr @malloc(i64)
-declare ptr @strcpy(ptr, ptr)
-declare ptr @strcat(ptr, ptr)
+declare ptr @memcpy(ptr, ptr, i64)
 declare i64 @strlen(ptr)
+declare i64 @write(i32, ptr, i64)
 declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 
-@.fmt = private unnamed_addr constant [3 x i8] c"%s\00"
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant [1 x i8] c"\00"
+@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
 
-@.str.0 = private unnamed_addr constant [5 x i8] c"True\00"
-@.str.1 = private unnamed_addr constant [6 x i8] c"False\00"
+@.str.0 = private unnamed_addr constant {i32, i32, [4 x i8]} { i32 4, i32 4, [4 x i8] c"True" }
+@.str.1 = private unnamed_addr constant {i32, i32, [5 x i8]} { i32 5, i32 5, [5 x i8] c"False" }
 
 define internal ptr @__print(ptr %s) {
-  call i32 (ptr, ...) @printf(ptr @.fmt, ptr %s)
+  %byte_count = load i32, ptr %s
+  %byte_count_64 = zext i32 %byte_count to i64
+  %payload = getelementptr i8, ptr %s, i64 8
+  call i64 @write(i32 1, ptr %payload, i64 %byte_count_64)
   %unit = call ptr @malloc(i64 8)
   %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0
   %unit_tag = inttoptr i64 0 to ptr
   store ptr %unit_tag, ptr %unit_tag_ptr
   ret ptr %unit
+}
+
+
+define internal ptr @__entryArgEither(ptr %arg) {
+entry:
+  %i_p = alloca i64, align 8
+  store i64 0, ptr %i_p
+  %n_p = alloca i32, align 4
+  store i32 0, ptr %n_p
+  %surr_p = alloca i32, align 4
+  store i32 0, ptr %surr_p
+  br label %head
+head:
+  %i = load i64, ptr %i_p
+  %bp = getelementptr i8, ptr %arg, i64 %i
+  %b = load i8, ptr %bp
+  %is_nul = icmp eq i8 %b, 0
+  br i1 %is_nul, label %scan_done, label %body
+body:
+  %bz = zext i8 %b to i32
+  %top2 = and i32 %bz, 192
+  %is_cont = icmp eq i32 %top2, 128
+  br i1 %is_cont, label %step, label %surrogate_check
+surrogate_check:
+  %is_ED = icmp eq i32 %bz, 237
+  br i1 %is_ED, label %peek_next, label %check4
+peek_next:
+  %i_next = add i64 %i, 1
+  %bp_next = getelementptr i8, ptr %arg, i64 %i_next
+  %nxt = load i8, ptr %bp_next
+  %nxt_z = zext i8 %nxt to i32
+  %nxt_top3 = and i32 %nxt_z, 224
+  %is_surr = icmp eq i32 %nxt_top3, 160
+  br i1 %is_surr, label %set_surr, label %check4
+set_surr:
+  store i32 1, ptr %surr_p
+  br label %check4
+check4:
+  %top5 = and i32 %bz, 248
+  %is_4 = icmp eq i32 %top5, 240
+  br i1 %is_4, label %add2, label %add1
+add2:
+  %n2 = load i32, ptr %n_p
+  %n2_new = add i32 %n2, 2
+  store i32 %n2_new, ptr %n_p
+  %over2 = icmp ugt i32 %n2_new, 134217728
+  br i1 %over2, label %scan_done, label %step
+add1:
+  %n1 = load i32, ptr %n_p
+  %n1_new = add i32 %n1, 1
+  store i32 %n1_new, ptr %n_p
+  %over1 = icmp ugt i32 %n1_new, 134217728
+  br i1 %over1, label %scan_done, label %step
+step:
+  %i1 = add i64 %i, 1
+  store i64 %i1, ptr %i_p
+  br label %head
+scan_done:
+  %n_final = load i32, ptr %n_p
+  %over_final = icmp ugt i32 %n_final, 134217728
+  br i1 %over_final, label %too_long, label %check_surr
+check_surr:
+  %surr_final = load i32, ptr %surr_p
+  %is_surr_set = icmp ne i32 %surr_final, 0
+  br i1 %is_surr_set, label %unpaired, label %fits
+fits:
+  %byte_count_64 = load i64, ptr %i_p
+  %byte_count_32 = trunc i64 %byte_count_64 to i32
+  %alloc_size_64 = add i64 %byte_count_64, 8
+  %wrapped = call ptr @malloc(i64 %alloc_size_64)
+  store i32 %byte_count_32, ptr %wrapped
+  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4
+  store i32 %n_final, ptr %wrapped_u16p
+  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8
+  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)
+  %right = call ptr @malloc(i64 16)
+  %right_tag = inttoptr i64 1 to ptr
+  store ptr %right_tag, ptr %right
+  %right_f = getelementptr ptr, ptr %right, i32 1
+  store ptr %wrapped, ptr %right_f
+  ret ptr %right
+too_long:
+  %tl_inner = call ptr @malloc(i64 8)
+  %tl_inner_tag = inttoptr i64 0 to ptr
+  store ptr %tl_inner_tag, ptr %tl_inner
+  %tl_row = call ptr @malloc(i64 16)
+  %tl_row_tag = inttoptr i64 589989748 to ptr
+  store ptr %tl_row_tag, ptr %tl_row
+  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1
+  store ptr %tl_inner, ptr %tl_row_f
+  %tl_left = call ptr @malloc(i64 16)
+  %tl_left_tag = inttoptr i64 0 to ptr
+  store ptr %tl_left_tag, ptr %tl_left
+  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1
+  store ptr %tl_row, ptr %tl_left_f
+  ret ptr %tl_left
+unpaired:
+  %us_inner = call ptr @malloc(i64 8)
+  %us_inner_tag = inttoptr i64 0 to ptr
+  store ptr %us_inner_tag, ptr %us_inner
+  %us_row = call ptr @malloc(i64 16)
+  %us_row_tag = inttoptr i64 502975519 to ptr
+  store ptr %us_row_tag, ptr %us_row
+  %us_row_f = getelementptr ptr, ptr %us_row, i32 1
+  store ptr %us_inner, ptr %us_row_f
+  %us_left = call ptr @malloc(i64 16)
+  %us_left_tag = inttoptr i64 0 to ptr
+  store ptr %us_left_tag, ptr %us_left
+  %us_left_f = getelementptr ptr, ptr %us_left, i32 1
+  store ptr %us_row, ptr %us_left_f
+  ret ptr %us_left
 }
 
 
@@ -46,6 +159,26 @@ case.default.3:
 case.join.4:
   %t12 = phi ptr [%v_b, %case.end.0.6], [%t9, %case.end.1.8]
   ret ptr %t12
+}
+
+define internal ptr @v_showBool(ptr %v_b) {
+  %t0 = getelementptr ptr, ptr %v_b, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.7 ]
+case.arm.0.5:
+  br label %case.end.0.6
+case.end.0.6:
+  br label %case.join.4
+case.arm.1.7:
+  br label %case.end.1.8
+case.end.1.8:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t9 = phi ptr [@.str.0, %case.end.0.6], [@.str.1, %case.end.1.8]
+  ret ptr %t9
 }
 
 define internal ptr @v_runIO(ptr %v_io) {
@@ -1897,28 +2030,6 @@ case.default.3:
 case.join.4:
   %t1205 = phi ptr [%t8, %case.end.0.6], [%t12, %case.end.1.10], [%t16, %case.end.2.14], [%t20, %case.end.3.18], [%t24, %case.end.4.22], [%t28, %case.end.5.26], [%t32, %case.end.6.30], [%t36, %case.end.7.34], [%t40, %case.end.8.38], [%t44, %case.end.9.42], [%t48, %case.end.10.46], [%t52, %case.end.11.50], [%t56, %case.end.12.54], [%t60, %case.end.13.58], [%t64, %case.end.14.62], [%t68, %case.end.15.66], [%t72, %case.end.16.70], [%t76, %case.end.17.74], [%t80, %case.end.18.78], [%t84, %case.end.19.82], [%t88, %case.end.20.86], [%t92, %case.end.21.90], [%t96, %case.end.22.94], [%t100, %case.end.23.98], [%t104, %case.end.24.102], [%t108, %case.end.25.106], [%t112, %case.end.26.110], [%t116, %case.end.27.114], [%t120, %case.end.28.118], [%t124, %case.end.29.122], [%t128, %case.end.30.126], [%t132, %case.end.31.130], [%t136, %case.end.32.134], [%t140, %case.end.33.138], [%t144, %case.end.34.142], [%t148, %case.end.35.146], [%t152, %case.end.36.150], [%t156, %case.end.37.154], [%t160, %case.end.38.158], [%t164, %case.end.39.162], [%t168, %case.end.40.166], [%t172, %case.end.41.170], [%t176, %case.end.42.174], [%t180, %case.end.43.178], [%t184, %case.end.44.182], [%t188, %case.end.45.186], [%t192, %case.end.46.190], [%t196, %case.end.47.194], [%t200, %case.end.48.198], [%t204, %case.end.49.202], [%t208, %case.end.50.206], [%t212, %case.end.51.210], [%t216, %case.end.52.214], [%t220, %case.end.53.218], [%t224, %case.end.54.222], [%t228, %case.end.55.226], [%t232, %case.end.56.230], [%t236, %case.end.57.234], [%t240, %case.end.58.238], [%t244, %case.end.59.242], [%t248, %case.end.60.246], [%t252, %case.end.61.250], [%t256, %case.end.62.254], [%t260, %case.end.63.258], [%t264, %case.end.64.262], [%t268, %case.end.65.266], [%t272, %case.end.66.270], [%t276, %case.end.67.274], [%t280, %case.end.68.278], [%t284, %case.end.69.282], [%t288, %case.end.70.286], [%t292, %case.end.71.290], [%t296, %case.end.72.294], [%t300, %case.end.73.298], [%t304, %case.end.74.302], [%t308, %case.end.75.306], [%t312, %case.end.76.310], [%t316, %case.end.77.314], [%t320, %case.end.78.318], [%t324, %case.end.79.322], [%t328, %case.end.80.326], [%t332, %case.end.81.330], [%t336, %case.end.82.334], [%t340, %case.end.83.338], [%t344, %case.end.84.342], [%t348, %case.end.85.346], [%t352, %case.end.86.350], [%t356, %case.end.87.354], [%t360, %case.end.88.358], [%t364, %case.end.89.362], [%t368, %case.end.90.366], [%t372, %case.end.91.370], [%t376, %case.end.92.374], [%t380, %case.end.93.378], [%t384, %case.end.94.382], [%t388, %case.end.95.386], [%t392, %case.end.96.390], [%t396, %case.end.97.394], [%t400, %case.end.98.398], [%t404, %case.end.99.402], [%t408, %case.end.100.406], [%t412, %case.end.101.410], [%t416, %case.end.102.414], [%t420, %case.end.103.418], [%t424, %case.end.104.422], [%t428, %case.end.105.426], [%t432, %case.end.106.430], [%t436, %case.end.107.434], [%t440, %case.end.108.438], [%t444, %case.end.109.442], [%t448, %case.end.110.446], [%t452, %case.end.111.450], [%t456, %case.end.112.454], [%t460, %case.end.113.458], [%t464, %case.end.114.462], [%t468, %case.end.115.466], [%t472, %case.end.116.470], [%t476, %case.end.117.474], [%t480, %case.end.118.478], [%t484, %case.end.119.482], [%t488, %case.end.120.486], [%t492, %case.end.121.490], [%t496, %case.end.122.494], [%t500, %case.end.123.498], [%t504, %case.end.124.502], [%t508, %case.end.125.506], [%t512, %case.end.126.510], [%t516, %case.end.127.514], [%t520, %case.end.128.518], [%t524, %case.end.129.522], [%t528, %case.end.130.526], [%t532, %case.end.131.530], [%t536, %case.end.132.534], [%t540, %case.end.133.538], [%t544, %case.end.134.542], [%t548, %case.end.135.546], [%t552, %case.end.136.550], [%t556, %case.end.137.554], [%t560, %case.end.138.558], [%t564, %case.end.139.562], [%t568, %case.end.140.566], [%t572, %case.end.141.570], [%t576, %case.end.142.574], [%t580, %case.end.143.578], [%t584, %case.end.144.582], [%t588, %case.end.145.586], [%t592, %case.end.146.590], [%t596, %case.end.147.594], [%t600, %case.end.148.598], [%t604, %case.end.149.602], [%t608, %case.end.150.606], [%t612, %case.end.151.610], [%t616, %case.end.152.614], [%t620, %case.end.153.618], [%t624, %case.end.154.622], [%t628, %case.end.155.626], [%t632, %case.end.156.630], [%t636, %case.end.157.634], [%t640, %case.end.158.638], [%t644, %case.end.159.642], [%t648, %case.end.160.646], [%t652, %case.end.161.650], [%t656, %case.end.162.654], [%t660, %case.end.163.658], [%t664, %case.end.164.662], [%t668, %case.end.165.666], [%t672, %case.end.166.670], [%t676, %case.end.167.674], [%t680, %case.end.168.678], [%t684, %case.end.169.682], [%t688, %case.end.170.686], [%t692, %case.end.171.690], [%t696, %case.end.172.694], [%t700, %case.end.173.698], [%t704, %case.end.174.702], [%t708, %case.end.175.706], [%t712, %case.end.176.710], [%t716, %case.end.177.714], [%t720, %case.end.178.718], [%t724, %case.end.179.722], [%t728, %case.end.180.726], [%t732, %case.end.181.730], [%t736, %case.end.182.734], [%t740, %case.end.183.738], [%t744, %case.end.184.742], [%t748, %case.end.185.746], [%t752, %case.end.186.750], [%t756, %case.end.187.754], [%t760, %case.end.188.758], [%t764, %case.end.189.762], [%t768, %case.end.190.766], [%t772, %case.end.191.770], [%t776, %case.end.192.774], [%t780, %case.end.193.778], [%t784, %case.end.194.782], [%t788, %case.end.195.786], [%t792, %case.end.196.790], [%t796, %case.end.197.794], [%t800, %case.end.198.798], [%t804, %case.end.199.802], [%t808, %case.end.200.806], [%t812, %case.end.201.810], [%t816, %case.end.202.814], [%t820, %case.end.203.818], [%t824, %case.end.204.822], [%t828, %case.end.205.826], [%t832, %case.end.206.830], [%t836, %case.end.207.834], [%t840, %case.end.208.838], [%t844, %case.end.209.842], [%t848, %case.end.210.846], [%t852, %case.end.211.850], [%t856, %case.end.212.854], [%t860, %case.end.213.858], [%t864, %case.end.214.862], [%t868, %case.end.215.866], [%t872, %case.end.216.870], [%t876, %case.end.217.874], [%t880, %case.end.218.878], [%t884, %case.end.219.882], [%t888, %case.end.220.886], [%t892, %case.end.221.890], [%t896, %case.end.222.894], [%t900, %case.end.223.898], [%t904, %case.end.224.902], [%t908, %case.end.225.906], [%t912, %case.end.226.910], [%t916, %case.end.227.914], [%t920, %case.end.228.918], [%t924, %case.end.229.922], [%t928, %case.end.230.926], [%t932, %case.end.231.930], [%t936, %case.end.232.934], [%t940, %case.end.233.938], [%t944, %case.end.234.942], [%t948, %case.end.235.946], [%t952, %case.end.236.950], [%t956, %case.end.237.954], [%t960, %case.end.238.958], [%t964, %case.end.239.962], [%t968, %case.end.240.966], [%t972, %case.end.241.970], [%t976, %case.end.242.974], [%t980, %case.end.243.978], [%t984, %case.end.244.982], [%t988, %case.end.245.986], [%t992, %case.end.246.990], [%t996, %case.end.247.994], [%t1000, %case.end.248.998], [%t1004, %case.end.249.1002], [%t1008, %case.end.250.1006], [%t1012, %case.end.251.1010], [%t1016, %case.end.252.1014], [%t1020, %case.end.253.1018], [%t1024, %case.end.254.1022], [%t1028, %case.end.255.1026], [%t1032, %case.end.256.1030], [%t1036, %case.end.257.1034], [%t1040, %case.end.258.1038], [%t1044, %case.end.259.1042], [%t1048, %case.end.260.1046], [%t1052, %case.end.261.1050], [%t1056, %case.end.262.1054], [%t1060, %case.end.263.1058], [%t1064, %case.end.264.1062], [%t1068, %case.end.265.1066], [%t1072, %case.end.266.1070], [%t1076, %case.end.267.1074], [%t1080, %case.end.268.1078], [%t1084, %case.end.269.1082], [%t1088, %case.end.270.1086], [%t1092, %case.end.271.1090], [%t1096, %case.end.272.1094], [%t1100, %case.end.273.1098], [%t1104, %case.end.274.1102], [%t1108, %case.end.275.1106], [%t1112, %case.end.276.1110], [%t1116, %case.end.277.1114], [%t1120, %case.end.278.1118], [%t1124, %case.end.279.1122], [%t1128, %case.end.280.1126], [%t1132, %case.end.281.1130], [%t1136, %case.end.282.1134], [%t1140, %case.end.283.1138], [%t1144, %case.end.284.1142], [%t1148, %case.end.285.1146], [%t1152, %case.end.286.1150], [%t1156, %case.end.287.1154], [%t1160, %case.end.288.1158], [%t1164, %case.end.289.1162], [%t1168, %case.end.290.1166], [%t1172, %case.end.291.1170], [%t1176, %case.end.292.1174], [%t1180, %case.end.293.1178], [%t1184, %case.end.294.1182], [%t1188, %case.end.295.1186], [%t1192, %case.end.296.1190], [%t1196, %case.end.297.1194], [%t1200, %case.end.298.1198], [%t1204, %case.end.299.1202]
   ret ptr %t1205
-}
-
-define internal ptr @v_showBool(ptr %v_b) {
-  %t0 = getelementptr ptr, ptr %v_b, i32 0
-  %t1 = load ptr, ptr %t0
-  %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 i64 1, label %case.arm.1.8 ]
-case.arm.0.5:
-  %t7 = getelementptr [5 x i8], ptr @.str.0, i64 0, i64 0
-  br label %case.end.0.6
-case.end.0.6:
-  br label %case.join.4
-case.arm.1.8:
-  %t10 = getelementptr [6 x i8], ptr @.str.1, i64 0, i64 0
-  br label %case.end.1.9
-case.end.1.9:
-  br label %case.join.4
-case.default.3:
-  unreachable
-case.join.4:
-  %t11 = phi ptr [%t7, %case.end.0.6], [%t10, %case.end.1.9]
-  ret ptr %t11
 }
 
 define internal ptr @v_res() {
@@ -5559,13 +5670,8 @@ no_arg:
   br label %call_main
 call_main:
   %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]
-  %right_box = call ptr @malloc(i64 16)
-  %right_tag_ptr = getelementptr ptr, ptr %right_box, i32 0
-  %right_tag = inttoptr i64 1 to ptr
-  store ptr %right_tag, ptr %right_tag_ptr
-  %right_payload_ptr = getelementptr ptr, ptr %right_box, i32 1
-  store ptr %input, ptr %right_payload_ptr
-  %io = call ptr @v_main(ptr %right_box)
+  %either = call ptr @__entryArgEither(ptr %input)
+  %io = call ptr @v_main(ptr %either)
   call ptr @v_runIO(ptr %io)
   ret i32 0
 }

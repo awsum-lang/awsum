@@ -100,7 +100,7 @@ Program
                     )
                     ( QName [] "w" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 8

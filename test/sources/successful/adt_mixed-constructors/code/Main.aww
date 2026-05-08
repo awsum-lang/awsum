@@ -12,7 +12,7 @@ showToken token = case token of
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input =
-  let res : Either StringTooLong String = do
+  let res : Either StringTooLong String = (do
         a <- showToken (Word "hello")
         b <- showToken Comma
         c <- showToken (Number "42")
@@ -23,6 +23,7 @@ main _input =
         abcsc <- abcs ++ c
         abcscd <- abcsc ++ " "
         abcscd ++ d
+      )
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

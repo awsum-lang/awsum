@@ -434,8 +434,9 @@ cilBr off = 0x38 : w32le (fromIntegral off :: Word32)
 cilBneUn :: Int32 -> [Word8]
 cilBneUn off = 0x40 : w32le (fromIntegral off :: Word32)
 
-cilBrfalse, cilBeq, cilBge, cilBgt, cilBlt :: Int32 -> [Word8]
+cilBrfalse, cilBrtrue, cilBeq, cilBge, cilBgt, cilBlt :: Int32 -> [Word8]
 cilBrfalse off = 0x39 : w32le (fromIntegral off :: Word32)
+cilBrtrue off = 0x3A : w32le (fromIntegral off :: Word32)
 cilBeq off = 0x3B : w32le (fromIntegral off :: Word32)
 cilBge off = 0x3C : w32le (fromIntegral off :: Word32)
 cilBgt off = 0x3D : w32le (fromIntegral off :: Word32)
@@ -496,6 +497,20 @@ underflowRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "Underflow
 
 overflowRowTagInt :: Int
 overflowRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "OverflowError")) :: Int32)
+
+-- | StringTooLong row tag, used at the entry-point glue when argv[1]
+--   exceeds the language-fixed length cap and user code receives
+--   'Left StringTooLong' through the row
+--   '(StringTooLong | UnpairedUtf16Surrogate)'.
+stringTooLongRowTagInt :: Int
+stringTooLongRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
+
+-- | UnpairedUtf16Surrogate row tag, used at the entry-point glue when
+--   '__entryArgEither' detects a high surrogate not followed by a low
+--   (or a standalone low, or a trailing high) in argv[1] — the user's
+--   'main' receives 'Left UnpairedUtf16Surrogate'.
+unpairedSurrogateRowTagInt :: Int
+unpairedSurrogateRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
 
 cilStloc :: Int -> [Word8]
 cilStloc n
@@ -638,11 +653,14 @@ doAssemble (CoreProgram decls) = do
                    ("__parseUInt32", Set.member "parseUInt32" builtIns),
                    ("__lengthCodePoints", Set.member "lengthCodePoints" builtIns),
                    ("__lengthUtf16CodeUnits", Set.member "lengthUtf16CodeUnits" builtIns),
-                   ("__lengthBytesAsUtf8", Set.member "lengthBytesAsUtf8" builtIns)
+                   ("__lengthUtf8Bytes", Set.member "lengthUtf8Bytes" builtIns)
                  ],
                keep
              ]
-      allNames = helperNames <> userNames <> ["Main"]
+      -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
+      -- String' for the user's 'main' (cap pre-check). Always emitted —
+      -- 'Main' calls it unconditionally on the input.
+      allNames = helperNames <> ["__entryArgEither"] <> userNames <> ["Main"]
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
 
   let valNames = Set.fromList [n | CValDef n _ <- decls]
@@ -679,10 +697,11 @@ doAssemble (CoreProgram decls) = do
   m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
   mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
-  mLb <- if Set.member "lengthBytesAsUtf8" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
+  mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
+  mEntryArg <- mkEntryArgEither
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -2204,12 +2223,12 @@ mkLengthUtf16CodeUnits = do
           <> cilRet
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
--- | lengthBytesAsUtf8: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
+-- | lengthUtf8Bytes: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
 --   without materialising the bytes. Binary equivalent of
---   'Awsum.Codegen.CLR.lengthBytesAsUtf8Method'.
+--   'Awsum.Codegen.CLR.lengthUtf8BytesMethod'.
 mkLengthBytesAsUtf8 :: AsmM MInfo
 mkLengthBytesAsUtf8 = do
-  ni <- w16 <$> addStr "__lengthBytesAsUtf8"
+  ni <- w16 <$> addStr "__lengthUtf8Bytes"
   si <- w16 <$> addBlob (sigStatic etObject 1)
   ps <- addParams 1
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
@@ -2693,14 +2712,234 @@ mkParseUInt32 = do
           <> blockY
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
+-- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
+--   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
+--     1. Length cap (134217728 = 2^27) — short-circuits before the
+--        surrogate walk.
+--     2. UTF-16 surrogate pairing — walks code units; high surrogate
+--        (D800..DBFF) must be immediately followed by a low surrogate
+--        (DC00..DFFF). Cap-check has priority.
+--
+--   Cap value and FNV-1a row tags for "StringTooLong" /
+--   "UnpairedUtf16Surrogate" must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+--
+--   Local slots:
+--     V_0 = string (after castclass), V_1 = length, V_2 = i,
+--     V_3 = expecting_low (0/1), V_4 = c & 0xFC00,
+--     V_5 = inner (transient), V_6 = row (transient).
+--   No StackMapTable equivalent on CLR — the verifier infers types from
+--   instruction history, so only the bytecode and the LocalVarSig matter.
+mkEntryArgEither :: AsmM MInfo
+mkEntryArgEither = do
+  ni <- w16 <$> addStr "__entryArgEither"
+  si <- w16 <$> addBlob (sigStatic etObject 1)
+  ps <- addParams 1
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
+  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
+  -- LocalVarSig: 7 slots — V_0=String (0x0E), V_1..V_4=int32 (0x08), V_5..V_6=object (0x1C).
+  localTok <- addLocalSigBytes [0x07, 0x07, 0x0E, 0x08, 0x08, 0x08, 0x08, 0x1C, 0x1C]
+  let boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      preamble =
+        cilLdarg 0
+          <> cilCastclass (tokTR trStr)
+          <> cilStloc 0
+          <> cilLdloc 0
+          <> cilCallvirt (tokMR lengthRef)
+          <> cilStloc 1
+          <> cilLdloc 1
+          -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
+          <> cilLdcI4 134217728
+      preLen :: Int
+      preLen = length preamble
+      ifGtLen :: Int
+      ifGtLen = 5 -- cilBgt long form
+      scanInit :: [Word8]
+      scanInit =
+        cilLdcI4 0
+          <> cilStloc 2
+          <> cilLdcI4 0
+          <> cilStloc 3
+      scanInitLen :: Int
+      scanInitLen = length scanInit
+      lScan :: Int
+      lScan = preLen + ifGtLen + scanInitLen
+      -- scanEntry: ldloc.2, ldloc.1, bge L_scan_done
+      scanEntryLen :: Int
+      scanEntryLen = 1 + 1 + 5
+      -- scanCharLoad: ldloc.0, ldloc.2, callvirt charsRef (5),
+      --               ldcI4 64512 (5), and (1), stloc.s 4 (2)
+      scanCharLoadLen :: Int
+      scanCharLoadLen = 1 + 1 + 5 + 5 + 1 + 2
+      -- scanDispatch: ldloc.3 (1), brtrue L_check_low (5)
+      scanDispatchLen :: Int
+      scanDispatchLen = 1 + 5
+      -- noLowExpected: ldloc.s 4 (2), ldcI4 56320 (5), beq L_unpaired (5),
+      --                ldloc.s 4 (2), ldcI4 55296 (5), bne.un L_inc (5),
+      --                ldcI4 1 (1), stloc 3 (1), br L_inc (5)
+      noLowExpectedLen :: Int
+      noLowExpectedLen = 2 + 5 + 5 + 2 + 5 + 5 + 1 + 1 + 5
+      lCheckLow :: Int
+      lCheckLow = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen + noLowExpectedLen
+      -- checkLowBlock: ldloc.s 4 (2), ldcI4 56320 (5), bne.un L_unpaired (5),
+      --                ldcI4 0 (1), stloc 3 (1), br L_inc (5)
+      checkLowLen :: Int
+      checkLowLen = 2 + 5 + 5 + 1 + 1 + 5
+      lInc :: Int
+      lInc = lCheckLow + checkLowLen
+      -- incBlock: ldloc.2 (1), ldcI4 1 (1), add (1), stloc.2 (1), br L_scan (5)
+      incLen :: Int
+      incLen = 1 + 1 + 1 + 1 + 5
+      lScanDone :: Int
+      lScanDone = lInc + incLen
+      -- trailingCheck: ldloc.3 (1), brtrue L_unpaired (5)
+      trailingCheckLen :: Int
+      trailingCheckLen = 1 + 5
+      okStart :: Int
+      okStart = lScanDone + trailingCheckLen
+      okBlock :: [Word8]
+      okBlock =
+        cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 1
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdarg 0
+          <> cilStelemRef
+          <> cilRet
+      okLen :: Int
+      okLen = length okBlock
+      lTooLong :: Int
+      lTooLong = okStart + okLen
+      buildLeftBlock :: [Word8] -> [Word8]
+      buildLeftBlock rowTagBytes =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilStloc 5
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> rowTagBytes
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 5
+          <> cilStelemRef
+          <> cilStloc 6
+          <> cilLdcI4 2
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 0
+          <> boxInt32
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 1
+          <> cilLdloc 6
+          <> cilStelemRef
+          <> cilRet
+      tooLongBlock :: [Word8]
+      tooLongBlock = buildLeftBlock (cilLdcI4 stringTooLongRowTagInt)
+      tooLongLen :: Int
+      tooLongLen = length tooLongBlock
+      lUnpaired :: Int
+      lUnpaired = lTooLong + tooLongLen
+      unpairedBlock :: [Word8]
+      unpairedBlock = buildLeftBlock (cilLdcI4 unpairedSurrogateRowTagInt)
+      -- Branch offsets — CIL relative offset is from the byte AFTER the
+      -- branch instruction, so offset = target - (sourceStart + 5) for
+      -- the long-form 5-byte branches.
+      ifGtRel = fromIntegral (lTooLong - (preLen + ifGtLen)) :: Int32
+      scanEntryBgeAt = lScan + 2
+      scanEntryBgeRel = fromIntegral (lScanDone - (scanEntryBgeAt + 5)) :: Int32
+      scanDispatchBrtrueAt = lScan + scanEntryLen + scanCharLoadLen + 1
+      scanDispatchBrtrueRel = fromIntegral (lCheckLow - (scanDispatchBrtrueAt + 5)) :: Int32
+      noLowStart = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen
+      noLowBeqAt = noLowStart + 2 + 5
+      noLowBeqRel = fromIntegral (lUnpaired - (noLowBeqAt + 5)) :: Int32
+      noLowBneAt = noLowBeqAt + 5 + 2 + 5
+      noLowBneRel = fromIntegral (lInc - (noLowBneAt + 5)) :: Int32
+      noLowBrAt = noLowBneAt + 5 + 1 + 1
+      noLowBrRel = fromIntegral (lInc - (noLowBrAt + 5)) :: Int32
+      checkLowBneAt = lCheckLow + 2 + 5
+      checkLowBneRel = fromIntegral (lUnpaired - (checkLowBneAt + 5)) :: Int32
+      checkLowBrAt = checkLowBneAt + 5 + 1 + 1
+      checkLowBrRel = fromIntegral (lInc - (checkLowBrAt + 5)) :: Int32
+      incBrAt = lInc + 1 + 1 + 1 + 1
+      incBrRel = fromIntegral (lScan - (incBrAt + 5)) :: Int32
+      trailingBrtrueAt = lScanDone + 1
+      trailingBrtrueRel = fromIntegral (lUnpaired - (trailingBrtrueAt + 5)) :: Int32
+      ifGtSeg = cilBgt ifGtRel
+      scanEntrySeg = cilLdloc 2 <> cilLdloc 1 <> cilBge scanEntryBgeRel
+      scanCharLoadSeg =
+        cilLdloc 0
+          <> cilLdloc 2
+          <> cilCallvirt (tokMR charsRef)
+          <> cilLdcI4 64512
+          <> cilAnd
+          <> cilStloc 4
+      scanDispatchSeg = cilLdloc 3 <> cilBrtrue scanDispatchBrtrueRel
+      noLowExpectedSeg =
+        cilLdloc 4
+          <> cilLdcI4 56320
+          <> cilBeq noLowBeqRel
+          <> cilLdloc 4
+          <> cilLdcI4 55296
+          <> cilBneUn noLowBneRel
+          <> cilLdcI4 1
+          <> cilStloc 3
+          <> cilBr noLowBrRel
+      checkLowSeg =
+        cilLdloc 4
+          <> cilLdcI4 56320
+          <> cilBneUn checkLowBneRel
+          <> cilLdcI4 0
+          <> cilStloc 3
+          <> cilBr checkLowBrRel
+      incSeg =
+        cilLdloc 2
+          <> cilLdcI4 1
+          <> cilAdd
+          <> cilStloc 2
+          <> cilBr incBrRel
+      trailingCheckSeg = cilLdloc 3 <> cilBrtrue trailingBrtrueRel
+      code =
+        preamble
+          <> ifGtSeg
+          <> scanInit
+          <> scanEntrySeg
+          <> scanCharLoadSeg
+          <> scanDispatchSeg
+          <> noLowExpectedSeg
+          <> checkLowSeg
+          <> incSeg
+          <> trailingCheckSeg
+          <> okBlock
+          <> tooLongBlock
+          <> unpairedBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
   si <- w16 <$> addBlob [0x00, 0x01, etVoid, etSZArray, etString]
   ps <- addParams 1
   emptyTok <- addUS ""
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   -- Force stdout to UTF-8 before any user code runs. See the IL-text
   -- 'mainMethod' for the rationale (Windows ANSI fallback mangles
   -- supplementary code points to '?' per UTF-16 unit when stdout is
@@ -2712,21 +2951,17 @@ mkMain tokMap = do
   let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
   getUtf8Ref <- addMemberRef (mrpTR trEncoding) "get_UTF8" ([0x00, 0x00] <> encodingClass)
   setOutEncRef <- addMemberRef (mrpTR trConsole) "set_OutputEncoding" ([0x00, 0x01, etVoid] <> encodingClass)
-  -- LocalVarSig: count=1, ELEMENT_TYPE_OBJECT (0x1C) — local to stash
-  -- argv[1] while we build the Right-wrapper array.
-  localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
+  -- '__entryArgEither' returns a fully-formed Either cell, so 'Main' no
+  -- longer needs a local slot to stash argv[1] during inline Right
+  -- construction. Empty LocalVarSig.
+  localTok <- addLocalSigBytes [0x07, 0x00]
   let vMainTok = fromMaybe (error "no v_main") (Map.lookup (mangle "main") tokMap)
       vRunIOTok = fromMaybe (error "no v_runIO") (Map.lookup (mangle "runIO") tokMap)
-      boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
-      -- v_main. Layout matches CCon emit on CLR: object[1+nFields] with
-      -- boxed Int32 tag at index 0, fields at indices 1..
-      --
-      -- Offsets in the comments below are relative to the start of the
-      -- Right-box wrap (i.e. after the two encoding-setup calls), so the
-      -- short-branch deltas in cilBgeS/cilBrS read identically to the
-      -- pre-fix layout.
+      entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
+      -- After the encoding-setup prologue, push argv[1] (or "") onto the
+      -- stack and hand it to '__entryArgEither' which compares its
+      -- 'String::get_Length()' against the language-fixed cap and
+      -- returns 'Right input' or row-tagged 'Left StringTooLong'.
       code =
         cilCall (tokMR getUtf8Ref) -- push UTF-8 Encoding instance
           <> cilCall (tokMR setOutEncRef) -- Console.OutputEncoding = it
@@ -2740,19 +2975,9 @@ mkMain tokMap = do
           <> cilLdarg 0 -- 13 (has_arg)
           <> cilLdcI4_0 -- 14
           <> cilLdelemRef -- 15
-          -- call_main:
-          <> cilStloc 0 -- save input → locals[0]
-          <> cilLdcI4 2 -- length
-          <> newarrObj -- new object[2]
-          <> cilDup -- arr,arr
-          <> cilLdcI4_0 -- arr,arr,0
-          <> cilLdcI4 1 -- arr,arr,0,1 (tag=1 for Right)
-          <> boxInt32 -- arr,arr,0,boxedTag
-          <> cilStelemRef -- arr   (arr[0]=tag)
-          <> cilDup -- arr,arr
-          <> cilLdcI4 1 -- arr,arr,1
-          <> cilLdloc 0 -- arr,arr,1,input
-          <> cilStelemRef -- arr   (arr[1]=input)
+          -- call_main: input on top of stack; '__entryArgEither' wraps it
+          -- in 'Either (StringTooLong | …) String' (cap pre-check).
+          <> cilCall entryArgEitherTok
           <> cilCall vMainTok
           -- v_main returned an IO tree on the stack; hand it to runIO
           -- to walk and execute the effects. runIO returns Unit which
@@ -3033,13 +3258,13 @@ emitExpr ctx = \case
                 _ -> "__parseUInt8"
           pure (cx <> cilCall (lkTok ctx fn))
     CBuiltIn name
-      | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+      | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
         [x] <- xs -> do
           cx <- emitExpr ctx x
           let fn = case name of
                 "lengthCodePoints" -> "__lengthCodePoints"
                 "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                _ -> "__lengthBytesAsUtf8"
+                _ -> "__lengthUtf8Bytes"
           pure (cx <> cilCall (lkTok ctx fn))
     CBuiltIn n ->
       error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")

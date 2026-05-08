@@ -1,0 +1,10 @@
+-- Trailing '_' in an integer literal is rejected at parse time.
+-- '_' is allowed only between digits — `1_` has nothing on the
+-- right and is a syntax error. Workaround: drop the trailing '_'.
+import IO.Stdout
+
+bad : Int32
+bad = 1_
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = IO.Stdout.print "ok"

@@ -5,4 +5,4 @@ main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _ = IO.Stdout.print "ok"
 
 underMin : Int32
-underMin = -2147483649
+underMin = -2_147_483_649

@@ -183,9 +183,9 @@ CoreProgram
                                     ( CVar "check" )
                                     [ CIntLit 4 TUInt32
                                     , CCall
-                                        ( CBuiltIn "lengthBytesAsUtf8" )
+                                        ( CBuiltIn "lengthUtf8Bytes" )
                                         [ CString "🔥" ]
-                                    , CString "lengthBytesAsUtf8"
+                                    , CString "lengthUtf8Bytes"
                                     ]
                                 )
                                 [

@@ -12,6 +12,7 @@ import Awsum.Program (ProgramType (..))
 import Awsum.ProgramSnapshotsSpec qualified
 import Awsum.PropertySpec qualified
 import Awsum.Render (renderProgram)
+import Awsum.StringLiteralCapSpec qualified
 import Awsum.Syntax
 import Awsum.Typing (TypeError (..), requireMain, typecheckProgram)
 import GHC.IO.Encoding (setLocaleEncoding, utf8)
@@ -39,6 +40,7 @@ main = do
     Awsum.FormattingSnapshotsSpec.spec
     Awsum.ErrorSnapshotsSpec.spec
     Awsum.PropertySpec.spec
+    Awsum.StringLiteralCapSpec.spec
 
 preludeSpec :: Spec
 preludeSpec = describe "Awsum.Prelude" $ do
@@ -193,7 +195,7 @@ parserSpec = do
                     ECase _ _ alts _ <- [body],
                     a <- toList alts
                   ]
-              isAscribed (Just (CaseAlt _ (PAscribe _ (PVar _ "n") (TyCon _ "Int32")) _ _)) = True
+              isAscribed (Just (CaseAltLeaf _ (PAscribe _ (PVar _ "n") (TyCon _ "Int32")) _ _)) = True
               isAscribed _ = False
            in isAscribed arm `shouldBe` True
 
@@ -226,10 +228,10 @@ parserSpec = do
           -- (under derived 'Eq' that ignores spans).
           let parsedPat =
                 listToMaybe
-                  [ pp
+                  [ caseAltPattern alt
                   | FunDef _ "f" _ body _ <- toList (decls p),
                     ECase _ _ alts _ <- [body],
-                    CaseAlt _ pp _ _ <- toList alts
+                    alt <- toList alts
                   ]
           parsedPat `shouldBe` Just pat
 

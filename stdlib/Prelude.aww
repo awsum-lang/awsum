@@ -70,8 +70,8 @@ lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
    three for U+0800..U+FFFF, four for U+10000..U+10FFFF. Useful when
    sizing a buffer for an API that takes UTF-8. -}
 
-lengthBytesAsUtf8 : String -> UInt32
-lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
+lengthUtf8Bytes : String -> UInt32
+lengthUtf8Bytes = BuiltIn.lengthUtf8Bytes
 
 {- Maximum length of an Awsum `String` in UTF-16 code units, identical
    on every backend (LLVM, JVM, CLR, WASM, JS). Operations that would
@@ -86,7 +86,7 @@ lengthBytesAsUtf8 = BuiltIn.lengthBytesAsUtf8
    determines this value. -}
 
 maxStringLengthUtf16CodeUnits : UInt32
-maxStringLengthUtf16CodeUnits = 134217728
+maxStringLengthUtf16CodeUnits = 134_217_728
 
 -- ---------------------- Unit
 
@@ -134,6 +134,11 @@ or a b = case a of
   True -> True
   False -> b
 
+showBool : Bool -> String
+showBool b = case b of
+  True -> "True"
+  False -> "False"
+
 -- ---------------------- Either
 
 {- Two-constructor sum: a `Left` carrying an error / failure value, or a
@@ -163,6 +168,19 @@ bindEither x k = case x of
 
 pureEither : a -> Either e a
 pureEither x = Right x
+
+{- `andThenEither` is `bindEither` with the arguments flipped: the
+   continuation comes first, the `Either` value second. The shape is
+   `value |> andThenEither k`, so a chain of fallible steps reads
+   left-to-right in execution order without nested lambdas. The error
+   rows union the same way as in `bindEither`. The body is a direct
+   `case` rather than a wrapper around `bindEither` so no extra
+   tail-call survives at Core level. -}
+
+andThenEither : (a -> Either e2 b) -> Either e1 a -> Either (e1 | e2) b
+andThenEither k x = case x of
+  Left e -> Left e
+  Right a -> k a
 
 {- `const` returns its first argument and ignores the second. Used by
    the `do`-notation desugarer to express continuations whose bound
@@ -242,6 +260,20 @@ bindIO io k = case io of
   IOPure a -> k a
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (bindIO next k)
+
+{- `andThenIO` is `bindIO` with the arguments flipped: the continuation
+   comes first, the IO value second. The shape is
+   `io |> andThenIO k`, so a chain of IO actions reads left-to-right
+   in execution order without nested lambdas. The error rows union the
+   same way as in `bindIO`. The body is a direct `case` rather than a
+   wrapper around `bindIO` so no extra tail-call survives at Core
+   level. -}
+
+andThenIO : (a -> IO e2 b) -> IO e1 a -> IO (e1 | e2) b
+andThenIO k io = case io of
+  IOPure a -> k a
+  IOFail e -> IOFail e
+  IOStdoutPrint s next -> IOStdoutPrint s (andThenIO k next)
 
 {- Apply `f` to the success value of an IO action, leaving the error
    row untouched. Same shape as `mapRight` for `Either`. -}
@@ -448,7 +480,7 @@ minUInt32 : UInt32
 minUInt32 = 0
 
 maxUInt32 : UInt32
-maxUInt32 = 4294967295
+maxUInt32 = 4_294_967_295
 
 eqUInt32 : UInt32 -> UInt32 -> Bool
 eqUInt32 = BuiltIn.eqUInt32
@@ -499,10 +531,10 @@ parseUInt32 = BuiltIn.parseUInt32
    for boundary checks without spelling out the literal at every call site. -}
 
 minInt32 : Int32
-minInt32 = -2147483648
+minInt32 = -2_147_483_648
 
 maxInt32 : Int32
-maxInt32 = 2147483647
+maxInt32 = 2_147_483_647
 
 eqInt32 : Int32 -> Int32 -> Bool
 eqInt32 = BuiltIn.eqInt32

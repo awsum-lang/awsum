@@ -75,6 +75,8 @@ header builtIns =
       -- user-side row dispatch agree by construction, not by accident.
       underflowTag = rowTag (TyCon noSpan "UnderflowError")
       overflowTag = rowTag (TyCon noSpan "OverflowError")
+      stringTooLongTag = rowTag (TyCon noSpan "StringTooLong")
+      unpairedSurrogateTag = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
       lns =
         filter
           (not . T.null)
@@ -255,14 +257,32 @@ header builtIns =
             if Set.member "lengthUtf16CodeUnits" builtIns
               then "function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }"
               else "",
-            -- lengthBytesAsUtf8: TextEncoder always uses standard (not
+            -- lengthUtf8Bytes: TextEncoder always uses standard (not
             -- modified) UTF-8 — 1 byte for ASCII, 2 for U+0080..U+07FF,
             -- 3 for U+0800..U+FFFF, 4 for U+10000..U+10FFFF.
             -- Allocating one encoder per call keeps the helper stateless;
             -- benchmarks haven't motivated hoisting it.
-            if Set.member "lengthBytesAsUtf8" builtIns
-              then "function __lengthBytesAsUtf8(s){ return (new TextEncoder().encode(s).length >>> 0); }"
-              else ""
+            if Set.member "lengthUtf8Bytes" builtIns
+              then "function __lengthUtf8Bytes(s){ return (new TextEncoder().encode(s).length >>> 0); }"
+              else "",
+            -- __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
+            -- UnpairedUtf16Surrogate) String' for the user's 'main'. Two
+            -- checks in one helper:
+            --   1. Length cap: JS String.length is UTF-16 code units
+            --      exactly; cap test is a single i32 compare.
+            --   2. Surrogate pairing: walk code units, reject if any high
+            --      surrogate (D800..DBFF) is not immediately followed by
+            --      a low surrogate (DC00..DFFF), or any low surrogate has
+            --      no preceding high. JS strings allow unpaired surrogates
+            --      at the language level — Awsum 'String' is strict UTF-16,
+            --      so the boundary validates.
+            -- Cap value (134217728 = 2^27) and FNV-1a row tags for
+            -- "StringTooLong" / "UnpairedUtf16Surrogate" must stay in sync
+            -- with 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+            -- Encoding mirrors the other backends: Right=[1, arg];
+            -- Left=[0, [rowTag, [0]]] — three layers (inner CCon, row
+            -- wrap, Left).
+            "function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [" <> show stringTooLongTag <> ", [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; } return [1, arg]; }"
           ]
    in T.intercalate "\n" lns <> "\n"
 
@@ -276,13 +296,13 @@ cliFooter =
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",
       "  const arg = process.argv[2] ?? \"\";",
-      -- Wrap input in `Right arg` (tag=1) before handing to user's main. Layout
-      -- matches CCon emit: `[tag, ...fields]`. The IO tree returned by main is
-      -- handed to `runIO` (defined in the prelude as a regular Awsum
-      -- function), which walks it to perform any effects via
-      -- `BuiltIn.internalStdoutPrint`. Naming follows the same
-      -- 'v_' mangling rule as user top-levels.
-      "  if (typeof main === 'function') v_runIO(main([1, arg]));",
+      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
+      -- user's main. '__entryArgEither' compares 'arg.length' against the
+      -- language-fixed cap and returns either 'Right arg' or row-tagged
+      -- 'Left StringTooLong'. The IO tree from main is walked by 'runIO'
+      -- (defined in the prelude as a regular Awsum function) which performs
+      -- any effects via 'BuiltIn.internalStdoutPrint'.
+      "  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));",
       "}"
     ]
 
@@ -524,13 +544,13 @@ emitExpr = \case
                  in fn <> "(" <> emitExpr a <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8" ->
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes" ->
             case xs of
               [a] ->
                 let fn = case name of
                       "lengthCodePoints" -> "__lengthCodePoints"
                       "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                      _ -> "__lengthBytesAsUtf8"
+                      _ -> "__lengthUtf8Bytes"
                  in fn <> "(" <> emitExpr a <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn n ->

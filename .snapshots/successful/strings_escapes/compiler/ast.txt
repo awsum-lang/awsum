@@ -1,0 +1,194 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Cross-backend snapshot test for the parser's string-literal escape
+               sequences. All six escapes (see 'Awsum.Parser') are exercised here
+               verbatim — `\n \t \r \" \\ \0`.
+
+               Identical stdout bytes on every backend confirm both the parser's
+               escape handling and the runtime's "print exactly" semantics; the
+               no-stdin snapshot pins the exact byte sequence (including CR / LF /
+               TAB / NUL characters that look unusual in text editors). The NUL
+               case in particular verifies that strings are length-prefixed end-to-
+               end on every backend — including LLVM and WASM, which moved off
+               C-style null-terminated layout. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 14
+            , spanStartCol = 1
+            , spanEndLine = 14
+            , spanEndCol = 79
+            }
+        ) "main"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 14
+                , spanStartCol = 8
+                , spanEndLine = 14
+                , spanEndCol = 79
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 8
+                    , spanEndLine = 14
+                    , spanEndCol = 62
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 8
+                        , spanEndLine = 14
+                        , spanEndCol = 56
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 8
+                            , spanEndLine = 14
+                            , spanEndCol = 14
+                            }
+                        ) "Either"
+                    )
+                    ( TyOr
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 15
+                            , spanEndLine = 14
+                            , spanEndCol = 56
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 16
+                                , spanEndLine = 14
+                                , spanEndCol = 29
+                                }
+                            ) "StringTooLong"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 14
+                                , spanStartCol = 32
+                                , spanEndLine = 14
+                                , spanEndCol = 54
+                                }
+                            ) "UnpairedUtf16Surrogate"
+                        )
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 56
+                        , spanEndLine = 14
+                        , spanEndCol = 62
+                        }
+                    ) "String"
+                )
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 14
+                    , spanStartCol = 66
+                    , spanEndLine = 14
+                    , spanEndCol = 79
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 66
+                        , spanEndLine = 14
+                        , spanEndCol = 74
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 66
+                            , spanEndLine = 14
+                            , spanEndCol = 68
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 14
+                            , spanStartCol = 69
+                            , spanEndLine = 14
+                            , spanEndCol = 74
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 14
+                        , spanStartCol = 75
+                        , spanEndLine = 14
+                        , spanEndCol = 79
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 15
+                , spanStartCol = 1
+                , spanEndLine = 15
+                , spanEndCol = 74
+                }
+            ) "main"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 6
+                    , spanEndLine = 15
+                    , spanEndCol = 12
+                    }
+                ) "_input"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 15
+                    , spanStartCol = 15
+                    , spanEndLine = 15
+                    , spanEndCol = 74
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 15
+                        , spanEndLine = 15
+                        , spanEndCol = 31
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( ELit
+                    ( SrcSpan
+                        { spanStartLine = 15
+                        , spanStartCol = 31
+                        , spanEndLine = 15
+                        , spanEndCol = 74
+                        }
+                    )
+                    ( LString "BS=\ DQ=" CR=\xd LF=
+                     TAB=\x9 NUL=\x0 end" )
+                )
+            ) Nothing
+        ]
+    }

@@ -7,13 +7,14 @@ property v = showUInt32 v
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main rawArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = do
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         v <- parseUInt32 raw
         pureEither (property v)
+      )
    in case res of
         Left e -> case e of
-          (_ : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
-          (_ : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
-          (_ : ParseError) -> IO.Stdout.print "PARSE_ERROR"
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+          ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s

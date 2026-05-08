@@ -149,7 +149,7 @@ Program
                         ( LInt 0 )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 7
@@ -187,7 +187,7 @@ Program
                             ( LInt 0 )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 8
@@ -234,7 +234,7 @@ Program
                                     ( QName [] "n" )
                                 )
                             )
-                            ( CaseAlt []
+                            ( CaseAltLeaf []
                                 ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 9
@@ -281,7 +281,7 @@ Program
                                         ( QName [] "e" )
                                     )
                                 ) Nothing :|
-                                [ CaseAlt []
+                                [ CaseAltLeaf []
                                     ( PCon
                                         ( SrcSpan
                                             { spanStartLine = 10
@@ -331,7 +331,7 @@ Program
                                     ) Nothing
                                 ]
                             ) []
-                        ) Nothing
+                        )
                     ]
                 ) []
             ) Nothing
@@ -479,7 +479,7 @@ Program
                         ( LInt 0 )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 14
@@ -517,7 +517,7 @@ Program
                             ( LInt 0 )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 15
@@ -564,7 +564,7 @@ Program
                                     ( QName [] "n" )
                                 )
                             )
-                            ( CaseAlt []
+                            ( CaseAltLeaf []
                                 ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 16
@@ -611,7 +611,7 @@ Program
                                         ( QName [] "e" )
                                     )
                                 ) Nothing :|
-                                [ CaseAlt []
+                                [ CaseAltLeaf []
                                     ( PCon
                                         ( SrcSpan
                                             { spanStartLine = 17
@@ -661,7 +661,7 @@ Program
                                     ) Nothing
                                 ]
                             ) []
-                        ) Nothing
+                        )
                     ]
                 ) []
             ) Nothing
@@ -809,7 +809,7 @@ Program
                         ( LInt 0 )
                     )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 21
@@ -847,7 +847,7 @@ Program
                             ( LInt 0 )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltBlock []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 22
@@ -894,7 +894,7 @@ Program
                                     ( QName [] "n" )
                                 )
                             )
-                            ( CaseAlt []
+                            ( CaseAltLeaf []
                                 ( PCon
                                     ( SrcSpan
                                         { spanStartLine = 23
@@ -941,7 +941,7 @@ Program
                                         ( QName [] "e" )
                                     )
                                 ) Nothing :|
-                                [ CaseAlt []
+                                [ CaseAltLeaf []
                                     ( PCon
                                         ( SrcSpan
                                             { spanStartLine = 24
@@ -991,7 +991,7 @@ Program
                                     ) Nothing
                                 ]
                             ) []
-                        ) Nothing
+                        )
                     ]
                 ) []
             ) Nothing
@@ -1137,7 +1137,7 @@ Program
                     )
                     ( QName [] "r" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 28
@@ -1204,7 +1204,7 @@ Program
                             )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 29
@@ -1421,7 +1421,7 @@ Program
                     { spanStartLine = 33
                     , spanStartCol = 7
                     , spanEndLine = 33
-                    , spanEndCol = 69
+                    , spanEndCol = 71
                     }
                 )
                 ( PVar
@@ -1485,7 +1485,7 @@ Program
                         { spanStartLine = 33
                         , spanStartCol = 43
                         , spanEndLine = 33
-                        , spanEndCol = 69
+                        , spanEndCol = 71
                         }
                     )
                     ( EVar
@@ -1503,7 +1503,7 @@ Program
                             { spanStartLine = 33
                             , spanStartCol = 54
                             , spanEndLine = 33
-                            , spanEndCol = 69
+                            , spanEndCol = 71
                             }
                         )
                         ( EApp
@@ -1511,7 +1511,7 @@ Program
                                 { spanStartLine = 33
                                 , spanStartCol = 55
                                 , spanEndLine = 33
-                                , spanEndCol = 68
+                                , spanEndCol = 70
                                 }
                             )
                             ( EVar
@@ -1529,7 +1529,7 @@ Program
                                     { spanStartLine = 33
                                     , spanStartCol = 61
                                     , spanEndLine = 33
-                                    , spanEndCol = 68
+                                    , spanEndCol = 70
                                     }
                                 )
                                 ( LInt 1000000 )
@@ -1555,7 +1555,7 @@ Program
                         )
                         ( QName [] "res" )
                     )
-                    ( CaseAlt []
+                    ( CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 35
@@ -1607,7 +1607,7 @@ Program
                                 ( LString "STRING_TOO_LONG" )
                             )
                         ) Nothing :|
-                        [ CaseAlt []
+                        [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
                                     { spanStartLine = 36

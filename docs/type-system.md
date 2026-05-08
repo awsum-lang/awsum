@@ -31,7 +31,10 @@ User-facing description of Awsum's type system — concepts and examples of prog
 
 `String`, `Int32`, `UInt8`, `UInt32` are built-in. `IO e a` is declared in the prelude (see [docs/prelude.md](prelude.md) and [IO](#io) below); everything else is in the prelude too.
 
-`String` has a fixed maximum length, identical on every backend: `maxStringLengthUtf16CodeUnits = 134217728` (`2^27`) UTF-16 code units. In UTF-8 bytes the worst case (BMP CJK content, 3 bytes per UTF-16 code unit) is `3 × 2^27 = 402653184` ≈ 384 MiB; ASCII is `1 × 2^27` ≈ 128 MiB. Operations that would produce a longer string return `Left StringTooLong`. The cap is fixed by the WASM-32 backend, not by the smallest UTF-16 runtime — see [targets.md](targets.md) for why.
+`String` has two length caps, both expressed in **UTF-16 code units** so the spec stays in one unit regardless of content. They are derived from different backend constraints:
+
+- **Runtime cap** — `maxStringLengthUtf16CodeUnits = 134_217_728` (`2^27`) UTF-16 code units. Applies to any string the running program builds — `(++)`, the program-entry argument, future `IO`-driven sources. Operations that would produce a longer string return `Left StringTooLong`. Pinned by the WASM-32 backend (not by the smallest UTF-16 runtime), so the worst-case UTF-8 expansion (`3 × 2^27 ≈ 384 MiB`), the `(++)` peak (`6×`), and other program data fit in WASM-32's 2–3 GiB practical budget — see [targets.md](targets.md).
+- **Compile-time literal cap** — `maxStringLitUtf16CodeUnits = 21845` UTF-16 code units. Applies only to `LString` literals in `.aww` source. Pinned by JVM's `CONSTANT_Utf8_info` length field (`u2`, max 65535 UTF-8 bytes per single literal): with worst-case UTF-8 expansion `3 bytes/code unit` (BMP-3-byte content — CJK, hangul, most non-Latin scripts), `floor(65535 / 3) = 21845` is the largest UTF-16 code unit count whose worst-case Modified-UTF-8 encoding still fits the field. A literal over this cap is rejected by the typechecker as `StringLiteralTooLong` regardless of content. Runtime construction is bounded by the much higher runtime cap, so concatenations or input strings of any size up to `2^27` work normally — only the source-level shape is restricted.
 
 ```awsum
 greeting : String
@@ -235,6 +238,24 @@ captureFn k = apply (\n -> k) answer
 ```
 
 No backend has a closure runtime. The compiler /defunctionalises/ each HOF call site at lowering time: the static closure flowing into a fn-typed slot is replaced with a specialised first-order copy of the HOF whose parameter list adds the closure's captures up front. After this pass no first-class function value remains in any reachable position. Polymorphic HOFs become a family of monomorphic specialisations, one per distinct closure shape across call sites; pass-through HOFs (`applyTwice f x = applyOnce f (applyOnce f x)`) cascade naturally because each inner call resolves the same closure and reuses the memoised specialisation.
+
+### Pipe operator `|>`
+
+`x |> f` is **syntax** for `f x`. Left-associative, lowest precedence — `++` binds tighter (`a ++ b |> f` is `f (a ++ b)`); a chain `x |> f |> g` is `g (f x)`.
+
+```awsum
+-- Without |>
+shoutLoud : String -> IO Never Unit
+shoutLoud msg = bindIO (IO.Stdout.print msg) (\_u -> IO.Stdout.print "!")
+
+-- With |>
+shoutLoud : String -> IO Never Unit
+shoutLoud msg = IO.Stdout.print msg |> bindIO (\_u -> IO.Stdout.print "!")
+```
+
+The rewrite happens before any Core-to-Core pass: after lowering, the IR for `x |> f` is the same IR you'd get for `f x`, so there is no residual call frame on any backend.
+
+`(|>)` is **not** a referenceable name — there is no `(|>) x f = f x` definition in the prelude, and the parser rejects `(|>)` in any value position. `|>` is a syntactic operator, not a higher-order function. (When type classes and a supercompiler land, a first-class form may be added without losing the zero-cost guarantee; until then, the operator-only form is the only one available.)
 
 ---
 

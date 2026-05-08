@@ -8,7 +8,9 @@
 --   FunDef  ::= lident { lident } "=" Expr
 --   Type    ::= Type "->" Type | TypeAtom         -- right-assoc
 --   TypeAtom::= UIdent | "(" Type ")"
---   Expr    ::= Concat
+--   Expr    ::= Lambda | Let | Do | Case | Pipe
+--   Pipe    ::= PipeOp { "|>" PipeOp }            -- left-assoc, lowest infix
+--   PipeOp  ::= Lambda | Let | Do | Case | Concat -- Expr without Pipe (for left-assoc)
 --   Concat  ::= App { "++" App }                  -- left-assoc
 --   App     ::= Atom { Atom }                     -- left-assoc
 --   Atom    ::= QName | "(" Expr ")" | StringLit
@@ -25,9 +27,10 @@
 --     block comments via Megaparsec's block comment consumer.
 --
 -- Operator precedence (lowest to highest):
---   1) "++"   (left-assoc)
---   2) application (left-assoc)
---   3) atoms
+--   1) "|>"   (left-assoc)   — pure syntactic rewrite to application; not a name
+--   2) "++"   (left-assoc)
+--   3) application (left-assoc)
+--   4) atoms
 --
 -- NOTE: We treat a /declaration terminator/ as either an explicit newline or EOF.
 --       This makes multi-decl files unambiguous without semicolons.
@@ -568,10 +571,56 @@ pTypeAtomNoLineComments =
 
 -- Expressions ───────────────────────────────────────────────────────────────
 
--- | Lowest precedence layer: @\\x -> …@, @do …@, @case@ (multi-line),
---   or @++@ chain.
+-- | Lowest precedence layer: @\\x -> …@, @let …@, @do …@, @case …@, or
+--   a @|>@ pipe chain (which itself bottoms out in a @++@ chain).
 pExprNoLineComments :: Parser Expr
 pExprNoLineComments =
+  pLambdaNoLineComments
+    <|> pLetNoLineComments
+    <|> pDoNoLineComments
+    <|> pCaseNoLineComments
+    <|> pPipeNoLineComments
+
+-- | Left-associative chain of @PipeOp@ separated by @|>@. The right-hand
+--   side parses through 'pPipeOpNoLineComments' rather than recursing
+--   into 'pPipeNoLineComments' so that @x |> y |> z@ binds as
+--   @(x |> y) |> z@; using 'pExprNoLineComments' on the right would
+--   make it right-associative.
+--
+--   The right-hand side still admits a lambda / @let@ / @do@ / @case@
+--   (so @x |> \\y -> y@ is @(\\y -> y) x@), since these constructs
+--   have the same precedence rank as the pipe chain itself — they
+--   just don't loop.
+--
+--   A @|>@ may appear either on the same line as the previous
+--   'PipeOp' or on a new indented line. The new-line form requires
+--   strictly positive indent so a top-level declaration starting at
+--   column 1 cannot be mistaken for a chain continuation. The
+--   formatter normalises to the multi-line form for chains of two or
+--   more operators; chains of one operator stay inline.
+pPipeNoLineComments :: Parser Expr
+pPipeNoLineComments = do
+  x <- pConcatNoLineComments
+  let pipeOnNewLine = do
+        void C.eol
+        skipBlankLinesNoComments
+        hspaceNoComments
+        lvl <- L.indentLevel
+        guard (lvl > P.pos1)
+      rest acc =
+        ( do
+            _ <- try (P.optional (try pipeOnNewLine) *> symNoLine "|>")
+            y <- pPipeOpNoLineComments
+            rest (EInfix (spanBetween (exprSpan acc) (exprSpan y)) OpPipe acc y)
+        )
+          <|> pure acc
+  rest x
+
+-- | RHS of a @|>@: every alternative of 'pExprNoLineComments' /except/
+--   'pPipeNoLineComments' itself. Splitting this layer is what enforces
+--   left-associativity for @|>@.
+pPipeOpNoLineComments :: Parser Expr
+pPipeOpNoLineComments =
   pLambdaNoLineComments
     <|> pLetNoLineComments
     <|> pDoNoLineComments
@@ -726,16 +775,40 @@ pStringLitNoLineComments = lexemeNoLine $ do
   chars <- P.manyTill stringChar (C.char '"')
   pure (toText chars)
 
--- | Integer literal: optional '-' followed by one or more decimal digits.
---   The '-' must be adjacent to the digits (no whitespace), so future binary
---   operators will not collide with negative literals.
---   Range validation happens at the type-check stage against the declared type.
+-- | Integer literal: optional '-' followed by one or more decimal digits,
+--   with optional '_' separators *between* digits (a readability affordance —
+--   '1_000_000' parses to the same Integer as '1000000', '10_00', or '1_0_0_0').
+--
+--   Forbidden positions for '_':
+--     • leading: '_1' is rejected (would clash with underscore-prefixed names)
+--     • trailing: '1_' is rejected
+--     • adjacent to another '_': '1__2' is rejected
+--     • immediately after the sign: '-_1' is rejected
+--
+--   The '-' must be adjacent to the first digit (no whitespace), so future
+--   binary operators will not collide with negative literals. Range validation
+--   happens at the type-check stage against the declared type.
 pIntLitNoLineComments :: Parser Integer
-pIntLitNoLineComments = lexemeNoLine $ try $ do
-  sign <- P.option 1 (C.char '-' $> (-1))
-  digits <- P.takeWhile1P (Just "digit") Char.isDigit
-  pure (sign * readDecimal digits)
+pIntLitNoLineComments = lexemeNoLine $ do
+  -- 'try' is restricted to the [-]?digit prefix so that backtracking
+  -- happens only when this isn't a literal at all (e.g. a bare '-' in a
+  -- different position). Once the first digit is committed, malformed
+  -- '_' placement produces a real parse error rather than rolling back.
+  (sign, firstDigit) <- try $ do
+    s <- P.option 1 (C.char '-' $> (-1))
+    d <- P.satisfy Char.isDigit
+    pure (s, d)
+  rest <- P.many digitOrSepDigit
+  pure (sign * readDecimal (toText (firstDigit : rest)))
   where
+    -- A digit, or '_' immediately followed by a digit. '_' alone is not
+    -- a valid continuation: if '_' matches but the next char isn't a
+    -- digit, we fail with "expected digit" — that's how trailing and
+    -- doubled '_' get rejected.
+    digitOrSepDigit :: Parser Char
+    digitOrSepDigit =
+      P.satisfy Char.isDigit
+        <|> (C.char '_' *> P.satisfy Char.isDigit)
     readDecimal :: Text -> Integer
     readDecimal = T.foldl' (\acc c -> acc * 10 + toInteger (Char.digitToInt c)) 0
 
@@ -922,13 +995,27 @@ pCaseNoLineComments = do
 -- | Group flat case items into structured alternatives.
 --   Comments before an arm become its leading @[Comment]@;
 --   comments after the last arm become the trailing @[Comment]@ on 'ECase'.
+--
+--   Constructor choice mirrors the parser-level invariant captured in
+--   'CaseAlt' / 'isBlockBody': a block-form body that ends inside its
+--   own last arm/stmt cannot have outer-arm trailing because the inner
+--   trailing-slot eats it. When the parser observed a trailing comment
+--   ('Just _'), the body must be leaf-form (the parser couldn't have
+--   reached 'pTrailingLineCommentMaybe' otherwise) — emit 'CaseAltLeaf'.
+--   With no trailing, we still emit 'CaseAltLeaf' for leaf-form bodies
+--   (so a future trailing can be added without changing the
+--   constructor) and 'CaseAltBlock' for block-form ones.
 groupCaseItems :: [CaseItem] -> ([CaseAlt], [Comment])
 groupCaseItems = go []
   where
     go pendingComments [] = ([], pendingComments)
     go pendingComments (CaseItemComment c : rest) = go (pendingComments <> [c]) rest
     go pendingComments (CaseItemArm pat body mc : rest) =
-      let alt = CaseAlt pendingComments pat body mc
+      let alt = case mc of
+            Just _ -> CaseAltLeaf pendingComments pat body mc
+            Nothing
+              | isBlockBody body -> CaseAltBlock pendingComments pat body
+              | otherwise -> CaseAltLeaf pendingComments pat body Nothing
           (alts, trailing) = go [] rest
        in (alt : alts, trailing)
 

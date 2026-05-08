@@ -22,8 +22,8 @@ run x = do
 describe : Either (ErrA | ErrB) Int32 -> Either StringTooLong String
 describe r = case r of
   Left e -> case e of
-    (_ : ErrA) -> Right "ErrA"
-    (_ : ErrB) -> Right "ErrB"
+    ErrA -> Right "ErrA"
+    ErrB -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit

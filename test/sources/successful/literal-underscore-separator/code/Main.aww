@@ -1,0 +1,25 @@
+{- Decimal integer literals accept '_' as a thousands separator
+   between digits. Semantics are identical regardless of placement:
+   '1_234_567', '1_234567', and '1234567' parse to the same Integer.
+   The formatter canonicalises every literal to groups of 3 from
+   the right (sign on the outside), starting at 4 digits. -}
+import IO.Stdout
+
+big : Int32
+big = 1_234_567
+
+negativeBig : Int32
+negativeBig = -1_000_000
+
+sum : Either (UnderflowError | OverflowError) Int32
+sum = addInt32 big negativeBig
+
+line : Either (UnderflowError | OverflowError | StringTooLong) String
+line = do
+  s <- sum
+  "sum=" ++ showInt32 s
+
+main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+main _input = case line of
+  Left _ -> IO.Stdout.print "FAIL"
+  Right s -> IO.Stdout.print s

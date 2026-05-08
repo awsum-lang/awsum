@@ -264,6 +264,21 @@ underflowRowTag = fromIntegral (rowTag (TyCon noSpan "UnderflowError"))
 overflowRowTag :: Int32
 overflowRowTag = fromIntegral (rowTag (TyCon noSpan "OverflowError"))
 
+-- | StringTooLong row tag, used when the entry-point glue rejects a
+--   too-long argv[1] and hands user code 'Left StringTooLong' through
+--   the row '(StringTooLong | UnpairedUtf16Surrogate)'. Word32 wraps to
+--   signed Int32 (CONSTANT_Integer); user-side row dispatch uses the
+--   same wrapping so bit patterns match.
+stringTooLongRowTag :: Int32
+stringTooLongRowTag = fromIntegral (rowTag (TyCon noSpan "StringTooLong"))
+
+-- | UnpairedUtf16Surrogate row tag, used when '__entryArgEither' detects
+--   an unpaired surrogate in argv[1] (high surrogate not followed by a
+--   low surrogate, standalone low, or trailing high). Word32 wraps to
+--   signed Int32 the same way 'stringTooLongRowTag' does.
+unpairedSurrogateRowTag :: Int32
+unpairedSurrogateRowTag = fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
+
 -- | Push an arbitrary signed 32-bit integer on the stack.
 --   Uses iconst/bipush/sipush for values that fit in a short, otherwise
 --   loads a CPInteger from the constant pool via ldc.
@@ -345,10 +360,11 @@ doAssemble prog@(CoreProgram decls) = do
   m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
   mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
-  mLb <- if Set.member "lengthBytesAsUtf8" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
+  mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
+  mEntryArg <- mkEntryArgEither
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg, mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -2723,16 +2739,16 @@ mkLengthUtf16CodeUnits = do
         mMaxLocals = 256
       }
 
--- | lengthBytesAsUtf8: String -> UInt32. Encodes via
+-- | lengthUtf8Bytes: String -> UInt32. Encodes via
 --   'String.getBytes(Charset)' with 'StandardCharsets.UTF_8' (standard,
 --   not modified UTF-8) and reports the resulting array length. The
 --   intermediate byte array is dropped on the next instruction; if
 --   profiling ever flags this, swap in a manual scan over the chars
 --   that sums 1/2/3/4-byte contributions per code point.
---   Binary equivalent of 'Awsum.Codegen.JVM.lengthBytesAsUtf8Method'.
+--   Binary equivalent of 'Awsum.Codegen.JVM.lengthUtf8BytesMethod'.
 mkLengthBytesAsUtf8 :: AsmM MInfo
 mkLengthBytesAsUtf8 = do
-  ni <- addUtf8 "__lengthBytesAsUtf8"
+  ni <- addUtf8 "__lengthUtf8Bytes"
   di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
   strCls <- addClass "java/lang/String"
   utf8FieldRef <- addFRef "java/nio/charset/StandardCharsets" "UTF_8" "Ljava/nio/charset/Charset;"
@@ -3236,6 +3252,261 @@ mkParseUInt8 = do
         mMaxLocals = 256
       }
 
+-- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
+--   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
+--     1. Length cap (134217728 = 2^27) — short-circuits before the
+--        surrogate walk.
+--     2. UTF-16 surrogate pairing — walks code units; high surrogate
+--        (D800..DBFF) must be immediately followed by a low surrogate
+--        (DC00..DFFF). Cap-check has priority.
+--
+--   Cap value and FNV-1a row tags for "StringTooLong" /
+--   "UnpairedUtf16Surrogate" must stay in sync with
+--   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
+--
+--   Local slots:
+--     V_0 = arg, V_1 = string, V_2 = length, V_3 = i,
+--     V_4 = expecting_low (0/1), V_5 = c & 0xFC00,
+--     V_6 = inner (transient), V_7 = row (transient).
+--
+--   Six full_frame SMT entries (verbose but explicit) at L_scan,
+--   L_check_low, L_inc, L_scan_done, L_too_long, L_unpaired.
+mkEntryArgEither :: AsmM MInfo
+mkEntryArgEither = do
+  ni <- addUtf8 "__entryArgEither"
+  di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  lengthRef <- addMRef "java/lang/String" "length" "()I"
+  charAtRef <- addMRef "java/lang/String" "charAt" "(I)C"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  ldcCap <- bcLoadInt32 134217728
+  ldcMaskFC00 <- bcLoadInt32 64512
+  ldcMaskDC00 <- bcLoadInt32 56320
+  ldcMaskD800 <- bcLoadInt32 55296
+  ldcStringTooLongTag <- bcLoadInt32 stringTooLongRowTag
+  ldcUnpairedTag <- bcLoadInt32 unpairedSurrogateRowTag
+  let preamble :: [Word8]
+      preamble =
+        [0x2A] -- aload_0
+          <> [0xC0, hi8 strCls, lo8 strCls] -- checkcast String
+          <> [0x4C] -- astore_1
+          <> [0x2B] -- aload_1
+          <> [0xB6, hi8 lengthRef, lo8 lengthRef] -- invokevirtual length()I
+          <> [0x3D] -- istore_2
+          <> [0x1C] -- iload_2
+          <> ldcCap
+      preLen = length preamble
+      ifGtLen = 3 :: Int
+      scanInit :: [Word8]
+      scanInit =
+        [0x03] -- iconst_0
+          <> [0x3E] -- istore_3
+          <> [0x03] -- iconst_0
+          <> [0x36, 0x04] -- istore 4
+      scanInitLen = length scanInit
+      lScan = preLen + ifGtLen + scanInitLen
+      scanEntryLen = 5 :: Int -- iload_3 (1) + iload_2 (1) + if_icmpge (3)
+      scanCharLoadLen = 5 + length ldcMaskFC00 + 1 + 2
+      scanDispatchLen = 5 :: Int -- iload 4 (2) + ifne (3)
+      noLowExpectedLen =
+        2
+          + length ldcMaskDC00
+          + 3 -- iload 5 + ldcDC00 + if_icmpeq
+          + 2
+          + length ldcMaskD800
+          + 3 -- iload 5 + ldcD800 + if_icmpne
+          + 1
+          + 2
+          + 3 -- iconst_1 + istore 4 + goto
+      lCheckLow = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen + noLowExpectedLen
+      checkLowLen = 2 + length ldcMaskDC00 + 3 + 1 + 2 + 3
+      lInc = lCheckLow + checkLowLen
+      incLen = 6 :: Int -- iinc (3) + goto (3)
+      lScanDone = lInc + incLen
+      trailingCheckLen = 5 :: Int -- iload 4 (2) + ifne (3)
+      okStart = lScanDone + trailingCheckLen
+      okBlock :: [Word8]
+      okBlock =
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0
+          <> [0x04] -- iconst_1 (Right tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59] -- dup
+          <> [0x04] -- iconst_1
+          <> [0x2A] -- aload_0
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      okLen = length okBlock
+      lTooLong = okStart + okLen
+      buildLeftBlock :: [Word8] -> [Word8]
+      buildLeftBlock ldcRowTag =
+        [0x04] -- iconst_1
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03] -- iconst_0 (inner CCon tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x3A, 0x06] -- astore 6
+          <> [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> ldcRowTag
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x19, 0x06] -- aload 6
+          <> [0x53]
+          <> [0x3A, 0x07] -- astore 7
+          <> [0x05]
+          <> [0xBD, hi8 objCls, lo8 objCls]
+          <> [0x59]
+          <> [0x03]
+          <> [0x03] -- iconst_0 (Left tag)
+          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> [0x53]
+          <> [0x59]
+          <> [0x04]
+          <> [0x19, 0x07] -- aload 7
+          <> [0x53]
+          <> [0xB0] -- areturn
+      tooLongBlock = buildLeftBlock ldcStringTooLongTag
+      tooLongLen = length tooLongBlock
+      lUnpaired = lTooLong + tooLongLen
+      unpairedBlock = buildLeftBlock ldcUnpairedTag
+      -- Branch offsets — all are computed as (target - source_opcode_offset).
+      mkBr :: Word8 -> Int -> [Word8]
+      mkBr op rel =
+        let w = fromIntegral rel :: Word16
+         in [op, hi8 w, lo8 w]
+      ifGtBytes = mkBr 0xA3 (lTooLong - preLen)
+      scanEntryIfgeAt = lScan + 2
+      scanEntryIfgeBytes = mkBr 0xA2 (lScanDone - scanEntryIfgeAt)
+      scanDispatchIfneAt = lScan + scanEntryLen + scanCharLoadLen + 2
+      scanDispatchIfneBytes = mkBr 0x9A (lCheckLow - scanDispatchIfneAt)
+      noLowStart = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen
+      noLowIfeqAt = noLowStart + 2 + length ldcMaskDC00
+      noLowIfeqBytes = mkBr 0x9F (lUnpaired - noLowIfeqAt)
+      noLowIfneAt = noLowIfeqAt + 3 + 2 + length ldcMaskD800
+      noLowIfneBytes = mkBr 0xA0 (lInc - noLowIfneAt)
+      noLowGotoAt = noLowIfneAt + 3 + 1 + 2
+      noLowGotoBytes = mkBr 0xA7 (lInc - noLowGotoAt)
+      checkLowIfneAt = lCheckLow + 2 + length ldcMaskDC00
+      checkLowIfneBytes = mkBr 0xA0 (lUnpaired - checkLowIfneAt)
+      checkLowGotoAt = checkLowIfneAt + 3 + 1 + 2
+      checkLowGotoBytes = mkBr 0xA7 (lInc - checkLowGotoAt)
+      incGotoAt = lInc + 3
+      incGotoBytes = mkBr 0xA7 (lScan - incGotoAt) -- backward; Word16 wraps
+      trailingIfneAt = lScanDone + 2
+      trailingIfneBytes = mkBr 0x9A (lUnpaired - trailingIfneAt)
+      ifGtSeg = ifGtBytes
+      scanEntrySeg :: [Word8]
+      scanEntrySeg = [0x1D, 0x1C] <> scanEntryIfgeBytes
+      scanCharLoadSeg :: [Word8]
+      scanCharLoadSeg =
+        [0x2B] -- aload_1
+          <> [0x1D] -- iload_3
+          <> [0xB6, hi8 charAtRef, lo8 charAtRef]
+          <> ldcMaskFC00
+          <> [0x7E] -- iand
+          <> [0x36, 0x05] -- istore 5
+      scanDispatchSeg :: [Word8]
+      scanDispatchSeg = [0x15, 0x04] <> scanDispatchIfneBytes
+      noLowExpectedSeg :: [Word8]
+      noLowExpectedSeg =
+        [0x15, 0x05]
+          <> ldcMaskDC00
+          <> noLowIfeqBytes
+          <> [0x15, 0x05]
+          <> ldcMaskD800
+          <> noLowIfneBytes
+          <> [0x04]
+          <> [0x36, 0x04]
+          <> noLowGotoBytes
+      checkLowSeg :: [Word8]
+      checkLowSeg =
+        [0x15, 0x05]
+          <> ldcMaskDC00
+          <> checkLowIfneBytes
+          <> [0x03]
+          <> [0x36, 0x04]
+          <> checkLowGotoBytes
+      incSeg :: [Word8]
+      incSeg = [0x84, 0x03, 0x01] <> incGotoBytes
+      trailingCheckSeg :: [Word8]
+      trailingCheckSeg = [0x15, 0x04] <> trailingIfneBytes
+      code =
+        preamble
+          <> ifGtSeg
+          <> scanInit
+          <> scanEntrySeg
+          <> scanCharLoadSeg
+          <> scanDispatchSeg
+          <> noLowExpectedSeg
+          <> checkLowSeg
+          <> incSeg
+          <> trailingCheckSeg
+          <> okBlock
+          <> tooLongBlock
+          <> unpairedBlock
+      -- StackMapTable: full_frame for each branch target. Verbose but
+      -- explicit; the verifier accepts these without inferring deltas.
+      objVT, strVT, intVT :: [Word8]
+      objVT = [7, hi8 objCls, lo8 objCls]
+      strVT = [7, hi8 strCls, lo8 strCls]
+      intVT = [1]
+      mkFullFrame :: Word16 -> [[Word8]] -> [Word8]
+      mkFullFrame delta locals =
+        [255, hi8 delta, lo8 delta]
+          <> [0, fromIntegral (length locals)]
+          <> mconcat locals
+          <> [0, 0] -- empty stack
+          -- offset_delta of frame 1 = absolute offset; subsequent frames =
+          -- target - prev - 1 (per JVM Spec § 4.7.4).
+      f1Delta = fromIntegral lScan :: Word16
+      f2Delta = fromIntegral (lCheckLow - lScan - 1) :: Word16
+      f3Delta = fromIntegral (lInc - lCheckLow - 1) :: Word16
+      f4Delta = fromIntegral (lScanDone - lInc - 1) :: Word16
+      f5Delta = fromIntegral (lTooLong - lScanDone - 1) :: Word16
+      f6Delta = fromIntegral (lUnpaired - lTooLong - 1) :: Word16
+      smtEntries :: [Word8]
+      smtEntries =
+        mkFullFrame f1Delta [objVT, strVT, intVT, intVT, intVT]
+          <> mkFullFrame f2Delta [objVT, strVT, intVT, intVT, intVT, intVT]
+          <> mkFullFrame f3Delta [objVT, strVT, intVT, intVT, intVT, intVT]
+          <> mkFullFrame f4Delta [objVT, strVT, intVT, intVT, intVT]
+          <> mkFullFrame f5Delta [objVT, strVT, intVT]
+          <> mkFullFrame f6Delta [objVT, strVT, intVT, intVT, intVT]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 6] -- 6 entries
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr,
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
 mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
@@ -3246,7 +3517,10 @@ mkMain = do
   -- value to it so any effects are performed. It returns Unit which we
   -- discard.
   vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
-  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …) String':
+  -- 'Right input' on fit, 'Left StringTooLong' (row-tagged) on overflow.
+  -- See 'mkEntryArgEither' for the inline-cap-check + Either-build.
+  entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
   -- Refs for the System.out → UTF-8 swap. See the IL-text 'mainMethod'
@@ -3329,18 +3603,9 @@ mkMain = do
             <> bcAload 0 -- has_arg
             <> [0x03] -- iconst_0
             <> [0x32] -- aaload
-            <> [0x4C] -- call_main: astore_1 (input → locals[1])
-            <> [0x05] -- iconst_2
-            <> [0xBD, hi8 objClsIdx, lo8 objClsIdx] -- anewarray Object
-            <> [0x59] -- dup
-            <> [0x03] -- iconst_0
-            <> [0x04] -- iconst_1 (tag=1 for Right)
-            <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- invokestatic Integer.valueOf
-            <> [0x53] -- aastore
-            <> [0x59] -- dup
-            <> [0x04] -- iconst_1
-            <> [0x2B] -- aload_1
-            <> [0x53] -- aastore
+            -- call_main: input on top of stack; '__entryArgEither' replaces it
+            -- with a fully-formed 'Either (StringTooLong | …) String' cell.
+            <> bcInvokeStatic entryArgEitherRef
             <> bcInvokeStatic vMainRef
             -- v_main returned an IO tree on the stack; hand it to runIO
             -- to walk and execute the effects. runIO returns Unit which
@@ -3863,13 +4128,13 @@ emitExpr ctx = \case
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
             pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
       CBuiltIn name
-        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthBytesAsUtf8",
+        | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs -> do
             xMeta <- emitExpr ctx x
             let fn = case name of
                   "lengthCodePoints" -> "__lengthCodePoints"
                   "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                  _ -> "__lengthBytesAsUtf8"
+                  _ -> "__lengthUtf8Bytes"
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;)Ljava/lang/Object;"
             pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
       CBuiltIn n ->

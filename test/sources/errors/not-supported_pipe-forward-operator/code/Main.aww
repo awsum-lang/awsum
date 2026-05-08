@@ -1,9 +1,0 @@
--- Not yet supported: `|>` pipe-forward operator (Elm / OCaml /
--- F# style). No user-facing operators in Awsum besides `(++)`. The
--- parser rejects the `|>` token directly. Workaround: write the
--- function calls in left-to-right pipeline order with parens, or
--- introduce a `let`-bound intermediate.
-import IO.Stdout
-
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = input |> IO.Stdout.print

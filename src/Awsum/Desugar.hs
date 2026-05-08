@@ -95,9 +95,9 @@ desugarExpr = \case
     rewriteLet sp pat mAnnot e' body'
   e -> pure e
   where
-    desugarCaseAlt (CaseAlt c pat body mc) = do
-      body' <- desugarExpr body
-      pure (CaseAlt c pat body' mc)
+    desugarCaseAlt alt = do
+      body' <- desugarExpr (caseAltBody alt)
+      pure (mkCaseAlt (caseAltLeading alt) (caseAltPattern alt) body' (caseAltTrailing alt))
 
 -- | Translate a 'do'-block into nested @case@ on @Either@. Each
 --   bind step becomes:
@@ -147,7 +147,7 @@ desugarDo sp = go
           -- the user would have seen had they written the case
           -- by hand. No special "refutable in do-bind" error.
           rightPat = PCon bsp "Right" [pat]
-          arms = CaseAlt [] leftPat leftBody Nothing :| [CaseAlt [] rightPat body Nothing]
+          arms = mkCaseAlt [] leftPat leftBody Nothing :| [mkCaseAlt [] rightPat body Nothing]
       Right (ECase bsp e' arms [])
     go (DoLet lsp pat mAnnot e : rest) = do
       e' <- desugarExpr e
@@ -198,7 +198,7 @@ liftParamPatterns params body =
             ECase
               sp
               (EVar sp (QName [] n))
-              (CaseAlt [] pat (wrap inner) Nothing :| [])
+              (mkCaseAlt [] pat (wrap inner) Nothing :| [])
               []
        in (Param sp n : ps, newWrap)
 
@@ -228,4 +228,4 @@ rewriteLet sp pat mAnnot e' body' = case pat of
   _ -> case mAnnot of
     Just _ -> Left (DesugarPatternLetAscription sp)
     Nothing ->
-      Right (ECase sp e' (CaseAlt [] pat body' Nothing :| []) [])
+      Right (ECase sp e' (mkCaseAlt [] pat body' Nothing :| []) [])

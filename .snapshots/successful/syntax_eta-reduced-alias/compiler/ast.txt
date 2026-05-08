@@ -257,7 +257,7 @@ Program
                     )
                     ( QName [] "inputArg" )
                 )
-                ( CaseAlt []
+                ( CaseAltLeaf []
                     ( PCon
                         ( SrcSpan
                             { spanStartLine = 9
@@ -309,7 +309,7 @@ Program
                             ( LString "INPUT_ERROR" )
                         )
                     ) Nothing :|
-                    [ CaseAlt []
+                    [ CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
                                 { spanStartLine = 10
