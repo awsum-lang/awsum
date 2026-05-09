@@ -37,6 +37,7 @@ library
       Awsum.Format
       Awsum.HM
       Awsum.LowerClosures
+      Awsum.Lsp
       Awsum.Normalize
       Awsum.Parser
       Awsum.Prelude
@@ -66,7 +67,12 @@ library
       base >=4.7 && <5
     , bytestring
     , containers
+    , directory
     , file-embed
+    , filepath
+    , lens
+    , lsp
+    , lsp-types
     , megaparsec
     , relude
     , text

@@ -16,6 +16,7 @@ import Awsum.Core (CoreProgram, PreludeTags)
 import Awsum.Diagnostic
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
+import Awsum.Lsp (runLspServer)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, verifyPrelude, withPrelude)
 import Awsum.Program (ProgramType, parseProgramType)
@@ -63,6 +64,18 @@ data Command
     CmdFormat FilePath Bool
   | -- | file, useJson
     CmdSymbols FilePath Bool
+  | -- | Run the LSP server. The transport must be specified explicitly
+    --   (the only one supported today is stdio, but the choice is part
+    --   of the contract — same "no defaulting" rule that applies to
+    --   integer literal types and program-type selection elsewhere in
+    --   the CLI).
+    CmdLsp LspTransport
+  deriving stock (Show)
+
+-- | LSP transport selector. New transports (TCP socket, named pipe, …)
+--   land here as additional constructors, each gated by its own
+--   mutually-exclusive flag in the parser.
+data LspTransport = LspStdio
   deriving stock (Show)
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -148,6 +161,19 @@ optInPlace =
 optJson :: OA.Parser Bool
 optJson = OA.switch (OA.long "json" <> OA.help "Output diagnostics as JSON")
 
+-- | Mandatory LSP transport selector. Today only @--stdio@ is
+--   accepted; the option is required (via 'flag'') so that adding a
+--   second transport later (e.g. @--socket PORT@) is a non-breaking
+--   change and so that no command line ever runs the server with an
+--   implicit transport.
+optLspTransport :: OA.Parser LspTransport
+optLspTransport =
+  OA.flag'
+    LspStdio
+    ( OA.long "stdio"
+        <> OA.help "Use stdio (the only supported transport today)"
+    )
+
 -- | Flag: treat warnings as errors (fail with non-zero exit).
 optStrict :: OA.Parser Bool
 optStrict =
@@ -183,6 +209,7 @@ pCommand =
           <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optProgramType <*> optTarget)
           <> subcmd "format" "Format source (render . parse)" (CmdFormat <$> argFilePath <*> optInPlace)
           <> subcmd "symbols" "Print top-level symbols (outline)" (CmdSymbols <$> argFilePath <*> optJson)
+          <> subcmd "lsp" "Run Language Server Protocol (transport: --stdio)" (CmdLsp <$> optLspTransport)
       )
 
 -- | Top-level Options.Applicative info.
@@ -276,6 +303,7 @@ runCommand = \case
     if useJson
       then putTextLn (symbolsToJson syms)
       else pPrint syms
+  CmdLsp LspStdio -> void (runLspServer awsumVersion)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

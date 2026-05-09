@@ -34,6 +34,7 @@ awsum asm --program-type cli -t jvm|clr|wasm FILE  # Print target assembly text
 awsum format [-i] FILE                        # Format source
 awsum ast FILE                                # Print AST
 awsum symbols [--json] FILE                   # List top-level declarations (outline)
+awsum lsp --stdio                             # Run Language Server Protocol (transport mandatory)
 ```
 
 ## Project Structure
@@ -67,7 +68,8 @@ src/Awsum/
 ├── Render.hs         # Pretty printer
 ├── Normalize.hs      # Normalization pass
 ├── Symbols.hs        # Top-level symbol extraction (outline, IDE integration)
-└── Diagnostic.hs     # Editor-facing diagnostic shape (severity, fixes) + JSON encoder
+├── Diagnostic.hs     # Editor-facing diagnostic shape (severity, fixes) + JSON encoder
+└── Lsp.hs            # `awsum lsp` Language Server Protocol over stdio
 
 awsum/Main.hs         # CLI entry point
 stdlib/Prelude.aww    # Implicitly-imported prelude (embedded into the binary)
