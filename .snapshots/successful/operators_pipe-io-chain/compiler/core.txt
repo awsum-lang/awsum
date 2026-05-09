@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -28,19 +28,31 @@ CoreProgram
                                 )
                             ]
                         )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CContinue
+                            [ CCall
+                                ( CVar "$apply1" )
+                                [ CVar "cont"
+                                , CCall
+                                    ( CBuiltIn "internalGetArgs" ) []
+                                ]
+                            ]
+                        )
                     ]
                 )
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
                 ( CVar "$df$andThenIO$0" )
                 [ CCall
-                    ( CVar "$df$andThenIO$1" )
+                    ( CVar "$df$andThenIO$2" )
                     [ CCall
-                        ( CVar "$lift$3" )
-                        [ CCon 2
+                        ( CVar "$lift$8" )
+                        [ CCon 7
                             [ CString "a"
-                            , CCon 0
+                            , CCon 5
                                 [ CCon 0 [] ]
                             ]
                         ]
@@ -51,7 +63,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$lift$1" )
                 [ CVar "__input"
-                , CCon 0 []
+                , CCon 18 []
                 ]
             )
         , CFunDef "$cps$$lift$1"
@@ -62,36 +74,48 @@ CoreProgram
                 ( CCase
                     ( CVar "__input" )
                     [
-                        ( 0
+                        ( 5
                         , [ "__f0" ]
                         , CCall
                             ( CVar "$apply$$lift$1" )
                             [ CVar "$k"
-                            , CCon 0
+                            , CCon 5
                                 [ CVar "__f0" ]
                             ]
                         )
                     ,
-                        ( 1
+                        ( 6
                         , [ "__f0" ]
                         , CCall
                             ( CVar "$apply$$lift$1" )
                             [ CVar "$k"
-                            , CCon 1
+                            , CCon 6
                                 [ CVar "__f0" ]
                             ]
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "__f0"
                             , "__f1"
                             ]
                         , CContinue
                             [ CVar "__f1"
-                            , CCon 1
+                            , CCon 19
                                 [ CVar "$k"
                                 , CVar "__f0"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "__f0" ]
+                        , CCall
+                            ( CVar "$apply$$lift$1" )
+                            [ CVar "$k"
+                            , CCon 8
+                                [ CCon 11
+                                    [ CVar "__f0" ]
                                 ]
                             ]
                         )
@@ -106,19 +130,19 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 18
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 19
                         ,
-                            [ "$pk_1"
+                            [ "$pk_19"
                             , "__f0"
                             ]
                         , CContinue
-                            [ CVar "$pk_1"
-                            , CCon 2
+                            [ CVar "$pk_19"
+                            , CCon 7
                                 [ CVar "__f0"
                                 , CVar "$x"
                                 ]
@@ -127,21 +151,21 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lam$2" [ "_u" ]
-            ( CCon 2
+        , CFunDef "$lam$7" [ "_u" ]
+            ( CCon 7
                 [ CString "c"
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$3" [ "__input" ]
+        , CFunDef "$lift$8" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$3" )
+                ( CVar "$cps$$lift$8" )
                 [ CVar "__input"
-                , CCon 0 []
+                , CCon 20 []
                 ]
             )
-        , CFunDef "$cps$$lift$3"
+        , CFunDef "$cps$$lift$8"
             [ "__input"
             , "$k"
             ]
@@ -149,43 +173,55 @@ CoreProgram
                 ( CCase
                     ( CVar "__input" )
                     [
-                        ( 0
+                        ( 5
                         , [ "__f0" ]
                         , CCall
-                            ( CVar "$apply$$lift$3" )
+                            ( CVar "$apply$$lift$8" )
                             [ CVar "$k"
-                            , CCon 0
+                            , CCon 5
                                 [ CVar "__f0" ]
                             ]
                         )
                     ,
-                        ( 1
+                        ( 6
                         , [ "__f0" ]
                         , CCall
-                            ( CVar "$apply$$lift$3" )
+                            ( CVar "$apply$$lift$8" )
                             [ CVar "$k"
-                            , CCon 1
+                            , CCon 6
                                 [ CVar "__f0" ]
                             ]
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "__f0"
                             , "__f1"
                             ]
                         , CContinue
                             [ CVar "__f1"
-                            , CCon 1
+                            , CCon 21
                                 [ CVar "$k"
                                 , CVar "__f0"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "__f0" ]
+                        , CCall
+                            ( CVar "$apply$$lift$8" )
+                            [ CVar "$k"
+                            , CCon 8
+                                [ CCon 12
+                                    [ CVar "__f0" ]
                                 ]
                             ]
                         )
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$3"
+        , CFunDef "$apply$$lift$8"
             [ "$k"
             , "$x"
             ]
@@ -193,19 +229,19 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 20
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 21
                         ,
-                            [ "$pk_1"
+                            [ "$pk_21"
                             , "__f0"
                             ]
                         , CContinue
-                            [ CVar "$pk_1"
-                            , CCon 2
+                            [ CVar "$pk_21"
+                            , CCon 7
                                 [ CVar "__f0"
                                 , CVar "$x"
                                 ]
@@ -214,12 +250,12 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lam$4" [ "_u" ]
+        , CFunDef "$lam$10" [ "_u" ]
             ( CCall
-                ( CVar "$lift$3" )
-                [ CCon 2
+                ( CVar "$lift$8" )
+                [ CCon 7
                     [ CString "b"
-                    , CCon 0
+                    , CCon 5
                         [ CCon 0 [] ]
                     ]
                 ]
@@ -228,7 +264,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$df$andThenIO$0" )
                 [ CVar "io"
-                , CCon 0 []
+                , CCon 22 []
                 ]
             )
         , CFunDef "$cps$$df$andThenIO$0"
@@ -239,7 +275,7 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "a" ]
                         , CCall
                             ( CVar "$apply$$df$andThenIO$0" )
@@ -247,32 +283,44 @@ CoreProgram
                             , CCall
                                 ( CVar "$lift$1" )
                                 [ CCall
-                                    ( CVar "$lam$2" )
+                                    ( CVar "$lam$7" )
                                     [ CVar "a" ]
                                 ]
                             ]
                         )
                     ,
-                        ( 1
+                        ( 6
                         , [ "e" ]
                         , CCall
                             ( CVar "$apply$$df$andThenIO$0" )
                             [ CVar "$k"
-                            , CCon 1
+                            , CCon 6
                                 [ CVar "e" ]
                             ]
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
                             ]
                         , CContinue
                             [ CVar "next"
-                            , CCon 1
+                            , CCon 23
                                 [ CVar "$k"
                                 , CVar "s"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$0" )
+                            [ CVar "$k"
+                            , CCon 8
+                                [ CCon 9
+                                    [ CVar "cont" ]
                                 ]
                             ]
                         )
@@ -287,19 +335,19 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 22
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 23
                         ,
-                            [ "$pk_1"
+                            [ "$pk_23"
                             , "s"
                             ]
                         , CContinue
-                            [ CVar "$pk_1"
-                            , CCon 2
+                            [ CVar "$pk_23"
+                            , CCon 7
                                 [ CVar "s"
                                 , CVar "$x"
                                 ]
@@ -308,14 +356,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$df$andThenIO$1" [ "io" ]
+        , CFunDef "$df$andThenIO$2" [ "io" ]
             ( CCall
-                ( CVar "$cps$$df$andThenIO$1" )
+                ( CVar "$cps$$df$andThenIO$2" )
                 [ CVar "io"
-                , CCon 0 []
+                , CCon 24 []
                 ]
             )
-        , CFunDef "$cps$$df$andThenIO$1"
+        , CFunDef "$cps$$df$andThenIO$2"
             [ "io"
             , "$k"
             ]
@@ -323,47 +371,59 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "a" ]
                         , CCall
-                            ( CVar "$apply$$df$andThenIO$1" )
+                            ( CVar "$apply$$df$andThenIO$2" )
                             [ CVar "$k"
                             , CCall
                                 ( CVar "$lift$1" )
                                 [ CCall
-                                    ( CVar "$lam$4" )
+                                    ( CVar "$lam$10" )
                                     [ CVar "a" ]
                                 ]
                             ]
                         )
                     ,
-                        ( 1
+                        ( 6
                         , [ "e" ]
                         , CCall
-                            ( CVar "$apply$$df$andThenIO$1" )
+                            ( CVar "$apply$$df$andThenIO$2" )
                             [ CVar "$k"
-                            , CCon 1
+                            , CCon 6
                                 [ CVar "e" ]
                             ]
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
                             ]
                         , CContinue
                             [ CVar "next"
-                            , CCon 1
+                            , CCon 25
                                 [ CVar "$k"
                                 , CVar "s"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CCall
+                            ( CVar "$apply$$df$andThenIO$2" )
+                            [ CVar "$k"
+                            , CCon 8
+                                [ CCon 10
+                                    [ CVar "cont" ]
                                 ]
                             ]
                         )
                     ]
                 )
             )
-        , CFunDef "$apply$$df$andThenIO$1"
+        , CFunDef "$apply$$df$andThenIO$2"
             [ "$k"
             , "$x"
             ]
@@ -371,19 +431,19 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 24
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 25
                         ,
-                            [ "$pk_1"
+                            [ "$pk_25"
                             , "s"
                             ]
                         , CContinue
-                            [ CVar "$pk_1"
-                            , CCon 2
+                            [ CVar "$pk_25"
+                            , CCon 7
                                 [ CVar "s"
                                 , CVar "$x"
                                 ]
@@ -391,6 +451,204 @@ CoreProgram
                         )
                     ]
                 )
+            )
+        , CFunDef "$scc$$apply1_$df$$lam$3$1_$df$$lam$3$3_$lift$2_$lift$9" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$$apply1_$df$$lam$3$1_$df$$lam$3$3_$lift$2_$lift$9" )
+                [ CVar "$args"
+                , CCon 26 []
+                ]
+            )
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$3$1_$df$$lam$3$3_$lift$2_$lift$9"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 13
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CCase
+                            ( CVar "$cl" )
+                            [
+                                ( 9
+                                , [ "$cap9_0" ]
+                                , CContinue
+                                    [ CCon 14
+                                        [ CVar "$cap9_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 10
+                                , [ "$cap10_0" ]
+                                , CContinue
+                                    [ CCon 15
+                                        [ CVar "$cap10_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 11
+                                , [ "$cap11_0" ]
+                                , CContinue
+                                    [ CCon 16
+                                        [ CVar "$cap11_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 12
+                                , [ "$cap12_0" ]
+                                , CContinue
+                                    [ CCon 17
+                                        [ CVar "$cap12_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 14
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CContinue
+                            [ CCon 13
+                                [ CVar "cont"
+                                , CVar "result"
+                                ]
+                            , CCon 27
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ,
+                        ( 15
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CContinue
+                            [ CCon 13
+                                [ CVar "cont"
+                                , CVar "result"
+                                ]
+                            , CCon 28
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ,
+                        ( 16
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CContinue
+                            [ CCon 13
+                                [ CVar "__f"
+                                , CVar "__arg"
+                                ]
+                            , CCon 29
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ,
+                        ( 17
+                        ,
+                            [ "__f"
+                            , "__arg"
+                            ]
+                        , CContinue
+                            [ CCon 13
+                                [ CVar "__f"
+                                , CVar "__arg"
+                                ]
+                            , CCon 30
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$scc$$apply1_$df$$lam$3$1_$df$$lam$3$3_$lift$2_$lift$9"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 26
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 27
+                        , [ "$pk_27" ]
+                        , CContinue
+                            [ CVar "$pk_27"
+                            , CCall
+                                ( CVar "$df$andThenIO$0" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ,
+                        ( 28
+                        , [ "$pk_28" ]
+                        , CContinue
+                            [ CVar "$pk_28"
+                            , CCall
+                                ( CVar "$df$andThenIO$2" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ,
+                        ( 29
+                        , [ "$pk_29" ]
+                        , CContinue
+                            [ CVar "$pk_29"
+                            , CCall
+                                ( CVar "$lift$1" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ,
+                        ( 30
+                        , [ "$pk_30" ]
+                        , CContinue
+                            [ CVar "$pk_30"
+                            , CCall
+                                ( CVar "$lift$8" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCall
+                ( CVar "$scc$$apply1_$df$$lam$3$1_$df$$lam$3$3_$lift$2_$lift$9" )
+                [ CCon 13
+                    [ CVar "$cl"
+                    , CVar "$arg0"
+                    ]
+                ]
             )
         ]
     }

@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":10,"startCol":42,"endLine":10,"endCol":42,"message":"unexpected '@'\nexpecting \"++\", \"|>\", '\"', '(', ')', '-', '_', end of line, or uppercase letter","fixes":[]}]
+[{"severity":"error","startLine":10,"startCol":35,"endLine":10,"endCol":35,"message":"unexpected '@'\nexpecting \"++\", \"|>\", '\"', '(', ')', '-', '_', end of line, or uppercase letter","fixes":[]}]

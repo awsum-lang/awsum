@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -51,7 +51,7 @@ CoreProgram
             )
         , CValDef "viaLambda"
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$7" )
                 [ CVar "n" ]
             )
         , CFunDef "wrap" [ "s" ]
@@ -65,13 +65,13 @@ CoreProgram
                     ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_28_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CVar "$do_e_28_3" ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "a" ]
                     , CCase
                         ( CCall
@@ -81,13 +81,13 @@ CoreProgram
                             ]
                         )
                         [
-                            ( 0
+                            ( 3
                             , [ "$do_e_29_3" ]
-                            , CCon 0
+                            , CCon 3
                                 [ CVar "$do_e_29_3" ]
                             )
                         ,
-                            ( 1
+                            ( 4
                             , [ "b" ]
                             , CCase
                                 ( CCall
@@ -97,13 +97,13 @@ CoreProgram
                                     ]
                                 )
                                 [
-                                    ( 0
+                                    ( 3
                                     , [ "$do_e_30_3" ]
-                                    , CCon 0
+                                    , CCon 3
                                         [ CVar "$do_e_30_3" ]
                                     )
                                 ,
-                                    ( 1
+                                    ( 4
                                     , [ "c" ]
                                     , CCall
                                         ( CBuiltIn "concatString" )
@@ -117,30 +117,30 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CVar "joined" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ]
             )
-        , CFunDef "$lam$2" [ "i" ]
+        , CFunDef "$lam$7" [ "i" ]
             ( CCall
                 ( CBuiltIn "showInt32" )
                 [ CVar "i" ]

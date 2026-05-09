@@ -1,0 +1,26 @@
+{- The `empty type X` keyword opts a type into the row-identity rule:
+   every two such declarations are interchangeable in row positions,
+   regardless of their declared name. Here `handleE1` returns
+   `IO SecondNever Unit` — a user-declared `empty type` distinct in
+   name from the prelude's `Never` — and the `handleErrorIO`-rewritten
+   chain composes into `main : … -> IO Never Unit` without any
+   conversion. `SecondNever`'s name is diagnostic only; the
+   typechecker treats every `empty type` as the same canonical type.
+
+   Runtime path: failingComputation fails with E1; handleE1 catches
+   E1 and prints. Output: "got E1". -}
+import IO.Stdout
+
+empty type SecondNever
+
+type E1 = E1
+
+failingComputation : IO E1 Unit
+failingComputation = failIO E1
+
+handleE1 : E1 -> IO SecondNever Unit
+handleE1 e = case e of
+  E1 -> IO.Stdout.print "got E1"
+
+main : IO Never Unit
+main = failingComputation |> handleErrorIO handleE1

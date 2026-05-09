@@ -1,0 +1,452 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "failIO" [ "e" ]
+            ( CCon 6
+                [ CVar "e" ]
+            )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CContinue
+                            [ CCall
+                                ( CVar "$apply1" )
+                                [ CVar "cont"
+                                , CCall
+                                    ( CBuiltIn "internalGetArgs" ) []
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "failingComputation"
+            ( CCall
+                ( CVar "failIO" )
+                [ CRow 63694499
+                    ( CCon 19 [] )
+                ]
+            )
+        , CFunDef "handleSomeErrors" [ "e" ]
+            ( CRowCase
+                ( CVar "e" )
+                [
+                    ( 63694499
+                    , "__rw"
+                    , CCase
+                        ( CVar "__rw" )
+                        [
+                            ( 19
+                            , []
+                            , CCall
+                                ( CVar "failIO" )
+                                [ CRow 63694499
+                                    ( CCon 19 [] )
+                                ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 80472118
+                    , "__rw"
+                    , CCase
+                        ( CVar "__rw" )
+                        [
+                            ( 20
+                            , []
+                            , CCall
+                                ( CVar "failIO" )
+                                [ CRow 80472118
+                                    ( CCon 20 [] )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "handleRemainingErrors" [ "e" ]
+            ( CRowCase
+                ( CVar "e" )
+                [
+                    ( 63694499
+                    , "__rw"
+                    , CCase
+                        ( CVar "__rw" )
+                        [
+                            ( 19
+                            , []
+                            , CCon 7
+                                [ CString "got E1"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 80472118
+                    , "__rw"
+                    , CCase
+                        ( CVar "__rw" )
+                        [
+                            ( 20
+                            , []
+                            , CCon 7
+                                [ CString "got E2"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$df$handleErrorIO$0" )
+                [ CCall
+                    ( CVar "$df$handleErrorIO$2" )
+                    [ CVar "failingComputation" ]
+                ]
+            )
+        , CFunDef "$df$handleErrorIO$0" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$0" )
+                [ CVar "io"
+                , CCon 26 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 5
+                                [ CVar "a" ]
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCall
+                                ( CVar "handleRemainingErrors" )
+                                [ CVar "e" ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CContinue
+                            [ CVar "next"
+                            , CCon 27
+                                [ CVar "$k"
+                                , CVar "s"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$0" )
+                            [ CVar "$k"
+                            , CCon 8
+                                [ CCon 21
+                                    [ CVar "cont" ]
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 26
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 27
+                        ,
+                            [ "$pk_27"
+                            , "s"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_27"
+                            , CCon 7
+                                [ CVar "s"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$df$handleErrorIO$2" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$2" )
+                [ CVar "io"
+                , CCon 28 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$2"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$2" )
+                            [ CVar "$k"
+                            , CCon 5
+                                [ CVar "a" ]
+                            ]
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$2" )
+                            [ CVar "$k"
+                            , CCall
+                                ( CVar "handleSomeErrors" )
+                                [ CVar "e" ]
+                            ]
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CContinue
+                            [ CVar "next"
+                            , CCon 29
+                                [ CVar "$k"
+                                , CVar "s"
+                                ]
+                            ]
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CCall
+                            ( CVar "$apply$$df$handleErrorIO$2" )
+                            [ CVar "$k"
+                            , CCon 8
+                                [ CCon 22
+                                    [ CVar "cont" ]
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$2"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 28
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 29
+                        ,
+                            [ "$pk_29"
+                            , "s"
+                            ]
+                        , CContinue
+                            [ CVar "$pk_29"
+                            , CCon 7
+                                [ CVar "s"
+                                , CVar "$x"
+                                ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3" )
+                [ CVar "$args"
+                , CCon 30 []
+                ]
+            )
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 23
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CCase
+                            ( CVar "$cl" )
+                            [
+                                ( 21
+                                , [ "$cap21_0" ]
+                                , CContinue
+                                    [ CCon 24
+                                        [ CVar "$cap21_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ,
+                                ( 22
+                                , [ "$cap22_0" ]
+                                , CContinue
+                                    [ CCon 25
+                                        [ CVar "$cap22_0"
+                                        , CVar "$arg0"
+                                        ]
+                                    , CVar "$k"
+                                    ]
+                                )
+                            ]
+                        )
+                    ,
+                        ( 24
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CContinue
+                            [ CCon 23
+                                [ CVar "cont"
+                                , CVar "result"
+                                ]
+                            , CCon 31
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ,
+                        ( 25
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CContinue
+                            [ CCon 23
+                                [ CVar "cont"
+                                , CVar "result"
+                                ]
+                            , CCon 32
+                                [ CVar "$k" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 30
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 31
+                        , [ "$pk_31" ]
+                        , CContinue
+                            [ CVar "$pk_31"
+                            , CCall
+                                ( CVar "$df$handleErrorIO$0" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ,
+                        ( 32
+                        , [ "$pk_32" ]
+                        , CContinue
+                            [ CVar "$pk_32"
+                            , CCall
+                                ( CVar "$df$handleErrorIO$2" )
+                                [ CVar "$x" ]
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCall
+                ( CVar "$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3" )
+                [ CCon 23
+                    [ CVar "$cl"
+                    , CVar "$arg0"
+                    ]
+                ]
+            )
+        ]
+    }

@@ -1,8 +1,8 @@
 {- Chain of 300 non-recursive function calls. -}
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (showBool (f1 True))
+main : IO Never Unit
+main = IO.Stdout.print (showBool (f1 True))
 
 f1 : Bool -> Bool
 f1 acc = f2 (and acc True)

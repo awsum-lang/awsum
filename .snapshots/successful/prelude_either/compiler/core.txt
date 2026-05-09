@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,7 +35,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 3
                     , [ "e" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -44,7 +44,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "v" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -54,40 +54,40 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCase
                     ( CCall
                         ( CVar "unwrap" )
-                        [ CCon 0
+                        [ CCon 3
                             [ CString "bad" ]
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_12_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_12_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "a" ]
                         , CCase
                             ( CCall
                                 ( CVar "unwrap" )
-                                [ CCon 1
+                                [ CCon 4
                                     [ CString "good" ]
                                 ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_13_9" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CVar "$do_e_13_9" ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "b" ]
                                 , CCase
                                     ( CCall
@@ -97,13 +97,13 @@ CoreProgram
                                         ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "$do_e_14_9" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CVar "$do_e_14_9" ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "s0" ]
                                         , CCall
                                             ( CBuiltIn "concatString" )
@@ -118,24 +118,24 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

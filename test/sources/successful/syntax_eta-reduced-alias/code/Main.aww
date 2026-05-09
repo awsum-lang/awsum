@@ -1,10 +1,14 @@
 {- Eta-reduced (point-free) alias for a function-typed value. -}
 import IO.Stdout
+import IO.Args
 
 say : String -> IO Never Unit
 say = IO.Stdout.print
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main inputArg = case inputArg of
-  Left _ -> IO.Stdout.print "INPUT_ERROR"
-  Right input -> say input
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr _e = IO.Stdout.print "INPUT_ERROR"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO say
+  |> handleErrorIO handleInputErr

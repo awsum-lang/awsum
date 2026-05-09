@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -40,19 +40,19 @@ CoreProgram
                 , CVar "k"
                 ]
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "captureFn" )
                         [ CIntLit 7 TInt32 ]
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$2"
+        , CFunDef "$lam$7"
             [ "k"
             , "_n"
             ]
@@ -62,7 +62,7 @@ CoreProgram
             , "$df$apply$0$cap0$0"
             ]
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$7" )
                 [ CVar "$df$apply$0$cap0$0"
                 , CVar "x"
                 ]

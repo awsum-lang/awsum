@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -43,13 +43,13 @@ CoreProgram
                         ]
                     )
                     [
-                        ( 0
+                        ( 1
                         , []
-                        , CCon 1
+                        , CCon 4
                             [ CIntLit 0 TInt32 ]
                         )
                     ,
-                        ( 1
+                        ( 2
                         , []
                         , CCase
                             ( CCall
@@ -57,13 +57,13 @@ CoreProgram
                                 [ CVar "n" ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "e" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CVar "e" ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "m" ]
                                 , CContinue
                                     [ CVar "m" ]
@@ -77,7 +77,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 3
                     , [ "e" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -88,7 +88,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "v" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -100,9 +100,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCall
                     ( CVar "showResult" )
                     [ CCall
@@ -111,24 +111,24 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

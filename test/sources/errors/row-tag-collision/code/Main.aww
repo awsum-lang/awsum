@@ -17,5 +17,5 @@ _f x = case x of
   (_ : Puk9) -> "p"
   (_ : AFB4F) -> "a"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "ok"
+main : IO Never Unit
+main = IO.Stdout.print "ok"

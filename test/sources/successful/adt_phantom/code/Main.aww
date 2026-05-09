@@ -7,5 +7,5 @@ show : Phantom String -> String
 show p = case p of
   Phantom -> "Phantom"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (show Phantom)
+main : IO Never Unit
+main = IO.Stdout.print (show Phantom)

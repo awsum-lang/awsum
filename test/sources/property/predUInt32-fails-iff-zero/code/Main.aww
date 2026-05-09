@@ -2,14 +2,15 @@
 -- branches must be exercised, so the Haskell-side generator biases
 -- towards 0 to make the boundary case appear in 100-test runs.
 import IO.Stdout
+import IO.Args
 
 property : UInt32 -> Bool
 property x = case predUInt32 x of
   Left _ -> eqUInt32 x minUInt32
   Right _ -> not (eqUInt32 x minUInt32)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) Bool = (do
         raw <- rawArg
         x <- parseUInt32 raw
@@ -22,3 +23,8 @@ main rawArg =
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

@@ -10,5 +10,5 @@ unwrap : Box String -> String
 unwrap b = case b of
   Box value -> value
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (unwrap (wrap Box "wrapped"))
+main : IO Never Unit
+main = IO.Stdout.print (unwrap (wrap Box "wrapped"))

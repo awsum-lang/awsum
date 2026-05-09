@@ -12,5 +12,5 @@ foo = bar
 bar : String
 bar = foo
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print foo
+main : IO Never Unit
+main = IO.Stdout.print foo

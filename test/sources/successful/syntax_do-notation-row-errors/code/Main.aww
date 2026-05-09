@@ -32,8 +32,8 @@ describe r = case r of
     ErrorC -> Right "ErrorC"
   Right n -> "Ok " ++ showInt32 n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = describe f
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"

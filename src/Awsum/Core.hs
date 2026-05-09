@@ -22,8 +22,10 @@ module Awsum.Core
     CExpr (..),
     CDecl (..),
     CoreProgram (..),
+    PreludeTags (..),
     usedBuiltIns,
     usesIntLit,
+    nextFreshConTag,
   )
 where
 
@@ -127,6 +129,36 @@ data CDecl
 newtype CoreProgram = CoreProgram {cdecls :: [CDecl]}
   deriving stock (Show, Eq)
 
+-- | The constructor tags codegen runtime helpers need to construct
+-- values of well-known prelude types (e.g. @Left StringTooLong@ from
+-- @__concat@'s overflow path). Under globally-unique tags every
+-- constructor's tag depends on declaration order and the size of
+-- everything that came before it, so the helpers — which build these
+-- values out of band of the user's program — must look the tags up
+-- rather than hardcode them.
+--
+-- Populated from 'ConInfoEnv' at the end of elaboration and passed
+-- alongside 'CoreProgram' to every codegen. The fields cover exactly
+-- the constructors that appear in any runtime helper's emitted
+-- expression — adding a helper that creates a new constructor type
+-- means adding a field here.
+data PreludeTags = PreludeTags
+  { ptLeft :: !Int,
+    ptRight :: !Int,
+    ptJust :: !Int,
+    ptNothing :: !Int,
+    ptTrue :: !Int,
+    ptFalse :: !Int,
+    ptUnit :: !Int,
+    ptTuple2 :: !Int,
+    ptUnderflowError :: !Int,
+    ptOverflowError :: !Int,
+    ptParseError :: !Int,
+    ptStringTooLong :: !Int,
+    ptUnpairedUtf16Surrogate :: !Int
+  }
+  deriving stock (Show, Eq)
+
 -- | Every 'CBuiltIn' name referenced in the program. Backends gate
 --   runtime helpers (@__print@, @__predInt32@, future @__addInt32@, ...)
 --   on this so programs that don't touch a given built-in don't pay for it.
@@ -147,6 +179,40 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
       CRowCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
       CLoop b -> exprBuiltIns b
       CContinue xs -> foldMap exprBuiltIns xs
+
+-- | Smallest 'Int' strictly greater than every constructor tag used
+--   anywhere in the program ('CCon' construction sites and 'CCase'
+--   arm tags). Used by tag-minting passes ('Awsum.Scc',
+--   'Awsum.LowerClosures', 'Awsum.Cps') to allocate fresh
+--   synthetic-type tags that do not collide with any existing
+--   nominal-constructor tag (or with each other, when threaded
+--   through). Globally unique constructor tags are what makes
+--   'pruneDeadArms' precise — without them, two unrelated types
+--   sharing a tag value mask each other's reachability.
+--
+--   Returns @0@ when the program references no constructor tags at
+--   all (vacuous program).
+nextFreshConTag :: CoreProgram -> Int
+nextFreshConTag (CoreProgram ds) =
+  1 + foldl' max (-1) (concatMap declConTags ds)
+  where
+    declConTags :: CDecl -> [Int]
+    declConTags = \case
+      CFunDef _ _ body -> exprConTags body
+      CValDef _ body -> exprConTags body
+    exprConTags :: CExpr -> [Int]
+    exprConTags = \case
+      CCon t fs -> t : concatMap exprConTags fs
+      CCase s alts -> exprConTags s <> [t | (t, _, _) <- alts] <> concatMap (\(_, _, b) -> exprConTags b) alts
+      CCall f xs -> exprConTags f <> concatMap exprConTags xs
+      CRow _ v -> exprConTags v
+      CRowCase s alts -> exprConTags s <> concatMap (\(_, _, b) -> exprConTags b) alts
+      CLoop b -> exprConTags b
+      CContinue xs -> concatMap exprConTags xs
+      CVar _ -> []
+      CString _ -> []
+      CIntLit _ _ -> []
+      CBuiltIn _ -> []
 
 -- | Does the program contain any integer literal? Backends that rely on
 --   boxing helpers (e.g. WASM's @__box_i32@) can drop them when the

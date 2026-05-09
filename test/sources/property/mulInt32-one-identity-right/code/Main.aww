@@ -3,14 +3,15 @@
 -- range, so neither UNDERFLOW nor OVERFLOW can fire on a well-formed
 -- input.
 import IO.Stdout
+import IO.Args
 
 property : Int32 -> Either (UnderflowError | OverflowError) Bool
 property a = do
   r <- mulInt32 a 1
   pureEither (eqInt32 r a)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) Bool = (do
         raw <- rawArg
         a <- parseInt32 raw
@@ -25,3 +26,8 @@ main rawArg =
           OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

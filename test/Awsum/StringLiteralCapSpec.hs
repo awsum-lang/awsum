@@ -50,8 +50,8 @@ mkProgram literal =
   unlines
     [ "import IO.Stdout",
       "",
-      "main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit",
-      "main _e = IO.Stdout.print \"" <> literal <> "\""
+      "main : IO Never Unit",
+      "main = IO.Stdout.print \"" <> literal <> "\""
     ]
 
 -- | Compile a temp 'Main.aww' through the typechecker. Mirrors the
@@ -67,7 +67,7 @@ compileTempFile src =
       Left e -> error $ "parse failed: " <> e
       Right prog -> case elaborateLowerProgram ProgramCli (withPrelude prog) of
         Left err -> pure (Left err)
-        Right (_warns, _core) -> pure (Right ())
+        Right (_warns, _ptags, _core) -> pure (Right ())
 
 -- | Predicate: a 'TypeError' is 'StringLiteralTooLong' with the
 --   expected reported length (UTF-16 code units) — checked exactly so

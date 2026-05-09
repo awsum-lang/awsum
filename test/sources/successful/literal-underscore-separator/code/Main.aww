@@ -19,7 +19,7 @@ line = do
   s <- sum
   "sum=" ++ showInt32 s
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = case line of
+main : IO Never Unit
+main = case line of
   Left _ -> IO.Stdout.print "FAIL"
   Right s -> IO.Stdout.print s

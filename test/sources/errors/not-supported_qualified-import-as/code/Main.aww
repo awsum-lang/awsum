@@ -5,5 +5,5 @@
 -- the full module-system pass.
 import IO.Stdout as Out
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = Out.print input
+main : IO Never Unit
+main = Out.print "x"

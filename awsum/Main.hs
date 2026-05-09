@@ -12,7 +12,7 @@ import Awsum.Codegen.JVM.Assemble (assembleJVM)
 import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
-import Awsum.Core (CoreProgram)
+import Awsum.Core (CoreProgram, PreludeTags)
 import Awsum.Diagnostic
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
@@ -210,16 +210,16 @@ runCommand = \case
   CmdVersion -> putTextLn awsumVersion
   CmdCheck filePath progType useJson strict -> runCheck filePath progType useJson strict
   CmdBuild filePath progType target mOut -> do
-    core <- compileToCoreOrDie progType filePath
+    (ptags, core) <- compileToCoreOrDie progType filePath
     -- (warnings are emitted to stderr by compileToCoreOrDie)
     case target of
       TargetJVM -> do
-        let bytes = assembleJVM core
+        let bytes = assembleJVM ptags core
         case mOut of
           Nothing -> BS.hPut stdout bytes
           Just out -> writeFileBS out bytes
       TargetCLR -> do
-        let bytes = assembleCLR core
+        let bytes = assembleCLR ptags core
         case mOut of
           Nothing -> BS.hPut stdout bytes
           Just out -> do
@@ -227,12 +227,12 @@ runCommand = \case
             let rcPath = dropExtension out <> ".runtimeconfig.json"
             writeFileText rcPath runtimeConfigJson
       TargetWASM -> do
-        let bytes = assembleWASM core
+        let bytes = assembleWASM ptags core
         case mOut of
           Nothing -> BS.hPut stdout bytes
           Just out -> writeFileBS out bytes
       _ -> do
-        let code = codegenText progType target core
+        let code = codegenText progType target ptags core
         case mOut of
           Nothing -> putTextLn code
           Just out -> writeFileText out code
@@ -241,8 +241,8 @@ runCommand = \case
       if useStdin
         then T.stripEnd <$> TIO.getContents
         else pure (fromMaybe "" mInput)
-    core <- compileToCoreOrDie progType filePath
-    runOnTarget progType target core input
+    (ptags, core) <- compileToCoreOrDie progType filePath
+    runOnTarget progType target ptags core input
   CmdAST filePath -> do
     prog <- parseFileOrDie filePath
     pPrint prog
@@ -252,15 +252,15 @@ runCommand = \case
     let prog = withPrelude userProg
     case elaborateLowerProgram progType prog of
       Left err -> die $ toString (prettyPrintTypeError err)
-      Right (warns, ir) -> do
+      Right (warns, _ptags, ir) -> do
         emitWarningsToStderr filePath (stripPreludeWarnings warns)
         pPrint ir
   CmdAsm filePath progType target -> do
-    core <- compileToCoreOrDie progType filePath
+    (ptags, core) <- compileToCoreOrDie progType filePath
     case target of
-      TargetJVM -> putTextLn (codegenJVM core)
-      TargetCLR -> putTextLn (codegenCLR core)
-      TargetWASM -> putTextLn (codegenWASM core)
+      TargetJVM -> putTextLn (codegenJVM ptags core)
+      TargetCLR -> putTextLn (codegenCLR ptags core)
+      TargetWASM -> putTextLn (codegenWASM ptags core)
       _ -> die "asm is only supported for jvm, clr, and wasm targets"
   CmdFormat filePath inPlace -> do
     src <- readFileTextUtf8 filePath
@@ -284,7 +284,7 @@ runCommand = \case
 -- | Select the text codegen for a target. Some targets (@JS@) are
 --   parameterized by 'ProgramType' because their wrapping strategy
 --   depends on it.
-codegenText :: ProgramType -> Target -> CoreProgram -> Text
+codegenText :: ProgramType -> Target -> PreludeTags -> CoreProgram -> Text
 codegenText progType = \case
   TargetLLVM -> codegenLLVM llvmHostFromSystem
   TargetJVM -> codegenJVM
@@ -293,14 +293,14 @@ codegenText progType = \case
   TargetJS -> codegenJS progType
 
 -- | Compile Core to target and run using the appropriate system runtime.
-runOnTarget :: ProgramType -> Target -> CoreProgram -> Text -> IO ()
-runOnTarget progType target core input = case target of
+runOnTarget :: ProgramType -> Target -> PreludeTags -> CoreProgram -> Text -> IO ()
+runOnTarget progType target ptags core input = case target of
   TargetLLVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
           binPath = dir </> "out"
       let host = llvmHostFromSystem
-      writeFileText llPath (codegenLLVM host core)
+      writeFileText llPath (codegenLLVM host ptags core)
       -- AWSUM_CLANG: optional absolute path to clang. Useful on hosts where
       -- the PATH-resolved 'clang' points at an outdated LLVM (e.g. GHC's
       -- bundled mingw clang on Windows when invoked through Stack).
@@ -329,7 +329,7 @@ runOnTarget progType target core input = case target of
   TargetJVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let classPath = dir </> "AwsumMain.class"
-      writeFileBS classPath (assembleJVM core)
+      writeFileBS classPath (assembleJVM ptags core)
       -- Pin the JVM's I/O charsets to UTF-8 so 'argv[1]' survives the
       -- startup decode on hosts whose default charset isn't UTF-8 (the
       -- usual Windows case, where 'sun.jnu.encoding' otherwise comes
@@ -344,7 +344,7 @@ runOnTarget progType target core input = case target of
     withSystemTempDirectory "awsum" $ \dir -> do
       let dllPath = dir </> "AwsumMain.dll"
           rcPath = dir </> "AwsumMain.runtimeconfig.json"
-      writeFileBS dllPath (assembleCLR core)
+      writeFileBS dllPath (assembleCLR ptags core)
       writeFileText rcPath runtimeConfigJson
       (exit, stdoutS, stderrS) <- readProcessWithExitCode "dotnet" [dllPath, toString input] ""
       case exit of
@@ -353,13 +353,13 @@ runOnTarget progType target core input = case target of
   TargetWASM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let wasmPath = dir </> "out.wasm"
-      writeFileBS wasmPath (assembleWASM core)
+      writeFileBS wasmPath (assembleWASM ptags core)
       (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
   TargetJS ->
-    runText "node" ".js" (codegenJS progType core) input
+    runText "node" ".js" (codegenJS progType ptags core) input
 
 -- | Write text code to a temp file and run with the given interpreter.
 runText :: String -> String -> Text -> Text -> IO ()
@@ -393,7 +393,7 @@ runtimeConfigJson =
 --   Unlike plain 'typecheckProgram', this path is for commands that produce
 --   an executable (@build@, @run@, @asm@) and therefore enforces the
 --   entry-point contract via 'requireMain'.
-compileToCoreOrDie :: ProgramType -> FilePath -> IO CoreProgram
+compileToCoreOrDie :: ProgramType -> FilePath -> IO (PreludeTags, CoreProgram)
 compileToCoreOrDie progType filePath = do
   verifyPreludeOrDie progType
   userProg <- parseFileOrDie filePath
@@ -403,9 +403,9 @@ compileToCoreOrDie progType filePath = do
     Right () -> pass
   case elaborateLowerProgram progType prog of
     Left err -> dieWithTypeError filePath err
-    Right (warns, core) -> do
+    Right (warns, ptags, core) -> do
       emitWarningsToStderr filePath (stripPreludeWarnings warns)
-      pure core
+      pure (ptags, core)
 
 -- | Typecheck the bundled prelude before processing any user file. A
 --   failure here is a compiler bug — the prelude ships with the binary —
@@ -465,7 +465,7 @@ runCheck filePath progType useJson strict = do
         Right userProg ->
           case elaborateLowerProgram progType (withPrelude userProg) of
             Left typeErr -> Left [typeErrorToDiagnostic typeErr]
-            Right (warns, _core) ->
+            Right (warns, _ptags, _core) ->
               Right (map warningToDiagnostic (stripPreludeWarnings warns))
   let diagnostics = either id id result
       hasError = isLeft result

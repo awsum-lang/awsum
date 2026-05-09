@@ -109,7 +109,7 @@ isBinderStart c = Char.isLower c || c == '_'
 
 -- | Reserved words that cannot be used as identifiers.
 reserved :: [Text]
-reserved = ["import", "type", "case", "of", "do", "let", "in"]
+reserved = ["import", "type", "case", "of", "do", "let", "in", "empty"]
 
 -- | Recognize a reserved word /without/ swallowing identifier tails.
 --   e.g. parsing \"import\" will fail on \"importX\".
@@ -383,27 +383,67 @@ pSigWithEnd = do
   endLineOrEOF
   pure (Sig (toSrcSpan start end) name ty tcom)
 
--- | Sum type declaration: @type Lookup a = Found a | NotFound@.
---   Empty constructor list (no @=@) declares an uninhabited type: @type Never@.
+-- | Sum type declaration. Two surface forms:
+--
+--   @type Lookup a = Found a | NotFound@ — ordinary form. Zero
+--   constructors (no @=@) declares an uninhabited type that is still
+--   a /distinct row label/: @type Never@ here would unify only with
+--   itself.
+--
+--   @empty type X@ — declared as the row identity. Forbidden:
+--   parameters and constructors; the parser fails fast with a
+--   dedicated message if either appears. All @empty type@
+--   declarations interchange in row positions; see
+--   'Awsum.HM.rowSubsume' and the @TyEmpty@ constructor in
+--   'Awsum.Syntax.Type''.
 pTypeDeclWithEnd :: Parser Decl
 pTypeDeclWithEnd = do
   start <- P.getSourcePos
+  emptyKind <- P.option NotEmpty (Empty <$ rwordS "empty")
   rwordS "type"
   -- 'uidentNoLine' (not the line-comment-aware variant) so a
   -- trailing '-- …' on the declaration's line stays for
   -- 'pTrailingLineCommentMaybe' to pick up; otherwise the
   -- line-comment-aware 'lexeme' would consume it as whitespace.
   name <- uidentNoLine
+  -- 'empty type' forbids parameters and constructors. Look for them
+  -- in the input and fail with a tailored message rather than letting
+  -- the parser silently reinterpret the declaration.
+  case emptyKind of
+    Empty -> do
+      mTvarStart <- P.optional (P.lookAhead paramBinderNoLine)
+      whenJust mTvarStart $ \_ ->
+        fail "'empty type' must have no type parameters"
+      mEq <- P.optional (P.lookAhead (sym "="))
+      whenJust mEq $ \_ ->
+        fail "'empty type' must have no constructors (drop the '=' clause)"
+    NotEmpty -> pass
   tvars <- P.many paramBinderNoLine
   cons <- P.option [] $ do
+    -- '=' may sit on the header line (one- or two-constructor compact
+    -- form, @type Foo = A | B@) or on a fresh indented continuation
+    -- line (multi-constructor form emitted by the formatter when the
+    -- list has three or more constructors). 'optIndentedContinuation'
+    -- is rollback-safe: when there is no indented continuation it
+    -- consumes nothing.
+    optIndentedContinuation
     _ <- sym "="
     firstCon <- pConDefNoLine
-    restCons <- P.many (symNoLine "|" *> pConDefNoLine)
+    -- Each subsequent '|' is allowed on the same line (compact form)
+    -- or at the start of a fresh indented continuation line. The
+    -- 'try' makes the lookahead for the '|' and its preceding
+    -- newline roll back cleanly when there are no more constructors,
+    -- so the trailing '--' / 'endLineOrEOF' below see the input as if
+    -- the parser had stopped right after the last 'pConDefNoLine'.
+    restCons <- P.many $ try $ do
+      optIndentedContinuation
+      _ <- symNoLine "|"
+      pConDefNoLine
     pure (firstCon : restCons)
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
   endLineOrEOF
-  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom)
+  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom emptyKind)
 
 -- | Constructor definition: @Found a@ or @NotFound@. The constructor's
 --   name span (captured before trailing whitespace) is preserved so
@@ -481,6 +521,20 @@ pTrailingLineCommentMaybe = do
 -- | End of declaration: newline or EOF.
 endLineOrEOF :: Parser ()
 endLineOrEOF = void C.eol <|> P.eof
+
+-- | Consume an optional indented continuation: a newline followed by
+--   any number of blank lines and finally landing at any column @> 1@.
+--   Used by 'pTypeDeclWithEnd' to allow the @=@ and each subsequent
+--   @|@ in a multi-line ADT declaration to appear on a fresh indented
+--   line. Rollback-safe — when there is no eol next, or when the next
+--   non-blank content sits at column 1, consumes nothing.
+optIndentedContinuation :: Parser ()
+optIndentedContinuation = void $ P.optional $ try $ do
+  void C.eol
+  skipBlankLinesNoComments
+  hspaceNoComments
+  lvl <- L.indentLevel
+  guard (lvl > P.pos1)
 
 -- Types (right-assoc arrows) ────────────────────────────────────────────────
 
@@ -565,6 +619,11 @@ pTypeAtomNoLineComments =
     reSpan sp = \case
       TyVar _ n -> TyVar sp n
       TyCon _ n -> TyCon sp n
+      -- The parser never directly produces 'TyEmpty' (resolution from
+      -- a name to the empty-type marker happens later, in
+      -- 'Awsum.Typing'); this branch is here only so 'reSpan' is
+      -- exhaustive over 'Type''.
+      TyEmpty _ n -> TyEmpty sp n
       TyApp _ f x -> TyApp sp f x
       TyArrow _ a b -> TyArrow sp a b
       TyOr _ a b -> TyOr sp a b

@@ -8,5 +8,5 @@ type _A = B | C
 foo : _A -> String
 foo x = "hi"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = IO.Stdout.print input
+main : IO Never Unit
+main = IO.Stdout.print "x"

@@ -14,5 +14,5 @@ parseBinary tok _acc = case tok of
   IDone -> 0
   IStep -> parseExpr IDone
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (showInt32 (parseExpr IStep))
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (parseExpr IStep))

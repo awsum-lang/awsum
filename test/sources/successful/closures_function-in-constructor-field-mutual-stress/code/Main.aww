@@ -1,0 +1,33 @@
+{- Mutual recursion through a closure stored in a constructor
+   field, depth 1_000_000. `a` calls `b` indirectly via the closure
+   in `bBox`; `b` calls `a` directly. After `Awsum.LowerClosures`
+   the cycle becomes a → $apply1 → liftedLambda → b → a, and
+   `Awsum.Scc` must detect the SCC across the synthetic apply
+   vertex to fuse the cluster into one self-recursive function
+   that `Awsum.Tco` then folds into a loop. -}
+import IO.Stdout
+
+type Box = Box (Int32 -> Either UnderflowError Int32)
+
+bBox : Box
+bBox = Box (\n -> b n)
+
+a : Int32 -> Either UnderflowError Int32
+a n = case eqInt32 n 0 of
+  True -> Right 0
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> case bBox of
+      Box f -> f m
+
+b : Int32 -> Either UnderflowError Int32
+b n = case eqInt32 n 0 of
+  True -> Right 0
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> a m
+
+main : IO Never Unit
+main = case a 1_000_000 of
+  Left _e -> IO.Stdout.print "underflow"
+  Right v -> IO.Stdout.print (showInt32 v)

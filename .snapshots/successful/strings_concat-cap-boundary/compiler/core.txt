@@ -7,12 +7,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -44,12 +44,12 @@ CoreProgram
                     ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
                     , CString "FAIL: build returned Left at the cap"
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "capStr" ]
                     , CCase
                         ( CCall
@@ -61,7 +61,7 @@ CoreProgram
                             ]
                         )
                         [
-                            ( 0
+                            ( 1
                             , []
                             , CCase
                                 ( CCall
@@ -71,19 +71,19 @@ CoreProgram
                                     ]
                                 )
                                 [
-                                    ( 0
+                                    ( 3
                                     , [ "__w0" ]
                                     , CString "OK"
                                     )
                                 ,
-                                    ( 1
+                                    ( 4
                                     , [ "__w0" ]
                                     , CString "FAIL: cap + 1 returned Right"
                                     )
                                 ]
                             )
                         ,
-                            ( 1
+                            ( 2
                             , []
                             , CString "FAIL: built string length is not at cap"
                             )
@@ -91,10 +91,10 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CVar "runTest"
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
@@ -102,27 +102,27 @@ CoreProgram
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__f0" ]
-                    , CCon 0
+                    , CCon 3
                         [ CVar "__f0" ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "__f0" ]
-                    , CCon 1
+                    , CCon 4
                         [ CVar "__f0" ]
                     )
                 ]
             )
-        , CFunDef "$scc$$df$andThenEither$0_$lam$2_build" [ "$args" ]
+        , CFunDef "$scc$$df$andThenEither$0_$lam$7_build" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$df$andThenEither$0_$lam$2_build" )
+                ( CVar "$cps$$scc$$df$andThenEither$0_$lam$7_build" )
                 [ CVar "$args"
-                , CCon 0 []
+                , CCon 11 []
                 ]
             )
-        , CFunDef "$cps$$scc$$df$andThenEither$0_$lam$2_build"
+        , CFunDef "$cps$$scc$$df$andThenEither$0_$lam$7_build"
             [ "$args"
             , "$k"
             ]
@@ -130,7 +130,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 0
+                        ( 8
                         ,
                             [ "x"
                             , "$df$andThenEither$0$cap0$0"
@@ -138,37 +138,37 @@ CoreProgram
                         , CCase
                             ( CVar "x" )
                             [
-                                ( 0
+                                ( 3
                                 , [ "e" ]
                                 , CCall
-                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$2_build" )
+                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$7_build" )
                                     [ CVar "$k"
-                                    , CCon 0
+                                    , CCon 3
                                         [ CVar "e" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "a" ]
                                 , CContinue
-                                    [ CCon 1
+                                    [ CCon 9
                                         [ CVar "$df$andThenEither$0$cap0$0"
                                         , CVar "a"
                                         ]
-                                    , CCon 1
+                                    , CCon 12
                                         [ CVar "$k" ]
                                     ]
                                 )
                             ]
                         )
                     ,
-                        ( 1
+                        ( 9
                         ,
                             [ "m"
                             , "doubled"
                             ]
                         , CContinue
-                            [ CCon 2
+                            [ CCon 10
                                 [ CVar "m"
                                 , CVar "doubled"
                                 ]
@@ -176,7 +176,7 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 2
+                        ( 10
                         ,
                             [ "n"
                             , "acc"
@@ -187,20 +187,20 @@ CoreProgram
                                 [ CVar "n" ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "__w0" ]
                                 , CCall
-                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$2_build" )
+                                    ( CVar "$apply$$scc$$df$andThenEither$0_$lam$7_build" )
                                     [ CVar "$k"
-                                    , CCon 1
+                                    , CCon 4
                                         [ CVar "acc" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "m" ]
                                 , CContinue
-                                    [ CCon 0
+                                    [ CCon 8
                                         [ CCall
                                             ( CBuiltIn "concatString" )
                                             [ CVar "acc"
@@ -216,7 +216,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$scc$$df$andThenEither$0_$lam$2_build"
+        , CFunDef "$apply$$scc$$df$andThenEither$0_$lam$7_build"
             [ "$k"
             , "$x"
             ]
@@ -224,15 +224,15 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 11
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
-                        , [ "$pk_1" ]
+                        ( 12
+                        , [ "$pk_12" ]
                         , CContinue
-                            [ CVar "$pk_1"
+                            [ CVar "$pk_12"
                             , CCall
                                 ( CVar "$lift$0" )
                                 [ CVar "$x" ]
@@ -246,8 +246,8 @@ CoreProgram
             , "acc"
             ]
             ( CCall
-                ( CVar "$scc$$df$andThenEither$0_$lam$2_build" )
-                [ CCon 2
+                ( CVar "$scc$$df$andThenEither$0_$lam$7_build" )
+                [ CCon 10
                     [ CVar "n"
                     , CVar "acc"
                     ]

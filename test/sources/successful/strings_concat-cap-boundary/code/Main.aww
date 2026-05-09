@@ -43,5 +43,5 @@ runTest = case build 20 block of
       Right _ -> "FAIL: cap + 1 returned Right"
       Left _ -> "OK"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print runTest
+main : IO Never Unit
+main = IO.Stdout.print runTest

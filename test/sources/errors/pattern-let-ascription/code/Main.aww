@@ -12,7 +12,7 @@ import IO.Stdout
 makeTriple : Int32 -> Tuple3 Int32 Int32 Int32
 makeTriple n = Tuple3 n n n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+main : IO Never Unit
+main =
   let (Tuple3 a b c) : Tuple3 Int32 Int32 Int32 = makeTriple 7
    in IO.Stdout.print "ok"

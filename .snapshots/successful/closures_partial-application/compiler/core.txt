@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -32,14 +32,14 @@ CoreProgram
                 )
             )
         , CFunDef "wrap" [ "s" ]
-            ( CCon 0
+            ( CCon 19
                 [ CVar "s" ]
             )
         , CFunDef "unwrap" [ "b" ]
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 19
                     , [ "value" ]
                     , CVar "value"
                     )
@@ -51,21 +51,24 @@ CoreProgram
             , "x"
             ]
             ( CCall
-                ( CVar "f" )
-                [ CCall
-                    ( CVar "g" )
-                    [ CVar "x" ]
+                ( CVar "$apply1" )
+                [ CVar "f"
+                , CCall
+                    ( CVar "$apply1" )
+                    [ CVar "g"
+                    , CVar "x"
+                    ]
                 ]
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CVar "$df$apply$0" )
                     [ CString "chain"
-                    , CVar "unwrap"
-                    , CVar "wrap"
+                    , CCon 20 []
+                    , CCon 21 []
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
@@ -79,6 +82,28 @@ CoreProgram
                 [ CVar "$df$apply$0$cap0$0"
                 , CVar "$df$apply$0$cap0$1"
                 , CVar "x"
+                ]
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCase
+                ( CVar "$cl" )
+                [
+                    ( 20
+                    , []
+                    , CCall
+                        ( CVar "unwrap" )
+                        [ CVar "$arg0" ]
+                    )
+                ,
+                    ( 21
+                    , []
+                    , CCall
+                        ( CVar "wrap" )
+                        [ CVar "$arg0" ]
+                    )
                 ]
             )
         ]

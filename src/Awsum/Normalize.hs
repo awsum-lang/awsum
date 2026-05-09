@@ -49,7 +49,7 @@ normalizeDecl :: Decl -> Decl
 normalizeDecl = \case
   Sig sp n t mc -> Sig sp n t (normalizeTrailing mc)
   FunDef sp n as e mc -> FunDef sp n (map normalizeParam as) (normalizeExpr e) (normalizeTrailing mc)
-  TypeDecl sp n tvs cs mc -> TypeDecl sp n (map normalizeParam tvs) cs (normalizeTrailing mc)
+  TypeDecl sp n tvs cs mc ek -> TypeDecl sp n (map normalizeParam tvs) cs (normalizeTrailing mc) ek
   CommentDecl c -> CommentDecl c
 
 -- | Collapse @ParamPat (PVar n)@ to @Param n@ — the parser

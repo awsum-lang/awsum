@@ -5,6 +5,7 @@
 -- value" gap. The property prints the computed sum as a decimal
 -- string; Haskell expects `show (a + b)`.
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple2 Int32 Int32)
 parseInput raw = case splitOnFirst ":" raw of
@@ -19,8 +20,8 @@ property a b = do
   r <- addInt32 a b
   pureEither (showInt32 r)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | UnderflowError | OverflowError) String = (do
         raw <- rawArg
         Tuple2 a b <- parseInput raw
@@ -34,3 +35,8 @@ main rawArg =
           UnderflowError -> IO.Stdout.print "UNDERFLOW"
           OverflowError -> IO.Stdout.print "OVERFLOW"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

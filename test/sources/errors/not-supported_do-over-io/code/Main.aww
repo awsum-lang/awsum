@@ -6,9 +6,7 @@
 -- with type-class dispatch (the `Monad` instance for `IO`).
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg = case rawArg of
-  Left _ -> IO.Stdout.print "INPUT_ERROR"
-  Right input -> do
-    x <- IO.Stdout.print input
-    pureEither x
+main : IO Never Unit
+main = do
+  x <- IO.Stdout.print "hi"
+  pureEither x

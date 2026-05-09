@@ -12,8 +12,8 @@ whatsThat x = case x of
     False -> Right "Just False"
   Just (u : Unit) -> "Just " ++ showUnit u
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = whatsThat (Just True)
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"

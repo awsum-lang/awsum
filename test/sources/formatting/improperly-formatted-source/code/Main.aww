@@ -1,50 +1,38 @@
--- top file comment
-{- block comment
+ -- top file comment
+  {- block comment
 before imports -}
-{- no space -}
-{- extra spaces -}
-{- newline -}
-import IO.Stdout -- import trailing comment
+{-no space-}
+{-  extra spaces  -}
+{-
+newline-}
+import IO.Stdout   -- import trailing comment
 
-{- block
+  {- block
 comment -}
+ -- top comment 1
+   -- top comment 2
+type Color =   Red   |   Green   |   Blue
 
--- top comment 1
-
--- top comment 2
-
-type Color = Red | Green | Blue
-
--- before show sig
-
-show : Color -> String
-
-{- between show sig and def -}
-
-show c = case c of
-  -- deep leading
-  -- shallow leading
-  {- block comment in case -}
-  Red -> "Red" -- inline 1
-  -- deep between
-  Green -> "Green" -- inline 2
-  Blue -> "Blue"
-  -- trailing case comment
+ -- before show sig
+show :   Color  ->  String
+  {- between show sig and def -}
+show   c  =  case c of
+      -- deep leading
+ -- shallow leading
+   {- block comment in case -}
+  Red   ->   "Red"  -- inline 1
+       -- deep between
+  Green   ->  "Green"     -- inline 2
+  Blue   ->   "Blue"
+    -- trailing case comment
 
 -- showAll : Color -> String
-
 -- showAll c = case c of
-
 --   Red -> "Red"
-
 --   Green -> "Green"
-
 --   Blue -> "Blue"
 
--- before main sig
-
-main : String -> IO Never Unit
-
--- between main sig and def
-
-main _ = IO.Stdout.print "ok"
+ -- before main sig
+main :  String  ->  IO Never Unit
+   -- between main sig and def
+main  _  =  IO.Stdout.print "ok"

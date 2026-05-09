@@ -8,5 +8,5 @@ firstZero x = case x of
   Just Nothing -> 0
   Nothing -> 0
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (showInt32 (firstZero Nothing))
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (firstZero Nothing))

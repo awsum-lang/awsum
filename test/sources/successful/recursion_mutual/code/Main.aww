@@ -1,7 +1,11 @@
 {- Mutual recursion: forward references resolve across both functions. -}
 import IO.Stdout
 
-type Step = StepA | StepB | StepC | Done
+type Step
+  = StepA
+  | StepB
+  | StepC
+  | Done
 
 handleA : Step -> Either StringTooLong String
 handleA step = case step of
@@ -23,8 +27,8 @@ handleB step = case step of
     "C" ++ rest
   Done -> Right ""
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = handleA StepA
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"

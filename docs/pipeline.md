@@ -13,6 +13,7 @@ Source (.aww)
   │
   ▼  Core-to-Core passes
 [ Defunctionalize → tree-shake
+  LowerClosures → tree-shake
   Saturate
   Scc-merge → tree-shake
   Cps
@@ -45,8 +46,9 @@ Every phase below is orchestrated by `elaborateLowerProgram` in [../src/Awsum/El
 
 These run in order inside `Awsum.ElaborateLower` after the initial tree-shake. Their job is to flatten everything that any backend would otherwise need a runtime feature to handle (closures, mutual recursion, non-tail recursion, partial application).
 
-- **Defunctionalize** (`Awsum.Defunctionalize`) — No backend has a closure runtime. Each HOF call site has its `fn`-typed slot statically resolved to the closure flowing in, and the HOF is replaced with a first-order specialisation whose parameter list adds the closure's captures up front. After this pass, no first-class function value remains in any reachable position. *(Tree-shake re-runs — original polymorphic HOFs whose calls were all replaced by specialisations fall out as dead code.)*
-- **Saturate** — Lambda-lift under-applied direct calls so codegen sees only full-arity calls.
+- **Defunctionalize** (`Awsum.Defunctionalize`) — No backend has a closure runtime. Each HOF call site that statically resolves to a known closure has its `fn`-typed slot replaced with a first-order specialisation whose parameter list adds the closure's captures up front. *(Tree-shake re-runs — original polymorphic HOFs whose calls were all replaced by specialisations fall out as dead code.)*
+- **LowerClosures** (`Awsum.LowerClosures`) — Reynolds defunctionalization for residual function values: closures that survived the previous pass because they flow through positions Defunctionalize cannot specialise (stored in a constructor field, passed through a case-arm-binder, captured into a partial application inside a non-statically-resolvable HOF). Each such closure is encoded as a tagged `CCon` and every residual call routed through a per-arity `$applyN` dispatcher. After this pass no first-class function value remains in any reachable position; every `CCall` callee is either a top-level fn name or one of the synthetic `$applyN` helpers. *(Tree-shake re-runs.)*
+- **Saturate** — Lambda-lift under-applied direct calls so codegen sees only full-arity calls. Also asserts the post-Defunctionalize/LowerClosures invariant that no partial application with local captures survives — both passes cooperate to maintain it.
 - **Scc-merge** (`Awsum.Scc`) — Every mutually recursive call-graph cluster (Tarjan SCC, size > 1) is fused into a single self-recursive `$scc$…` function whose argument is a sum-typed `CCon` tagged by "which member is active". Each original public name becomes a one-line wrapper that packs its args into the right tag. After this, mutual recursion has become self-recursion. *(Tree-shake re-runs — wrappers for SCC members only called from inside the cluster fall out.)*
 - **Cps** (`Awsum.Cps`) — Non-tail self-recursion is moved off the system stack into a heap-allocated continuation chain (defunctionalisation-by-Reynolds applied to the continuation type). Each function with at least one non-tail self-call is emitted as a wrapper + `$cps$f` + `$apply$f` trio; both `$cps$f` and `$apply$f` are self-tail-recursive so they fall through to TCO below.
 - **StackSafety verifier** (`Awsum.StackSafety`) — A standalone post-condition check: after Scc-merge and Cps there must be no non-trivial call-graph cycle and no `CFunDef` with a non-tail self-call. Any remainder is a compile error, no escape hatch — the program is either user-level ill-formed (e.g. mutually recursive `CValDef`s, which have no fixed point) or a compiler bug.

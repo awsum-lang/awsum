@@ -8,5 +8,5 @@ showPair : Pair String String -> String
 showPair p = case p of
   Pair _x _x -> "paired"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = IO.Stdout.print (showPair (Pair "l" "r"))
+main : IO Never Unit
+main = IO.Stdout.print (showPair (Pair "l" "r"))

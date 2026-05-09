@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":9,"startCol":33,"endLine":9,"endCol":33,"message":"unexpected 'x'\nexpecting '\"', '0', '\\', 'n', 'r', or 't'","fixes":[]}]
+[{"severity":"error","startLine":9,"startCol":26,"endLine":9,"endCol":26,"message":"unexpected 'x'\nexpecting '\"', '0', '\\', 'n', 'r', or 't'","fixes":[]}]

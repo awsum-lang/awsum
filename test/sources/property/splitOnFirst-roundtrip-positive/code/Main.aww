@@ -4,6 +4,7 @@
 -- split is guaranteed to find a match. The property emits the
 -- round-tripped string; Haskell expects `s` back.
 import IO.Stdout
+import IO.Args
 
 type NoMatch = NoMatch
 
@@ -19,8 +20,8 @@ property sep s = case splitOnFirst sep s of
     s0 <- a ++ sep
     s0 ++ b
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | NoMatch) String = (do
         raw <- rawArg
         Tuple2 sep s <- parseInput raw
@@ -33,3 +34,8 @@ main rawArg =
           ParseError -> IO.Stdout.print "PARSE_ERROR"
           NoMatch -> IO.Stdout.print "NO_MATCH"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

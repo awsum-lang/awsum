@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,7 +35,7 @@ CoreProgram
             ( CCase
                 ( CVar "$arg_5_11" )
                 [
-                    ( 0
+                    ( 12
                     ,
                         [ "a"
                         , "b"
@@ -49,12 +49,12 @@ CoreProgram
                             ]
                         )
                         [
-                            ( 0
+                            ( 3
                             , [ "__w0" ]
                             , CIntLit 0 TInt32
                             )
                         ,
-                            ( 1
+                            ( 4
                             , [ "ab" ]
                             , CCase
                                 ( CCall
@@ -64,12 +64,12 @@ CoreProgram
                                     ]
                                 )
                                 [
-                                    ( 0
+                                    ( 3
                                     , [ "__w0" ]
                                     , CIntLit 0 TInt32
                                     )
                                 ,
-                                    ( 1
+                                    ( 4
                                     , [ "abc" ]
                                     , CVar "abc"
                                     )
@@ -83,7 +83,7 @@ CoreProgram
             ( CCase
                 ( CVar "$arg_15_9" )
                 [
-                    ( 0
+                    ( 11
                     ,
                         [ "a"
                         , "b"
@@ -96,12 +96,12 @@ CoreProgram
                             ]
                         )
                         [
-                            ( 0
+                            ( 3
                             , [ "__w0" ]
                             , CIntLit 0 TInt32
                             )
                         ,
-                            ( 1
+                            ( 4
                             , [ "s" ]
                             , CVar "s"
                             )
@@ -110,61 +110,61 @@ CoreProgram
                 ]
             )
         , CValDef "triple"
-            ( CCon 0
+            ( CCon 12
                 [ CIntLit 10 TInt32
                 , CIntLit 20 TInt32
                 , CIntLit 30 TInt32
                 ]
             )
         , CValDef "pair"
-            ( CCon 0
+            ( CCon 11
                 [ CIntLit 100 TInt32
                 , CIntLit 200 TInt32
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$5" )
+                ( CVar "$let$10" )
                 [ CCall
                     ( CVar "sumTriple" )
                     [ CVar "triple" ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ]
             )
-        , CFunDef "$lam$3" [ "$arg_28_19" ]
+        , CFunDef "$lam$8" [ "$arg_28_19" ]
             ( CCase
                 ( CVar "$arg_28_19" )
                 [
-                    ( 0
+                    ( 11
                     ,
                         [ "a"
                         , "b"
                         ]
                     , CCall
                         ( CVar "sumPair" )
-                        [ CCon 0
+                        [ CCon 11
                             [ CVar "a"
                             , CVar "b"
                             ]
@@ -172,12 +172,12 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$4"
+        , CFunDef "$let$9"
             [ "n"
             , "m"
             ]
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -188,13 +188,13 @@ CoreProgram
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_30_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_30_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "s0" ]
                         , CCall
                             ( CBuiltIn "concatString" )
@@ -207,9 +207,9 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$5" [ "n" ]
+        , CFunDef "$let$10" [ "n" ]
             ( CCall
-                ( CVar "$let$4" )
+                ( CVar "$let$9" )
                 [ CVar "n"
                 , CCall
                     ( CVar "$df$apply$0" )
@@ -218,7 +218,7 @@ CoreProgram
             )
         , CFunDef "$df$apply$0" [ "t" ]
             ( CCall
-                ( CVar "$lam$3" )
+                ( CVar "$lam$8" )
                 [ CVar "t" ]
             )
         ]

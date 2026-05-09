@@ -4,14 +4,14 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
-                    , []
-                    , CCon 1 []
-                    )
-                ,
                     ( 1
                     , []
-                    , CCon 0 []
+                    , CCon 2 []
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CCon 1 []
                     )
                 ]
             )
@@ -22,14 +22,14 @@ CoreProgram
             ( CCase
                 ( CVar "a" )
                 [
-                    ( 0
+                    ( 1
                     , []
                     , CVar "b"
                     )
                 ,
-                    ( 1
+                    ( 2
                     , []
-                    , CCon 1 []
+                    , CCon 2 []
                     )
                 ]
             )
@@ -40,12 +40,12 @@ CoreProgram
             ( CCase
                 ( CVar "a" )
                 [
-                    ( 0
+                    ( 1
                     , []
-                    , CCon 0 []
+                    , CCon 1 []
                     )
                 ,
-                    ( 1
+                    ( 2
                     , []
                     , CVar "b"
                     )
@@ -55,12 +55,12 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 1
                     , []
                     , CString "True"
                     )
                 ,
-                    ( 1
+                    ( 2
                     , []
                     , CString "False"
                     )
@@ -71,12 +71,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -97,9 +97,9 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -107,24 +107,24 @@ CoreProgram
                             ( CVar "showBool" )
                             [ CCall
                                 ( CVar "not" )
-                                [ CCon 0 [] ]
+                                [ CCon 1 [] ]
                             ]
                         , CCall
                             ( CVar "showBool" )
                             [ CCall
                                 ( CVar "not" )
-                                [ CCon 1 [] ]
+                                [ CCon 2 [] ]
                             ]
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_7_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_7_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "s0" ]
                         , CCase
                             ( CCall
@@ -134,20 +134,20 @@ CoreProgram
                                     ( CVar "showBool" )
                                     [ CCall
                                         ( CVar "and" )
-                                        [ CCon 0 []
-                                        , CCon 1 []
+                                        [ CCon 1 []
+                                        , CCon 2 []
                                         ]
                                     ]
                                 ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_8_9" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CVar "$do_e_8_9" ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "s1" ]
                                 , CCase
                                     ( CCall
@@ -157,20 +157,20 @@ CoreProgram
                                             ( CVar "showBool" )
                                             [ CCall
                                                 ( CVar "and" )
-                                                [ CCon 0 []
-                                                , CCon 0 []
+                                                [ CCon 1 []
+                                                , CCon 1 []
                                                 ]
                                             ]
                                         ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "$do_e_9_9" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CVar "$do_e_9_9" ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "s2" ]
                                         , CCase
                                             ( CCall
@@ -180,20 +180,20 @@ CoreProgram
                                                     ( CVar "showBool" )
                                                     [ CCall
                                                         ( CVar "or" )
-                                                        [ CCon 1 []
-                                                        , CCon 1 []
+                                                        [ CCon 2 []
+                                                        , CCon 2 []
                                                         ]
                                                     ]
                                                 ]
                                             )
                                             [
-                                                ( 0
+                                                ( 3
                                                 , [ "$do_e_10_9" ]
-                                                , CCon 0
+                                                , CCon 3
                                                     [ CVar "$do_e_10_9" ]
                                                 )
                                             ,
-                                                ( 1
+                                                ( 4
                                                 , [ "s3" ]
                                                 , CCall
                                                     ( CBuiltIn "concatString" )
@@ -202,8 +202,8 @@ CoreProgram
                                                         ( CVar "showBool" )
                                                         [ CCall
                                                             ( CVar "or" )
-                                                            [ CCon 0 []
-                                                            , CCon 1 []
+                                                            [ CCon 1 []
+                                                            , CCon 2 []
                                                             ]
                                                         ]
                                                     ]
@@ -217,24 +217,24 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

@@ -1,7 +1,11 @@
 {- Single ADT mixing data-bearing and nullary constructors. -}
 import IO.Stdout
 
-type Token = Word String | Number String | Comma | EOF
+type Token
+  = Word String
+  | Number String
+  | Comma
+  | EOF
 
 showToken : Token -> Either StringTooLong String
 showToken token = case token of
@@ -10,8 +14,8 @@ showToken token = case token of
   Comma -> Right ","
   EOF -> Right "<eof>"
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- showToken (Word "hello")
         b <- showToken Comma

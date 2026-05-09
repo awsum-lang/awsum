@@ -1,0 +1,392 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " The `empty type X` keyword opts a type into the row-identity rule:
+               every two such declarations are interchangeable in row positions,
+               regardless of their declared name. Here `handleE1` returns
+               `IO SecondNever Unit` — a user-declared `empty type` distinct in
+               name from the prelude's `Never` — and the `handleErrorIO`-rewritten
+               chain composes into `main : … -> IO Never Unit` without any
+               conversion. `SecondNever`'s name is diagnostic only; the
+               typechecker treats every `empty type` as the same canonical type.
+
+               Runtime path: failingComputation fails with E1; handleE1 catches
+               E1 and prints. Output: "got E1". " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = TypeDecl
+        ( SrcSpan
+            { spanStartLine = 14
+            , spanStartCol = 1
+            , spanEndLine = 14
+            , spanEndCol = 23
+            }
+        ) "SecondNever" [] [] Nothing Empty :|
+        [ TypeDecl
+            ( SrcSpan
+                { spanStartLine = 16
+                , spanStartCol = 1
+                , spanEndLine = 16
+                , spanEndCol = 13
+                }
+            ) "E1" []
+            [ ConDef
+                ( SrcSpan
+                    { spanStartLine = 16
+                    , spanStartCol = 11
+                    , spanEndLine = 16
+                    , spanEndCol = 13
+                    }
+                ) "E1" []
+            ] Nothing NotEmpty
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 18
+                , spanStartCol = 1
+                , spanEndLine = 18
+                , spanEndCol = 32
+                }
+            ) "failingComputation"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 18
+                    , spanStartCol = 22
+                    , spanEndLine = 18
+                    , spanEndCol = 32
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 18
+                        , spanStartCol = 22
+                        , spanEndLine = 18
+                        , spanEndCol = 27
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 18
+                            , spanStartCol = 22
+                            , spanEndLine = 18
+                            , spanEndCol = 24
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 18
+                            , spanStartCol = 25
+                            , spanEndLine = 18
+                            , spanEndCol = 27
+                            }
+                        ) "E1"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 18
+                        , spanStartCol = 28
+                        , spanEndLine = 18
+                        , spanEndCol = 32
+                        }
+                    ) "Unit"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 19
+                , spanStartCol = 1
+                , spanEndLine = 19
+                , spanEndCol = 31
+                }
+            ) "failingComputation" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 19
+                    , spanStartCol = 22
+                    , spanEndLine = 19
+                    , spanEndCol = 31
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 22
+                        , spanEndLine = 19
+                        , spanEndCol = 29
+                        }
+                    )
+                    ( QName [] "failIO" )
+                )
+                ( ECon
+                    ( SrcSpan
+                        { spanStartLine = 19
+                        , spanStartCol = 29
+                        , spanEndLine = 19
+                        , spanEndCol = 31
+                        }
+                    ) "E1"
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 21
+                , spanStartCol = 1
+                , spanEndLine = 21
+                , spanEndCol = 37
+                }
+            ) "handleE1"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 21
+                    , spanStartCol = 12
+                    , spanEndLine = 21
+                    , spanEndCol = 37
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 21
+                        , spanStartCol = 12
+                        , spanEndLine = 21
+                        , spanEndCol = 14
+                        }
+                    ) "E1"
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 21
+                        , spanStartCol = 18
+                        , spanEndLine = 21
+                        , spanEndCol = 37
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 21
+                            , spanStartCol = 18
+                            , spanEndLine = 21
+                            , spanEndCol = 32
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 21
+                                , spanStartCol = 18
+                                , spanEndLine = 21
+                                , spanEndCol = 20
+                                }
+                            ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 21
+                                , spanStartCol = 21
+                                , spanEndLine = 21
+                                , spanEndCol = 32
+                                }
+                            ) "SecondNever"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 21
+                            , spanStartCol = 33
+                            , spanEndLine = 21
+                            , spanEndCol = 37
+                            }
+                        ) "Unit"
+                    )
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 22
+                , spanStartCol = 1
+                , spanEndLine = 23
+                , spanEndCol = 33
+                }
+            ) "handleE1"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 22
+                    , spanStartCol = 10
+                    , spanEndLine = 22
+                    , spanEndCol = 11
+                    }
+                ) "e"
+            ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 22
+                    , spanStartCol = 14
+                    , spanEndLine = 23
+                    , spanEndCol = 33
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 22
+                        , spanStartCol = 19
+                        , spanEndLine = 22
+                        , spanEndCol = 21
+                        }
+                    )
+                    ( QName [] "e" )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 3
+                            , spanEndLine = 23
+                            , spanEndCol = 5
+                            }
+                        ) "E1" []
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 23
+                            , spanStartCol = 9
+                            , spanEndLine = 23
+                            , spanEndCol = 33
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 23
+                                , spanStartCol = 9
+                                , spanEndLine = 23
+                                , spanEndCol = 25
+                                }
+                            )
+                            ( QName
+                                [ "IO"
+                                , "Stdout"
+                                ] "print"
+                            )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 23
+                                , spanStartCol = 25
+                                , spanEndLine = 23
+                                , spanEndCol = 33
+                                }
+                            )
+                            ( LString "got E1" )
+                        )
+                    ) Nothing :| []
+                ) []
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 25
+                , spanStartCol = 1
+                , spanEndLine = 25
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 25
+                    , spanStartCol = 8
+                    , spanEndLine = 25
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 25
+                        , spanStartCol = 8
+                        , spanEndLine = 25
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 25
+                            , spanStartCol = 8
+                            , spanEndLine = 25
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 25
+                            , spanStartCol = 11
+                            , spanEndLine = 25
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 25
+                        , spanStartCol = 17
+                        , spanEndLine = 25
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 26
+                , spanStartCol = 1
+                , spanEndLine = 26
+                , spanEndCol = 52
+                }
+            ) "main" []
+            ( EInfix
+                ( SrcSpan
+                    { spanStartLine = 26
+                    , spanStartCol = 8
+                    , spanEndLine = 26
+                    , spanEndCol = 52
+                    }
+                ) OpPipe
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 26
+                        , spanStartCol = 8
+                        , spanEndLine = 26
+                        , spanEndCol = 27
+                        }
+                    )
+                    ( QName [] "failingComputation" )
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 26
+                        , spanStartCol = 30
+                        , spanEndLine = 26
+                        , spanEndCol = 52
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 26
+                            , spanStartCol = 30
+                            , spanEndLine = 26
+                            , spanEndCol = 44
+                            }
+                        )
+                        ( QName [] "handleErrorIO" )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 26
+                            , spanStartCol = 44
+                            , spanEndLine = 26
+                            , spanEndCol = 52
+                            }
+                        )
+                        ( QName [] "handleE1" )
+                    )
+                )
+            ) Nothing
+        ]
+    }

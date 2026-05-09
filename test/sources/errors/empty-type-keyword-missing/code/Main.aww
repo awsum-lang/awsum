@@ -1,0 +1,20 @@
+-- Two regular `type X` declarations (without the `empty` keyword) stay
+-- distinct nominal types even though both are zero-constructor and
+-- structurally identical. Only `empty type X` opts a type into the
+-- row-identity rule that makes such types interchangeable; without it,
+-- `IO Label1 Unit` and `IO Label2 Unit` are different types, and the
+-- assignment below fails to typecheck.
+import IO.Stdout
+
+type Label1
+
+type Label2
+
+source : IO Label1 Unit
+source = IO.Stdout.print "x"
+
+_target : IO Label2 Unit
+_target = source
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

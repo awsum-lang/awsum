@@ -5,5 +5,5 @@
    `|>` form puts the actions in execution order left-to-right. -}
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "a" |> andThenIO (\_u -> IO.Stdout.print "b")
+main : IO Never Unit
+main = IO.Stdout.print "a" |> andThenIO (\_u -> IO.Stdout.print "b")

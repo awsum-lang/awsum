@@ -1,19 +1,18 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }
-function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [589989748, [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [502975519, [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [502975519, [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [502975519, [0]]]; } return [1, arg]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
     {
       const __s = v_io;
       switch (__s[0]) {
-        case 0: {
+        case 5: {
           const v_u = __s[1];
           return v_u;
         }
-        case 2: {
+        case 7: {
           const v_s = __s[1];
           const v_next = __s[2];
           {
@@ -36,37 +35,37 @@ function v_unwrap(v_r){
     {
       const __s = v_r;
       switch (__s[0]) {
-        case 0: {
+        case 19: {
           const v_inner1 = __s[1];
           {
             const __s = v_inner1;
             switch (__s[0]) {
-              case 0: {
+              case 19: {
                 const v_inner2 = __s[1];
                 {
                   const __s = v_inner2;
                   switch (__s[0]) {
-                    case 0: {
+                    case 19: {
                       const v_value = __s[1];
                       return v_value;
                     }
-                    case 1: {
+                    case 20: {
                       const v_value = __s[1];
                       return v_value;
                     }
                   }
                 }
               }
-              case 1: {
+              case 20: {
                 const v_inner2 = __s[1];
                 {
                   const __s = v_inner2;
                   switch (__s[0]) {
-                    case 0: {
+                    case 19: {
                       const v_value = __s[1];
                       return v_value;
                     }
-                    case 1: {
+                    case 20: {
                       const v_value = __s[1];
                       return v_value;
                     }
@@ -76,37 +75,37 @@ function v_unwrap(v_r){
             }
           }
         }
-        case 1: {
+        case 20: {
           const v_inner1 = __s[1];
           {
             const __s = v_inner1;
             switch (__s[0]) {
-              case 0: {
+              case 19: {
                 const v_inner2 = __s[1];
                 {
                   const __s = v_inner2;
                   switch (__s[0]) {
-                    case 0: {
+                    case 19: {
                       const v_value = __s[1];
                       return v_value;
                     }
-                    case 1: {
+                    case 20: {
                       const v_value = __s[1];
                       return v_value;
                     }
                   }
                 }
               }
-              case 1: {
+              case 20: {
                 const v_inner2 = __s[1];
                 {
                   const __s = v_inner2;
                   switch (__s[0]) {
-                    case 0: {
+                    case 19: {
                       const v_value = __s[1];
                       return v_value;
                     }
-                    case 1: {
+                    case 20: {
                       const v_value = __s[1];
                       return v_value;
                     }
@@ -120,29 +119,26 @@ function v_unwrap(v_r){
     }
 }
 
-function main(v__input){
-    return (v__let_2)(((s) => { switch(s[0]) { case 0: { const v__do_e_26_9 = s[1]; return [0, v__do_e_26_9]; } case 1: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_27_9 = s[1]; return [0, v__do_e_27_9]; } case 1: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_28_9 = s[1]; return [0, v__do_e_28_9]; } case 1: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_29_9 = s[1]; return [0, v__do_e_29_9]; } case 1: { const v_s3 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_30_9 = s[1]; return [0, v__do_e_30_9]; } case 1: { const v_s4 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_31_9 = s[1]; return [0, v__do_e_31_9]; } case 1: { const v_s5 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_32_9 = s[1]; return [0, v__do_e_32_9]; } case 1: { const v_s6 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_33_9 = s[1]; return [0, v__do_e_33_9]; } case 1: { const v_s7 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_34_9 = s[1]; return [0, v__do_e_34_9]; } case 1: { const v_s8 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_35_9 = s[1]; return [0, v__do_e_35_9]; } case 1: { const v_s9 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_36_9 = s[1]; return [0, v__do_e_36_9]; } case 1: { const v_s10 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_37_9 = s[1]; return [0, v__do_e_37_9]; } case 1: { const v_s11 = s[1]; return ((s) => { switch(s[0]) { case 0: { const v__do_e_38_9 = s[1]; return [0, v__do_e_38_9]; } case 1: { const v_s12 = s[1]; return __concat(v_s12, (v_unwrap)([1, [1, [1, "8"]]])); } } })(__concat(v_s11, ",")); } } })(__concat(v_s10, (v_unwrap)([1, [1, [0, "7"]]]))); } } })(__concat(v_s9, ",")); } } })(__concat(v_s8, (v_unwrap)([1, [0, [1, "6"]]]))); } } })(__concat(v_s7, ",")); } } })(__concat(v_s6, (v_unwrap)([1, [0, [0, "5"]]]))); } } })(__concat(v_s5, ",")); } } })(__concat(v_s4, (v_unwrap)([0, [1, [1, "4"]]]))); } } })(__concat(v_s3, ",")); } } })(__concat(v_s2, (v_unwrap)([0, [1, [0, "3"]]]))); } } })(__concat(v_s1, ",")); } } })(__concat(v_s0, (v_unwrap)([0, [0, [1, "2"]]]))); } } })(__concat((v_unwrap)([0, [0, [0, "1"]]]), ",")));
-}
+const main = (v__let_7)(((s) => { switch(s[0]) { case 3: { const v__do_e_26_9 = s[1]; return [3, v__do_e_26_9]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_27_9 = s[1]; return [3, v__do_e_27_9]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_28_9 = s[1]; return [3, v__do_e_28_9]; } case 4: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_29_9 = s[1]; return [3, v__do_e_29_9]; } case 4: { const v_s3 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_30_9 = s[1]; return [3, v__do_e_30_9]; } case 4: { const v_s4 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_31_9 = s[1]; return [3, v__do_e_31_9]; } case 4: { const v_s5 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_32_9 = s[1]; return [3, v__do_e_32_9]; } case 4: { const v_s6 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_33_9 = s[1]; return [3, v__do_e_33_9]; } case 4: { const v_s7 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_34_9 = s[1]; return [3, v__do_e_34_9]; } case 4: { const v_s8 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_35_9 = s[1]; return [3, v__do_e_35_9]; } case 4: { const v_s9 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_36_9 = s[1]; return [3, v__do_e_36_9]; } case 4: { const v_s10 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_37_9 = s[1]; return [3, v__do_e_37_9]; } case 4: { const v_s11 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_38_9 = s[1]; return [3, v__do_e_38_9]; } case 4: { const v_s12 = s[1]; return __concat(v_s12, (v_unwrap)([20, [20, [20, "8"]]])); } } })(__concat(v_s11, ",")); } } })(__concat(v_s10, (v_unwrap)([20, [20, [19, "7"]]]))); } } })(__concat(v_s9, ",")); } } })(__concat(v_s8, (v_unwrap)([20, [19, [20, "6"]]]))); } } })(__concat(v_s7, ",")); } } })(__concat(v_s6, (v_unwrap)([20, [19, [19, "5"]]]))); } } })(__concat(v_s5, ",")); } } })(__concat(v_s4, (v_unwrap)([19, [20, [20, "4"]]]))); } } })(__concat(v_s3, ",")); } } })(__concat(v_s2, (v_unwrap)([19, [20, [19, "3"]]]))); } } })(__concat(v_s1, ",")); } } })(__concat(v_s0, (v_unwrap)([19, [19, [20, "2"]]]))); } } })(__concat((v_unwrap)([19, [19, [19, "1"]]]), ",")));
 
-function v__let_2(v_res){
+function v__let_7(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
-        case 0: {
+        case 3: {
           const v___w0 = __s[1];
-          return [2, "STRING_TOO_LONG", [0, [0]]];
+          return [7, "STRING_TOO_LONG", [5, [0]]];
         }
-        case 1: {
+        case 4: {
           const v_s = __s[1];
-          return [2, v_s, [0, [0]]];
+          return [7, v_s, [5, [0]]];
         }
       }
     }
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  const arg = process.argv[2] ?? "";
-  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));
+  if (typeof main !== 'undefined') v_runIO(main);
 }
 
 })();

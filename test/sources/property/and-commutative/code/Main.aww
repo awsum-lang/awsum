@@ -3,6 +3,7 @@
 -- should match Haskell's independently computed `(a && b)`.
 -- Input format: "a:b" with a, b as "0" / "1" decimal strings.
 import IO.Stdout
+import IO.Args
 
 intToBool : UInt8 -> Bool
 intToBool n = case eqUInt8 n 0 of
@@ -28,8 +29,8 @@ property na nb =
       b = intToBool nb
    in boolToStr (and a b) ++ boolToStr (and b a)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError) String = (do
         raw <- rawArg
         Tuple2 na nb <- parseInput raw
@@ -41,3 +42,8 @@ main rawArg =
           UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
           ParseError -> IO.Stdout.print "PARSE_ERROR"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

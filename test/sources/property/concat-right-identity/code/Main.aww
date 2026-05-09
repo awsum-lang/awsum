@@ -5,12 +5,13 @@
 -- and nothing that can fail, so the property runs over 'main raw'
 -- directly.
 import IO.Stdout
+import IO.Args
 
 property : String -> Either StringTooLong String
 property s = s ++ ""
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = (do
         raw <- rawArg
         property raw
@@ -20,3 +21,8 @@ main rawArg =
           StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
           UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
         Right s -> IO.Stdout.print s
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

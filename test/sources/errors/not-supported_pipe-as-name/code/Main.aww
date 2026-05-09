@@ -9,5 +9,5 @@ import IO.Stdout
 (|>) : a -> (a -> b) -> b
 (|>) x f = f x
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "unreachable"
+main : IO Never Unit
+main = IO.Stdout.print "unreachable"

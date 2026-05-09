@@ -1,0 +1,29 @@
+{- Non-tail self-recursion at depth 1_000_000 where the post-call
+   continuation also calls a closure stored in a constructor field.
+   `Awsum.LowerClosures` rewrites `f v` (call through case-arm
+   binder) to `$apply1 f v`; `Awsum.Cps` then has to hoist the
+   non-tail continuation off the system stack, with the apply_k
+   call living inside the K-arm's post-call body. If the apply_k
+   edge is missed by either pass's call-graph analysis, this
+   overflows on at least one backend. -}
+import IO.Stdout
+
+type Box = Box (Int32 -> Int32)
+
+identity : Int32 -> Int32
+identity n = n
+
+countWithBox : Box -> Int32 -> Either UnderflowError Int32
+countWithBox b n = case eqInt32 n 0 of
+  True -> Right 0
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> case countWithBox b m of
+      Left e -> Left e
+      Right v -> case b of
+        Box f -> Right (f v)
+
+main : IO Never Unit
+main = case countWithBox (Box identity) 1_000_000 of
+  Left _e -> IO.Stdout.print "underflow"
+  Right v -> IO.Stdout.print (showInt32 v)

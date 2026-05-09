@@ -7,8 +7,8 @@ describe x = case x of
   (n : Int32) -> "Int32 " ++ showInt32 n
   (s : String) -> "String " ++ s
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = describe "hello"
    in case res of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"

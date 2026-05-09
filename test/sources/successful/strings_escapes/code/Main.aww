@@ -11,5 +11,5 @@
    C-style null-terminated layout. -}
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 end"
+main : IO Never Unit
+main = IO.Stdout.print "BS=\\ DQ=\" CR=\r LF=\n TAB=\t NUL=\0 end"

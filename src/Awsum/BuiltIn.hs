@@ -161,7 +161,22 @@ builtIns =
       -- reaches into `BuiltIn.internalStdoutPrint` directly. When
       -- modules land, this and the IO type's constructors move into a
       -- privileged module inaccessible to user code.
-      ("internalStdoutPrint", TyArrow noSpan stringTy unitTy)
+      ("internalStdoutPrint", TyArrow noSpan stringTy unitTy),
+      -- internalGetArgs : Either (StringTooLong | UnpairedUtf16Surrogate) String
+      -- Privileged zero-arg low-level primitive: reads the platform's
+      -- raw argv at runtime and decodes it into Awsum's strict UTF-16
+      -- 'String'; returns 'Left StringTooLong' if the decoded length
+      -- would exceed 'maxStringLengthUtf16CodeUnits', 'Left
+      -- UnpairedUtf16Surrogate' if the input contains an unpaired
+      -- surrogate, 'Right s' on success. Used exclusively by the
+      -- prelude's 'runIO' to perform the effect of an 'IOGetArgs' arm
+      -- during IO-tree walking. The user-facing wrapper is
+      -- 'IO.Args.getArgs' (a CLI platform built-in that elaborates to
+      -- an 'IOGetArgs' constructor whose continuation routes 'Left' to
+      -- 'IOFail' and 'Right' to 'IOPure'). Per the no-memoisation
+      -- decision, each call re-reads argv; deterministic because argv
+      -- does not change during program execution.
+      ("internalGetArgs", eitherTy argsDecodeRowTy stringTy)
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -177,6 +192,12 @@ builtIns =
     arithRowTy = TyOr noSpan underflowErrorTy overflowErrorTy
     parseErrorTy = TyCon noSpan "ParseError"
     stringTooLongTy = TyCon noSpan "StringTooLong"
+    unpairedUtf16SurrogateTy = TyCon noSpan "UnpairedUtf16Surrogate"
+    -- Structural row of the two decode-failure labels — the error side
+    -- of 'internalGetArgs' and any future input-parsing primitive that
+    -- reads platform-encoded text and must report both length-cap and
+    -- surrogate-validity violations.
+    argsDecodeRowTy = TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

@@ -39,6 +39,9 @@ module Awsum.Typing
     splitArrow,
     intTypeRange,
     maxStringLitUtf16CodeUnits,
+    emptyTypeNamesInProgram,
+    markEmptyType,
+    markEmptyTypesInDecl,
   )
 where
 
@@ -368,7 +371,7 @@ prettyPrintTypeError = \case
   DuplicateDefinition _ name -> "Duplicate definition for: " <> name
   UnknownTypeCon _ name -> "Unknown type constructor: " <> name
   MainMissing -> "Missing 'main' function"
-  MainWrongType ty -> "Wrong type for 'main': expected Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit, got " <> showType ty
+  MainWrongType ty -> "Wrong type for 'main': expected IO Never Unit, got " <> showType ty
   NotImported _ (QName _ n) -> "Not imported: " <> n
   TELowering msg -> msg
   DuplicateTypeDef _ name -> "Duplicate type definition: " <> name
@@ -497,6 +500,7 @@ prettyPrintTypeError = \case
     showType = \case
       TyVar _ n -> n
       TyCon _ n -> n
+      TyEmpty _ n -> n
       TyApp _ f x -> showType f <> " " <> showTypeAtom x
       TyArrow _ a b -> showType a <> " -> " <> showType b
       TyOr _ a b -> showType a <> " | " <> showType b
@@ -609,9 +613,55 @@ wellFormedTypeWith userTypes = \case
   TyCon sp n
     | S.member n userTypes -> Right ()
     | otherwise -> Left (UnknownTypeCon sp n)
+  -- 'TyEmpty' is produced by the empty-type rewrite from a TyCon
+  -- whose name matched an 'empty type X' declaration; the user-types
+  -- check has already accepted that name as known.
+  TyEmpty _ _ -> Right ()
   TyApp _ f x -> wellFormedTypeWith userTypes f >> wellFormedTypeWith userTypes x
   TyArrow _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
   TyOr _ a b -> wellFormedTypeWith userTypes a >> wellFormedTypeWith userTypes b
+
+-- | Collect every name declared with the @empty type@ keyword from a
+--   program's top-level declarations. Used by callers (the
+--   typechecker, the elaborator) that need to rewrite TyCon
+--   references for those names into 'TyEmpty' before any type-shape
+--   work runs.
+emptyTypeNamesInProgram :: Program -> Set Name
+emptyTypeNamesInProgram Program {decls} =
+  S.fromList [n | TypeDecl _ n _ _ _ Empty <- toList decls]
+
+-- | Walk a 'Type'' and replace every 'TyCon' whose name is in the
+--   given 'Set' (the set of types declared with the @empty type@
+--   keyword) with a 'TyEmpty' carrying the same name and span.
+--   Non-'TyCon' nodes recurse structurally.
+markEmptyType :: Set Name -> Type' -> Type'
+markEmptyType emptyNames = go
+  where
+    go = \case
+      TyCon sp n | n `S.member` emptyNames -> TyEmpty sp n
+      t@TyVar {} -> t
+      t@TyCon {} -> t
+      t@TyEmpty {} -> t
+      TyApp sp f x -> TyApp sp (go f) (go x)
+      TyArrow sp a b -> TyArrow sp (go a) (go b)
+      TyOr sp a b -> TyOr sp (go a) (go b)
+
+-- | Apply 'markEmptyType' across a top-level declaration. Handles
+--   signatures and the constructor-field types inside a 'TypeDecl';
+--   leaves 'FunDef' / 'CommentDecl' alone (function bodies are walked
+--   later inside 'checkExpr', where any ascription embedded in a
+--   'PAscribe' / 'ELet' / 'DoLet' still passes through 'rowSubsume',
+--   which already accepts a 'TyEmpty' on the actual side).
+markEmptyTypesInDecl :: Set Name -> Decl -> Decl
+markEmptyTypesInDecl emptyNames = \case
+  Sig sp n t mc -> Sig sp n (markEmptyType emptyNames t) mc
+  TypeDecl sp n ps cs mc ek ->
+    TypeDecl sp n ps (map markCon cs) mc ek
+    where
+      markCon (ConDef cSp cName flds) =
+        ConDef cSp cName (map (markEmptyType emptyNames) flds)
+  d@FunDef {} -> d
+  d@CommentDecl {} -> d
 
 -- | Build the return type of a constructor given the type name and type parameters.
 --   @conReturnType "Color" []@    → @TyCon "Color"@
@@ -632,7 +682,7 @@ type TypeConsMap = M.Map Name [Name]
 --   Returns (set of type names, constructor env, constructor value env, type-constructor map).
 buildConEnv :: [Decl] -> Either TypeError (S.Set Name, ConEnv, Env, TypeConsMap)
 buildConEnv decls = do
-  let typeDecls = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ <- decls]
+  let typeDecls = [(sp, n, tvs, cs) | TypeDecl sp n tvs cs _ _ <- decls]
   -- Validate each declaration before building anything else:
   --   • bare '_' as type or constructor name — rejected;
   --   • bare '_' or duplicate type-parameter names — rejected;
@@ -734,6 +784,7 @@ validateTypeParams _declSp params cons = do
       TyVar sp n | "_" `T.isPrefixOf` n -> Left (ReferencingIgnoredTypeVar sp n)
       TyVar _ _ -> Right ()
       TyCon _ _ -> Right ()
+      TyEmpty _ _ -> Right ()
       TyApp _ f x -> checkNoIgnoredTyVar f >> checkNoIgnoredTyVar x
       TyArrow _ a b -> checkNoIgnoredTyVar a >> checkNoIgnoredTyVar b
       TyOr _ a b -> checkNoIgnoredTyVar a >> checkNoIgnoredTyVar b
@@ -747,6 +798,7 @@ validateTypeParams _declSp params cons = do
         | S.member n declared -> Right ()
         | otherwise -> Left (UnknownTypeVariable sp n)
       TyCon _ _ -> Right ()
+      TyEmpty _ _ -> Right ()
       TyApp _ f x -> checkDeclaredTyVar declared f >> checkDeclaredTyVar declared x
       TyArrow _ a b -> checkDeclaredTyVar declared a >> checkDeclaredTyVar declared b
       TyOr _ a b -> checkDeclaredTyVar declared a >> checkDeclaredTyVar declared b
@@ -802,11 +854,24 @@ warningMessage = \case
 --   in module @Prelude@ and no exemption applies).
 typecheckProgram :: ProgramType -> Set Name -> Program -> Either TypeError [Warning]
 typecheckProgram progType preludeNames Program {imports, decls} = do
+  -- 0) Resolve every TyCon reference whose name was declared with the
+  -- 'empty type' keyword to a 'TyEmpty', so the typechecker sees the
+  -- row-identity flag uniformly. The rewrite covers signatures and
+  -- constructor field types — references inside 'ELet' / 'DoLet' /
+  -- 'PAscribe' ascriptions in expression bodies still arrive as
+  -- 'TyCon' but flow through 'rowSubsume' (which accepts a 'TyEmpty'
+  -- on the actual side regardless of the expected side's shape), so
+  -- the practical user-level invariant — values of any 'empty type'
+  -- subsume into any expected position — holds end-to-end.
+  let emptyTypeNames =
+        S.fromList [n | TypeDecl _ n _ _ _ Empty <- toList decls]
+      declsResolved = fmap (markEmptyTypesInDecl emptyTypeNames) decls
+
   -- 1) Build constructor environment from type declarations.
-  (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList decls)
+  (userTypeNames, conEnv, conValEnv, typeConsMap) <- buildConEnv (toList declsResolved)
 
   -- 2) Partition top-level decls into signatures and definitions.
-  let (sigsList, defsList) = partitionEithers (mapMaybe toEither (toList decls))
+  let (sigsList, defsList) = partitionEithers (mapMaybe toEither (toList declsResolved))
       toEither = \case
         Sig sp n t _ -> Just (Left (sp, n, t))
         FunDef sp n as e _ -> Just (Right (sp, n, as, e))
@@ -949,7 +1014,7 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
   -- Underscore-prefixed params are the explicit opt-out and are skipped.
   let typeDeclParams =
         [ (params, cs)
-        | TypeDecl _ _ params cs _ <- toList decls
+        | TypeDecl _ _ params cs _ _ <- toList declsResolved
         ]
       typeParamWarnings =
         [ UnusedTypeParameter sp n
@@ -989,33 +1054,27 @@ bareBuiltInRef = \case
   _ -> Nothing
 
 -- | Entry-point check: verify the program declares
---   @main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Unit@.
+--   @main : IO Never Unit@.
 --   Called only from @build@/@run@ — modules without @main@ (libraries,
 --   @Prelude.aww@) pass 'typecheckProgram' but fail here when an executable
 --   is requested.
 --
---   The argument is an 'Either' on a structural sum because the runtime
---   reports two independent failures while decoding @argv[1]@ into an
---   Awsum 'String': length cap exceeded ('StringTooLong') and a stray
---   UTF-16 half surrogate ('UnpairedUtf16Surrogate'). Phase 1 always
---   passes 'Right'; the validators that produce 'Left' move into the
---   per-target entry points incrementally (phase 2.x).
+--   The signature has no parameter: command-line input arrives via
+--   @IO.Args.getArgs@ inside the IO chain (a platform built-in
+--   registered in 'Awsum.Program.Cli'), not as an entry-point
+--   argument. The error row 'Never' means @main@ has handled all
+--   IO failures by the time it is built — typically via
+--   @|> handleErrorIO h@ at the tail of the chain.
 requireMain :: Program -> Either TypeError ()
 requireMain Program {decls} =
   case listToMaybe [t | Sig _ "main" t _ <- toList decls] of
     Nothing -> Left MainMissing
     Just ty ->
-      let stringTy = TyCon noSpan "String"
-          ioNeverUnit =
+      let want =
             TyApp
               noSpan
               (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never"))
               (TyCon noSpan "Unit")
-          tooLong = TyCon noSpan "StringTooLong"
-          unpaired = TyCon noSpan "UnpairedUtf16Surrogate"
-          errSum = TyOr noSpan tooLong unpaired
-          eitherErr = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") errSum) stringTy
-          want = TyArrow noSpan eitherErr ioNeverUnit
        in unless (ty == want) (Left (MainWrongType ty))
 
 -- | Reject a fresh list of binders if any of them are already in scope or
@@ -1878,6 +1937,12 @@ patternBindings conEnv pats tys = concatMap go (zip pats tys)
 -- | Extract the type constructor name from a type (peeling off TyApp).
 extractTyCon :: Type' -> Maybe Name
 extractTyCon (TyCon _ n) = Just n
+-- 'TyEmpty' carries the same nominal name as the originating
+-- declaration; for the purposes of exhaustiveness and constructor
+-- lookup it behaves like a 'TyCon' (the name resolves to a
+-- 'TypeDecl' with zero constructors — every @empty type X@ has zero
+-- constructors by parser-side rejection).
+extractTyCon (TyEmpty _ n) = Just n
 extractTyCon (TyApp _ f _) = extractTyCon f
 extractTyCon _ = Nothing
 

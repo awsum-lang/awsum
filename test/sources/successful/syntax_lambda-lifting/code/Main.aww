@@ -31,8 +31,8 @@ describe r = case r of
     ErrB -> Right "ErrB"
   Right n -> "Ok " ++ showInt32 n
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         d <- describe g
         s0 <- showInt32 inc42 ++ " / "

@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,20 +35,20 @@ CoreProgram
             ( CCase
                 ( CVar "w" )
                 [
-                    ( 0
+                    ( 19
                     , [ "value" ]
                     , CVar "value"
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CVar "unwrap" )
-                    [ CCon 0
+                    [ CCon 19
                         [ CString "hello" ]
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )

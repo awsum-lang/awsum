@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -33,15 +33,15 @@ CoreProgram
             )
         , CFunDef "incr" [ "n" ]
             ( CVar "n" )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "$df$applyTwice$0" )
                         [ CIntLit 7 TInt32 ]
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )

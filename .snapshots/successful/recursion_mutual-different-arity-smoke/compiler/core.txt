@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -31,15 +31,15 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "parseExpr" )
-                        [ CCon 1 [] ]
+                        [ CCon 20 [] ]
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
@@ -48,7 +48,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 0
+                        ( 21
                         ,
                             [ "tok"
                             , "_acc"
@@ -56,35 +56,35 @@ CoreProgram
                         , CCase
                             ( CVar "tok" )
                             [
-                                ( 0
+                                ( 19
                                 , []
                                 , CIntLit 0 TInt32
                                 )
                             ,
-                                ( 1
+                                ( 20
                                 , []
                                 , CContinue
-                                    [ CCon 1
-                                        [ CCon 0 [] ]
+                                    [ CCon 22
+                                        [ CCon 19 [] ]
                                     ]
                                 )
                             ]
                         )
                     ,
-                        ( 1
+                        ( 22
                         , [ "tok" ]
                         , CCase
                             ( CVar "tok" )
                             [
-                                ( 0
+                                ( 19
                                 , []
                                 , CIntLit 0 TInt32
                                 )
                             ,
-                                ( 1
+                                ( 20
                                 , []
                                 , CContinue
-                                    [ CCon 0
+                                    [ CCon 21
                                         [ CVar "tok"
                                         , CIntLit 0 TInt32
                                         ]
@@ -98,7 +98,7 @@ CoreProgram
         , CFunDef "parseExpr" [ "tok" ]
             ( CCall
                 ( CVar "$scc$parseBinary_parseExpr" )
-                [ CCon 1
+                [ CCon 22
                     [ CVar "tok" ]
                 ]
             )

@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,19 +35,14 @@ CoreProgram
             ( CCase
                 ( CVar "c" )
                 [
-                    ( 0
+                    ( 19
                     , []
                     , CString "red"
                     )
                 ,
-                    ( 1
+                    ( 20
                     , []
                     , CString "green"
-                    )
-                ,
-                    ( 2
-                    , []
-                    , CString "blue"
                     )
                 ]
             )
@@ -55,7 +50,7 @@ CoreProgram
             ( CCase
                 ( CVar "bc" )
                 [
-                    ( 0
+                    ( 22
                     , [ "c" ]
                     , CCall
                         ( CVar "colorName" )
@@ -67,50 +62,45 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 23
                     , [ "box" ]
                     , CCall
                         ( CVar "showBoxedColor" )
                         [ CVar "box" ]
                     )
-                ,
-                    ( 1
-                    , [ "e" ]
-                    , CVar "e"
-                    )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "showBoxedColor" )
-                            [ CCon 0
-                                [ CCon 0 [] ]
+                            [ CCon 22
+                                [ CCon 19 [] ]
                             ]
                         , CString " "
                         ]
                     )
                     [
-                        ( 0
-                        , [ "$do_e_28_9" ]
-                        , CCon 0
-                            [ CVar "$do_e_28_9" ]
+                        ( 3
+                        , [ "$do_e_31_9" ]
+                        , CCon 3
+                            [ CVar "$do_e_31_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "s0" ]
                         , CCall
                             ( CBuiltIn "concatString" )
                             [ CVar "s0"
                             , CCall
                                 ( CVar "showResult" )
-                                [ CCon 0
-                                    [ CCon 0
-                                        [ CCon 1 [] ]
+                                [ CCon 23
+                                    [ CCon 22
+                                        [ CCon 20 [] ]
                                     ]
                                 ]
                             ]
@@ -118,24 +108,24 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

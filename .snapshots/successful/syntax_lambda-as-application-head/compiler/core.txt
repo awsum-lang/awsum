@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -33,26 +33,26 @@ CoreProgram
             )
         , CValDef "runMe"
             ( CCall
-                ( CVar "$lam$2" )
+                ( CVar "$lam$7" )
                 [ CIntLit 5 TInt32 ]
             )
         , CValDef "doubled"
             ( CCall
-                ( CVar "$lam$3" )
+                ( CVar "$lam$8" )
                 [ CVar "runMe" ]
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CVar "doubled" ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lam$2" [ "x" ]
+        , CFunDef "$lam$7" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$lam$3" [ "n" ]
+        , CFunDef "$lam$8" [ "n" ]
             ( CVar "n" )
         ]
     }

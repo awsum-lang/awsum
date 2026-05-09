@@ -25,9 +25,9 @@ import Relude
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Produce a complete .class file as a strict ByteString.
-assembleJVM :: CoreProgram -> BS.ByteString
-assembleJVM prog =
-  let (methods, finalSt) = runState (doAssemble prog) emptyPool
+assembleJVM :: PreludeTags -> CoreProgram -> BS.ByteString
+assembleJVM ptags prog =
+  let (methods, finalSt) = runState (doAssemble prog) (emptyPool ptags)
    in toStrict (B.toLazyByteString (buildClassFile finalSt methods))
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -60,13 +60,35 @@ data CPKey
 data Pool = Pool
   { entries :: [CPEntry], -- reverse order
     nextIdx :: Word16,
-    cache :: Map CPKey Word16
+    cache :: Map CPKey Word16,
+    -- | Globally-unique constructor tags for prelude types, threaded
+    -- in through 'assembleJVM' so that runtime helpers built here
+    -- match the user's user-side 'CCon' / 'CCase' encoding.
+    poolTags :: PreludeTags
   }
 
-emptyPool :: Pool
-emptyPool = Pool {entries = [], nextIdx = 1, cache = Map.empty}
+emptyPool :: PreludeTags -> Pool
+emptyPool ptags = Pool {entries = [], nextIdx = 1, cache = Map.empty, poolTags = ptags}
 
 type AsmM = State Pool
+
+-- | Read the 'PreludeTags' record threaded through 'AsmM'. The
+-- constructor-tag fields ('ptLeft', 'ptRight', 'ptUnderflowError',
+-- ...) are needed every time a runtime helper builds a CCon-shaped
+-- value out of band of user code.
+askPreludeTags :: AsmM PreludeTags
+askPreludeTags = gets poolTags
+
+-- | Bytecode for "push tag @n@, then box it as 'java.lang.Integer'
+-- using 'Integer.valueOf'". The first byte sequence is the
+-- size-appropriate iconst/bipush/sipush for @n@; the second is the
+-- 'invokestatic' opcode plus the 'valueOf' methodref's two-byte
+-- constant-pool index. Used everywhere a constructor's tag is being
+-- stored into an @Object[]@ slot at the call site that builds a
+-- CCon-shaped value.
+boxedTagBytes :: Int -> Word16 -> [Word8]
+boxedTagBytes n valueOfRef =
+  bcIconst n <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
 
 addEntry :: CPKey -> CPEntry -> AsmM Word16
 addEntry key entry = do
@@ -363,8 +385,9 @@ doAssemble prog@(CoreProgram decls) = do
   mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntryArg <- mkEntryArgEither
+  mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs else pure []
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg, mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg] <> mGetArgs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -414,6 +437,7 @@ mkConcat = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unboxLen :: [Word8]
       unboxLen =
         bcCheckCast strCls
@@ -447,13 +471,12 @@ mkConcat = do
           <> bcCheckCast strCls
           <> [0xB6, hi8 concatRef, lo8 concatRef] -- invokevirtual String.concat
           <> bcAstore 2
-          -- Build Right(result): Object[2] = [Integer(1), result]
+          -- Build Right(result): Object[2] = [Integer(Right tag), result]
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
           <> [0x59] -- dup
           <> bcIconst 0
-          <> bcIconst 1
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- invokestatic Integer.valueOf
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> bcIconst 1
@@ -461,22 +484,20 @@ mkConcat = do
           <> [0x53] -- aastore
           <> [0xB0] -- areturn
       tooLongBlock =
-        -- StringTooLong cell: Object[1] = [Integer(0)]
+        -- StringTooLong cell: Object[1] = [Integer(StringTooLong tag)]
         bcIconst 1
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptStringTooLong ptags) valueOfRef
           <> [0x53]
           <> bcAstore 2
-          -- Left cell: Object[2] = [Integer(0), StringTooLong cell]
+          -- Left cell: Object[2] = [Integer(Left tag), StringTooLong cell]
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -528,6 +549,7 @@ mkPrint = do
   printRef <- addMRef "java/io/PrintStream" "print" "(Ljava/lang/Object;)V"
   objCls <- addClass "java/lang/Object"
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  ptags <- askPreludeTags
   pure
     MInfo
       { mFlags = 0x0008,
@@ -537,12 +559,12 @@ mkPrint = do
           bcGetStatic outRef
             <> bcAload 0
             <> bcInvokeVirtual printRef
-            -- Build Unit value: Object[1] = [Integer(0)]
+            -- Build Unit value: Object[1] = [Integer(unit)]
             <> [0x04] -- iconst_1 (array length)
             <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
             <> [0x59] -- dup
             <> [0x03] -- iconst_0 (index)
-            <> [0x03] -- iconst_0 (Unit tag)
+            <> bcIconst (ptUnit ptags)
             <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- valueOf(I)Integer
             <> [0x53] -- aastore
             <> [0xB0], -- areturn
@@ -571,6 +593,7 @@ mkPredInt32 = do
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
   minLoad <- bcLoadInt32 (-2147483648)
+  ptags <- askPreludeTags
   let preamble =
         [0x2A] -- aload_0
           <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
@@ -580,22 +603,20 @@ mkPredInt32 = do
           <> minLoad
       ifAt = length preamble
       overflow =
-        -- Build UnderflowError Object[1] = [Integer(0)]
+        -- Build UnderflowError Object[1] = [Integer(UE tag)]
         [0x04] -- iconst_1 (array length)
           <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
           <> [0x59] -- dup
           <> [0x03] -- iconst_0 (idx)
-          <> [0x03] -- iconst_0 (tag value 0 for UnderflowError)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptUnderflowError ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x4D] -- astore_2 (save UE)
-          -- Build Left Object[2] = [Integer(0), UE]
+          -- Build Left Object[2] = [Integer(Left tag), UE]
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (Left tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1 (idx)
@@ -604,13 +625,12 @@ mkPredInt32 = do
           <> [0xB0] -- areturn
       okAt = ifAt + 3 + length overflow
       ok =
-        -- Build Right Object[2] = [Integer(1), Integer(v - 1)]
+        -- Build Right Object[2] = [Integer(Right tag), Integer(v - 1)]
         [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1 (idx)
@@ -667,6 +687,7 @@ mkPredUInt8 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let preamble =
         [0x2A] -- aload_0
           <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
@@ -675,22 +696,20 @@ mkPredUInt8 = do
           <> [0x1B] -- iload_1
       ifAt = length preamble
       overflow =
-        -- UnderflowError instance: Object[1] = [Integer(0)]
+        -- UnderflowError instance: Object[1] = [Integer(UE tag)]
         [0x04] -- iconst_1
           <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
           <> [0x59] -- dup
           <> [0x03] -- iconst_0 (index)
-          <> [0x03] -- iconst_0 (UE tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptUnderflowError ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x4D] -- astore_2 (save UE)
-          -- Left: Object[2] = [Integer(0), UE]
+          -- Left: Object[2] = [Integer(Left tag), UE]
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (Left tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1 (index)
@@ -699,13 +718,12 @@ mkPredUInt8 = do
           <> [0xB0] -- areturn
       okAt = ifAt + 3 + length overflow
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(v - 1)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(v - 1)]
         [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1 (index)
@@ -761,6 +779,7 @@ mkSuccInt32 = do
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
   maxLoad <- bcLoadInt32 2147483647
+  ptags <- askPreludeTags
   let preamble =
         [0x2A] -- aload_0
           <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
@@ -770,22 +789,20 @@ mkSuccInt32 = do
           <> maxLoad
       ifAt = length preamble
       overflow =
-        -- OverflowError instance: Object[1] = [Integer(0)]
+        -- OverflowError instance: Object[1] = [Integer(OE tag)]
         [0x04] -- iconst_1
           <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
           <> [0x59] -- dup
           <> [0x03] -- iconst_0 (index)
-          <> [0x03] -- iconst_0 (OE tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x4D] -- astore_2 (save OE)
-          -- Left: Object[2] = [Integer(0), OE]
+          -- Left: Object[2] = [Integer(Left tag), OE]
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (Left tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1 (index)
@@ -794,13 +811,12 @@ mkSuccInt32 = do
           <> [0xB0] -- areturn
       okAt = ifAt + 3 + length overflow
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(v + 1)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(v + 1)]
         [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1 (index)
@@ -851,6 +867,7 @@ mkSuccUInt8 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let preamble =
         [0x2A] -- aload_0
           <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
@@ -860,22 +877,20 @@ mkSuccUInt8 = do
           <> [0x11, 0x00, 0xFF] -- sipush 255
       ifAt = length preamble
       overflow =
-        -- OverflowError instance: Object[1] = [Integer(0)]
+        -- OverflowError instance: Object[1] = [Integer(OE tag)]
         [0x04]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53]
           <> [0x4D]
-          -- Left: Object[2] = [Integer(0), OE]
+          -- Left: Object[2] = [Integer(Left tag), OE]
           <> [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -884,13 +899,12 @@ mkSuccUInt8 = do
           <> [0xB0]
       okAt = ifAt + 3 + length overflow
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(v + 1)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(v + 1)]
         [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x04]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -946,6 +960,7 @@ mkEq methodName = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
           <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
@@ -960,12 +975,11 @@ mkEq methodName = do
           <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
           <> [0x59] -- dup
           <> [0x03] -- iconst_0 (index)
-          <> [tag] -- iconst_0 (True=0) or iconst_1 (False=1)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef] -- Integer.valueOf
+          <> boxedTagBytes tag valueOfRef
           <> [0x53] -- aastore
           <> [0xB0] -- areturn
-      equalBlock = boolBox 0x03 -- True tag = 0
-      notEqualBlock = boolBox 0x04 -- False tag = 1
+      equalBlock = boolBox (ptTrue ptags)
+      notEqualBlock = boolBox (ptFalse ptags)
       ifAt = length preamble
       notEqAt = ifAt + 3 + length equalBlock
       ifRel = notEqAt - ifAt
@@ -1021,6 +1035,7 @@ mkAddInt32 = do
   smtNameIdx <- addUtf8 "StackMapTable"
   ldcOver <- bcLoadInt32 overflowRowTag
   ldcUnder <- bcLoadInt32 underflowRowTag
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
           <> [0xB6, hi8 intValRef, lo8 intValRef] -- invokevirtual intValue()I
@@ -1048,13 +1063,12 @@ mkAddInt32 = do
           <> [0x7E] -- iand
       iflt1At = length preamble
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(sum)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(sum)]
         [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -1071,15 +1085,16 @@ mkAddInt32 = do
         [0x1C] -- iload_2 (a)
         -- iflt L_under (placeholder, patched below)
       iflt2At = overAt + length overSplit
-      -- Inner CCon: Object[1] = [Integer(0)]. The single-ctor tag is
-      -- always 0; the choice of label is encoded in the row wrap.
-      innerBox =
+      -- Inner CCon: Object[1] = [Integer(ctor tag)]. With globally
+      -- unique tags, OverflowError and UnderflowError each carry their
+      -- own constructor tag; the choice of label is also encoded in
+      -- the row wrap.
+      innerBox ctorTag =
         [0x04] -- iconst_1 (length)
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (CCon tag = 0)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes ctorTag valueOfRef
           <> [0x53] -- aastore
           <> [0x3A, 0x05] -- astore 5  (slot 5 = inner)
           -- Row wrap: Object[2] = [Integer(rowTag), inner].
@@ -1097,24 +1112,23 @@ mkAddInt32 = do
           <> [0x53] -- aastore
           <> [0x3A, 0x05] -- astore 5  (slot 5 = row)
       leftWrap =
-        -- Left: Object[2] = [Integer(0), Object @ slot 5]
+        -- Left: Object[2] = [Integer(Left tag), Object @ slot 5]
         [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- Left tag
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
           <> [0x19, 0x05] -- aload 5 (row)
           <> [0x53]
           <> [0xB0]
-      overBlock = innerBox <> rowBox ldcOver <> leftWrap
+      overBlock = innerBox (ptOverflowError ptags) <> rowBox ldcOver <> leftWrap
       underAt = iflt2At + 3 + length overBlock
       iflt2Rel = underAt - iflt2At
       iflt2Bytes = [0x9B, hi8 (fromIntegral iflt2Rel), lo8 (fromIntegral iflt2Rel)]
-      underBlock = innerBox <> rowBox ldcUnder <> leftWrap
+      underBlock = innerBox (ptUnderflowError ptags) <> rowBox ldcUnder <> leftWrap
       code =
         preamble
           <> iflt1Bytes
@@ -1169,6 +1183,7 @@ mkAddUInt8 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1183,22 +1198,20 @@ mkAddUInt8 = do
           <> [0x11, 0x00, 0xFF] -- sipush 255
       ifAt = length preamble
       overflow =
-        -- OverflowError box: Object[1] = [Integer(0)]
+        -- OverflowError box: Object[1] = [Integer(OE tag)]
         [0x04]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53]
           <> [0x4D] -- astore_2 (overwrite sum slot — no longer needed)
-          -- Left: Object[2] = [Integer(0), OE]
+          -- Left: Object[2] = [Integer(Left tag), OE]
           <> [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1207,13 +1220,12 @@ mkAddUInt8 = do
           <> [0xB0]
       okAt = ifAt + 3 + length overflow
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(sum)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(sum)]
         [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1272,6 +1284,7 @@ mkSubInt32 = do
   smtNameIdx <- addUtf8 "StackMapTable"
   ldcOver <- bcLoadInt32 overflowRowTag
   ldcUnder <- bcLoadInt32 underflowRowTag
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1296,13 +1309,12 @@ mkSubInt32 = do
           <> [0x7E] -- iand
       iflt1At = length preamble
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(diff)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(diff)]
         [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -1318,13 +1330,12 @@ mkSubInt32 = do
         [0x1C] -- iload_2 (a)
         -- iflt L_under (placeholder, patched below)
       iflt2At = overAt + length overSplit
-      innerBox =
+      innerBox ctorTag =
         [0x04]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- iconst_0 (CCon tag = 0)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes ctorTag valueOfRef
           <> [0x53]
           <> [0x3A, 0x05] -- astore 5  (slot 5 = inner)
       rowBox ldcRowTag =
@@ -1345,19 +1356,18 @@ mkSubInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- Left tag
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
           <> [0x19, 0x05] -- aload 5 (row)
           <> [0x53]
           <> [0xB0]
-      overBlock = innerBox <> rowBox ldcOver <> leftWrap
+      overBlock = innerBox (ptOverflowError ptags) <> rowBox ldcOver <> leftWrap
       underAt = iflt2At + 3 + length overBlock
       iflt2Rel = underAt - iflt2At
       iflt2Bytes = [0x9B, hi8 (fromIntegral iflt2Rel), lo8 (fromIntegral iflt2Rel)]
-      underBlock = innerBox <> rowBox ldcUnder <> leftWrap
+      underBlock = innerBox (ptUnderflowError ptags) <> rowBox ldcUnder <> leftWrap
       code =
         preamble
           <> iflt1Bytes
@@ -1418,6 +1428,7 @@ mkMulInt32 = do
   ldcMin <- bcLoadInt32 (-2147483648)
   ldcOver <- bcLoadInt32 overflowRowTag
   ldcUnder <- bcLoadInt32 underflowRowTag
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1449,8 +1460,7 @@ mkMulInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -1458,18 +1468,17 @@ mkMulInt32 = do
           <> [0x53] -- aastore
           <> [0xB0] -- areturn
       overAt = ifltAt + 3 + length ok
-      -- Build Left (CRow rowTag (CCon 0 [])): inner Object[1] = [Integer(0)],
-      -- row Object[2] = [Integer(rowTag), inner], left Object[2] = [Integer(0), row].
+      -- Build Left (CRow rowTag (CCon ctorTag [])): inner Object[1] = [Integer(ctorTag)],
+      -- row Object[2] = [Integer(rowTag), inner], left Object[2] = [Integer(Left tag), row].
       -- @astore_2@ is reused across stages: first holds inner, then row.
-      leftRow ldcRowTag =
+      leftRow ctorTag ldcRowTag =
         [0x58] -- pop2 (drop the dup'd long product)
-        -- inner = Object[1] = [Integer(0)]
+        -- inner = Object[1] = [Integer(ctorTag)]
           <> [0x04] -- iconst_1
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (CCon tag = 0)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes ctorTag valueOfRef
           <> [0x53] -- aastore
           <> [0x4D] -- astore_2 (slot 2 = inner)
           -- row = Object[2] = [Integer(rowTag), inner]
@@ -1485,22 +1494,21 @@ mkMulInt32 = do
           <> [0x2C] -- aload_2 (inner)
           <> [0x53] -- aastore
           <> [0x4D] -- astore_2 (slot 2 = row)
-          -- left = Object[2] = [Integer(0), row]
+          -- left = Object[2] = [Integer(Left tag), row]
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (Left tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
           <> [0x2C] -- aload_2 (row)
           <> [0x53] -- aastore
           <> [0xB0]
-      overBlock = leftRow ldcOver
+      overBlock = leftRow (ptOverflowError ptags) ldcOver
       underAt = overAt + length overBlock
-      underBlock = leftRow ldcUnder
+      underBlock = leftRow (ptUnderflowError ptags) ldcUnder
       ifgtRel = overAt - ifgtAt
       ifltRel = underAt - ifltAt
       ifgtBytes = [0x9D, fromIntegral (ifgtRel `div` 256), fromIntegral (ifgtRel `mod` 256)]
@@ -1568,6 +1576,7 @@ mkNegInt32 = do
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
   minLoad <- bcLoadInt32 (-2147483648)
+  ptags <- askPreludeTags
   let preamble =
         [0x2A] -- aload_0
           <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
@@ -1581,16 +1590,14 @@ mkNegInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (OE tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x4D] -- astore_2
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (Left tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -1603,8 +1610,7 @@ mkNegInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -1657,6 +1663,7 @@ mkSubUInt8 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1670,13 +1677,12 @@ mkSubUInt8 = do
           <> [0x1C] -- iload_2
       ifAt = length preamble
       ok =
-        -- Right: Object[2] = [Integer(1), Integer(diff)]
+        -- Right: Object[2] = [Integer(Right tag), Integer(diff)]
         [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -1686,22 +1692,20 @@ mkSubUInt8 = do
           <> [0xB0] -- areturn
       underAt = ifAt + 3 + length ok
       under =
-        -- UnderflowError: Object[1] = [Integer(0)]
+        -- UnderflowError: Object[1] = [Integer(UE tag)]
         [0x04]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- UE tag = 0
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptUnderflowError ptags) valueOfRef
           <> [0x53]
           <> [0x4D] -- astore_2 (overwrite int slot — no longer needed)
-          -- Left: Object[2] = [Integer(0), UE]
+          -- Left: Object[2] = [Integer(Left tag), UE]
           <> [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- Left tag = 0
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1754,6 +1758,7 @@ mkMulUInt8 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox =
         [0xC0, hi8 intCls, lo8 intCls]
           <> [0xB6, hi8 intValRef, lo8 intValRef]
@@ -1772,16 +1777,14 @@ mkMulUInt8 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53]
           <> [0x4D] -- astore_2 (overwrite product slot — no longer needed)
           <> [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1794,8 +1797,7 @@ mkMulUInt8 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x04]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1892,6 +1894,7 @@ mkPredUInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let preamble =
         [0x2A]
           <> [0xC0, hi8 intCls, lo8 intCls]
@@ -1904,16 +1907,14 @@ mkPredUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptUnderflowError ptags) valueOfRef
           <> [0x53]
           <> [0x4D]
           <> [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1926,8 +1927,7 @@ mkPredUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x04]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -1978,6 +1978,7 @@ mkSuccUInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let preamble =
         [0x2A]
           <> [0xC0, hi8 intCls, lo8 intCls]
@@ -1991,16 +1992,14 @@ mkSuccUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53]
           <> [0x4D]
           <> [0x05]
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -2013,8 +2012,7 @@ mkSuccUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x04]
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
@@ -2067,6 +2065,7 @@ mkAddUInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox = [0xC0, hi8 intCls, lo8 intCls] <> [0xB6, hi8 intValRef, lo8 intValRef]
       uExt = [0x85] <> bcU32MaxAsLong <> [0x7F] -- i2l + land
       preamble =
@@ -2091,8 +2090,7 @@ mkAddUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 1
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2105,16 +2103,14 @@ mkAddUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53]
           <> bcAstore 4
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2168,6 +2164,7 @@ mkSubUInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox = [0xC0, hi8 intCls, lo8 intCls] <> [0xB6, hi8 intValRef, lo8 intValRef]
       preamble =
         bcAload 0
@@ -2196,8 +2193,7 @@ mkSubUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 1
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2210,16 +2206,14 @@ mkSubUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptUnderflowError ptags) valueOfRef
           <> [0x53]
           <> bcAstore 4
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2270,6 +2264,7 @@ mkMulUInt32 = do
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let unbox = [0xC0, hi8 intCls, lo8 intCls] <> [0xB6, hi8 intValRef, lo8 intValRef]
       uExt = [0x85] <> bcU32MaxAsLong <> [0x7F]
       preamble =
@@ -2295,8 +2290,7 @@ mkMulUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 1
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2309,16 +2303,14 @@ mkMulUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptOverflowError ptags) valueOfRef
           <> [0x53]
           <> bcAstore 2
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> bcInvokeStatic valueOfRef
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2372,6 +2364,7 @@ mkParseUInt32 = do
   charAtRef <- addMRef "java/lang/String" "charAt" "(I)C"
   intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let blockA =
         bcAload 0
           <> bcCheckCast strCls
@@ -2433,8 +2426,7 @@ mkParseUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 1
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptRight ptags) intValueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2450,16 +2442,14 @@ mkParseUInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptParseError ptags) intValueOfRef
           <> [0x53]
           <> bcAstore 4
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptLeft ptags) intValueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2577,6 +2567,7 @@ mkSplitOnFirst = do
   substring1Ref <- addMRef "java/lang/String" "substring" "(I)Ljava/lang/String;"
   lengthRef <- addMRef "java/lang/String" "length" "()I"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let preamble =
         [0x2B] -- aload_1 (str)
           <> [0xC0, hi8 strCls, lo8 strCls] -- checkcast String
@@ -2588,13 +2579,12 @@ mkSplitOnFirst = do
           <> [0x02] -- iconst_m1
       ifAt = length preamble
       nothing =
-        -- Nothing: Object[1] = [Integer(0)]
+        -- Nothing: Object[1] = [Integer(Nothing tag)]
         [0x04] -- iconst_1
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0 (idx)
-          <> [0x03] -- iconst_0 (Nothing tag)
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptNothing ptags) intValueOfRef
           <> [0x53] -- aastore
           <> [0xB0] -- areturn
       foundAt = ifAt + 3 + length nothing
@@ -2618,13 +2608,12 @@ mkSplitOnFirst = do
           <> [0x60] -- iadd
           <> [0xB6, hi8 substring1Ref, lo8 substring1Ref]
           <> [0x4D] -- astore_2 (suffix; reuses slot 2 — idx no longer needed)
-          -- Tuple2: Object[3] = [Integer(0), prefix, suffix] → slot 3 (reuse)
+          -- Tuple2: Object[3] = [Integer(Tuple2 tag), prefix, suffix] → slot 3 (reuse)
           <> [0x06] -- iconst_3
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x03] -- iconst_0 (Tuple2 tag)
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptTuple2 ptags) intValueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -2635,13 +2624,12 @@ mkSplitOnFirst = do
           <> [0x2C] -- aload_2 (suffix)
           <> [0x53] -- aastore
           <> [0x4E] -- astore_3 (tuple; overwrites prefix slot)
-          -- Just: Object[2] = [Integer(1), tuple]
+          -- Just: Object[2] = [Integer(Just tag), tuple]
           <> [0x05] -- iconst_2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Just tag)
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptJust ptags) intValueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -2795,6 +2783,7 @@ mkParseInt32 = do
   intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
   ldcMaxInt <- bcLoadInt32 2147483647
+  ptags <- askPreludeTags
   let -- block A: aload_0; checkcast; astore_1; aload_1; invokevirtual length; istore_2
       blockA =
         bcAload 0
@@ -2905,14 +2894,13 @@ mkParseInt32 = do
       ifGtPosAt :: Int
       ifGtPosAt = posCheckAt + lenV
       buildRightAt = ifGtPosAt + 3
-      -- block X: build Right (Object[2] = [Integer(1), Integer(acc as int)])
+      -- block X: build Right (Object[2] = [Integer(Right tag), Integer(acc as int)])
       blockX =
         bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 1
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptRight ptags) intValueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -2929,16 +2917,14 @@ mkParseInt32 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptParseError ptags) intValueOfRef
           <> [0x53]
           <> bcAstore 4
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptLeft ptags) intValueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -3079,6 +3065,7 @@ mkParseUInt8 = do
   charAtRef <- addMRef "java/lang/String" "charAt" "(I)C"
   intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
   smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
   let blockA =
         bcAload 0
           <> bcCheckCast strCls
@@ -3132,14 +3119,13 @@ mkParseUInt8 = do
       lenS = length blockS
       gotoLoopAt = afterIfGtAcc + lenS
       okAt = gotoLoopAt + 3
-      -- block X: build Right (Object[2] = [Integer(1), Integer(acc)])
+      -- block X: build Right (Object[2] = [Integer(Right tag), Integer(acc)])
       blockX =
         bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 1
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptRight ptags) intValueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -3154,16 +3140,14 @@ mkParseUInt8 = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptParseError ptags) intValueOfRef
           <> [0x53]
           <> bcAstore 4
           <> bcIconst 2
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> bcIconst 0
-          <> bcIconst 0
-          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> boxedTagBytes (ptLeft ptags) intValueOfRef
           <> [0x53]
           <> [0x59]
           <> bcIconst 1
@@ -3252,6 +3236,36 @@ mkParseUInt8 = do
         mMaxLocals = 256
       }
 
+-- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'.
+--   Reads the cached argv[0] from the "awsum.argv0" system property
+--   ('mkMain' stashed it via 'setProperty' on entry) and routes it
+--   through '__entryArgEither' for strict-UTF-16 validation. Per the
+--   no-memoisation decision each call yields a fresh Either cell;
+--   argv is invariant during execution so repeat calls are
+--   deterministically equal.
+mkGetArgs :: AsmM MInfo
+mkGetArgs = do
+  ni <- addUtf8 "__getArgs"
+  di <- addUtf8 "()Ljava/lang/Object;"
+  argvKeyIdx <- addStr "awsum.argv0"
+  getPropertyRef <- addMRef "java/lang/System" "getProperty" "(Ljava/lang/String;)Ljava/lang/String;"
+  entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode =
+          bcLdc argvKeyIdx
+            <> [0xB8, hi8 getPropertyRef, lo8 getPropertyRef] -- invokestatic getProperty
+            <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
+            <> [0xB0], -- areturn
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
 --   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
 --     1. Length cap (134217728 = 2^27) — short-circuits before the
@@ -3287,6 +3301,7 @@ mkEntryArgEither = do
   ldcMaskD800 <- bcLoadInt32 55296
   ldcStringTooLongTag <- bcLoadInt32 stringTooLongRowTag
   ldcUnpairedTag <- bcLoadInt32 unpairedSurrogateRowTag
+  ptags <- askPreludeTags
   let preamble :: [Word8]
       preamble =
         [0x2A] -- aload_0
@@ -3333,8 +3348,7 @@ mkEntryArgEither = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59] -- dup
           <> [0x03] -- iconst_0
-          <> [0x04] -- iconst_1 (Right tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptRight ptags) valueOfRef
           <> [0x53] -- aastore
           <> [0x59] -- dup
           <> [0x04] -- iconst_1
@@ -3343,14 +3357,13 @@ mkEntryArgEither = do
           <> [0xB0] -- areturn
       okLen = length okBlock
       lTooLong = okStart + okLen
-      buildLeftBlock :: [Word8] -> [Word8]
-      buildLeftBlock ldcRowTag =
+      buildLeftBlock :: Int -> [Word8] -> [Word8]
+      buildLeftBlock innerCtorTag ldcRowTag =
         [0x04] -- iconst_1
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- iconst_0 (inner CCon tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes innerCtorTag valueOfRef
           <> [0x53]
           <> [0x3A, 0x06] -- astore 6
           <> [0x05]
@@ -3369,18 +3382,17 @@ mkEntryArgEither = do
           <> [0xBD, hi8 objCls, lo8 objCls]
           <> [0x59]
           <> [0x03]
-          <> [0x03] -- iconst_0 (Left tag)
-          <> [0xB8, hi8 valueOfRef, lo8 valueOfRef]
+          <> boxedTagBytes (ptLeft ptags) valueOfRef
           <> [0x53]
           <> [0x59]
           <> [0x04]
           <> [0x19, 0x07] -- aload 7
           <> [0x53]
           <> [0xB0] -- areturn
-      tooLongBlock = buildLeftBlock ldcStringTooLongTag
+      tooLongBlock = buildLeftBlock (ptStringTooLong ptags) ldcStringTooLongTag
       tooLongLen = length tooLongBlock
       lUnpaired = lTooLong + tooLongLen
-      unpairedBlock = buildLeftBlock ldcUnpairedTag
+      unpairedBlock = buildLeftBlock (ptUnpairedUtf16Surrogate ptags) ldcUnpairedTag
       -- Branch offsets — all are computed as (target - source_opcode_offset).
       mkBr :: Word8 -> Int -> [Word8]
       mkBr op rel =
@@ -3512,15 +3524,19 @@ mkMain = do
   ni <- addUtf8 "main"
   di <- addUtf8 "([Ljava/lang/String;)V"
   emptyIdx <- addStr ""
-  vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 1)
+  vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 0)
   -- `runIO` is the prelude's IO-tree walker; we hand `v_main`'s return
   -- value to it so any effects are performed. It returns Unit which we
   -- discard.
   vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
-  -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …) String':
-  -- 'Right input' on fit, 'Left StringTooLong' (row-tagged) on overflow.
-  -- See 'mkEntryArgEither' for the inline-cap-check + Either-build.
-  entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  -- 'System.setProperty' caches argv[0] so 'BuiltIn.internalGetArgs'
+  -- can re-read it via 'System.getProperty' from inside 'runIO''s
+  -- 'IOGetArgs' arm. See 'mkGetArgs' for the read side. Argv is
+  -- invariant for the JVM process lifetime; one cache at entry is
+  -- enough.
+  setPropertyRef <- addMRef "java/lang/System" "setProperty" "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+  argvKeyIdx <- addStr "awsum.argv0"
+  strClsForArgv <- addClass "java/lang/String"
   smtNameIdx <- addUtf8 "StackMapTable"
   objClsIdx <- addClass "java/lang/Object"
   -- Refs for the System.out → UTF-8 swap. See the IL-text 'mainMethod'
@@ -3603,9 +3619,19 @@ mkMain = do
             <> bcAload 0 -- has_arg
             <> [0x03] -- iconst_0
             <> [0x32] -- aaload
-            -- call_main: input on top of stack; '__entryArgEither' replaces it
-            -- with a fully-formed 'Either (StringTooLong | …) String' cell.
-            <> bcInvokeStatic entryArgEitherRef
+            -- call_main: input on top of stack. 'main' itself takes
+            -- no arguments; user code reads argv via 'IO.Args.getArgs'
+            -- inside the IO chain. We just cache the input via
+            -- System.setProperty so 'BuiltIn.internalGetArgs' can
+            -- read it later from 'runIO''s 'IOGetArgs' arm. The
+            -- 'aaload' returned Object — checkcast to String for the
+            -- 'setProperty(String, String)' signature.
+            <> [0xC0, hi8 strClsForArgv, lo8 strClsForArgv] -- checkcast String
+            <> bcLdc argvKeyIdx -- ldc "awsum.argv0"
+            <> [0x5F] -- swap
+            <> [0xB8, hi8 setPropertyRef, lo8 setPropertyRef] -- invokestatic setProperty
+            <> [0x57] -- pop the previous-value return
+            -- v_main is a zero-arg value (CValDef): build the IO tree.
             <> bcInvokeStatic vMainRef
             -- v_main returned an IO tree on the stack; hand it to runIO
             -- to walk and execute the effects. runIO returns Unit which
@@ -4036,6 +4062,12 @@ emitExpr ctx = \case
         xMeta <- emitExpr ctx x
         ref <- addMRef "AwsumMain" "__print" "(Ljava/lang/Object;)Ljava/lang/Object;"
         pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
+      -- 'BuiltIn.internalGetArgs' — invokestatic AwsumMain/__getArgs.
+      -- The helper reads the cached argv[0] (set in 'mkMain' via
+      -- 'System.setProperty') and routes it through '__entryArgEither'.
+      CBuiltIn "internalGetArgs" | [] <- xs -> do
+        ref <- addMRef "AwsumMain" "__getArgs" "()Ljava/lang/Object;"
+        pure CodeWithMeta {cwCode = [0xB8, hi8 ref, lo8 ref], cwBranchTargets = [], cwIntSlots = []}
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs -> do

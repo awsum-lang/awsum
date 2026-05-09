@@ -5,6 +5,7 @@
 -- (see `NoOverflowMulUInt8Triple` in PropertySpec.hs), so the
 -- OVERFLOW branch is never expected to fire.
 import IO.Stdout
+import IO.Args
 
 parseInput : String -> Either ParseError (Tuple3 UInt8 UInt8 UInt8)
 parseInput raw = case splitOnFirst ":" raw of
@@ -25,8 +26,8 @@ property a b c = do
   aBc <- mulUInt8 a bc
   pureEither (eqUInt8 abc aBc)
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main rawArg =
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
   let res : Either (StringTooLong | UnpairedUtf16Surrogate | ParseError | OverflowError) Bool = (do
         raw <- rawArg
         Tuple3 a b c <- parseInput raw
@@ -40,3 +41,8 @@ main rawArg =
           OverflowError -> IO.Stdout.print "OVERFLOW"
         Right True -> IO.Stdout.print "OK"
         Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

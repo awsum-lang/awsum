@@ -1,17 +1,21 @@
 {- Smoke: string concat, helper function, `IO.Stdout.print`. -}
 import IO.Stdout
+import IO.Args
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main inputArg =
-  let res : Either (StringTooLong | UnpairedUtf16Surrogate) String = (do
-        input <- inputArg
-        addGreeting input
-      )
-   in case res of
-        Left e -> case e of
-          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
-          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
-        Right s -> IO.Stdout.print s
+main : IO Never Unit
+main = IO.Args.getArgs
+  |> andThenIO greetAndPrint
+  |> handleErrorIO printDecodeError
+
+greetAndPrint : String -> IO Never Unit
+greetAndPrint input = case addGreeting input of
+  Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+  Right s -> IO.Stdout.print s
+
+printDecodeError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+printDecodeError e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
 
 {- Block comment -}
 

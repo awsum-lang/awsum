@@ -37,7 +37,7 @@ import Relude
 
 -- | Produce a complete JS file. The wrapping strategy is selected by the
 --   program type; the inner name-emission rules are shared.
-codegenJS :: ProgramType -> CoreProgram -> Text
+codegenJS :: ProgramType -> PreludeTags -> CoreProgram -> Text
 codegenJS = \case
   ProgramCli -> emitCliScript
 
@@ -45,13 +45,13 @@ codegenJS = \case
 --   to the global object — neither function declarations (hoisted onto
 --   @window@ only at /script/ top level, not inside an IIFE) nor
 --   @const@/@let@ (lexically script-scoped).
-emitCliScript :: CoreProgram -> Text
-emitCliScript prog@(CoreProgram decls) =
+emitCliScript :: PreludeTags -> CoreProgram -> Text
+emitCliScript ptags prog@(CoreProgram decls) =
   T.intercalate
     "\n"
     [ "\"use strict\";",
       "(function () {",
-      header (usedBuiltIns prog),
+      header ptags (usedBuiltIns prog),
       T.intercalate "\n\n" (map emitDecl decls),
       cliFooter,
       "})();"
@@ -65,8 +65,8 @@ emitCliScript prog@(CoreProgram decls) =
 --     '+' at each site would duplicate the cap check inline at every '++'.
 --   Integer stringification doesn't need a helper; @String(x)@ is
 --   inlined at each show call site.
-header :: Set Name -> Text
-header builtIns =
+header :: PreludeTags -> Set Name -> Text
+header ptags builtIns =
   let -- FNV-1a 32-bit row tags for the prelude's nominal labels used
       -- by the Int32 arithmetic builtins. Hard-wiring them via
       -- 'rowTag' here (instead of a magic number) keeps the encoding
@@ -75,72 +75,86 @@ header builtIns =
       -- user-side row dispatch agree by construction, not by accident.
       underflowTag = rowTag (TyCon noSpan "UnderflowError")
       overflowTag = rowTag (TyCon noSpan "OverflowError")
-      stringTooLongTag = rowTag (TyCon noSpan "StringTooLong")
-      unpairedSurrogateTag = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
+      stringTooLongRowTag = rowTag (TyCon noSpan "StringTooLong")
+      unpairedSurrogateRowTag = rowTag (TyCon noSpan "UnpairedUtf16Surrogate")
+      -- Constructor tags fed in from 'PreludeTags'. Under globally
+      -- unique tags every constructor's tag depends on declaration
+      -- order, so the runtime helpers — which build these values out
+      -- of band of the user's program — must look the tags up rather
+      -- than hardcode them.
+      ptL = show (ptLeft ptags)
+      ptR = show (ptRight ptags)
+      ptU = show (ptUnit ptags)
+      ptT = show (ptTrue ptags)
+      ptF = show (ptFalse ptags)
+      ptN = show (ptNothing ptags)
+      ptJ = show (ptJust ptags)
+      ptT2 = show (ptTuple2 ptags)
+      ptUE = show (ptUnderflowError ptags)
+      ptOE = show (ptOverflowError ptags)
+      ptPE = show (ptParseError ptags)
+      ptSTL = show (ptStringTooLong ptags)
+      ptUS = show (ptUnpairedUtf16Surrogate ptags)
       lns =
         filter
           (not . T.null)
           [ -- '__print' writes a string to stdout (no newline) and
-            -- returns the Unit constructor `[0]`. Driven by the
-            -- prelude's `runIO` walking an 'IOStdoutPrint' arm via
+            -- returns the Unit constructor. Driven by the prelude's
+            -- `runIO` walking an 'IOStdoutPrint' arm via
             -- `BuiltIn.internalStdoutPrint`. Returning a real Unit
             -- value lets the prelude `case … of Unit -> next`
             -- dispatch through the standard CCase tag check.
             if Set.member "internalStdoutPrint" builtIns
-              then "function __print(s){ process.stdout.write(String(s)); return [0]; }"
+              then "function __print(s){ process.stdout.write(String(s)); return [" <> ptU <> "]; }"
               else "",
             -- predInt32: returns Left UnderflowError on INT32_MIN, else Right (x - 1).
-            -- Left=0, Right=1, UnderflowError=0 — matches user-code tag assignment
-            -- for `type Either a b = Left a | Right b` and `type UnderflowError = UnderflowError`.
             if Set.member "predInt32" builtIns
-              then "function __predInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((x - 1)|0)]; }"
+              then "function __predInt32(x){ return x === -2147483648 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", ((x - 1)|0)]; }"
               else "",
             -- predUInt8: returns Left UnderflowError on 0, else Right (x - 1).
             -- When x >= 1, (x - 1) is in 0..254, so no explicit mask is
             -- needed to stay in UInt8 range — but we keep '& 0xFF' for
             -- parallel structure with other UInt8 arithmetic helpers.
             if Set.member "predUInt8" builtIns
-              then "function __predUInt8(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) & 0xFF)]; }"
+              then "function __predUInt8(x){ return x === 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", ((x - 1) & 0xFF)]; }"
               else "",
             -- succInt32: returns Left OverflowError on INT32_MAX, else Right (x + 1).
-            -- Left=0, Right=1, OverflowError=0 — tag assignment mirrors
-            -- __predInt32 since both error types are single-constructor.
             if Set.member "succInt32" builtIns
-              then "function __succInt32(x){ return x === 2147483647 ? [0, [0]] : [1, ((x + 1)|0)]; }"
+              then "function __succInt32(x){ return x === 2147483647 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((x + 1)|0)]; }"
               else "",
             -- succUInt8: returns Left OverflowError on 255, else Right (x + 1).
             -- '& 0xFF' kept for parallel structure with __predUInt8.
             if Set.member "succUInt8" builtIns
-              then "function __succUInt8(x){ return x === 255 ? [0, [0]] : [1, ((x + 1) & 0xFF)]; }"
+              then "function __succUInt8(x){ return x === 255 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((x + 1) & 0xFF)]; }"
               else "",
-            -- eqInt32 / eqUInt8: True=0, False=1 for `type Bool = True | False`.
-            -- Both incoming values are already '|0' / '& 0xFF' coerced, so '===' on
-            -- the JS Numbers gives the same answer as native i32/u8 equality.
+            -- eqInt32 / eqUInt8: returns Bool. Both incoming values are
+            -- already '|0' / '& 0xFF' coerced, so '===' on JS Numbers
+            -- gives the same answer as native i32/u8 equality.
             if Set.member "eqInt32" builtIns
-              then "function __eqInt32(a, b){ return a === b ? [0] : [1]; }"
+              then "function __eqInt32(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
               else "",
             if Set.member "eqUInt8" builtIns
-              then "function __eqUInt8(a, b){ return a === b ? [0] : [1]; }"
+              then "function __eqUInt8(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
               else "",
             -- addInt32: Either (UnderflowError | OverflowError) Int32. JS
             -- numbers exactly represent the 33-bit sum of two i32s, so the
             -- range checks are direct without intermediate '|0' wrapping.
             -- The error side is a structural sum dispatched at runtime by
             -- FNV-1a row tags; the encoded shape is
-            --   Left UnderflowError = [0, [tagU, [0]]]
-            --   Left OverflowError  = [0, [tagO, [0]]]
-            -- where the inner '[0]' is the nullary CCon for the
-            -- single-constructor type and 'tagU' / 'tagO' are
-            -- 'rowTag (TyCon "UnderflowError")' / 'rowTag (TyCon "OverflowError")'.
+            --   Left UnderflowError = [ptL, [tagU, [ptUE]]]
+            --   Left OverflowError  = [ptL, [tagO, [ptOE]]]
+            -- where the inner [ptUE]/[ptOE] is the nullary CCon for the
+            -- single-constructor type and 'tagU'/'tagO' are
+            -- 'rowTag (TyCon "UnderflowError")'/'rowTag (TyCon "OverflowError")'.
             if Set.member "addInt32" builtIns
-              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [0, [" <> show overflowTag <> ", [0]]]; if (s < -2147483648) return [0, [" <> show underflowTag <> ", [0]]]; return [1, s|0]; }"
+              then "function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [" <> ptL <> ", [" <> show overflowTag <> ", [" <> ptOE <> "]]]; if (s < -2147483648) return [" <> ptL <> ", [" <> show underflowTag <> ", [" <> ptUE <> "]]]; return [" <> ptR <> ", s|0]; }"
               else "",
             -- subInt32: Either (UnderflowError | OverflowError) Int32. Same
             -- range-check shape as __addInt32 — the i32 difference fits in
             -- a JS Number exactly, so direct '> maxInt32' / '< minInt32'
             -- tests pick the branch. Same row-tagged error encoding.
             if Set.member "subInt32" builtIns
-              then "function __subInt32(a, b){ const d = a - b; if (d > 2147483647) return [0, [" <> show overflowTag <> ", [0]]]; if (d < -2147483648) return [0, [" <> show underflowTag <> ", [0]]]; return [1, d|0]; }"
+              then "function __subInt32(a, b){ const d = a - b; if (d > 2147483647) return [" <> ptL <> ", [" <> show overflowTag <> ", [" <> ptOE <> "]]]; if (d < -2147483648) return [" <> ptL <> ", [" <> show underflowTag <> ", [" <> ptUE <> "]]]; return [" <> ptR <> ", d|0]; }"
               else "",
             -- mulInt32: Either (UnderflowError | OverflowError) Int32. JS
             -- Numbers represent the product of two i32 values exactly (it
@@ -149,33 +163,33 @@ header builtIns =
             -- '|0' coerces back to i32 on the ok path. Same row-tagged
             -- error encoding as add/sub.
             if Set.member "mulInt32" builtIns
-              then "function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [0, [" <> show overflowTag <> ", [0]]]; if (p < -2147483648) return [0, [" <> show underflowTag <> ", [0]]]; return [1, p|0]; }"
+              then "function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [" <> ptL <> ", [" <> show overflowTag <> ", [" <> ptOE <> "]]]; if (p < -2147483648) return [" <> ptL <> ", [" <> show underflowTag <> ", [" <> ptUE <> "]]]; return [" <> ptR <> ", p|0]; }"
               else "",
             -- negInt32: Either OverflowError Int32. Only INT32_MIN overflows
             -- (negation would yield 2147483648, outside the signed range);
             -- every other value flips sign cleanly inside JS Number precision.
             if Set.member "negInt32" builtIns
-              then "function __negInt32(x){ return x === -2147483648 ? [0, [0]] : [1, ((-x)|0)]; }"
+              then "function __negInt32(x){ return x === -2147483648 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((-x)|0)]; }"
               else "",
             -- addUInt8: Either OverflowError UInt8. Both inputs in 0..255,
             -- so the unmasked sum is in 0..510 and a single '> 255' check
             -- separates the branches.
             if Set.member "addUInt8" builtIns
-              then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [0, [0]] : [1, s & 0xFF]; }"
+              then "function __addUInt8(a, b){ const s = a + b; return s > 255 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", s & 0xFF]; }"
               else "",
             -- subUInt8: Either UnderflowError UInt8. Both inputs in 0..255,
             -- so the difference is in -255..255; a single '< 0' check picks
             -- the underflow branch. The ok-path mask keeps parallel structure
             -- with __addUInt8 (the difference is already in 0..255 there).
             if Set.member "subUInt8" builtIns
-              then "function __subUInt8(a, b){ const d = a - b; return d < 0 ? [0, [0]] : [1, d & 0xFF]; }"
+              then "function __subUInt8(a, b){ const d = a - b; return d < 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", d & 0xFF]; }"
               else "",
             -- mulUInt8: Either OverflowError UInt8. Both inputs in 0..255,
             -- so the unmasked product is in 0..65025 — well within JS Number
             -- precision and the i32 range that '|0' would coerce to. A
             -- single '> 255' check picks the overflow branch.
             if Set.member "mulUInt8" builtIns
-              then "function __mulUInt8(a, b){ const p = a * b; return p > 255 ? [0, [0]] : [1, p & 0xFF]; }"
+              then "function __mulUInt8(a, b){ const p = a * b; return p > 255 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", p & 0xFF]; }"
               else "",
             -- concatString: implements 'BuiltIn.concatString'. Pre-checks
             -- the combined UTF-16 length against the language-fixed cap
@@ -183,17 +197,15 @@ header builtIns =
             -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww').
             -- JS String.length is UTF-16 code units exactly (matches the
             -- cap unit directly), so the check is one i32 comparison.
-            -- Encoding: Left=0, Right=1, StringTooLong=0 (single ctor).
             if Set.member "concatString" builtIns
-              then "function __concat(a, b){ return (a.length + b.length > 134217728) ? [0, [0]] : [1, a + b]; }"
+              then "function __concat(a, b){ return (a.length + b.length > 134217728) ? [" <> ptL <> ", [" <> ptSTL <> "]] : [" <> ptR <> ", a + b]; }"
               else "",
             -- splitOnFirst: 'indexOf("")' returns 0 in JS, so empty separator
             -- naturally yields ["", str]. 'substring' creates fresh strings
             -- (V8 sometimes shares storage internally — irrelevant at the
-            -- semantic level we observe). Tags: Maybe Nothing=0, Just=1;
-            -- Tuple2 has one constructor (tag 0).
+            -- semantic level we observe).
             if Set.member "splitOnFirst" builtIns
-              then "function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [0]; return [1, [0, str.substring(0, i), str.substring(i + sep.length)]]; }"
+              then "function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [" <> ptN <> "]; return [" <> ptJ <> ", [" <> ptT2 <> ", str.substring(0, i), str.substring(i + sep.length)]]; }"
               else "",
             -- parseInt32: strict decimal grammar mirroring the language
             -- literal — optional '-', one or more ASCII digits, nothing else.
@@ -201,49 +213,49 @@ header builtIns =
             -- numbers are double-precision and represent every i32 (and the
             -- absolute minInt32 boundary 2147483648) exactly.
             if Set.member "parseInt32" builtIns
-              then "function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [0, [0]]; return [1, n | 0]; }"
+              then "function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [" <> ptL <> ", [" <> ptPE <> "]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [" <> ptL <> ", [" <> ptPE <> "]]; return [" <> ptR <> ", n | 0]; }"
               else "",
             -- parseUInt8: same shape but no sign accepted; range 0..255.
             if Set.member "parseUInt8" builtIns
-              then "function __parseUInt8(s){ if (!/^[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n > 255) return [0, [0]]; return [1, n & 0xFF]; }"
+              then "function __parseUInt8(s){ if (!/^[0-9]+$/.test(s)) return [" <> ptL <> ", [" <> ptPE <> "]]; const n = Number(s); if (n > 255) return [" <> ptL <> ", [" <> ptPE <> "]]; return [" <> ptR <> ", n & 0xFF]; }"
               else "",
             -- predUInt32: returns Left UnderflowError on 0, else Right (x - 1).
             -- '>>> 0' coerces to unsigned 32-bit (where '|0' would give signed).
             if Set.member "predUInt32" builtIns
-              then "function __predUInt32(x){ return x === 0 ? [0, [0]] : [1, ((x - 1) >>> 0)]; }"
+              then "function __predUInt32(x){ return x === 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", ((x - 1) >>> 0)]; }"
               else "",
             -- succUInt32: returns Left OverflowError on 4294967295, else Right (x + 1).
             if Set.member "succUInt32" builtIns
-              then "function __succUInt32(x){ return x === 4294967295 ? [0, [0]] : [1, ((x + 1) >>> 0)]; }"
+              then "function __succUInt32(x){ return x === 4294967295 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", ((x + 1) >>> 0)]; }"
               else "",
             -- eqUInt32: identical shape to eqInt32 — both inputs are already
             -- '>>> 0' coerced so '===' on JS Numbers gives native u32 equality.
             if Set.member "eqUInt32" builtIns
-              then "function __eqUInt32(a, b){ return a === b ? [0] : [1]; }"
+              then "function __eqUInt32(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
               else "",
             -- addUInt32: Either OverflowError UInt32. JS Numbers exactly
             -- represent the unmasked sum of two u32s (max ~2^33), so a
             -- direct '> 4294967295' check separates the branches.
             if Set.member "addUInt32" builtIns
-              then "function __addUInt32(a, b){ const s = a + b; return s > 4294967295 ? [0, [0]] : [1, (s >>> 0)]; }"
+              then "function __addUInt32(a, b){ const s = a + b; return s > 4294967295 ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", (s >>> 0)]; }"
               else "",
             -- subUInt32: Either UnderflowError UInt32. Difference is in
             -- -4294967295..4294967295; '< 0' picks the underflow branch.
             if Set.member "subUInt32" builtIns
-              then "function __subUInt32(a, b){ const d = a - b; return d < 0 ? [0, [0]] : [1, (d >>> 0)]; }"
+              then "function __subUInt32(a, b){ const d = a - b; return d < 0 ? [" <> ptL <> ", [" <> ptUE <> "]] : [" <> ptR <> ", (d >>> 0)]; }"
               else "",
             -- mulUInt32: Either OverflowError UInt32. Product of two u32
             -- values is at most ~2^64; JS Numbers only have 53-bit
             -- precision so we use BigInt to compute the exact product,
             -- then range-check before coercing back.
             if Set.member "mulUInt32" builtIns
-              then "function __mulUInt32(a, b){ const p = BigInt(a) * BigInt(b); return p > 4294967295n ? [0, [0]] : [1, (Number(p) >>> 0)]; }"
+              then "function __mulUInt32(a, b){ const p = BigInt(a) * BigInt(b); return p > 4294967295n ? [" <> ptL <> ", [" <> ptOE <> "]] : [" <> ptR <> ", (Number(p) >>> 0)]; }"
               else "",
             -- parseUInt32: same grammar as parseUInt8 — no sign, decimal
             -- digits only — range 0..4294967295. JS Numbers represent
             -- 4294967295 exactly, so direct '> 4294967295' is faithful.
             if Set.member "parseUInt32" builtIns
-              then "function __parseUInt32(s){ if (!/^[0-9]+$/.test(s)) return [0, [0]]; const n = Number(s); if (n > 4294967295) return [0, [0]]; return [1, (n >>> 0)]; }"
+              then "function __parseUInt32(s){ if (!/^[0-9]+$/.test(s)) return [" <> ptL <> ", [" <> ptPE <> "]]; const n = Number(s); if (n > 4294967295) return [" <> ptL <> ", [" <> ptPE <> "]]; return [" <> ptR <> ", (n >>> 0)]; }"
               else "",
             -- lengthCodePoints: spread iteration walks the string by code
             -- point — the JS string iterator yields a surrogate pair as a
@@ -282,7 +294,24 @@ header builtIns =
             -- Encoding mirrors the other backends: Right=[1, arg];
             -- Left=[0, [rowTag, [0]]] — three layers (inner CCon, row
             -- wrap, Left).
-            "function __entryArgEither(arg){ if (arg.length > 134217728) return [0, [" <> show stringTooLongTag <> ", [0]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [0, [" <> show unpairedSurrogateTag <> ", [0]]]; } return [1, arg]; }"
+            -- '__entryArgEither' is now used only by '__getArgs' (the
+            -- main-entry stub no longer wraps argv in 'Either' since
+            -- 'main : IO Never Unit' takes no parameter). Gate on the
+            -- same builtin so a program without 'IO.Args.getArgs'
+            -- doesn't ship the validator.
+            if Set.member "internalGetArgs" builtIns
+              then "function __entryArgEither(arg){ if (arg.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; } return [" <> ptR <> ", arg]; }"
+              else "",
+            -- __getArgs: zero-arg helper called by 'runIO''s 'IOGetArgs'
+            -- arm via 'BuiltIn.internalGetArgs'. Reads 'process.argv[2]'
+            -- (same slot as the entry-point glue) and routes through
+            -- '__entryArgEither' for the strict-UTF-16 validation. Per
+            -- the no-memoisation decision each call re-reads argv;
+            -- argv is invariant during execution, so repeat calls
+            -- return the same value deterministically.
+            if Set.member "internalGetArgs" builtIns
+              then "function __getArgs(){ return __entryArgEither(process.argv[2] ?? \"\"); }"
+              else ""
           ]
    in T.intercalate "\n" lns <> "\n"
 
@@ -295,14 +324,14 @@ cliFooter =
   unlines
     [ "",
       "if (typeof require !== 'undefined' && require.main === module) {",
-      "  const arg = process.argv[2] ?? \"\";",
-      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
-      -- user's main. '__entryArgEither' compares 'arg.length' against the
-      -- language-fixed cap and returns either 'Right arg' or row-tagged
-      -- 'Left StringTooLong'. The IO tree from main is walked by 'runIO'
-      -- (defined in the prelude as a regular Awsum function) which performs
-      -- any effects via 'BuiltIn.internalStdoutPrint'.
-      "  if (typeof main === 'function') v_runIO(main(__entryArgEither(arg)));",
+      -- v_main is a zero-arg value (CValDef in Core) that the JS
+      -- codegen emits as a top-level 'const main = …' — i.e. the IO
+      -- tree is the value of that binding, not a function. 'v_runIO'
+      -- walks the tree for effects. User code reads argv through
+      -- 'IO.Args.getArgs' inside the chain; that lowers to an
+      -- 'IOGetArgs' constructor whose runIO arm calls '__getArgs'
+      -- (which reads 'process.argv[2]' lazily on each call).
+      "  if (typeof main !== 'undefined') v_runIO(main);",
       "}"
     ]
 
@@ -466,6 +495,10 @@ emitExpr = \case
         case xs of
           [x] -> "__print(" <> emitExpr x <> ")"
           _ -> error "__print: arity mismatch"
+      CBuiltIn "internalGetArgs" ->
+        case xs of
+          [] -> "__getArgs()"
+          _ -> error "__getArgs: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of

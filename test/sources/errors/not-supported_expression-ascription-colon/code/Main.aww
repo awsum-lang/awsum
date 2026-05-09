@@ -7,5 +7,5 @@
 -- the binding site (`foo : T = …`) or at the function signature.
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (showInt32 (42 : Int32))
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (42 : Int32))

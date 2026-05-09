@@ -6,8 +6,8 @@ render r = case r of
   Left _ -> Right "err"
   Right v -> "ok:" ++ showInt32 v
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input =
+main : IO Never Unit
+main =
   let res : Either StringTooLong String = (do
         a <- render (parseInt32 "42")
         b <- render (parseInt32 "-42")

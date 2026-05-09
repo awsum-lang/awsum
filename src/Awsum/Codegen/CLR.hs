@@ -19,8 +19,8 @@ import Relude
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Produce a textual CIL assembly from a Core program.
-codegenCLR :: CoreProgram -> Text
-codegenCLR prog@(CoreProgram decls) =
+codegenCLR :: PreludeTags -> CoreProgram -> Text
+codegenCLR ptags prog@(CoreProgram decls) =
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
@@ -36,64 +36,66 @@ codegenCLR prog@(CoreProgram decls) =
             "",
             initMethod,
             "",
-            gate (Set.member "concatString" builtIns) concatMethod,
+            gate (Set.member "concatString" builtIns) (concatMethod ptags),
             "",
-            gate (Set.member "internalStdoutPrint" builtIns) printMethod,
+            gate (Set.member "internalStdoutPrint" builtIns) (printMethod ptags),
             "",
-            gate (Set.member "predInt32" builtIns) predInt32Method,
+            gate (Set.member "predInt32" builtIns) (predInt32Method ptags),
             "",
-            gate (Set.member "predUInt8" builtIns) predUInt8Method,
+            gate (Set.member "predUInt8" builtIns) (predUInt8Method ptags),
             "",
-            gate (Set.member "predUInt32" builtIns) predUInt32Method,
+            gate (Set.member "predUInt32" builtIns) (predUInt32Method ptags),
             "",
-            gate (Set.member "succInt32" builtIns) succInt32Method,
+            gate (Set.member "succInt32" builtIns) (succInt32Method ptags),
             "",
-            gate (Set.member "succUInt8" builtIns) succUInt8Method,
+            gate (Set.member "succUInt8" builtIns) (succUInt8Method ptags),
             "",
-            gate (Set.member "succUInt32" builtIns) succUInt32Method,
+            gate (Set.member "succUInt32" builtIns) (succUInt32Method ptags),
             "",
-            gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "IL_eq_i32"),
+            gate (Set.member "eqInt32" builtIns) (eqMethod ptags "__eqInt32" "IL_eq_i32"),
             "",
-            gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "IL_eq_u8"),
+            gate (Set.member "eqUInt8" builtIns) (eqMethod ptags "__eqUInt8" "IL_eq_u8"),
             "",
-            gate (Set.member "eqUInt32" builtIns) (eqMethod "__eqUInt32" "IL_eq_u32"),
+            gate (Set.member "eqUInt32" builtIns) (eqMethod ptags "__eqUInt32" "IL_eq_u32"),
             "",
-            gate (Set.member "addInt32" builtIns) addInt32Method,
+            gate (Set.member "addInt32" builtIns) (addInt32Method ptags),
             "",
-            gate (Set.member "subInt32" builtIns) subInt32Method,
+            gate (Set.member "subInt32" builtIns) (subInt32Method ptags),
             "",
-            gate (Set.member "mulInt32" builtIns) mulInt32Method,
+            gate (Set.member "mulInt32" builtIns) (mulInt32Method ptags),
             "",
-            gate (Set.member "negInt32" builtIns) negInt32Method,
+            gate (Set.member "negInt32" builtIns) (negInt32Method ptags),
             "",
-            gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            gate (Set.member "addUInt8" builtIns) (addUInt8Method ptags),
             "",
-            gate (Set.member "subUInt8" builtIns) subUInt8Method,
+            gate (Set.member "subUInt8" builtIns) (subUInt8Method ptags),
             "",
-            gate (Set.member "mulUInt8" builtIns) mulUInt8Method,
+            gate (Set.member "mulUInt8" builtIns) (mulUInt8Method ptags),
             "",
-            gate (Set.member "addUInt32" builtIns) addUInt32Method,
+            gate (Set.member "addUInt32" builtIns) (addUInt32Method ptags),
             "",
-            gate (Set.member "subUInt32" builtIns) subUInt32Method,
+            gate (Set.member "subUInt32" builtIns) (subUInt32Method ptags),
             "",
-            gate (Set.member "mulUInt32" builtIns) mulUInt32Method,
+            gate (Set.member "mulUInt32" builtIns) (mulUInt32Method ptags),
             "",
             gate (Set.member "showUInt32" builtIns) showUInt32Method,
             "",
-            gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            gate (Set.member "splitOnFirst" builtIns) (splitOnFirstMethod ptags),
             gate (Set.member "lengthCodePoints" builtIns) lengthCodePointsMethod,
             gate (Set.member "lengthUtf16CodeUnits" builtIns) lengthUtf16CodeUnitsMethod,
             gate (Set.member "lengthUtf8Bytes" builtIns) lengthUtf8BytesMethod,
             "",
-            gate (Set.member "parseInt32" builtIns) parseInt32Method,
+            gate (Set.member "parseInt32" builtIns) (parseInt32Method ptags),
             "",
-            gate (Set.member "parseUInt8" builtIns) parseUInt8Method,
+            gate (Set.member "parseUInt8" builtIns) (parseUInt8Method ptags),
             "",
-            gate (Set.member "parseUInt32" builtIns) parseUInt32Method,
+            gate (Set.member "parseUInt32" builtIns) (parseUInt32Method ptags),
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
-            entryArgEitherMethod,
+            gate (Set.member "internalGetArgs" builtIns) (entryArgEitherMethod ptags),
+            "",
+            gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
             "",
             mainMethod,
             "",
@@ -110,6 +112,56 @@ data Ctx = Ctx
     cFunDefs :: Set Text,
     cArities :: Map Text Int
   }
+
+-- | Emit the CIL instruction for "push integer N onto the eval stack".
+-- Picks the tightest encoding the CIL offers: 'ldc.i4.<N>' for [0, 8],
+-- 'ldc.i4.m1' for -1, 'ldc.i4.s <byte>' for one-byte signed,
+-- otherwise full 'ldc.i4 <int32>'.
+pushIntInsn :: Int -> Text
+pushIntInsn n
+  | n >= 0 && n <= 8 = "    ldc.i4." <> show n
+  | n == -1 = "    ldc.i4.m1"
+  | n >= -128 && n <= 127 = "    ldc.i4.s " <> show n
+  | otherwise = "    ldc.i4 " <> show n
+
+-- | Lines for "push tag @n@, then box it as @System.Int32@". Used
+-- every time a constructor tag is stored into an @object[]@ slot at
+-- the call site that builds a CCon-shaped value.
+boxedTagLines :: Int -> [Text]
+boxedTagLines n =
+  [ pushIntInsn n,
+    "    box [System.Runtime]System.Int32"
+  ]
+
+-- | Lines that build @object[1] = [box(tag)]@ (a nullary 'CCon')
+-- and leave it on the stack.
+makeNullaryCellLines :: Int -> [Text]
+makeNullaryCellLines tag =
+  [ "    ldc.i4.1",
+    "    newarr [System.Runtime]System.Object",
+    "    dup",
+    "    ldc.i4.0"
+  ]
+    <> boxedTagLines tag
+    <> ["    stelem.ref"]
+
+-- | Lines that build @object[2] = [box(tag), <value loaded by ldlocInsn>]@
+-- (a one-field 'CCon') and leave it on the stack. @ldlocInsn@ is the
+-- raw line emitting the load — typically @"    ldloc.<n>"@.
+makeUnaryCellFromLocalLines :: Int -> Text -> [Text]
+makeUnaryCellFromLocalLines tag ldlocInsn =
+  [ "    ldc.i4.2",
+    "    newarr [System.Runtime]System.Object",
+    "    dup",
+    "    ldc.i4.0"
+  ]
+    <> boxedTagLines tag
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         ldlocInsn,
+         "    stelem.ref"
+       ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed sections
@@ -152,153 +204,119 @@ initMethod =
 --   are UTF-16 natively), so the check unit matches the language-level
 --   cap directly. Both lengths are widened to int64 before summing to
 --   stay defensive against any input that overshoots the invariant.
-concatMethod :: Text
-concatMethod =
-  unlines
-    [ "  .method private hidebysig static object __concat(object, object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (object V_0)",
-      -- UTF-16 length of arg 0 (widened to i8).
-      "    ldarg.0",
-      "    castclass [System.Runtime]System.String",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    conv.i8",
-      -- UTF-16 length of arg 1 (widened to i8).
-      "    ldarg.1",
-      "    castclass [System.Runtime]System.String",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    conv.i8",
-      "    add",
-      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
-      -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
-      -- 'stdlib/Prelude.aww'.
-      "    ldc.i8 134217728",
-      "    bgt.un IL_concat_too_long",
-      -- Length OK: do String.Concat and wrap in Right.
-      "    ldarg.0",
-      "    ldarg.1",
-      "    call string [System.Runtime]System.String::Concat(object, object)",
-      "    stloc.0",
-      -- Build Right(result): object[2] = [box(1), result]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    stelem.ref",
-      "    ret",
-      "  IL_concat_too_long:",
-      -- StringTooLong cell: object[1] = [box(0)]
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.0",
-      -- Left cell: object[2] = [box(0), StringTooLong cell]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+concatMethod :: PreludeTags -> Text
+concatMethod ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __concat(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (object V_0)",
+        -- UTF-16 length of arg 0 (widened to i8).
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+        "    conv.i8",
+        -- UTF-16 length of arg 1 (widened to i8).
+        "    ldarg.1",
+        "    castclass [System.Runtime]System.String",
+        "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+        "    conv.i8",
+        "    add",
+        -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
+        -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+        -- 'stdlib/Prelude.aww'.
+        "    ldc.i8 134217728",
+        "    bgt.un IL_concat_too_long",
+        -- Length OK: do String.Concat and wrap in Right.
+        "    ldarg.0",
+        "    ldarg.1",
+        "    call string [System.Runtime]System.String::Concat(object, object)",
+        "    stloc.0",
+        -- Build Right(result): object[2] = [box(rightTag), result]
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    stelem.ref",
+         "    ret",
+         "  IL_concat_too_long:"
+       ]
+    -- Inner StringTooLong CCon, then wrap in Left.
+    <> makeNullaryCellLines (ptStringTooLong ptags)
+    <> ["    stloc.0"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.0"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- | __print: low-level platform primitive driven by the prelude's
 --   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
 --   (object[1] = [boxed Int32 0]) so the surrounding `case … of Unit
 --   -> next` arm in `runIO` dispatches through the standard CCase
 --   tag check.
-printMethod :: Text
-printMethod =
-  unlines
-    [ "  .method private hidebysig static object __print(object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    ldarg.0",
-      "    call void [System.Console]System.Console::Write(object)",
-      -- Build Unit value: object[1] = [boxed Int32 0]
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+printMethod :: PreludeTags -> Text
+printMethod ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __print(object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    ldarg.0",
+        "    call void [System.Console]System.Console::Write(object)"
+      ]
+    <> makeNullaryCellLines (ptUnit ptags)
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- predInt32: Int32 -> Either UnderflowError Int32.
 --   Containers are object[] (newarr) with boxed Int32 tag at [0] and
 --   fields at [1..], matching user CCon emission on the CLR. Tags:
 --   Left=0, Right=1, UnderflowError=0.
-predInt32Method :: Text
-predInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __predInt32(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4 -2147483648",
-      "    bne.un.s IL_pred_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_pred_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldc.i4.1",
-      "    sub",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+predInt32Method :: PreludeTags -> Text
+predInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __predInt32(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4 -2147483648",
+        "    bne.un.s IL_pred_ok"
+      ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_pred_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldc.i4.1",
+         "    sub",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- predUInt8: UInt8 -> Either UnderflowError UInt8.
 --   Mirrors 'predInt32Method' except the boundary check is against 0.
@@ -306,207 +324,156 @@ predInt32Method =
 --   the unbox is the same. 'bne.un.s' against a pushed 0 (short form
 --   ldc.i4.0) jumps to the ok block when the value is non-zero;
 --   otherwise we fall through to the overflow block.
-predUInt8Method :: Text
-predUInt8Method =
-  unlines
-    [ "  .method private hidebysig static object __predUInt8(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4.0",
-      "    bne.un.s IL_predu8_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_predu8_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldc.i4.1",
-      "    sub",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+predUInt8Method :: PreludeTags -> Text
+predUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __predUInt8(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4.0",
+        "    bne.un.s IL_predu8_ok"
+      ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_predu8_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldc.i4.1",
+         "    sub",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- succInt32: Int32 -> Either OverflowError Int32.
 --   Mirror of 'predInt32Method' with INT32_MAX as the boundary and 'add'
 --   for the non-overflow branch. OverflowError tag is 0 (single-
 --   constructor type), so the Left-branch encoding is identical to the
 --   UnderflowError case in predInt32.
-succInt32Method :: Text
-succInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __succInt32(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4 2147483647",
-      "    bne.un.s IL_succ_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_succ_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldc.i4.1",
-      "    add",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+succInt32Method :: PreludeTags -> Text
+succInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __succInt32(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4 2147483647",
+        "    bne.un.s IL_succ_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_succ_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldc.i4.1",
+         "    add",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- succUInt8: UInt8 -> Either OverflowError UInt8.
 --   Mirrors 'succInt32Method' except the boundary is 255. 'ldc.i4 255' is
 --   used (the short form 'ldc.i4.s' operand is signed byte and would push
 --   -1 instead of 255). No mask on (v + 1) — when v <= 254 the result
 --   is in 1..255.
-succUInt8Method :: Text
-succUInt8Method =
-  unlines
-    [ "  .method private hidebysig static object __succUInt8(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4 255",
-      "    bne.un.s IL_succu8_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_succu8_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldc.i4.1",
-      "    add",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+succUInt8Method :: PreludeTags -> Text
+succUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __succUInt8(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4 255",
+        "    bne.un.s IL_succu8_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_succu8_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldc.i4.1",
+         "    add",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- eqInt32 / eqUInt8: two integers of the same type → Bool.
 --   On the CLR both Int32 and UInt8 values are boxed as Int32 (that's how
 --   CIntLit emits them), so the two methods share a single builder
 --   parameterised by name and a label suffix. Returns a one-slot object[]
 --   with boxed tag 0 (True) on equal, 1 (False) otherwise.
-eqMethod :: Text -> Text -> Text
-eqMethod name lbl =
-  unlines
-    [ "  .method private hidebysig static object " <> name <> "(object, object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    bne.un.s " <> lbl <> "_ne",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  " <> lbl <> "_ne:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+eqMethod :: PreludeTags -> Text -> Text -> Text
+eqMethod ptags name lbl =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object " <> name <> "(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    bne.un.s " <> lbl <> "_ne"
+      ]
+    <> makeNullaryCellLines (ptTrue ptags)
+    <> [ "    ret",
+         "  " <> lbl <> "_ne:"
+       ]
+    <> makeNullaryCellLines (ptFalse ptags)
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Signed overflow detected with the XOR trick: '(a ^ sum) & (b ^ sum)'
@@ -517,149 +484,106 @@ eqMethod name lbl =
 --   inner @CCon@ (single-ctor tag 0), row (FNV-1a tag of label name),
 --   outer Left. Avoids 'add.ovf' / try-catch — keeps the method
 --   single-block and verifiable.
-addInt32Method :: Text
-addInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __addInt32(object, object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.1",
-      "    ldloc.0",
-      "    ldloc.1",
-      "    add",
-      "    stloc.2",
-      "    ldloc.0",
-      "    ldloc.2",
-      "    xor",
-      "    ldloc.1",
-      "    ldloc.2",
-      "    xor",
-      "    and",
-      "    ldc.i4.0",
-      "    blt.s IL_addi32_over",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.2",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_addi32_over:",
-      "    ldloc.0",
-      "    ldc.i4.0",
-      "    blt.s IL_addi32_under",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.3",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    ret",
-      "  IL_addi32_under:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.3",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+addInt32Method :: PreludeTags -> Text
+addInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __addInt32(object, object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.1",
+        "    ldloc.0",
+        "    ldloc.1",
+        "    add",
+        "    stloc.2",
+        "    ldloc.0",
+        "    ldloc.2",
+        "    xor",
+        "    ldloc.1",
+        "    ldloc.2",
+        "    xor",
+        "    and",
+        "    ldc.i4.0",
+        "    blt.s IL_addi32_over",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.2",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_addi32_over:",
+         "    ldloc.0",
+         "    ldc.i4.0",
+         "    blt.s IL_addi32_under"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.3"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.3"
+    <> [ "    ret",
+         "  IL_addi32_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.3"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.3"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Both operands are 0..255 so 'add' yields 0..510 in i32 and a single
 --   'ble' against 255 selects the branch. No mask on the ok path — the
 --   sum is already a valid UInt8 value when the comparison falls through.
-addUInt8Method :: Text
-addUInt8Method =
-  unlines
-    [ "  .method private hidebysig static object __addUInt8(object, object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    add",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4 255",
-      "    ble.s IL_addu8_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_addu8_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+addUInt8Method :: PreludeTags -> Text
+addUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __addUInt8(object, object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    add",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4 255",
+        "    ble.s IL_addu8_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_addu8_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- subInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   XOR-based signed-overflow detection: '(a ^ b) & (a ^ diff)' has its
@@ -667,92 +591,63 @@ addUInt8Method =
 --   off 'a >= 0' — when subtraction overflows the signs of @a@ and @b@
 --   must differ, so @a >= 0@ implies @b < 0@ which implies positive
 --   overflow. Same single-block, no try/catch shape as 'addInt32Method'.
-subInt32Method :: Text
-subInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __subInt32(object, object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.1",
-      "    ldloc.0",
-      "    ldloc.1",
-      "    sub",
-      "    stloc.2",
-      "    ldloc.0",
-      "    ldloc.1",
-      "    xor",
-      "    ldloc.0",
-      "    ldloc.2",
-      "    xor",
-      "    and",
-      "    ldc.i4.0",
-      "    blt.s IL_subi32_over",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.2",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_subi32_over:",
-      "    ldloc.0",
-      "    ldc.i4.0",
-      "    blt.s IL_subi32_under",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.3",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    ret",
-      "  IL_subi32_under:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.3",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+subInt32Method :: PreludeTags -> Text
+subInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __subInt32(object, object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (int32 V_0, int32 V_1, int32 V_2, object V_3)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.1",
+        "    ldloc.0",
+        "    ldloc.1",
+        "    sub",
+        "    stloc.2",
+        "    ldloc.0",
+        "    ldloc.1",
+        "    xor",
+        "    ldloc.0",
+        "    ldloc.2",
+        "    xor",
+        "    and",
+        "    ldc.i4.0",
+        "    blt.s IL_subi32_over",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.2",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_subi32_over:",
+         "    ldloc.0",
+         "    ldc.i4.0",
+         "    blt.s IL_subi32_under"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.3"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.3"
+    <> [ "    ret",
+         "  IL_subi32_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.3"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.3"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- mulInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   Promote both operands to int64, multiply at long width, range-check
@@ -760,260 +655,189 @@ subInt32Method =
 --   values. Direction (over vs under) is read off the lcmp result —
 --   ifgt → Overflow, iflt → Underflow. ArithError tags follow
 --   declaration order: Underflow = 0, Overflow = 1.
-mulInt32Method :: Text
-mulInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __mulInt32(object, object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, int32 V_1, int64 V_2, object V_3)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.1",
-      "    ldloc.0",
-      "    conv.i8",
-      "    ldloc.1",
-      "    conv.i8",
-      "    mul",
-      "    stloc.2",
-      "    ldloc.2",
-      "    ldc.i4 2147483647",
-      "    conv.i8",
-      "    bgt IL_muli32_over",
-      "    ldloc.2",
-      "    ldc.i4 -2147483648",
-      "    conv.i8",
-      "    blt IL_muli32_under",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.2",
-      "    conv.i4",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_muli32_over:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.3",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    ret",
-      "  IL_muli32_under:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.3",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+mulInt32Method :: PreludeTags -> Text
+mulInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __mulInt32(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, int32 V_1, int64 V_2, object V_3)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.1",
+        "    ldloc.0",
+        "    conv.i8",
+        "    ldloc.1",
+        "    conv.i8",
+        "    mul",
+        "    stloc.2",
+        "    ldloc.2",
+        "    ldc.i4 2147483647",
+        "    conv.i8",
+        "    bgt IL_muli32_over",
+        "    ldloc.2",
+        "    ldc.i4 -2147483648",
+        "    conv.i8",
+        "    blt IL_muli32_under",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.2",
+         "    conv.i4",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_muli32_over:"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.3"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.3"
+    <> [ "    ret",
+         "  IL_muli32_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.3"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.3"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- negInt32: Int32 -> Either OverflowError Int32.
 --   Mirror of 'succInt32Method' with INT32_MIN as the boundary and 'neg'
 --   for the non-overflow branch. OverflowError is single-constructor, so
 --   its tag is 0 — Left-branch encoding is identical to predInt32.
-negInt32Method :: Text
-negInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __negInt32(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4 -2147483648",
-      "    bne.un.s IL_neg_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_neg_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    neg",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+negInt32Method :: PreludeTags -> Text
+negInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __negInt32(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4 -2147483648",
+        "    bne.un.s IL_neg_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_neg_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    neg",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
 --   Both operands are 0..255 so 'sub' yields a value in -255..255 in i32
 --   and a single 'blt' against 0 picks the underflow branch. No mask on
 --   the ok path — the result is already a valid UInt8 by construction.
-subUInt8Method :: Text
-subUInt8Method =
-  unlines
-    [ "  .method private hidebysig static object __subUInt8(object, object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    sub",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4.0",
-      "    blt.s IL_subu8_under",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_subu8_under:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+subUInt8Method :: PreludeTags -> Text
+subUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __subUInt8(object, object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    sub",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4.0",
+        "    blt.s IL_subu8_under",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_subu8_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Both operands are 0..255 so 'mul' yields 0..65025 in i32 with no
 --   CIL-level overflow; one 'ble.s' against 255 picks the branch.
 --   Same shape as 'addUInt8Method' with 'mul' replacing 'add'.
-mulUInt8Method :: Text
-mulUInt8Method =
-  unlines
-    [ "  .method private hidebysig static object __mulUInt8(object, object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    mul",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4 255",
-      "    ble.s IL_mulu8_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_mulu8_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+mulUInt8Method :: PreludeTags -> Text
+mulUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __mulUInt8(object, object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    mul",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4 255",
+        "    ble.s IL_mulu8_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_mulu8_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- showUInt32: UInt32 -> String. The Awsum literal lowers to a boxed
 --   System.Int32 (same as Int32 / UInt8). Re-box as System.UInt32 (bit
@@ -1039,607 +863,495 @@ showUInt32Method =
 --   structurally identical to 'predUInt8Method' — only the labels
 --   differ. (v - 1) wraps modulo 2^32 in i32, but on the ok path
 --   v >= 1 so the result is in [0, 2^32-2], no wrap.
-predUInt32Method :: Text
-predUInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __predUInt32(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4.0",
-      "    bne.un.s IL_predu32_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_predu32_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldc.i4.1",
-      "    sub",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+predUInt32Method :: PreludeTags -> Text
+predUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __predUInt32(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4.0",
+        "    bne.un.s IL_predu32_ok"
+      ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_predu32_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldc.i4.1",
+         "    sub",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
 --   encoded as 'ldc.i4.m1' (= -1, identical bit pattern when interpreted
 --   as u32). On the ok path v + 1 wraps in i32, but since v != -1 the
 --   result is in [1, 2^32-1] — no wrap.
-succUInt32Method :: Text
-succUInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __succUInt32(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int32 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i4.m1",
-      "    bne.un.s IL_succu32_ok",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  IL_succu32_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldc.i4.1",
-      "    add",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+succUInt32Method :: PreludeTags -> Text
+succUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __succUInt32(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int32 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i4.m1",
+        "    bne.un.s IL_succu32_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  IL_succu32_ok:",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldc.i4.1",
+         "    add",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
 --   both operands to uint64 (`conv.u8` zero-extends a u32 bit pattern),
 --   add, compare against 4294967295 with `bgt.un` (unsigned greater).
 --   The sum lives in [0, 2*2^32-2] so the i64 add doesn't itself
 --   overflow.
-addUInt32Method :: Text
-addUInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __addUInt32(object, object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int64 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    conv.u8",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    conv.u8",
-      "    add",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i8 4294967295",
-      "    bgt.un.s IL_addu32_over",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    conv.u4",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_addu32_over:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+addUInt32Method :: PreludeTags -> Text
+addUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __addUInt32(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int64 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    conv.u8",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    conv.u8",
+        "    add",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i8 4294967295",
+        "    bgt.un.s IL_addu32_over",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    conv.u4",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_addu32_over:"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
 --   `a < b` with `blt.un.s` — unsigned less-than on i32 stack values
 --   uses the bit pattern as u32. On the ok path 'sub' at i32 gives the
 --   correct u32 difference (bit pattern of a - b mod 2^32 equals a - b
 --   when a >= b unsigned).
-subUInt32Method :: Text
-subUInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __subUInt32(object, object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (int32 V_0, int32 V_1, object V_2)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.0",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    stloc.1",
-      "    ldloc.0",
-      "    ldloc.1",
-      "    blt.un.s IL_subu32_under",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    ldloc.1",
-      "    sub",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_subu32_under:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.2",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.2",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+subUInt32Method :: PreludeTags -> Text
+subUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __subUInt32(object, object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (int32 V_0, int32 V_1, object V_2)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.0",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    stloc.1",
+        "    ldloc.0",
+        "    ldloc.1",
+        "    blt.un.s IL_subu32_under",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    ldloc.1",
+         "    sub",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_subu32_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["    stloc.2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.2"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
 --   both operands to uint64 via 'conv.u8', multiply at int64 stack
 --   width (the bit pattern of the result is the low 64 bits of the
 --   true u32*u32 product, which fits exactly in u64). Compare against
 --   4294967295 with 'bgt.un'.
-mulUInt32Method :: Text
-mulUInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __mulUInt32(object, object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (int64 V_0, object V_1)",
-      "    ldarg.0",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    conv.u8",
-      "    ldarg.1",
-      "    unbox.any [System.Runtime]System.Int32",
-      "    conv.u8",
-      "    mul",
-      "    stloc.0",
-      "    ldloc.0",
-      "    ldc.i8 4294967295",
-      "    bgt.un.s IL_mulu32_over",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.0",
-      "    conv.u4",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_mulu32_over:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.1",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.1",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+mulUInt32Method :: PreludeTags -> Text
+mulUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __mulUInt32(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (int64 V_0, object V_1)",
+        "    ldarg.0",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    conv.u8",
+        "    ldarg.1",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    conv.u8",
+        "    mul",
+        "    stloc.0",
+        "    ldloc.0",
+        "    ldc.i8 4294967295",
+        "    bgt.un.s IL_mulu32_over",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.0",
+         "    conv.u4",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_mulu32_over:"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["    stloc.1"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.1"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- parseUInt32: String -> Either ParseError UInt32. Same shape as
 --   'parseUInt8Method' minus the > 255 cap, with an int64 accumulator
 --   and a > 4294967295 cap (max running magnitude is
 --   4294967295 * 10 + 9 = 42949672959, fits in i64 signed).
-parseUInt32Method :: Text
-parseUInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __parseUInt32(object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (string V_0, int32 V_1, int32 V_2, int64 V_3, int32 V_4, object V_5)",
-      "    ldarg.0",
-      "    castclass [System.Runtime]System.String",
-      "    stloc.0",
-      "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    stloc.1",
-      "    ldloc.1",
-      "    brfalse IL_parseUInt32_fail",
-      "    ldc.i4.0",
-      "    stloc.2",
-      "    ldc.i4.0",
-      "    conv.i8",
-      "    stloc.3",
-      "  IL_parseUInt32_loop:",
-      "    ldloc.2",
-      "    ldloc.1",
-      "    bge IL_parseUInt32_ok",
-      "    ldloc.0",
-      "    ldloc.2",
-      "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
-      "    stloc.s 4",
-      "    ldloc.s 4",
-      "    ldc.i4.s 48",
-      "    blt IL_parseUInt32_fail",
-      "    ldloc.s 4",
-      "    ldc.i4.s 57",
-      "    bgt IL_parseUInt32_fail",
-      "    ldloc.3",
-      "    ldc.i4.s 10",
-      "    conv.i8",
-      "    mul",
-      "    ldloc.s 4",
-      "    ldc.i4.s 48",
-      "    sub",
-      "    conv.i8",
-      "    add",
-      "    stloc.3",
-      "    ldloc.3",
-      "    ldc.i8 4294967295",
-      "    bgt IL_parseUInt32_fail",
-      "    ldloc.2",
-      "    ldc.i4.1",
-      "    add",
-      "    stloc.2",
-      "    br IL_parseUInt32_loop",
-      "  IL_parseUInt32_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    conv.u4",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_parseUInt32_fail:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.s 5",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 5",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+parseUInt32Method :: PreludeTags -> Text
+parseUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __parseUInt32(object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (string V_0, int32 V_1, int32 V_2, int64 V_3, int32 V_4, object V_5)",
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    stloc.0",
+        "    ldloc.0",
+        "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+        "    stloc.1",
+        "    ldloc.1",
+        "    brfalse IL_parseUInt32_fail",
+        "    ldc.i4.0",
+        "    stloc.2",
+        "    ldc.i4.0",
+        "    conv.i8",
+        "    stloc.3",
+        "  IL_parseUInt32_loop:",
+        "    ldloc.2",
+        "    ldloc.1",
+        "    bge IL_parseUInt32_ok",
+        "    ldloc.0",
+        "    ldloc.2",
+        "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
+        "    stloc.s 4",
+        "    ldloc.s 4",
+        "    ldc.i4.s 48",
+        "    blt IL_parseUInt32_fail",
+        "    ldloc.s 4",
+        "    ldc.i4.s 57",
+        "    bgt IL_parseUInt32_fail",
+        "    ldloc.3",
+        "    ldc.i4.s 10",
+        "    conv.i8",
+        "    mul",
+        "    ldloc.s 4",
+        "    ldc.i4.s 48",
+        "    sub",
+        "    conv.i8",
+        "    add",
+        "    stloc.3",
+        "    ldloc.3",
+        "    ldc.i8 4294967295",
+        "    bgt IL_parseUInt32_fail",
+        "    ldloc.2",
+        "    ldc.i4.1",
+        "    add",
+        "    stloc.2",
+        "    br IL_parseUInt32_loop",
+        "  IL_parseUInt32_ok:",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.3",
+         "    conv.u4",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_parseUInt32_fail:"
+       ]
+    <> makeNullaryCellLines (ptParseError ptags)
+    <> ["    stloc.s 5"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.s 5"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- parseInt32: String -> Either ParseError Int32. Handrolled decimal
 --   parser; same shape as the LLVM and JVM helpers — long accumulator
 --   capped at the magnitude `|minInt32|`. Constant `2147483648L` is
 --   built with the shift trick `1 << 31` (avoids needing a CPLong-style
 --   literal in the binary assembler).
-parseInt32Method :: Text
-parseInt32Method =
-  unlines
-    [ "  .method private hidebysig static object __parseInt32(object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int64 V_4, int32 V_5, object V_6)",
-      "    ldarg.0",
-      "    castclass [System.Runtime]System.String",
-      "    stloc.0",
-      "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    stloc.1",
-      "    ldloc.1",
-      "    brfalse IL_parseInt32_fail",
-      "    ldc.i4.0",
-      "    stloc.2",
-      "    ldc.i4.0",
-      "    stloc.3",
-      "    ldloc.0",
-      "    ldc.i4.0",
-      "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
-      "    ldc.i4.s 45",
-      "    bne.un.s IL_parseInt32_init_acc",
-      "    ldc.i4.1",
-      "    stloc.3",
-      "    ldc.i4.1",
-      "    stloc.2",
-      "    ldloc.1",
-      "    ldc.i4.1",
-      "    beq IL_parseInt32_fail",
-      "  IL_parseInt32_init_acc:",
-      "    ldc.i4.0",
-      "    conv.i8",
-      "    stloc.s 4",
-      "  IL_parseInt32_loop:",
-      "    ldloc.2",
-      "    ldloc.1",
-      "    bge IL_parseInt32_after_loop",
-      "    ldloc.0",
-      "    ldloc.2",
-      "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
-      "    stloc.s 5",
-      "    ldloc.s 5",
-      "    ldc.i4.s 48",
-      "    blt IL_parseInt32_fail",
-      "    ldloc.s 5",
-      "    ldc.i4.s 57",
-      "    bgt IL_parseInt32_fail",
-      "    ldloc.s 4",
-      "    ldc.i4.s 10",
-      "    conv.i8",
-      "    mul",
-      "    ldloc.s 5",
-      "    ldc.i4.s 48",
-      "    sub",
-      "    conv.i8",
-      "    add",
-      "    stloc.s 4",
-      "    ldloc.s 4",
-      "    ldc.i4.1",
-      "    conv.i8",
-      "    ldc.i4.s 31",
-      "    shl",
-      "    bgt IL_parseInt32_fail",
-      "    ldloc.2",
-      "    ldc.i4.1",
-      "    add",
-      "    stloc.2",
-      "    br IL_parseInt32_loop",
-      "  IL_parseInt32_after_loop:",
-      "    ldloc.3",
-      "    brfalse IL_parseInt32_pos_check",
-      "    ldloc.s 4",
-      "    neg",
-      "    stloc.s 4",
-      "    br IL_parseInt32_build_right",
-      "  IL_parseInt32_pos_check:",
-      "    ldloc.s 4",
-      "    ldc.i4 2147483647",
-      "    conv.i8",
-      "    bgt IL_parseInt32_fail",
-      "  IL_parseInt32_build_right:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 4",
-      "    conv.i4",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_parseInt32_fail:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.s 6",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 6",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+parseInt32Method :: PreludeTags -> Text
+parseInt32Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __parseInt32(object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int64 V_4, int32 V_5, object V_6)",
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    stloc.0",
+        "    ldloc.0",
+        "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+        "    stloc.1",
+        "    ldloc.1",
+        "    brfalse IL_parseInt32_fail",
+        "    ldc.i4.0",
+        "    stloc.2",
+        "    ldc.i4.0",
+        "    stloc.3",
+        "    ldloc.0",
+        "    ldc.i4.0",
+        "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
+        "    ldc.i4.s 45",
+        "    bne.un.s IL_parseInt32_init_acc",
+        "    ldc.i4.1",
+        "    stloc.3",
+        "    ldc.i4.1",
+        "    stloc.2",
+        "    ldloc.1",
+        "    ldc.i4.1",
+        "    beq IL_parseInt32_fail",
+        "  IL_parseInt32_init_acc:",
+        "    ldc.i4.0",
+        "    conv.i8",
+        "    stloc.s 4",
+        "  IL_parseInt32_loop:",
+        "    ldloc.2",
+        "    ldloc.1",
+        "    bge IL_parseInt32_after_loop",
+        "    ldloc.0",
+        "    ldloc.2",
+        "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
+        "    stloc.s 5",
+        "    ldloc.s 5",
+        "    ldc.i4.s 48",
+        "    blt IL_parseInt32_fail",
+        "    ldloc.s 5",
+        "    ldc.i4.s 57",
+        "    bgt IL_parseInt32_fail",
+        "    ldloc.s 4",
+        "    ldc.i4.s 10",
+        "    conv.i8",
+        "    mul",
+        "    ldloc.s 5",
+        "    ldc.i4.s 48",
+        "    sub",
+        "    conv.i8",
+        "    add",
+        "    stloc.s 4",
+        "    ldloc.s 4",
+        "    ldc.i4.1",
+        "    conv.i8",
+        "    ldc.i4.s 31",
+        "    shl",
+        "    bgt IL_parseInt32_fail",
+        "    ldloc.2",
+        "    ldc.i4.1",
+        "    add",
+        "    stloc.2",
+        "    br IL_parseInt32_loop",
+        "  IL_parseInt32_after_loop:",
+        "    ldloc.3",
+        "    brfalse IL_parseInt32_pos_check",
+        "    ldloc.s 4",
+        "    neg",
+        "    stloc.s 4",
+        "    br IL_parseInt32_build_right",
+        "  IL_parseInt32_pos_check:",
+        "    ldloc.s 4",
+        "    ldc.i4 2147483647",
+        "    conv.i8",
+        "    bgt IL_parseInt32_fail",
+        "  IL_parseInt32_build_right:",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.s 4",
+         "    conv.i4",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_parseInt32_fail:"
+       ]
+    <> makeNullaryCellLines (ptParseError ptags)
+    <> ["    stloc.s 6"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.s 6"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- parseUInt8: String -> Either ParseError UInt8. Same shape as
 --   'parseInt32Method' minus the sign handling — UInt8 cannot represent
 --   a negative number — and with an i32 accumulator (the running
 --   magnitude never exceeds 2559 before the > 255 check fails).
-parseUInt8Method :: Text
-parseUInt8Method =
-  unlines
-    [ "  .method private hidebysig static object __parseUInt8(object) cil managed",
-      "  {",
-      "    .maxstack 4",
-      "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int32 V_4, object V_5)",
-      "    ldarg.0",
-      "    castclass [System.Runtime]System.String",
-      "    stloc.0",
-      "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    stloc.1",
-      "    ldloc.1",
-      "    brfalse IL_parseUInt8_fail",
-      "    ldc.i4.0",
-      "    stloc.2",
-      "    ldc.i4.0",
-      "    stloc.3",
-      "  IL_parseUInt8_loop:",
-      "    ldloc.2",
-      "    ldloc.1",
-      "    bge IL_parseUInt8_ok",
-      "    ldloc.0",
-      "    ldloc.2",
-      "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
-      "    stloc.s 4",
-      "    ldloc.s 4",
-      "    ldc.i4.s 48",
-      "    blt IL_parseUInt8_fail",
-      "    ldloc.s 4",
-      "    ldc.i4.s 57",
-      "    bgt IL_parseUInt8_fail",
-      "    ldloc.3",
-      "    ldc.i4.s 10",
-      "    mul",
-      "    ldloc.s 4",
-      "    ldc.i4.s 48",
-      "    sub",
-      "    add",
-      "    stloc.3",
-      "    ldloc.3",
-      "    ldc.i4 255",
-      "    bgt IL_parseUInt8_fail",
-      "    ldloc.2",
-      "    ldc.i4.1",
-      "    add",
-      "    stloc.2",
-      "    br IL_parseUInt8_loop",
-      "  IL_parseUInt8_ok:",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_parseUInt8_fail:",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.s 5",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 5",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+parseUInt8Method :: PreludeTags -> Text
+parseUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __parseUInt8(object) cil managed",
+        "  {",
+        "    .maxstack 4",
+        "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int32 V_4, object V_5)",
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    stloc.0",
+        "    ldloc.0",
+        "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+        "    stloc.1",
+        "    ldloc.1",
+        "    brfalse IL_parseUInt8_fail",
+        "    ldc.i4.0",
+        "    stloc.2",
+        "    ldc.i4.0",
+        "    stloc.3",
+        "  IL_parseUInt8_loop:",
+        "    ldloc.2",
+        "    ldloc.1",
+        "    bge IL_parseUInt8_ok",
+        "    ldloc.0",
+        "    ldloc.2",
+        "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
+        "    stloc.s 4",
+        "    ldloc.s 4",
+        "    ldc.i4.s 48",
+        "    blt IL_parseUInt8_fail",
+        "    ldloc.s 4",
+        "    ldc.i4.s 57",
+        "    bgt IL_parseUInt8_fail",
+        "    ldloc.3",
+        "    ldc.i4.s 10",
+        "    mul",
+        "    ldloc.s 4",
+        "    ldc.i4.s 48",
+        "    sub",
+        "    add",
+        "    stloc.3",
+        "    ldloc.3",
+        "    ldc.i4 255",
+        "    bgt IL_parseUInt8_fail",
+        "    ldloc.2",
+        "    ldc.i4.1",
+        "    add",
+        "    stloc.2",
+        "    br IL_parseUInt8_loop",
+        "  IL_parseUInt8_ok:",
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.3",
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    ret",
+         "  IL_parseUInt8_fail:"
+       ]
+    <> makeNullaryCellLines (ptParseError ptags)
+    <> ["    stloc.s 5"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.s 5"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
 
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Defers substring search to 'String.IndexOf(string, Ordinal)' —
@@ -1653,78 +1365,74 @@ parseUInt8Method =
 --   'String.Substring' allocates fresh strings (CLR strings are
 --   immutable; substrings are owning copies, not aliases). Containers:
 --   Maybe Nothing=0, Just=1; Tuple2 has one constructor (tag 0).
-splitOnFirstMethod :: Text
-splitOnFirstMethod =
-  unlines
-    [ "  .method private hidebysig static object __splitOnFirst(object, object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      "    .locals init (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)",
-      "    ldarg.0",
-      "    castclass [System.Runtime]System.String",
-      "    stloc.0",
-      "    ldarg.1",
-      "    castclass [System.Runtime]System.String",
-      "    stloc.1",
-      "    ldloc.1",
-      "    ldloc.0",
-      "    ldc.i4.4",
-      "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string, valuetype [System.Runtime]System.StringComparison)",
-      "    stloc.2",
-      "    ldloc.2",
-      "    ldc.i4.m1",
-      "    bne.un.s IL_split_found",
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    ret",
-      "  IL_split_found:",
-      "    ldloc.1",
-      "    ldc.i4.0",
-      "    ldloc.2",
-      "    callvirt instance string [System.Runtime]System.String::Substring(int32, int32)",
-      "    stloc.3",
-      "    ldloc.1",
-      "    ldloc.2",
-      "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    add",
-      "    callvirt instance string [System.Runtime]System.String::Substring(int32)",
-      "    stloc.4",
-      "    ldc.i4.3",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.3",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.2",
-      "    ldloc.4",
-      "    stelem.ref",
-      "    stloc.5",
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.5",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+splitOnFirstMethod :: PreludeTags -> Text
+splitOnFirstMethod ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __splitOnFirst(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)",
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    stloc.0",
+        "    ldarg.1",
+        "    castclass [System.Runtime]System.String",
+        "    stloc.1",
+        "    ldloc.1",
+        "    ldloc.0",
+        "    ldc.i4.4",
+        "    callvirt instance int32 [System.Runtime]System.String::IndexOf(string, valuetype [System.Runtime]System.StringComparison)",
+        "    stloc.2",
+        "    ldloc.2",
+        "    ldc.i4.m1",
+        "    bne.un.s IL_split_found"
+      ]
+    <> makeNullaryCellLines (ptNothing ptags)
+    <> [ "    ret",
+         "  IL_split_found:",
+         "    ldloc.1",
+         "    ldc.i4.0",
+         "    ldloc.2",
+         "    callvirt instance string [System.Runtime]System.String::Substring(int32, int32)",
+         "    stloc.3",
+         "    ldloc.1",
+         "    ldloc.2",
+         "    ldloc.0",
+         "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+         "    add",
+         "    callvirt instance string [System.Runtime]System.String::Substring(int32)",
+         "    stloc.4",
+         "    ldc.i4.3",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptTuple2 ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.3",
+         "    stelem.ref",
+         "    dup",
+         "    ldc.i4.2",
+         "    ldloc.4",
+         "    stelem.ref",
+         "    stloc.5",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0"
+       ]
+    <> boxedTagLines (ptJust ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.5",
+         "    stelem.ref",
+         "    ret",
+         "  }",
+         ""
+       ]
 
 -- lengthCodePoints: String -> UInt32. UTF-32 byte count divided by 4
 --   gives the code-point count exactly — every Unicode scalar is one
@@ -1784,6 +1492,26 @@ lengthUtf8BytesMethod =
       "  }"
     ]
 
+-- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'. Reads
+--   the cached argv[0] from the "awsum.argv0" environment variable
+--   ('Main' stashed it via 'SetEnvironmentVariable' on entry) and
+--   routes it through '__entryArgEither' for strict-UTF-16
+--   validation. Per the no-memoisation decision each call yields a
+--   fresh Either cell; argv is invariant during execution so repeat
+--   calls are deterministically equal.
+getArgsMethod :: Text
+getArgsMethod =
+  unlines
+    [ "  .method private hidebysig static object __getArgs() cil managed",
+      "  {",
+      "    .maxstack 1",
+      "    ldstr \"awsum.argv0\"",
+      "    call string [System.Runtime]System.Environment::GetEnvironmentVariable(string)",
+      "    call object AwsumMain::__entryArgEither(object)",
+      "    ret",
+      "  }"
+    ]
+
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong | …) String'
 --   for the user's 'main'. 'System.String::get_Length' returns UTF-16
 --   code units (CLR strings are UTF-16 natively), so the cap check is a
@@ -1793,157 +1521,124 @@ lengthUtf8BytesMethod =
 --   Cap value (134217728 = 2^27) and the FNV-1a row tag for
 --   "StringTooLong" must stay in sync with 'maxStringLengthUtf16CodeUnits'
 --   in 'stdlib/Prelude.aww'.
-entryArgEitherMethod :: Text
-entryArgEitherMethod =
-  unlines
-    [ "  .method private hidebysig static object __entryArgEither(object) cil managed",
-      "  {",
-      "    .maxstack 5",
-      -- V_0 = String (cast), V_1 = length, V_2 = i, V_3 = expecting_low,
-      -- V_4 = c & 0xFC00, V_5 = inner, V_6 = row.
-      "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int32 V_4, object V_5, object V_6)",
-      "    ldarg.0",
-      "    castclass [System.Runtime]System.String",
-      "    stloc.0",
-      "    ldloc.0",
-      "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
-      "    stloc.1",
-      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27). Cap-check first.
-      "    ldloc.1",
-      "    ldc.i4 134217728",
-      "    bgt IL_entry_too_long",
-      -- Surrogate scan: walk UTF-16 code units.
-      "    ldc.i4.0",
-      "    stloc.2",
-      "    ldc.i4.0",
-      "    stloc.3",
-      "  IL_entry_scan:",
-      "    ldloc.2",
-      "    ldloc.1",
-      "    bge IL_entry_scan_done",
-      "    ldloc.0",
-      "    ldloc.2",
-      "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
-      "    ldc.i4 64512", -- 0xFC00
-      "    and",
-      "    stloc.s 4",
-      "    ldloc.s 4",
-      "    ldloc.3",
-      "    brfalse IL_entry_no_low_expected",
-      -- expecting_low: must be DC00.
-      "    ldloc.s 4",
-      "    ldc.i4 56320", -- 0xDC00
-      "    bne.un IL_entry_unpaired",
-      "    ldc.i4.0",
-      "    stloc.3",
-      "    br IL_entry_inc",
-      "  IL_entry_no_low_expected:",
-      "    ldloc.s 4",
-      "    ldc.i4 56320", -- 0xDC00
-      "    beq IL_entry_unpaired",
-      "    ldloc.s 4",
-      "    ldc.i4 55296", -- 0xD800
-      "    bne.un IL_entry_inc",
-      "    ldc.i4.1",
-      "    stloc.3",
-      "    br IL_entry_inc",
-      "  IL_entry_inc:",
-      "    ldloc.2",
-      "    ldc.i4.1",
-      "    add",
-      "    stloc.2",
-      "    br IL_entry_scan",
-      "  IL_entry_scan_done:",
-      -- Trailing high surrogate (last code unit was high without low pair).
-      "    ldloc.3",
-      "    brtrue IL_entry_unpaired",
-      -- Right(input): object[2] = [box(1), input]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.1",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldarg.0",
-      "    stelem.ref",
-      "    ret",
-      "  IL_entry_too_long:",
-      -- inner: object[1] = [box(0)]
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.s 5",
-      -- row: object[2] = [box(stringTooLongTag), inner]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4 " <> stringTooLongRowTag,
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 5",
-      "    stelem.ref",
-      "    stloc.s 6",
-      -- left: object[2] = [box(0), row]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 6",
-      "    stelem.ref",
-      "    ret",
-      "  IL_entry_unpaired:",
-      -- inner: UnpairedUtf16Surrogate CCon — object[1] = [box(0)]
-      "    ldc.i4.1",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    stloc.s 5",
-      -- row: object[2] = [box(unpairedSurrogateTag), inner]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4 " <> unpairedSurrogateRowTag,
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 5",
-      "    stelem.ref",
-      "    stloc.s 6",
-      -- left: object[2] = [box(0), row]
-      "    ldc.i4.2",
-      "    newarr [System.Runtime]System.Object",
-      "    dup",
-      "    ldc.i4.0",
-      "    ldc.i4.0",
-      "    box [System.Runtime]System.Int32",
-      "    stelem.ref",
-      "    dup",
-      "    ldc.i4.1",
-      "    ldloc.s 6",
-      "    stelem.ref",
-      "    ret",
-      "  }"
-    ]
+entryArgEitherMethod :: PreludeTags -> Text
+entryArgEitherMethod ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __entryArgEither(object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        -- V_0 = String (cast), V_1 = length, V_2 = i, V_3 = expecting_low,
+        -- V_4 = c & 0xFC00, V_5 = inner, V_6 = row.
+        "    .locals init (string V_0, int32 V_1, int32 V_2, int32 V_3, int32 V_4, object V_5, object V_6)",
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    stloc.0",
+        "    ldloc.0",
+        "    callvirt instance int32 [System.Runtime]System.String::get_Length()",
+        "    stloc.1",
+        -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27). Cap-check first.
+        "    ldloc.1",
+        "    ldc.i4 134217728",
+        "    bgt IL_entry_too_long",
+        -- Surrogate scan: walk UTF-16 code units.
+        "    ldc.i4.0",
+        "    stloc.2",
+        "    ldc.i4.0",
+        "    stloc.3",
+        "  IL_entry_scan:",
+        "    ldloc.2",
+        "    ldloc.1",
+        "    bge IL_entry_scan_done",
+        "    ldloc.0",
+        "    ldloc.2",
+        "    callvirt instance char [System.Runtime]System.String::get_Chars(int32)",
+        "    ldc.i4 64512", -- 0xFC00
+        "    and",
+        "    stloc.s 4",
+        "    ldloc.s 4",
+        "    ldloc.3",
+        "    brfalse IL_entry_no_low_expected",
+        -- expecting_low: must be DC00.
+        "    ldloc.s 4",
+        "    ldc.i4 56320", -- 0xDC00
+        "    bne.un IL_entry_unpaired",
+        "    ldc.i4.0",
+        "    stloc.3",
+        "    br IL_entry_inc",
+        "  IL_entry_no_low_expected:",
+        "    ldloc.s 4",
+        "    ldc.i4 56320", -- 0xDC00
+        "    beq IL_entry_unpaired",
+        "    ldloc.s 4",
+        "    ldc.i4 55296", -- 0xD800
+        "    bne.un IL_entry_inc",
+        "    ldc.i4.1",
+        "    stloc.3",
+        "    br IL_entry_inc",
+        "  IL_entry_inc:",
+        "    ldloc.2",
+        "    ldc.i4.1",
+        "    add",
+        "    stloc.2",
+        "    br IL_entry_scan",
+        "  IL_entry_scan_done:",
+        -- Trailing high surrogate (last code unit was high without low pair).
+        "    ldloc.3",
+        "    brtrue IL_entry_unpaired",
+        -- Right(input): object[2] = [box(rightTag), input]
+        "    ldc.i4.2",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldarg.0",
+         "    stelem.ref",
+         "    ret",
+         "  IL_entry_too_long:"
+       ]
+    <> makeNullaryCellLines (ptStringTooLong ptags)
+    <> [ "    stloc.s 5",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0",
+         "    ldc.i4 " <> stringTooLongRowTag,
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.s 5",
+         "    stelem.ref",
+         "    stloc.s 6"
+       ]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.s 6"
+    <> [ "    ret",
+         "  IL_entry_unpaired:"
+       ]
+    <> makeNullaryCellLines (ptUnpairedUtf16Surrogate ptags)
+    <> [ "    stloc.s 5",
+         "    ldc.i4.2",
+         "    newarr [System.Runtime]System.Object",
+         "    dup",
+         "    ldc.i4.0",
+         "    ldc.i4 " <> unpairedSurrogateRowTag,
+         "    box [System.Runtime]System.Int32",
+         "    stelem.ref",
+         "    dup",
+         "    ldc.i4.1",
+         "    ldloc.s 5",
+         "    stelem.ref",
+         "    stloc.s 6"
+       ]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "    ldloc.s 6"
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
   where
     stringTooLongRowTag :: Text
     stringTooLongRowTag = show (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
@@ -1977,12 +1672,20 @@ mainMethod =
       "    ldc.i4.0",
       "    ldelem.ref",
       "  call_main:",
-      -- Wrap input in 'Either (StringTooLong | …) String' before handing to
-      -- user's main. '__entryArgEither' compares 'String::get_Length()'
-      -- against the language-fixed cap and returns either 'Right input' or
-      -- 'Left StringTooLong' (row-tagged); see entryArgEitherMethod above.
-      "    call object AwsumMain::__entryArgEither(object)",
-      "    call object AwsumMain::" <> mangle "main" <> "(object)",
+      -- Cache argv[0] for 'BuiltIn.internalGetArgs' (called from
+      -- 'runIO''s 'IOGetArgs' arm) via a process-wide environment
+      -- variable. 'main' itself takes no arguments (signature
+      -- 'IO Never Unit'); user code reads argv through
+      -- 'IO.Args.getArgs' inside the IO chain. CIL has no direct
+      -- 'swap' opcode so we route through 'input' local: stloc; ldstr;
+      -- ldloc; castclass; call SetEnv (returns void).
+      "    stloc.0",
+      "    ldstr \"awsum.argv0\"",
+      "    ldloc.0",
+      "    castclass string",
+      "    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)",
+      -- v_main is a zero-arg value (CValDef): build the IO tree.
+      "    call object AwsumMain::" <> mangle "main" <> "()",
       -- Hand the IO tree to `runIO`, which walks it and performs the
       -- effects via `BuiltIn.internalStdoutPrint`. `runIO` returns
       -- Unit; we discard it.
@@ -2144,6 +1847,12 @@ emitExprText ctx varMap = \case
               [ emitExprText ctx varMap x,
                 "    call object AwsumMain::__print(object)"
               ]
+      -- 'BuiltIn.internalGetArgs' — call AwsumMain::__getArgs(), which
+      -- reads the cached argv[0] (set in 'Main' via
+      -- 'SetEnvironmentVariable') and routes it through
+      -- '__entryArgEither'.
+      CBuiltIn "internalGetArgs"
+        | [] <- xs -> "    call object AwsumMain::__getArgs()"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

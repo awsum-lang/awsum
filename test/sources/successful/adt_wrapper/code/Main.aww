@@ -7,5 +7,5 @@ unwrap : Wrapper -> String
 unwrap w = case w of
   Wrap value -> value
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _input = IO.Stdout.print (unwrap (Wrap "hello"))
+main : IO Never Unit
+main = IO.Stdout.print (unwrap (Wrap "hello"))

@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -48,13 +48,13 @@ CoreProgram
             ( CCase
                 ( CVar "sum" )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_19_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CVar "$do_e_19_3" ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -66,24 +66,24 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCase
                 ( CVar "line" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "FAIL"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

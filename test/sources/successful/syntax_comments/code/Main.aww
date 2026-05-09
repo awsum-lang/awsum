@@ -1,5 +1,6 @@
 {- File-leading block comment. -}
 import IO.Stdout -- Import trailing comment
+import IO.Args -- Args import trailing
 
 {- Block comment between import and the first decl. -}
 
@@ -7,7 +8,10 @@ import IO.Stdout -- Import trailing comment
 
 -- Line comment 2
 
-type Color = Red | Green | Blue -- TypeDecl with constructors trailing
+type Color
+  = Red
+  | Green
+  | Blue -- TypeDecl with constructors trailing
 
 -- Line comment between top-level decls
 
@@ -36,14 +40,20 @@ withBrackets s = -- FunDef multi-line let body, trailing on '=' line
   let withOpen = "[" ++ s
    in withOpen
 
+handleInputError : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputError _e = IO.Stdout.print "INPUT_ERROR"
+
+printInput : String -> IO Never Unit
+printInput s = IO.Stdout.print s
+
 -- Line comment before main
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit -- Sig trailing
+main : IO Never Unit -- Sig trailing
 
 -- Line comment between sig and def
 
-main inputArg = case inputArg of
-  Left _ -> IO.Stdout.print "INPUT_ERROR" -- CaseAlt with effect
-  Right input -> IO.Stdout.print input -- CaseAlt with effect 2
+main = IO.Args.getArgs
+  |> andThenIO printInput
+  |> handleErrorIO handleInputError
 
 -- Trailing line comment at EOF

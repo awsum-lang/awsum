@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -37,7 +37,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 19
                     , [ "__w0" ]
                     , CString "unwrapped"
                     )
@@ -47,7 +47,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 19
                     , [ "_v" ]
                     , CString "unwrapped-named"
                     )
@@ -57,7 +57,7 @@ CoreProgram
             ( CCase
                 ( CVar "p" )
                 [
-                    ( 0
+                    ( 20
                     ,
                         [ "__w0"
                         , "__w1"
@@ -66,9 +66,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
+        , CValDef "main"
             ( CCall
-                ( CVar "$let$2" )
+                ( CVar "$let$7" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -79,13 +79,13 @@ CoreProgram
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_26_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_26_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "s0" ]
                         , CCase
                             ( CCall
@@ -93,19 +93,19 @@ CoreProgram
                                 [ CVar "s0"
                                 , CCall
                                     ( CVar "unwrapBox" )
-                                    [ CCon 0
+                                    [ CCon 19
                                         [ CString "a" ]
                                     ]
                                 ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_27_9" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CVar "$do_e_27_9" ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "s1" ]
                                 , CCase
                                     ( CCall
@@ -115,13 +115,13 @@ CoreProgram
                                         ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "$do_e_28_9" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CVar "$do_e_28_9" ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "s2" ]
                                         , CCase
                                             ( CCall
@@ -129,19 +129,19 @@ CoreProgram
                                                 [ CVar "s2"
                                                 , CCall
                                                     ( CVar "unwrapBoxNamed" )
-                                                    [ CCon 0
+                                                    [ CCon 19
                                                         [ CString "b" ]
                                                     ]
                                                 ]
                                             )
                                             [
-                                                ( 0
+                                                ( 3
                                                 , [ "$do_e_29_9" ]
-                                                , CCon 0
+                                                , CCon 3
                                                     [ CVar "$do_e_29_9" ]
                                                 )
                                             ,
-                                                ( 1
+                                                ( 4
                                                 , [ "s3" ]
                                                 , CCase
                                                     ( CCall
@@ -151,20 +151,20 @@ CoreProgram
                                                         ]
                                                     )
                                                     [
-                                                        ( 0
+                                                        ( 3
                                                         , [ "$do_e_30_9" ]
-                                                        , CCon 0
+                                                        , CCon 3
                                                             [ CVar "$do_e_30_9" ]
                                                         )
                                                     ,
-                                                        ( 1
+                                                        ( 4
                                                         , [ "s4" ]
                                                         , CCall
                                                             ( CBuiltIn "concatString" )
                                                             [ CVar "s4"
                                                             , CCall
                                                                 ( CVar "showPair" )
-                                                                [ CCon 0
+                                                                [ CCon 20
                                                                     [ CString "l"
                                                                     , CString "r"
                                                                     ]
@@ -182,24 +182,24 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$2" [ "res" ]
+        , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

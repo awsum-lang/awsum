@@ -1,8 +1,8 @@
 -- Error: Int32 literal 1 below lower bound (-2^31 - 1)
 import IO.Stdout
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main _ = IO.Stdout.print "ok"
+main : IO Never Unit
+main = IO.Stdout.print "ok"
 
 underMin : Int32
 underMin = -2_147_483_649

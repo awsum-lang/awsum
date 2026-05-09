@@ -4,5 +4,5 @@ import IO.Stdout
 foo : String -> IO Never Unit
 foo a b = IO.Stdout.print a
 
-main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
-main input = foo input "extra"
+main : IO Never Unit
+main = foo "x" "extra"

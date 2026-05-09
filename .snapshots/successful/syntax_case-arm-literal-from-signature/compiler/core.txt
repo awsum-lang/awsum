@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,22 +35,22 @@ CoreProgram
             ( CCase
                 ( CVar "x" )
                 [
-                    ( 0
+                    ( 9
                     , []
                     , CIntLit 0 TInt32
                     )
                 ,
-                    ( 1
+                    ( 10
                     , [ "__p0" ]
                     , CCase
                         ( CVar "__p0" )
                         [
-                            ( 0
+                            ( 9
                             , []
                             , CIntLit 0 TInt32
                             )
                         ,
-                            ( 1
+                            ( 10
                             , [ "n" ]
                             , CVar "n"
                             )
@@ -58,15 +58,15 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "main" [ "_input" ]
-            ( CCon 2
+        , CValDef "main"
+            ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "firstZero" )
-                        [ CCon 0 [] ]
+                        [ CCon 9 [] ]
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )

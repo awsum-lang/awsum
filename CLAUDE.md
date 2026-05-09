@@ -45,6 +45,7 @@ src/Awsum/
 ├── Typing.hs         # Type checker
 ├── ElaborateLower.hs # Surface → Core lowering (incl. unused-conWrapper tree-shake)
 ├── Defunctionalize.hs# Eliminate first-class function values via per-call-site HOF specialisation
+├── LowerClosures.hs  # Reynolds defunctionalization for residual fn values (ctor fields, case-arm-binders) → tagged CCon + per-arity $applyN dispatcher
 ├── Core.hs           # Core IR
 ├── Prelude.hs        # Bundles stdlib/Prelude.aww (file-embed); withPrelude; warning filter
 ├── BuiltIn.hs        # Registered prelude built-ins: surface name → surface type (see docs/prelude.md)
