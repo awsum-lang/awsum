@@ -74,7 +74,12 @@ library:
   dependencies:
     - bytestring # for JVM bytecode assembler
     - containers # for Data.Graph SCC analysis (unused-top-level warning)
+    - directory # for workspace symbol scan in Awsum.Lsp
     - file-embed # for bundling stdlib/Prelude.aww into the compiler binary
+    - filepath # for workspace symbol scan in Awsum.Lsp
+    - lens # for Language.LSP.Protocol.Lens accessors used by Awsum.Lsp
+    - lsp # for `awsum lsp` subcommand
+    - lsp-types # transitive of lsp, used for protocol records / SMethod singletons
     - megaparsec # for parser
     - text # for Data.Text.Encoding (JVM assembler)
 
