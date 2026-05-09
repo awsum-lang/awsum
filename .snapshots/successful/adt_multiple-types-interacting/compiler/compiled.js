@@ -76,7 +76,7 @@ function v_showResult(v_r){
     }
 }
 
-const main = (v__let_7)(((s) => { switch(s[0]) { case 0: { const v__do_e_28_9 = s[1]; return [0, v__do_e_28_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([0, [0, [1]]])); } } })(__concat((v_showBoxedColor)([0, [0]]), " ")));
+const main = (v__let_7)(((s) => { switch(s[0]) { case 0: { const v__do_e_31_9 = s[1]; return [0, v__do_e_31_9]; } case 1: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([0, [0, [1]]])); } } })(__concat((v_showBoxedColor)([0, [0]]), " ")));
 
 function v__let_7(v_res){
     {

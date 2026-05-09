@@ -9,7 +9,6 @@ handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
 handleInputErr _e = IO.Stdout.print "INPUT_ERROR"
 
 main : IO Never Unit
-main =
-  IO.Args.getArgs
-    |> andThenIO say
-    |> handleErrorIO handleInputErr
+main = IO.Args.getArgs
+  |> andThenIO say
+  |> handleErrorIO handleInputErr

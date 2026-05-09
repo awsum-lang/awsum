@@ -251,7 +251,11 @@ mapLeft x f = case x of
    lockstep with the compiler. When modules land, the constructors
    move to a privileged module and become inaccessible to user code. -}
 
-type IO e a = IOPure a | IOFail e | IOStdoutPrint String (IO e a) | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+type IO e a
+  = IOPure a
+  | IOFail e
+  | IOStdoutPrint String (IO e a)
+  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 
 {- Lift a pure value into IO. The error row `e` stays free and gets
    pinned by the surrounding context. -}

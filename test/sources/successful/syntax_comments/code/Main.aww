@@ -8,7 +8,10 @@ import IO.Args -- Args import trailing
 
 -- Line comment 2
 
-type Color = Red | Green | Blue -- TypeDecl with constructors trailing
+type Color
+  = Red
+  | Green
+  | Blue -- TypeDecl with constructors trailing
 
 -- Line comment between top-level decls
 
@@ -49,9 +52,8 @@ main : IO Never Unit -- Sig trailing
 
 -- Line comment between sig and def
 
-main =
-  IO.Args.getArgs
-    |> andThenIO printInput
-    |> handleErrorIO handleInputError
+main = IO.Args.getArgs
+  |> andThenIO printInput
+  |> handleErrorIO handleInputError
 
 -- Trailing line comment at EOF

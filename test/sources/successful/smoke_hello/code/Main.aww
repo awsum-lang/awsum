@@ -3,10 +3,9 @@ import IO.Stdout
 import IO.Args
 
 main : IO Never Unit
-main =
-  IO.Args.getArgs
-    |> andThenIO greetAndPrint
-    |> handleErrorIO printDecodeError
+main = IO.Args.getArgs
+  |> andThenIO greetAndPrint
+  |> handleErrorIO printDecodeError
 
 greetAndPrint : String -> IO Never Unit
 greetAndPrint input = case addGreeting input of

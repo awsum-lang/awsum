@@ -1,7 +1,10 @@
 {- Three ADTs interacting; pattern matches threaded across them. -}
 import IO.Stdout
 
-type Color = Red | Green | Blue
+type Color
+  = Red
+  | Green
+  | Blue
 
 type Box a = Box a
 

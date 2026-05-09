@@ -420,9 +420,25 @@ pTypeDeclWithEnd = do
     NotEmpty -> pass
   tvars <- P.many paramBinderNoLine
   cons <- P.option [] $ do
+    -- '=' may sit on the header line (one- or two-constructor compact
+    -- form, @type Foo = A | B@) or on a fresh indented continuation
+    -- line (multi-constructor form emitted by the formatter when the
+    -- list has three or more constructors). 'optIndentedContinuation'
+    -- is rollback-safe: when there is no indented continuation it
+    -- consumes nothing.
+    optIndentedContinuation
     _ <- sym "="
     firstCon <- pConDefNoLine
-    restCons <- P.many (symNoLine "|" *> pConDefNoLine)
+    -- Each subsequent '|' is allowed on the same line (compact form)
+    -- or at the start of a fresh indented continuation line. The
+    -- 'try' makes the lookahead for the '|' and its preceding
+    -- newline roll back cleanly when there are no more constructors,
+    -- so the trailing '--' / 'endLineOrEOF' below see the input as if
+    -- the parser had stopped right after the last 'pConDefNoLine'.
+    restCons <- P.many $ try $ do
+      optIndentedContinuation
+      _ <- symNoLine "|"
+      pConDefNoLine
     pure (firstCon : restCons)
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
@@ -505,6 +521,20 @@ pTrailingLineCommentMaybe = do
 -- | End of declaration: newline or EOF.
 endLineOrEOF :: Parser ()
 endLineOrEOF = void C.eol <|> P.eof
+
+-- | Consume an optional indented continuation: a newline followed by
+--   any number of blank lines and finally landing at any column @> 1@.
+--   Used by 'pTypeDeclWithEnd' to allow the @=@ and each subsequent
+--   @|@ in a multi-line ADT declaration to appear on a fresh indented
+--   line. Rollback-safe — when there is no eol next, or when the next
+--   non-blank content sits at column 1, consumes nothing.
+optIndentedContinuation :: Parser ()
+optIndentedContinuation = void $ P.optional $ try $ do
+  void C.eol
+  skipBlankLinesNoComments
+  hspaceNoComments
+  lvl <- L.indentLevel
+  guard (lvl > P.pos1)
 
 -- Types (right-assoc arrows) ────────────────────────────────────────────────
 

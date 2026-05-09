@@ -1,7 +1,10 @@
 {- Self-recursive function with enum-driven termination. -}
 import IO.Stdout
 
-type Step = Step1 | Step2 | Step3
+type Step
+  = Step1
+  | Step2
+  | Step3
 
 advanceStep : Step -> String
 advanceStep x = case x of

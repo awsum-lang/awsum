@@ -2,7 +2,10 @@
    multiple types in the body, no annotation needed. -}
 import IO.Stdout
 
-type Tri = TA | TB | TC
+type Tri
+  = TA
+  | TB
+  | TC
 
 showTri : Tri -> String
 showTri t = case t of

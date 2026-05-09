@@ -1,7 +1,11 @@
 {- Mutual recursion: forward references resolve across both functions. -}
 import IO.Stdout
 
-type Step = StepA | StepB | StepC | Done
+type Step
+  = StepA
+  | StepB
+  | StepC
+  | Done
 
 handleA : Step -> Either StringTooLong String
 handleA step = case step of

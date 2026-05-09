@@ -13,7 +13,10 @@ comment -}
 
 -- top comment 2
 
-type Color = Red | Green | Blue
+type Color
+  = Red
+  | Green
+  | Blue
 
 -- before show sig
 

@@ -26,7 +26,6 @@ handleInputErr e = case e of
   (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
 
 main : IO Never Unit
-main =
-  IO.Args.getArgs
-    |> andThenIO processInput
-    |> handleErrorIO handleInputErr
+main = IO.Args.getArgs
+  |> andThenIO processInput
+  |> handleErrorIO handleInputErr

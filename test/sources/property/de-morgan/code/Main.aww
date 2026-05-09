@@ -44,7 +44,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main =
-  IO.Args.getArgs
-    |> andThenIO (\s -> runMain (Right s))
-    |> handleErrorIO (\e -> runMain (Left e))
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

@@ -23,7 +23,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main =
-  IO.Args.getArgs
-    |> andThenIO (\s -> runMain (Right s))
-    |> handleErrorIO (\e -> runMain (Left e))
+main = IO.Args.getArgs
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

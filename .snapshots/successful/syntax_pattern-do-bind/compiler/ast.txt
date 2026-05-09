@@ -1203,32 +1203,32 @@ Program
             ( SrcSpan
                 { spanStartLine = 29
                 , spanStartCol = 1
-                , spanEndLine = 32
-                , spanEndCol = 36
+                , spanEndLine = 31
+                , spanEndCol = 34
                 }
             ) "main" []
             ( EInfix
                 ( SrcSpan
-                    { spanStartLine = 30
-                    , spanStartCol = 3
-                    , spanEndLine = 32
-                    , spanEndCol = 36
+                    { spanStartLine = 29
+                    , spanStartCol = 8
+                    , spanEndLine = 31
+                    , spanEndCol = 34
                     }
                 ) OpPipe
                 ( EInfix
                     ( SrcSpan
-                        { spanStartLine = 30
-                        , spanStartCol = 3
-                        , spanEndLine = 31
-                        , spanEndCol = 30
+                        { spanStartLine = 29
+                        , spanStartCol = 8
+                        , spanEndLine = 30
+                        , spanEndCol = 28
                         }
                     ) OpPipe
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 30
-                            , spanStartCol = 3
-                            , spanEndLine = 30
-                            , spanEndCol = 18
+                            { spanStartLine = 29
+                            , spanStartCol = 8
+                            , spanEndLine = 29
+                            , spanEndCol = 23
                             }
                         )
                         ( QName
@@ -1239,28 +1239,28 @@ Program
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 31
-                            , spanStartCol = 8
-                            , spanEndLine = 31
-                            , spanEndCol = 30
+                            { spanStartLine = 30
+                            , spanStartCol = 6
+                            , spanEndLine = 30
+                            , spanEndCol = 28
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 31
-                                , spanStartCol = 8
-                                , spanEndLine = 31
-                                , spanEndCol = 18
+                                { spanStartLine = 30
+                                , spanStartCol = 6
+                                , spanEndLine = 30
+                                , spanEndCol = 16
                                 }
                             )
                             ( QName [] "andThenIO" )
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 31
-                                , spanStartCol = 18
-                                , spanEndLine = 31
-                                , spanEndCol = 30
+                                { spanStartLine = 30
+                                , spanStartCol = 16
+                                , spanEndLine = 30
+                                , spanEndCol = 28
                                 }
                             )
                             ( QName [] "processInput" )
@@ -1269,28 +1269,28 @@ Program
                 )
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 32
-                        , spanStartCol = 8
-                        , spanEndLine = 32
-                        , spanEndCol = 36
+                        { spanStartLine = 31
+                        , spanStartCol = 6
+                        , spanEndLine = 31
+                        , spanEndCol = 34
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 32
-                            , spanStartCol = 8
-                            , spanEndLine = 32
-                            , spanEndCol = 22
+                            { spanStartLine = 31
+                            , spanStartCol = 6
+                            , spanEndLine = 31
+                            , spanEndCol = 20
                             }
                         )
                         ( QName [] "handleErrorIO" )
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 32
-                            , spanStartCol = 22
-                            , spanEndLine = 32
-                            , spanEndCol = 36
+                            { spanStartLine = 31
+                            , spanStartCol = 20
+                            , spanEndLine = 31
+                            , spanEndCol = 34
                             }
                         )
                         ( QName [] "handleInputErr" )

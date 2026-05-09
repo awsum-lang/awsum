@@ -1,7 +1,10 @@
 -- Error: duplicate pattern (Green matched twice) in case expression
 import IO.Stdout
 
-type Color = Red | Green | Blue
+type Color
+  = Red
+  | Green
+  | Blue
 
 show : Color -> String
 show c = case c of
