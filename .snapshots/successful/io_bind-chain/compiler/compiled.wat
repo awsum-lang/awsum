@@ -73,9 +73,6 @@
         (br_if $break_scan (i32.eqz (local.get $b)))
         (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))
           (then
-            ;; Surrogate-byte detection: 'ED A0..BF' starts a 3-byte
-            ;; UTF-8 encoding of U+D800..U+DFFF (forbidden in standard
-            ;; UTF-8). Sticky flag — keep scanning so cap-exceed wins.
             (if (i32.eq (local.get $b) (i32.const 0xED))
               (then
                 (if (i32.eq (i32.and (i32.load8_u (i32.add (local.get $arg) (i32.add (local.get $i) (i32.const 1)))) (i32.const 0xE0)) (i32.const 0xA0))
@@ -83,48 +80,39 @@
             (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))
               (then (local.set $n (i32.add (local.get $n) (i32.const 2))))
               (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))
-            ;; maxStringLengthUtf16CodeUnits = 134217728. Short-circuit
-            ;; out of the scan as soon as the running count exceeds the
-            ;; cap so adversarial inputs don't drive an unbounded walk.
             (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br $scan_loop)))
-    ;; $i now equals byte_count (position of NUL or break).
-    ;; Cap-check has priority over surrogate-flag.
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
-        ;; Build Left(StringTooLong row-wrapped).
         (local.set $inner (call $__alloc (i32.const 4)))
-        (i32.store (local.get $inner) (i32.const 0))
+        (i32.store (local.get $inner) (i32.const 15))
         (local.set $row (call $__alloc (i32.const 8)))
         (i32.store (local.get $row) (i32.const 589989748))
         (i32.store offset=4 (local.get $row) (local.get $inner))
         (local.set $cell (call $__alloc (i32.const 8)))
-        (i32.store (local.get $cell) (i32.const 0))
+        (i32.store (local.get $cell) (i32.const 3))
         (i32.store offset=4 (local.get $cell) (local.get $row))
         (local.get $cell))
       (else
         (if (result i32) (local.get $surr)
           (then
-            ;; Build Left(UnpairedUtf16Surrogate row-wrapped).
             (local.set $inner (call $__alloc (i32.const 4)))
-            (i32.store (local.get $inner) (i32.const 0))
+            (i32.store (local.get $inner) (i32.const 16))
             (local.set $row (call $__alloc (i32.const 8)))
             (i32.store (local.get $row) (i32.const 502975519))
             (i32.store offset=4 (local.get $row) (local.get $inner))
             (local.set $cell (call $__alloc (i32.const 8)))
-            (i32.store (local.get $cell) (i32.const 0))
+            (i32.store (local.get $cell) (i32.const 3))
             (i32.store offset=4 (local.get $cell) (local.get $row))
             (local.get $cell))
           (else
-            ;; Build a length-prefixed copy of the C-string and wrap
-            ;; in Right. byte_count = $i, utf16_count = $n.
             (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
             (i32.store (local.get $wrapped) (local.get $i))
             (i32.store offset=4 (local.get $wrapped) (local.get $n))
             (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
             (local.set $cell (call $__alloc (i32.const 8)))
-            (i32.store (local.get $cell) (i32.const 1))
+            (i32.store (local.get $cell) (i32.const 4))
             (i32.store offset=4 (local.get $cell) (local.get $wrapped))
             (local.get $cell))))))
 
@@ -151,17 +139,17 @@
     (local $v_u i32)
     (local $__scrut i32)
     (local $__k0 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top))) (else (local.set $v_cont (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (call $v__apply1 (local.get $v_cont) (call $__getArgs))) (local.set $v_io (local.get $__k0)) (br $tco_top))))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 7)) (then (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top))) (else (local.set $v_cont (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (call $v__apply1 (local.get $v_cont) (call $__getArgs))) (local.set $v_io (local.get $__k0)) (br $tco_top))))))))
 
   (func $v_main (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)
-    (call $v__df_andThenIO_0 (call $v__lift_8 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (i32.const 72)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))))
+    (call $v__df_andThenIO_0 (call $v__lift_8 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (i32.const 72)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))))
 
   (func $v__lift_1 (param $v___input i32) (result i32)
     (local $__con_0 i32)
-    (call $v__cps__lift_1 (local.get $v___input) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
+    (call $v__cps__lift_1 (local.get $v___input) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 16)) (local.get $__con_0))))
 
   (func $v__cps__lift_1 (param $v___input i32) (param $v__k i32) (result i32)
     (local $__con_0 i32)
@@ -171,25 +159,25 @@
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v___input)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_1 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_1 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f1 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v___f1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0))) (local.set $v___input (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_1 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_1) (local.get $v___f0)) (local.get $__con_1))) (local.get $__con_0))))))))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v___input)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_1 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 6)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_1 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 6)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 7)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f1 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v___f1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 17)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0))) (local.set $v___input (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_1 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 8)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 10)) (i32.store offset=4 (local.get $__con_1) (local.get $v___f0)) (local.get $__con_1))) (local.get $__con_0))))))))))))
 
   (func $v__apply__lift_1 (param $v__k i32) (param $v__x i32) (result i32)
-    (local $v__pk_1 i32)
+    (local $v__pk_17 i32)
     (local $v___f0 i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f0 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 16)) (then (local.get $v__x)) (else (local.set $v__pk_17 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f0 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_17)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
 
   (func $v__lam_7 (param $v__u i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (i32.const 81)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (i32.const 81)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
 
   (func $v__lift_8 (param $v___input i32) (result i32)
     (local $__con_0 i32)
-    (call $v__cps__lift_8 (local.get $v___input) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
+    (call $v__cps__lift_8 (local.get $v___input) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 18)) (local.get $__con_0))))
 
   (func $v__cps__lift_8 (param $v___input i32) (param $v__k i32) (result i32)
     (local $__con_0 i32)
@@ -199,19 +187,19 @@
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v___input)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_8 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_8 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f1 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v___f1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0))) (local.set $v___input (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_8 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 2)) (i32.store offset=4 (local.get $__con_1) (local.get $v___f0)) (local.get $__con_1))) (local.get $__con_0))))))))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v___input)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_8 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 6)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_8 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 6)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 7)) (then (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f1 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v___f1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 19)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v___f0)) (local.get $__con_0))) (local.set $v___input (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v___f0 (i32.load offset=4 (local.get $__scrut))) (call $v__apply__lift_8 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 8)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 11)) (i32.store offset=4 (local.get $__con_1) (local.get $v___f0)) (local.get $__con_1))) (local.get $__con_0))))))))))))
 
   (func $v__apply__lift_8 (param $v__k i32) (param $v__x i32) (result i32)
-    (local $v__pk_1 i32)
+    (local $v__pk_19 i32)
     (local $v___f0 i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f0 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 18)) (then (local.get $v__x)) (else (local.set $v__pk_19 (i32.load offset=4 (local.get $__scrut))) (local.set $v___f0 (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_19)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
 
   (func $v__df_andThenIO_0 (param $v_io i32) (result i32)
     (local $__con_0 i32)
-    (call $v__cps__df_andThenIO_0 (local.get $v_io) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
+    (call $v__cps__df_andThenIO_0 (local.get $v_io) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 20)) (local.get $__con_0))))
 
   (func $v__cps__df_andThenIO_0 (param $v_io i32) (param $v__k i32) (result i32)
     (local $__con_0 i32)
@@ -224,25 +212,25 @@
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (call $v__apply__df_andThenIO_0 (local.get $v__k) (call $v__lift_1 (call $v__lam_7 (local.get $v_a))))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $v__apply__df_andThenIO_0 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v_e)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v_next)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v_s)) (local.get $__con_0))) (local.set $v_io (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v_cont (i32.load offset=4 (local.get $__scrut))) (call $v__apply__df_andThenIO_0 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 0)) (i32.store offset=4 (local.get $__con_1) (local.get $v_cont)) (local.get $__con_1))) (local.get $__con_0))))))))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v_a (i32.load offset=4 (local.get $__scrut))) (call $v__apply__df_andThenIO_0 (local.get $v__k) (call $v__lift_1 (call $v__lam_7 (local.get $v_a))))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 6)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $v__apply__df_andThenIO_0 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 6)) (i32.store offset=4 (local.get $__con_0) (local.get $v_e)) (local.get $__con_0)))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 7)) (then (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v_next)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 21)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (i32.store offset=8 (local.get $__con_0) (local.get $v_s)) (local.get $__con_0))) (local.set $v_io (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v_cont (i32.load offset=4 (local.get $__scrut))) (call $v__apply__df_andThenIO_0 (local.get $v__k) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 8)) (i32.store offset=4 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 9)) (i32.store offset=4 (local.get $__con_1) (local.get $v_cont)) (local.get $__con_1))) (local.get $__con_0))))))))))))
 
   (func $v__apply__df_andThenIO_0 (param $v__k i32) (param $v__x i32) (result i32)
-    (local $v__pk_1 i32)
+    (local $v__pk_21 i32)
     (local $v_s i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $v_s (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v_s)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 20)) (then (local.get $v__x)) (else (local.set $v__pk_21 (i32.load offset=4 (local.get $__scrut))) (local.set $v_s (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_21)) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (local.get $v_s)) (i32.store offset=8 (local.get $__con_0) (local.get $v__x)) (local.get $__con_0))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))
 
   (func $v__scc__apply1__df__lam_3_1__lift_2__lift_9 (param $v__args i32) (result i32)
     (local $__con_0 i32)
-    (call $v__cps__scc__apply1__df__lam_3_1__lift_2__lift_9 (local.get $v__args) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_0))))
+    (call $v__cps__scc__apply1__df__lam_3_1__lift_2__lift_9 (local.get $v__args) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 22)) (local.get $__con_0))))
 
   (func $v__cps__scc__apply1__df__lam_3_1__lift_2__lift_9 (param $v__args i32) (param $v__k i32) (result i32)
     (local $v__arg0 i32)
-    (local $v__cap0_0 i32)
-    (local $v__cap1_0 i32)
-    (local $v__cap2_0 i32)
+    (local $v__cap10_0 i32)
+    (local $v__cap11_0 i32)
+    (local $v__cap9_0 i32)
     (local $v__cl i32)
     (local $v___arg i32)
     (local $v___f i32)
@@ -251,20 +239,20 @@
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__args)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v__cl (i32.load offset=4 (local.get $__scrut))) (local.set $v__arg0 (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v__cl)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.set $v__cap0_0 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cap0_0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v__cap1_0 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cap1_0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v__cap2_0 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cap2_0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top))))))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v_cont (i32.load offset=4 (local.get $__scrut))) (local.set $v_result (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v_cont)) (i32.store offset=8 (local.get $__con_0) (local.get $v_result)) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 1)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v___f (i32.load offset=4 (local.get $__scrut))) (local.set $v___arg (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f)) (i32.store offset=8 (local.get $__con_0) (local.get $v___arg)) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 2)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v___f (i32.load offset=4 (local.get $__scrut))) (local.set $v___arg (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f)) (i32.store offset=8 (local.get $__con_0) (local.get $v___arg)) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top))))))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__args)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 12)) (then (local.set $v__cl (i32.load offset=4 (local.get $__scrut))) (local.set $v__arg0 (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (local.get $v__cl)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 9)) (then (local.set $v__cap9_0 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 13)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cap9_0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 10)) (then (local.set $v__cap10_0 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 14)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cap10_0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v__cap11_0 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 15)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cap11_0)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))) (local.set $__k1 (local.get $v__k)) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top))))))) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 13)) (then (local.set $v_cont (i32.load offset=4 (local.get $__scrut))) (local.set $v_result (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 12)) (i32.store offset=4 (local.get $__con_0) (local.get $v_cont)) (i32.store offset=8 (local.get $__con_0) (local.get $v_result)) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 23)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 14)) (then (local.set $v___f (i32.load offset=4 (local.get $__scrut))) (local.set $v___arg (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 12)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f)) (i32.store offset=8 (local.get $__con_0) (local.get $v___arg)) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 24)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top)) (else (local.set $v___f (i32.load offset=4 (local.get $__scrut))) (local.set $v___arg (i32.load offset=8 (local.get $__scrut))) (local.set $__k0 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 12)) (i32.store offset=4 (local.get $__con_0) (local.get $v___f)) (i32.store offset=8 (local.get $__con_0) (local.get $v___arg)) (local.get $__con_0))) (local.set $__k1 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 25)) (i32.store offset=4 (local.get $__con_0) (local.get $v__k)) (local.get $__con_0))) (local.set $v__args (local.get $__k0)) (local.set $v__k (local.get $__k1)) (br $tco_top))))))))))
 
   (func $v__apply__scc__apply1__df__lam_3_1__lift_2__lift_9 (param $v__k i32) (param $v__x i32) (result i32)
-    (local $v__pk_1 i32)
-    (local $v__pk_2 i32)
-    (local $v__pk_3 i32)
+    (local $v__pk_23 i32)
+    (local $v__pk_24 i32)
+    (local $v__pk_25 i32)
     (local $__scrut i32)
     (local $__k0 i32)
     (local $__k1 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 0)) (then (local.get $v__x)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.set $v__pk_1 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_1)) (local.set $__k1 (call $v__df_andThenIO_0 (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 2)) (then (local.set $v__pk_2 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_2)) (local.set $__k1 (call $v__lift_1 (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (local.set $v__pk_3 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_3)) (local.set $__k1 (call $v__lift_8 (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v__k)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 22)) (then (local.get $v__x)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 23)) (then (local.set $v__pk_23 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_23)) (local.set $__k1 (call $v__df_andThenIO_0 (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 24)) (then (local.set $v__pk_24 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_24)) (local.set $__k1 (call $v__lift_1 (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top)) (else (local.set $v__pk_25 (i32.load offset=4 (local.get $__scrut))) (local.set $__k0 (local.get $v__pk_25)) (local.set $__k1 (call $v__lift_8 (local.get $v__x))) (local.set $v__k (local.get $__k0)) (local.set $v__x (local.get $__k1)) (br $tco_top))))))))))
 
   (func $v__apply1 (param $v__cl i32) (param $v__arg0 i32) (result i32)
     (local $__con_0 i32)
-    (call $v__scc__apply1__df__lam_3_1__lift_2__lift_9 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 0)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cl)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))))
+    (call $v__scc__apply1__df__lam_3_1__lift_2__lift_9 (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 12)) (i32.store offset=4 (local.get $__con_0) (local.get $v__cl)) (i32.store offset=8 (local.get $__con_0) (local.get $v__arg0)) (local.get $__con_0))))
 
   (func $_start (export "_start")
     (drop (call $v_runIO (call $v_main))))

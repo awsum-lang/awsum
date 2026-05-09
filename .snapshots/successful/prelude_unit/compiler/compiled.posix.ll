@@ -41,13 +41,13 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 ]
-tco.case.arm.0.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 5, label %tco.case.arm.5.9 i64 7, label %tco.case.arm.7.12 ]
+tco.case.arm.5.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   store ptr %t11, ptr %t2
   br label %tco.exit.1
-tco.case.arm.2.12:
+tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   %t15 = getelementptr ptr, ptr %t4, i32 2
@@ -71,7 +71,7 @@ tco.exit.1:
 
 define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 24)
-  %t1 = inttoptr i64 2 to ptr
+  %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @malloc(i64 8)
@@ -82,7 +82,7 @@ define internal ptr @v_main() {
   %t7 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t6, ptr %t7
   %t8 = call ptr @malloc(i64 16)
-  %t9 = inttoptr i64 0 to ptr
+  %t9 = inttoptr i64 5 to ptr
   %t10 = getelementptr ptr, ptr %t8, i32 0
   store ptr %t9, ptr %t10
   %t11 = call ptr @malloc(i64 8)

@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -36,13 +36,13 @@ CoreProgram
                 ( CVar "$let$7" )
                 [ CCall
                     ( CVar "show" )
-                    [ CCon 0
+                    [ CCon 19
                         [ CString "a"
-                        , CCon 0
+                        , CCon 19
                             [ CString "b"
-                            , CCon 0
+                            , CCon 19
                                 [ CString "c"
-                                , CCon 1 []
+                                , CCon 20 []
                                 ]
                             ]
                         ]
@@ -53,20 +53,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
@@ -76,7 +76,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$scc$show_showCons" )
                 [ CVar "$args"
-                , CCon 0 []
+                , CCon 23 []
                 ]
             )
         , CFunDef "$cps$$scc$show_showCons"
@@ -87,18 +87,18 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 0
+                        ( 21
                         , [ "xs" ]
                         , CCase
                             ( CVar "xs" )
                             [
-                                ( 0
+                                ( 19
                                 ,
                                     [ "h"
                                     , "t"
                                     ]
                                 , CContinue
-                                    [ CCon 1
+                                    [ CCon 22
                                         [ CVar "h"
                                         , CVar "t"
                                         ]
@@ -106,19 +106,19 @@ CoreProgram
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 20
                                 , []
                                 , CCall
                                     ( CVar "$apply$$scc$show_showCons" )
                                     [ CVar "$k"
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "" ]
                                     ]
                                 )
                             ]
                         )
                     ,
-                        ( 1
+                        ( 22
                         ,
                             [ "h"
                             , "t"
@@ -131,22 +131,22 @@ CoreProgram
                                 ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_13_3" ]
                                 , CCall
                                     ( CVar "$apply$$scc$show_showCons" )
                                     [ CVar "$k"
-                                    , CCon 0
+                                    , CCon 3
                                         [ CVar "$do_e_13_3" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "hc" ]
                                 , CContinue
-                                    [ CCon 0
+                                    [ CCon 21
                                         [ CVar "t" ]
-                                    , CCon 1
+                                    , CCon 24
                                         [ CVar "$k"
                                         , CVar "hc"
                                         ]
@@ -165,32 +165,32 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 23
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 24
                         ,
-                            [ "$pk_1"
+                            [ "$pk_24"
                             , "hc"
                             ]
                         , CCase
                             ( CVar "$x" )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_14_3" ]
                                 , CContinue
-                                    [ CVar "$pk_1"
-                                    , CCon 0
+                                    [ CVar "$pk_24"
+                                    , CCon 3
                                         [ CVar "$do_e_14_3" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "rest" ]
                                 , CContinue
-                                    [ CVar "$pk_1"
+                                    [ CVar "$pk_24"
                                     , CCall
                                         ( CBuiltIn "concatString" )
                                         [ CVar "hc"
@@ -206,7 +206,7 @@ CoreProgram
         , CFunDef "show" [ "xs" ]
             ( CCall
                 ( CVar "$scc$show_showCons" )
-                [ CCon 0
+                [ CCon 21
                     [ CVar "xs" ]
                 ]
             )

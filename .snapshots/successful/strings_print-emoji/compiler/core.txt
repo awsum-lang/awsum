@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -32,9 +32,9 @@ CoreProgram
                 )
             )
         , CValDef "main"
-            ( CCon 2
+            ( CCon 7
                 [ CString "🔥"
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )

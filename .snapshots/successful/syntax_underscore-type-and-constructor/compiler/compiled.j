@@ -33,10 +33,10 @@ L_tco_loop:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_tco_arm_0
-    2: L_tco_arm_2
-    default: L_tco_arm_0
-L_tco_arm_0:
+    5: L_tco_arm_5
+    7: L_tco_arm_7
+    default: L_tco_arm_5
+L_tco_arm_5:
   dup
   iconst_1
   aaload
@@ -44,7 +44,7 @@ L_tco_arm_0:
   pop
   aload_1
   areturn
-L_tco_arm_2:
+L_tco_arm_7:
   dup
   iconst_1
   aaload
@@ -80,16 +80,11 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
+    21: L_arm_21
+    default: L_arm_21
+L_arm_21:
   pop
   ldc "one"
-  goto L_join
-L_arm_1:
-  pop
-  ldc "two"
   goto L_join
 L_join:
   areturn
@@ -101,7 +96,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_2
+  bipush 7
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -110,7 +105,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  bipush 21
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
@@ -121,7 +116,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup

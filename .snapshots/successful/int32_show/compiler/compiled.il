@@ -37,7 +37,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.1
+    ldc.i4.4
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.s 15
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -58,7 +58,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -91,8 +91,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_0, IL_tco_arm_2)
-  IL_tco_arm_0:
+    switch (IL_tco_arm_5, IL_tco_arm_7)
+  IL_tco_arm_5:
     dup
     ldc.i4.1
     ldelem.ref
@@ -100,7 +100,7 @@
     pop
     ldloc.0
     ret
-  IL_tco_arm_2:
+  IL_tco_arm_7:
     dup
     ldc.i4.1
     ldelem.ref
@@ -151,8 +151,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -162,7 +162,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -170,7 +170,7 @@
     ldloc.0
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -185,8 +185,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -196,7 +196,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -204,7 +204,7 @@
     ldloc.1
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -217,8 +217,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -228,7 +228,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -236,7 +236,7 @@
     ldloc.2
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -251,8 +251,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -262,7 +262,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -270,7 +270,7 @@
     ldloc.3
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -283,8 +283,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -294,7 +294,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -302,7 +302,7 @@
     ldloc.s 4
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -317,8 +317,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -328,7 +328,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -336,7 +336,7 @@
     ldloc.s 5
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -349,8 +349,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -360,7 +360,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -368,7 +368,7 @@
     ldloc.s 6
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -383,8 +383,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -394,7 +394,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -402,7 +402,7 @@
     ldloc.s 7
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -415,8 +415,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -426,7 +426,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.3
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -434,7 +434,7 @@
     ldloc.s 8
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -474,8 +474,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_0, IL_arm_1)
-  IL_arm_0:
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
     dup
     ldc.i4.1
     ldelem.ref
@@ -485,7 +485,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.2
+    ldc.i4.7
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -498,7 +498,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.5
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -513,7 +513,7 @@
     stelem.ref
     stelem.ref
     br.s IL_join
-  IL_arm_1:
+  IL_arm_4:
     dup
     ldc.i4.1
     ldelem.ref
@@ -523,7 +523,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.2
+    ldc.i4.7
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -536,7 +536,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.0
+    ldc.i4.5
     box [System.Runtime]System.Int32
     stelem.ref
     dup

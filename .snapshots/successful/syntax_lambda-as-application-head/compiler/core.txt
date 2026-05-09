@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -42,11 +42,11 @@ CoreProgram
                 [ CVar "runMe" ]
             )
         , CValDef "main"
-            ( CCon 2
+            ( CCon 7
                 [ CCall
                     ( CBuiltIn "showInt32" )
                     [ CVar "doubled" ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )

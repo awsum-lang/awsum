@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -28,18 +28,6 @@ CoreProgram
                                 )
                             ]
                         )
-                    ,
-                        ( 3
-                        , [ "cont" ]
-                        , CContinue
-                            [ CCall
-                                ( CVar "$apply1" )
-                                [ CVar "cont"
-                                , CCall
-                                    ( CBuiltIn "internalGetArgs" ) []
-                                ]
-                            ]
-                        )
                     ]
                 )
             )
@@ -48,44 +36,37 @@ CoreProgram
                 ( CVar "$let$7" )
                 [ CCall
                     ( CVar "handleA" )
-                    [ CCon 0 [] ]
+                    [ CCon 19 [] ]
                 ]
             )
         , CFunDef "$let$7" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ]
             )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCase
-                ( CVar "$cl" ) []
-            )
         , CFunDef "$scc$handleA_handleB" [ "$args" ]
             ( CCall
                 ( CVar "$cps$$scc$handleA_handleB" )
                 [ CVar "$args"
-                , CCon 0 []
+                , CCon 25 []
                 ]
             )
         , CFunDef "$cps$$scc$handleA_handleB"
@@ -96,91 +77,91 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 0
+                        ( 23
                         , [ "step" ]
                         , CCase
                             ( CVar "step" )
                             [
-                                ( 0
+                                ( 19
                                 , []
                                 , CContinue
-                                    [ CCon 1
-                                        [ CCon 1 [] ]
-                                    , CCon 1
+                                    [ CCon 24
+                                        [ CCon 20 [] ]
+                                    , CCon 26
                                         [ CVar "$k" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 20
                                 , []
                                 , CContinue
-                                    [ CCon 1
+                                    [ CCon 24
                                         [ CVar "step" ]
                                     , CVar "$k"
                                     ]
                                 )
                             ,
-                                ( 2
+                                ( 21
                                 , []
                                 , CContinue
-                                    [ CCon 1
+                                    [ CCon 24
                                         [ CVar "step" ]
                                     , CVar "$k"
                                     ]
                                 )
                             ,
-                                ( 3
+                                ( 22
                                 , []
                                 , CCall
                                     ( CVar "$apply$$scc$handleA_handleB" )
                                     [ CVar "$k"
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "" ]
                                     ]
                                 )
                             ]
                         )
                     ,
-                        ( 1
+                        ( 24
                         , [ "step" ]
                         , CCase
                             ( CVar "step" )
                             [
-                                ( 0
+                                ( 19
                                 , []
                                 , CContinue
-                                    [ CCon 0
+                                    [ CCon 23
                                         [ CVar "step" ]
                                     , CVar "$k"
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 20
                                 , []
                                 , CContinue
-                                    [ CCon 0
-                                        [ CCon 2 [] ]
-                                    , CCon 2
+                                    [ CCon 23
+                                        [ CCon 21 [] ]
+                                    , CCon 27
                                         [ CVar "$k" ]
                                     ]
                                 )
                             ,
-                                ( 2
+                                ( 21
                                 , []
                                 , CContinue
-                                    [ CCon 0
-                                        [ CCon 3 [] ]
-                                    , CCon 3
+                                    [ CCon 23
+                                        [ CCon 22 [] ]
+                                    , CCon 28
                                         [ CVar "$k" ]
                                     ]
                                 )
                             ,
-                                ( 3
+                                ( 22
                                 , []
                                 , CCall
                                     ( CVar "$apply$$scc$handleA_handleB" )
                                     [ CVar "$k"
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "" ]
                                     ]
                                 )
@@ -197,29 +178,29 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 25
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
-                        , [ "$pk_1" ]
+                        ( 26
+                        , [ "$pk_26" ]
                         , CCase
                             ( CVar "$x" )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_13_5" ]
                                 , CContinue
-                                    [ CVar "$pk_1"
-                                    , CCon 0
+                                    [ CVar "$pk_26"
+                                    , CCon 3
                                         [ CVar "$do_e_13_5" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "rest" ]
                                 , CContinue
-                                    [ CVar "$pk_1"
+                                    [ CVar "$pk_26"
                                     , CCall
                                         ( CBuiltIn "concatString" )
                                         [ CString "A"
@@ -230,24 +211,24 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 2
-                        , [ "$pk_2" ]
+                        ( 27
+                        , [ "$pk_27" ]
                         , CCase
                             ( CVar "$x" )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_22_5" ]
                                 , CContinue
-                                    [ CVar "$pk_2"
-                                    , CCon 0
+                                    [ CVar "$pk_27"
+                                    , CCon 3
                                         [ CVar "$do_e_22_5" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "rest" ]
                                 , CContinue
-                                    [ CVar "$pk_2"
+                                    [ CVar "$pk_27"
                                     , CCall
                                         ( CBuiltIn "concatString" )
                                         [ CString "B"
@@ -258,24 +239,24 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 3
-                        , [ "$pk_3" ]
+                        ( 28
+                        , [ "$pk_28" ]
                         , CCase
                             ( CVar "$x" )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_26_5" ]
                                 , CContinue
-                                    [ CVar "$pk_3"
-                                    , CCon 0
+                                    [ CVar "$pk_28"
+                                    , CCon 3
                                         [ CVar "$do_e_26_5" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "rest" ]
                                 , CContinue
-                                    [ CVar "$pk_3"
+                                    [ CVar "$pk_28"
                                     , CCall
                                         ( CBuiltIn "concatString" )
                                         [ CString "C"
@@ -291,7 +272,7 @@ CoreProgram
         , CFunDef "handleA" [ "step" ]
             ( CCall
                 ( CVar "$scc$handleA_handleB" )
-                [ CCon 0
+                [ CCon 23
                     [ CVar "step" ]
                 ]
             )

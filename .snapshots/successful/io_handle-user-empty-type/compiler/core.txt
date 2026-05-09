@@ -1,7 +1,7 @@
 CoreProgram
     { cdecls =
         [ CFunDef "failIO" [ "e" ]
-            ( CCon 1
+            ( CCon 6
                 [ CVar "e" ]
             )
         , CFunDef "runIO" [ "io" ]
@@ -9,12 +9,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -33,7 +33,7 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 3
+                        ( 8
                         , [ "cont" ]
                         , CContinue
                             [ CCall
@@ -50,17 +50,17 @@ CoreProgram
         , CValDef "failingComputation"
             ( CCall
                 ( CVar "failIO" )
-                [ CCon 0 [] ]
+                [ CCon 19 [] ]
             )
         , CFunDef "handleE1" [ "e" ]
             ( CCase
                 ( CVar "e" )
                 [
-                    ( 0
+                    ( 19
                     , []
-                    , CCon 2
+                    , CCon 7
                         [ CString "got E1"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
@@ -75,7 +75,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$df$handleErrorIO$0" )
                 [ CVar "io"
-                , CCon 0 []
+                , CCon 23 []
                 ]
             )
         , CFunDef "$cps$$df$handleErrorIO$0"
@@ -86,17 +86,17 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "a" ]
                         , CCall
                             ( CVar "$apply$$df$handleErrorIO$0" )
                             [ CVar "$k"
-                            , CCon 0
+                            , CCon 5
                                 [ CVar "a" ]
                             ]
                         )
                     ,
-                        ( 1
+                        ( 6
                         , [ "e" ]
                         , CCall
                             ( CVar "$apply$$df$handleErrorIO$0" )
@@ -107,27 +107,27 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
                             ]
                         , CContinue
                             [ CVar "next"
-                            , CCon 1
+                            , CCon 24
                                 [ CVar "$k"
                                 , CVar "s"
                                 ]
                             ]
                         )
                     ,
-                        ( 3
+                        ( 8
                         , [ "cont" ]
                         , CCall
                             ( CVar "$apply$$df$handleErrorIO$0" )
                             [ CVar "$k"
-                            , CCon 3
-                                [ CCon 0
+                            , CCon 8
+                                [ CCon 20
                                     [ CVar "cont" ]
                                 ]
                             ]
@@ -143,19 +143,19 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 23
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 24
                         ,
-                            [ "$pk_1"
+                            [ "$pk_24"
                             , "s"
                             ]
                         , CContinue
-                            [ CVar "$pk_1"
-                            , CCon 2
+                            [ CVar "$pk_24"
+                            , CCon 7
                                 [ CVar "s"
                                 , CVar "$x"
                                 ]
@@ -168,7 +168,7 @@ CoreProgram
             ( CCall
                 ( CVar "$cps$$scc$$apply1_$df$$lam$6$1" )
                 [ CVar "$args"
-                , CCon 0 []
+                , CCon 25 []
                 ]
             )
         , CFunDef "$cps$$scc$$apply1_$df$$lam$6$1"
@@ -179,7 +179,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 0
+                        ( 21
                         ,
                             [ "$cl"
                             , "$arg0"
@@ -187,11 +187,11 @@ CoreProgram
                         , CCase
                             ( CVar "$cl" )
                             [
-                                ( 0
-                                , [ "$cap0_0" ]
+                                ( 20
+                                , [ "$cap20_0" ]
                                 , CContinue
-                                    [ CCon 1
-                                        [ CVar "$cap0_0"
+                                    [ CCon 22
+                                        [ CVar "$cap20_0"
                                         , CVar "$arg0"
                                         ]
                                     , CVar "$k"
@@ -200,17 +200,17 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 1
+                        ( 22
                         ,
                             [ "cont"
                             , "result"
                             ]
                         , CContinue
-                            [ CCon 0
+                            [ CCon 21
                                 [ CVar "cont"
                                 , CVar "result"
                                 ]
-                            , CCon 1
+                            , CCon 26
                                 [ CVar "$k" ]
                             ]
                         )
@@ -225,15 +225,15 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 25
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
-                        , [ "$pk_1" ]
+                        ( 26
+                        , [ "$pk_26" ]
                         , CContinue
-                            [ CVar "$pk_1"
+                            [ CVar "$pk_26"
                             , CCall
                                 ( CVar "$df$handleErrorIO$0" )
                                 [ CVar "$x" ]
@@ -248,7 +248,7 @@ CoreProgram
             ]
             ( CCall
                 ( CVar "$scc$$apply1_$df$$lam$6$1" )
-                [ CCon 0
+                [ CCon 21
                     [ CVar "$cl"
                     , CVar "$arg0"
                     ]

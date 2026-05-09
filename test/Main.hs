@@ -533,4 +533,4 @@ elaborateSpec = do
       Right p ->
         case elaborateLowerProgram ProgramCli (withPrelude p) of
           Left err -> expectationFailure ("expected Right, got: " <> show err)
-          Right (_warns, _core) -> pass
+          Right (_warns, _ptags, _core) -> pass

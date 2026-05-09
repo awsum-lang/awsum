@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,7 +35,7 @@ CoreProgram
             ( CCase
                 ( CVar "box" )
                 [
-                    ( 0
+                    ( 19
                     , [ "value" ]
                     , CVar "value"
                     )
@@ -45,14 +45,9 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 20
                     , [ "a" ]
                     , CVar "a"
-                    )
-                ,
-                    ( 1
-                    , [ "e" ]
-                    , CVar "e"
                     )
                 ]
             )
@@ -64,20 +59,20 @@ CoreProgram
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 0
+                            [ CCon 19
                                 [ CString "from box" ]
                             ]
                         , CString " "
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_20_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_20_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "s0" ]
                         , CCall
                             ( CBuiltIn "concatString" )
@@ -86,8 +81,8 @@ CoreProgram
                                 ( CVar "showResult" )
                                 [ CCall
                                     ( CVar "unwrap" )
-                                    [ CCon 0
-                                        [ CCon 0
+                                    [ CCon 19
+                                        [ CCon 20
                                             [ CString "nested" ]
                                         ]
                                     ]
@@ -101,20 +96,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

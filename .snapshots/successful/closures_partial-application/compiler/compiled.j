@@ -33,10 +33,10 @@ L_tco_loop:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_tco_arm_0
-    2: L_tco_arm_2
-    default: L_tco_arm_0
-L_tco_arm_0:
+    5: L_tco_arm_5
+    7: L_tco_arm_7
+    default: L_tco_arm_5
+L_tco_arm_5:
   dup
   iconst_1
   aaload
@@ -44,7 +44,7 @@ L_tco_arm_0:
   pop
   aload_1
   areturn
-L_tco_arm_2:
+L_tco_arm_7:
   dup
   iconst_1
   aaload
@@ -77,7 +77,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -96,9 +96,9 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
-    default: L_arm_0
-L_arm_0:
+    19: L_arm_19
+    default: L_arm_19
+L_arm_19:
   dup
   iconst_1
   aaload
@@ -126,7 +126,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_2
+  bipush 7
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -136,14 +136,14 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  bipush 20
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_1
+  bipush 21
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v__df_apply_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -154,7 +154,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -189,15 +189,15 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
-    1: L_arm_1
-    default: L_arm_0
-L_arm_0:
+    20: L_arm_20
+    21: L_arm_21
+    default: L_arm_20
+L_arm_20:
   pop
   aload_1
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   goto L_join
-L_arm_1:
+L_arm_21:
   pop
   aload_1
   invokestatic AwsumMain/v_wrap(Ljava/lang/Object;)Ljava/lang/Object;

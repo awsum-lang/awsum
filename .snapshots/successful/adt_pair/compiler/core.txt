@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,7 +35,7 @@ CoreProgram
             ( CCase
                 ( CVar "pair" )
                 [
-                    ( 0
+                    ( 19
                     ,
                         [ "first"
                         , "second"
@@ -60,13 +60,13 @@ CoreProgram
                     ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_12_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CVar "$do_e_12_3" ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s0" ]
                     , CCase
                         ( CCall
@@ -76,13 +76,13 @@ CoreProgram
                             ]
                         )
                         [
-                            ( 0
+                            ( 3
                             , [ "$do_e_13_3" ]
-                            , CCon 0
+                            , CCon 3
                                 [ CVar "$do_e_13_3" ]
                             )
                         ,
-                            ( 1
+                            ( 4
                             , [ "s1" ]
                             , CCase
                                 ( CCall
@@ -92,13 +92,13 @@ CoreProgram
                                     ]
                                 )
                                 [
-                                    ( 0
+                                    ( 3
                                     , [ "$do_e_14_3" ]
-                                    , CCon 0
+                                    , CCon 3
                                         [ CVar "$do_e_14_3" ]
                                     )
                                 ,
-                                    ( 1
+                                    ( 4
                                     , [ "s2" ]
                                     , CCall
                                         ( CBuiltIn "concatString" )
@@ -117,7 +117,7 @@ CoreProgram
                 ( CVar "$let$7" )
                 [ CCall
                     ( CVar "showPair" )
-                    [ CCon 0
+                    [ CCon 19
                         [ CString "hello"
                         , CString "world"
                         ]
@@ -128,20 +128,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

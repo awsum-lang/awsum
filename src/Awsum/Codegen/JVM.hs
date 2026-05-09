@@ -19,8 +19,8 @@ import Relude
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Produce a textual JVM bytecode assembly from a Core program.
-codegenJVM :: CoreProgram -> Text
-codegenJVM prog@(CoreProgram decls) =
+codegenJVM :: PreludeTags -> CoreProgram -> Text
+codegenJVM ptags prog@(CoreProgram decls) =
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
@@ -34,51 +34,51 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             initMethod,
             "",
-            gate (Set.member "concatString" builtIns) concatMethod,
+            gate (Set.member "concatString" builtIns) (concatMethod ptags),
             "",
-            gate (Set.member "internalStdoutPrint" builtIns) printMethod,
+            gate (Set.member "internalStdoutPrint" builtIns) (printMethod ptags),
             "",
-            gate (Set.member "predInt32" builtIns) predInt32Method,
+            gate (Set.member "predInt32" builtIns) (predInt32Method ptags),
             "",
-            gate (Set.member "predUInt8" builtIns) predUInt8Method,
+            gate (Set.member "predUInt8" builtIns) (predUInt8Method ptags),
             "",
-            gate (Set.member "predUInt32" builtIns) predUInt32Method,
+            gate (Set.member "predUInt32" builtIns) (predUInt32Method ptags),
             "",
-            gate (Set.member "succInt32" builtIns) succInt32Method,
+            gate (Set.member "succInt32" builtIns) (succInt32Method ptags),
             "",
-            gate (Set.member "succUInt8" builtIns) succUInt8Method,
+            gate (Set.member "succUInt8" builtIns) (succUInt8Method ptags),
             "",
-            gate (Set.member "succUInt32" builtIns) succUInt32Method,
+            gate (Set.member "succUInt32" builtIns) (succUInt32Method ptags),
             "",
-            gate (Set.member "eqInt32" builtIns) (eqMethod "__eqInt32" "L_eq_i32"),
+            gate (Set.member "eqInt32" builtIns) (eqMethod ptags "__eqInt32" "L_eq_i32"),
             "",
-            gate (Set.member "eqUInt8" builtIns) (eqMethod "__eqUInt8" "L_eq_u8"),
+            gate (Set.member "eqUInt8" builtIns) (eqMethod ptags "__eqUInt8" "L_eq_u8"),
             "",
-            gate (Set.member "eqUInt32" builtIns) (eqMethod "__eqUInt32" "L_eq_u32"),
+            gate (Set.member "eqUInt32" builtIns) (eqMethod ptags "__eqUInt32" "L_eq_u32"),
             "",
-            gate (Set.member "addInt32" builtIns) addInt32Method,
+            gate (Set.member "addInt32" builtIns) (addInt32Method ptags),
             "",
-            gate (Set.member "subInt32" builtIns) subInt32Method,
+            gate (Set.member "subInt32" builtIns) (subInt32Method ptags),
             "",
-            gate (Set.member "mulInt32" builtIns) mulInt32Method,
+            gate (Set.member "mulInt32" builtIns) (mulInt32Method ptags),
             "",
-            gate (Set.member "negInt32" builtIns) negInt32Method,
+            gate (Set.member "negInt32" builtIns) (negInt32Method ptags),
             "",
-            gate (Set.member "addUInt8" builtIns) addUInt8Method,
+            gate (Set.member "addUInt8" builtIns) (addUInt8Method ptags),
             "",
-            gate (Set.member "subUInt8" builtIns) subUInt8Method,
+            gate (Set.member "subUInt8" builtIns) (subUInt8Method ptags),
             "",
-            gate (Set.member "mulUInt8" builtIns) mulUInt8Method,
+            gate (Set.member "mulUInt8" builtIns) (mulUInt8Method ptags),
             "",
-            gate (Set.member "addUInt32" builtIns) addUInt32Method,
+            gate (Set.member "addUInt32" builtIns) (addUInt32Method ptags),
             "",
-            gate (Set.member "subUInt32" builtIns) subUInt32Method,
+            gate (Set.member "subUInt32" builtIns) (subUInt32Method ptags),
             "",
-            gate (Set.member "mulUInt32" builtIns) mulUInt32Method,
+            gate (Set.member "mulUInt32" builtIns) (mulUInt32Method ptags),
             "",
             gate (Set.member "showUInt32" builtIns) showUInt32Method,
             "",
-            gate (Set.member "splitOnFirst" builtIns) splitOnFirstMethod,
+            gate (Set.member "splitOnFirst" builtIns) (splitOnFirstMethod ptags),
             "",
             gate (Set.member "lengthCodePoints" builtIns) lengthCodePointsMethod,
             "",
@@ -86,15 +86,15 @@ codegenJVM prog@(CoreProgram decls) =
             "",
             gate (Set.member "lengthUtf8Bytes" builtIns) lengthUtf8BytesMethod,
             "",
-            gate (Set.member "parseInt32" builtIns) parseInt32Method,
+            gate (Set.member "parseInt32" builtIns) (parseInt32Method ptags),
             "",
-            gate (Set.member "parseUInt8" builtIns) parseUInt8Method,
+            gate (Set.member "parseUInt8" builtIns) (parseUInt8Method ptags),
             "",
-            gate (Set.member "parseUInt32" builtIns) parseUInt32Method,
+            gate (Set.member "parseUInt32" builtIns) (parseUInt32Method ptags),
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
-            gate (Set.member "internalGetArgs" builtIns) entryArgEitherMethod,
+            gate (Set.member "internalGetArgs" builtIns) (entryArgEitherMethod ptags),
             "",
             gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
             "",
@@ -111,6 +111,58 @@ data Ctx = Ctx
     cFunDefs :: Set Text,
     cArities :: Map Text Int
   }
+
+-- | Emit the JVM bytecode line for "push integer N onto the operand
+-- stack". Picks the tightest instruction the JVM offers for the
+-- value: 'iconst_<N>' for [-1, 5], 'bipush' for one-byte signed,
+-- 'sipush' for two-byte signed, otherwise 'ldc' (constant-pool
+-- indirection).
+pushIntInsn :: Int -> Text
+pushIntInsn n
+  | n >= -1 && n <= 5 = "  iconst_" <> if n == -1 then "m1" else show n
+  | n >= -128 && n <= 127 = "  bipush " <> show n
+  | n >= -32768 && n <= 32767 = "  sipush " <> show n
+  | otherwise = "  ldc " <> show n
+
+-- | Lines for "push tag @n@, then box it as @java.lang.Integer@".
+-- Used every time a constructor tag is stored into an @Object[]@
+-- slot at the call site that builds a CCon-shaped value.
+boxedTagLines :: Int -> [Text]
+boxedTagLines n =
+  [ pushIntInsn n,
+    "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;"
+  ]
+
+-- | Lines that build @Object[1] = [Integer(tag)]@ (a nullary 'CCon')
+-- and leave it on the stack. Caller decides what to do with it
+-- (typically @astore_<n>@ or @areturn@).
+makeNullaryCellLines :: Int -> [Text]
+makeNullaryCellLines tag =
+  [ "  iconst_1",
+    "  anewarray java/lang/Object",
+    "  dup",
+    "  iconst_0"
+  ]
+    <> boxedTagLines tag
+    <> ["  aastore"]
+
+-- | Lines that build @Object[2] = [Integer(tag), <value loaded by aloadInsn>]@
+-- (a one-field 'CCon') and leave it on the stack. @aloadInsn@ is the
+-- raw line emitting the load — typically @"  aload_<n>"@.
+makeUnaryCellFromLocalLines :: Int -> Text -> [Text]
+makeUnaryCellFromLocalLines tag aloadInsn =
+  [ "  iconst_2",
+    "  anewarray java/lang/Object",
+    "  dup",
+    "  iconst_0"
+  ]
+    <> boxedTagLines tag
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         aloadInsn,
+         "  aastore"
+       ]
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed sections
@@ -142,157 +194,143 @@ initMethod =
 --   String.concat call on the rejection path). The cap value (134217728)
 --   must stay in sync with 'maxStringLengthUtf16CodeUnits' in
 --   'stdlib/Prelude.aww'.
-concatMethod :: Text
-concatMethod =
-  unlines
-    [ ".method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 3",
-      -- Compute UTF-16 length of each input. java.lang.String.length()
-      -- is exactly UTF-16 code units (JVM stores strings as UTF-16),
-      -- so this is the right unit for the cap check directly.
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  invokevirtual java/lang/String/length()I",
-      "  i2l",
-      "  aload_1",
-      "  checkcast java/lang/String",
-      "  invokevirtual java/lang/String/length()I",
-      "  i2l",
-      "  ladd",
-      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
-      -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
-      -- 'stdlib/Prelude.aww'.
-      "  ldc2_w 134217728",
-      "  lcmp",
-      "  ifgt L_concat_too_long",
-      -- Length OK: do String.concat and wrap in Right.
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  aload_1",
-      "  checkcast java/lang/String",
-      "  invokevirtual java/lang/String/concat(Ljava/lang/String;)Ljava/lang/String;",
-      "  astore_2",
-      -- Build Right(result): Object[2] = [Integer(1), result].
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_concat_too_long:",
-      -- Build Left(StringTooLong). StringTooLong is a single-constructor
-      -- type so its tag is 0; Either's Left tag is 0.
-      -- StringTooLong cell: Object[1] = [Integer(0)].
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      -- Left cell: Object[2] = [Integer(0), stl].
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+concatMethod :: PreludeTags -> Text
+concatMethod ptags =
+  T.intercalate "\n"
+    $ [ ".method static __concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 3",
+        -- Compute UTF-16 length of each input. java.lang.String.length()
+        -- is exactly UTF-16 code units (JVM stores strings as UTF-16),
+        -- so this is the right unit for the cap check directly.
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  invokevirtual java/lang/String/length()I",
+        "  i2l",
+        "  aload_1",
+        "  checkcast java/lang/String",
+        "  invokevirtual java/lang/String/length()I",
+        "  i2l",
+        "  ladd",
+        -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
+        -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
+        -- 'stdlib/Prelude.aww'.
+        "  ldc2_w 134217728",
+        "  lcmp",
+        "  ifgt L_concat_too_long",
+        -- Length OK: do String.concat and wrap in Right.
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  aload_1",
+        "  checkcast java/lang/String",
+        "  invokevirtual java/lang/String/concat(Ljava/lang/String;)Ljava/lang/String;",
+        "  astore_2",
+        -- Build Right(result): Object[2] = [Integer(rightTag), result].
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         "L_concat_too_long:",
+         -- Build Left(StringTooLong). StringTooLong cell: Object[1] = [Integer(stl)].
+         "  iconst_1",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptStringTooLong ptags)
+    <> [ "  aastore",
+         "  astore_2",
+         -- Left cell: Object[2] = [Integer(left), stl].
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptLeft ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- | __print: low-level platform primitive driven by the prelude's
 --   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
 --   (Object[1] = [Integer(0)]) so the surrounding `case … of Unit ->
 --   next` arm in `runIO` dispatches through the standard CCase tag
 --   check.
-printMethod :: Text
-printMethod =
-  unlines
-    [ ".method static __print(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  getstatic java/lang/System/out Ljava/io/PrintStream;",
-      "  aload_0",
-      "  invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V",
-      -- Build Unit value: Object[1] = [Integer(0)]
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+printMethod :: PreludeTags -> Text
+printMethod ptags =
+  T.intercalate "\n"
+    $ [ ".method static __print(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  getstatic java/lang/System/out Ljava/io/PrintStream;",
+        "  aload_0",
+        "  invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V",
+        -- Build Unit value: Object[1] = [Integer(unit)]
+        "  iconst_1",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptUnit ptags)
+    <> [ "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- predInt32: Int32 -> Either UnderflowError Int32.
 --   `Left UnderflowError` on INT32_MIN (tags Left=0, UnderflowError=0);
 --   `Right (x - 1)` otherwise (Right=1). Containers are Object[] with
 --   boxed Integer tags at [0], matching user CCon emission on the JVM.
-predInt32Method :: Text
-predInt32Method =
-  unlines
-    [ ".method static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  ldc -2147483648",
-      "  if_icmpne L_pred_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_pred_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  iconst_1",
-      "  isub",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+predInt32Method :: PreludeTags -> Text
+predInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __predInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  ldc -2147483648",
+        "  if_icmpne L_pred_ok"
+      ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_pred_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  iconst_1",
+         "  isub",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- predUInt8: UInt8 -> Either UnderflowError UInt8.
 --   `Left UnderflowError` on 0; `Right (v - 1)` otherwise. UInt8 flows as
@@ -300,445 +338,322 @@ predInt32Method =
 --   method structure mirrors predInt32 — the only differences are the
 --   zero check (via 'ifne' against 0) and the absence of any mask on
 --   (v - 1), which is guaranteed to be in 0..254 when v >= 1.
-predUInt8Method :: Text
-predUInt8Method =
-  unlines
-    [ ".method static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  ifne L_predu8_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_predu8_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  iconst_1",
-      "  isub",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+predUInt8Method :: PreludeTags -> Text
+predUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __predUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  ifne L_predu8_ok"
+      ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_predu8_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  iconst_1",
+         "  isub",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- succInt32: Int32 -> Either OverflowError Int32.
 --   Mirror of predInt32Method with INT32_MAX as the boundary and 'iadd'
 --   for the non-overflow branch. OverflowError is single-constructor, so
 --   its tag is 0 — the error-branch encoding is identical to the
 --   UnderflowError case in predInt32.
-succInt32Method :: Text
-succInt32Method =
-  unlines
-    [ ".method static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  ldc 2147483647",
-      "  if_icmpne L_succ_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_succ_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  iconst_1",
-      "  iadd",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+succInt32Method :: PreludeTags -> Text
+succInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __succInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  ldc 2147483647",
+        "  if_icmpne L_succ_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_succ_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  iconst_1",
+         "  iadd",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- succUInt8: UInt8 -> Either OverflowError UInt8.
 --   Mirrors succInt32Method with boundary 255. Since v <= 254 on the ok
 --   path, (v + 1) is in 1..255, so no mask is needed to stay in UInt8
 --   range. 'sipush' is used for 255 (outside the 'bipush' signed byte
 --   range but inside signed short).
-succUInt8Method :: Text
-succUInt8Method =
-  unlines
-    [ ".method static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  sipush 255",
-      "  if_icmpne L_succu8_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_succu8_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  iconst_1",
-      "  iadd",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+succUInt8Method :: PreludeTags -> Text
+succUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __succUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  sipush 255",
+        "  if_icmpne L_succu8_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_succu8_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  iconst_1",
+         "  iadd",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- eqInt32 / eqUInt8: Int32 -> Int32 -> Bool and UInt8 -> UInt8 -> Bool.
 --   Both types are boxed as Integer on the JVM, so the two methods have
 --   identical bodies but distinct names (parallel to showInt32 vs
 --   showUInt8). Returns True=0 or False=1 as a one-slot Object[].
 --   A unique label suffix keeps both methods disassemblable in one class.
-eqMethod :: Text -> Text -> Text
-eqMethod name lbl =
-  unlines
-    [ ".method static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 2",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  if_icmpne " <> lbl <> "_ne",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      lbl <> "_ne:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+eqMethod :: PreludeTags -> Text -> Text -> Text
+eqMethod ptags name lbl =
+  T.intercalate "\n"
+    $ [ ".method static " <> name <> "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 2",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  if_icmpne " <> lbl <> "_ne"
+      ]
+    <> makeNullaryCellLines (ptTrue ptags)
+    <> [ "  areturn",
+         lbl <> "_ne:"
+       ]
+    <> makeNullaryCellLines (ptFalse ptags)
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- addInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   Promote both operands to long, sum, then range-check against
 --   [-2147483648, 2147483647] with `lcmp`. ArithError tags follow the
 --   declaration order in `Prelude.aww`: Underflow=0, Overflow=1; Either
 --   tags are Left=0, Right=1 as everywhere else in this file.
-addInt32Method :: Text
-addInt32Method =
-  unlines
-    [ ".method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  ladd",
-      "  dup2",
-      "  ldc2_w 2147483647",
-      "  lcmp",
-      "  ifgt L_addi32_over",
-      "  dup2",
-      "  ldc2_w -2147483648",
-      "  lcmp",
-      "  iflt L_addi32_under",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_addi32_over:",
-      "  pop2",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_addi32_under:",
-      "  pop2",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+addInt32Method :: PreludeTags -> Text
+addInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __addInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  ladd",
+        "  dup2",
+        "  ldc2_w 2147483647",
+        "  lcmp",
+        "  ifgt L_addi32_over",
+        "  dup2",
+        "  ldc2_w -2147483648",
+        "  lcmp",
+        "  iflt L_addi32_under",
+        "  l2i",
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+        "  astore_2",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         "L_addi32_over:",
+         "  pop2"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_addi32_under:",
+         "  pop2"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Both operands are 0..255, so `iadd` produces a value in 0..510 with
 --   no JVM-level overflow; one `if_icmple` against 255 picks the branch.
 --   On the ok path the sum is already a valid UInt8 — no mask needed.
-addUInt8Method :: Text
-addUInt8Method =
-  unlines
-    [ ".method static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  iadd",
-      "  istore_2",
-      "  iload_2",
-      "  sipush 255",
-      "  if_icmple L_addu8_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_addu8_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_2",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+addUInt8Method :: PreludeTags -> Text
+addUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __addUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  iadd",
+        "  istore_2",
+        "  iload_2",
+        "  sipush 255",
+        "  if_icmple L_addu8_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_addu8_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_2",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
--- subInt32: Int32 -> Int32 -> Either ArithError Int32.
+-- subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Promote both operands to long, subtract, then range-check the result.
 --   ArithError tags follow declaration order: Underflow=0, Overflow=1.
 --   Mirrors 'addInt32Method' with 'lsub' replacing 'ladd'.
-subInt32Method :: Text
-subInt32Method =
-  unlines
-    [ ".method static __subInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  lsub",
-      "  dup2",
-      "  ldc2_w 2147483647",
-      "  lcmp",
-      "  ifgt L_subi32_over",
-      "  dup2",
-      "  ldc2_w -2147483648",
-      "  lcmp",
-      "  iflt L_subi32_under",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_subi32_over:",
-      "  pop2",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_subi32_under:",
-      "  pop2",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+subInt32Method :: PreludeTags -> Text
+subInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __subInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  lsub",
+        "  dup2",
+        "  ldc2_w 2147483647",
+        "  lcmp",
+        "  ifgt L_subi32_over",
+        "  dup2",
+        "  ldc2_w -2147483648",
+        "  lcmp",
+        "  iflt L_subi32_under",
+        "  l2i",
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+        "  astore_2",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         "L_subi32_over:",
+         "  pop2"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_subi32_under:",
+         "  pop2"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- mulInt32: Int32 -> Int32 -> Either ArithError Int32.
 --   Promote both operands to long, multiply at long width, then range-
@@ -748,210 +663,153 @@ subInt32Method =
 --   the direction split on the err path; slot 3 holds the boxed result
 --   on the ok path / boxed AE on the err paths. Mirrors 'addInt32Method'
 --   with 'lmul' (0x69) replacing 'ladd'.
-mulInt32Method :: Text
-mulInt32Method =
-  unlines
-    [ ".method static __mulInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 4",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_2",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_3",
-      "  iload_2",
-      "  i2l",
-      "  iload_3",
-      "  i2l",
-      "  lmul",
-      "  dup2",
-      "  ldc2_w 2147483647",
-      "  lcmp",
-      "  ifgt L_muli32_split",
-      "  dup2",
-      "  ldc2_w -2147483648",
-      "  lcmp",
-      "  ifge L_muli32_ok",
-      "L_muli32_split:",
-      "  pop2",
-      "  iload_2",
-      "  iload_3",
-      "  ixor",
-      "  iflt L_muli32_under",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_muli32_under:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_muli32_ok:",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+mulInt32Method :: PreludeTags -> Text
+mulInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __mulInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 4",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_2",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_3",
+        "  iload_2",
+        "  i2l",
+        "  iload_3",
+        "  i2l",
+        "  lmul",
+        "  dup2",
+        "  ldc2_w 2147483647",
+        "  lcmp",
+        "  ifgt L_muli32_split",
+        "  dup2",
+        "  ldc2_w -2147483648",
+        "  lcmp",
+        "  ifge L_muli32_ok",
+        "L_muli32_split:",
+        "  pop2",
+        "  iload_2",
+        "  iload_3",
+        "  ixor",
+        "  iflt L_muli32_under"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_muli32_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_muli32_ok:",
+         "  l2i",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  astore_2",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- negInt32: Int32 -> Either OverflowError Int32.
 --   Mirrors 'succInt32Method' with INT32_MIN as the boundary and 'ineg'
 --   for the non-overflow branch. OverflowError is single-constructor,
 --   so its tag is 0 — Left-branch encoding is identical to 'predInt32'.
-negInt32Method :: Text
-negInt32Method =
-  unlines
-    [ ".method static __negInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  ldc -2147483648",
-      "  if_icmpne L_neg_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_neg_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  ineg",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+negInt32Method :: PreludeTags -> Text
+negInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __negInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  ldc -2147483648",
+        "  if_icmpne L_neg_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_neg_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  ineg",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
 --   Both operands are 0..255 so 'isub' produces a value in -255..255 with
 --   no JVM-level overflow; one 'iflt' picks the underflow branch. On the
 --   ok path the result is already a valid UInt8 — no mask needed.
-subUInt8Method :: Text
-subUInt8Method =
-  unlines
-    [ ".method static __subUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  isub",
-      "  istore_2",
-      "  iload_2",
-      "  iflt L_subu8_under",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_2",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      "L_subu8_under:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+subUInt8Method :: PreludeTags -> Text
+subUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __subUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  isub",
+        "  istore_2",
+        "  iload_2",
+        "  iflt L_subu8_under",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_2",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         "L_subu8_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Both operands are 0..255 so 'imul' produces a value in 0..65025 with
@@ -959,59 +817,45 @@ subUInt8Method =
 --   against 255 picks the branch — same shape as 'addUInt8Method' with
 --   'imul' replacing 'iadd'. No mask on the ok path since the product
 --   is already a valid UInt8 by construction.
-mulUInt8Method :: Text
-mulUInt8Method =
-  unlines
-    [ ".method static __mulUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  imul",
-      "  istore_2",
-      "  iload_2",
-      "  sipush 255",
-      "  if_icmple L_mulu8_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_mulu8_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_2",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+mulUInt8Method :: PreludeTags -> Text
+mulUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __mulUInt8(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  imul",
+        "  istore_2",
+        "  iload_2",
+        "  sipush 255",
+        "  if_icmple L_mulu8_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_mulu8_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_2",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- showUInt32: UInt32 -> String. JVM int is signed 32-bit, so values
 --   2^31..2^32-1 would render as negative via 'Integer.toString'. Mask
@@ -1039,250 +883,194 @@ showUInt32Method =
 --   is also against 0 (same as 'predUInt8'), so the body is structurally
 --   identical to predUInt8Method — only the labels are renamed to keep
 --   both methods in one class without label collision.
-predUInt32Method :: Text
-predUInt32Method =
-  unlines
-    [ ".method static __predUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  ifne L_predu32_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_predu32_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  iconst_1",
-      "  isub",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+predUInt32Method :: PreludeTags -> Text
+predUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __predUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  ifne L_predu32_ok"
+      ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_predu32_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  iconst_1",
+         "  isub",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
 --   is encoded as @iconst_m1@ — identical bit pattern when stored as
 --   signed i32. On the ok path '(v + 1)' wraps modulo 2^32, but since
 --   we already checked v != 4294967295, the result is in 1..4294967295
 --   (no wrap).
-succUInt32Method :: Text
-succUInt32Method =
-  unlines
-    [ ".method static __succUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_1",
-      "  iload_1",
-      "  iconst_m1",
-      "  if_icmpne L_succu32_ok",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_succu32_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload_1",
-      "  iconst_1",
-      "  iadd",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+succUInt32Method :: PreludeTags -> Text
+succUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __succUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_1",
+        "  iload_1",
+        "  iconst_m1",
+        "  if_icmpne L_succu32_ok"
+      ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         "L_succu32_ok:",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload_1",
+         "  iconst_1",
+         "  iadd",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
 --   both operands to unsigned long via @(long)x & 0xFFFFFFFFL@; the
 --   sum lives in [0, 2*2^32-2] which fits in long-signed, so 'lcmp'
 --   against 4294967295 gives the correct branch. The l2i on the ok
 --   path keeps the low 32 bits — exactly the in-range u32 result.
-addUInt32Method :: Text
-addUInt32Method =
-  unlines
-    [ ".method static __addUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 3",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  ladd",
-      "  dup2",
-      "  ldc2_w 4294967295",
-      "  lcmp",
-      "  ifgt L_addu32_over",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_addu32_over:",
-      "  pop2",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+addUInt32Method :: PreludeTags -> Text
+addUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __addUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 3",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  ldc2_w 4294967295",
+        "  land",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  ldc2_w 4294967295",
+        "  land",
+        "  ladd",
+        "  dup2",
+        "  ldc2_w 4294967295",
+        "  lcmp",
+        "  ifgt L_addu32_over",
+        "  l2i",
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+        "  astore_2",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         "L_addu32_over:",
+         "  pop2"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
 --   @a < b@ as unsigned via long masking + lcmp. On the ok path
 --   @isub@ at int width gives the correct u32 difference (bit pattern
 --   of @a - b mod 2^32@ equals @a - b@ when @a >= b@ in unsigned).
-subUInt32Method :: Text
-subUInt32Method =
-  unlines
-    [ ".method static __subUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 5",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_2",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  istore_3",
-      "  iload_2",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  iload_3",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  lcmp",
-      "  iflt L_subu32_under",
-      "  iload_2",
-      "  iload_3",
-      "  isub",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  astore 4",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 4",
-      "  aastore",
-      "  areturn",
-      "L_subu32_under:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore 4",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 4",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+subUInt32Method :: PreludeTags -> Text
+subUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __subUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 5",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_2",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  istore_3",
+        "  iload_2",
+        "  i2l",
+        "  ldc2_w 4294967295",
+        "  land",
+        "  iload_3",
+        "  i2l",
+        "  ldc2_w 4294967295",
+        "  land",
+        "  lcmp",
+        "  iflt L_subu32_under",
+        "  iload_2",
+        "  iload_3",
+        "  isub",
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+        "  astore 4",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload 4",
+         "  aastore",
+         "  areturn",
+         "L_subu32_under:"
+       ]
+    <> makeNullaryCellLines (ptUnderflowError ptags)
+    <> ["  astore 4"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload 4"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. The
 --   product of two u32 values is in [0, (2^32-1)^2 ≈ 2^64-2^33+1]; this
@@ -1290,162 +1078,134 @@ subUInt32Method =
 --   misclassify some overflowing products as in-range. Instead we shift
 --   the product right by 32 (unsigned, 'lushr') and check whether any
 --   high bit is set — equivalent to @(a*b) > 2^32 - 1@ unsigned.
-mulUInt32Method :: Text
-mulUInt32Method =
-  unlines
-    [ ".method static __mulUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 4",
-      "  aload_0",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  aload_1",
-      "  checkcast java/lang/Integer",
-      "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  lmul",
-      "  lstore_2",
-      "  lload_2",
-      "  bipush 32",
-      "  lushr",
-      "  l2i",
-      "  ifne L_mulu32_over",
-      "  lload_2",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      "L_mulu32_over:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore_2",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_2",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+mulUInt32Method :: PreludeTags -> Text
+mulUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __mulUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 4",
+        "  aload_0",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  ldc2_w 4294967295",
+        "  land",
+        "  aload_1",
+        "  checkcast java/lang/Integer",
+        "  invokevirtual java/lang/Integer/intValue()I",
+        "  i2l",
+        "  ldc2_w 4294967295",
+        "  land",
+        "  lmul",
+        "  lstore_2",
+        "  lload_2",
+        "  bipush 32",
+        "  lushr",
+        "  l2i",
+        "  ifne L_mulu32_over",
+        "  lload_2",
+        "  l2i",
+        "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+        "  astore_2",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_2",
+         "  aastore",
+         "  areturn",
+         "L_mulu32_over:"
+       ]
+    <> makeNullaryCellLines (ptOverflowError ptags)
+    <> ["  astore_2"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload_2"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- parseUInt32: String -> Either ParseError UInt32. Same shape as
 --   'parseUInt8Method' minus the sign handling, with a long accumulator
 --   (max running magnitude is 4294967295 * 10 + 9 = 42949672959 — fits
 --   in long-signed). On the ok path l2i takes the low 32 bits, which
 --   are the correct u32 bit pattern.
-parseUInt32Method :: Text
-parseUInt32Method =
-  unlines
-    [ ".method static __parseUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 8",
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  astore_1",
-      "  aload_1",
-      "  invokevirtual java/lang/String/length()I",
-      "  istore_2",
-      "  iload_2",
-      "  ifeq L_parseUInt32_fail",
-      "  iconst_0",
-      "  istore_3",
-      "  lconst_0",
-      "  lstore 4",
-      "L_parseUInt32_loop:",
-      "  iload_3",
-      "  iload_2",
-      "  if_icmpge L_parseUInt32_ok",
-      "  aload_1",
-      "  iload_3",
-      "  invokevirtual java/lang/String/charAt(I)C",
-      "  istore 6",
-      "  iload 6",
-      "  bipush 48",
-      "  if_icmplt L_parseUInt32_fail",
-      "  iload 6",
-      "  bipush 57",
-      "  if_icmpgt L_parseUInt32_fail",
-      "  lload 4",
-      "  bipush 10",
-      "  i2l",
-      "  lmul",
-      "  iload 6",
-      "  bipush 48",
-      "  isub",
-      "  i2l",
-      "  ladd",
-      "  lstore 4",
-      "  lload 4",
-      "  ldc2_w 4294967295",
-      "  lcmp",
-      "  ifgt L_parseUInt32_fail",
-      "  iinc 3 1",
-      "  goto L_parseUInt32_loop",
-      "L_parseUInt32_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  lload 4",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      "L_parseUInt32_fail:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore 4",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 4",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+parseUInt32Method :: PreludeTags -> Text
+parseUInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __parseUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 8",
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  astore_1",
+        "  aload_1",
+        "  invokevirtual java/lang/String/length()I",
+        "  istore_2",
+        "  iload_2",
+        "  ifeq L_parseUInt32_fail",
+        "  iconst_0",
+        "  istore_3",
+        "  lconst_0",
+        "  lstore 4",
+        "L_parseUInt32_loop:",
+        "  iload_3",
+        "  iload_2",
+        "  if_icmpge L_parseUInt32_ok",
+        "  aload_1",
+        "  iload_3",
+        "  invokevirtual java/lang/String/charAt(I)C",
+        "  istore 6",
+        "  iload 6",
+        "  bipush 48",
+        "  if_icmplt L_parseUInt32_fail",
+        "  iload 6",
+        "  bipush 57",
+        "  if_icmpgt L_parseUInt32_fail",
+        "  lload 4",
+        "  bipush 10",
+        "  i2l",
+        "  lmul",
+        "  iload 6",
+        "  bipush 48",
+        "  isub",
+        "  i2l",
+        "  ladd",
+        "  lstore 4",
+        "  lload 4",
+        "  ldc2_w 4294967295",
+        "  lcmp",
+        "  ifgt L_parseUInt32_fail",
+        "  iinc 3 1",
+        "  goto L_parseUInt32_loop",
+        "L_parseUInt32_ok:",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  lload 4",
+         "  l2i",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         "L_parseUInt32_fail:"
+       ]
+    <> makeNullaryCellLines (ptParseError ptags)
+    <> ["  astore 4"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload 4"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Defers substring search to 'String.indexOf(String)', which returns -1
@@ -1454,75 +1214,71 @@ parseUInt32Method =
 --   String objects (not aliased into the input), then we wrap them in
 --   Tuple2 (Object[3], tag 0) inside Just (Object[2], tag 1). On miss
 --   we return Nothing (Object[1], tag 0).
-splitOnFirstMethod :: Text
-splitOnFirstMethod =
-  unlines
-    [ ".method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 4",
-      "  aload_1",
-      "  checkcast java/lang/String",
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  invokevirtual java/lang/String/indexOf(Ljava/lang/String;)I",
-      "  istore_2",
-      "  iload_2",
-      "  iconst_m1",
-      "  if_icmpne L_split_found",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      "L_split_found:",
-      "  aload_1",
-      "  checkcast java/lang/String",
-      "  iconst_0",
-      "  iload_2",
-      "  invokevirtual java/lang/String/substring(II)Ljava/lang/String;",
-      "  astore_3",
-      "  aload_1",
-      "  checkcast java/lang/String",
-      "  iload_2",
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  invokevirtual java/lang/String/length()I",
-      "  iadd",
-      "  invokevirtual java/lang/String/substring(I)Ljava/lang/String;",
-      "  astore_2",
-      "  iconst_3",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_3",
-      "  aastore",
-      "  dup",
-      "  iconst_2",
-      "  aload_2",
-      "  aastore",
-      "  astore_3",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_3",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+splitOnFirstMethod :: PreludeTags -> Text
+splitOnFirstMethod ptags =
+  T.intercalate "\n"
+    $ [ ".method static __splitOnFirst(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 4",
+        "  aload_1",
+        "  checkcast java/lang/String",
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  invokevirtual java/lang/String/indexOf(Ljava/lang/String;)I",
+        "  istore_2",
+        "  iload_2",
+        "  iconst_m1",
+        "  if_icmpne L_split_found"
+      ]
+    <> makeNullaryCellLines (ptNothing ptags)
+    <> [ "  areturn",
+         "L_split_found:",
+         "  aload_1",
+         "  checkcast java/lang/String",
+         "  iconst_0",
+         "  iload_2",
+         "  invokevirtual java/lang/String/substring(II)Ljava/lang/String;",
+         "  astore_3",
+         "  aload_1",
+         "  checkcast java/lang/String",
+         "  iload_2",
+         "  aload_0",
+         "  checkcast java/lang/String",
+         "  invokevirtual java/lang/String/length()I",
+         "  iadd",
+         "  invokevirtual java/lang/String/substring(I)Ljava/lang/String;",
+         "  astore_2",
+         "  iconst_3",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptTuple2 ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_3",
+         "  aastore",
+         "  dup",
+         "  iconst_2",
+         "  aload_2",
+         "  aastore",
+         "  astore_3",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0"
+       ]
+    <> boxedTagLines (ptJust ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_3",
+         "  aastore",
+         "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- lengthCodePoints: String -> UInt32. 'String.codePointCount(0, length())'
 --   walks the UTF-16 buffer once and counts surrogate pairs as one
@@ -1595,208 +1351,180 @@ lengthUtf8BytesMethod =
 --   stage the boxed `ParseError` on the L_parseInt32_fail path — JVM
 --   slot reuse is fine because the verifier tracks the type after each
 --   instruction.
-parseInt32Method :: Text
-parseInt32Method =
-  unlines
-    [ ".method static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 5",
-      "  .limit locals 8",
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  astore_1",
-      "  aload_1",
-      "  invokevirtual java/lang/String/length()I",
-      "  istore_2",
-      "  iload_2",
-      "  ifeq L_parseInt32_fail",
-      "  iconst_0",
-      "  istore_3",
-      "  iconst_0",
-      "  istore 4",
-      "  aload_1",
-      "  iconst_0",
-      "  invokevirtual java/lang/String/charAt(I)C",
-      "  bipush 45",
-      "  if_icmpne L_parseInt32_init_acc",
-      "  iconst_1",
-      "  istore 4",
-      "  iconst_1",
-      "  istore_3",
-      "  iload_2",
-      "  iconst_1",
-      "  if_icmpeq L_parseInt32_fail",
-      "L_parseInt32_init_acc:",
-      "  lconst_0",
-      "  lstore 5",
-      "L_parseInt32_loop:",
-      "  iload_3",
-      "  iload_2",
-      "  if_icmpge L_parseInt32_after_loop",
-      "  aload_1",
-      "  iload_3",
-      "  invokevirtual java/lang/String/charAt(I)C",
-      "  istore 7",
-      "  iload 7",
-      "  bipush 48",
-      "  if_icmplt L_parseInt32_fail",
-      "  iload 7",
-      "  bipush 57",
-      "  if_icmpgt L_parseInt32_fail",
-      "  lload 5",
-      "  bipush 10",
-      "  i2l",
-      "  lmul",
-      "  iload 7",
-      "  bipush 48",
-      "  isub",
-      "  i2l",
-      "  ladd",
-      "  lstore 5",
-      "  lload 5",
-      "  ldc2_w 2147483648",
-      "  lcmp",
-      "  ifgt L_parseInt32_fail",
-      "  iinc 3 1",
-      "  goto L_parseInt32_loop",
-      "L_parseInt32_after_loop:",
-      "  iload 4",
-      "  ifeq L_parseInt32_pos_check",
-      "  lload 5",
-      "  lneg",
-      "  lstore 5",
-      "  goto L_parseInt32_build_right",
-      "L_parseInt32_pos_check:",
-      "  lload 5",
-      "  ldc 2147483647",
-      "  i2l",
-      "  lcmp",
-      "  ifgt L_parseInt32_fail",
-      "L_parseInt32_build_right:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  lload 5",
-      "  l2i",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      "L_parseInt32_fail:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore 4",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 4",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+parseInt32Method :: PreludeTags -> Text
+parseInt32Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __parseInt32(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 8",
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  astore_1",
+        "  aload_1",
+        "  invokevirtual java/lang/String/length()I",
+        "  istore_2",
+        "  iload_2",
+        "  ifeq L_parseInt32_fail",
+        "  iconst_0",
+        "  istore_3",
+        "  iconst_0",
+        "  istore 4",
+        "  aload_1",
+        "  iconst_0",
+        "  invokevirtual java/lang/String/charAt(I)C",
+        "  bipush 45",
+        "  if_icmpne L_parseInt32_init_acc",
+        "  iconst_1",
+        "  istore 4",
+        "  iconst_1",
+        "  istore_3",
+        "  iload_2",
+        "  iconst_1",
+        "  if_icmpeq L_parseInt32_fail",
+        "L_parseInt32_init_acc:",
+        "  lconst_0",
+        "  lstore 5",
+        "L_parseInt32_loop:",
+        "  iload_3",
+        "  iload_2",
+        "  if_icmpge L_parseInt32_after_loop",
+        "  aload_1",
+        "  iload_3",
+        "  invokevirtual java/lang/String/charAt(I)C",
+        "  istore 7",
+        "  iload 7",
+        "  bipush 48",
+        "  if_icmplt L_parseInt32_fail",
+        "  iload 7",
+        "  bipush 57",
+        "  if_icmpgt L_parseInt32_fail",
+        "  lload 5",
+        "  bipush 10",
+        "  i2l",
+        "  lmul",
+        "  iload 7",
+        "  bipush 48",
+        "  isub",
+        "  i2l",
+        "  ladd",
+        "  lstore 5",
+        "  lload 5",
+        "  ldc2_w 2147483648",
+        "  lcmp",
+        "  ifgt L_parseInt32_fail",
+        "  iinc 3 1",
+        "  goto L_parseInt32_loop",
+        "L_parseInt32_after_loop:",
+        "  iload 4",
+        "  ifeq L_parseInt32_pos_check",
+        "  lload 5",
+        "  lneg",
+        "  lstore 5",
+        "  goto L_parseInt32_build_right",
+        "L_parseInt32_pos_check:",
+        "  lload 5",
+        "  ldc 2147483647",
+        "  i2l",
+        "  lcmp",
+        "  ifgt L_parseInt32_fail",
+        "L_parseInt32_build_right:",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  lload 5",
+         "  l2i",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         "L_parseInt32_fail:"
+       ]
+    <> makeNullaryCellLines (ptParseError ptags)
+    <> ["  astore 4"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload 4"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- parseUInt8: String -> Either ParseError UInt8.
 --   Same shape as 'parseInt32Method' minus the sign handling — UInt8
 --   does not represent a negative number — and with an i32 accumulator,
 --   since the running magnitude never exceeds 2559 (255 * 10 + 9) before
 --   the `> 255` check triggers a fail.
-parseUInt8Method :: Text
-parseUInt8Method =
-  unlines
-    [ ".method static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 4",
-      "  .limit locals 6",
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  astore_1",
-      "  aload_1",
-      "  invokevirtual java/lang/String/length()I",
-      "  istore_2",
-      "  iload_2",
-      "  ifeq L_parseUInt8_fail",
-      "  iconst_0",
-      "  istore_3",
-      "  iconst_0",
-      "  istore 4",
-      "L_parseUInt8_loop:",
-      "  iload_3",
-      "  iload_2",
-      "  if_icmpge L_parseUInt8_ok",
-      "  aload_1",
-      "  iload_3",
-      "  invokevirtual java/lang/String/charAt(I)C",
-      "  istore 5",
-      "  iload 5",
-      "  bipush 48",
-      "  if_icmplt L_parseUInt8_fail",
-      "  iload 5",
-      "  bipush 57",
-      "  if_icmpgt L_parseUInt8_fail",
-      "  iload 4",
-      "  bipush 10",
-      "  imul",
-      "  iload 5",
-      "  bipush 48",
-      "  isub",
-      "  iadd",
-      "  istore 4",
-      "  iload 4",
-      "  sipush 255",
-      "  if_icmpgt L_parseUInt8_fail",
-      "  iinc 3 1",
-      "  goto L_parseUInt8_loop",
-      "L_parseUInt8_ok:",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  iload 4",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  areturn",
-      "L_parseUInt8_fail:",
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore 4",
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 4",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+parseUInt8Method :: PreludeTags -> Text
+parseUInt8Method ptags =
+  T.intercalate "\n"
+    $ [ ".method static __parseUInt8(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 4",
+        "  .limit locals 6",
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  astore_1",
+        "  aload_1",
+        "  invokevirtual java/lang/String/length()I",
+        "  istore_2",
+        "  iload_2",
+        "  ifeq L_parseUInt8_fail",
+        "  iconst_0",
+        "  istore_3",
+        "  iconst_0",
+        "  istore 4",
+        "L_parseUInt8_loop:",
+        "  iload_3",
+        "  iload_2",
+        "  if_icmpge L_parseUInt8_ok",
+        "  aload_1",
+        "  iload_3",
+        "  invokevirtual java/lang/String/charAt(I)C",
+        "  istore 5",
+        "  iload 5",
+        "  bipush 48",
+        "  if_icmplt L_parseUInt8_fail",
+        "  iload 5",
+        "  bipush 57",
+        "  if_icmpgt L_parseUInt8_fail",
+        "  iload 4",
+        "  bipush 10",
+        "  imul",
+        "  iload 5",
+        "  bipush 48",
+        "  isub",
+        "  iadd",
+        "  istore 4",
+        "  iload 4",
+        "  sipush 255",
+        "  if_icmpgt L_parseUInt8_fail",
+        "  iinc 3 1",
+        "  goto L_parseUInt8_loop",
+        "L_parseUInt8_ok:",
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  iload 4",
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  areturn",
+         "L_parseUInt8_fail:"
+       ]
+    <> makeNullaryCellLines (ptParseError ptags)
+    <> ["  astore 4"]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload 4"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
 
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
 --   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
@@ -1826,158 +1554,132 @@ parseUInt8Method =
 --     V_2 = length, V_3 = i, V_4 = expecting_low (0/1),
 --     V_5 = c & 0xFC00 (masked code unit, used to dispatch surrogate),
 --     V_6 = inner (transient), V_7 = row (transient).
-entryArgEitherMethod :: Text
-entryArgEitherMethod =
-  unlines
-    [ ".method static __entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 6",
-      "  .limit locals 8",
-      "  aload_0",
-      "  checkcast java/lang/String",
-      "  astore_1",
-      "  aload_1",
-      "  invokevirtual java/lang/String/length()I",
-      "  istore_2",
-      -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27). Cap-check first.
-      "  iload_2",
-      "  ldc 134217728",
-      "  if_icmpgt L_entry_too_long",
-      -- Surrogate scan: walk UTF-16 code units, ensure pairing.
-      "  iconst_0",
-      "  istore_3",
-      "  iconst_0",
-      "  istore 4",
-      "L_entry_scan:",
-      "  iload_3",
-      "  iload_2",
-      "  if_icmpge L_entry_scan_done",
-      "  aload_1",
-      "  iload_3",
-      "  invokevirtual java/lang/String/charAt(I)C",
-      -- Mask top 6 bits: surrogate range U+D800..U+DFFF shares prefix,
-      -- with bit 10 distinguishing high (0) from low (1).
-      "  ldc 64512", -- 0xFC00
-      "  iand",
-      "  istore 5",
-      "  iload 4",
-      "  ifne L_entry_check_low",
-      -- !expecting_low: standalone low → fail; high → set flag; else nothing.
-      "  iload 5",
-      "  ldc 56320", -- 0xDC00
-      "  if_icmpeq L_entry_unpaired",
-      "  iload 5",
-      "  ldc 55296", -- 0xD800
-      "  if_icmpne L_entry_inc",
-      "  iconst_1",
-      "  istore 4",
-      "  goto L_entry_inc",
-      "L_entry_check_low:",
-      -- expecting_low: must be low surrogate; else fail.
-      "  iload 5",
-      "  ldc 56320", -- 0xDC00
-      "  if_icmpne L_entry_unpaired",
-      "  iconst_0",
-      "  istore 4",
-      "  goto L_entry_inc",
-      "L_entry_inc:",
-      "  iinc 3 1",
-      "  goto L_entry_scan",
-      "L_entry_scan_done:",
-      -- Trailing high surrogate (last code unit was high, no low followed).
-      "  iload 4",
-      "  ifne L_entry_unpaired",
-      -- Right(input): Object[2] = [Integer(1), input]
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_1",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload_0",
-      "  aastore",
-      "  areturn",
-      "L_entry_too_long:",
-      -- inner: StringTooLong CCon — Object[1] = [Integer(0)]
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore 6",
-      -- row: CRow — Object[2] = [Integer(stringTooLongTag), inner]
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  ldc " <> stringTooLongTag,
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 6",
-      "  aastore",
-      "  astore 7",
-      -- left: Either Left — Object[2] = [Integer(0), row]
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 7",
-      "  aastore",
-      "  areturn",
-      "L_entry_unpaired:",
-      -- inner: UnpairedUtf16Surrogate CCon — Object[1] = [Integer(0)]
-      "  iconst_1",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  astore 6",
-      -- row: CRow — Object[2] = [Integer(unpairedSurrogateTag), inner]
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  ldc " <> unpairedSurrogateTag,
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 6",
-      "  aastore",
-      "  astore 7",
-      -- left: Either Left — Object[2] = [Integer(0), row]
-      "  iconst_2",
-      "  anewarray java/lang/Object",
-      "  dup",
-      "  iconst_0",
-      "  iconst_0",
-      "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
-      "  aastore",
-      "  dup",
-      "  iconst_1",
-      "  aload 7",
-      "  aastore",
-      "  areturn",
-      ".end method"
-    ]
+entryArgEitherMethod :: PreludeTags -> Text
+entryArgEitherMethod ptags =
+  T.intercalate "\n"
+    $ [ ".method static __entryArgEither(Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 6",
+        "  .limit locals 8",
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  astore_1",
+        "  aload_1",
+        "  invokevirtual java/lang/String/length()I",
+        "  istore_2",
+        -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27). Cap-check first.
+        "  iload_2",
+        "  ldc 134217728",
+        "  if_icmpgt L_entry_too_long",
+        -- Surrogate scan: walk UTF-16 code units, ensure pairing.
+        "  iconst_0",
+        "  istore_3",
+        "  iconst_0",
+        "  istore 4",
+        "L_entry_scan:",
+        "  iload_3",
+        "  iload_2",
+        "  if_icmpge L_entry_scan_done",
+        "  aload_1",
+        "  iload_3",
+        "  invokevirtual java/lang/String/charAt(I)C",
+        -- Mask top 6 bits: surrogate range U+D800..U+DFFF shares prefix,
+        -- with bit 10 distinguishing high (0) from low (1).
+        "  ldc 64512", -- 0xFC00
+        "  iand",
+        "  istore 5",
+        "  iload 4",
+        "  ifne L_entry_check_low",
+        -- !expecting_low: standalone low → fail; high → set flag; else nothing.
+        "  iload 5",
+        "  ldc 56320", -- 0xDC00
+        "  if_icmpeq L_entry_unpaired",
+        "  iload 5",
+        "  ldc 55296", -- 0xD800
+        "  if_icmpne L_entry_inc",
+        "  iconst_1",
+        "  istore 4",
+        "  goto L_entry_inc",
+        "L_entry_check_low:",
+        -- expecting_low: must be low surrogate; else fail.
+        "  iload 5",
+        "  ldc 56320", -- 0xDC00
+        "  if_icmpne L_entry_unpaired",
+        "  iconst_0",
+        "  istore 4",
+        "  goto L_entry_inc",
+        "L_entry_inc:",
+        "  iinc 3 1",
+        "  goto L_entry_scan",
+        "L_entry_scan_done:",
+        -- Trailing high surrogate (last code unit was high, no low followed).
+        "  iload 4",
+        "  ifne L_entry_unpaired",
+        -- Right(input): Object[2] = [Integer(rightTag), input]
+        "  iconst_2",
+        "  anewarray java/lang/Object",
+        "  dup",
+        "  iconst_0"
+      ]
+    <> boxedTagLines (ptRight ptags)
+    -- Right(input): Object[2] = [Integer(rightTag), input]
+    <> [ "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload_0",
+         "  aastore",
+         "  areturn",
+         "L_entry_too_long:"
+       ]
+    -- inner: StringTooLong CCon — Object[1] = [Integer(stl)]
+    <> makeNullaryCellLines (ptStringTooLong ptags)
+    -- row: CRow — Object[2] = [Integer(stringTooLongRowTag), inner]
+    <> [ "  astore 6",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0",
+         "  ldc " <> stringTooLongRowTagText,
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload 6",
+         "  aastore",
+         "  astore 7"
+       ]
+    -- left: Either Left — Object[2] = [Integer(left), row]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload 7"
+    <> [ "  areturn",
+         "L_entry_unpaired:"
+       ]
+    -- inner: UnpairedUtf16Surrogate CCon — Object[1] = [Integer(us)]
+    <> makeNullaryCellLines (ptUnpairedUtf16Surrogate ptags)
+    -- row: CRow — Object[2] = [Integer(unpairedSurrogateRowTag), inner]
+    <> [ "  astore 6",
+         "  iconst_2",
+         "  anewarray java/lang/Object",
+         "  dup",
+         "  iconst_0",
+         "  ldc " <> unpairedSurrogateRowTagText,
+         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+         "  aastore",
+         "  dup",
+         "  iconst_1",
+         "  aload 6",
+         "  aastore",
+         "  astore 7"
+       ]
+    -- left: Either Left — Object[2] = [Integer(left), row]
+    <> makeUnaryCellFromLocalLines (ptLeft ptags) "  aload 7"
+    <> [ "  areturn",
+         ".end method",
+         ""
+       ]
   where
-    stringTooLongTag :: Text
-    stringTooLongTag = show (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
-    unpairedSurrogateTag :: Text
-    unpairedSurrogateTag = show (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
+    stringTooLongRowTagText :: Text
+    stringTooLongRowTagText = show (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
+    unpairedSurrogateRowTagText :: Text
+    unpairedSurrogateRowTagText = show (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
 
 -- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs', called
 --   from 'runIO''s 'IOGetArgs' arm. Reads the cached argv[0] from the

@@ -37,13 +37,13 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 ]
-tco.case.arm.0.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 5, label %tco.case.arm.5.9 i64 7, label %tco.case.arm.7.12 ]
+tco.case.arm.5.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   store ptr %t11, ptr %t2
   br label %tco.exit.1
-tco.case.arm.2.12:
+tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   %t15 = getelementptr ptr, ptr %t4, i32 2
@@ -71,11 +71,11 @@ define internal ptr @v_identity(ptr %v_x) {
 
 define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 24)
-  %t1 = inttoptr i64 2 to ptr
+  %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @malloc(i64 16)
-  %t4 = inttoptr i64 0 to ptr
+  %t4 = inttoptr i64 19 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = getelementptr ptr, ptr %t3, i32 1
@@ -84,21 +84,21 @@ define internal ptr @v_main() {
   %t8 = getelementptr ptr, ptr %t7, i32 0
   %t9 = load ptr, ptr %t8
   %t10 = ptrtoint ptr %t9 to i64
-  switch i64 %t10, label %case.default.11 [ i64 0, label %case.arm.0.13 ]
-case.arm.0.13:
+  switch i64 %t10, label %case.default.11 [ i64 19, label %case.arm.19.13 ]
+case.arm.19.13:
   %t15 = getelementptr ptr, ptr %t7, i32 1
   %t16 = load ptr, ptr %t15
-  br label %case.end.0.14
-case.end.0.14:
+  br label %case.end.19.14
+case.end.19.14:
   br label %case.join.12
 case.default.11:
   unreachable
 case.join.12:
-  %t17 = phi ptr [%t16, %case.end.0.14]
+  %t17 = phi ptr [%t16, %case.end.19.14]
   %t18 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t17, ptr %t18
   %t19 = call ptr @malloc(i64 16)
-  %t20 = inttoptr i64 0 to ptr
+  %t20 = inttoptr i64 5 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
   store ptr %t20, ptr %t21
   %t22 = call ptr @malloc(i64 8)

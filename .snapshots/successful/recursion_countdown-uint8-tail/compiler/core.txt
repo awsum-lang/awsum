@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -46,7 +46,7 @@ CoreProgram
                         ]
                     )
                     [
-                        ( 0
+                        ( 1
                         , []
                         , CCall
                             ( CBuiltIn "concatString" )
@@ -57,7 +57,7 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 1
+                        ( 2
                         , []
                         , CCase
                             ( CCall
@@ -65,15 +65,15 @@ CoreProgram
                                 [ CVar "n" ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "e" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CRow 3768445577
                                         ( CVar "e" )
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "m" ]
                                 , CCase
                                     ( CCall
@@ -85,15 +85,15 @@ CoreProgram
                                         ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "e" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CRow 3768445577
                                                 ( CVar "e" )
                                             ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "s0" ]
                                         , CCase
                                             ( CCall
@@ -103,15 +103,15 @@ CoreProgram
                                                 ]
                                             )
                                             [
-                                                ( 0
+                                                ( 3
                                                 , [ "e" ]
-                                                , CCon 0
+                                                , CCon 3
                                                     [ CRow 3768445577
                                                         ( CVar "e" )
                                                     ]
                                                 )
                                             ,
-                                                ( 1
+                                                ( 4
                                                 , [ "s1" ]
                                                 , CContinue
                                                     [ CVar "m"
@@ -131,7 +131,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 3
                     , [ "e" ]
                     , CRowCase
                         ( CVar "e" )
@@ -141,9 +141,9 @@ CoreProgram
                             , CCase
                                 ( CVar "__rw" )
                                 [
-                                    ( 0
+                                    ( 15
                                     , []
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "STRING_TOO_LONG" ]
                                     )
                                 ]
@@ -162,7 +162,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -189,20 +189,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

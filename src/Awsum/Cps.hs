@@ -56,21 +56,29 @@ import Relude
 -- | Run over every top-level declaration. Functions with at least one
 -- non-tail self-call get replaced by the @(wrapper, $cps$f, $apply$f)@
 -- trio; everything else passes through.
+--
+-- The K-sum-type's tags (@KTop@ and @K_i@) are allocated from a
+-- program-wide supply seeded by 'nextFreshConTag', so each CPS'd
+-- function's continuations land in a tag range disjoint from every
+-- other type — including other CPS'd functions' K-sum-types.
 cpsProgram :: CoreProgram -> CoreProgram
-cpsProgram (CoreProgram ds) =
+cpsProgram prog@(CoreProgram ds) =
   let topLevelNames = Set.fromList (map declName ds)
-   in CoreProgram (concatMap (transformDecl topLevelNames) ds)
+      baseTag = nextFreshConTag prog
+      (_, transformed) = mapAccumL (transformDecl topLevelNames) baseTag ds
+   in CoreProgram (concat transformed)
   where
     declName (CFunDef n _ _) = n
     declName (CValDef n _) = n
 
-transformDecl :: Set Name -> CDecl -> [CDecl]
-transformDecl topLevel = \case
+transformDecl :: Set Name -> Int -> CDecl -> (Int, [CDecl])
+transformDecl topLevel nextTag = \case
   CFunDef f params body
     | hasNonTailSelfCall f body ->
-        cpsDefunc topLevel f params body
-    | otherwise -> [CFunDef f params body]
-  d@CValDef {} -> [d]
+        let (decls, consumed) = cpsDefunc nextTag topLevel f params body
+         in (nextTag + consumed, decls)
+    | otherwise -> (nextTag, [CFunDef f params body])
+  d@CValDef {} -> (nextTag, [d])
 
 -- | Free variables of a Core expression. Arm pattern binders scope over
 -- their body only and are subtracted.
@@ -109,7 +117,9 @@ data KCon = KCon
   }
 
 data CpsState = CpsState
-  { -- | Next K tag to allocate; tag 0 is reserved for @KTop@.
+  { -- | Next K tag to allocate. The function's @KTop@ tag was
+    -- consumed before this state was constructed (it sits at
+    -- @baseTag@); 'cpsNextTag' starts at @baseTag + 1@.
     cpsNextTag :: !Int,
     -- | Fresh-name counter for received-value binders ($rcv_0, ...).
     cpsNextVarId :: !Int,
@@ -134,26 +144,37 @@ freshTag = do
 registerK :: KCon -> CpsM ()
 registerK kc = modify' (\s -> s {cpsCons = kc : cpsCons s})
 
--- | CPS-defunctionalize one top-level function with non-tail self-recursion.
-cpsDefunc :: Set Name -> Name -> [Name] -> CExpr -> [CDecl]
-cpsDefunc topLevel f params body =
+-- | CPS-defunctionalize one top-level function with non-tail
+-- self-recursion. Returns the generated decls and the number of K
+-- tags consumed (always at least 1 for @KTop@; one extra per
+-- non-tail self-call discovered in the body).
+--
+-- @baseTag@ is this function's allocation base in the program-wide
+-- K-tag namespace: @KTop@ takes @baseTag@, each @K_i@ takes
+-- @baseTag + i@ for @i = 1, 2, …@.
+cpsDefunc :: Int -> Set Name -> Name -> [Name] -> CExpr -> ([CDecl], Int)
+cpsDefunc baseTag topLevel f params body =
   let cpsName, applyName, kParam, xParam :: Name
       cpsName = "$cps$" <> f
       applyName = "$apply$" <> f
       kParam = "$k"
       xParam = "$x"
+      kTopTag = baseTag
       -- Generated names are globally accessible top-level functions;
       -- adding them to the "skip" set keeps them out of 'K_i' captures.
       topLevel' = topLevel <> Set.fromList [cpsName, applyName]
-      initial = CpsState {cpsNextTag = 1, cpsNextVarId = 0, cpsCons = []}
+      initial = CpsState {cpsNextTag = baseTag + 1, cpsNextVarId = 0, cpsCons = []}
       env = CpsEnv {cpsSelfF = f, cpsName = cpsName, cpsApplyName = applyName, cpsKName = kParam, cpsTopLevel = topLevel'}
       (cpsBody, finalState) = runState (goTail env body) initial
       kcons = reverse (cpsCons finalState)
-      applyBody = genApplyBody kParam xParam kcons
-   in [ CFunDef f params (CCall (CVar cpsName) (map CVar params ++ [CCon 0 []])),
-        CFunDef cpsName (params ++ [kParam]) cpsBody,
-        CFunDef applyName [kParam, xParam] applyBody
-      ]
+      applyBody = genApplyBody kTopTag kParam xParam kcons
+      consumed = cpsNextTag finalState - baseTag
+   in ( [ CFunDef f params (CCall (CVar cpsName) (map CVar params ++ [CCon kTopTag []])),
+          CFunDef cpsName (params ++ [kParam]) cpsBody,
+          CFunDef applyName [kParam, xParam] applyBody
+        ],
+        consumed
+      )
 
 -- | Names and settings threaded through the transformer.
 data CpsEnv = CpsEnv
@@ -301,7 +322,7 @@ goNonTail env expr kont = case expr of
 --
 -- @
 --   case $k of
---     0                     -> $x                                 -- KTop
+--     kTopTag               -> $x                                 -- KTop
 --     i ($pk_i, caps..)     -> <post-call continuation with $x as
 --                                 rcv and $pk_i as the parent
 --                                 continuation>
@@ -314,11 +335,11 @@ goNonTail env expr kont = case expr of
 -- assignment to the parameter slot. We alpha-rename the post-call body
 -- so every @$k@ reference flips to @$pk_i@, and similarly the received
 -- variable becomes @$x@.
-genApplyBody :: Name -> Name -> [KCon] -> CExpr
-genApplyBody kParam xParam kcons =
+genApplyBody :: Int -> Name -> Name -> [KCon] -> CExpr
+genApplyBody kTopTag kParam xParam kcons =
   CCase (CVar kParam) (topArm : map kconArm kcons)
   where
-    topArm = (0, [], CVar xParam)
+    topArm = (kTopTag, [], CVar xParam)
 
     kconArm kcon =
       let pkName :: Name

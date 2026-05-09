@@ -66,7 +66,6 @@ module Awsum.LowerClosures (lowerClosuresProgram) where
 
 import Awsum.Core
 import Awsum.Syntax (Name)
-import Data.List (elemIndex)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Relude
@@ -77,19 +76,24 @@ import Relude
 type ClosureShape = (Name, Int)
 
 -- | Layout of one apply_k dispatcher: shapes that flow through it,
--- in the order they were assigned tags (tag = list index).
+-- each paired with its globally unique tag. Tags are allocated from
+-- a program-wide supply seeded by 'nextFreshConTag', so a shape's
+-- tag never collides with another type's constructor tag (or with
+-- another dispatcher's shape tag).
 data ApplyDispatcher = ApplyDispatcher
   { adRemainingArity :: !Int,
-    adShapes :: ![ClosureShape]
+    adShapes :: ![(Int, ClosureShape)]
   }
   deriving stock (Show, Eq)
 
 -- | Top-level entry. Returns a Core program with every residual
 -- function value replaced by a tagged 'CCon' and every residual call
 -- routed through an @apply_k@ dispatcher; the dispatchers are
--- appended at the end.
+-- appended at the end. Shape tags are allocated from a program-wide
+-- supply seeded by 'nextFreshConTag' so they don't collide with any
+-- nominal-constructor tag.
 lowerClosuresProgram :: CoreProgram -> CoreProgram
-lowerClosuresProgram (CoreProgram decls) =
+lowerClosuresProgram prog@(CoreProgram decls) =
   let arities = Map.fromList [(n, length args) | CFunDef n args _ <- decls]
       shapeMap = collectShapes arities decls
       residualArities = collectResidualArities arities decls
@@ -104,7 +108,8 @@ lowerClosuresProgram (CoreProgram decls) =
           (<>)
           shapeMap
           (Map.fromSet (const []) residualArities)
-      dispatchers = buildDispatchers arities arityKeysWithEmpty
+      baseTag = nextFreshConTag prog
+      dispatchers = buildDispatchers baseTag arityKeysWithEmpty
       shapeTagOf = shapeTagOfFn dispatchers
       rewritten = map (rewriteDecl arities shapeTagOf) decls
    in CoreProgram (rewritten <> map dispatcherDecl dispatchers)
@@ -202,23 +207,34 @@ exprShapes arities = goValue
 
 -- | Build one 'ApplyDispatcher' per used remaining arity. Shapes are
 -- stable-sorted (already 'Set'-ordered by 'collectShapes') so tag
--- assignment is deterministic across runs.
-buildDispatchers :: Map Name Int -> Map Int [ClosureShape] -> [ApplyDispatcher]
-buildDispatchers _arities shapeMap =
-  [ ApplyDispatcher {adRemainingArity = k, adShapes = shapes}
-  | (k, shapes) <- Map.toAscList shapeMap
-  ]
+-- assignment is deterministic across runs. Tags are allocated from
+-- @baseTag@ in ascending arity order, then ascending shape order
+-- inside each arity bucket — every shape across the whole program
+-- ends up with a globally unique tag.
+buildDispatchers :: Int -> Map Int [ClosureShape] -> [ApplyDispatcher]
+buildDispatchers baseTag shapeMap =
+  let buckets = Map.toAscList shapeMap
+      (_, dispatchers) = mapAccumL assignBucket baseTag buckets
+   in dispatchers
+  where
+    assignBucket nextTag (k, shapes) =
+      let tagged = zip [nextTag ..] shapes
+       in ( nextTag + length shapes,
+            ApplyDispatcher {adRemainingArity = k, adShapes = tagged}
+          )
 
--- | Lookup function: shape → (dispatcher's remaining arity, tag
--- within that dispatcher). 'Nothing' for an unrecognised shape (a
--- closure whose helper has an unknown arity, e.g. a 'CBuiltIn' —
--- shouldn't arise after Defunctionalize but we tolerate it).
+-- | Lookup function: shape → (dispatcher's remaining arity, globally
+-- unique tag of the shape within that dispatcher). 'Nothing' for an
+-- unrecognised shape (a closure whose helper has an unknown arity,
+-- e.g. a 'CBuiltIn' — shouldn't arise after Defunctionalize but we
+-- tolerate it).
 shapeTagOfFn :: [ApplyDispatcher] -> ClosureShape -> Maybe (Int, Int)
 shapeTagOfFn dispatchers shape =
   listToMaybe
     [ (adRemainingArity ad, tag)
     | ad <- dispatchers,
-      Just tag <- [elemIndex shape (adShapes ad)]
+      (tag, s) <- adShapes ad,
+      s == shape
     ]
 
 -- | Apply the rewrite to one declaration's body.
@@ -291,7 +307,7 @@ dispatcherDecl ad =
             captureNames,
             CCall (CVar helper) (map CVar (captureNames <> argParams))
           )
-        | (tag, (helper, captureCount)) <- zip [0 ..] (adShapes ad),
+        | (tag, (helper, captureCount)) <- adShapes ad,
           let captureNames :: [Name]
               captureNames = ["$cap" <> show tag <> "_" <> show i | i <- [0 .. captureCount - 1]]
         ]

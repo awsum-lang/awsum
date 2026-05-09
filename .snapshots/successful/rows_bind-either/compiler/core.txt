@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -32,12 +32,12 @@ CoreProgram
                 )
             )
         , CFunDef "opA" [ "n" ]
-            ( CCon 1
+            ( CCon 4
                 [ CVar "n" ]
             )
         , CFunDef "opB" [ "_n" ]
-            ( CCon 0
-                [ CCon 0 [] ]
+            ( CCon 3
+                [ CCon 20 [] ]
             )
         , CFunDef "run" [ "x" ]
             ( CCase
@@ -46,15 +46,15 @@ CoreProgram
                     [ CVar "x" ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_19_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CRow 2252990199
                             ( CVar "$do_e_19_3" )
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "a" ]
                     , CCall
                         ( CVar "$lift$7" )
@@ -69,7 +69,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 3
                     , [ "e" ]
                     , CRowCase
                         ( CVar "e" )
@@ -79,9 +79,9 @@ CoreProgram
                             , CCase
                                 ( CVar "__rw" )
                                 [
-                                    ( 0
+                                    ( 19
                                     , []
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "ErrA" ]
                                     )
                                 ]
@@ -92,9 +92,9 @@ CoreProgram
                             , CCase
                                 ( CVar "__rw" )
                                 [
-                                    ( 0
+                                    ( 20
                                     , []
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "ErrB" ]
                                     )
                                 ]
@@ -102,7 +102,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "n" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -129,17 +129,17 @@ CoreProgram
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__f0" ]
-                    , CCon 0
+                    , CCon 3
                         [ CRow 2269767818
                             ( CVar "__f0" )
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "__f0" ]
-                    , CCon 1
+                    , CCon 4
                         [ CVar "__f0" ]
                     )
                 ]
@@ -148,20 +148,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

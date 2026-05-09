@@ -79,8 +79,8 @@ llvmHostLinkerFlags = \case
   LLVMWindows -> ["-lshell32", "-lkernel32"]
 
 -- | Produce a complete LLVM IR module from a Core program for a given host.
-codegenLLVM :: LLVMHost -> CoreProgram -> Text
-codegenLLVM host prog@(CoreProgram decls) =
+codegenLLVM :: LLVMHost -> PreludeTags -> CoreProgram -> Text
+codegenLLVM host ptags prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
       ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing}
@@ -90,7 +90,7 @@ codegenLLVM host prog@(CoreProgram decls) =
         "\n"
         [ header builtIns,
           emitStringConstants pool,
-          runtime builtIns,
+          runtime ptags builtIns,
           userCode,
           footer host
         ]
@@ -296,29 +296,47 @@ header builtIns =
 -- | LLVM runtime helpers, tree-shaken: each @define@ is emitted only
 --   if the corresponding built-in is actually referenced in the
 --   program's Core.
-runtime :: Set Name -> Text
-runtime builtIns =
+runtime :: PreludeTags -> Set Name -> Text
+runtime ptags builtIns =
   T.intercalate "\n\n" (filter (not . T.null) parts) <> "\n"
   where
     -- FNV-1a 32-bit row tags for the prelude's nominal labels used by
     -- the Int32 arithmetic builtins. Computed via 'rowTag' so the
     -- runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'
     -- without hard-coded magic numbers.
-    underflowTag :: Text
-    underflowTag = show (rowTag (TyCon noSpan "UnderflowError"))
-    overflowTag :: Text
-    overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
+    underflowRowTag :: Text
+    underflowRowTag = show (rowTag (TyCon noSpan "UnderflowError"))
+    overflowRowTag :: Text
+    overflowRowTag = show (rowTag (TyCon noSpan "OverflowError"))
     -- StringTooLong row tag, used when the entry-point glue rejects a
     -- too-long argv[1] and hands user code 'Left StringTooLong' through
     -- the row '(StringTooLong | UnpairedUtf16Surrogate)'.
-    stringTooLongTag :: Text
-    stringTooLongTag = show (rowTag (TyCon noSpan "StringTooLong"))
+    stringTooLongRowTag :: Text
+    stringTooLongRowTag = show (rowTag (TyCon noSpan "StringTooLong"))
     -- UnpairedUtf16Surrogate row tag, used when '__entryArgEither'
     -- detects an ill-formed surrogate-encoded UTF-8 byte triplet
     -- ('ED A0..BF 80..BF') in argv[1] — standard UTF-8 (RFC 3629)
     -- forbids these, but WTF-8 / CESU-8 / Java-modified-UTF-8 do not.
-    unpairedSurrogateTag :: Text
-    unpairedSurrogateTag = show (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
+    unpairedSurrogateRowTag :: Text
+    unpairedSurrogateRowTag = show (rowTag (TyCon noSpan "UnpairedUtf16Surrogate"))
+    -- Globally-unique constructor tags fed in via 'PreludeTags'. These
+    -- show up at every user 'CCon' / 'CCase' arm; runtime helpers
+    -- construct values of these types out of band so they need to
+    -- match the same numbering.
+    leftLit, rightLit, unitLit, trueLit, falseLit, nothingLit, justLit, tuple2Lit, ueLit, oeLit, peLit, stlLit, usLit :: Text
+    leftLit = show (ptLeft ptags)
+    rightLit = show (ptRight ptags)
+    unitLit = show (ptUnit ptags)
+    trueLit = show (ptTrue ptags)
+    falseLit = show (ptFalse ptags)
+    nothingLit = show (ptNothing ptags)
+    justLit = show (ptJust ptags)
+    tuple2Lit = show (ptTuple2 ptags)
+    ueLit = show (ptUnderflowError ptags)
+    oeLit = show (ptOverflowError ptags)
+    peLit = show (ptParseError ptags)
+    stlLit = show (ptStringTooLong ptags)
+    usLit = show (ptUnpairedUtf16Surrogate ptags)
     parts =
       [ if Set.member "concatString" builtIns then rtConcat else "",
         -- '__print' is the low-level platform primitive driven by the
@@ -397,10 +415,10 @@ runtime builtIns =
           -- Build 'Left StringTooLong'. StringTooLong is a single-ctor
           -- type so its tag is 0; Either's Left tag is 0.
           "  %stl = call ptr @malloc(i64 8)",
-          "  %stl_tag = inttoptr i64 0 to ptr",
+          "  %stl_tag = inttoptr i64 " <> stlLit <> " to ptr",
           "  store ptr %stl_tag, ptr %stl",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %stl, ptr %left_f",
@@ -427,7 +445,7 @@ runtime builtIns =
           "  call ptr @memcpy(ptr %buf_payload_b, ptr %b_payload, i64 %bb64)",
           -- Wrap in 'Right'. Either's Right tag is 1.
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %buf, ptr %right_f",
@@ -450,7 +468,7 @@ runtime builtIns =
           -- standard CCase tag check.
           "  %unit = call ptr @malloc(i64 8)",
           "  %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0",
-          "  %unit_tag = inttoptr i64 0 to ptr",
+          "  %unit_tag = inttoptr i64 " <> unitLit <> " to ptr",
           "  store ptr %unit_tag, ptr %unit_tag_ptr",
           "  ret ptr %unit",
           "}"
@@ -504,10 +522,10 @@ runtime builtIns =
           "  br i1 %is_min, label %overflow, label %ok",
           "overflow:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -517,7 +535,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -536,10 +554,10 @@ runtime builtIns =
           "  br i1 %is_zero, label %overflow, label %ok",
           "overflow:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -549,7 +567,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -568,10 +586,10 @@ runtime builtIns =
           "  br i1 %is_max, label %overflow, label %ok",
           "overflow:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -581,7 +599,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -600,10 +618,10 @@ runtime builtIns =
           "  br i1 %is_max, label %overflow, label %ok",
           "overflow:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -613,7 +631,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -629,7 +647,7 @@ runtime builtIns =
           "  %va = load i32, ptr %a",
           "  %vb = load i32, ptr %b",
           "  %eq = icmp eq i32 %va, %vb",
-          "  %tag = select i1 %eq, i64 0, i64 1",
+          "  %tag = select i1 %eq, i64 " <> trueLit <> ", i64 " <> falseLit <> "",
           "  %box = call ptr @malloc(i64 8)",
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
@@ -642,7 +660,7 @@ runtime builtIns =
           "  %va = load i8, ptr %a",
           "  %vb = load i8, ptr %b",
           "  %eq = icmp eq i8 %va, %vb",
-          "  %tag = select i1 %eq, i64 0, i64 1",
+          "  %tag = select i1 %eq, i64 " <> trueLit <> ", i64 " <> falseLit <> "",
           "  %box = call ptr @malloc(i64 8)",
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
@@ -671,9 +689,10 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %is_pos = icmp sge i32 %a, 0",
-          "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowTag <> ", i64 " <> underflowTag,
+          "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowRowTag <> ", i64 " <> underflowRowTag,
+          "  %inner_tag_idx = select i1 %is_pos, i64 " <> oeLit <> ", i64 " <> ueLit,
           "  %inner = call ptr @malloc(i64 8)",
-          "  %inner_tag = inttoptr i64 0 to ptr",
+          "  %inner_tag = inttoptr i64 %inner_tag_idx to ptr",
           "  store ptr %inner_tag, ptr %inner",
           "  %row = call ptr @malloc(i64 16)",
           "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
@@ -681,7 +700,7 @@ runtime builtIns =
           "  %row_f = getelementptr ptr, ptr %row, i32 1",
           "  store ptr %inner, ptr %row_f",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %row, ptr %left_f",
@@ -690,7 +709,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %sum, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -717,9 +736,10 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %is_pos = icmp sge i32 %a, 0",
-          "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowTag <> ", i64 " <> underflowTag,
+          "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowRowTag <> ", i64 " <> underflowRowTag,
+          "  %inner_tag_idx = select i1 %is_pos, i64 " <> oeLit <> ", i64 " <> ueLit,
           "  %inner = call ptr @malloc(i64 8)",
-          "  %inner_tag = inttoptr i64 0 to ptr",
+          "  %inner_tag = inttoptr i64 %inner_tag_idx to ptr",
           "  store ptr %inner_tag, ptr %inner",
           "  %row = call ptr @malloc(i64 16)",
           "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
@@ -727,7 +747,7 @@ runtime builtIns =
           "  %row_f = getelementptr ptr, ptr %row, i32 1",
           "  store ptr %inner, ptr %row_f",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %row, ptr %left_f",
@@ -736,7 +756,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %diff, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -764,7 +784,7 @@ runtime builtIns =
           "err:",
           "  %xor_ab = xor i32 %a, %b",
           "  %same_sign = icmp sge i32 %xor_ab, 0",
-          "  %row_tag_idx = select i1 %same_sign, i64 " <> overflowTag <> ", i64 " <> underflowTag,
+          "  %row_tag_idx = select i1 %same_sign, i64 " <> overflowRowTag <> ", i64 " <> underflowRowTag,
           "  %inner = call ptr @malloc(i64 8)",
           "  %inner_tag = inttoptr i64 0 to ptr",
           "  store ptr %inner_tag, ptr %inner",
@@ -774,7 +794,7 @@ runtime builtIns =
           "  %row_f = getelementptr ptr, ptr %row, i32 1",
           "  store ptr %inner, ptr %row_f",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %row, ptr %left_f",
@@ -783,7 +803,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %prod, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -803,10 +823,10 @@ runtime builtIns =
           "  br i1 %is_min, label %overflow, label %ok",
           "overflow:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -816,7 +836,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -841,10 +861,10 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -854,7 +874,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -878,10 +898,10 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -891,7 +911,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -915,10 +935,10 @@ runtime builtIns =
           "  br i1 %unf, label %err, label %ok",
           "err:",
           "  %ue = call ptr @malloc(i64 8)",
-          "  %ue_tag = inttoptr i64 0 to ptr",
+          "  %ue_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %ue_tag, ptr %ue",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %ue, ptr %left_f",
@@ -929,7 +949,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -1020,21 +1040,21 @@ runtime builtIns =
           "  call ptr @memcpy(ptr %suffix_payload, ptr %suffix_start, i64 %suffix_blen)",
           -- Tuple2 prefix suffix → Just (Tuple2 prefix suffix).
           "  %tuple = call ptr @malloc(i64 24)",
-          "  %tuple_tag = inttoptr i64 0 to ptr",
+          "  %tuple_tag = inttoptr i64 " <> tuple2Lit <> " to ptr",
           "  store ptr %tuple_tag, ptr %tuple",
           "  %tuple_a = getelementptr ptr, ptr %tuple, i32 1",
           "  store ptr %prefix, ptr %tuple_a",
           "  %tuple_b = getelementptr ptr, ptr %tuple, i32 2",
           "  store ptr %suffix, ptr %tuple_b",
           "  %just = call ptr @malloc(i64 16)",
-          "  %just_tag = inttoptr i64 1 to ptr",
+          "  %just_tag = inttoptr i64 " <> justLit <> " to ptr",
           "  store ptr %just_tag, ptr %just",
           "  %just_f = getelementptr ptr, ptr %just, i32 1",
           "  store ptr %tuple, ptr %just_f",
           "  ret ptr %just",
           "not_found:",
           "  %nothing = call ptr @malloc(i64 8)",
-          "  %nothing_tag = inttoptr i64 0 to ptr",
+          "  %nothing_tag = inttoptr i64 " <> nothingLit <> " to ptr",
           "  store ptr %nothing_tag, ptr %nothing",
           "  ret ptr %nothing",
           "}",
@@ -1166,17 +1186,17 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %result, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
           "  ret ptr %right",
           "fail:",
           "  %pe = call ptr @malloc(i64 8)",
-          "  %pe_tag = inttoptr i64 0 to ptr",
+          "  %pe_tag = inttoptr i64 " <> peLit <> " to ptr",
           "  store ptr %pe_tag, ptr %pe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %pe, ptr %left_f",
@@ -1231,17 +1251,17 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 1)",
           "  store i8 %result_i8, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
           "  ret ptr %right",
           "fail:",
           "  %pe = call ptr @malloc(i64 8)",
-          "  %pe_tag = inttoptr i64 0 to ptr",
+          "  %pe_tag = inttoptr i64 " <> peLit <> " to ptr",
           "  store ptr %pe_tag, ptr %pe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %pe, ptr %left_f",
@@ -1277,10 +1297,10 @@ runtime builtIns =
           "  br i1 %is_zero, label %overflow, label %ok",
           "overflow:",
           "  %ue = call ptr @malloc(i64 8)",
-          "  %ue_tag = inttoptr i64 0 to ptr",
+          "  %ue_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %ue_tag, ptr %ue",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %ue, ptr %left_f",
@@ -1290,7 +1310,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -1309,10 +1329,10 @@ runtime builtIns =
           "  br i1 %is_max, label %overflow, label %ok",
           "overflow:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -1322,7 +1342,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -1337,7 +1357,7 @@ runtime builtIns =
           "  %va = load i32, ptr %a",
           "  %vb = load i32, ptr %b",
           "  %eq = icmp eq i32 %va, %vb",
-          "  %tag = select i1 %eq, i64 0, i64 1",
+          "  %tag = select i1 %eq, i64 " <> trueLit <> ", i64 " <> falseLit <> "",
           "  %box = call ptr @malloc(i64 8)",
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
@@ -1360,10 +1380,10 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -1373,7 +1393,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -1392,10 +1412,10 @@ runtime builtIns =
           "  br i1 %unf, label %err, label %ok",
           "err:",
           "  %ue = call ptr @malloc(i64 8)",
-          "  %ue_tag = inttoptr i64 0 to ptr",
+          "  %ue_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %ue_tag, ptr %ue",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %ue, ptr %left_f",
@@ -1405,7 +1425,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -1428,10 +1448,10 @@ runtime builtIns =
           "  br i1 %ovf, label %err, label %ok",
           "err:",
           "  %oe = call ptr @malloc(i64 8)",
-          "  %oe_tag = inttoptr i64 0 to ptr",
+          "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
@@ -1441,7 +1461,7 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %newv, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
@@ -1650,7 +1670,7 @@ runtime builtIns =
           "  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)",
           -- Right(wrapped): tag=1, payload=wrapped length-prefixed string.
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %wrapped, ptr %right_f",
@@ -1658,16 +1678,16 @@ runtime builtIns =
           "too_long:",
           -- inner: StringTooLong CCon (single ctor, tag 0).
           "  %tl_inner = call ptr @malloc(i64 8)",
-          "  %tl_inner_tag = inttoptr i64 0 to ptr",
+          "  %tl_inner_tag = inttoptr i64 " <> stlLit <> " to ptr",
           "  store ptr %tl_inner_tag, ptr %tl_inner",
           -- row: CRow box keyed by FNV-1a hash of "StringTooLong".
           "  %tl_row = call ptr @malloc(i64 16)",
-          "  %tl_row_tag = inttoptr i64 " <> stringTooLongTag <> " to ptr",
+          "  %tl_row_tag = inttoptr i64 " <> stringTooLongRowTag <> " to ptr",
           "  store ptr %tl_row_tag, ptr %tl_row",
           "  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1",
           "  store ptr %tl_inner, ptr %tl_row_f",
           "  %tl_left = call ptr @malloc(i64 16)",
-          "  %tl_left_tag = inttoptr i64 0 to ptr",
+          "  %tl_left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %tl_left_tag, ptr %tl_left",
           "  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1",
           "  store ptr %tl_row, ptr %tl_left_f",
@@ -1675,16 +1695,16 @@ runtime builtIns =
           "unpaired:",
           -- inner: UnpairedUtf16Surrogate CCon (single ctor, tag 0).
           "  %us_inner = call ptr @malloc(i64 8)",
-          "  %us_inner_tag = inttoptr i64 0 to ptr",
+          "  %us_inner_tag = inttoptr i64 " <> usLit <> " to ptr",
           "  store ptr %us_inner_tag, ptr %us_inner",
           -- row: CRow box keyed by FNV-1a hash of "UnpairedUtf16Surrogate".
           "  %us_row = call ptr @malloc(i64 16)",
-          "  %us_row_tag = inttoptr i64 " <> unpairedSurrogateTag <> " to ptr",
+          "  %us_row_tag = inttoptr i64 " <> unpairedSurrogateRowTag <> " to ptr",
           "  store ptr %us_row_tag, ptr %us_row",
           "  %us_row_f = getelementptr ptr, ptr %us_row, i32 1",
           "  store ptr %us_inner, ptr %us_row_f",
           "  %us_left = call ptr @malloc(i64 16)",
-          "  %us_left_tag = inttoptr i64 0 to ptr",
+          "  %us_left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %us_left_tag, ptr %us_left",
           "  %us_left_f = getelementptr ptr, ptr %us_left, i32 1",
           "  store ptr %us_row, ptr %us_left_f",
@@ -1735,17 +1755,17 @@ runtime builtIns =
           "  %box = call ptr @malloc(i64 4)",
           "  store i32 %result_i32, ptr %box",
           "  %right = call ptr @malloc(i64 16)",
-          "  %right_tag = inttoptr i64 1 to ptr",
+          "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
           "  ret ptr %right",
           "fail:",
           "  %pe = call ptr @malloc(i64 8)",
-          "  %pe_tag = inttoptr i64 0 to ptr",
+          "  %pe_tag = inttoptr i64 " <> peLit <> " to ptr",
           "  store ptr %pe_tag, ptr %pe",
           "  %left = call ptr @malloc(i64 16)",
-          "  %left_tag = inttoptr i64 0 to ptr",
+          "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %pe, ptr %left_f",

@@ -87,21 +87,21 @@ compileFromText src = do
   let ast = case parseProgram src of
         Left e -> error $ "parse failed" <> e
         Right x -> x
-      core = case elaborateLowerProgram ProgramCli (withPrelude ast) of
+      (ptags, core) = case elaborateLowerProgram ProgramCli (withPrelude ast) of
         Left err -> error $ "elaborate failed" <> show err
-        Right (_warns, x) -> x
+        Right (_warns, pt, x) -> (pt, x)
   -- Binary built from the host-native variant — only that one can actually
   -- be linked and run by the host's clang. Snapshot tests pull text for
   -- other hosts via the 'caLLVM' field, which is a closure over 'core'.
-  llvmBinPath <- compileLLVMBin (codegenLLVM llvmHostFromSystem core)
+  llvmBinPath <- compileLLVMBin (codegenLLVM llvmHostFromSystem ptags core)
   pure
     CompiledArtifacts
-      { caLLVM = (`codegenLLVM` core),
+      { caLLVM = \host -> codegenLLVM host ptags core,
         caLLVMBinPath = llvmBinPath,
-        caJVMBytes = assembleJVM core,
-        caCLRBytes = assembleCLR core,
-        caWASMBytes = assembleWASM core,
-        caJS = codegenJS ProgramCli core
+        caJVMBytes = assembleJVM ptags core,
+        caCLRBytes = assembleCLR ptags core,
+        caWASMBytes = assembleWASM ptags core,
+        caJS = codegenJS ProgramCli ptags core
       }
 
 compileFromFile :: FilePath -> IO CompiledArtifacts

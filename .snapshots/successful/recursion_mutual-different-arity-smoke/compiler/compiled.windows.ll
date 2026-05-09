@@ -48,13 +48,13 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 ]
-tco.case.arm.0.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 5, label %tco.case.arm.5.9 i64 7, label %tco.case.arm.7.12 ]
+tco.case.arm.5.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   store ptr %t11, ptr %t2
   br label %tco.exit.1
-tco.case.arm.2.12:
+tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   %t15 = getelementptr ptr, ptr %t4, i32 2
@@ -78,11 +78,11 @@ tco.exit.1:
 
 define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 24)
-  %t1 = inttoptr i64 2 to ptr
+  %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @malloc(i64 8)
-  %t4 = inttoptr i64 1 to ptr
+  %t4 = inttoptr i64 20 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @v_parseExpr(ptr %t3)
@@ -90,7 +90,7 @@ define internal ptr @v_main() {
   %t8 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t7, ptr %t8
   %t9 = call ptr @malloc(i64 16)
-  %t10 = inttoptr i64 0 to ptr
+  %t10 = inttoptr i64 5 to ptr
   %t11 = getelementptr ptr, ptr %t9, i32 0
   store ptr %t10, ptr %t11
   %t12 = call ptr @malloc(i64 8)
@@ -115,8 +115,8 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 1, label %tco.case.arm.1.28 ]
-tco.case.arm.0.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 21, label %tco.case.arm.21.9 i64 22, label %tco.case.arm.22.28 ]
+tco.case.arm.21.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   %t12 = getelementptr ptr, ptr %t4, i32 2
@@ -124,19 +124,19 @@ tco.case.arm.0.9:
   %t14 = getelementptr ptr, ptr %t11, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %tco.case.default.17 [ i64 0, label %tco.case.arm.0.18 i64 1, label %tco.case.arm.1.20 ]
-tco.case.arm.0.18:
+  switch i64 %t16, label %tco.case.default.17 [ i64 19, label %tco.case.arm.19.18 i64 20, label %tco.case.arm.20.20 ]
+tco.case.arm.19.18:
   %t19 = call ptr @malloc(i64 4)
   store i32 0, ptr %t19
   store ptr %t19, ptr %t2
   br label %tco.exit.1
-tco.case.arm.1.20:
+tco.case.arm.20.20:
   %t21 = call ptr @malloc(i64 16)
-  %t22 = inttoptr i64 1 to ptr
+  %t22 = inttoptr i64 22 to ptr
   %t23 = getelementptr ptr, ptr %t21, i32 0
   store ptr %t22, ptr %t23
   %t24 = call ptr @malloc(i64 8)
-  %t25 = inttoptr i64 0 to ptr
+  %t25 = inttoptr i64 19 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
   %t27 = getelementptr ptr, ptr %t21, i32 1
@@ -145,21 +145,21 @@ tco.case.arm.1.20:
   br label %tco.loop.0
 tco.case.default.17:
   unreachable
-tco.case.arm.1.28:
+tco.case.arm.22.28:
   %t29 = getelementptr ptr, ptr %t4, i32 1
   %t30 = load ptr, ptr %t29
   %t31 = getelementptr ptr, ptr %t30, i32 0
   %t32 = load ptr, ptr %t31
   %t33 = ptrtoint ptr %t32 to i64
-  switch i64 %t33, label %tco.case.default.34 [ i64 0, label %tco.case.arm.0.35 i64 1, label %tco.case.arm.1.37 ]
-tco.case.arm.0.35:
+  switch i64 %t33, label %tco.case.default.34 [ i64 19, label %tco.case.arm.19.35 i64 20, label %tco.case.arm.20.37 ]
+tco.case.arm.19.35:
   %t36 = call ptr @malloc(i64 4)
   store i32 0, ptr %t36
   store ptr %t36, ptr %t2
   br label %tco.exit.1
-tco.case.arm.1.37:
+tco.case.arm.20.37:
   %t38 = call ptr @malloc(i64 24)
-  %t39 = inttoptr i64 0 to ptr
+  %t39 = inttoptr i64 21 to ptr
   %t40 = getelementptr ptr, ptr %t38, i32 0
   store ptr %t39, ptr %t40
   %t41 = getelementptr ptr, ptr %t38, i32 1
@@ -181,7 +181,7 @@ tco.exit.1:
 
 define internal ptr @v_parseExpr(ptr %v_tok) {
   %t0 = call ptr @malloc(i64 16)
-  %t1 = inttoptr i64 1 to ptr
+  %t1 = inttoptr i64 22 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = getelementptr ptr, ptr %t0, i32 1

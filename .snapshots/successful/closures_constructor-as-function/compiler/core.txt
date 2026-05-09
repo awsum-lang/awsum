@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -35,26 +35,26 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 19
                     , [ "value" ]
                     , CVar "value"
                     )
                 ]
             )
         , CValDef "main"
-            ( CCon 2
+            ( CCon 7
                 [ CCall
                     ( CVar "unwrap" )
                     [ CCall
                         ( CVar "$df$wrap$0" )
                         [ CString "wrapped" ]
                     ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
         , CFunDef "$con$Box" [ "$x0" ]
-            ( CCon 0
+            ( CCon 19
                 [ CVar "$x0" ]
             )
         , CFunDef "$df$wrap$0" [ "x" ]

@@ -32,20 +32,20 @@
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
     1: L_arm_1
-    default: L_arm_0
-L_arm_0:
+    2: L_arm_2
+    default: L_arm_1
+L_arm_1:
   pop
   aload_1
   goto L_join
-L_arm_1:
+L_arm_2:
   pop
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_1
+  iconst_2
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join
@@ -62,14 +62,14 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_arm_0
     1: L_arm_1
-    default: L_arm_0
-L_arm_0:
+    2: L_arm_2
+    default: L_arm_1
+L_arm_1:
   pop
   ldc "True"
   goto L_join
-L_arm_1:
+L_arm_2:
   pop
   ldc "False"
   goto L_join
@@ -87,10 +87,10 @@ L_tco_loop:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    0: L_tco_arm_0
-    2: L_tco_arm_2
-    default: L_tco_arm_0
-L_tco_arm_0:
+    5: L_tco_arm_5
+    7: L_tco_arm_7
+    default: L_tco_arm_5
+L_tco_arm_5:
   dup
   iconst_1
   aaload
@@ -98,7 +98,7 @@ L_tco_arm_0:
   pop
   aload_1
   areturn
-L_tco_arm_2:
+L_tco_arm_7:
   dup
   iconst_1
   aaload
@@ -131,7 +131,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_2
+  bipush 7
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -140,7 +140,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_f1(Ljava/lang/Object;)Ljava/lang/Object;
@@ -152,7 +152,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -176,7 +176,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -191,7 +191,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -206,7 +206,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -221,7 +221,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -236,7 +236,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -251,7 +251,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -266,7 +266,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -281,7 +281,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -296,7 +296,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -311,7 +311,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -326,7 +326,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -341,7 +341,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -356,7 +356,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -371,7 +371,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -386,7 +386,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -401,7 +401,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -416,7 +416,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -431,7 +431,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -446,7 +446,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -461,7 +461,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -476,7 +476,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -491,7 +491,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -506,7 +506,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -521,7 +521,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -536,7 +536,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -551,7 +551,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -566,7 +566,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -581,7 +581,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -596,7 +596,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -611,7 +611,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -626,7 +626,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -641,7 +641,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -656,7 +656,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -671,7 +671,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -686,7 +686,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -701,7 +701,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -716,7 +716,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -731,7 +731,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -746,7 +746,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -761,7 +761,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -776,7 +776,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -791,7 +791,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -806,7 +806,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -821,7 +821,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -836,7 +836,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -851,7 +851,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -866,7 +866,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -881,7 +881,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -896,7 +896,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -911,7 +911,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -926,7 +926,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -941,7 +941,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -956,7 +956,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -971,7 +971,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -986,7 +986,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1001,7 +1001,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1016,7 +1016,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1031,7 +1031,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1046,7 +1046,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1061,7 +1061,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1076,7 +1076,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1091,7 +1091,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1106,7 +1106,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1121,7 +1121,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1136,7 +1136,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1151,7 +1151,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1166,7 +1166,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1181,7 +1181,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1196,7 +1196,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1211,7 +1211,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1226,7 +1226,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1241,7 +1241,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1256,7 +1256,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1271,7 +1271,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1286,7 +1286,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1301,7 +1301,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1316,7 +1316,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1331,7 +1331,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1346,7 +1346,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1361,7 +1361,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1376,7 +1376,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1391,7 +1391,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1406,7 +1406,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1421,7 +1421,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1436,7 +1436,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1451,7 +1451,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1466,7 +1466,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1481,7 +1481,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1496,7 +1496,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1511,7 +1511,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1526,7 +1526,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1541,7 +1541,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1556,7 +1556,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1571,7 +1571,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1586,7 +1586,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1601,7 +1601,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1616,7 +1616,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1631,7 +1631,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1646,7 +1646,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1661,7 +1661,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1676,7 +1676,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1691,7 +1691,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1706,7 +1706,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1721,7 +1721,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1736,7 +1736,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1751,7 +1751,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1766,7 +1766,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1781,7 +1781,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1796,7 +1796,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1811,7 +1811,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1826,7 +1826,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1841,7 +1841,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1856,7 +1856,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1871,7 +1871,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1886,7 +1886,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1901,7 +1901,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1916,7 +1916,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1931,7 +1931,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1946,7 +1946,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1961,7 +1961,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1976,7 +1976,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1991,7 +1991,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2006,7 +2006,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2021,7 +2021,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2036,7 +2036,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2051,7 +2051,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2066,7 +2066,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2081,7 +2081,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2096,7 +2096,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2111,7 +2111,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2126,7 +2126,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2141,7 +2141,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2156,7 +2156,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2171,7 +2171,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2186,7 +2186,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2201,7 +2201,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2216,7 +2216,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2231,7 +2231,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2246,7 +2246,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2261,7 +2261,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2276,7 +2276,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2291,7 +2291,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2306,7 +2306,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2321,7 +2321,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2336,7 +2336,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2351,7 +2351,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2366,7 +2366,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2381,7 +2381,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2396,7 +2396,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2411,7 +2411,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2426,7 +2426,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2441,7 +2441,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2456,7 +2456,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2471,7 +2471,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2486,7 +2486,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2501,7 +2501,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2516,7 +2516,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2531,7 +2531,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2546,7 +2546,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2561,7 +2561,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2576,7 +2576,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2591,7 +2591,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2606,7 +2606,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2621,7 +2621,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2636,7 +2636,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2651,7 +2651,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2666,7 +2666,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2681,7 +2681,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2696,7 +2696,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2711,7 +2711,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2726,7 +2726,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2741,7 +2741,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2756,7 +2756,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2771,7 +2771,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2786,7 +2786,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2801,7 +2801,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2816,7 +2816,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2831,7 +2831,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2846,7 +2846,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2861,7 +2861,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2876,7 +2876,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2891,7 +2891,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2906,7 +2906,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2921,7 +2921,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2936,7 +2936,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2951,7 +2951,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2966,7 +2966,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2981,7 +2981,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -2996,7 +2996,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3011,7 +3011,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3026,7 +3026,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3041,7 +3041,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3056,7 +3056,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3071,7 +3071,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3086,7 +3086,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3101,7 +3101,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3116,7 +3116,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3131,7 +3131,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3146,7 +3146,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3161,7 +3161,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3176,7 +3176,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3191,7 +3191,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3206,7 +3206,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3221,7 +3221,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3236,7 +3236,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3251,7 +3251,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3266,7 +3266,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3281,7 +3281,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3296,7 +3296,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3311,7 +3311,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3326,7 +3326,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3341,7 +3341,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3356,7 +3356,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3371,7 +3371,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3386,7 +3386,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3401,7 +3401,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3416,7 +3416,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3431,7 +3431,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3446,7 +3446,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3461,7 +3461,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3476,7 +3476,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3491,7 +3491,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3506,7 +3506,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3521,7 +3521,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3536,7 +3536,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3551,7 +3551,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3566,7 +3566,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3581,7 +3581,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3596,7 +3596,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3611,7 +3611,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3626,7 +3626,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3641,7 +3641,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3656,7 +3656,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3671,7 +3671,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3686,7 +3686,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3701,7 +3701,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3716,7 +3716,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3731,7 +3731,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3746,7 +3746,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3761,7 +3761,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3776,7 +3776,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3791,7 +3791,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3806,7 +3806,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3821,7 +3821,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3836,7 +3836,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3851,7 +3851,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3866,7 +3866,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3881,7 +3881,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3896,7 +3896,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3911,7 +3911,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3926,7 +3926,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3941,7 +3941,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3956,7 +3956,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3971,7 +3971,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -3986,7 +3986,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4001,7 +4001,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4016,7 +4016,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4031,7 +4031,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4046,7 +4046,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4061,7 +4061,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4076,7 +4076,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4091,7 +4091,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4106,7 +4106,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4121,7 +4121,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4136,7 +4136,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4151,7 +4151,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4166,7 +4166,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4181,7 +4181,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4196,7 +4196,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4211,7 +4211,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4226,7 +4226,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4241,7 +4241,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4256,7 +4256,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4271,7 +4271,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4286,7 +4286,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4301,7 +4301,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4316,7 +4316,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4331,7 +4331,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4346,7 +4346,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4361,7 +4361,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4376,7 +4376,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4391,7 +4391,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4406,7 +4406,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4421,7 +4421,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4436,7 +4436,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4451,7 +4451,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4466,7 +4466,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4481,7 +4481,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4496,7 +4496,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4511,7 +4511,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4526,7 +4526,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4541,7 +4541,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4556,7 +4556,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4571,7 +4571,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4586,7 +4586,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4601,7 +4601,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4616,7 +4616,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4631,7 +4631,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4646,7 +4646,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -4661,7 +4661,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  iconst_0
+  iconst_1
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;

@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -32,8 +32,8 @@ CoreProgram
                 )
             )
         , CValDef "bBox"
-            ( CCon 0
-                [ CCon 0 [] ]
+            ( CCon 19
+                [ CCon 20 [] ]
             )
         , CValDef "main"
             ( CCase
@@ -42,22 +42,22 @@ CoreProgram
                     [ CIntLit 1000000 TInt32 ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "_e" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "underflow"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "v" ]
-                    , CCon 2
+                    , CCon 7
                         [ CCall
                             ( CBuiltIn "showInt32" )
                             [ CVar "v" ]
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
@@ -68,7 +68,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 0
+                        ( 21
                         ,
                             [ "$cl"
                             , "$arg0"
@@ -76,25 +76,25 @@ CoreProgram
                         , CCase
                             ( CVar "$cl" )
                             [
-                                ( 0
+                                ( 20
                                 , []
                                 , CContinue
-                                    [ CCon 1
+                                    [ CCon 22
                                         [ CVar "$arg0" ]
                                     ]
                                 )
                             ]
                         )
                     ,
-                        ( 1
+                        ( 22
                         , [ "n" ]
                         , CContinue
-                            [ CCon 3
+                            [ CCon 24
                                 [ CVar "n" ]
                             ]
                         )
                     ,
-                        ( 2
+                        ( 23
                         , [ "n" ]
                         , CCase
                             ( CCall
@@ -104,13 +104,13 @@ CoreProgram
                                 ]
                             )
                             [
-                                ( 0
+                                ( 1
                                 , []
-                                , CCon 1
+                                , CCon 4
                                     [ CIntLit 0 TInt32 ]
                                 )
                             ,
-                                ( 1
+                                ( 2
                                 , []
                                 , CCase
                                     ( CCall
@@ -118,21 +118,21 @@ CoreProgram
                                         [ CVar "n" ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "e" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CVar "e" ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "m" ]
                                         , CCase
                                             ( CVar "bBox" )
                                             [
-                                                ( 0
+                                                ( 19
                                                 , [ "f" ]
                                                 , CContinue
-                                                    [ CCon 0
+                                                    [ CCon 21
                                                         [ CVar "f"
                                                         , CVar "m"
                                                         ]
@@ -145,7 +145,7 @@ CoreProgram
                             ]
                         )
                     ,
-                        ( 3
+                        ( 24
                         , [ "n" ]
                         , CCase
                             ( CCall
@@ -155,13 +155,13 @@ CoreProgram
                                 ]
                             )
                             [
-                                ( 0
+                                ( 1
                                 , []
-                                , CCon 1
+                                , CCon 4
                                     [ CIntLit 0 TInt32 ]
                                 )
                             ,
-                                ( 1
+                                ( 2
                                 , []
                                 , CCase
                                     ( CCall
@@ -169,16 +169,16 @@ CoreProgram
                                         [ CVar "n" ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "e" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CVar "e" ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "m" ]
                                         , CContinue
-                                            [ CCon 2
+                                            [ CCon 23
                                                 [ CVar "m" ]
                                             ]
                                         )
@@ -192,7 +192,7 @@ CoreProgram
         , CFunDef "a" [ "n" ]
             ( CCall
                 ( CVar "$scc$$apply1_$lam$7_a_b" )
-                [ CCon 2
+                [ CCon 23
                     [ CVar "n" ]
                 ]
             )

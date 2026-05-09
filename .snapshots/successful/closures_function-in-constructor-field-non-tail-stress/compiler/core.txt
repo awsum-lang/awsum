@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -41,7 +41,7 @@ CoreProgram
                 ( CVar "$cps$countWithBox" )
                 [ CVar "b"
                 , CVar "n"
-                , CCon 0 []
+                , CCon 21 []
                 ]
             )
         , CFunDef "$cps$countWithBox"
@@ -58,17 +58,17 @@ CoreProgram
                         ]
                     )
                     [
-                        ( 0
+                        ( 1
                         , []
                         , CCall
                             ( CVar "$apply$countWithBox" )
                             [ CVar "$k"
-                            , CCon 1
+                            , CCon 4
                                 [ CIntLit 0 TInt32 ]
                             ]
                         )
                     ,
-                        ( 1
+                        ( 2
                         , []
                         , CCase
                             ( CCall
@@ -76,22 +76,22 @@ CoreProgram
                                 [ CVar "n" ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "e" ]
                                 , CCall
                                     ( CVar "$apply$countWithBox" )
                                     [ CVar "$k"
-                                    , CCon 0
+                                    , CCon 3
                                         [ CVar "e" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "m" ]
                                 , CContinue
                                     [ CVar "b"
                                     , CVar "m"
-                                    , CCon 1
+                                    , CCon 22
                                         [ CVar "$k"
                                         , CVar "b"
                                         ]
@@ -110,38 +110,38 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 0
+                        ( 21
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 1
+                        ( 22
                         ,
-                            [ "$pk_1"
+                            [ "$pk_22"
                             , "b"
                             ]
                         , CCase
                             ( CVar "$x" )
                             [
-                                ( 0
+                                ( 3
                                 , [ "e" ]
                                 , CContinue
-                                    [ CVar "$pk_1"
-                                    , CCon 0
+                                    [ CVar "$pk_22"
+                                    , CCon 3
                                         [ CVar "e" ]
                                     ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "v" ]
                                 , CCase
                                     ( CVar "b" )
                                     [
-                                        ( 0
+                                        ( 19
                                         , [ "f" ]
                                         , CContinue
-                                            [ CVar "$pk_1"
-                                            , CCon 1
+                                            [ CVar "$pk_22"
+                                            , CCon 4
                                                 [ CCall
                                                     ( CVar "$apply1" )
                                                     [ CVar "f"
@@ -161,28 +161,28 @@ CoreProgram
             ( CCase
                 ( CCall
                     ( CVar "countWithBox" )
-                    [ CCon 0
-                        [ CCon 0 [] ]
+                    [ CCon 19
+                        [ CCon 20 [] ]
                     , CIntLit 1000000 TInt32
                     ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "_e" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "underflow"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "v" ]
-                    , CCon 2
+                    , CCon 7
                         [ CCall
                             ( CBuiltIn "showInt32" )
                             [ CVar "v" ]
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
@@ -195,7 +195,7 @@ CoreProgram
             ( CCase
                 ( CVar "$cl" )
                 [
-                    ( 0
+                    ( 20
                     , []
                     , CCall
                         ( CVar "identity" )

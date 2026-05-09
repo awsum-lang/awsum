@@ -28,9 +28,9 @@ import Relude
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Produce a complete .NET PE DLL as a strict ByteString.
-assembleCLR :: CoreProgram -> BS.ByteString
-assembleCLR prog =
-  let (methods, st) = runState (doAssemble prog) emptyPool
+assembleCLR :: PreludeTags -> CoreProgram -> BS.ByteString
+assembleCLR ptags prog =
+  let (methods, st) = runState (doAssemble prog) (emptyPool ptags)
    in toStrict (B.toLazyByteString (buildPE st methods))
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -78,13 +78,21 @@ data Pool = Pool
     pPMn :: Word32,
     -- StandAloneSig table rows: blobIdx (for LocalVarSig)
     pSAS :: [Word16],
-    pSASn :: Word32
+    pSASn :: Word32,
+    -- Globally unique constructor tags for prelude types, threaded
+    -- in through 'assembleCLR' so the runtime helpers built here
+    -- match the user's CCon/CCase encoding.
+    pTags :: PreludeTags
   }
 
 type AsmM = State Pool
 
-emptyPool :: Pool
-emptyPool =
+-- | Read the threaded-in 'PreludeTags' from the assembler state.
+askPreludeTags :: AsmM PreludeTags
+askPreludeTags = gets pTags
+
+emptyPool :: PreludeTags -> Pool
+emptyPool ptags =
   Pool
     { pStr = [0x00],
       pStrOff = 1,
@@ -107,7 +115,8 @@ emptyPool =
       pPM = [],
       pPMn = 0,
       pSAS = [],
-      pSASn = 0
+      pSASn = 0,
+      pTags = ptags
     }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -742,6 +751,7 @@ mkConcat = do
   lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
   -- LocalVarSig: 0x07, count=1, ELEMENT_TYPE_OBJECT (0x1C)
   localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
+  ptags <- askPreludeTags
   let castStr = cilCastclass (tokTR trStr)
       callLen = cilCallvirt (tokMR lengthRef)
       boxInt32 = cilBox (tokTR trInt32)
@@ -766,12 +776,12 @@ mkConcat = do
           <> cilLdarg 1
           <> cilCall (tokMR 2) -- MemberRef 2 = String.Concat
           <> cilStloc 0
-          -- Right(result): object[2] = [box(1), result]
+          -- Right(result): object[2] = [box(rightTag), result]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -780,21 +790,21 @@ mkConcat = do
           <> cilStelemRef
           <> cilRet
       tooLongBlock =
-        -- StringTooLong cell: object[1] = [box(0)]
+        -- StringTooLong cell: object[1] = [box(stlTag)]
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptStringTooLong ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 0
-          -- Left cell: object[2] = [box(0), StringTooLong cell]
+          -- Left cell: object[2] = [box(leftTag), StringTooLong cell]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -818,15 +828,16 @@ mkPrint = do
   ps <- addParams 1
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      -- Build Unit value: object[1] = [boxed Int32(0)]
+      -- Build Unit value: object[1] = [boxed Int32(unitTag)]
       buildUnit =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptUnit ptags)
           <> boxInt32
           <> cilStelemRef
       code = cilLdarg 0 <> cilCall (tokMR 3) <> buildUnit <> cilRet -- MemberRef 3 = Console.Write
@@ -845,24 +856,23 @@ mkPredInt32 = do
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   -- LocalVarSig: 0x07, count=2, ELEMENT_TYPE_I4 (0x08), ELEMENT_TYPE_OBJECT (0x1C)
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
-        -- UnderflowError instance: object[1] with boxed Int32(0) at [0]
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptUnderflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
-          -- Left: object[2] = [boxed Int32(0) tag, UE]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -871,12 +881,11 @@ mkPredInt32 = do
           <> cilStelemRef
           <> cilRet
       okBranch =
-        -- Right: object[2] = [boxed Int32(1) tag, boxed Int32(v - 1)]
         cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -900,13 +909,6 @@ mkPredInt32 = do
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | predUInt8: UInt8 -> Either UnderflowError UInt8.
---   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predUInt8Method'.
---   Same local layout as 'mkPredInt32' (V_0 int32, V_1 object); only the
---   boundary constant changes — 'cilLdcI4 0' vs MIN_VALUE. Since
---   'cilLdcI4 0' uses the 1-byte short form 'ldc.i4.0', the preamble is
---   4 bytes shorter than predInt32, but 'branchOffset = length overflow'
---   is unchanged because it measures the gap between the branch and the
---   ok block, not the preamble.
 mkPredUInt8 :: AsmM MInfo
 mkPredUInt8 = do
   ni <- w16 <$> addStr "__predUInt8"
@@ -915,24 +917,23 @@ mkPredUInt8 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
-        -- UnderflowError instance: object[1] with boxed Int32(0) at [0]
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptUnderflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
-          -- Left: object[2] = [boxed Int32(0) tag, UE]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -941,12 +942,11 @@ mkPredUInt8 = do
           <> cilStelemRef
           <> cilRet
       okBranch =
-        -- Right: object[2] = [boxed Int32(1) tag, boxed Int32(v - 1)]
         cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -982,6 +982,7 @@ mkSuccInt32 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
@@ -989,7 +990,7 @@ mkSuccInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -997,7 +998,7 @@ mkSuccInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1010,7 +1011,7 @@ mkSuccInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1045,6 +1046,7 @@ mkSuccUInt8 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
@@ -1052,7 +1054,7 @@ mkSuccUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -1060,7 +1062,7 @@ mkSuccUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1073,7 +1075,7 @@ mkSuccUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1109,10 +1111,10 @@ mkEq methodName = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       boolBox tagVal =
-        -- One-slot object[] holding a boxed Int32 tag.
         cilLdcI4 1
           <> newarrObj
           <> cilDup
@@ -1121,8 +1123,8 @@ mkEq methodName = do
           <> boxInt32
           <> cilStelemRef
           <> cilRet
-      equalBlock = boolBox 0 -- True tag = 0
-      notEqualBlock = boolBox 1 -- False tag = 1
+      equalBlock = boolBox (ptTrue ptags)
+      notEqualBlock = boolBox (ptFalse ptags)
       branchOffset = fromIntegral (length equalBlock) :: Word8
       code =
         cilLdarg 0
@@ -1150,21 +1152,19 @@ mkAddInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3, object V_4
   localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x08, 0x1C, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      makeLeft rowTagBytes =
-        -- inner = Object[1] = [Integer(0)]; V_3 = inner
+      makeLeft innerTag rowTagBytes =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- inner CCon tag = 0
+          <> cilLdcI4 innerTag
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 3
-          -- row = Object[2] = [Integer(rowTag), inner]; V_4 = row
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
@@ -1177,12 +1177,11 @@ mkAddInt32 = do
           <> cilLdloc 3
           <> cilStelemRef
           <> cilStloc 4
-          -- left = Object[2] = [Integer(0), row]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1190,14 +1189,14 @@ mkAddInt32 = do
           <> cilLdloc 4
           <> cilStelemRef
           <> cilRet
-      overBlock = makeLeft (cilLdcI4 overflowRowTagInt)
-      underBlock = makeLeft (cilLdcI4 underflowRowTagInt)
+      overBlock = makeLeft (ptOverflowError ptags) (cilLdcI4 overflowRowTagInt)
+      underBlock = makeLeft (ptUnderflowError ptags) (cilLdcI4 underflowRowTagInt)
       okBlock =
         cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1208,9 +1207,9 @@ mkAddInt32 = do
           <> cilRet
       blt2Off = fromIntegral (length overBlock) :: Word8
       overSplit =
-        cilLdloc 0 -- a
+        cilLdloc 0
           <> cilLdcI4 0
-          <> cilBltS blt2Off -- if a < 0 → underBlock
+          <> cilBltS blt2Off
       blt1Off = fromIntegral (length okBlock) :: Word8
       preamble =
         cilLdarg 0
@@ -1251,8 +1250,8 @@ mkAddUInt8 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0 (sum), object V_1 (Left payload)
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       okBlock =
@@ -1260,7 +1259,7 @@ mkAddUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1274,7 +1273,7 @@ mkAddUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- OverflowError tag
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -1282,7 +1281,7 @@ mkAddUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1300,7 +1299,7 @@ mkAddUInt8 = do
           <> cilStloc 0
           <> cilLdloc 0
           <> cilLdcI4 255
-          <> cilBleS bleOff -- if sum <= 255 → okBlock
+          <> cilBleS bleOff
       code =
         preamble
           <> overBlock
@@ -1318,16 +1317,16 @@ mkSubInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0, int32 V_1, int32 V_2, object V_3, object V_4
   localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x08, 0x1C, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      makeLeft rowTagBytes =
+      makeLeft innerTag rowTagBytes =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 innerTag
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 3
@@ -1347,7 +1346,7 @@ mkSubInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1355,14 +1354,14 @@ mkSubInt32 = do
           <> cilLdloc 4
           <> cilStelemRef
           <> cilRet
-      overBlock = makeLeft (cilLdcI4 overflowRowTagInt)
-      underBlock = makeLeft (cilLdcI4 underflowRowTagInt)
+      overBlock = makeLeft (ptOverflowError ptags) (cilLdcI4 overflowRowTagInt)
+      underBlock = makeLeft (ptUnderflowError ptags) (cilLdcI4 underflowRowTagInt)
       okBlock =
         cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1373,9 +1372,9 @@ mkSubInt32 = do
           <> cilRet
       blt2Off = fromIntegral (length overBlock) :: Word8
       overSplit =
-        cilLdloc 0 -- a
+        cilLdloc 0
           <> cilLdcI4 0
-          <> cilBltS blt2Off -- if a < 0 → underBlock
+          <> cilBltS blt2Off
       blt1Off = fromIntegral (length okBlock) :: Word8
       preamble =
         cilLdarg 0
@@ -1419,17 +1418,16 @@ mkMulInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0, int32 V_1, int64 V_2, object V_3, object V_4
-  -- ELEMENT_TYPE_I4 = 0x08, ELEMENT_TYPE_I8 = 0x0A, ELEMENT_TYPE_OBJECT = 0x1C
   localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x0A, 0x1C, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
-      makeLeft rowTagBytes =
+      makeLeft innerTag rowTagBytes =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 innerTag
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 3
@@ -1449,7 +1447,7 @@ mkMulInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1457,20 +1455,20 @@ mkMulInt32 = do
           <> cilLdloc 4
           <> cilStelemRef
           <> cilRet
-      overBlock = makeLeft (cilLdcI4 overflowRowTagInt)
-      underBlock = makeLeft (cilLdcI4 underflowRowTagInt)
+      overBlock = makeLeft (ptOverflowError ptags) (cilLdcI4 overflowRowTagInt)
+      underBlock = makeLeft (ptUnderflowError ptags) (cilLdcI4 underflowRowTagInt)
       okBlock =
         cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
           <> cilLdcI4 1
           <> cilLdloc 2
-          <> [0x69] -- conv.i4 (truncate int64 → int32)
+          <> [0x69]
           <> boxInt32
           <> cilStelemRef
           <> cilRet
@@ -1526,6 +1524,7 @@ mkNegInt32 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
@@ -1533,7 +1532,7 @@ mkNegInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -1541,7 +1540,7 @@ mkNegInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1554,7 +1553,7 @@ mkNegInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1587,8 +1586,8 @@ mkSubUInt8 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0 (diff), object V_1 (Left payload)
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       okBlock =
@@ -1596,7 +1595,7 @@ mkSubUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1610,7 +1609,7 @@ mkSubUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- UnderflowError tag
+          <> cilLdcI4 (ptUnderflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -1618,7 +1617,7 @@ mkSubUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1636,7 +1635,7 @@ mkSubUInt8 = do
           <> cilStloc 0
           <> cilLdloc 0
           <> cilLdcI4 0
-          <> cilBltS bltOff -- if diff < 0 → underBlock
+          <> cilBltS bltOff
       code =
         preamble
           <> okBlock
@@ -1654,8 +1653,8 @@ mkMulUInt8 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32 V_0 (product), object V_1 (Left payload)
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       okBlock =
@@ -1663,7 +1662,7 @@ mkMulUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1677,7 +1676,7 @@ mkMulUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- OverflowError tag
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -1685,7 +1684,7 @@ mkMulUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1703,7 +1702,7 @@ mkMulUInt8 = do
           <> cilStloc 0
           <> cilLdloc 0
           <> cilLdcI4 255
-          <> cilBleS bleOff -- if product <= 255 → okBlock
+          <> cilBleS bleOff
       code =
         preamble
           <> overBlock
@@ -1746,27 +1745,25 @@ mkSplitOnFirst = do
   lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
   -- locals: 6 (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)
   localTok <- addLocalSigBytes [0x07, 0x06, etString, etString, 0x08, etString, etString, etObject]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       castStr = cilCastclass (tokTR trStr)
       nothingBlock =
-        -- Nothing: object[1] = [box(0)]
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptNothing ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilRet
       foundBlock =
-        -- prefix = str.Substring(0, idx) → V_3
         cilLdloc 1
           <> cilLdcI4 0
           <> cilLdloc 2
           <> cilCallvirt (tokMR substring2Ref)
           <> cilStloc 3
-          -- suffix = str.Substring(idx + sep.Length) → V_4
           <> cilLdloc 1
           <> cilLdloc 2
           <> cilLdloc 0
@@ -1774,12 +1771,11 @@ mkSplitOnFirst = do
           <> cilAdd
           <> cilCallvirt (tokMR substring1Ref)
           <> cilStloc 4
-          -- Tuple2: object[3] = [box(0), prefix, suffix] → V_5
           <> cilLdcI4 3
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptTuple2 ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1791,12 +1787,11 @@ mkSplitOnFirst = do
           <> cilLdloc 4
           <> cilStelemRef
           <> cilStloc 5
-          -- Just: object[2] = [box(1), tuple]
           <> cilLdcI4 2
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptJust ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1840,8 +1835,8 @@ mkParseInt32 = do
   trStr <- addTypeRef (resScopeAR 1) "String" "System"
   lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
   charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  -- locals: string, int32, int32, int32, int64, int32, object
   localTok <- addLocalSigBytes [0x07, 0x07, etString, 0x08, 0x08, 0x08, 0x0A, 0x08, etObject]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       castStr = cilCastclass (tokTR trStr)
@@ -1956,7 +1951,7 @@ mkParseInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -1968,13 +1963,12 @@ mkParseInt32 = do
           <> cilRet
       lenX = length blockX
       failAt = buildRightAt + lenX
-      -- Y: build Left ParseError
       blockY =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptParseError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 6
@@ -1982,7 +1976,7 @@ mkParseInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2050,8 +2044,8 @@ mkParseUInt8 = do
   trStr <- addTypeRef (resScopeAR 1) "String" "System"
   lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
   charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  -- locals: string, int32 (×4), object
   localTok <- addLocalSigBytes [0x07, 0x06, etString, 0x08, 0x08, 0x08, 0x08, etObject]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       castStr = cilCastclass (tokTR trStr)
@@ -2109,7 +2103,7 @@ mkParseUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2125,7 +2119,7 @@ mkParseUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptParseError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 5
@@ -2133,7 +2127,7 @@ mkParseUInt8 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2267,6 +2261,7 @@ mkPredUInt32 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
@@ -2274,7 +2269,7 @@ mkPredUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptUnderflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -2282,7 +2277,7 @@ mkPredUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2295,7 +2290,7 @@ mkPredUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2330,6 +2325,7 @@ mkSuccUInt32 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       overflow =
@@ -2337,7 +2333,7 @@ mkSuccUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -2345,7 +2341,7 @@ mkSuccUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2358,7 +2354,7 @@ mkSuccUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2393,8 +2389,8 @@ mkAddUInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int64 (0x0A), object (0x1C)
   localTok <- addLocalSigBytes [0x07, 0x02, 0x0A, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       okBlock =
@@ -2402,7 +2398,7 @@ mkAddUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2417,7 +2413,7 @@ mkAddUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- OverflowError tag
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -2425,7 +2421,7 @@ mkAddUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2445,7 +2441,7 @@ mkAddUInt32 = do
           <> cilStloc 0
           <> cilLdloc 0
           <> cilLdcI8 4294967295
-          <> cilBgtUnS bgtOff -- if sum > 4294967295 → overBlock
+          <> cilBgtUnS bgtOff
       code = preamble <> okBlock <> overBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
@@ -2461,8 +2457,8 @@ mkSubUInt32 = do
   ps <- addParams 2
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- locals: int32, int32, object
   localTok <- addLocalSigBytes [0x07, 0x03, 0x08, 0x08, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       okBlock =
@@ -2470,7 +2466,7 @@ mkSubUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1 -- Right tag
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2486,7 +2482,7 @@ mkSubUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- UnderflowError tag
+          <> cilLdcI4 (ptUnderflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 2
@@ -2494,7 +2490,7 @@ mkSubUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0 -- Left tag
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2512,7 +2508,7 @@ mkSubUInt32 = do
           <> cilStloc 1
           <> cilLdloc 0
           <> cilLdloc 1
-          <> cilBltUnS bltOff -- if a <u b → underBlock
+          <> cilBltUnS bltOff
       code = preamble <> okBlock <> underBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
@@ -2530,6 +2526,7 @@ mkMulUInt32 = do
   trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
   trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   localTok <- addLocalSigBytes [0x07, 0x02, 0x0A, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       okBlock =
@@ -2537,7 +2534,7 @@ mkMulUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2552,7 +2549,7 @@ mkMulUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptOverflowError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 1
@@ -2560,7 +2557,7 @@ mkMulUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2600,8 +2597,8 @@ mkParseUInt32 = do
   trStr <- addTypeRef (resScopeAR 1) "String" "System"
   lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
   charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  -- locals: string, int32, int32, int64, int32, object
   localTok <- addLocalSigBytes [0x07, 0x06, etString, 0x08, 0x08, 0x0A, 0x08, etObject]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       castStr = cilCastclass (tokTR trStr)
@@ -2661,7 +2658,7 @@ mkParseUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2678,7 +2675,7 @@ mkParseUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptParseError ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 5
@@ -2686,7 +2683,7 @@ mkParseUInt32 = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2751,6 +2748,7 @@ mkEntryArgEither = do
   charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
   -- LocalVarSig: 7 slots — V_0=String (0x0E), V_1..V_4=int32 (0x08), V_5..V_6=object (0x1C).
   localTok <- addLocalSigBytes [0x07, 0x07, 0x0E, 0x08, 0x08, 0x08, 0x08, 0x1C, 0x1C]
+  ptags <- askPreludeTags
   let boxInt32 = cilBox (tokTR trInt32)
       newarrObj = cilNewarr (tokTR trObj)
       preamble =
@@ -2816,7 +2814,7 @@ mkEntryArgEither = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 1
+          <> cilLdcI4 (ptRight ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2828,13 +2826,13 @@ mkEntryArgEither = do
       okLen = length okBlock
       lTooLong :: Int
       lTooLong = okStart + okLen
-      buildLeftBlock :: [Word8] -> [Word8]
-      buildLeftBlock rowTagBytes =
+      buildLeftBlock :: Int -> [Word8] -> [Word8]
+      buildLeftBlock innerCCon rowTagBytes =
         cilLdcI4 1
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 innerCCon
           <> boxInt32
           <> cilStelemRef
           <> cilStloc 5
@@ -2854,7 +2852,7 @@ mkEntryArgEither = do
           <> newarrObj
           <> cilDup
           <> cilLdcI4 0
-          <> cilLdcI4 0
+          <> cilLdcI4 (ptLeft ptags)
           <> boxInt32
           <> cilStelemRef
           <> cilDup
@@ -2863,13 +2861,13 @@ mkEntryArgEither = do
           <> cilStelemRef
           <> cilRet
       tooLongBlock :: [Word8]
-      tooLongBlock = buildLeftBlock (cilLdcI4 stringTooLongRowTagInt)
+      tooLongBlock = buildLeftBlock (ptStringTooLong ptags) (cilLdcI4 stringTooLongRowTagInt)
       tooLongLen :: Int
       tooLongLen = length tooLongBlock
       lUnpaired :: Int
       lUnpaired = lTooLong + tooLongLen
       unpairedBlock :: [Word8]
-      unpairedBlock = buildLeftBlock (cilLdcI4 unpairedSurrogateRowTagInt)
+      unpairedBlock = buildLeftBlock (ptUnpairedUtf16Surrogate ptags) (cilLdcI4 unpairedSurrogateRowTagInt)
       -- Branch offsets — CIL relative offset is from the byte AFTER the
       -- branch instruction, so offset = target - (sourceStart + 5) for
       -- the long-form 5-byte branches.

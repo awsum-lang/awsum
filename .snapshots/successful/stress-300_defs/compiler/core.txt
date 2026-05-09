@@ -7,14 +7,14 @@ CoreProgram
             ( CCase
                 ( CVar "a" )
                 [
-                    ( 0
+                    ( 1
                     , []
                     , CVar "b"
                     )
                 ,
-                    ( 1
+                    ( 2
                     , []
-                    , CCon 1 []
+                    , CCon 2 []
                     )
                 ]
             )
@@ -22,12 +22,12 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 1
                     , []
                     , CString "True"
                     )
                 ,
-                    ( 1
+                    ( 2
                     , []
                     , CString "False"
                     )
@@ -38,12 +38,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -65,605 +65,605 @@ CoreProgram
                 )
             )
         , CValDef "b1"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b2"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b3"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b4"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b5"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b6"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b7"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b8"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b9"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b10"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b11"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b12"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b13"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b14"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b15"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b16"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b17"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b18"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b19"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b20"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b21"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b22"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b23"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b24"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b25"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b26"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b27"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b28"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b29"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b30"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b31"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b32"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b33"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b34"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b35"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b36"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b37"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b38"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b39"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b40"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b41"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b42"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b43"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b44"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b45"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b46"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b47"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b48"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b49"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b50"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b51"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b52"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b53"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b54"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b55"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b56"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b57"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b58"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b59"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b60"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b61"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b62"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b63"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b64"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b65"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b66"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b67"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b68"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b69"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b70"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b71"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b72"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b73"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b74"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b75"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b76"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b77"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b78"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b79"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b80"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b81"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b82"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b83"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b84"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b85"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b86"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b87"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b88"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b89"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b90"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b91"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b92"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b93"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b94"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b95"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b96"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b97"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b98"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b99"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b100"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b101"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b102"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b103"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b104"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b105"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b106"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b107"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b108"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b109"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b110"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b111"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b112"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b113"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b114"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b115"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b116"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b117"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b118"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b119"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b120"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b121"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b122"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b123"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b124"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b125"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b126"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b127"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b128"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b129"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b130"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b131"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b132"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b133"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b134"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b135"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b136"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b137"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b138"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b139"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b140"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b141"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b142"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b143"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b144"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b145"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b146"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b147"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b148"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b149"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b150"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b151"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b152"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b153"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b154"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b155"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b156"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b157"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b158"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b159"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b160"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b161"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b162"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b163"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b164"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b165"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b166"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b167"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b168"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b169"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b170"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b171"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b172"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b173"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b174"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b175"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b176"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b177"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b178"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b179"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b180"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b181"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b182"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b183"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b184"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b185"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b186"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b187"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b188"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b189"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b190"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b191"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b192"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b193"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b194"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b195"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b196"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b197"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b198"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b199"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b200"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b201"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b202"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b203"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b204"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b205"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b206"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b207"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b208"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b209"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b210"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b211"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b212"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b213"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b214"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b215"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b216"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b217"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b218"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b219"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b220"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b221"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b222"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b223"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b224"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b225"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b226"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b227"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b228"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b229"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b230"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b231"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b232"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b233"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b234"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b235"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b236"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b237"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b238"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b239"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b240"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b241"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b242"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b243"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b244"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b245"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b246"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b247"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b248"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b249"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b250"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b251"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b252"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b253"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b254"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b255"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b256"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b257"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b258"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b259"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b260"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b261"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b262"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b263"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b264"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b265"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b266"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b267"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b268"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b269"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b270"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b271"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b272"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b273"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b274"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b275"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b276"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b277"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b278"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b279"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b280"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b281"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b282"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b283"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b284"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b285"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b286"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b287"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b288"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b289"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b290"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b291"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b292"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b293"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b294"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b295"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b296"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b297"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b298"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b299"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "b300"
-            ( CCon 0 [] )
+            ( CCon 1 [] )
         , CValDef "res"
             ( CCall
                 ( CVar "and" )
@@ -1864,11 +1864,11 @@ CoreProgram
                 ]
             )
         , CValDef "main"
-            ( CCon 2
+            ( CCon 7
                 [ CCall
                     ( CVar "showBool" )
                     [ CVar "res" ]
-                , CCon 0
+                , CCon 5
                     [ CCon 0 [] ]
                 ]
             )

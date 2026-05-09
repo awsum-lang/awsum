@@ -1,7 +1,7 @@
 CoreProgram
     { cdecls =
         [ CFunDef "pureEither" [ "x" ]
-            ( CCon 1
+            ( CCon 4
                 [ CVar "x" ]
             )
         , CFunDef "runIO" [ "io" ]
@@ -9,12 +9,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -36,56 +36,56 @@ CoreProgram
                 )
             )
         , CValDef "op1"
-            ( CCon 1
+            ( CCon 4
                 [ CIntLit 1 TInt32 ]
             )
         , CValDef "op2"
-            ( CCon 0
+            ( CCon 3
                 [ CRow 435006518
-                    ( CCon 0 [] )
+                    ( CCon 21 [] )
                 ]
             )
         , CValDef "op3"
-            ( CCon 1
+            ( CCon 4
                 [ CIntLit 3 TInt32 ]
             )
         , CValDef "f"
             ( CCase
                 ( CVar "op1" )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_22_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CRow 401451280
                             ( CVar "$do_e_22_3" )
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "a" ]
                     , CCase
                         ( CVar "op2" )
                         [
-                            ( 0
+                            ( 3
                             , [ "$do_e_23_3" ]
-                            , CCon 0
+                            , CCon 3
                                 [ CVar "$do_e_23_3" ]
                             )
                         ,
-                            ( 1
+                            ( 4
                             , [ "b" ]
                             , CCase
                                 ( CVar "op3" )
                                 [
-                                    ( 0
+                                    ( 3
                                     , [ "$do_e_24_3" ]
-                                    , CCon 0
+                                    , CCon 3
                                         [ CRow 451784137
                                             ( CVar "$do_e_24_3" )
                                         ]
                                     )
                                 ,
-                                    ( 1
+                                    ( 4
                                     , [ "c" ]
                                     , CCall
                                         ( CVar "pureEither" )
@@ -101,7 +101,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 0
+                    ( 3
                     , [ "e" ]
                     , CRowCase
                         ( CVar "e" )
@@ -111,9 +111,9 @@ CoreProgram
                             , CCase
                                 ( CVar "__rw" )
                                 [
-                                    ( 0
+                                    ( 19
                                     , []
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "ErrorA" ]
                                     )
                                 ]
@@ -124,9 +124,9 @@ CoreProgram
                             , CCase
                                 ( CVar "__rw" )
                                 [
-                                    ( 0
+                                    ( 21
                                     , []
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "ErrorC" ]
                                     )
                                 ]
@@ -137,9 +137,9 @@ CoreProgram
                             , CCase
                                 ( CVar "__rw" )
                                 [
-                                    ( 0
+                                    ( 20
                                     , []
-                                    , CCon 1
+                                    , CCon 4
                                         [ CString "ErrorB" ]
                                     )
                                 ]
@@ -147,7 +147,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "n" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -171,20 +171,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

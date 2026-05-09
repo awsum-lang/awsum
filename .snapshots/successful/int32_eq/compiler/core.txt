@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -39,12 +39,12 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 1
                     , []
                     , CString "T"
                     )
                 ,
-                    ( 1
+                    ( 2
                     , []
                     , CString "F"
                     )
@@ -75,13 +75,13 @@ CoreProgram
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_12_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_12_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "s0" ]
                         , CCase
                             ( CCall
@@ -98,13 +98,13 @@ CoreProgram
                                 ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_13_9" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CVar "$do_e_13_9" ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "s1" ]
                                 , CCall
                                     ( CBuiltIn "concatString" )
@@ -128,20 +128,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

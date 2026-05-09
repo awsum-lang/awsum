@@ -41,7 +41,7 @@ testError testName = do
             let prog = withPrelude userProg
              in case elaborateLowerProgram ProgramCli prog of
                   Left typeErr -> [typeErrorToDiagnostic typeErr]
-                  Right (warns, _core) ->
+                  Right (warns, _ptags, _core) ->
                     case requireMain prog of
                       Left typeErr -> [typeErrorToDiagnostic typeErr]
                       Right () -> map warningToDiagnostic (stripPreludeWarnings warns)

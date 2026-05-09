@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -28,18 +28,6 @@ CoreProgram
                                 )
                             ]
                         )
-                    ,
-                        ( 3
-                        , [ "cont" ]
-                        , CContinue
-                            [ CCall
-                                ( CVar "$apply1" )
-                                [ CVar "cont"
-                                , CCall
-                                    ( CBuiltIn "internalGetArgs" ) []
-                                ]
-                            ]
-                        )
                     ]
                 )
             )
@@ -47,7 +35,7 @@ CoreProgram
             ( CCase
                 ( CVar "token" )
                 [
-                    ( 0
+                    ( 19
                     , [ "w" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -56,7 +44,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 1
+                    ( 20
                     , [ "n" ]
                     , CCall
                         ( CBuiltIn "concatString" )
@@ -65,15 +53,15 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 2
+                    ( 21
                     , []
-                    , CCon 1
+                    , CCon 4
                         [ CString "," ]
                     )
                 ,
-                    ( 3
+                    ( 22
                     , []
-                    , CCon 1
+                    , CCon 4
                         [ CString "<eof>" ]
                     )
                 ]
@@ -84,62 +72,62 @@ CoreProgram
                 [ CCase
                     ( CCall
                         ( CVar "showToken" )
-                        [ CCon 0
+                        [ CCon 19
                             [ CString "hello" ]
                         ]
                     )
                     [
-                        ( 0
+                        ( 3
                         , [ "$do_e_20_9" ]
-                        , CCon 0
+                        , CCon 3
                             [ CVar "$do_e_20_9" ]
                         )
                     ,
-                        ( 1
+                        ( 4
                         , [ "a" ]
                         , CCase
                             ( CCall
                                 ( CVar "showToken" )
-                                [ CCon 2 [] ]
+                                [ CCon 21 [] ]
                             )
                             [
-                                ( 0
+                                ( 3
                                 , [ "$do_e_21_9" ]
-                                , CCon 0
+                                , CCon 3
                                     [ CVar "$do_e_21_9" ]
                                 )
                             ,
-                                ( 1
+                                ( 4
                                 , [ "b" ]
                                 , CCase
                                     ( CCall
                                         ( CVar "showToken" )
-                                        [ CCon 1
+                                        [ CCon 20
                                             [ CString "42" ]
                                         ]
                                     )
                                     [
-                                        ( 0
+                                        ( 3
                                         , [ "$do_e_22_9" ]
-                                        , CCon 0
+                                        , CCon 3
                                             [ CVar "$do_e_22_9" ]
                                         )
                                     ,
-                                        ( 1
+                                        ( 4
                                         , [ "c" ]
                                         , CCase
                                             ( CCall
                                                 ( CVar "showToken" )
-                                                [ CCon 3 [] ]
+                                                [ CCon 22 [] ]
                                             )
                                             [
-                                                ( 0
+                                                ( 3
                                                 , [ "$do_e_23_9" ]
-                                                , CCon 0
+                                                , CCon 3
                                                     [ CVar "$do_e_23_9" ]
                                                 )
                                             ,
-                                                ( 1
+                                                ( 4
                                                 , [ "d" ]
                                                 , CCase
                                                     ( CCall
@@ -149,13 +137,13 @@ CoreProgram
                                                         ]
                                                     )
                                                     [
-                                                        ( 0
+                                                        ( 3
                                                         , [ "$do_e_24_9" ]
-                                                        , CCon 0
+                                                        , CCon 3
                                                             [ CVar "$do_e_24_9" ]
                                                         )
                                                     ,
-                                                        ( 1
+                                                        ( 4
                                                         , [ "ab" ]
                                                         , CCase
                                                             ( CCall
@@ -165,13 +153,13 @@ CoreProgram
                                                                 ]
                                                             )
                                                             [
-                                                                ( 0
+                                                                ( 3
                                                                 , [ "$do_e_25_9" ]
-                                                                , CCon 0
+                                                                , CCon 3
                                                                     [ CVar "$do_e_25_9" ]
                                                                 )
                                                             ,
-                                                                ( 1
+                                                                ( 4
                                                                 , [ "abc" ]
                                                                 , CCase
                                                                     ( CCall
@@ -181,13 +169,13 @@ CoreProgram
                                                                         ]
                                                                     )
                                                                     [
-                                                                        ( 0
+                                                                        ( 3
                                                                         , [ "$do_e_26_9" ]
-                                                                        , CCon 0
+                                                                        , CCon 3
                                                                             [ CVar "$do_e_26_9" ]
                                                                         )
                                                                     ,
-                                                                        ( 1
+                                                                        ( 4
                                                                         , [ "abcs" ]
                                                                         , CCase
                                                                             ( CCall
@@ -197,13 +185,13 @@ CoreProgram
                                                                                 ]
                                                                             )
                                                                             [
-                                                                                ( 0
+                                                                                ( 3
                                                                                 , [ "$do_e_27_9" ]
-                                                                                , CCon 0
+                                                                                , CCon 3
                                                                                     [ CVar "$do_e_27_9" ]
                                                                                 )
                                                                             ,
-                                                                                ( 1
+                                                                                ( 4
                                                                                 , [ "abcsc" ]
                                                                                 , CCase
                                                                                     ( CCall
@@ -213,13 +201,13 @@ CoreProgram
                                                                                         ]
                                                                                     )
                                                                                     [
-                                                                                        ( 0
+                                                                                        ( 3
                                                                                         , [ "$do_e_28_9" ]
-                                                                                        , CCon 0
+                                                                                        , CCon 3
                                                                                             [ CVar "$do_e_28_9" ]
                                                                                         )
                                                                                     ,
-                                                                                        ( 1
+                                                                                        ( 4
                                                                                         , [ "abcscd" ]
                                                                                         , CCall
                                                                                             ( CBuiltIn "concatString" )
@@ -250,31 +238,24 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ]
-            )
-        , CFunDef "$apply1"
-            [ "$cl"
-            , "$arg0"
-            ]
-            ( CCase
-                ( CVar "$cl" ) []
             )
         ]
     }

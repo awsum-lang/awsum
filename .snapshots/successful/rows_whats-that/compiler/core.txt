@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -40,13 +40,13 @@ CoreProgram
                     , CCase
                         ( CVar "__rw" )
                         [
-                            ( 0
+                            ( 9
                             , []
-                            , CCon 1
+                            , CCon 4
                                 [ CString "Nothing" ]
                             )
                         ,
-                            ( 1
+                            ( 10
                             , [ "__pa0" ]
                             , CRowCase
                                 ( CVar "__pa0" )
@@ -56,15 +56,15 @@ CoreProgram
                                     , CCase
                                         ( CVar "b" )
                                         [
-                                            ( 0
+                                            ( 1
                                             , []
-                                            , CCon 1
+                                            , CCon 4
                                                 [ CString "Just True" ]
                                             )
                                         ,
-                                            ( 1
+                                            ( 2
                                             , []
-                                            , CCon 1
+                                            , CCon 4
                                                 [ CString "Just False" ]
                                             )
                                         ]
@@ -81,9 +81,9 @@ CoreProgram
                 [ CCall
                     ( CVar "whatsThat" )
                     [ CRow 1454647603
-                        ( CCon 1
+                        ( CCon 10
                             [ CRow 796142685
-                                ( CCon 0 [] )
+                                ( CCon 1 [] )
                             ]
                         )
                     ]
@@ -93,20 +93,20 @@ CoreProgram
             ( CCase
                 ( CVar "res" )
                 [
-                    ( 0
+                    ( 3
                     , [ "__w0" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "STRING_TOO_LONG"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )

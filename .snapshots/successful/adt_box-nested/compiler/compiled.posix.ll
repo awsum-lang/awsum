@@ -37,13 +37,13 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 0, label %tco.case.arm.0.9 i64 2, label %tco.case.arm.2.12 ]
-tco.case.arm.0.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 5, label %tco.case.arm.5.9 i64 7, label %tco.case.arm.7.12 ]
+tco.case.arm.5.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   store ptr %t11, ptr %t2
   br label %tco.exit.1
-tco.case.arm.2.12:
+tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
   %t15 = getelementptr ptr, ptr %t4, i32 2
@@ -69,63 +69,63 @@ define internal ptr @v_unwrap(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 0, label %case.arm.0.5 ]
-case.arm.0.5:
+  switch i64 %t2, label %case.default.3 [ i64 19, label %case.arm.19.5 ]
+case.arm.19.5:
   %t7 = getelementptr ptr, ptr %v_b, i32 1
   %t8 = load ptr, ptr %t7
   %t9 = getelementptr ptr, ptr %t8, i32 0
   %t10 = load ptr, ptr %t9
   %t11 = ptrtoint ptr %t10 to i64
-  switch i64 %t11, label %case.default.12 [ i64 0, label %case.arm.0.14 ]
-case.arm.0.14:
+  switch i64 %t11, label %case.default.12 [ i64 19, label %case.arm.19.14 ]
+case.arm.19.14:
   %t16 = getelementptr ptr, ptr %t8, i32 1
   %t17 = load ptr, ptr %t16
   %t18 = getelementptr ptr, ptr %t17, i32 0
   %t19 = load ptr, ptr %t18
   %t20 = ptrtoint ptr %t19 to i64
-  switch i64 %t20, label %case.default.21 [ i64 0, label %case.arm.0.23 ]
-case.arm.0.23:
+  switch i64 %t20, label %case.default.21 [ i64 19, label %case.arm.19.23 ]
+case.arm.19.23:
   %t25 = getelementptr ptr, ptr %t17, i32 1
   %t26 = load ptr, ptr %t25
-  br label %case.end.0.24
-case.end.0.24:
+  br label %case.end.19.24
+case.end.19.24:
   br label %case.join.22
 case.default.21:
   unreachable
 case.join.22:
-  %t27 = phi ptr [%t26, %case.end.0.24]
-  br label %case.end.0.15
-case.end.0.15:
+  %t27 = phi ptr [%t26, %case.end.19.24]
+  br label %case.end.19.15
+case.end.19.15:
   br label %case.join.13
 case.default.12:
   unreachable
 case.join.13:
-  %t28 = phi ptr [%t27, %case.end.0.15]
-  br label %case.end.0.6
-case.end.0.6:
+  %t28 = phi ptr [%t27, %case.end.19.15]
+  br label %case.end.19.6
+case.end.19.6:
   br label %case.join.4
 case.default.3:
   unreachable
 case.join.4:
-  %t29 = phi ptr [%t28, %case.end.0.6]
+  %t29 = phi ptr [%t28, %case.end.19.6]
   ret ptr %t29
 }
 
 define internal ptr @v_main() {
   %t0 = call ptr @malloc(i64 24)
-  %t1 = inttoptr i64 2 to ptr
+  %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @malloc(i64 16)
-  %t4 = inttoptr i64 0 to ptr
+  %t4 = inttoptr i64 19 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @malloc(i64 16)
-  %t7 = inttoptr i64 0 to ptr
+  %t7 = inttoptr i64 19 to ptr
   %t8 = getelementptr ptr, ptr %t6, i32 0
   store ptr %t7, ptr %t8
   %t9 = call ptr @malloc(i64 16)
-  %t10 = inttoptr i64 0 to ptr
+  %t10 = inttoptr i64 19 to ptr
   %t11 = getelementptr ptr, ptr %t9, i32 0
   store ptr %t10, ptr %t11
   %t12 = getelementptr ptr, ptr %t9, i32 1
@@ -138,7 +138,7 @@ define internal ptr @v_main() {
   %t16 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t15, ptr %t16
   %t17 = call ptr @malloc(i64 16)
-  %t18 = inttoptr i64 0 to ptr
+  %t18 = inttoptr i64 5 to ptr
   %t19 = getelementptr ptr, ptr %t17, i32 0
   store ptr %t18, ptr %t19
   %t20 = call ptr @malloc(i64 8)

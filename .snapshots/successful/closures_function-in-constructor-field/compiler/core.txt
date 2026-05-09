@@ -5,12 +5,12 @@ CoreProgram
                 ( CCase
                     ( CVar "io" )
                     [
-                        ( 0
+                        ( 5
                         , [ "u" ]
                         , CVar "u"
                         )
                     ,
-                        ( 2
+                        ( 7
                         ,
                             [ "s"
                             , "next"
@@ -47,13 +47,13 @@ CoreProgram
                     ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_16_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CVar "$do_e_16_3" ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "m" ]
                     , CCall
                         ( CBuiltIn "addInt32" )
@@ -70,7 +70,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 0
+                    ( 19
                     , [ "f" ]
                     , CCall
                         ( CVar "$apply1" )
@@ -84,36 +84,36 @@ CoreProgram
             ( CCase
                 ( CCall
                     ( CVar "callBox" )
-                    [ CCon 0
-                        [ CCon 0 [] ]
+                    [ CCon 19
+                        [ CCon 20 [] ]
                     , CIntLit 7 TInt32
                     ]
                 )
                 [
-                    ( 0
+                    ( 3
                     , [ "$do_e_25_3" ]
-                    , CCon 0
+                    , CCon 3
                         [ CVar "$do_e_25_3" ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "d" ]
                     , CCase
                         ( CCall
                             ( CVar "callBox" )
-                            [ CCon 0
-                                [ CCon 1 [] ]
+                            [ CCon 19
+                                [ CCon 21 [] ]
                             , CIntLit 7 TInt32
                             ]
                         )
                         [
-                            ( 0
+                            ( 3
                             , [ "$do_e_26_3" ]
-                            , CCon 0
+                            , CCon 3
                                 [ CVar "$do_e_26_3" ]
                             )
                         ,
-                            ( 1
+                            ( 4
                             , [ "t" ]
                             , CCase
                                 ( CCall
@@ -125,15 +125,15 @@ CoreProgram
                                     ]
                                 )
                                 [
-                                    ( 0
+                                    ( 3
                                     , [ "$do_e_27_3" ]
-                                    , CCon 0
+                                    , CCon 3
                                         [ CRow 3768445577
                                             ( CVar "$do_e_27_3" )
                                         ]
                                     )
                                 ,
-                                    ( 1
+                                    ( 4
                                     , [ "ds" ]
                                     , CCall
                                         ( CBuiltIn "concatString" )
@@ -153,20 +153,20 @@ CoreProgram
             ( CCase
                 ( CVar "formatOutputs" )
                 [
-                    ( 0
+                    ( 3
                     , [ "_e" ]
-                    , CCon 2
+                    , CCon 7
                         [ CString "error"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
                 ,
-                    ( 1
+                    ( 4
                     , [ "s" ]
-                    , CCon 2
+                    , CCon 7
                         [ CVar "s"
-                        , CCon 0
+                        , CCon 5
                             [ CCon 0 [] ]
                         ]
                     )
@@ -179,14 +179,14 @@ CoreProgram
             ( CCase
                 ( CVar "$cl" )
                 [
-                    ( 0
+                    ( 20
                     , []
                     , CCall
                         ( CVar "double" )
                         [ CVar "$arg0" ]
                     )
                 ,
-                    ( 1
+                    ( 21
                     , []
                     , CCall
                         ( CVar "triple" )

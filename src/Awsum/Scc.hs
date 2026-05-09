@@ -47,11 +47,17 @@ import Relude
 -- | Run SCC analysis and merge every non-trivial cyclic SCC.
 -- Trivial SCCs (acyclic or single-member) pass through; merged ones
 -- emit @$scc$<joined names>@ plus N wrappers preserving the originals.
+--
+-- Each merged SCC's sum-type tags are allocated from a globally
+-- monotonic supply seeded with 'nextFreshConTag', so every member's
+-- tag is unique across the whole program (no collision with nominal
+-- constructor tags or with other SCCs' merged sum types).
 sccMergeProgram :: CoreProgram -> CoreProgram
 sccMergeProgram prog@(CoreProgram ds) =
   let declMap = Map.fromList [(declName d, d) | d <- ds]
       sccs = stronglyConnected prog
-      sccOutputs = map (processScc declMap) sccs
+      baseTag = nextFreshConTag prog
+      (_, sccOutputs) = mapAccumL (processScc declMap) baseTag sccs
       mergedNames = Set.unions [Set.fromList (sccReplaced out) | out <- sccOutputs]
       -- Keep originals not part of any merged SCC, preserving source order.
       kept = [d | d <- ds, not (declName d `Set.member` mergedNames)]
@@ -65,40 +71,50 @@ data SccOutput = SccOutput
     sccAdded :: [CDecl]
   }
 
-processScc :: Map Name CDecl -> G.SCC Name -> SccOutput
-processScc declMap = \case
-  G.AcyclicSCC _ -> SccOutput [] []
+-- | Stateful SCC processing: takes the next-free tag, produces an
+-- updated next-free tag (advanced by the number of tags this SCC
+-- consumed) plus the SCC's output.
+processScc :: Map Name CDecl -> Int -> G.SCC Name -> (Int, SccOutput)
+processScc declMap nextTag = \case
+  G.AcyclicSCC _ -> (nextTag, SccOutput [] [])
   G.CyclicSCC [_] ->
     -- Self-recursion — already handled by TCO + Cps.
-    SccOutput [] []
+    (nextTag, SccOutput [] [])
   G.CyclicSCC members ->
-    case planMerge declMap members of
-      Nothing -> SccOutput [] [] -- unsupported SCC, leave as-is
-      Just (merged, wrappers) ->
-        SccOutput
-          { sccReplaced = members,
-            sccAdded = merged : wrappers
-          }
+    case planMerge nextTag declMap members of
+      Nothing -> (nextTag, SccOutput [] []) -- unsupported SCC, leave as-is
+      Just (merged, wrappers, consumed) ->
+        ( nextTag + consumed,
+          SccOutput
+            { sccReplaced = members,
+              sccAdded = merged : wrappers
+            }
+        )
 
 -- | Build the @$scc$@ merged function and its wrappers, or 'Nothing'
 -- if a member is a 'CValDef' (the only blocker).
+--
+-- Member tags are allocated as @baseTag, baseTag+1, …@ — globally
+-- unique across the program. The returned 'Int' is the number of
+-- tags consumed (the SCC's member count when the merge succeeds), so
+-- the caller can advance the supply.
 --
 -- Emission shape:
 --
 -- @
 --   $scc$…( $args ) =
 --     case $args of
---       0 (p_0_0, p_0_1, …) -> <body of f_0 with cross-calls rewritten>
---       1 (p_1_0, p_1_1, …) -> <body of f_1 with cross-calls rewritten>
+--       baseTag     (p_0_0, p_0_1, …) -> <body of f_0 with cross-calls rewritten>
+--       baseTag + 1 (p_1_0, p_1_1, …) -> <body of f_1 with cross-calls rewritten>
 --       …
 --
---   f_i(p_0, p_1, …) = $scc$… (CCon i [p_0, p_1, …])              -- wrapper
+--   f_i(p_0, p_1, …) = $scc$… (CCon (baseTag + i) [p_0, p_1, …])    -- wrapper
 -- @
 --
 -- Arm binders are each member's /original/ parameter names — body
 -- references resolve naturally, no alpha-rename.
-planMerge :: Map Name CDecl -> [Name] -> Maybe (CDecl, [CDecl])
-planMerge declMap members = do
+planMerge :: Int -> Map Name CDecl -> [Name] -> Maybe (CDecl, [CDecl], Int)
+planMerge baseTag declMap members = do
   memberDecls <- traverse (`Map.lookup` declMap) members
   parts <- traverse asFun memberDecls
   -- Sort by name for a stable tag assignment regardless of call-graph order.
@@ -108,8 +124,10 @@ planMerge declMap members = do
       mergedName = "$scc$" <> T.intercalate "_" names
       argsParam :: Name
       argsParam = "$args"
+      tagOf :: Int -> Int
+      tagOf i = baseTag + i
       alts =
-        [ (i, ps, rewriteCrossCalls memberSet mergedName names body)
+        [ (tagOf i, ps, rewriteCrossCalls memberSet mergedName names tagOf body)
         | (i, (_, ps, body)) <- zip [0 ..] sorted
         ]
       mergedBody = CCase (CVar argsParam) alts
@@ -120,11 +138,11 @@ planMerge declMap members = do
             origParams
             ( CCall
                 (CVar mergedName)
-                [CCon i (map CVar origParams)]
+                [CCon (tagOf i) (map CVar origParams)]
             )
         | (i, (n, origParams, _)) <- zip [0 ..] sorted
         ]
-  Just (mergedDecl, wrappers)
+  Just (mergedDecl, wrappers, length sorted)
   where
     asFun :: CDecl -> Maybe (Name, [Name], CExpr)
     asFun = \case
@@ -133,13 +151,15 @@ planMerge declMap members = do
 
 -- | Redirect every direct call to a fellow SCC member into a tail call
 -- on the merged function with args packed into a tagged 'CCon'.
--- Structural traversal otherwise.
-rewriteCrossCalls :: Set Name -> Name -> [Name] -> CExpr -> CExpr
-rewriteCrossCalls memberSet mergedName memberOrder = go
+-- Structural traversal otherwise. The @tagOf@ argument maps the
+-- member's positional index in @memberOrder@ to its globally unique
+-- tag.
+rewriteCrossCalls :: Set Name -> Name -> [Name] -> (Int -> Int) -> CExpr -> CExpr
+rewriteCrossCalls memberSet mergedName memberOrder tagOf = go
   where
     tagFor :: Name -> Int
     tagFor n = case elemIndex n memberOrder of
-      Just i -> i
+      Just i -> tagOf i
       Nothing -> error ("Awsum.Scc: tagFor: not an SCC member: " <> n)
 
     go :: CExpr -> CExpr

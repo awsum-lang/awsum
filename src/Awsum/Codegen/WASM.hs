@@ -31,8 +31,8 @@ import Relude
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Produce a complete WAT module from a Core program.
-codegenWASM :: CoreProgram -> Text
-codegenWASM prog@(CoreProgram decls) =
+codegenWASM :: PreludeTags -> CoreProgram -> Text
+codegenWASM ptags prog@(CoreProgram decls) =
   let (pool, emptyOff, heapStart) = buildStringPool prog
       valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
@@ -62,7 +62,7 @@ codegenWASM prog@(CoreProgram decls) =
           table (length funDefs),
           elemSection funDefs,
           typeDecls indirectArities,
-          runtimeHelpers emptyOff (usedBuiltIns prog) (usesIntLit prog),
+          runtimeHelpers ptags emptyOff (usedBuiltIns prog) (usesIntLit prog),
           T.intercalate "\n\n" (map (emitDecl ctx) decls),
           "",
           startFunc,
@@ -292,45 +292,45 @@ typeDecls arities
 --   into main; the rest are small infrastructure), the higher-level
 --   helpers (@__concat@, @__print@, @__box_i32@, @__show_i32@,
 --   @__predInt32@) are gated on usage.
-runtimeHelpers :: Int -> Set Name -> Bool -> Text
-runtimeHelpers emptyOff builtIns hasIntLit =
+runtimeHelpers :: PreludeTags -> Int -> Set Name -> Bool -> Text
+runtimeHelpers ptags emptyOff builtIns hasIntLit =
   let lns =
         filter
           (not . T.null)
           [ rtAlloc,
             rtMemcpy,
-            if Set.member "concatString" builtIns then rtConcat else "",
-            if Set.member "internalStdoutPrint" builtIns then rtPrint else "",
+            if Set.member "concatString" builtIns then rtConcat ptags else "",
+            if Set.member "internalStdoutPrint" builtIns then rtPrint ptags else "",
             if hasIntLit then rtBoxI32 else "",
             if any (`Set.member` builtIns) ["showInt32", "showUInt8"]
               then rtShowI32
               else "",
             if Set.member "showUInt32" builtIns then rtShowU32 else "",
-            if Set.member "predInt32" builtIns then rtPredI32 else "",
-            if Set.member "predUInt8" builtIns then rtPredU8 else "",
-            if Set.member "predUInt32" builtIns then rtPredU32 else "",
-            if Set.member "succInt32" builtIns then rtSuccI32 else "",
-            if Set.member "succUInt8" builtIns then rtSuccU8 else "",
-            if Set.member "succUInt32" builtIns then rtSuccU32 else "",
-            if any (`Set.member` builtIns) ["eqInt32", "eqUInt8", "eqUInt32"] then rtEqI32 else "",
-            if Set.member "addInt32" builtIns then rtAddI32 else "",
-            if Set.member "subInt32" builtIns then rtSubI32 else "",
-            if Set.member "mulInt32" builtIns then rtMulI32 else "",
-            if Set.member "negInt32" builtIns then rtNegI32 else "",
-            if Set.member "addUInt8" builtIns then rtAddU8 else "",
-            if Set.member "subUInt8" builtIns then rtSubU8 else "",
-            if Set.member "mulUInt8" builtIns then rtMulU8 else "",
-            if Set.member "addUInt32" builtIns then rtAddU32 else "",
-            if Set.member "subUInt32" builtIns then rtSubU32 else "",
-            if Set.member "mulUInt32" builtIns then rtMulU32 else "",
-            if Set.member "splitOnFirst" builtIns then rtSplitOnFirst else "",
+            if Set.member "predInt32" builtIns then rtPredI32 ptags else "",
+            if Set.member "predUInt8" builtIns then rtPredU8 ptags else "",
+            if Set.member "predUInt32" builtIns then rtPredU32 ptags else "",
+            if Set.member "succInt32" builtIns then rtSuccI32 ptags else "",
+            if Set.member "succUInt8" builtIns then rtSuccU8 ptags else "",
+            if Set.member "succUInt32" builtIns then rtSuccU32 ptags else "",
+            if any (`Set.member` builtIns) ["eqInt32", "eqUInt8", "eqUInt32"] then rtEqI32 ptags else "",
+            if Set.member "addInt32" builtIns then rtAddI32 ptags else "",
+            if Set.member "subInt32" builtIns then rtSubI32 ptags else "",
+            if Set.member "mulInt32" builtIns then rtMulI32 ptags else "",
+            if Set.member "negInt32" builtIns then rtNegI32 ptags else "",
+            if Set.member "addUInt8" builtIns then rtAddU8 ptags else "",
+            if Set.member "subUInt8" builtIns then rtSubU8 ptags else "",
+            if Set.member "mulUInt8" builtIns then rtMulU8 ptags else "",
+            if Set.member "addUInt32" builtIns then rtAddU32 ptags else "",
+            if Set.member "subUInt32" builtIns then rtSubU32 ptags else "",
+            if Set.member "mulUInt32" builtIns then rtMulU32 ptags else "",
+            if Set.member "splitOnFirst" builtIns then rtSplitOnFirst ptags else "",
             -- '__splitOnFirst' computes utf16 prefixes for both halves via
             -- '__utf16_of_range', so emit the helper whenever splitOnFirst
             -- is referenced.
             if Set.member "splitOnFirst" builtIns then rtUtf16OfRange else "",
-            if Set.member "parseInt32" builtIns then rtParseInt32 else "",
-            if Set.member "parseUInt8" builtIns then rtParseUInt8 else "",
-            if Set.member "parseUInt32" builtIns then rtParseUInt32 else "",
+            if Set.member "parseInt32" builtIns then rtParseInt32 ptags else "",
+            if Set.member "parseUInt8" builtIns then rtParseUInt8 ptags else "",
+            if Set.member "parseUInt32" builtIns then rtParseUInt32 ptags else "",
             if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
             if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
@@ -342,7 +342,7 @@ runtimeHelpers emptyOff builtIns hasIntLit =
             -- changing the binary footprint. A future WASM-binary
             -- optimisation can drop them per-program; until then,
             -- text mirrors binary.
-            rtEntryArgEither,
+            rtEntryArgEither ptags,
             rtGetArg emptyOff,
             rtGetArgs
           ]
@@ -423,8 +423,8 @@ rtUtf16OfRange =
 --
 --   Output: alloc(8 + ba + bb), write byte/utf16 sums in the header,
 --   memcpy a's payload then b's payload to offset 8.
-rtConcat :: Text
-rtConcat =
+rtConcat :: PreludeTags -> Text
+rtConcat ptags =
   unlines
     [ "  (func $__concat (param $a i32) (param $b i32) (result i32)",
       "    (local $ba i32) (local $bb i32) (local $ua i32) (local $ub i32)",
@@ -435,27 +435,19 @@ rtConcat =
       "    (local.set $bb (i32.load (local.get $b)))",
       "    (local.set $ub (i32.load offset=4 (local.get $b)))",
       "    (local.set $usum (i32.add (local.get $ua) (local.get $ub)))",
-      "    ;; maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).",
-      "    ;; Keep in sync with 'maxStringLengthUtf16CodeUnits' in",
-      "    ;; 'stdlib/Prelude.aww'.",
       "    (if (result i32) (i32.gt_u (local.get $usum) (i32.const 134217728))",
       "      (then",
-      "        ;; Build StringTooLong cell (alloc 4, tag 0).",
       "        (local.set $stl (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $stl) (i32.const 0))",
-      "        ;; Left cell: alloc 8, tag 0 + ptr to stl.",
+      "        (i32.store (local.get $stl) (i32.const " <> tShow (ptStringTooLong ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $stl))",
       "        (local.get $cell))",
       "      (else",
-      "        ;; Allocate header (8 bytes) + ba + bb payload.",
       "        (local.set $bsum (i32.add (local.get $ba) (local.get $bb)))",
       "        (local.set $buf (call $__alloc (i32.add (local.get $bsum) (i32.const 8))))",
-      "        ;; Write header.",
       "        (i32.store (local.get $buf) (local.get $bsum))",
       "        (i32.store offset=4 (local.get $buf) (local.get $usum))",
-      "        ;; memcpy a's payload then b's payload to offset 8.",
       "        (call $__memcpy",
       "          (i32.add (local.get $buf) (i32.const 8))",
       "          (i32.add (local.get $a) (i32.const 8))",
@@ -464,20 +456,24 @@ rtConcat =
       "          (i32.add (local.get $buf) (i32.add (i32.const 8) (local.get $ba)))",
       "          (i32.add (local.get $b) (i32.const 8))",
       "          (local.get $bb))",
-      "        ;; Right cell: alloc 8, tag 1 + ptr to buf.",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $buf))",
       "        (local.get $cell))))"
     ]
+
+-- | 'show' specialized to 'Int -> Text' so call sites that interpolate
+--   tag values stay readable without explicit type signatures.
+tShow :: Int -> Text
+tShow = show
 
 -- | __print: low-level platform primitive driven by the prelude's
 --   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
 --   (alloc(4); store tag 0) so the surrounding `case … of Unit ->
 --   next` arm in `runIO` dispatches through the standard CCase tag
 --   check.
-rtPrint :: Text
-rtPrint =
+rtPrint :: PreludeTags -> Text
+rtPrint ptags =
   unlines
     [ "  (func $__print (param $s i32) (result i32)",
       "    (local $len i32)",
@@ -487,9 +483,9 @@ rtPrint =
       "    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))",
       "    (i32.store (i32.const 4) (local.get $len))",
       "    (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))",
-      -- Build Unit value: alloc(4) + store tag 0 at offset 0.
+      -- Build Unit value: alloc(4) + store Unit tag at offset 0.
       "    (local.set $unit (call $__alloc (i32.const 4)))",
-      "    (i32.store (local.get $unit) (i32.const 0))",
+      "    (i32.store (local.get $unit) (i32.const " <> tShow (ptUnit ptags) <> "))",
       "    (local.get $unit))"
     ]
 
@@ -569,8 +565,8 @@ rtShowI32 =
 --   i32 fields at offsets 4, 8, ...]. Tags: Left=0, Right=1,
 --   UnderflowError=0. Returns `Left UnderflowError` on INT32_MIN,
 --   `Right (v - 1)` otherwise.
-rtPredI32 :: Text
-rtPredI32 =
+rtPredI32 :: PreludeTags -> Text
+rtPredI32 ptags =
   unlines
     [ "  (func $__predInt32 (param $p i32) (result i32)",
       "    (local $v i32) (local $ue i32) (local $box i32) (local $cell i32)",
@@ -578,16 +574,16 @@ rtPredI32 =
       "    (if (result i32) (i32.eq (local.get $v) (i32.const -2147483648))",
       "      (then",
       "        (local.set $ue (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (i32.store (local.get $ue) (i32.const " <> tShow (ptUnderflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.sub (local.get $v) (i32.const 1)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -597,8 +593,8 @@ rtPredI32 =
 --   masking — (v - 1) is in 0..254 when v >= 1, so it stays in UInt8
 --   range naturally. Container layout and tag assignment match
 --   'rtPredI32' exactly.
-rtPredU8 :: Text
-rtPredU8 =
+rtPredU8 :: PreludeTags -> Text
+rtPredU8 ptags =
   unlines
     [ "  (func $__predUInt8 (param $p i32) (result i32)",
       "    (local $v i32) (local $ue i32) (local $box i32) (local $cell i32)",
@@ -606,16 +602,16 @@ rtPredU8 =
       "    (if (result i32) (i32.eqz (local.get $v))",
       "      (then",
       "        (local.set $ue (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (i32.store (local.get $ue) (i32.const " <> tShow (ptUnderflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.sub (local.get $v) (i32.const 1)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -625,8 +621,8 @@ rtPredU8 =
 --   instead of subtraction. OverflowError is single-constructor, so its
 --   inner-box tag is 0 (same as UnderflowError), which matches the
 --   predecessor helpers' encoding exactly.
-rtSuccI32 :: Text
-rtSuccI32 =
+rtSuccI32 :: PreludeTags -> Text
+rtSuccI32 ptags =
   unlines
     [ "  (func $__succInt32 (param $p i32) (result i32)",
       "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -634,9 +630,9 @@ rtSuccI32 =
       "    (if (result i32) (i32.eq (local.get $v) (i32.const 2147483647))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
@@ -652,8 +648,8 @@ rtSuccI32 =
 --   Mirrors 'rtSuccI32' but checks against 255. Masking is unnecessary —
 --   (v + 1) is in 1..255 when v <= 254, so the result stays in UInt8 range
 --   naturally.
-rtSuccU8 :: Text
-rtSuccU8 =
+rtSuccU8 :: PreludeTags -> Text
+rtSuccU8 ptags =
   unlines
     [ "  (func $__succUInt8 (param $p i32) (result i32)",
       "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -661,16 +657,16 @@ rtSuccU8 =
       "    (if (result i32) (i32.eq (local.get $v) (i32.const 255))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.add (local.get $v) (i32.const 1)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -694,8 +690,8 @@ underflowTag = show (rowTag (TyCon noSpan "UnderflowError"))
 overflowTag :: Text
 overflowTag = show (rowTag (TyCon noSpan "OverflowError"))
 
-rtAddI32 :: Text
-rtAddI32 =
+rtAddI32 :: PreludeTags -> Text
+rtAddI32 ptags =
   unlines
     [ "  (func $__addInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $a i32) (local $b i32) (local $s i32)",
@@ -711,7 +707,10 @@ rtAddI32 =
       "        (i32.const 0))",
       "      (then",
       "        (local.set $inner (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (i32.store (local.get $inner)",
+      "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
+      "            (then (i32.const " <> tShow (ptOverflowError ptags) <> "))",
+      "            (else (i32.const " <> tShow (ptUnderflowError ptags) <> "))))",
       "        (local.set $row (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $row)",
       "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
@@ -719,14 +718,14 @@ rtAddI32 =
       "            (else (i32.const " <> underflowTag <> "))))",
       "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $s))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -735,8 +734,8 @@ rtAddI32 =
 --   Both operands are 0..255 so an i32 add gives 0..510 and a single
 --   'i32.gt_u 255' check selects the branch — no widening needed beyond
 --   the already-i32-typed cells, no mask on the ok path.
-rtAddU8 :: Text
-rtAddU8 =
+rtAddU8 :: PreludeTags -> Text
+rtAddU8 ptags =
   unlines
     [ "  (func $__addUInt8 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $s i32) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -744,16 +743,16 @@ rtAddU8 =
       "    (if (result i32) (i32.gt_u (local.get $s) (i32.const 255))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $s))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -765,8 +764,8 @@ rtAddU8 =
 --   of @a@ and @b@ must differ, so @a >= 0@ implies @b < 0@ which implies
 --   positive overflow → OverflowError). Same row-tagged error encoding
 --   as 'rtAddI32'.
-rtSubI32 :: Text
-rtSubI32 =
+rtSubI32 :: PreludeTags -> Text
+rtSubI32 ptags =
   unlines
     [ "  (func $__subInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $a i32) (local $b i32) (local $d i32)",
@@ -782,7 +781,10 @@ rtSubI32 =
       "        (i32.const 0))",
       "      (then",
       "        (local.set $inner (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (i32.store (local.get $inner)",
+      "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
+      "            (then (i32.const " <> tShow (ptOverflowError ptags) <> "))",
+      "            (else (i32.const " <> tShow (ptUnderflowError ptags) <> "))))",
       "        (local.set $row (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $row)",
       "          (if (result i32) (i32.ge_s (local.get $a) (i32.const 0))",
@@ -790,14 +792,14 @@ rtSubI32 =
       "            (else (i32.const " <> underflowTag <> "))))",
       "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $d))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -809,8 +811,8 @@ rtSubI32 =
 --   UnderflowError. The truncated i32 product is the correct ok-path
 --   value when the comparison falls through. Same row-tagged error
 --   encoding as 'rtAddI32'.
-rtMulI32 :: Text
-rtMulI32 =
+rtMulI32 :: PreludeTags -> Text
+rtMulI32 ptags =
   unlines
     [ "  (func $__mulInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $p i64)",
@@ -822,31 +824,31 @@ rtMulI32 =
       "    (if (result i32) (i64.gt_s (local.get $p) (i64.const 2147483647))",
       "      (then",
       "        (local.set $inner (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (i32.store (local.get $inner) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $row (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $row) (i32.const " <> overflowTag <> "))",
       "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (if (result i32) (i64.lt_s (local.get $p) (i64.const -2147483648))",
       "          (then",
       "            (local.set $inner (call $__alloc (i32.const 4)))",
-      "            (i32.store (local.get $inner) (i32.const 0))",
+      "            (i32.store (local.get $inner) (i32.const " <> tShow (ptUnderflowError ptags) <> "))",
       "            (local.set $row (call $__alloc (i32.const 8)))",
       "            (i32.store (local.get $row) (i32.const " <> underflowTag <> "))",
       "            (i32.store offset=4 (local.get $row) (local.get $inner))",
       "            (local.set $cell (call $__alloc (i32.const 8)))",
-      "            (i32.store (local.get $cell) (i32.const 0))",
+      "            (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "            (i32.store offset=4 (local.get $cell) (local.get $row))",
       "            (local.get $cell))",
       "          (else",
       "            (local.set $box (call $__alloc (i32.const 4)))",
       "            (i32.store (local.get $box) (i32.wrap_i64 (local.get $p)))",
       "            (local.set $cell (call $__alloc (i32.const 8)))",
-      "            (i32.store (local.get $cell) (i32.const 1))",
+      "            (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "            (i32.store offset=4 (local.get $cell) (local.get $box))",
       "            (local.get $cell))))))"
     ]
@@ -856,8 +858,8 @@ rtMulI32 =
 --   '(0 - v)' for the ok branch. OverflowError is single-constructor,
 --   so its inner-box tag is 0 — Left-branch encoding is identical
 --   to predInt32.
-rtNegI32 :: Text
-rtNegI32 =
+rtNegI32 :: PreludeTags -> Text
+rtNegI32 ptags =
   unlines
     [ "  (func $__negInt32 (param $p i32) (result i32)",
       "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -865,16 +867,16 @@ rtNegI32 =
       "    (if (result i32) (i32.eq (local.get $v) (i32.const -2147483648))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.sub (i32.const 0) (local.get $v)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -883,8 +885,8 @@ rtNegI32 =
 --   Both operands are 0..255 so the i32 difference is in -255..255 and a
 --   single 'i32.lt_s 0' check selects the underflow branch. No mask on
 --   the ok path — when a >= b the difference is already a valid UInt8.
-rtSubU8 :: Text
-rtSubU8 =
+rtSubU8 :: PreludeTags -> Text
+rtSubU8 ptags =
   unlines
     [ "  (func $__subUInt8 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $d i32) (local $ue i32) (local $box i32) (local $cell i32)",
@@ -892,16 +894,16 @@ rtSubU8 =
       "    (if (result i32) (i32.lt_s (local.get $d) (i32.const 0))",
       "      (then",
       "        (local.set $ue (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (i32.store (local.get $ue) (i32.const " <> tShow (ptUnderflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $d))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -909,8 +911,8 @@ rtSubU8 =
 -- | mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Both operands are 0..255 so an i32 multiply gives 0..65025 — well
 --   inside i32 range. A single 'i32.gt_u 255' check selects the branch.
-rtMulU8 :: Text
-rtMulU8 =
+rtMulU8 :: PreludeTags -> Text
+rtMulU8 ptags =
   unlines
     [ "  (func $__mulUInt8 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $p i32) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -918,16 +920,16 @@ rtMulU8 =
       "    (if (result i32) (i32.gt_u (local.get $p) (i32.const 255))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $p))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -945,8 +947,8 @@ rtMulU8 =
 --     Maybe Nothing : 1-slot cell [tag=0]
 --     Maybe Just    : 2-slot cell [tag=1, payload]
 --     Tuple2        : 3-slot cell [tag=0, prefix, suffix]
-rtSplitOnFirst :: Text
-rtSplitOnFirst =
+rtSplitOnFirst :: PreludeTags -> Text
+rtSplitOnFirst ptags =
   unlines
     [ "  (func $__splitOnFirst (param $sep i32) (param $str i32) (result i32)",
       "    (local $sep_len i32) (local $str_len i32)",
@@ -990,17 +992,14 @@ rtSplitOnFirst =
       "    (if (result i32) (i32.eq (local.get $pos) (i32.const -1))",
       "      (then",
       "        (local.set $cell (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptNothing ptags) <> "))",
       "        (local.get $cell))",
       "      (else",
-      "        ;; prefix = str[0..pos] as length-prefixed: alloc(8 + pos),",
-      "        ;; header = byte_count, utf16_count, payload memcpy'd",
       "        (local.set $prefix (call $__alloc (i32.add (local.get $pos) (i32.const 8))))",
       "        (i32.store (local.get $prefix) (local.get $pos))",
       "        (local.set $u16 (call $__utf16_of_range (local.get $str_payload) (local.get $pos)))",
       "        (i32.store offset=4 (local.get $prefix) (local.get $u16))",
       "        (call $__memcpy (i32.add (local.get $prefix) (i32.const 8)) (local.get $str_payload) (local.get $pos))",
-      "        ;; suffix = str[pos + sep_len..]; same length-prefixed shape",
       "        (local.set $suf_len (i32.sub (i32.sub (local.get $str_len) (local.get $pos)) (local.get $sep_len)))",
       "        (local.set $suffix (call $__alloc (i32.add (local.get $suf_len) (i32.const 8))))",
       "        (i32.store (local.get $suffix) (local.get $suf_len))",
@@ -1012,14 +1011,12 @@ rtSplitOnFirst =
       "          (i32.add (local.get $suffix) (i32.const 8))",
       "          (i32.add (local.get $str_payload) (i32.add (local.get $pos) (local.get $sep_len)))",
       "          (local.get $suf_len))",
-      "        ;; Tuple2 cell: [tag=0, prefix, suffix]",
       "        (local.set $tuple (call $__alloc (i32.const 12)))",
-      "        (i32.store (local.get $tuple) (i32.const 0))",
+      "        (i32.store (local.get $tuple) (i32.const " <> tShow (ptTuple2 ptags) <> "))",
       "        (i32.store offset=4 (local.get $tuple) (local.get $prefix))",
       "        (i32.store offset=8 (local.get $tuple) (local.get $suffix))",
-      "        ;; Just cell: [tag=1, tuple]",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptJust ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $tuple))",
       "        (local.get $cell))))"
     ]
@@ -1085,8 +1082,8 @@ rtLengthUtf16CodeUnits =
 --   the `$failed` flag and `br $exit` out of the parsing block; result
 --   construction (Right or Left) happens after the block based on the
 --   flag.
-rtParseInt32 :: Text
-rtParseInt32 =
+rtParseInt32 :: PreludeTags -> Text
+rtParseInt32 ptags =
   unlines
     [ "  (func $__parseInt32 (param $s i32) (result i32)",
       "    (local $len i32) (local $i i32) (local $neg i32) (local $payload i32)",
@@ -1131,16 +1128,16 @@ rtParseInt32 =
       "    (if (result i32) (local.get $failed)",
       "      (then",
       "        (local.set $pe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (i32.store (local.get $pe) (i32.const " <> tShow (ptParseError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.wrap_i64 (local.get $acc)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1149,8 +1146,8 @@ rtParseInt32 =
 --   'rtParseInt32' minus the sign handling, with an i32 accumulator
 --   (the running magnitude never exceeds 2559 before the > 255 check
 --   fails the parse).
-rtParseUInt8 :: Text
-rtParseUInt8 =
+rtParseUInt8 :: PreludeTags -> Text
+rtParseUInt8 ptags =
   unlines
     [ "  (func $__parseUInt8 (param $s i32) (result i32)",
       "    (local $len i32) (local $i i32) (local $acc i32) (local $payload i32)",
@@ -1183,16 +1180,16 @@ rtParseUInt8 =
       "    (if (result i32) (local.get $failed)",
       "      (then",
       "        (local.set $pe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (i32.store (local.get $pe) (i32.const " <> tShow (ptParseError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (local.get $acc))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1236,8 +1233,8 @@ rtShowU32 =
 --   the underflow boundary is also 0; the only difference is that the
 --   stored cell is interpreted as unsigned 32-bit, but i32.eqz / i32.sub
 --   work bit-pattern-identically for u32.
-rtPredU32 :: Text
-rtPredU32 =
+rtPredU32 :: PreludeTags -> Text
+rtPredU32 ptags =
   unlines
     [ "  (func $__predUInt32 (param $p i32) (result i32)",
       "    (local $v i32) (local $ue i32) (local $box i32) (local $cell i32)",
@@ -1245,16 +1242,16 @@ rtPredU32 =
       "    (if (result i32) (i32.eqz (local.get $v))",
       "      (then",
       "        (local.set $ue (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (i32.store (local.get $ue) (i32.const " <> tShow (ptUnderflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.sub (local.get $v) (i32.const 1)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1264,8 +1261,8 @@ rtPredU32 =
 --   '(v + 1)' wraps modulo 2^32 in i32 arithmetic — but since we already
 --   checked v != 4294967295, the result is in 1..4294967295 and the
 --   wrap is irrelevant.
-rtSuccU32 :: Text
-rtSuccU32 =
+rtSuccU32 :: PreludeTags -> Text
+rtSuccU32 ptags =
   unlines
     [ "  (func $__succUInt32 (param $p i32) (result i32)",
       "    (local $v i32) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -1273,16 +1270,16 @@ rtSuccU32 =
       "    (if (result i32) (i32.eq (local.get $v) (i32.const -1))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.add (local.get $v) (i32.const 1)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1291,8 +1288,8 @@ rtSuccU32 =
 --   (extend_i32_u, unsigned), sum at 64-bit width, compare against
 --   4294967295. On the ok path 'i32.wrap_i64' truncates the low 32 bits,
 --   which is exactly the in-range result.
-rtAddU32 :: Text
-rtAddU32 =
+rtAddU32 :: PreludeTags -> Text
+rtAddU32 ptags =
   unlines
     [ "  (func $__addUInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $s i64) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -1303,16 +1300,16 @@ rtAddU32 =
       "    (if (result i32) (i64.gt_u (local.get $s) (i64.const 4294967295))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.wrap_i64 (local.get $s)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1320,8 +1317,8 @@ rtAddU32 =
 -- | subUInt32: Either UnderflowError UInt32. 'i32.lt_u' compares the
 --   stored cells as unsigned; the difference is computed at i32 width
 --   (the bit pattern matches u32 subtraction when a >= b).
-rtSubU32 :: Text
-rtSubU32 =
+rtSubU32 :: PreludeTags -> Text
+rtSubU32 ptags =
   unlines
     [ "  (func $__subUInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $a i32) (local $b i32) (local $ue i32) (local $box i32) (local $cell i32)",
@@ -1330,16 +1327,16 @@ rtSubU32 =
       "    (if (result i32) (i32.lt_u (local.get $a) (local.get $b))",
       "      (then",
       "        (local.set $ue (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $ue) (i32.const 0))",
+      "        (i32.store (local.get $ue) (i32.const " <> tShow (ptUnderflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $ue))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.sub (local.get $a) (local.get $b)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1347,8 +1344,8 @@ rtSubU32 =
 -- | mulUInt32: Either OverflowError UInt32. Promote both operands to
 --   i64 (extend_i32_u) so the unmasked product up to (2^32-1)^2 fits,
 --   compare against 4294967295.
-rtMulU32 :: Text
-rtMulU32 =
+rtMulU32 :: PreludeTags -> Text
+rtMulU32 ptags =
   unlines
     [ "  (func $__mulUInt32 (param $pa i32) (param $pb i32) (result i32)",
       "    (local $p i64) (local $oe i32) (local $box i32) (local $cell i32)",
@@ -1359,16 +1356,16 @@ rtMulU32 =
       "    (if (result i32) (i64.gt_u (local.get $p) (i64.const 4294967295))",
       "      (then",
       "        (local.set $oe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $oe) (i32.const 0))",
+      "        (i32.store (local.get $oe) (i32.const " <> tShow (ptOverflowError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $oe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.wrap_i64 (local.get $p)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1377,8 +1374,8 @@ rtMulU32 =
 --   'rtParseUInt8' but with an i64 accumulator so the running magnitude
 --   (up to 4294967295 * 10 + 9 = 42949672959) fits before the
 --   '> 4294967295' fast-fail check.
-rtParseUInt32 :: Text
-rtParseUInt32 =
+rtParseUInt32 :: PreludeTags -> Text
+rtParseUInt32 ptags =
   unlines
     [ "  (func $__parseUInt32 (param $s i32) (result i32)",
       "    (local $len i32) (local $i i32) (local $acc i64) (local $payload i32)",
@@ -1411,16 +1408,16 @@ rtParseUInt32 =
       "    (if (result i32) (local.get $failed)",
       "      (then",
       "        (local.set $pe (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $pe) (i32.const 0))",
+      "        (i32.store (local.get $pe) (i32.const " <> tShow (ptParseError ptags) <> "))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $pe))",
       "        (local.get $cell))",
       "      (else",
       "        (local.set $box (call $__alloc (i32.const 4)))",
       "        (i32.store (local.get $box) (i32.wrap_i64 (local.get $acc)))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $box))",
       "        (local.get $cell))))"
     ]
@@ -1430,18 +1427,18 @@ rtParseUInt32 =
 --   stored masked to 0..255, so a plain i32.eq gives the same answer as
 --   native u8 equality. True=0, False=1 matches declaration order in
 --   `type Bool = True | False`.
-rtEqI32 :: Text
-rtEqI32 =
+rtEqI32 :: PreludeTags -> Text
+rtEqI32 ptags =
   unlines
     [ "  (func $__eq_i32 (param $a i32) (param $b i32) (result i32)",
       "    (local $cell i32)",
       "    (local.set $cell (call $__alloc (i32.const 4)))",
       "    (if (result i32) (i32.eq (i32.load (local.get $a)) (i32.load (local.get $b)))",
       "      (then",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptTrue ptags) <> "))",
       "        (local.get $cell))",
       "      (else",
-      "        (i32.store (local.get $cell) (i32.const 1))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptFalse ptags) <> "))",
       "        (local.get $cell))))"
     ]
 
@@ -1495,8 +1492,8 @@ rtGetArg emptyOff =
 --     Left e  : alloc(8); [tag=0, ptr=row]
 --               row   : alloc(8); [rowTag, ptr=inner]   (CRow box)
 --               inner : alloc(4); [tag=0]              (singleton CCon)
-rtEntryArgEither :: Text
-rtEntryArgEither =
+rtEntryArgEither :: PreludeTags -> Text
+rtEntryArgEither ptags =
   unlines
     [ "  (func $__entryArgEither (param $arg i32) (result i32)",
       "    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)",
@@ -1511,9 +1508,6 @@ rtEntryArgEither =
       "        (br_if $break_scan (i32.eqz (local.get $b)))",
       "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
       "          (then",
-      "            ;; Surrogate-byte detection: 'ED A0..BF' starts a 3-byte",
-      "            ;; UTF-8 encoding of U+D800..U+DFFF (forbidden in standard",
-      "            ;; UTF-8). Sticky flag — keep scanning so cap-exceed wins.",
       "            (if (i32.eq (local.get $b) (i32.const 0xED))",
       "              (then",
       "                (if (i32.eq (i32.and (i32.load8_u (i32.add (local.get $arg) (i32.add (local.get $i) (i32.const 1)))) (i32.const 0xE0)) (i32.const 0xA0))",
@@ -1521,48 +1515,39 @@ rtEntryArgEither =
       "            (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))",
       "              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))",
       "              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))",
-      "            ;; maxStringLengthUtf16CodeUnits = 134217728. Short-circuit",
-      "            ;; out of the scan as soon as the running count exceeds the",
-      "            ;; cap so adversarial inputs don't drive an unbounded walk.",
       "            (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))",
       "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
       "        (br $scan_loop)))",
-      "    ;; $i now equals byte_count (position of NUL or break).",
-      "    ;; Cap-check has priority over surrogate-flag.",
       "    (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))",
       "      (then",
-      "        ;; Build Left(StringTooLong row-wrapped).",
       "        (local.set $inner (call $__alloc (i32.const 4)))",
-      "        (i32.store (local.get $inner) (i32.const 0))",
+      "        (i32.store (local.get $inner) (i32.const " <> tShow (ptStringTooLong ptags) <> "))",
       "        (local.set $row (call $__alloc (i32.const 8)))",
       "        (i32.store (local.get $row) (i32.const " <> show stringTooLongTag <> "))",
       "        (i32.store offset=4 (local.get $row) (local.get $inner))",
       "        (local.set $cell (call $__alloc (i32.const 8)))",
-      "        (i32.store (local.get $cell) (i32.const 0))",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "        (i32.store offset=4 (local.get $cell) (local.get $row))",
       "        (local.get $cell))",
       "      (else",
       "        (if (result i32) (local.get $surr)",
       "          (then",
-      "            ;; Build Left(UnpairedUtf16Surrogate row-wrapped).",
       "            (local.set $inner (call $__alloc (i32.const 4)))",
-      "            (i32.store (local.get $inner) (i32.const 0))",
+      "            (i32.store (local.get $inner) (i32.const " <> tShow (ptUnpairedUtf16Surrogate ptags) <> "))",
       "            (local.set $row (call $__alloc (i32.const 8)))",
       "            (i32.store (local.get $row) (i32.const " <> show unpairedSurrogateTag <> "))",
       "            (i32.store offset=4 (local.get $row) (local.get $inner))",
       "            (local.set $cell (call $__alloc (i32.const 8)))",
-      "            (i32.store (local.get $cell) (i32.const 0))",
+      "            (i32.store (local.get $cell) (i32.const " <> tShow (ptLeft ptags) <> "))",
       "            (i32.store offset=4 (local.get $cell) (local.get $row))",
       "            (local.get $cell))",
       "          (else",
-      "            ;; Build a length-prefixed copy of the C-string and wrap",
-      "            ;; in Right. byte_count = $i, utf16_count = $n.",
       "            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))",
       "            (i32.store (local.get $wrapped) (local.get $i))",
       "            (i32.store offset=4 (local.get $wrapped) (local.get $n))",
       "            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))",
       "            (local.set $cell (call $__alloc (i32.const 8)))",
-      "            (i32.store (local.get $cell) (i32.const 1))",
+      "            (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
       "            (i32.store offset=4 (local.get $cell) (local.get $wrapped))",
       "            (local.get $cell))))))"
     ]

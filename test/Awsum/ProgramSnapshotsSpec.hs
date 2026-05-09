@@ -59,9 +59,9 @@ compileAll testName = do
   ast <- case parseProgram src of
     Left e -> error $ "parse failed" <> e
     Right x -> pure x
-  core <- case elaborateLowerProgram ProgramCli (withPrelude ast) of
+  (ptags, core) <- case elaborateLowerProgram ProgramCli (withPrelude ast) of
     Left err -> error $ "elaborate failed" <> show err
-    Right (_warns, x) -> pure x
+    Right (_warns, pt, x) -> pure (pt, x)
   artifacts <- RB.compileFromText src
   pure
     CompileResult
@@ -69,9 +69,9 @@ compileAll testName = do
         ast = ast,
         core = core,
         symbolsJson = symbolsToJson (symbolsOfProgram ast),
-        jvmText = codegenJVM core,
-        clrText = codegenCLR core,
-        wasmText = codegenWASM core
+        jvmText = codegenJVM ptags core,
+        clrText = codegenCLR ptags core,
+        wasmText = codegenWASM ptags core
       }
 
 testProgram :: FilePath -> Spec

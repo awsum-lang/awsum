@@ -85,15 +85,61 @@ data ConInfo = ConInfo
 
 type ConInfoEnv = M.Map Name ConInfo
 
+-- | Look up the constructor tags codegen runtime helpers need (see
+--   'PreludeTags' in 'Awsum.Core'). The names are all in the bundled
+--   prelude, so a missing one means the prelude was edited
+--   inconsistently; we fail loudly rather than substitute a default.
+preludeTagsFromConInfo :: ConInfoEnv -> PreludeTags
+preludeTagsFromConInfo conInfo =
+  let tag :: Name -> Int
+      tag n = case M.lookup n conInfo of
+        Just ci -> ciTag ci
+        Nothing ->
+          error
+            $ "preludeTagsFromConInfo: prelude is missing constructor '"
+            <> n
+            <> "' — runtime helpers depend on it; check stdlib/Prelude.aww."
+   in PreludeTags
+        { ptLeft = tag "Left",
+          ptRight = tag "Right",
+          ptJust = tag "Just",
+          ptNothing = tag "Nothing",
+          ptTrue = tag "True",
+          ptFalse = tag "False",
+          ptUnit = tag "Unit",
+          ptTuple2 = tag "Tuple2",
+          ptUnderflowError = tag "UnderflowError",
+          ptOverflowError = tag "OverflowError",
+          ptParseError = tag "ParseError",
+          ptStringTooLong = tag "StringTooLong",
+          ptUnpairedUtf16Surrogate = tag "UnpairedUtf16Surrogate"
+        }
+
 -- | Build constructor info from @type@ declarations. Each constructor
---   gets a 0-based tag, its arity, the owning type's name, the
---   declared type-parameter names of that type, and its field types.
+--   gets a globally unique tag (monotonic counter across every
+--   @type@ declaration in the program), its arity, the owning type's
+--   name, the declared type-parameter names of that type, and its
+--   field types.
+--
+--   /Why globally unique?/ 'pruneDeadArms' uses the set of
+--   reachable 'CCon' tags to decide which 'CCase' arms can be
+--   dropped. If two unrelated types share a tag value (e.g. tag 3
+--   meaning both 'IOGetArgs' in 'IO' and \"member 4\" in an
+--   'Awsum.Scc'-merged sum type), constructing the value of one type
+--   forces both arms to look reachable. Synthetic-tag-minting passes
+--   ('Awsum.Scc', 'Awsum.LowerClosures', 'Awsum.Cps') honour the
+--   same global namespace by allocating from 'nextFreshConTag'.
 buildConInfo :: [Decl] -> ConInfoEnv
 buildConInfo ds =
   M.fromList
-    [ (cName, ConInfo idx (length cFields) tName [n | Param _ n <- ps] cFields)
-    | TypeDecl _sp tName ps cs _ _ <- ds,
-      (ConDef _ cName cFields, idx) <- zip cs [0 ..]
+    [ (cName, ConInfo tag (length cFields) tName [n | Param _ n <- ps] cFields)
+    | (tag, (tName, ps, ConDef _ cName cFields)) <-
+        zip
+          [0 ..]
+          [ (tName, ps, c)
+          | TypeDecl _sp tName ps cs _ _ <- ds,
+            c <- cs
+          ]
     ]
 
 -- | Synthetic name for a constructor wrapper function.
@@ -301,7 +347,7 @@ runLowerM m = do
   (a, st) <- runStateT m (LowerState 0 [] M.empty M.empty)
   pure (a, reverse (lsHelpers st), lsRowTags st)
 
-elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], CoreProgram)
+elaborateLowerProgram :: ProgramType -> Program -> Either TypeError ([Warning], PreludeTags, CoreProgram)
 elaborateLowerProgram progType progIn = do
   -- 0) Pre-typecheck desugar: rewrite 'do' blocks into nested
   --    'bindEither' calls with 'ELam' continuations. Lambdas
@@ -439,7 +485,7 @@ elaborateLowerProgram progType progIn = do
   --    wrap affected function bodies in 'CLoop'. Backends compile the
   --    wrapped form into a loop + jump rather than a recursive call,
   --    guaranteeing stack safety for tail recursion across all targets.
-  pure (warnings, tcoProgram cpsed)
+  pure (warnings, preludeTagsFromConInfo conInfo, tcoProgram cpsed)
 
 -- | Translate a 'StackSafetyIssue' into a user-facing 'TypeError',
 -- recovering a source span from the corresponding 'Sig' in the surface
