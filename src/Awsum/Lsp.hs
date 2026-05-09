@@ -26,6 +26,10 @@ import Common.File (readFileTextUtf8)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (catch)
 import Control.Lens ((^.))
+import Data.Aeson qualified as Aeson
+import Data.Aeson.Key qualified as AesonKey
+import Data.Aeson.KeyMap qualified as AesonKeyMap
+import Data.Char (isDigit)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import Language.LSP.Protocol.Lens qualified as L
@@ -55,8 +59,44 @@ data ServerState = ServerState
     ssFixes :: IORef (Map (NormalizedUri, RangeKey) [AD.Fix]),
     -- | Workspace folders received during initialize. Used by
     --   @workspace/symbol@ as scan roots.
-    ssWorkspaceRoots :: IORef [FilePath]
+    ssWorkspaceRoots :: IORef [FilePath],
+    -- | The compiler's own version, frozen at process start (passed into
+    --   'runLspServer' from "Main"). The @SMethod_Initialized@ handler
+    --   compares it against 'chExpectedAwsumVersion' and, on mismatch,
+    --   surfaces a warning through the client.
+    ssCompilerVersion :: Text,
+    -- | Hints the client passed in @initializationOptions@: which
+    --   @awsum@ version it expects, and how it would prefer a UX
+    --   like the version-mismatch warning to be presented. Captured
+    --   in 'doInitialize', consumed in the @Initialized@ handler.
+    ssClientHints :: IORef ClientHints
   }
+
+-- | Optional fields the client may set in @initialize.params.initializationOptions@.
+--   Absent fields fall back to defaults that match the loosest
+--   behaviour (no version warning, prefer-link UI).
+data ClientHints = ClientHints
+  { -- | The @awsum@ version the client was built against. The server
+    --   compares with its own version on @initialized@ and warns on
+    --   mismatch (unless either side is non-@A.B.C@).
+    chExpectedAwsumVersion :: Maybe Text,
+    -- | UX preference for the version-mismatch warning. @True@ ⇒
+    --   @window/showMessageRequest@ with an action button (better for
+    --   VS Code: it doesn't auto-linkify URLs in notifications, but
+    --   reliably routes @window/showDocument@ to
+    --   @vscode.env.openExternal@). @False@ ⇒ @window/showMessage@
+    --   with the URL inline (better for Zed: it auto-linkifies
+    --   notification URLs but currently doesn't open external https
+    --   URLs from @window/showDocument@).
+    chPreferButtonsOverLinks :: Bool
+  }
+
+defaultClientHints :: ClientHints
+defaultClientHints =
+  ClientHints
+    { chExpectedAwsumVersion = Nothing,
+      chPreferButtonsOverLinks = False
+    }
 
 -- | Stable @Ord@-able key for a 'Range' so we can index the fixes map.
 type RangeKey = (UInt, UInt, UInt, UInt)
@@ -69,12 +109,14 @@ rangeKey r =
     r ^. L.end . L.character
   )
 
-newServerState :: IO ServerState
-newServerState =
+newServerState :: Text -> IO ServerState
+newServerState compilerVersion =
   ServerState
     <$> newIORef Map.empty
     <*> newIORef Map.empty
     <*> newIORef []
+    <*> pure compilerVersion
+    <*> newIORef defaultClientHints
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Awsum ↔ LSP type conversions
@@ -226,9 +268,7 @@ scheduleDebouncedCheck st uri mVersion = do
 stubNotifications :: Handlers (LspM ())
 stubNotifications =
   mconcat
-    [ -- @initialized@ is informational; nothing to do today.
-      notificationHandler SMethod_Initialized (const pass),
-      -- Configuration change. The actual config update is handled by
+    [ -- Configuration change. The actual config update is handled by
       -- `parseConfig` / `onConfigChange` in the 'ServerDefinition'
       -- below; this handler only acknowledges the notification.
       notificationHandler SMethod_WorkspaceDidChangeConfiguration (const pass),
@@ -241,10 +281,123 @@ stubNotifications =
       notificationHandler SMethod_CancelRequest (const pass)
     ]
 
+-- | Lockstep version check, run once after the client sends
+--   @initialized@. The client owns the decision /which/ awsum version
+--   it expected (passed in
+--   @initializationOptions.expectedAwsumVersion@ — extracted in
+--   'doInitialize' and stashed in 'ssClientHints'); we just compare
+--   against the running compiler's version and surface a warning when
+--   they disagree. Pre-release / dirty versions (anything not
+--   @A.B.C@) opt out — local dev sessions shouldn't spam the user.
+--
+--   The /how/ of the warning is also a client-supplied preference
+--   ('chPreferButtonsOverLinks'): button-driven
+--   @window/showMessageRequest@ + @window/showDocument@ for VS Code,
+--   plain @window/showMessage@ with an inline URL for Zed. Different
+--   clients render notifications differently; this lets each pick the
+--   path that actually surfaces a clickable install link.
+checkVersionOnInitialized :: ServerState -> LspM () ()
+checkVersionOnInitialized st = do
+  hints <- liftIO $ readIORef (ssClientHints st)
+  let compiler = ssCompilerVersion st
+  whenJust (chExpectedAwsumVersion hints) $ \expectedVer ->
+    when
+      ( looksLikeSemver expectedVer
+          && looksLikeSemver compiler
+          && expectedVer
+          /= compiler
+      )
+      $ do
+        -- Both branches use @window/showMessageRequest@, not
+        -- @window/showMessage@: a /request/ stays visible until the
+        -- user actively dismisses, while a /notification/ is
+        -- transient and gets auto-cleared by clients like Zed within
+        -- a few seconds — too short to read, let alone click. The
+        -- two branches differ only in /how/ they surface the install
+        -- URL (button vs inline).
+        let installUrl :: Text
+            installUrl = "https://awsum-lang.org/install"
+            installLabel :: Text
+            installLabel = "Open install page"
+            preferButtons = chPreferButtonsOverLinks hints
+            messageBody :: Text
+            messageBody =
+              "Awsum version mismatch: the client expected awsum "
+                <> expectedVer
+                <> ", but this server is awsum "
+                <> compiler
+                <> ". Update awsum"
+                -- URL inline only when no working action button is
+                -- on offer. Otherwise it's redundant noise next to
+                -- the button.
+                <> (if preferButtons then "" else " (" <> installUrl <> ")")
+                <> " or install a matching client; behaviour may be unpredictable until they match."
+            -- Button on clients that have a working
+            -- @window/showDocument@ for external URLs (VS Code). For
+            -- clients without that capability (Zed today), no button:
+            -- a non-functional button is worse than none, and the
+            -- inline URL above carries the same payload.
+            actions = [MessageActionItem installLabel | preferButtons]
+            params =
+              ShowMessageRequestParams
+                { _type_ = MessageType_Warning,
+                  _message = messageBody,
+                  _actions = Just actions
+                }
+        void $ sendRequest SMethod_WindowShowMessageRequest params $ \case
+          Right (InL (MessageActionItem chosen))
+            | chosen == installLabel ->
+                -- Client picked the install action. Open the page in
+                -- the user's browser via the standard LSP show-doc
+                -- mechanism.
+                void
+                  $ sendRequest
+                    SMethod_WindowShowDocument
+                    ShowDocumentParams
+                      { _uri = Uri installUrl,
+                        _external = Just True,
+                        _takeFocus = Nothing,
+                        _selection = Nothing
+                      }
+                  $ const pass
+          _ -> pass
+
+-- | True iff the text is exactly an @A.B.C@ triple (digits only).
+--   Anything richer (pre-release tag, dirty git suffix) opts out of the
+--   strict-equality check — those are dev-mode versions, not lockstep
+--   release versions.
+looksLikeSemver :: Text -> Bool
+looksLikeSemver t = case T.splitOn "." t of
+  [a, b, c] -> not (any T.null [a, b, c]) && all (T.all isDigit) [a, b, c]
+  _ -> False
+
+-- | Pull every recognised hint field out of @initializationOptions@,
+--   substituting defaults for absent / wrong-shape fields. Tolerant
+--   parser by design — clients should be able to extend
+--   @initializationOptions@ with private keys without breaking us, and
+--   omitting our hints should leave the server in a working state.
+extractClientHints :: Maybe Aeson.Value -> ClientHints
+extractClientHints (Just (Aeson.Object o)) =
+  ClientHints
+    { chExpectedAwsumVersion =
+        case AesonKeyMap.lookup (AesonKey.fromString "expectedAwsumVersion") o of
+          Just (Aeson.String s) -> Just s
+          _ -> Nothing,
+      chPreferButtonsOverLinks =
+        case AesonKeyMap.lookup (AesonKey.fromString "preferButtonsOverLinks") o of
+          Just (Aeson.Bool b) -> b
+          _ -> False
+    }
+extractClientHints _ = defaultClientHints
+
 serverHandlers :: ServerState -> Handlers (LspM ())
 serverHandlers st =
   mconcat
     [ stubNotifications,
+      -- @initialized@ — sent once by the client when it's ready to
+      -- receive notifications. Triggers the lockstep version check;
+      -- see 'checkVersionOnInitialized' for the comparison logic.
+      notificationHandler SMethod_Initialized $ \_ -> checkVersionOnInitialized st,
       -- New document: run check immediately so the user sees diagnostics
       -- without waiting for the first edit.
       notificationHandler SMethod_TextDocumentDidOpen $ \msg -> do
@@ -468,7 +621,7 @@ workspaceSymbolsForFile q file = do
 --   replacement for the previous CLI-based @awsum --version@ check.
 runLspServer :: Text -> IO Int
 runLspServer compilerVersion = do
-  st <- newServerState
+  st <- newServerState compilerVersion
   runServer
     ServerDefinition
       { defaultConfig = (),
@@ -485,6 +638,13 @@ runLspServer compilerVersion = do
                     Just (InL p) -> [toString p]
                     _ -> []
           writeIORef (ssWorkspaceRoots st) folders
+          -- Capture the client's hints (expected awsum version, UX
+          -- preference for the mismatch warning). Deferred to the
+          -- @initialized@ handler for the actual comparison — we
+          -- can't push notifications from within @doInitialize@.
+          writeIORef
+            (ssClientHints st)
+            (extractClientHints (req ^. L.params . L.initializationOptions))
           pure (Right env),
         staticHandlers = \_caps -> serverHandlers st,
         interpretHandler = \env -> Iso (runLspT env) liftIO,

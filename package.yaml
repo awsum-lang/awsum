@@ -72,6 +72,7 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+    - aeson # for parsing initializationOptions JSON in Awsum.Lsp
     - bytestring # for JVM bytecode assembler
     - containers # for Data.Graph SCC analysis (unused-top-level warning)
     - directory # for workspace symbol scan in Awsum.Lsp
