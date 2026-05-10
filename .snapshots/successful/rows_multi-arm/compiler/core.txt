@@ -85,9 +85,10 @@ CoreProgram
             ( CCase
                 ( CCall
                     ( CVar "whatsInside" )
-                    [ CCon 10
-                        [ CRow 796142685
-                            ( CCon 1 [] )
+                    [ CCall
+                        ( CVar "$lift$7" )
+                        [ CCon 10
+                            [ CCon 1 [] ]
                         ]
                     ]
                 )
@@ -103,9 +104,10 @@ CoreProgram
                     , CCase
                         ( CCall
                             ( CVar "whatsInside" )
-                            [ CCon 10
-                                [ CRow 1759602215
-                                    ( CCon 0 [] )
+                            [ CCall
+                                ( CVar "$lift$8" )
+                                [ CCon 10
+                                    [ CCon 0 [] ]
                                 ]
                             ]
                         )
@@ -121,7 +123,10 @@ CoreProgram
                             , CCase
                                 ( CCall
                                     ( CVar "whatsInside" )
-                                    [ CCon 9 [] ]
+                                    [ CCall
+                                        ( CVar "$lift$9" )
+                                        [ CCon 9 [] ]
+                                    ]
                                 )
                                 [
                                     ( 3
@@ -200,10 +205,62 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$10" )
                 [ CVar "summary" ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$lift$7" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 9
+                    , []
+                    , CCon 9 []
+                    )
+                ,
+                    ( 10
+                    , [ "__f0" ]
+                    , CCon 10
+                        [ CRow 796142685
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$lift$8" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 9
+                    , []
+                    , CCon 9 []
+                    )
+                ,
+                    ( 10
+                    , [ "__f0" ]
+                    , CCon 10
+                        [ CRow 1759602215
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$lift$9" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 9
+                    , []
+                    , CCon 9 []
+                    )
+                ,
+                    ( 10
+                    , [ "__f0" ]
+                    , CCon 10
+                        [ CVar "__f0" ]
+                    )
+                ]
+            )
+        , CFunDef "$let$10" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

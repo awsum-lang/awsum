@@ -56,7 +56,22 @@ function v_firstZero(v_x){
     }
 }
 
-const main = [7, String((v_firstZero)([9])), [5, [0]]];
+const main = [7, String((v_firstZero)((v__lift_7)([9]))), [5, [0]]];
+
+function v__lift_7(v___input){
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 9: {
+          return [9];
+        }
+        case 10: {
+          const v___f0 = __s[1];
+          return [10, v___f0];
+        }
+      }
+    }
+}
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

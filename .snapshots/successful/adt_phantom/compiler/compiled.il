@@ -106,6 +106,7 @@
     ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
+    call object AwsumMain::v__lift_7(object)
     call object AwsumMain::v_show(object)
     stelem.ref
     dup
@@ -128,6 +129,29 @@
     stelem.ref
     stelem.ref
     stelem.ref
+    ret
+  }
+
+
+  .method private hidebysig static object v__lift_7(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_19)
+  IL_arm_19:
+    pop
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 19
+    box [System.Runtime]System.Int32
+    stelem.ref
+    br.s IL_join
+  IL_join:
     ret
   }
 

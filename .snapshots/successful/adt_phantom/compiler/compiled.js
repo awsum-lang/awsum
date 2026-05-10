@@ -41,7 +41,18 @@ function v_show(v_p){
     }
 }
 
-const main = [7, (v_show)([19]), [5, [0]]];
+const main = [7, (v_show)((v__lift_7)([19])), [5, [0]]];
+
+function v__lift_7(v___input){
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 19: {
+          return [19];
+        }
+      }
+    }
+}
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

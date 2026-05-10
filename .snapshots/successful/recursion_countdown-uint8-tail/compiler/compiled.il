@@ -297,7 +297,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4 3768445577
+    ldc.i4 589989748
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -339,7 +339,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4 3768445577
+    ldc.i4 589989748
     box [System.Runtime]System.Int32
     stelem.ref
     dup

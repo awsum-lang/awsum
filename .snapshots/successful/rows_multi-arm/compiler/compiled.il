@@ -237,15 +237,6 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4 796142685
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
@@ -254,7 +245,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
-    stelem.ref
+    call object AwsumMain::v__lift_7(object)
     call object AwsumMain::v_whatsInside(object)
     dup
     ldc.i4.0
@@ -294,15 +285,6 @@
     stelem.ref
     dup
     ldc.i4.1
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
-    dup
-    ldc.i4.0
-    ldc.i4 1759602215
-    box [System.Runtime]System.Int32
-    stelem.ref
-    dup
-    ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
@@ -311,7 +293,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
-    stelem.ref
+    call object AwsumMain::v__lift_8(object)
     call object AwsumMain::v_whatsInside(object)
     dup
     ldc.i4.0
@@ -349,6 +331,7 @@
     ldc.i4.s 9
     box [System.Runtime]System.Int32
     stelem.ref
+    call object AwsumMain::v__lift_9(object)
     call object AwsumMain::v_whatsInside(object)
     dup
     ldc.i4.0
@@ -497,12 +480,155 @@
   .method private hidebysig static object v_main() cil managed
   {
     call object AwsumMain::v_summary()
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_10(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__lift_7(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_9, IL_arm_10)
+  IL_arm_9:
+    pop
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 9
+    box [System.Runtime]System.Int32
+    stelem.ref
+    br.s IL_join
+  IL_arm_10:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 10
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 796142685
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
+  .method private hidebysig static object v__lift_8(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_9, IL_arm_10)
+  IL_arm_9:
+    pop
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 9
+    box [System.Runtime]System.Int32
+    stelem.ref
+    br.s IL_join
+  IL_arm_10:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 10
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 1759602215
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
+  .method private hidebysig static object v__lift_9(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_9, IL_arm_10)
+  IL_arm_9:
+    pop
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 9
+    box [System.Runtime]System.Int32
+    stelem.ref
+    br.s IL_join
+  IL_arm_10:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 10
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
+  .method private hidebysig static object v__let_10(object) cil managed
   {
     ldarg.0
     dup

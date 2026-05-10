@@ -399,6 +399,58 @@ L_join:
 .end method
 
 
+.method static v__lift_8(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    3: L_arm_3
+    4: L_arm_4
+    default: L_arm_3
+L_arm_3:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_3
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  goto L_join
+L_arm_4:
+  dup
+  iconst_1
+  aaload
+  astore_1
+  pop
+  iconst_2
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_4
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_1
+  aastore
+  goto L_join
+L_join:
+  areturn
+.end method
+
+
 .method static v__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   iconst_1
@@ -589,6 +641,7 @@ L_tco_arm_4:
   aload_3
   aload_3
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_8(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   dup
   iconst_2

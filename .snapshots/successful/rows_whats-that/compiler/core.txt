@@ -77,19 +77,38 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$8" )
                 [ CCall
                     ( CVar "whatsThat" )
                     [ CRow 1454647603
-                        ( CCon 10
-                            [ CRow 796142685
-                                ( CCon 1 [] )
+                        ( CCall
+                            ( CVar "$lift$7" )
+                            [ CCon 10
+                                [ CCon 1 [] ]
                             ]
                         )
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$lift$7" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 9
+                    , []
+                    , CCon 9 []
+                    )
+                ,
+                    ( 10
+                    , [ "__f0" ]
+                    , CCon 10
+                        [ CRow 796142685
+                            ( CVar "__f0" )
+                        ]
+                    )
+                ]
+            )
+        , CFunDef "$let$8" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

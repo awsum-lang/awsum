@@ -64,10 +64,29 @@ CoreProgram
                     ( CBuiltIn "showInt32" )
                     [ CCall
                         ( CVar "firstZero" )
-                        [ CCon 9 [] ]
+                        [ CCall
+                            ( CVar "$lift$7" )
+                            [ CCon 9 [] ]
+                        ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
+                ]
+            )
+        , CFunDef "$lift$7" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 9
+                    , []
+                    , CCon 9 []
+                    )
+                ,
+                    ( 10
+                    , [ "__f0" ]
+                    , CCon 10
+                        [ CVar "__f0" ]
+                    )
                 ]
             )
         ]

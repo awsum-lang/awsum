@@ -33,7 +33,7 @@ function v_runIO(v_io){
 
 const v_defaultJust = [10, [1]];
 
-const v_defaultBools = [21, [1], [21, [2], [20]]];
+const v_defaultBools = [21, [1], [21, [2], (v__lift_7)([20])]];
 
 const v_defaultRight = [4, [10, [2]]];
 
@@ -154,36 +154,21 @@ function v_describeEither(v_r){
     }
 }
 
-const v_summary = ((s) => { switch(s[0]) { case 3: { const v__do_e_45_3 = s[1]; return [3, v__do_e_45_3]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_46_3 = s[1]; return [3, v__do_e_46_3]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_47_3 = s[1]; return [3, v__do_e_47_3]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_48_3 = s[1]; return [3, v__do_e_48_3]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_49_3 = s[1]; return [3, v__do_e_49_3]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_50_3 = s[1]; return [3, v__do_e_50_3]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, " / ")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, " / ")); } } })((v_describeEither)((v__lift_9)(v_defaultRight))); } } })((v_describeLst)((v__lift_8)(v_defaultBools))); } } })((v_describeMaybe)((v__lift_7)(v_defaultJust)));
+const v_summary = ((s) => { switch(s[0]) { case 3: { const v__do_e_45_3 = s[1]; return [3, v__do_e_45_3]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_46_3 = s[1]; return [3, v__do_e_46_3]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_47_3 = s[1]; return [3, v__do_e_47_3]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_48_3 = s[1]; return [3, v__do_e_48_3]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_49_3 = s[1]; return [3, v__do_e_49_3]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_50_3 = s[1]; return [3, v__do_e_50_3]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, " / ")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, " / ")); } } })((v_describeEither)((v__lift_10)(v_defaultRight))); } } })((v_describeLst)((v__lift_9)(v_defaultBools))); } } })((v_describeMaybe)((v__lift_8)(v_defaultJust)));
 
-const main = (v__let_10)(v_summary);
+const main = (v__let_11)(v_summary);
 
 function v__lift_7(v___input){
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 9: {
-          return [9];
-        }
-        case 10: {
-          const v___f0 = __s[1];
-          return [10, [796142685, v___f0]];
-        }
-      }
-    }
+    return (v__cps__lift_7)(v___input, [24]);
 }
 
-function v__lift_8(v___input){
-    return (v__cps__lift_8)(v___input, [24]);
-}
-
-function v__cps__lift_8(v___input, v__k){
+function v__cps__lift_7(v___input, v__k){
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 20: {
-          return (v__apply__lift_8)(v__k, [20]);
+          return (v__apply__lift_7)(v__k, [20]);
         }
         case 21: {
           const v___f0 = __s[1];
@@ -199,7 +184,7 @@ function v__cps__lift_8(v___input, v__k){
   }
 }
 
-function v__apply__lift_8(v__k, v__x){
+function v__apply__lift_7(v__k, v__x){
   while (true) {
     {
       const __s = v__k;
@@ -211,6 +196,69 @@ function v__apply__lift_8(v__k, v__x){
           const v__pk_25 = __s[1];
           const v___f0 = __s[2];
           const __t0 = v__pk_25;
+          const __t1 = [21, v___f0, v__x];
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+      }
+    }
+  }
+}
+
+function v__lift_8(v___input){
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 9: {
+          return [9];
+        }
+        case 10: {
+          const v___f0 = __s[1];
+          return [10, [796142685, v___f0]];
+        }
+      }
+    }
+}
+
+function v__lift_9(v___input){
+    return (v__cps__lift_9)(v___input, [26]);
+}
+
+function v__cps__lift_9(v___input, v__k){
+  while (true) {
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 20: {
+          return (v__apply__lift_9)(v__k, [20]);
+        }
+        case 21: {
+          const v___f0 = __s[1];
+          const v___f1 = __s[2];
+          const __t0 = v___f1;
+          const __t1 = [27, v__k, v___f0];
+          v___input = __t0;
+          v__k = __t1;
+          continue;
+        }
+      }
+    }
+  }
+}
+
+function v__apply__lift_9(v__k, v__x){
+  while (true) {
+    {
+      const __s = v__k;
+      switch (__s[0]) {
+        case 26: {
+          return v__x;
+        }
+        case 27: {
+          const v__pk_27 = __s[1];
+          const v___f0 = __s[2];
+          const __t0 = v__pk_27;
           const __t1 = [21, [796142685, v___f0], v__x];
           v__k = __t0;
           v__x = __t1;
@@ -221,7 +269,7 @@ function v__apply__lift_8(v__k, v__x){
   }
 }
 
-function v__lift_9(v___input){
+function v__lift_10(v___input){
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -231,13 +279,13 @@ function v__lift_9(v___input){
         }
         case 4: {
           const v___f0 = __s[1];
-          return [4, (v__lift_7)(v___f0)];
+          return [4, (v__lift_8)(v___f0)];
         }
       }
     }
 }
 
-function v__let_10(v_res){
+function v__let_11(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

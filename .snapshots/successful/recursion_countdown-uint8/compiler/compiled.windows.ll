@@ -314,7 +314,7 @@ tco.case.arm.3.37:
   %t42 = getelementptr ptr, ptr %t40, i32 0
   store ptr %t41, ptr %t42
   %t43 = call ptr @malloc(i64 16)
-  %t44 = inttoptr i64 3768445577 to ptr
+  %t44 = inttoptr i64 589989748 to ptr
   %t45 = getelementptr ptr, ptr %t43, i32 0
   store ptr %t44, ptr %t45
   %t46 = getelementptr ptr, ptr %t43, i32 1

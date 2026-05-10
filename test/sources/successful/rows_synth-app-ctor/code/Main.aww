@@ -1,0 +1,25 @@
+{- Pin the row-tag dispatch when a case-binder flows through a
+   non-nullary constructor application into a multi-alternative row.
+
+   The scrutinee `Just "hello"` is `EApp (ECon "Just") "hello"`. For
+   `dispatch x` to receive the right runtime row tag, lowering must
+   know that `x : String` after destructuring `Just x`. That requires
+   `synthLabelType` on the scrutinee to return `Maybe String`, which
+   in turn requires synthesising `Just`'s type as `a -> Maybe a` and
+   unifying the argument's synthesised `String` with `a`.
+
+   Without that path, the case-binder typed at `TyVar "a"`, the
+   row-injection wrapper falls through `coercible`'s TyVar src rule,
+   and `find` returns the first-coercible label in the row — i.e.
+   `Int32`, regardless of `x`'s actual runtime type. -}
+import IO.Stdout
+
+dispatch : (Int32 | String) -> String
+dispatch x = case x of
+  (_n : Int32) -> "i"
+  (_s : String) -> "s"
+
+main : IO Never Unit
+main = case Just "hello" of
+  Nothing -> IO.Stdout.print "n"
+  Just x -> IO.Stdout.print (dispatch x)

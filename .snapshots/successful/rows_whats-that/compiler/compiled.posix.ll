@@ -161,26 +161,59 @@ define internal ptr @v_main() {
   %t4 = inttoptr i64 10 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
-  %t6 = call ptr @malloc(i64 16)
-  %t7 = inttoptr i64 796142685 to ptr
+  %t6 = call ptr @malloc(i64 8)
+  %t7 = inttoptr i64 1 to ptr
   %t8 = getelementptr ptr, ptr %t6, i32 0
   store ptr %t7, ptr %t8
-  %t9 = call ptr @malloc(i64 8)
-  %t10 = inttoptr i64 1 to ptr
-  %t11 = getelementptr ptr, ptr %t9, i32 0
+  %t9 = getelementptr ptr, ptr %t3, i32 1
+  store ptr %t6, ptr %t9
+  %t10 = call ptr @v__lift_7(ptr %t3)
+  %t11 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t10, ptr %t11
-  %t12 = getelementptr ptr, ptr %t6, i32 1
-  store ptr %t9, ptr %t12
-  %t13 = getelementptr ptr, ptr %t3, i32 1
-  store ptr %t6, ptr %t13
-  %t14 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t3, ptr %t14
-  %t15 = call ptr @v_whatsThat(ptr %t0)
-  %t16 = call ptr @v__let_7(ptr %t15)
-  ret ptr %t16
+  %t12 = call ptr @v_whatsThat(ptr %t0)
+  %t13 = call ptr @v__let_8(ptr %t12)
+  ret ptr %t13
 }
 
-define internal ptr @v__let_7(ptr %v_res) {
+define internal ptr @v__lift_7(ptr %v___input) {
+  %t0 = getelementptr ptr, ptr %v___input, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 9, label %case.arm.9.5 i64 10, label %case.arm.10.10 ]
+case.arm.9.5:
+  %t7 = call ptr @malloc(i64 8)
+  %t8 = inttoptr i64 9 to ptr
+  %t9 = getelementptr ptr, ptr %t7, i32 0
+  store ptr %t8, ptr %t9
+  br label %case.end.9.6
+case.end.9.6:
+  br label %case.join.4
+case.arm.10.10:
+  %t12 = getelementptr ptr, ptr %v___input, i32 1
+  %t13 = load ptr, ptr %t12
+  %t14 = call ptr @malloc(i64 16)
+  %t15 = inttoptr i64 10 to ptr
+  %t16 = getelementptr ptr, ptr %t14, i32 0
+  store ptr %t15, ptr %t16
+  %t17 = call ptr @malloc(i64 16)
+  %t18 = inttoptr i64 796142685 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = getelementptr ptr, ptr %t17, i32 1
+  store ptr %t13, ptr %t20
+  %t21 = getelementptr ptr, ptr %t14, i32 1
+  store ptr %t17, ptr %t21
+  br label %case.end.10.11
+case.end.10.11:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t22 = phi ptr [%t7, %case.end.9.6], [%t14, %case.end.10.11]
+  ret ptr %t22
+}
+
+define internal ptr @v__let_8(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

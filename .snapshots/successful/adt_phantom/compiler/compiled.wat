@@ -10,8 +10,8 @@
   (global $heap (mut i32) (i32.const 87))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00")
   (data (i32.const 72) "\07\00\00\00\07\00\00\00Phantom")
-  (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v_show)
+  (table 3 funcref)
+  (elem (i32.const 0) $v_runIO $v_show $v__lift_7)
 
   (func $__alloc (param $size i32) (result i32)
     (local $ptr i32)
@@ -147,7 +147,12 @@
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $v_show (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 19)) (local.get $__con_1)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $v_show (call $v__lift_7 (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 4))) (i32.const 19)) (local.get $__con_1))))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+
+  (func $v__lift_7 (param $v___input i32) (result i32)
+    (local $__con_0 i32)
+    (local $__scrut i32)
+    (block (result i32) (local.set $__scrut (local.get $v___input)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 4))) (i32.const 19)) (local.get $__con_0))))
 
   (func $_start (export "_start")
     (drop (call $v_runIO (call $v_main))))

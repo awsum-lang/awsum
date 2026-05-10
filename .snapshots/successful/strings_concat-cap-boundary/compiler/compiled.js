@@ -58,6 +58,22 @@ function v__lift_0(v___input){
     }
 }
 
+function v__lift_8(v___input){
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 3: {
+          const v___f0 = __s[1];
+          return [3, v___f0];
+        }
+        case 4: {
+          const v___f0 = __s[1];
+          return [4, v___f0];
+        }
+      }
+    }
+}
+
 function v__scc__df_andThenEither_0__lam_7_build(v__args){
     return (v__cps__scc__df_andThenEither_0__lam_7_build)(v__args, [11]);
 }
@@ -109,7 +125,7 @@ function v__cps__scc__df_andThenEither_0__lam_7_build(v__args, v__k){
               }
               case 4: {
                 const v_m = __s[1];
-                const __t0 = [8, __concat(v_acc, v_acc), v_m];
+                const __t0 = [8, (v__lift_8)(__concat(v_acc, v_acc)), v_m];
                 const __t1 = v__k;
                 v__args = __t0;
                 v__k = __t1;

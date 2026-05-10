@@ -299,7 +299,7 @@ case.arm.3.59:
   %t65 = getelementptr ptr, ptr %t63, i32 0
   store ptr %t64, ptr %t65
   %t66 = call ptr @malloc(i64 16)
-  %t67 = inttoptr i64 3768445577 to ptr
+  %t67 = inttoptr i64 589989748 to ptr
   %t68 = getelementptr ptr, ptr %t66, i32 0
   store ptr %t67, ptr %t68
   %t69 = getelementptr ptr, ptr %t66, i32 1
