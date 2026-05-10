@@ -99,6 +99,20 @@ executables:
       - pretty-simple # for pretty-printing any Show instances
       - process # for CLI
       - temporary # for temporary files
+flags:
+  tree-sitter-tests:
+    description: |
+      Build the `tree-sitter-tests` test-suite, which exercises the
+      external `tree-sitter-awsum` grammar by parsing every `.aww`
+      under `test/sources/successful/` and `test/sources/property/`,
+      plus an arbitrary-program property test. Disabled by default so
+      CI doesn't build a suite that depends on the `tree-sitter` CLI
+      and a sibling `../tree-sitter-awsum` checkout. Enable with
+      `stack test --flag awsum:tree-sitter-tests` (or via the
+      `just test-tree-sitter[-property]` recipes).
+    default: false
+    manual: true
+
 tests:
   awsum-test:
     main: Main.hs
@@ -118,3 +132,37 @@ tests:
       - process # for codegen tests
       - QuickCheck # for property-based tests
       - temporary # for temporary files
+
+  tree-sitter-tests:
+    main: TreeSitterMain.hs
+    source-dirs: test
+    # Only buildable when the `tree-sitter-tests` flag is on. CI's
+    # `just test` / `just test-property` invocations don't pass it,
+    # so the suite (and its dependency on the `tree-sitter` CLI plus
+    # a sibling `../tree-sitter-awsum`) is invisible there.
+    when:
+      - condition: "!flag(tree-sitter-tests)"
+        buildable: false
+    # Only compile the modules this suite actually uses; avoids
+    # pulling in the snapshot / property / etc. modules from the
+    # shared `test/` directory.
+    other-modules:
+      - Awsum.ArbitraryInstances
+      - Awsum.TreeSitterSpec
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      # Two test-suites share `test/` as source-dir, so they need
+      # different main-file names; the tree-sitter suite's main file
+      # is `TreeSitterMain.hs` with `module TreeSitterMain`, and
+      # `-main-is` tells GHC where to find `main`.
+      - -main-is TreeSitterMain
+    dependencies:
+      - awsum
+      - directory
+      - filepath
+      - hspec
+      - QuickCheck
+      - process
+      - temporary

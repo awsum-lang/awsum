@@ -15,6 +15,18 @@ extra-source-files:
     CHANGELOG.md
     stdlib/Prelude.aww
 
+flag tree-sitter-tests
+  description: Build the `tree-sitter-tests` test-suite, which exercises the
+               external `tree-sitter-awsum` grammar by parsing every `.aww`
+               under `test/sources/successful/` and `test/sources/property/`,
+               plus an arbitrary-program property test. Disabled by default so
+               CI doesn't build a suite that depends on the `tree-sitter` CLI
+               and a sibling `../tree-sitter-awsum` checkout. Enable with
+               `stack test --flag awsum:tree-sitter-tests` (or via the
+               `just test-tree-sitter[-property]` recipes).
+  manual: True
+  default: False
+
 library
   exposed-modules:
       Awsum.BuiltIn
@@ -116,7 +128,9 @@ test-suite awsum-test
       Awsum.PropertySpec
       Awsum.RunBackend
       Awsum.StringLiteralCapSpec
+      Awsum.TreeSitterSpec
       Matchers
+      TreeSitterMain
       Paths_awsum
   hs-source-dirs:
       test
@@ -142,3 +156,33 @@ test-suite awsum-test
     , relude
     , temporary
   default-language: GHC2024
+
+test-suite tree-sitter-tests
+  type: exitcode-stdio-1.0
+  main-is: TreeSitterMain.hs
+  other-modules:
+      Awsum.ArbitraryInstances
+      Awsum.TreeSitterSpec
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      DeriveAnyClass
+      DerivingVia
+      DuplicateRecordFields
+      OverloadedRecordDot
+      OverloadedStrings
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N -main-is TreeSitterMain
+  build-depends:
+      QuickCheck
+    , awsum
+    , base >=4.7 && <5
+    , directory
+    , filepath
+    , hspec
+    , process
+    , relude
+    , temporary
+  default-language: GHC2024
+  if !flag(tree-sitter-tests)
+    buildable: False

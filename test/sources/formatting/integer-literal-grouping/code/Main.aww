@@ -7,25 +7,25 @@
 import IO.Stdout
 
 short : Int32
-short = 999
+short = 9_99
 
 exactlyFour : Int32
-exactlyFour = 1_000
+exactlyFour = 1000
 
 oddGrouping : Int32
-oddGrouping = 123_456
+oddGrouping = 12_3456
 
 denseGrouping : Int32
-denseGrouping = 12_345
+denseGrouping = 1_2_3_4_5
 
 bareLong : Int32
-bareLong = 134_217_728
+bareLong = 134217728
 
 negShort : Int32
-negShort = -42
+negShort = -4_2
 
 negLong : Int32
-negLong = -2_000_000_000
+negLong = -2000000000
 
 main : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
 main _input = IO.Stdout.print "ok"
