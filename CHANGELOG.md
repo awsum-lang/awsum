@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Symbol visibility tightened** — every backend exposes only the platform-mandated entry point externally; user top-levels and runtime helpers are private.
 - **`RowCatchAllPattern` diagnostic** points at the `_` itself, not the surrounding `case` arm.
 - **JVM target floor: Java 11 (LTS)** — emitted class file version bumped from 51.0 (Java 7) to 55.0 (Java 11), aligning with the documented platform-version policy. CI's pinned JDK on all four matrix runners is now Zulu 11. Generated `.class` files run on any JVM ≥ 11.
+- **JVM codegen — UInt32 helpers use Java 8+ stdlib unsigned helpers.** `__showUInt32` now calls `Integer.toUnsignedString(I)Ljava/lang/String;`; `__subUInt32` compares via `Integer.compareUnsigned(II)I`; `__addUInt32` and `__mulUInt32` widen operands via `Integer.toUnsignedLong(I)J` and check the u32 boundary via `Long.compareUnsigned(JJ)I`. Both the text codegen (`Awsum.Codegen.JVM`) and the binary assembler (`Awsum.Codegen.JVM.Assemble`) emit the same shape; hand-rolled `i2l + ldc2_w 0xFFFFFFFFL + land` masking and the `lushr 32` overflow trick for multiplication are gone. Behaviour is identical to the previous implementation (verified by cross-backend property tests).
 
 ### Removed
 

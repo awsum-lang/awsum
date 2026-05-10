@@ -129,15 +129,12 @@ L_succu32_ok:
 .end method
 
 .method static __showUInt32(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
+  .limit stack 1
   .limit locals 1
   aload_0
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  i2l
-  ldc2_w 4294967295
-  land
-  invokestatic java/lang/Long/toString(J)Ljava/lang/String;
+  invokestatic java/lang/Integer/toUnsignedString(I)Ljava/lang/String;
   areturn
 .end method
 

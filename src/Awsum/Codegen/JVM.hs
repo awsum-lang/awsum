@@ -858,23 +858,19 @@ mulUInt8Method ptags =
        ]
 
 -- showUInt32: UInt32 -> String. JVM int is signed 32-bit, so values
---   2^31..2^32-1 would render as negative via 'Integer.toString'. Mask
---   to unsigned long via @(long)v & 0xFFFFFFFFL@ then call
---   'Long.toString'. 'Integer.toUnsignedString' would be cleaner but is
---   Java 8+; this code targets bytecode 51.0 (Java 7).
+--   2^31..2^32-1 would render as negative via 'Integer.toString'.
+--   'Integer.toUnsignedString' (Java 8+, on our Java 11 floor) prints
+--   the unsigned decimal directly.
 showUInt32Method :: Text
 showUInt32Method =
   unlines
     [ ".method static __showUInt32(Ljava/lang/Object;)Ljava/lang/Object;",
-      "  .limit stack 4",
+      "  .limit stack 1",
       "  .limit locals 1",
       "  aload_0",
       "  checkcast java/lang/Integer",
       "  invokevirtual java/lang/Integer/intValue()I",
-      "  i2l",
-      "  ldc2_w 4294967295",
-      "  land",
-      "  invokestatic java/lang/Long/toString(J)Ljava/lang/String;",
+      "  invokestatic java/lang/Integer/toUnsignedString(I)Ljava/lang/String;",
       "  areturn",
       ".end method"
     ]
@@ -964,10 +960,11 @@ succUInt32Method ptags =
        ]
 
 -- addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
---   both operands to unsigned long via @(long)x & 0xFFFFFFFFL@; the
---   sum lives in [0, 2*2^32-2] which fits in long-signed, so 'lcmp'
---   against 4294967295 gives the correct branch. The l2i on the ok
---   path keeps the low 32 bits — exactly the in-range u32 result.
+--   both operands to unsigned long via 'Integer.toUnsignedLong' (Java
+--   8+, on our Java 11 floor); the sum lives in [0, 2^33-2].
+--   'Long.compareUnsigned' against 4294967295 names the boundary check
+--   directly. The l2i on the ok path keeps the low 32 bits — exactly
+--   the in-range u32 result.
 addUInt32Method :: PreludeTags -> Text
 addUInt32Method ptags =
   T.intercalate "\n"
@@ -977,19 +974,15 @@ addUInt32Method ptags =
         "  aload_0",
         "  checkcast java/lang/Integer",
         "  invokevirtual java/lang/Integer/intValue()I",
-        "  i2l",
-        "  ldc2_w 4294967295",
-        "  land",
+        "  invokestatic java/lang/Integer/toUnsignedLong(I)J",
         "  aload_1",
         "  checkcast java/lang/Integer",
         "  invokevirtual java/lang/Integer/intValue()I",
-        "  i2l",
-        "  ldc2_w 4294967295",
-        "  land",
+        "  invokestatic java/lang/Integer/toUnsignedLong(I)J",
         "  ladd",
         "  dup2",
         "  ldc2_w 4294967295",
-        "  lcmp",
+        "  invokestatic java/lang/Long/compareUnsigned(JJ)I",
         "  ifgt L_addu32_over",
         "  l2i",
         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
@@ -1018,14 +1011,15 @@ addUInt32Method ptags =
        ]
 
 -- subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
---   @a < b@ as unsigned via long masking + lcmp. On the ok path
+--   @a < b@ as unsigned via 'Integer.compareUnsigned' (Java 8+, on our
+--   Java 11 floor) — negative result means underflow. On the ok path
 --   @isub@ at int width gives the correct u32 difference (bit pattern
 --   of @a - b mod 2^32@ equals @a - b@ when @a >= b@ in unsigned).
 subUInt32Method :: PreludeTags -> Text
 subUInt32Method ptags =
   T.intercalate "\n"
     $ [ ".method static __subUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-        "  .limit stack 6",
+        "  .limit stack 4",
         "  .limit locals 5",
         "  aload_0",
         "  checkcast java/lang/Integer",
@@ -1036,14 +1030,8 @@ subUInt32Method ptags =
         "  invokevirtual java/lang/Integer/intValue()I",
         "  istore_3",
         "  iload_2",
-        "  i2l",
-        "  ldc2_w 4294967295",
-        "  land",
         "  iload_3",
-        "  i2l",
-        "  ldc2_w 4294967295",
-        "  land",
-        "  lcmp",
+        "  invokestatic java/lang/Integer/compareUnsigned(II)I",
         "  iflt L_subu32_under",
         "  iload_2",
         "  iload_3",
@@ -1074,10 +1062,11 @@ subUInt32Method ptags =
 
 -- mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. The
 --   product of two u32 values is in [0, (2^32-1)^2 ≈ 2^64-2^33+1]; this
---   exceeds @Long.MAX_VALUE@, so 'lcmp' against 4294967295 would
---   misclassify some overflowing products as in-range. Instead we shift
---   the product right by 32 (unsigned, 'lushr') and check whether any
---   high bit is set — equivalent to @(a*b) > 2^32 - 1@ unsigned.
+--   exceeds @Long.MAX_VALUE@, so signed 'lcmp' against 4294967295L
+--   would misclassify some overflowing products as in-range.
+--   'Long.compareUnsigned' (Java 8+, on our Java 11 floor) compares the
+--   product to the u32 boundary correctly across the full u64 range.
+--   Both operands are widened via 'Integer.toUnsignedLong'.
 mulUInt32Method :: PreludeTags -> Text
 mulUInt32Method ptags =
   T.intercalate "\n"
@@ -1087,22 +1076,17 @@ mulUInt32Method ptags =
         "  aload_0",
         "  checkcast java/lang/Integer",
         "  invokevirtual java/lang/Integer/intValue()I",
-        "  i2l",
-        "  ldc2_w 4294967295",
-        "  land",
+        "  invokestatic java/lang/Integer/toUnsignedLong(I)J",
         "  aload_1",
         "  checkcast java/lang/Integer",
         "  invokevirtual java/lang/Integer/intValue()I",
-        "  i2l",
-        "  ldc2_w 4294967295",
-        "  land",
+        "  invokestatic java/lang/Integer/toUnsignedLong(I)J",
         "  lmul",
         "  lstore_2",
         "  lload_2",
-        "  bipush 32",
-        "  lushr",
-        "  l2i",
-        "  ifne L_mulu32_over",
+        "  ldc2_w 4294967295",
+        "  invokestatic java/lang/Long/compareUnsigned(JJ)I",
+        "  ifgt L_mulu32_over",
         "  lload_2",
         "  l2i",
         "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
