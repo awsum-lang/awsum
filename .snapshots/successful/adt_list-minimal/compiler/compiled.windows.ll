@@ -141,18 +141,115 @@ define internal ptr @v_main() {
   %t13 = inttoptr i64 20 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
   store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t8, i32 2
-  store ptr %t12, ptr %t15
-  %t16 = getelementptr ptr, ptr %t4, i32 2
-  store ptr %t8, ptr %t16
-  %t17 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t4, ptr %t17
-  %t18 = call ptr @v_show(ptr %t0)
-  %t19 = call ptr @v__let_7(ptr %t18)
-  ret ptr %t19
+  %t15 = call ptr @v__lift_7(ptr %t12)
+  %t16 = getelementptr ptr, ptr %t8, i32 2
+  store ptr %t15, ptr %t16
+  %t17 = getelementptr ptr, ptr %t4, i32 2
+  store ptr %t8, ptr %t17
+  %t18 = getelementptr ptr, ptr %t0, i32 2
+  store ptr %t4, ptr %t18
+  %t19 = call ptr @v_show(ptr %t0)
+  %t20 = call ptr @v__let_8(ptr %t19)
+  ret ptr %t20
 }
 
-define internal ptr @v__let_7(ptr %v_res) {
+define internal ptr @v__lift_7(ptr %v___input) {
+  %t0 = call ptr @malloc(i64 8)
+  %t1 = inttoptr i64 23 to ptr
+  %t2 = getelementptr ptr, ptr %t0, i32 0
+  store ptr %t1, ptr %t2
+  %t3 = call ptr @v__cps__lift_7(ptr %v___input, ptr %t0)
+  ret ptr %t3
+}
+
+define internal ptr @v__cps__lift_7(ptr %v___input, ptr %v__k) {
+entry:
+  %t3 = alloca ptr
+  store ptr %v___input, ptr %t3
+  %t4 = alloca ptr
+  store ptr %v__k, ptr %t4
+  %t2 = alloca ptr
+  br label %tco.loop.0
+tco.loop.0:
+  %t5 = load ptr, ptr %t3
+  %t6 = load ptr, ptr %t4
+  %t7 = getelementptr ptr, ptr %t5, i32 0
+  %t8 = load ptr, ptr %t7
+  %t9 = ptrtoint ptr %t8 to i64
+  switch i64 %t9, label %tco.case.default.10 [ i64 19, label %tco.case.arm.19.11 i64 20, label %tco.case.arm.20.21 ]
+tco.case.arm.19.11:
+  %t12 = getelementptr ptr, ptr %t5, i32 1
+  %t13 = load ptr, ptr %t12
+  %t14 = getelementptr ptr, ptr %t5, i32 2
+  %t15 = load ptr, ptr %t14
+  %t16 = call ptr @malloc(i64 24)
+  %t17 = inttoptr i64 24 to ptr
+  %t18 = getelementptr ptr, ptr %t16, i32 0
+  store ptr %t17, ptr %t18
+  %t19 = getelementptr ptr, ptr %t16, i32 1
+  store ptr %t6, ptr %t19
+  %t20 = getelementptr ptr, ptr %t16, i32 2
+  store ptr %t13, ptr %t20
+  store ptr %t15, ptr %t3
+  store ptr %t16, ptr %t4
+  br label %tco.loop.0
+tco.case.arm.20.21:
+  %t22 = call ptr @malloc(i64 8)
+  %t23 = inttoptr i64 20 to ptr
+  %t24 = getelementptr ptr, ptr %t22, i32 0
+  store ptr %t23, ptr %t24
+  %t25 = call ptr @v__apply__lift_7(ptr %t6, ptr %t22)
+  store ptr %t25, ptr %t2
+  br label %tco.exit.1
+tco.case.default.10:
+  unreachable
+tco.exit.1:
+  %t26 = load ptr, ptr %t2
+  ret ptr %t26
+}
+
+define internal ptr @v__apply__lift_7(ptr %v__k, ptr %v__x) {
+entry:
+  %t3 = alloca ptr
+  store ptr %v__k, ptr %t3
+  %t4 = alloca ptr
+  store ptr %v__x, ptr %t4
+  %t2 = alloca ptr
+  br label %tco.loop.0
+tco.loop.0:
+  %t5 = load ptr, ptr %t3
+  %t6 = load ptr, ptr %t4
+  %t7 = getelementptr ptr, ptr %t5, i32 0
+  %t8 = load ptr, ptr %t7
+  %t9 = ptrtoint ptr %t8 to i64
+  switch i64 %t9, label %tco.case.default.10 [ i64 23, label %tco.case.arm.23.11 i64 24, label %tco.case.arm.24.12 ]
+tco.case.arm.23.11:
+  store ptr %t6, ptr %t2
+  br label %tco.exit.1
+tco.case.arm.24.12:
+  %t13 = getelementptr ptr, ptr %t5, i32 1
+  %t14 = load ptr, ptr %t13
+  %t15 = getelementptr ptr, ptr %t5, i32 2
+  %t16 = load ptr, ptr %t15
+  %t17 = call ptr @malloc(i64 24)
+  %t18 = inttoptr i64 19 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = getelementptr ptr, ptr %t17, i32 1
+  store ptr %t16, ptr %t20
+  %t21 = getelementptr ptr, ptr %t17, i32 2
+  store ptr %t6, ptr %t21
+  store ptr %t14, ptr %t3
+  store ptr %t17, ptr %t4
+  br label %tco.loop.0
+tco.case.default.10:
+  unreachable
+tco.exit.1:
+  %t22 = load ptr, ptr %t2
+  ret ptr %t22
+}
+
+define internal ptr @v__let_8(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -214,7 +311,7 @@ case.join.4:
 
 define internal ptr @v__scc_show_showCons(ptr %v__args) {
   %t0 = call ptr @malloc(i64 8)
-  %t1 = inttoptr i64 23 to ptr
+  %t1 = inttoptr i64 25 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v__cps__scc_show_showCons(ptr %v__args, ptr %t0)
@@ -303,7 +400,7 @@ tco.case.arm.4.52:
   %t58 = getelementptr ptr, ptr %t55, i32 1
   store ptr %t38, ptr %t58
   %t59 = call ptr @malloc(i64 24)
-  %t60 = inttoptr i64 24 to ptr
+  %t60 = inttoptr i64 26 to ptr
   %t61 = getelementptr ptr, ptr %t59, i32 0
   store ptr %t60, ptr %t61
   %t62 = getelementptr ptr, ptr %t59, i32 1
@@ -336,11 +433,11 @@ tco.loop.0:
   %t7 = getelementptr ptr, ptr %t5, i32 0
   %t8 = load ptr, ptr %t7
   %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %tco.case.default.10 [ i64 23, label %tco.case.arm.23.11 i64 24, label %tco.case.arm.24.12 ]
-tco.case.arm.23.11:
+  switch i64 %t9, label %tco.case.default.10 [ i64 25, label %tco.case.arm.25.11 i64 26, label %tco.case.arm.26.12 ]
+tco.case.arm.25.11:
   store ptr %t6, ptr %t2
   br label %tco.exit.1
-tco.case.arm.24.12:
+tco.case.arm.26.12:
   %t13 = getelementptr ptr, ptr %t5, i32 1
   %t14 = load ptr, ptr %t13
   %t15 = getelementptr ptr, ptr %t5, i32 2

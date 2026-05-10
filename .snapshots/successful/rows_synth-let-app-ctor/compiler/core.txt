@@ -1,0 +1,79 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "dispatch" [ "x" ]
+            ( CRowCase
+                ( CVar "x" )
+                [
+                    ( 1615808600
+                    , "_s"
+                    , CString "s"
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$7" )
+                [ CCon 10
+                    [ CString "world" ]
+                ]
+            )
+        , CFunDef "$let$7" [ "m" ]
+            ( CCase
+                ( CVar "m" )
+                [
+                    ( 9
+                    , []
+                    , CCon 7
+                        [ CString "n"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 10
+                    , [ "x" ]
+                    , CCon 7
+                        [ CCall
+                            ( CVar "dispatch" )
+                            [ CRow 1615808600
+                                ( CVar "x" )
+                            ]
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

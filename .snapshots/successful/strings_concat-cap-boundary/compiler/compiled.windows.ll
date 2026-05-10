@@ -303,6 +303,42 @@ case.join.4:
   ret ptr %t21
 }
 
+define internal ptr @v__lift_8(ptr %v___input) {
+  %t0 = getelementptr ptr, ptr %v___input, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 3, label %case.arm.3.5 i64 4, label %case.arm.4.13 ]
+case.arm.3.5:
+  %t7 = getelementptr ptr, ptr %v___input, i32 1
+  %t8 = load ptr, ptr %t7
+  %t9 = call ptr @malloc(i64 16)
+  %t10 = inttoptr i64 3 to ptr
+  %t11 = getelementptr ptr, ptr %t9, i32 0
+  store ptr %t10, ptr %t11
+  %t12 = getelementptr ptr, ptr %t9, i32 1
+  store ptr %t8, ptr %t12
+  br label %case.end.3.6
+case.end.3.6:
+  br label %case.join.4
+case.arm.4.13:
+  %t15 = getelementptr ptr, ptr %v___input, i32 1
+  %t16 = load ptr, ptr %t15
+  %t17 = call ptr @malloc(i64 16)
+  %t18 = inttoptr i64 4 to ptr
+  %t19 = getelementptr ptr, ptr %t17, i32 0
+  store ptr %t18, ptr %t19
+  %t20 = getelementptr ptr, ptr %t17, i32 1
+  store ptr %t16, ptr %t20
+  br label %case.end.4.14
+case.end.4.14:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t21 = phi ptr [%t9, %case.end.3.6], [%t17, %case.end.4.14]
+  ret ptr %t21
+}
+
 define internal ptr @v__scc__df_andThenEither_0__lam_7_build(ptr %v__args) {
   %t0 = call ptr @malloc(i64 8)
   %t1 = inttoptr i64 11 to ptr
@@ -416,10 +452,11 @@ tco.case.arm.4.68:
   %t73 = getelementptr ptr, ptr %t71, i32 0
   store ptr %t72, ptr %t73
   %t74 = call ptr @__concat(ptr %t54, ptr %t54)
-  %t75 = getelementptr ptr, ptr %t71, i32 1
-  store ptr %t74, ptr %t75
-  %t76 = getelementptr ptr, ptr %t71, i32 2
-  store ptr %t70, ptr %t76
+  %t75 = call ptr @v__lift_8(ptr %t74)
+  %t76 = getelementptr ptr, ptr %t71, i32 1
+  store ptr %t75, ptr %t76
+  %t77 = getelementptr ptr, ptr %t71, i32 2
+  store ptr %t70, ptr %t77
   store ptr %t71, ptr %t3
   store ptr %t6, ptr %t4
   br label %tco.loop.0
@@ -428,8 +465,8 @@ tco.case.default.59:
 tco.case.default.10:
   unreachable
 tco.exit.1:
-  %t77 = load ptr, ptr %t2
-  ret ptr %t77
+  %t78 = load ptr, ptr %t2
+  ret ptr %t78
 }
 
 define internal ptr @v__apply__scc__df_andThenEither_0__lam_7_build(ptr %v__k, ptr %v__x) {

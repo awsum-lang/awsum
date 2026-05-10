@@ -1,0 +1,146 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CVar "u"
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "internalStdoutPrint" )
+                                [ CVar "s" ]
+                            )
+                            [
+                                ( 0
+                                , []
+                                , CContinue
+                                    [ CVar "next" ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CFunDef "double"
+            [ "n"
+            , "s"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CCall
+                        ( CBuiltIn "eqInt32" )
+                        [ CVar "n"
+                        , CIntLit 0 TInt32
+                        ]
+                    )
+                    [
+                        ( 1
+                        , []
+                        , CCon 4
+                            [ CVar "s" ]
+                        )
+                    ,
+                        ( 2
+                        , []
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "predInt32" )
+                                [ CVar "n" ]
+                            )
+                            [
+                                ( 3
+                                , [ "ue" ]
+                                , CCon 3
+                                    [ CRow 3768445577
+                                        ( CVar "ue" )
+                                    ]
+                                )
+                            ,
+                                ( 4
+                                , [ "m" ]
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s"
+                                        , CVar "s"
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "se" ]
+                                        , CCon 3
+                                            [ CRow 589989748
+                                                ( CVar "se" )
+                                            ]
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "s2" ]
+                                        , CContinue
+                                            [ CVar "m"
+                                            , CVar "s2"
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        , CValDef "main"
+            ( CCase
+                ( CCall
+                    ( CVar "double" )
+                    [ CIntLit 24 TInt32
+                    , CString "0123456789abcdef"
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CRowCase
+                        ( CVar "e" )
+                        [
+                            ( 589989748
+                            , "_t"
+                            , CCon 7
+                                [ CString "string-too-long"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ,
+                            ( 3768445577
+                            , "_u"
+                            , CCon 7
+                                [ CString "underflow"
+                                , CCon 5
+                                    [ CCon 0 [] ]
+                                ]
+                            )
+                        ]
+                    )
+                ,
+                    ( 4
+                    , [ "_s" ]
+                    , CCon 7
+                        [ CString "done"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

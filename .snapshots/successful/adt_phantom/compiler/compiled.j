@@ -108,6 +108,7 @@ L_join:
   bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  invokestatic AwsumMain/v__lift_7(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   dup
@@ -130,6 +131,31 @@ L_join:
   aastore
   aastore
   aastore
+  areturn
+.end method
+
+
+.method static v__lift_7(Ljava/lang/Object;)Ljava/lang/Object;
+  aload_0
+  dup
+  iconst_0
+  aaload
+  checkcast java/lang/Integer
+  invokevirtual java/lang/Integer/intValue()I
+  lookupswitch
+    19: L_arm_19
+    default: L_arm_19
+L_arm_19:
+  pop
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 19
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  goto L_join
+L_join:
   areturn
 .end method
 

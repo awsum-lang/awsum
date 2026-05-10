@@ -46,9 +46,24 @@ function v_unwrap(v_x){
     }
 }
 
-const main = (v__let_7)(((s) => { switch(s[0]) { case 3: { const v__do_e_14_9 = s[1]; return [3, v__do_e_14_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)([20])); } } })(__concat((v_unwrap)([19, "hello"]), ", ")));
+const main = (v__let_8)(((s) => { switch(s[0]) { case 3: { const v__do_e_14_9 = s[1]; return [3, v__do_e_14_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)((v__lift_7)([20]))); } } })(__concat((v_unwrap)([19, "hello"]), ", ")));
 
-function v__let_7(v_res){
+function v__lift_7(v___input){
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 19: {
+          const v___f0 = __s[1];
+          return [19, v___f0];
+        }
+        case 20: {
+          return [20];
+        }
+      }
+    }
+}
+
+function v__let_8(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

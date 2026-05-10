@@ -384,6 +384,55 @@
   }
 
 
+  .method private hidebysig static object v__lift_8(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_3, IL_arm_4)
+  IL_arm_3:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.3
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    br.s IL_join
+  IL_arm_4:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
   .method private hidebysig static object v__scc__df_andThenEither_0__lam_7_build(object) cil managed
   {
     ldarg.0
@@ -563,6 +612,7 @@
     ldloc.1
     ldloc.1
     call object AwsumMain::__concat(object, object)
+    call object AwsumMain::v__lift_8(object)
     stelem.ref
     dup
     ldc.i4.2

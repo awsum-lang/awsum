@@ -1625,27 +1625,84 @@ synthLabelType env = \case
   ELit _ (LString _) -> Just (TyCon noSpan "String")
   ELit _ (LInt _) -> Nothing -- caller resolves via row's int label
   EParens _ inner -> synthLabelType env inner
-  EInfix {} -> Just (TyCon noSpan "String") -- the only infix op is ++ : String -> String -> String
-  e@(EApp _ f _) -> case synthLabelType env (collectAppHead f) of
-    Just t ->
-      let (params, ret) = splitArrow t
-          appliedArgs = countAppArgs e
-       in -- Only the /saturated/ shape is honest here: an under-applied
-          -- call returns a residual function type ('a -> b' rather than
-          -- 'b'), and the simple @snd . splitArrow@ shortcut would
-          -- silently misrepresent it as the final result type. Return
-          -- 'Nothing' for partial applications so the caller falls
-          -- through to the no-info path instead of coercing against a
-          -- wrong shape — same conservative answer we already give for
-          -- 'ELam' / 'EDo'.
-          if appliedArgs == length params
-            then Just ret
-            else Nothing
+  EInfix _ OpConcat _ _ -> case lookupBuiltIn "concatString" of
+    Just t -> snd (splitArrowN 2 t)
     Nothing -> Nothing
+  EInfix sp OpPipe l r -> synthLabelType env (EApp sp r l)
+  e@(EApp {}) ->
+    -- Saturated-only synthesis: collect head + all args, synthesise
+    -- types for every argument that we can, then unify them against
+    -- the parameter slots to propagate the type-arg substitution
+    -- through to the result. A generic-headed call like
+    -- @Just "hello"@ comes back as @Maybe String@ — concrete enough
+    -- that 'lowerArgWithRowInjectionM' can pick the right row label.
+    --
+    -- /Why we accept partial argument synthesis but reject a
+    -- polymorphic result:/ for a call like @double 24 "abc"@ whose
+    -- result type is already concrete (@Either (UE|ST) String@), the
+    -- int literal doesn't need to synth — its slot's substitution
+    -- contributes nothing to the (already-monomorphic) return type.
+    -- We let the call go through. But for a call like
+    -- @Tuple3 1 2 3@ whose result @Tuple3 a b c@ depends on every
+    -- argument's substitution, an un-synth int literal leaves the
+    -- result polymorphic; downstream 'synthCoerce' would then
+    -- re-lower each field with an unresolved tyvar as the expected
+    -- type, and 'ELit (LInt _)' would fail for lack of a numeric
+    -- type. Detect that by checking whether the post-substitution
+    -- result still has free tyvars; if so return 'Nothing' so the
+    -- caller falls back to direct lowering with its own (concrete)
+    -- expected type.
+    let (head_, args) = collectApps e []
+     in case synthLabelType env head_ of
+          Just t ->
+            let (allParams, fullRet) = splitArrow t
+             in if length args == length allParams
+                  then
+                    let step acc (paramT, argE) =
+                          case synthLabelType env argE of
+                            Just argT ->
+                              acc <> fromRight mempty (unify (applySubst acc paramT) argT)
+                            Nothing -> acc
+                        argSubsts = foldl' step mempty (zip allParams args)
+                        finalRet = applySubst argSubsts fullRet
+                     in if hasFreeTyVars finalRet
+                          then Nothing
+                          else Just finalRet
+                  else Nothing
+          Nothing -> Nothing
   ECon _ name -> case M.lookup name (leConInfo env) of
-    Just ci | ciArity ci == 0 -> Just (TyCon noSpan (ciTypeName ci))
-    _ -> Nothing -- non-nullary constructor types are polymorphic in field types
-  ECase {} -> Nothing
+    Just ci ->
+      -- Constructor's full type as an arrow: @field1 -> ... -> fieldN -> Ty tvs@.
+      -- Both nullary (no fields, just the result type) and non-nullary cases
+      -- collapse into the same shape via 'foldr (TyArrow noSpan)'. The
+      -- saturated-EApp path above unifies arg types against the param slots,
+      -- so a fully-applied @Just "hello"@ resolves to @Maybe String@; a bare
+      -- @Just@ in value position synthesises to @a -> Maybe a@ (consumed by
+      -- 'isLamHead'-style caller paths).
+      let retTy = applyTyParams (ciTypeName ci) (ciTypeParams ci)
+       in Just (foldr (TyArrow noSpan) retTy (ciFieldTypes ci))
+    Nothing -> Nothing
+  ECase _sp scrut alts _ ->
+    -- The result type of a @case@ is the type of every arm's body
+    -- (the typechecker has already unified them). Take the first arm
+    -- and synth its body in an env extended with that arm's pattern
+    -- binders, threading the scrutinee's synthesised type through
+    -- 'collectPatternBindings' so that binders referenced in the
+    -- body see their concrete type instead of an un-substituted
+    -- field tyvar. Without this clause, a @case@ used as a
+    -- constructor argument or as the scrutinee of an outer @case@
+    -- loses the synthesis chain — same failure mode as the
+    -- non-nullary-EApp case above.
+    let mScrutTy = synthLabelType env scrut
+        firstAlt :| _ = alts
+        body = caseAltBody firstAlt
+        env' = case caseAltPattern firstAlt of
+          PCon _ cName pats
+            | Just ci <- M.lookup cName (leConInfo env) ->
+                let binders = collectPatternBindings (leConInfo env) ci mScrutTy pats
+                 in extendLowerEnv env [(QName [] n, t) | (n, t) <- binders]
+          _ -> env
+     in synthLabelType env' body
   -- Closed lambdas synthesise an arrow type using fresh, span-unique
   -- tyvar names for parameters — same suffix scheme as
   -- 'Awsum.Typing'\''s synthesis-form 'typeOfExpr ELam' so a
@@ -1681,21 +1738,20 @@ synthLabelType env = \case
           _ -> [] -- shouldn't reach here; rewritten to ECase
         env' = extendLowerEnv env [(QName [] n, nTy) | n <- names]
      in synthLabelType env' body
-  where
-    countAppArgs :: Expr -> Int
-    countAppArgs = go (0 :: Int)
-      where
-        go acc (EApp _ inner _) = go (acc + 1) inner
-        go acc (EParens _ inner) = go acc inner
-        go acc _ = acc
 
--- | Strip nested 'EApp' to expose the head expression (the function
---   reference). Used by 'synthLabelType' when synthesising the type of
---   an applied call.
-collectAppHead :: Expr -> Expr
-collectAppHead = \case
-  EApp _ f _ -> collectAppHead f
-  e -> e
+-- | Does the type contain any free 'TyVar'? Used by 'synthLabelType'
+--   on 'EApp' to decide whether the synthesised result is concrete
+--   enough for the caller to act on; a residual tyvar would cascade
+--   into a downstream 'synthCoerce' that re-lowers fields against an
+--   unresolved expected type and trips on integer literals.
+hasFreeTyVars :: Type' -> Bool
+hasFreeTyVars = \case
+  TyVar _ _ -> True
+  TyCon _ _ -> False
+  TyEmpty _ _ -> False
+  TyApp _ a b -> hasFreeTyVars a || hasFreeTyVars b
+  TyArrow _ a b -> hasFreeTyVars a || hasFreeTyVars b
+  TyOr _ a b -> hasFreeTyVars a || hasFreeTyVars b
 
 -- | Lower a single case alternative: look up the constructor tag,
 --   desugar nested patterns into nested CCase, and lower the body.

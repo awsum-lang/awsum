@@ -1,0 +1,24 @@
+{- The outer case's scrutinee is itself a `case`. For the outer
+   `Just x -> dispatch x` arm to type `x : String`, `synthLabelType`
+   must descend into the inner `case` and derive its result type
+   from one of its arms. Previously `synthLabelType ECase = Nothing`
+   shortcut here; now it picks the first arm and synthesises its
+   body in an env extended with that arm's pattern binders.
+
+   Without the ECase synth, the outer case-binder `x` types at
+   `TyVar "a"`, the row-injection picks the first label in
+   `(Int32 | String)`, and `dispatch x` returns `"i"` for any input. -}
+import IO.Stdout
+
+dispatch : (Int32 | String) -> String
+dispatch x = case x of
+  (_n : Int32) -> "i"
+  (_s : String) -> "s"
+
+main : IO Never Unit
+main =
+  case (case True of
+          True -> Just "yes"
+          False -> Nothing) of
+    Nothing -> IO.Stdout.print "n"
+    Just x -> IO.Stdout.print (dispatch x)

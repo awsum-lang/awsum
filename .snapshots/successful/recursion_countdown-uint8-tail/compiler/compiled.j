@@ -313,7 +313,7 @@ L_tco_arm_3:
   anewarray java/lang/Object
   dup
   iconst_0
-  sipush 3768445577
+  sipush 589989748
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -359,7 +359,7 @@ L_tco_arm_3:
   anewarray java/lang/Object
   dup
   iconst_0
-  sipush 3768445577
+  sipush 589989748
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup

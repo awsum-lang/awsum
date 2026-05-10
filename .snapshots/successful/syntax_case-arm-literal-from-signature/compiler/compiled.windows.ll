@@ -129,23 +129,56 @@ define internal ptr @v_main() {
   %t4 = inttoptr i64 9 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
-  %t6 = call ptr @v_firstZero(ptr %t3)
-  %t7 = call ptr @__showInt32(ptr %t6)
-  %t8 = getelementptr ptr, ptr %t0, i32 1
-  store ptr %t7, ptr %t8
-  %t9 = call ptr @malloc(i64 16)
-  %t10 = inttoptr i64 5 to ptr
-  %t11 = getelementptr ptr, ptr %t9, i32 0
-  store ptr %t10, ptr %t11
-  %t12 = call ptr @malloc(i64 8)
-  %t13 = inttoptr i64 0 to ptr
-  %t14 = getelementptr ptr, ptr %t12, i32 0
-  store ptr %t13, ptr %t14
-  %t15 = getelementptr ptr, ptr %t9, i32 1
-  store ptr %t12, ptr %t15
-  %t16 = getelementptr ptr, ptr %t0, i32 2
-  store ptr %t9, ptr %t16
+  %t6 = call ptr @v__lift_7(ptr %t3)
+  %t7 = call ptr @v_firstZero(ptr %t6)
+  %t8 = call ptr @__showInt32(ptr %t7)
+  %t9 = getelementptr ptr, ptr %t0, i32 1
+  store ptr %t8, ptr %t9
+  %t10 = call ptr @malloc(i64 16)
+  %t11 = inttoptr i64 5 to ptr
+  %t12 = getelementptr ptr, ptr %t10, i32 0
+  store ptr %t11, ptr %t12
+  %t13 = call ptr @malloc(i64 8)
+  %t14 = inttoptr i64 0 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = getelementptr ptr, ptr %t10, i32 1
+  store ptr %t13, ptr %t16
+  %t17 = getelementptr ptr, ptr %t0, i32 2
+  store ptr %t10, ptr %t17
   ret ptr %t0
+}
+
+define internal ptr @v__lift_7(ptr %v___input) {
+  %t0 = getelementptr ptr, ptr %v___input, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 9, label %case.arm.9.5 i64 10, label %case.arm.10.10 ]
+case.arm.9.5:
+  %t7 = call ptr @malloc(i64 8)
+  %t8 = inttoptr i64 9 to ptr
+  %t9 = getelementptr ptr, ptr %t7, i32 0
+  store ptr %t8, ptr %t9
+  br label %case.end.9.6
+case.end.9.6:
+  br label %case.join.4
+case.arm.10.10:
+  %t12 = getelementptr ptr, ptr %v___input, i32 1
+  %t13 = load ptr, ptr %t12
+  %t14 = call ptr @malloc(i64 16)
+  %t15 = inttoptr i64 10 to ptr
+  %t16 = getelementptr ptr, ptr %t14, i32 0
+  store ptr %t15, ptr %t16
+  %t17 = getelementptr ptr, ptr %t14, i32 1
+  store ptr %t13, ptr %t17
+  br label %case.end.10.11
+case.end.10.11:
+  br label %case.join.4
+case.default.3:
+  unreachable
+case.join.4:
+  %t18 = phi ptr [%t7, %case.end.9.6], [%t14, %case.end.10.11]
+  ret ptr %t18
 }
 
 declare ptr @GetCommandLineW()

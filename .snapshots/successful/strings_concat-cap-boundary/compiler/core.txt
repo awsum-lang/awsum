@@ -115,6 +115,23 @@ CoreProgram
                     )
                 ]
             )
+        , CFunDef "$lift$8" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CCon 3
+                        [ CVar "__f0" ]
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CCon 4
+                        [ CVar "__f0" ]
+                    )
+                ]
+            )
         , CFunDef "$scc$$df$andThenEither$0_$lam$7_build" [ "$args" ]
             ( CCall
                 ( CVar "$cps$$scc$$df$andThenEither$0_$lam$7_build" )
@@ -202,9 +219,12 @@ CoreProgram
                                 , CContinue
                                     [ CCon 8
                                         [ CCall
-                                            ( CBuiltIn "concatString" )
-                                            [ CVar "acc"
-                                            , CVar "acc"
+                                            ( CVar "$lift$8" )
+                                            [ CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "acc"
+                                                , CVar "acc"
+                                                ]
                                             ]
                                         , CVar "m"
                                         ]
