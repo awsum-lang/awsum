@@ -24,6 +24,45 @@ test-property:
   stack test --pedantic --ta '--match "Property tests"'
   @echo "\n\n✅ Property tests completed!\n\n"
 
+# Run the tree-sitter fast tests:
+#   * `corpus`  — parse every .aww under test/sources/successful/,
+#                 test/sources/property/ and test/sources/formatting/
+#                 via ../tree-sitter-awsum and assert no ERROR /
+#                 MISSING nodes. formatting/ is included because
+#                 malformed-but-recoverable input is exactly where
+#                 the scanner has historically regressed (the
+#                 22-GiB-runaway bug surfaced on
+#                 formatting/improperly-formatted-source/).
+#   * `queries` — run every .scm under ../tree-sitter-awsum/queries/
+#                 against every .aww in the corpus and assert no
+#                 query-validation errors.
+# Fast, deterministic — the natural baseline for grammar work.
+#
+# Regenerates parser.c from grammar.js first so scanner.c / grammar.js edits
+# are picked up.
+# Skipped silently inside the spec if `tree-sitter` is not on PATH
+# or ../tree-sitter-awsum is missing (override the latter with
+# TREE_SITTER_AWSUM_DIR).
+test-tree-sitter:
+  #!/bin/sh
+  set -eu
+  if [ -d "../tree-sitter-awsum" ] && command -v tree-sitter >/dev/null 2>&1; then
+    (cd ../tree-sitter-awsum && tree-sitter generate)
+  fi
+  stack test --pedantic --flag awsum:tree-sitter-tests awsum:test:tree-sitter-tests --ta '--match "tree-sitter-awsum/" --skip "tree-sitter-awsum/property"'
+  echo "\n\n✅ tree-sitter corpus + queries completed!\n\n"
+
+# Run the tree-sitter property test (~100 generated programs against
+# the same grammar). Use after `just test-tree-sitter` is green.
+test-tree-sitter-property:
+  #!/bin/sh
+  set -eu
+  if [ -d "../tree-sitter-awsum" ] && command -v tree-sitter >/dev/null 2>&1; then
+    (cd ../tree-sitter-awsum && tree-sitter generate)
+  fi
+  stack test --pedantic --flag awsum:tree-sitter-tests awsum:test:tree-sitter-tests --ta '--match "tree-sitter-awsum/property"'
+  echo "\n\n✅ tree-sitter property completed!\n\n"
+
 # Clean build artefacts (may help with weird compilation issues)
 clean:
   stack clean
