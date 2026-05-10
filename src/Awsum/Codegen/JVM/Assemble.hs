@@ -1850,23 +1850,22 @@ bcU32MaxAsLong =
     0x65 -- lsub    → 2^32 - 1
   ]
 
--- | showUInt32: UInt32 -> String. Render as decimal via
---   @Long.toString((long)v & 0xFFFFFFFFL)@.
+-- | showUInt32: UInt32 -> String. Render the value as an unsigned
+--   decimal via 'Integer.toUnsignedString' (Java 8+, on our Java 11
+--   floor) — handles the 2^31..2^32-1 range that signed
+--   'Integer.toString' would print as negative.
 mkShowUInt32 :: AsmM MInfo
 mkShowUInt32 = do
   ni <- addUtf8 "__showUInt32"
   di <- addUtf8 "(Ljava/lang/Object;)Ljava/lang/Object;"
   intCls <- addClass "java/lang/Integer"
   intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
-  longToStringRef <- addMRef "java/lang/Long" "toString" "(J)Ljava/lang/String;"
+  toUnsignedStringRef <- addMRef "java/lang/Integer" "toUnsignedString" "(I)Ljava/lang/String;"
   let code =
         bcAload 0
           <> bcCheckCast intCls
           <> bcInvokeVirtual intValRef
-          <> [0x85] -- i2l
-          <> bcU32MaxAsLong
-          <> [0x7F] -- land
-          <> bcInvokeStatic longToStringRef
+          <> bcInvokeStatic toUnsignedStringRef
           <> [0xB0] -- areturn
   pure
     MInfo
@@ -2051,11 +2050,11 @@ mkSuccUInt32 = do
       }
 
 -- | addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
---   both operands to unsigned long via @i2l + land 0xFFFFFFFFL@; sum in
---   long lives in [0, 2*2^32-2] which fits signed long, so 'lcmp'
---   against 4294967295L gives the correct branch. Locals layout:
---   slot 0,1 = arg pointers; slots 2-3 = long sum (saved via lstore_2);
---   slot 4 = scratch Object.
+--   both operands to unsigned long via 'Integer.toUnsignedLong' (Java
+--   8+, on our Java 11 floor); sum lives in [0, 2^33-2].
+--   'Long.compareUnsigned' against 4294967295L names the boundary check
+--   directly. Locals layout: slot 0,1 = arg pointers; slots 2-3 = long
+--   sum (saved via lstore_2); slot 4 = scratch Object.
 mkAddUInt32 :: AsmM MInfo
 mkAddUInt32 = do
   ni <- addUtf8 "__addUInt32"
@@ -2063,23 +2062,24 @@ mkAddUInt32 = do
   intCls <- addClass "java/lang/Integer"
   intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  toUnsignedLongRef <- addMRef "java/lang/Integer" "toUnsignedLong" "(I)J"
+  cmpUnsignedLongRef <- addMRef "java/lang/Long" "compareUnsigned" "(JJ)I"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
   ptags <- askPreludeTags
   let unbox = [0xC0, hi8 intCls, lo8 intCls] <> [0xB6, hi8 intValRef, lo8 intValRef]
-      uExt = [0x85] <> bcU32MaxAsLong <> [0x7F] -- i2l + land
       preamble =
         bcAload 0
           <> unbox
-          <> uExt
+          <> bcInvokeStatic toUnsignedLongRef
           <> bcAload 1
           <> unbox
-          <> uExt
+          <> bcInvokeStatic toUnsignedLongRef
           <> [0x61] -- ladd
           <> bcLstore 2
           <> bcLload 2
           <> bcU32MaxAsLong
-          <> [0x94] -- lcmp
+          <> bcInvokeStatic cmpUnsignedLongRef
       ifGtAt = length preamble
       ok =
         bcLload 2
@@ -2149,10 +2149,10 @@ mkAddUInt32 = do
       }
 
 -- | subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
---   @a < b@ as unsigned via @i2l + land 0xFFFFFFFFL@ on each side, then
---   'lcmp' + 'iflt'. On the ok path 'isub' at int width gives the
---   correct u32 difference (bit pattern matches u32 subtraction when
---   a >= b unsigned).
+--   @a < b@ as unsigned via 'Integer.compareUnsigned' (Java 8+, on our
+--   Java 11 floor) — negative result means underflow. On the ok path
+--   'isub' at int width gives the correct u32 difference (bit pattern
+--   matches u32 subtraction when a >= b unsigned).
 --   Locals: slot 0,1 = args; slot 2 = int a; slot 3 = int b; slot 4 =
 --   scratch Object.
 mkSubUInt32 :: AsmM MInfo
@@ -2162,6 +2162,7 @@ mkSubUInt32 = do
   intCls <- addClass "java/lang/Integer"
   intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  cmpUnsignedRef <- addMRef "java/lang/Integer" "compareUnsigned" "(II)I"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
   ptags <- askPreludeTags
@@ -2174,14 +2175,8 @@ mkSubUInt32 = do
           <> unbox
           <> bcIstore 3
           <> bcIload 2
-          <> [0x85] -- i2l
-          <> bcU32MaxAsLong
-          <> [0x7F] -- land
           <> bcIload 3
-          <> [0x85] -- i2l
-          <> bcU32MaxAsLong
-          <> [0x7F] -- land
-          <> [0x94] -- lcmp
+          <> bcInvokeStatic cmpUnsignedRef
       ifLtAt = length preamble
       ok =
         bcIload 2
@@ -2251,9 +2246,11 @@ mkSubUInt32 = do
       }
 
 -- | mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Product
---   @(2^32-1)^2@ exceeds @Long.MAX_VALUE@, so 'lcmp' against 4294967295L
---   would misclassify some overflowing products. Instead detect overflow
---   by 'lushr 32' on the product: any high bit set means overflow.
+--   @(2^32-1)^2@ exceeds @Long.MAX_VALUE@, so signed 'lcmp' against
+--   4294967295L would misclassify some overflowing products.
+--   'Long.compareUnsigned' (Java 8+, on our Java 11 floor) compares the
+--   product to the u32 boundary correctly across the full u64 range;
+--   both operands are widened via 'Integer.toUnsignedLong'.
 --   Locals: slot 0,1 = args; slots 2-3 = long product.
 mkMulUInt32 :: AsmM MInfo
 mkMulUInt32 = do
@@ -2262,25 +2259,25 @@ mkMulUInt32 = do
   intCls <- addClass "java/lang/Integer"
   intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
   valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  toUnsignedLongRef <- addMRef "java/lang/Integer" "toUnsignedLong" "(I)J"
+  cmpUnsignedLongRef <- addMRef "java/lang/Long" "compareUnsigned" "(JJ)I"
   objCls <- addClass "java/lang/Object"
   smtNameIdx <- addUtf8 "StackMapTable"
   ptags <- askPreludeTags
   let unbox = [0xC0, hi8 intCls, lo8 intCls] <> [0xB6, hi8 intValRef, lo8 intValRef]
-      uExt = [0x85] <> bcU32MaxAsLong <> [0x7F]
       preamble =
         bcAload 0
           <> unbox
-          <> uExt
+          <> bcInvokeStatic toUnsignedLongRef
           <> bcAload 1
           <> unbox
-          <> uExt
+          <> bcInvokeStatic toUnsignedLongRef
           <> [0x69] -- lmul
           <> bcLstore 2
           <> bcLload 2
-          <> [0x10, 0x20] -- bipush 32
-          <> [0x7D] -- lushr
-          <> [0x88] -- l2i
-      ifNeAt = length preamble
+          <> bcU32MaxAsLong
+          <> bcInvokeStatic cmpUnsignedLongRef
+      ifGtAt = length preamble
       ok =
         bcLload 2
           <> [0x88] -- l2i
@@ -2297,7 +2294,7 @@ mkMulUInt32 = do
           <> bcAload 2
           <> [0x53]
           <> [0xB0]
-      overAt = ifNeAt + 3 + length ok
+      overAt = ifGtAt + 3 + length ok
       overBlock =
         bcIconst 1
           <> [0xBD, hi8 objCls, lo8 objCls]
@@ -2317,9 +2314,9 @@ mkMulUInt32 = do
           <> bcAload 2
           <> [0x53]
           <> [0xB0]
-      ifNeRel = overAt - ifNeAt
-      ifNeBytes = [0x9A, hi8 (fromIntegral ifNeRel), lo8 (fromIntegral ifNeRel)] :: [Word8]
-      code = preamble <> ifNeBytes <> ok <> overBlock
+      ifGtRel = overAt - ifGtAt
+      ifGtBytes = [0x9D, hi8 (fromIntegral ifGtRel), lo8 (fromIntegral ifGtRel)] :: [Word8]
+      code = preamble <> ifGtBytes <> ok <> overBlock
       -- L_over: locals = [Object, Object, long] (slots 2-3 hold long product).
       -- Initial locals were [Object, Object]. Append +1 long (tag 4).
       overAt16 = fromIntegral overAt :: Word16

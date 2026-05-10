@@ -81,7 +81,7 @@ L_concat_too_long:
 .end method
 
 .method static __subUInt32(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 6
+  .limit stack 4
   .limit locals 5
   aload_0
   checkcast java/lang/Integer
@@ -92,14 +92,8 @@ L_concat_too_long:
   invokevirtual java/lang/Integer/intValue()I
   istore_3
   iload_2
-  i2l
-  ldc2_w 4294967295
-  land
   iload_3
-  i2l
-  ldc2_w 4294967295
-  land
-  lcmp
+  invokestatic java/lang/Integer/compareUnsigned(II)I
   iflt L_subu32_under
   iload_2
   iload_3
@@ -142,15 +136,12 @@ L_subu32_under:
 .end method
 
 .method static __showUInt32(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
+  .limit stack 1
   .limit locals 1
   aload_0
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  i2l
-  ldc2_w 4294967295
-  land
-  invokestatic java/lang/Long/toString(J)Ljava/lang/String;
+  invokestatic java/lang/Integer/toUnsignedString(I)Ljava/lang/String;
   areturn
 .end method
 

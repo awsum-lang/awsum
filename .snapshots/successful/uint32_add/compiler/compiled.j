@@ -86,19 +86,15 @@ L_concat_too_long:
   aload_0
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  i2l
-  ldc2_w 4294967295
-  land
+  invokestatic java/lang/Integer/toUnsignedLong(I)J
   aload_1
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  i2l
-  ldc2_w 4294967295
-  land
+  invokestatic java/lang/Integer/toUnsignedLong(I)J
   ladd
   dup2
   ldc2_w 4294967295
-  lcmp
+  invokestatic java/lang/Long/compareUnsigned(JJ)I
   ifgt L_addu32_over
   l2i
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
@@ -140,15 +136,12 @@ L_addu32_over:
 .end method
 
 .method static __showUInt32(Ljava/lang/Object;)Ljava/lang/Object;
-  .limit stack 4
+  .limit stack 1
   .limit locals 1
   aload_0
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  i2l
-  ldc2_w 4294967295
-  land
-  invokestatic java/lang/Long/toString(J)Ljava/lang/String;
+  invokestatic java/lang/Integer/toUnsignedString(I)Ljava/lang/String;
   areturn
 .end method
 
