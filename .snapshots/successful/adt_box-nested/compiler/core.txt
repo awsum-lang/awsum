@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -37,21 +44,26 @@ CoreProgram
                 [
                     ( 19
                     , [ "__p0" ]
-                    , CCase
-                        ( CVar "__p0" )
-                        [
-                            ( 19
-                            , [ "__p0_p0" ]
-                            , CCase
-                                ( CVar "__p0_p0" )
-                                [
-                                    ( 19
-                                    , [ "value" ]
-                                    , CVar "value"
+                    , CDrop DropFreeUnchecked "__p0"
+                        ( CCase
+                            ( CVar "__p0" )
+                            [
+                                ( 19
+                                , [ "__p0_p0" ]
+                                , CDrop DropFreeUnchecked "__p0_p0"
+                                    ( CCase
+                                        ( CVar "__p0_p0" )
+                                        [
+                                            ( 19
+                                            , [ "value" ]
+                                            , CDrop DropFreeUnchecked "value"
+                                                ( CVar "value" )
+                                            )
+                                        ]
                                     )
-                                ]
-                            )
-                        ]
+                                )
+                            ]
+                        )
                     )
                 ]
             )

@@ -19,6 +19,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -48,6 +49,7 @@ function v__scc_parseBinary_parseExpr(v__args){
               }
               case 20: {
                 const __t0 = [22, [19]];
+                v__args = null;
                 v__args = __t0;
                 continue;
               }
@@ -64,6 +66,7 @@ function v__scc_parseBinary_parseExpr(v__args){
               }
               case 20: {
                 const __t0 = [21, v_tok, (0|0)];
+                v__args = null;
                 v__args = __t0;
                 continue;
               }

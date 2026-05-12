@@ -1,0 +1,24 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+pad:
+  param           s                               count=1
+  case-pattern    $do_e_7_3                       count=0
+  case-pattern    p                               count=0
+  case-pattern    $do_e_8_3                       count=0
+  case-pattern    q                               count=0
+
+main:
+  case-pattern    $do_e_14_9                      count=1
+  case-pattern    padded                          count=1
+  case-pattern    $do_e_15_9                      count=1
+  case-pattern    s0                              count=1
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

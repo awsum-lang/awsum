@@ -1,0 +1,209 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "bad"
+            ( CCon 3
+                [ CCon 19 [] ]
+            )
+        , CValDef "good"
+            ( CCon 4
+                [ CIntLit 42 TInt32 ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$11" )
+                [ CCall
+                    ( CVar "$df$mapLeft$0" )
+                    [ CVar "bad" ]
+                ]
+            )
+        , CFunDef "$let$7" [ "msg" ]
+            ( CCase
+                ( CVar "msg" )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$lam$8" [ "_a" ]
+            ( CCon 20 [] )
+        , CFunDef "$let$9"
+            [ "renamedBad"
+            , "renamedGood"
+            ]
+            ( CCall
+                ( CVar "$let$7" )
+                [ CCase
+                    ( CVar "renamedBad" )
+                    [
+                        ( 3
+                        , [ "__p0" ]
+                        , CDrop DropFreeUnchecked "__p0"
+                            ( CCase
+                                ( CVar "__p0" )
+                                [
+                                    ( 20
+                                    , []
+                                    , CCase
+                                        ( CVar "renamedGood" )
+                                        [
+                                            ( 3
+                                            , [ "__p0" ]
+                                            , CDrop DropFreeUnchecked "__p0"
+                                                ( CCase
+                                                    ( CVar "__p0" )
+                                                    [
+                                                        ( 20
+                                                        , []
+                                                        , CCon 4
+                                                            [ CString "bad-Left bad-Left" ]
+                                                        )
+                                                    ]
+                                                )
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "n" ]
+                                            , CDrop DropFreeUnchecked "n"
+                                                ( CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CString "bad-Left good-Right "
+                                                    , CCall
+                                                        ( CBuiltIn "showInt32" )
+                                                        [ CVar "n" ]
+                                                    ]
+                                                )
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ,
+                        ( 4
+                        , [ "__w0" ]
+                        , CDrop DropFreeUnchecked "__w0"
+                            ( CCon 4
+                                [ CString "WAT" ]
+                            )
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$lam$10" [ "_a" ]
+            ( CCon 20 [] )
+        , CFunDef "$let$11" [ "renamedBad" ]
+            ( CCall
+                ( CVar "$let$9" )
+                [ CVar "renamedBad"
+                , CCall
+                    ( CVar "$df$mapLeft$1" )
+                    [ CVar "good" ]
+                ]
+            )
+        , CFunDef "$df$mapLeft$0" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CCall
+                                ( CVar "$lam$10" )
+                                [ CVar "e" ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCon 4
+                            [ CVar "a" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$df$mapLeft$1" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CCall
+                                ( CVar "$lam$8" )
+                                [ CVar "e" ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCon 4
+                            [ CVar "a" ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }

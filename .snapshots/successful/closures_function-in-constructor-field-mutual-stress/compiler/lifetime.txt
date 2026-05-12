@@ -1,0 +1,26 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+main:
+  case-pattern    _e                              count=0
+  case-pattern    v                               count=1
+
+$scc$$apply1_$lam$7_a_b:
+  param           $args                           count=3
+  case-pattern    $cl                             count=0
+  case-pattern    $arg0                           count=0
+  case-pattern    n                               count=0
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+  case-pattern    f                               count=0
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+
+a:
+  param           n                               count=1
+

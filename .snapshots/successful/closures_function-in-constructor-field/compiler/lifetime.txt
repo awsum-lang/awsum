@@ -1,0 +1,35 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+double:
+  param           n                               count=2
+
+triple:
+  param           n                               count=3
+  case-pattern    $do_e_16_3                      count=0
+  case-pattern    m                               count=0
+
+callBox:
+  param           b                               count=1
+  param           x                               count=1
+  case-pattern    f                               count=0
+
+formatOutputs:
+  case-pattern    $do_e_25_3                      count=1
+  case-pattern    d                               count=1
+  case-pattern    $do_e_26_3                      count=1
+  case-pattern    t                               count=1
+  case-pattern    $do_e_27_3                      count=1
+  case-pattern    ds                              count=1
+
+main:
+  case-pattern    _e                              count=0
+  case-pattern    s                               count=1
+
+$apply1:
+  param           $cl                             count=1
+  param           $arg0                           count=2
+

@@ -1,0 +1,42 @@
+pureEither:
+  param           x                               count=1
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+op2WithA:
+  param           n                               count=1
+
+g:
+  case-pattern    $do_e_23_3                      count=1
+  case-pattern    a                               count=1
+  case-pattern    $do_e_24_3                      count=1
+  case-pattern    b                               count=1
+
+describe:
+  param           r                               count=1
+  case-pattern    e                               count=0
+  row-case        __rw                            count=0
+  row-case        __rw                            count=0
+  case-pattern    n                               count=0
+
+main:
+  case-pattern    $do_e_37_9                      count=1
+  case-pattern    d                               count=1
+  case-pattern    $do_e_38_9                      count=1
+  case-pattern    s0                              count=1
+
+$lam$7:
+  param           n                               count=1
+
+$let$8:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+
+$df$apply$0:
+  param           x                               count=1
+

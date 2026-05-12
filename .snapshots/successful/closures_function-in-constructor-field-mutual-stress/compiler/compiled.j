@@ -120,6 +120,8 @@ L_tco_arm_5:
   astore_1
   pop
   aload_1
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_7:
   dup
@@ -144,6 +146,12 @@ L_tco_arm_7:
 L_tco_arm_0:
   pop
   aload_2
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 .end method
@@ -313,6 +321,12 @@ L_tco_arm_20:
   iconst_1
   aload_2
   aastore
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_22:
@@ -321,8 +335,8 @@ L_tco_arm_22:
   aaload
   astore_1
   pop
-  iconst_2
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 24
@@ -332,6 +346,8 @@ L_tco_arm_22:
   iconst_1
   aload_1
   aastore
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_23:
@@ -367,6 +383,8 @@ L_tco_arm_1:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_2:
   pop
@@ -398,6 +416,10 @@ L_tco_arm_3:
   iconst_1
   aload_2
   aastore
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_4:
   dup
@@ -435,6 +457,14 @@ L_tco_arm_19:
   iconst_2
   aload_2
   aastore
+  aconst_null
+  astore_0
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_24:
@@ -470,6 +500,8 @@ L_tco_arm_1:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_2:
   pop
@@ -501,6 +533,10 @@ L_tco_arm_3:
   iconst_1
   aload_2
   aastore
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_4:
   dup
@@ -508,8 +544,8 @@ L_tco_arm_4:
   aaload
   astore_2
   pop
-  iconst_2
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 23
@@ -519,6 +555,10 @@ L_tco_arm_4:
   iconst_1
   aload_2
   aastore
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 .end method

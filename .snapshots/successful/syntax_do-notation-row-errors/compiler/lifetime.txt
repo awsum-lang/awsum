@@ -1,0 +1,30 @@
+pureEither:
+  param           x                               count=1
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+f:
+  case-pattern    $do_e_22_3                      count=1
+  case-pattern    a                               count=0
+  case-pattern    $do_e_23_3                      count=1
+  case-pattern    b                               count=0
+  case-pattern    $do_e_24_3                      count=1
+  case-pattern    c                               count=1
+
+describe:
+  param           r                               count=1
+  case-pattern    e                               count=0
+  row-case        __rw                            count=0
+  row-case        __rw                            count=0
+  row-case        __rw                            count=0
+  case-pattern    n                               count=0
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

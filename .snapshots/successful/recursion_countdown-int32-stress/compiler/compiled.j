@@ -176,6 +176,8 @@ L_tco_arm_5:
   astore_1
   pop
   aload_1
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_7:
   dup
@@ -200,6 +202,12 @@ L_tco_arm_7:
 L_tco_arm_0:
   pop
   aload_2
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 .end method
@@ -289,6 +297,8 @@ L_tco_arm_3:
   aload_2
   aastore
   invokestatic AwsumMain/v__apply_countDown(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_4:
   dup
@@ -308,6 +318,12 @@ L_tco_arm_4:
   iconst_1
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -353,8 +369,8 @@ L_tco_arm_3:
   astore_3
   pop
   aload_2
-  iconst_2
-  anewarray java/lang/Object
+  aload_1
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   iconst_3
@@ -364,6 +380,12 @@ L_tco_arm_3:
   iconst_1
   aload_3
   aastore
+  aconst_null
+  astore_0
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -374,8 +396,8 @@ L_tco_arm_4:
   astore_3
   pop
   aload_2
-  iconst_2
-  anewarray java/lang/Object
+  aload_1
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   iconst_4
@@ -385,6 +407,12 @@ L_tco_arm_4:
   iconst_1
   aload_3
   aastore
+  aconst_null
+  astore_0
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop

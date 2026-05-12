@@ -1,0 +1,34 @@
+showBool:
+  param           b                               count=1
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+showUnderflowError:
+  param           $wild0                          count=0
+
+showResult:
+  param           r                               count=1
+  case-pattern    e                               count=0
+  case-pattern    b                               count=0
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+
+$scc$evenInt_oddInt:
+  param           $args                           count=3
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+  case-pattern    n                               count=0
+  case-pattern    e                               count=0
+  case-pattern    m                               count=0
+
+evenInt:
+  param           n                               count=1
+

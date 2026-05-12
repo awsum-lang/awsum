@@ -25,6 +25,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -34,6 +35,7 @@ function v_runIO(v_io){
         case 8: {
           const v_cont = __s[1];
           const __t0 = (v__apply1)(v_cont, __getArgs());
+          v_io = null;
           v_io = __t0;
           continue;
         }
@@ -78,7 +80,8 @@ function v__cps__df_handleErrorIO_0(v_io, v__k){
           const v_s = __s[1];
           const v_next = __s[2];
           const __t0 = v_next;
-          const __t1 = [24, v__k, v_s];
+          const __t1 = (v_io[0] = 24, v_io[1] = v__k, v_io[2] = v_s, v_io);
+          v__k = null;
           v_io = __t0;
           v__k = __t1;
           continue;
@@ -104,7 +107,8 @@ function v__apply__df_handleErrorIO_0(v__k, v__x){
           const v__pk_24 = __s[1];
           const v_s = __s[2];
           const __t0 = v__pk_24;
-          const __t1 = [7, v_s, v__x];
+          const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
+          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -131,8 +135,9 @@ function v__cps__scc__apply1__df__lam_6_1(v__args, v__k){
             switch (__s[0]) {
               case 20: {
                 const v__cap20_0 = __s[1];
-                const __t0 = [22, v__cap20_0, v__arg0];
+                const __t0 = (v__args[0] = 22, v__args[1] = v__cap20_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
+                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -143,31 +148,11 @@ function v__cps__scc__apply1__df__lam_6_1(v__args, v__k){
         case 22: {
           const v_cont = __s[1];
           const v_result = __s[2];
-          const __t0 = [21, v_cont, v_result];
+          const __t0 = (v__args[0] = 21, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [26, v__k];
+          v__k = null;
           v__args = __t0;
           v__k = __t1;
-          continue;
-        }
-      }
-    }
-  }
-}
-
-function v__apply__scc__apply1__df__lam_6_1(v__k, v__x){
-  while (true) {
-    {
-      const __s = v__k;
-      switch (__s[0]) {
-        case 25: {
-          return v__x;
-        }
-        case 26: {
-          const v__pk_26 = __s[1];
-          const __t0 = v__pk_26;
-          const __t1 = (v__df_handleErrorIO_0)(v__x);
-          v__k = __t0;
-          v__x = __t1;
           continue;
         }
       }

@@ -1,0 +1,38 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+step1:
+  param           n                               count=1
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+step2:
+  param           n                               count=1
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+run:
+  param           start                           count=1
+  case-pattern    $do_e_18_3                      count=0
+  case-pattern    a                               count=0
+
+renderErr:
+  param           e                               count=1
+  row-case        __rw                            count=0
+  row-case        s                               count=0
+
+main:
+  case-pattern    e                               count=1
+  case-pattern    __w0                            count=0
+  case-pattern    out                             count=1
+  case-pattern    s                               count=1
+
+$let$7:
+  param           a                               count=1
+  param           prefix                          count=1
+  case-pattern    $do_e_20_3                      count=0
+  case-pattern    b                               count=0
+

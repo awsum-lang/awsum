@@ -1,0 +1,152 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Direct test of `pureIO`: lifts a pure value into the IO monad
+               as an `IOPure` cell. Composed with `bindIO` whose continuation
+               is the platform built-in `IO.Stdout.print` passed as a value —
+               this shape used to crash before built-in eta-wrappers landed. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 7
+            , spanStartCol = 1
+            , spanEndLine = 7
+            , spanEndCol = 21
+            }
+        ) "main"
+        ( TyApp
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 8
+                , spanEndLine = 7
+                , spanEndCol = 21
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 8
+                    , spanEndLine = 7
+                    , spanEndCol = 16
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 8
+                        , spanEndLine = 7
+                        , spanEndCol = 10
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 11
+                        , spanEndLine = 7
+                        , spanEndCol = 16
+                        }
+                    ) "Never"
+                )
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 17
+                    , spanEndLine = 7
+                    , spanEndCol = 21
+                    }
+                ) "Unit"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 53
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 8
+                    , spanStartCol = 8
+                    , spanEndLine = 8
+                    , spanEndCol = 53
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 8
+                        , spanEndLine = 8
+                        , spanEndCol = 38
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 8
+                            , spanEndLine = 8
+                            , spanEndCol = 15
+                            }
+                        )
+                        ( QName [] "bindIO" )
+                    )
+                    ( EParens
+                        ( SrcSpan
+                            { spanStartLine = 8
+                            , spanStartCol = 15
+                            , spanEndLine = 8
+                            , spanEndCol = 38
+                            }
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 8
+                                , spanStartCol = 16
+                                , spanEndLine = 8
+                                , spanEndCol = 36
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 8
+                                    , spanStartCol = 16
+                                    , spanEndLine = 8
+                                    , spanEndCol = 23
+                                    }
+                                )
+                                ( QName [] "pureIO" )
+                            )
+                            ( ELit
+                                ( SrcSpan
+                                    { spanStartLine = 8
+                                    , spanStartCol = 23
+                                    , spanEndLine = 8
+                                    , spanEndCol = 36
+                                    }
+                                )
+                                ( LString "from pureIO" )
+                            )
+                        )
+                    )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 8
+                        , spanStartCol = 38
+                        , spanEndLine = 8
+                        , spanEndCol = 53
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+            ) Nothing
+        ]
+    }

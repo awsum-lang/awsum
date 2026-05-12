@@ -1,0 +1,23 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+unwrap:
+  param           box                             count=1
+  case-pattern    value                           count=0
+
+showResult:
+  param           r                               count=1
+  case-pattern    a                               count=0
+
+main:
+  case-pattern    $do_e_20_9                      count=1
+  case-pattern    s0                              count=1
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

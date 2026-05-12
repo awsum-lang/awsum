@@ -1,0 +1,46 @@
+showUnit:
+  param           $wild0                          count=0
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+whatsInside:
+  param           x                               count=1
+  case-pattern    __pa0                           count=0
+  row-case        b                               count=0
+  row-case        u                               count=0
+
+summary:
+  case-pattern    $do_e_15_3                      count=1
+  case-pattern    a                               count=1
+  case-pattern    $do_e_16_3                      count=1
+  case-pattern    b                               count=1
+  case-pattern    $do_e_17_3                      count=1
+  case-pattern    c                               count=1
+  case-pattern    $do_e_18_3                      count=1
+  case-pattern    s0                              count=1
+  case-pattern    $do_e_19_3                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_20_3                      count=1
+  case-pattern    s2                              count=1
+
+$lift$7:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+
+$lift$8:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+
+$lift$9:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+
+$let$10:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

@@ -1,0 +1,39 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+showOverflowError:
+  param           $wild0                          count=0
+
+render:
+  param           r                               count=1
+  case-pattern    e                               count=0
+  case-pattern    v                               count=0
+
+main:
+  case-pattern    $do_e_12_9                      count=1
+  case-pattern    a                               count=1
+  case-pattern    $do_e_13_9                      count=1
+  case-pattern    b                               count=1
+  case-pattern    $do_e_14_9                      count=1
+  case-pattern    c                               count=1
+  case-pattern    $do_e_15_9                      count=1
+  case-pattern    d                               count=1
+  case-pattern    $do_e_16_9                      count=1
+  case-pattern    s0                              count=1
+  case-pattern    $do_e_17_9                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_18_9                      count=1
+  case-pattern    s2                              count=1
+  case-pattern    $do_e_19_9                      count=1
+  case-pattern    s3                              count=1
+  case-pattern    $do_e_20_9                      count=1
+  case-pattern    s4                              count=1
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -37,21 +44,26 @@ CoreProgram
                 [
                     ( 19
                     , [ "b2" ]
-                    , CCase
-                        ( CVar "b2" )
-                        [
-                            ( 19
-                            , [ "b3" ]
-                            , CCase
-                                ( CVar "b3" )
-                                [
-                                    ( 19
-                                    , [ "value" ]
-                                    , CVar "value"
+                    , CDrop DropFreeUnchecked "b2"
+                        ( CCase
+                            ( CVar "b2" )
+                            [
+                                ( 19
+                                , [ "b3" ]
+                                , CDrop DropFreeUnchecked "b3"
+                                    ( CCase
+                                        ( CVar "b3" )
+                                        [
+                                            ( 19
+                                            , [ "value" ]
+                                            , CDrop DropFreeUnchecked "value"
+                                                ( CVar "value" )
+                                            )
+                                        ]
                                     )
-                                ]
-                            )
-                        ]
+                                )
+                            ]
+                        )
                     )
                 ]
             )

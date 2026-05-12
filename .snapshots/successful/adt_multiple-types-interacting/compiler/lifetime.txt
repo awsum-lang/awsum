@@ -1,0 +1,26 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+colorName:
+  param           c                               count=1
+
+showBoxedColor:
+  param           bc                              count=1
+  case-pattern    c                               count=0
+
+showResult:
+  param           r                               count=1
+  case-pattern    box                             count=0
+
+main:
+  case-pattern    $do_e_31_9                      count=1
+  case-pattern    s0                              count=1
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+
