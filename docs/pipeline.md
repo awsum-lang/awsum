@@ -17,8 +17,11 @@ Source (.aww)
   Saturate
   Scc-merge → tree-shake
   Cps
+  Scc-merge → tree-shake (multi-non-tail-call cycle between $cps$f and $apply$f)
   StackSafety            (any leftover non-tail recursion → compile error)
-  Tco ]
+  Tco
+  Lifetime.insertDrops   (places CDrop annotations at scope-correct points)
+  Reuse.insertReuse      (rewrites linear-scrutinee CCon into in-place CReuse) ]
   │
   ▼  Backend
 [ Codegen  →  LLVM | JVM | CLR | WASM | JS ]
@@ -51,8 +54,11 @@ These run in order inside `Awsum.ElaborateLower` after the initial tree-shake. T
 - **Saturate** — Lambda-lift under-applied direct calls so codegen sees only full-arity calls. Also asserts the post-Defunctionalize/LowerClosures invariant that no partial application with local captures survives — both passes cooperate to maintain it.
 - **Scc-merge** (`Awsum.Scc`) — Every mutually recursive call-graph cluster (Tarjan SCC, size > 1) is fused into a single self-recursive `$scc$…` function whose argument is a sum-typed `CCon` tagged by "which member is active". Each original public name becomes a one-line wrapper that packs its args into the right tag. After this, mutual recursion has become self-recursion. *(Tree-shake re-runs — wrappers for SCC members only called from inside the cluster fall out.)*
 - **Cps** (`Awsum.Cps`) — Non-tail self-recursion is moved off the system stack into a heap-allocated continuation chain (defunctionalisation-by-Reynolds applied to the continuation type). Each function with at least one non-tail self-call is emitted as a wrapper + `$cps$f` + `$apply$f` trio; both `$cps$f` and `$apply$f` are self-tail-recursive so they fall through to TCO below.
+- **Scc-merge again** (`Awsum.Scc`) — When the original body has two or more non-tail self-calls in one expression (`Node (mirror r) v (mirror l)`-style), Cps allocates one K_i per call and an earlier K_i's apply arm tail-calls `$cps$f` to start the next call — so `$cps$f` and `$apply$f` end up mutually recursive. Re-running Scc-merge fuses any such pair into one self-recursive `$scc$` function tagged by which of the two is active. Single-non-tail-call functions stay unchanged (the apply body never references `$cps$f`, so no cycle exists), and Scc-merge is a no-op on them. *(Tree-shake re-runs.)*
 - **StackSafety verifier** (`Awsum.StackSafety`) — A standalone post-condition check: after Scc-merge and Cps there must be no non-trivial call-graph cycle and no `CFunDef` with a non-tail self-call. Any remainder is a compile error, no escape hatch — the program is either user-level ill-formed (e.g. mutually recursive `CValDef`s, which have no fixed point) or a compiler bug.
 - **Tco** (`Awsum.Tco`) — Remaining self-tail-calls fold into `CContinue` jumps inside a `CLoop` body; backends emit a loop + jump rather than a recursive call. Final Core-level invariant: every remaining recursion is a self-tail-call wrapped in `CLoop`. Full reference: [recursion.md](recursion.md).
+- **Lifetime.insertDrops** (`Awsum.Lifetime`) — Annotates each locally-introduced binder with a `CDrop n inner` node at the latest scope-correct point where it stops being referenced: scope start when unused, the start of `CCase`/`CRowCase` arms that don't mention it, the next sibling after its last use in `CCall`/`CCon`/`CContinue` sequences, and the function epilogue for tail-leaf parameters. JVM/CLR/JS treat `CDrop` as transparent (managed GC handles block-scoped slot collection); LLVM/WASM lower it to `__free_recursive`. Full reference: [memory-management.md](memory-management.md).
+- **Reuse.insertReuse** (`Awsum.Reuse`) — Detects the canonical linear-scrutinee pattern `case x of (..., CDrop x (CCon t [..])) -> ...` and rewrites the inner `CCon` to a `CReuse` Core node — in-place stores on the existing cell rather than `alloc`-then-store. The transformation distributes into nested `CCase`/`CRowCase` arms so each arm independently picks up the rewrite when its scrut-drop is present. Backends lower `CReuse` as in-place writes on LLVM/WASM and (still) as `anewarray`/`newarr`/array-literal on JVM/CLR/JS, which managed GCs then promote to stack via escape analysis once the hot loop is alloc-free.
 
 ## Backend
 
