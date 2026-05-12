@@ -163,6 +163,8 @@ collectResidualArities arities = foldMap declArities
       CRowCase s alts -> exprArities s <> foldMap (\(_, _, b) -> exprArities b) alts
       CLoop b -> exprArities b
       CContinue xs -> foldMap exprArities xs
+      CDrop _ _ b -> exprArities b
+      CReuse _ _ fs -> foldMap exprArities fs
       CVar _ -> mempty
       CString _ -> mempty
       CIntLit _ _ -> mempty
@@ -193,6 +195,8 @@ exprShapes arities = goValue
       CRowCase s alts -> goValue s <> foldMap (\(_, _, b) -> goValue b) alts
       CLoop b -> goValue b
       CContinue xs -> foldMap goValue xs
+      CDrop _ _ b -> goValue b
+      CReuse _ _ fs -> foldMap goValue fs
       CString _ -> mempty
       CIntLit _ _ -> mempty
       CBuiltIn _ -> mempty
@@ -273,6 +277,8 @@ rewriteExpr arities tagOf = goValue
       CRowCase s alts -> CRowCase (goValue s) (map (\(t, v, b) -> (t, v, goValue b)) alts)
       CLoop b -> CLoop (goValue b)
       CContinue xs -> CContinue (map goValue xs)
+      CDrop k n b -> CDrop k n (goValue b)
+      CReuse n tag fs -> CReuse n tag (map goValue fs)
       e@(CString _) -> e
       e@(CIntLit _ _) -> e
       e@(CBuiltIn _) -> e

@@ -6,6 +6,7 @@ import Awsum.Codegen.LLVM (allLLVMHosts, llvmHostName)
 import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Core
 import Awsum.ElaborateLower (elaborateLowerProgram)
+import Awsum.Lifetime (analyzeProgram, renderLifetime)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (withPrelude)
 import Awsum.Program (ProgramType (..))
@@ -50,7 +51,8 @@ data CompileResult = CompileResult
     symbolsJson :: Text,
     jvmText :: Text,
     clrText :: Text,
-    wasmText :: Text
+    wasmText :: Text,
+    lifetimeText :: Text
   }
 
 compileAll :: FilePath -> IO CompileResult
@@ -71,7 +73,8 @@ compileAll testName = do
         symbolsJson = symbolsToJson (symbolsOfProgram ast),
         jvmText = codegenJVM ptags core,
         clrText = codegenCLR ptags core,
-        wasmText = codegenWASM ptags core
+        wasmText = codegenWASM ptags core,
+        lifetimeText = renderLifetime (analyzeProgram core)
       }
 
 testProgram :: FilePath -> Spec
@@ -104,6 +107,8 @@ testProgram testName = do
       res.wasmText `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.wat")
     it "JS code should match snapshot" $ \res -> do
       res.artifacts.caJS `shouldMatchTextSnapshot` (snap <> "/compiler/compiled.js")
+    it "Lifetime should match snapshot" $ \res -> do
+      res.lifetimeText `shouldMatchTextSnapshot` (snap <> "/compiler/lifetime.txt")
 
   case stdinFiles of
     [] -> testProgramNoInput testName compileOnce

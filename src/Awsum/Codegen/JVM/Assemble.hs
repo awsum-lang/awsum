@@ -1470,7 +1470,7 @@ mkMulInt32 = do
       overAt = ifltAt + 3 + length ok
       -- Build Left (CRow rowTag (CCon ctorTag [])): inner Object[1] = [Integer(ctorTag)],
       -- row Object[2] = [Integer(rowTag), inner], left Object[2] = [Integer(Left tag), row].
-      -- @astore_2@ is reused across stages: first holds inner, then row.
+      -- @astore_2@ is reused across steps: first holds inner, then row.
       leftRow ctorTag ldcRowTag =
         [0x58] -- pop2 (drop the dup'd long product)
         -- inner = Object[1] = [Integer(ctorTag)]
@@ -3683,6 +3683,8 @@ exprMaxLocals = \case
   CCon _ fields -> foldl' max 0 (map exprMaxLocals fields)
   CLoop b -> exprMaxLocals b
   CContinue xs -> foldl' max 0 (map exprMaxLocals xs)
+  CDrop _ _ b -> exprMaxLocals b
+  CReuse _ _ fs -> foldl' max 0 (map exprMaxLocals fs)
   _ -> 0
 
 -- | Maximum operand-stack depth a body ever reaches. Mirrors the
@@ -3739,6 +3741,12 @@ exprMaxStack = \case
   CContinue xs ->
     let argDepths = map exprMaxStack xs
      in foldl' max 0 [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
+  -- Liveness annotation; codegen-transparent (no extra stack slots).
+  -- Stack budget == wrapped body's.
+  CDrop _ _ b -> exprMaxStack b
+  -- Cell reuse. On the JVM it falls through to 'CCon' (fresh
+  -- alloc), so stack budget matches an equivalent 'CCon tag fs'.
+  CReuse _ tag fs -> exprMaxStack (CCon tag fs)
 
 -- | Metadata about branch targets (for StackMapTable generation)
 data BranchTarget = BranchTarget
@@ -4192,6 +4200,51 @@ emitExpr ctx = \case
     emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CLoop _ -> error "JVM Assemble: CLoop reached emitExpr (non-tail position)"
   CContinue _ -> error "JVM Assemble: CContinue reached emitExpr (non-tail position)"
+  -- Liveness annotation; codegen-transparent. The managed GC
+  -- handles reclaim (the tail-position 'null'-store hints to it).
+  CDrop _ _ body -> emitExpr ctx body
+  -- Cell reuse. In-place mutation of the 'Object[]' at
+  -- slot of @n@: 'aload' the existing reference, then 'aastore'
+  -- the tag at index 0 and each field at index 1..k. No fresh
+  -- 'anewarray' — fewer young-gen allocations. Net stack: leaves
+  -- the reused array on the operand stack, identical shape to
+  -- 'CCon'.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the array has at
+  -- least @1 + length fields@ slots.
+  CReuse n tag fields -> do
+    intRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+    arrCls <- addClass "[Ljava/lang/Object;"
+    let slot = case Map.lookup n ctx.cLocals of
+          Just s -> s
+          Nothing -> case Map.lookup n ctx.cParams of
+            Just s -> s
+            Nothing -> error $ "JVM Assemble: CReuse on unknown binder " <> show n
+    tagPush <- bcLoadInt32 (fromIntegral tag)
+    -- 'aload <slot>' pushes 'java/lang/Object' (the param's static
+    -- type). 'aastore' requires '[Ljava/lang/Object;', so insert a
+    -- 'checkcast' — the runtime value really is an Object[] (it was
+    -- the matched scrutinee, originally built by 'CCon').
+    let loadCell = bcAload slot <> bcCheckCast arrCls
+        storeTag =
+          [0x59] -- dup
+            <> bcIconst 0
+            <> tagPush
+            <> bcInvokeStatic intRef
+            <> [0x53] -- aastore
+    fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+      fldMeta <- emitExpr ctx fld
+      pure
+        CodeWithMeta
+          { cwCode = [0x59] <> bcIconst i <> fldMeta.cwCode <> [0x53],
+            cwBranchTargets = fldMeta.cwBranchTargets,
+            cwIntSlots = fldMeta.cwIntSlots
+          }
+    let allTargets = concatMap cwBranchTargets fieldMetas
+        allCode = loadCell <> storeTag <> concatMap cwCode fieldMetas
+        allIntSlots = concatMap cwIntSlots fieldMetas
+    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
 
 -- | Emit @body@ in tail position under the implicit @L_tco_loop:@ label
 -- at method offset 0. 'CContinue' evaluates new parameter values onto
@@ -4202,20 +4255,55 @@ emitExpr ctx = \case
 -- arm self-terminates — no @goto join@ is needed. StackMapTable entries
 -- are collected for every @if_icmpne@ target; offset 0 needs no entry
 -- because the method signature gives the implicit initial frame.
+-- The binary assembler threads a 'pending' list of parameter drops
+-- through every tail-position emit. Mirrors the text-codegen logic
+-- ('Awsum.Codegen.JVM.emitTailText') and shares with LLVM/WASM the
+-- "drain at every terminator" model: 'CContinue' fires drops between
+-- buffered-arg evaluation and the @astore@s that copy them into
+-- params; value-producing tails fire drops between the result
+-- computation and @areturn@. Drop sequence is @aconst_null; astore
+-- <slot>@ — net operand-stack effect zero, so buffered args are
+-- still on top in order.
 emitTailBin :: ECtx -> [Text] -> Int -> CExpr -> AsmM CodeWithMeta
-emitTailBin ctx0 params = goTop ctx0
+emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
   where
-    goTop :: ECtx -> Int -> CExpr -> AsmM CodeWithMeta
-    goTop ctx offset = \case
-      CContinue newArgs -> emitContinue ctx offset newArgs
-      CCase scrut alts -> emitTailCase ctx offset scrut alts
+    -- Resolve a 'CDrop'-bound name to its JVM local-slot index. The
+    -- name is always a function parameter under the current
+    -- 'addContinueDrops' design — case-arm binders never appear in
+    -- 'pending' — but the lookup tries 'cLocals' first for symmetry
+    -- with the text codegen's 'binderSlot'.
+    binderSlot :: ECtx -> Text -> Maybe Int
+    binderSlot ctx n
+      | Just s <- Map.lookup n ctx.cLocals = Just s
+      | Just s <- Map.lookup n ctx.cParams = Just s
+      | otherwise = Nothing
+
+    -- Emit @aconst_null; astore <slot>@ for each pending binder
+    -- whose slot we know. If the binder isn't in 'cLocals' or
+    -- 'cParams' it's a transient case-binder whose
+    -- block-scoped slot dies as soon as the arm closes (managed
+    -- GC collects naturally) — skip rather than fail.
+    pendingDropBytes :: ECtx -> [Text] -> [Word8]
+    pendingDropBytes ctx =
+      concatMap
+        ( \n -> case binderSlot ctx n of
+            Just s -> [0x01] <> bcAstore s
+            Nothing -> []
+        )
+
+    goTop :: ECtx -> Int -> [Text] -> CExpr -> AsmM CodeWithMeta
+    goTop ctx offset pending = \case
+      CContinue newArgs -> emitContinue ctx offset pending newArgs
+      CCase scrut alts -> emitTailCase ctx offset pending scrut alts
       -- Row dispatch in tail position: same shape as 'CCase'.
       CRowCase scrut alts ->
-        emitTailCase ctx offset scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      other -> emitTailValue ctx other
+        emitTailCase ctx offset pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+      -- Push the drop onto 'pending'; drain at the next terminator.
+      CDrop _ n body -> goTop ctx offset (n : pending) body
+      other -> emitTailValue ctx pending other
 
-    emitContinue :: ECtx -> Int -> [CExpr] -> AsmM CodeWithMeta
-    emitContinue ctx offset newArgs = do
+    emitContinue :: ECtx -> Int -> [Text] -> [CExpr] -> AsmM CodeWithMeta
+    emitContinue ctx offset pending newArgs = do
       argMetas <- traverse (emitExpr ctx) newArgs
       let argBytes = concatMap cwCode argMetas
           -- Nested branch targets inside arg evaluations would need offset
@@ -4223,6 +4311,8 @@ emitTailBin ctx0 params = goTop ctx0
           -- CCase; the existing CCon/CCall paths also pass them through
           -- without adjustment, so we match that convention.
           argTargets = concatMap cwBranchTargets argMetas
+          freeBytes :: [Word8]
+          freeBytes = pendingDropBytes ctx pending
           paramSlots :: [Int]
           paramSlots =
             [ fromMaybe
@@ -4233,29 +4323,31 @@ emitTailBin ctx0 params = goTop ctx0
           astoreBytes :: [Word8]
           astoreBytes = concat [bcAstore s | s <- reverse paramSlots]
           gotoStart :: Int
-          gotoStart = offset + length argBytes + length astoreBytes
+          gotoStart =
+            offset + length argBytes + length freeBytes + length astoreBytes
           delta :: Int
           delta = negate gotoStart
           gotoBytes = bcGoto delta
           argIntSlots = concatMap cwIntSlots argMetas
       pure
         CodeWithMeta
-          { cwCode = argBytes <> astoreBytes <> gotoBytes,
+          { cwCode = argBytes <> freeBytes <> astoreBytes <> gotoBytes,
             cwBranchTargets = argTargets,
             cwIntSlots = argIntSlots
           }
 
-    emitTailValue :: ECtx -> CExpr -> AsmM CodeWithMeta
-    emitTailValue ctx expr = do
+    emitTailValue :: ECtx -> [Text] -> CExpr -> AsmM CodeWithMeta
+    emitTailValue ctx pending expr = do
       meta <- emitExpr ctx expr
+      let freeBytes = pendingDropBytes ctx pending
       pure
         CodeWithMeta
-          { cwCode = meta.cwCode <> [0xB0],
+          { cwCode = meta.cwCode <> freeBytes <> [0xB0], -- areturn
             cwBranchTargets = meta.cwBranchTargets,
             cwIntSlots = meta.cwIntSlots
-          } -- areturn
-    emitTailCase :: ECtx -> Int -> CExpr -> [(Int, [Text], CExpr)] -> AsmM CodeWithMeta
-    emitTailCase ctx offset scrut alts = do
+          }
+    emitTailCase :: ECtx -> Int -> [Text] -> CExpr -> [(Int, [Text], CExpr)] -> AsmM CodeWithMeta
+    emitTailCase ctx offset pending scrut alts = do
       intCls <- addClass "java/lang/Integer"
       intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
       arrCls <- addClass "[Ljava/lang/Object;"
@@ -4312,7 +4404,7 @@ emitTailBin ctx0 params = goTop ctx0
                     else []
                 prefix = bindCode <> paddingCode
                 bodyStart = armOffset + length prefix
-            bodyMeta <- goTop ctx' bodyStart armBody
+            bodyMeta <- goTop ctx' bodyStart pending armBody
             pure (prefix <> bodyMeta.cwCode, bodyMeta.cwBranchTargets, bodyMeta.cwIntSlots)
           goArms armOffset ((tag, vars, armBody) : rest) = do
             -- Use 'bcLoadInt32' so row tags > 2^15 (FNV-1a hashes from
@@ -4346,7 +4438,7 @@ emitTailBin ctx0 params = goTop ctx0
                     else []
                 prefix = bindCode <> paddingCode
                 bodyStart = armOffset + cmpPrefixLen + icmpneLen + length prefix
-            bodyMeta <- goTop ctx' bodyStart armBody
+            bodyMeta <- goTop ctx' bodyStart pending armBody
             let armBodyLen = length bodyMeta.cwCode
                 -- @if_icmpne@ target is the next arm's start — after
                 -- cmpPrefix + icmpne + bind/padding + arm body.

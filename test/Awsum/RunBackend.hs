@@ -223,7 +223,9 @@ runWASM :: ByteString -> Text -> IO (Either Text Text)
 runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let wasmFile = dir </> "out.wasm"
   writeFileBS wasmFile wasmBytes
-  eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
+  -- Bump max wasm stack so '__free_recursive' cascades through
+  -- deep chains without overflowing — see Main.hs comment.
+  eRes <- try @IOException (readProcessWithExitCode "wasmtime" ["-W", "max-wasm-stack=268435456", wasmFile, toString input] "")
   case eRes of
     Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
     Right (ExitSuccess, out, _) -> pure (Right (toText out))

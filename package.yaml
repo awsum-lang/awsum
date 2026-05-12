@@ -99,6 +99,35 @@ executables:
       - pretty-simple # for pretty-printing any Show instances
       - process # for CLI
       - temporary # for temporary files
+
+  awsum-bench:
+    main: Bench.hs
+    source-dirs: bench
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - awsum
+      - filepath # for FilePath ops
+      - optparse-applicative # for CLI args
+      - process # for /usr/bin/time + clang
+      - temporary # for per-run scratch directory
+      - text # for stderr parsing
+      - time # for wall-clock measurement
+
+  awsum-stats:
+    main: Stats.hs
+    source-dirs: stats
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - awsum
+      - directory # for scanning test/sources/successful/
+      - filepath
+      - text
 flags:
   tree-sitter-tests:
     description: |

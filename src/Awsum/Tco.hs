@@ -16,7 +16,7 @@
 -- No-op on functions with no self-tail-call: the 'CLoop' wrapper is
 -- only introduced when the body actually changed, keeping Core
 -- snapshots stable for non-tail-recursive code.
-module Awsum.Tco (tcoProgram, untcoProgram) where
+module Awsum.Tco (tcoProgram) where
 
 import Awsum.Core
 import Awsum.Syntax (Name)
@@ -53,41 +53,3 @@ rewriteTail fn = go
             anyChanged = any (\(_, _, (_, c)) -> c) results
          in (CRowCase scrut alts', anyChanged)
       other -> (other, False)
-
--- | Inverse of 'tcoProgram': strips every 'CLoop' wrapper and turns
--- 'CContinue' back into a self-recursive 'CCall'. Used by backends
--- that haven't yet learned to emit real loop-and-jump — they get
--- correct (if stack-unsafe) semantics; newer backends skip this and
--- lower 'CLoop' / 'CContinue' natively.
-untcoProgram :: CoreProgram -> CoreProgram
-untcoProgram (CoreProgram ds) = CoreProgram (map untcoDecl ds)
-
-untcoDecl :: CDecl -> CDecl
-untcoDecl = \case
-  CValDef n e -> CValDef n (stripLoop n e)
-  CFunDef n ps body -> CFunDef n ps (stripLoop n body)
-  where
-    -- Strip the outer 'CLoop' and rewrite inner 'CContinue's into
-    -- self-calls. No-op when the body doesn't start with 'CLoop'.
-    stripLoop :: Name -> CExpr -> CExpr
-    stripLoop fn = \case
-      CLoop b -> unwind fn b
-      other -> other
-
-    unwind :: Name -> CExpr -> CExpr
-    unwind fn = go
-      where
-        go = \case
-          CContinue args -> CCall (CVar fn) (map go args)
-          CCase scrut alts ->
-            CCase (go scrut) [(tag, vs, go body) | (tag, vs, body) <- alts]
-          CRowCase scrut alts ->
-            CRowCase (go scrut) [(tag, v, go body) | (tag, v, body) <- alts]
-          CRow tag v -> CRow tag (go v)
-          CCall f xs -> CCall (go f) (map go xs)
-          CCon tag fs -> CCon tag (map go fs)
-          CLoop b -> CLoop (go b)
-          e@(CVar _) -> e
-          e@(CString _) -> e
-          e@(CIntLit _ _) -> e
-          e@(CBuiltIn _) -> e

@@ -2015,28 +2015,77 @@ emitExprText ctx varMap = \case
               <> ["    callvirt instance object " <> funcType <> "::Invoke" <> invokeDesc]
   CLoop _ -> error "CLR codegen: CLoop reached emitExprText (non-tail position)"
   CContinue _ -> error "CLR codegen: CContinue reached emitExprText (non-tail position)"
+  -- Liveness annotation; backend treats as a transparent wrapper
+  -- since the managed GC handles reclaim.
+  CDrop _ _ body -> emitExprText ctx varMap body
+  -- Cell reuse. In-place mutation of the 'object[]'
+  -- at the binder slot of @n@: 'ldarg' / 'ldloc' the existing
+  -- reference, 'castclass object[]' (verifier needs the array
+  -- shape; the runtime value really is an object[]), then
+  -- 'stelem.ref' the tag at index 0 and each field at index 1..k.
+  -- No fresh 'newarr' — fewer Gen0 allocations.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the array has at
+  -- least @1 + length fields@ slots.
+  CReuse n tag fields ->
+    let loadInstr =
+          fromMaybe (error $ "CLR codegen: CReuse on unknown binder " <> show n)
+            $ Map.lookup n varMap
+        loadCell = loadInstr <> "\n    castclass object[]"
+        storeTag =
+          [ "    dup",
+            emitLdcI4 0,
+            emitLdcI4 tag,
+            "    box [System.Runtime]System.Int32",
+            "    stelem.ref"
+          ]
+        storeFields =
+          [ "    dup\n" <> emitLdcI4 (i :: Int) <> "\n" <> emitExprText ctx varMap fld <> "\n    stelem.ref"
+          | (fld, i) <- zip fields [1 ..]
+          ]
+     in T.intercalate "\n"
+          $ [loadCell]
+          <> storeTag
+          <> storeFields
 
--- | Emit @body@ in tail position under @IL_tco_loop:@.
--- 'CContinue' evaluates its new arguments (so old parameter reads see
--- the pre-update values), pops them into argument slots in reverse —
--- the CIL stack is LIFO, so the last-evaluated value is on top and
--- needs to land in the last argument slot — then @br IL_tco_loop@.
--- Any other tail shape computes a value and ends with its own @ret@.
--- 'CCase' chains structurally so each arm terminates itself.
+-- | Emit @body@ in tail position under @IL_tco_loop:@. Threads a
+-- 'pending' stack of 'CDrop'-bound parameter names that drains at
+-- every terminator as @ldnull; starg.s <i>@ pairs. Net CIL stack
+-- effect per drain is zero (ldnull pushes, starg pops), so the
+-- buffered 'CContinue' argument values are still in order when the
+-- @starg@s that copy them into params run. All Awsum heap values are
+-- @object[]@ references on the CLR; param slots are reference-typed
+-- and @starg@ is always legal.
 emitTailText :: Ctx -> Map Text Text -> [Text] -> CExpr -> Text
-emitTailText ctx varMap _params = go varMap
+emitTailText ctx varMap params = go varMap []
   where
-    go :: Map Text Text -> CExpr -> Text
-    go vmap = \case
+    -- 'CDrop' on a function parameter nullifies the 'starg' slot
+    -- (early GC root snip). 'CDrop' on a
+    -- 'CCase'/'CRowCase' arm-binder is a no-op on managed runtimes
+    -- — the local slot dies when the arm body exits and the GC
+    -- collects naturally; the matching @inc@ on case-extract that
+    -- the LLVM/WASM backends emit isn't needed here either since
+    -- managed refs don't track per-store counts.
+    emitDrop :: Text -> Text
+    emitDrop n =
+      case [i | (p, i) <- zip params [0 :: Int ..], p == n] of
+        (i : _) -> "    ldnull\n    starg.s " <> show i
+        [] -> ""
+
+    go :: Map Text Text -> [Text] -> CExpr -> Text
+    go vmap pending = \case
       CContinue newArgs ->
         let evals = T.intercalate "\n" [emitExprText ctx vmap a | a <- newArgs]
+            frees = T.intercalate "\n" [emitDrop n | n <- pending]
             stargs =
               T.intercalate
                 "\n"
                 [ "    starg.s " <> show i
                 | i <- reverse [0 .. length newArgs - 1]
                 ]
-         in evals <> "\n" <> stargs <> "\n    br IL_tco_loop"
+            sep s = if T.null s then "" else s <> "\n"
+         in evals <> "\n" <> sep frees <> stargs <> "\n    br IL_tco_loop"
       CCase scrut alts ->
         let sorted = sortWith (\(t, _, _) -> t) alts
             scrutText = emitExprText ctx vmap scrut
@@ -2059,13 +2108,18 @@ emitTailText ctx varMap _params = go varMap
                       | ((_, slot), i) <- zip bindings [1 :: Int ..]
                       ]
                   vmap' = foldl' (\m (v, slot) -> Map.insert v ("    ldloc" <> ldlocSuffix slot) m) vmap bindings
-               in "  " <> lbl <> ":\n" <> storeCode <> "    pop\n" <> go vmap' body
+               in "  " <> lbl <> ":\n" <> storeCode <> "    pop\n" <> go vmap' pending body
             armTexts = [emitArm alt lbl | (alt, lbl) <- zip sorted armLabels]
          in T.intercalate "\n"
               $ [scrutText, extractTag, switchText]
               <> armTexts
+      -- Push the drop onto 'pending'; drain at next terminator.
+      CDrop _ n body -> go vmap (n : pending) body
       other ->
-        emitExprText ctx vmap other <> "\n    ret"
+        let valText = emitExprText ctx vmap other
+            frees = T.intercalate "\n" [emitDrop n | n <- pending]
+            sep s = if T.null s then "" else s <> "\n"
+         in valText <> "\n" <> sep frees <> "    ret"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Helpers

@@ -281,6 +281,9 @@ exprLocalsNeeded = \case
   CCon _ fields -> 1 + foldl' max 0 (map exprLocalsNeeded fields)
   CLoop b -> exprLocalsNeeded b
   CContinue xs -> foldl' max 0 (map exprLocalsNeeded xs)
+  CDrop _ _ b -> exprLocalsNeeded b
+  -- Cell reuse: same locals budget as CCon.
+  CReuse _ _ fs -> 1 + foldl' max 0 (map exprLocalsNeeded fs)
   _ -> 0
 
 -- | Maximum operand-stack depth needed by 'emitExpr' / 'emitTailBin'
@@ -330,6 +333,13 @@ exprStackDepth = \case
   CContinue xs ->
     let argDepths = map exprStackDepth xs
      in foldl' max 0 [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
+  -- Liveness annotation; codegen-transparent (no extra stack slots).
+  -- Stack budget == wrapped body's.
+  CDrop _ _ b -> exprStackDepth b
+  -- Cell reuse: forwarded to CCon emission.
+  CReuse _ _ fields ->
+    let maxFld = foldl' max 0 (map exprStackDepth fields)
+     in max 3 (2 + maxFld)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Coded index helpers
@@ -1722,7 +1732,7 @@ mkMulUInt8 = do
 --   the two 'String.Substring' calls allocate fresh strings (CLR
 --   strings are immutable; substrings are owning copies, not aliases).
 --   Locals: 0..1 = unboxed String operands, 2 = idx, 3..4 =
---   prefix/suffix, 5 = boxed Tuple2 staged before the Just wrap.
+--   prefix/suffix, 5 = boxed Tuple2 held before the Just wrap.
 mkSplitOnFirst :: AsmM MInfo
 mkSplitOnFirst = do
   ni <- w16 <$> addStr "__splitOnFirst"
@@ -3335,6 +3345,50 @@ emitExpr ctx = \case
       pure (fCode <> cilCastclass tsTok <> concat argCodes <> cilCallvirt invTok)
   CLoop _ -> error "CLR Assemble: CLoop reached emitExpr (non-tail position)"
   CContinue _ -> error "CLR Assemble: CContinue reached emitExpr (non-tail position)"
+  -- Liveness annotation; codegen-transparent — the managed GC
+  -- handles reclaim.
+  CDrop _ _ body -> emitExpr ctx body
+  -- Cell reuse. In-place mutation of the 'object[]' at
+  -- the binder slot of @n@. Stash the loaded reference into a
+  -- scratch local (typed 'object' in 'addLocalSig'; the verifier
+  -- accepts 'stelem.ref' against it because all locals after
+  -- slot 0 are 'object'-typed and CIL §III.4.26 allows 'stelem.ref'
+  -- against any reference-typed array at runtime). Then for each
+  -- slot reload the local before 'stelem.ref' — keeps the operand
+  -- stack flat at ~3 regardless of field depth.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the array has at
+  -- least @1 + length fields@ slots.
+  CReuse n tag fields -> do
+    let tmpSlot = ctx.eNextScratch
+        ctx' = ctx {eNextScratch = tmpSlot + 1}
+    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+    -- TypeSpec for 'object[]' (SZARRAY OBJECT). Needed because
+    -- 'stelem.ref' demands a statically-array-typed value on the
+    -- stack; param/local slots are typed plain 'object' so we
+    -- 'castclass object[]' on initial load before stashing.
+    objArrTSRow <- addTypeSpec [0x1D, 0x1C]
+    let trObjArr = tokTS objArrTSRow
+        loadNToStash =
+          ( case Map.lookup n ctx.eLocals of
+              Just slot -> cilLdloc slot
+              Nothing -> case Map.lookup n ctx.eParams of
+                Just slot -> cilLdarg slot
+                Nothing -> error $ "CLR Assemble: CReuse on unknown binder " <> show n
+          )
+            <> cilCastclass trObjArr
+            <> cilStloc tmpSlot
+        storeTag =
+          cilLdloc tmpSlot
+            <> cilLdcI4 0
+            <> cilLdcI4 tag
+            <> cilBox (tokTR trInt32)
+            <> cilStelemRef
+    fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+      fldCode <- emitExpr ctx' fld
+      pure (cilLdloc tmpSlot <> cilLdcI4 i <> fldCode <> cilStelemRef)
+    pure (loadNToStash <> storeTag <> concat fieldCodes <> cilLdloc tmpSlot)
 
 -- | Emit @body@ in tail position under @IL_tco_loop:@ (offset 0 of the
 -- method code). 'CContinue' evaluates new argument values, pops them
@@ -3344,19 +3398,40 @@ emitExpr ctx = \case
 -- threading a running offset through the traversal. Tail value shapes
 -- end with their own @ret@; 'CCase' dispatches via a dup/bne chain
 -- where each arm self-terminates, so no join / fallthrough is needed.
+-- The binary emitter threads a 'pending' parameter-drop list through
+-- every tail-position emit. Each drop becomes @ldnull; starg.s
+-- <slot>@; CIL stack net-effect zero per pair, so the buffered-arg
+-- ordering survives. Mirrors 'emitTailText' in 'Awsum.Codegen.CLR'.
 emitTailBin :: ECtx -> [Text] -> CExpr -> AsmM [Word8]
-emitTailBin ctx0 params = fmap fst . goTop ctx0 0
+emitTailBin ctx0 params = fmap fst . goTop ctx0 0 []
   where
-    goTop :: ECtx -> Int -> CExpr -> AsmM ([Word8], Int)
-    goTop ctx offset = \case
-      CContinue newArgs -> emitContinue ctx offset newArgs
-      CCase scrut alts -> emitTailCase ctx offset scrut alts
-      CRowCase scrut alts ->
-        emitTailCase ctx offset scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      other -> emitTailValue ctx offset other
+    -- 'CDrop' on a function parameter nullifies that 'starg' slot
+    -- (early GC root snip). 'CDrop' on a case-arm
+    -- binder is a no-op on managed runtimes — the local slot
+    -- dies when the arm body exits and the GC collects naturally.
+    paramSlotOf :: ECtx -> Text -> Maybe Int
+    paramSlotOf ctx n = Map.lookup n ctx.eParams
 
-    emitContinue :: ECtx -> Int -> [CExpr] -> AsmM ([Word8], Int)
-    emitContinue ctx offset newArgs = do
+    pendingDropBytes :: ECtx -> [Text] -> [Word8]
+    pendingDropBytes ctx =
+      concatMap
+        ( \n -> case paramSlotOf ctx n of
+            Just s -> cilLdnull <> cilStarg s
+            Nothing -> []
+        )
+
+    goTop :: ECtx -> Int -> [Text] -> CExpr -> AsmM ([Word8], Int)
+    goTop ctx offset pending = \case
+      CContinue newArgs -> emitContinue ctx offset pending newArgs
+      CCase scrut alts -> emitTailCase ctx offset pending scrut alts
+      CRowCase scrut alts ->
+        emitTailCase ctx offset pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+      -- Push the drop onto 'pending'; drain at next terminator.
+      CDrop _ n body -> goTop ctx offset (n : pending) body
+      other -> emitTailValue ctx offset pending other
+
+    emitContinue :: ECtx -> Int -> [Text] -> [CExpr] -> AsmM ([Word8], Int)
+    emitContinue ctx offset pending newArgs = do
       argCodes <- traverse (emitExpr ctx) newArgs
       let paramSlots :: [Int]
           paramSlots =
@@ -3367,23 +3442,26 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
           stargBytes = concat [cilStarg s | s <- reverse paramSlots]
           argBytes :: [Word8]
           argBytes = concat argCodes
+          freeBytes :: [Word8]
+          freeBytes = pendingDropBytes ctx pending
           brStart :: Int
-          brStart = offset + length argBytes + length stargBytes
+          brStart = offset + length argBytes + length freeBytes + length stargBytes
           brLen :: Int
           brLen = 5
           delta :: Int32
           delta = fromIntegral (negate (brStart + brLen))
           brBytes = cilBr delta
-      pure (argBytes <> stargBytes <> brBytes, brStart + brLen)
+      pure (argBytes <> freeBytes <> stargBytes <> brBytes, brStart + brLen)
 
-    emitTailValue :: ECtx -> Int -> CExpr -> AsmM ([Word8], Int)
-    emitTailValue ctx offset expr = do
+    emitTailValue :: ECtx -> Int -> [Text] -> CExpr -> AsmM ([Word8], Int)
+    emitTailValue ctx offset pending expr = do
       code <- emitExpr ctx expr
-      let bytes = code <> cilRet
+      let freeBytes = pendingDropBytes ctx pending
+          bytes = code <> freeBytes <> cilRet
       pure (bytes, offset + length bytes)
 
-    emitTailCase :: ECtx -> Int -> CExpr -> [(Int, [Text], CExpr)] -> AsmM ([Word8], Int)
-    emitTailCase ctx offset scrut alts = do
+    emitTailCase :: ECtx -> Int -> [Text] -> CExpr -> [(Int, [Text], CExpr)] -> AsmM ([Word8], Int)
+    emitTailCase ctx offset pending scrut alts = do
       trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
       scrutCode <- emitExpr ctx scrut
       let sorted = sortWith (\(t, _, _) -> t) alts
@@ -3403,13 +3481,13 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
               <> cilUnboxAny (tokTR trInt32)
           prefix = scrutCode <> extractAndStore
           chainStartOffset = offset + length prefix
-      (chainBytes, endOffset) <- buildTailChain ctx arrSlot nextScratch' chainStartOffset sorted bindSlotStart
+      (chainBytes, endOffset) <- buildTailChain ctx arrSlot nextScratch' chainStartOffset pending sorted bindSlotStart
       pure (prefix <> chainBytes, endOffset)
 
-    buildTailChain :: ECtx -> Int -> Int -> Int -> [(Int, [Text], CExpr)] -> Int -> AsmM ([Word8], Int)
-    buildTailChain _ _ _ offset [] _ =
+    buildTailChain :: ECtx -> Int -> Int -> Int -> [Text] -> [(Int, [Text], CExpr)] -> Int -> AsmM ([Word8], Int)
+    buildTailChain _ _ _ offset _ [] _ =
       pure (cilLdnull <> cilRet, offset + length cilLdnull + length cilRet)
-    buildTailChain ctx arrSlot nextScratch' offset [(_, vars, armBody)] bindStart = do
+    buildTailChain ctx arrSlot nextScratch' offset pending [(_, vars, armBody)] bindStart = do
       let bindings = zip vars [bindStart ..]
           ctx' =
             ctx
@@ -3427,9 +3505,9 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
           popTag = cilPop
           armPrefix = popTag <> bindCode
           armStart = offset + length armPrefix
-      (armBytes, endOff) <- goTop ctx' armStart armBody
+      (armBytes, endOff) <- goTop ctx' armStart pending armBody
       pure (armPrefix <> armBytes, endOff)
-    buildTailChain ctx arrSlot nextScratch' offset ((tag, vars, armBody) : rest) bindStart = do
+    buildTailChain ctx arrSlot nextScratch' offset pending ((tag, vars, armBody) : rest) bindStart = do
       let dupCode :: [Word8]
           dupCode = [0x25] -- dup
           ldcCode :: [Word8]
@@ -3453,9 +3531,9 @@ emitTailBin ctx0 params = fmap fst . goTop ctx0 0
           popTag = cilPop
           armPrefixLen = length dupCode + length ldcCode + bneLen
           armStart = offset + armPrefixLen + length popTag + length bindCode
-      (armBytes, armEnd) <- goTop ctx' armStart armBody
+      (armBytes, armEnd) <- goTop ctx' armStart pending armBody
       let skipLen = length popTag + length bindCode + length armBytes
-      (restBytes, restEnd) <- buildTailChain ctx arrSlot nextScratch' armEnd rest bindStart
+      (restBytes, restEnd) <- buildTailChain ctx arrSlot nextScratch' armEnd pending rest bindStart
       let bne = cilBneUn (fromIntegral skipLen)
       pure
         ( dupCode <> ldcCode <> bne <> popTag <> bindCode <> armBytes <> restBytes,

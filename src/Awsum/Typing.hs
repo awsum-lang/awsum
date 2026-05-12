@@ -1,12 +1,16 @@
--- | Simple /monomorphic/ type checker for the surface AST ('Awsum.Syntax').
+-- | Bidirectional type checker for the surface AST ('Awsum.Syntax').
 --
 -- Scope and design notes:
 --   • Built-in type constructors: @"String"@ and @"IO"@ (the @Unit@ in
---     @IO Unit@ is a prelude-defined sum type, not a built-in).
+--     @IO Never Unit@ is a prelude-defined sum type, not a built-in).
 --   • User-defined sum types via @type Color = Red | Green | Blue@.
 --   • The only function type constructor is right-associative arrow @->@.
---   • No let-generalization, no unification variables, no inference beyond what is
---     written in signatures: every top-level definition must have an explicit 'Sig'.
+--   • Hindley-Milner unification via 'Awsum.HM' under bidirectional
+--     checking: expected types propagate down through 'ECase' arms,
+--     constructor applications, and 'EApp' chains. Every top-level
+--     definition still requires an explicit 'Sig' — no let-generalisation
+--     at the top level — but local 'ELet' and lambda parameters get fresh
+--     unification variables when no expected type is in scope.
 --   • Platform-gated names are injected from the program type's platform
 --     table ('Awsum.Program.platformTable'), filtered by the imports present
 --     in the file (e.g. @IO.Stdout.print@ requires both @--program-type cli@
@@ -1441,9 +1445,9 @@ typeOfExpr conEnv tcm env = \case
   -- so locations in any error remain accurate.
   EInfix sp OpPipe l r -> typeOfExpr conEnv tcm env (EApp sp r l)
   -- String concatenation `a ++ b` is defined for (String, String) and
-  -- returns `Either StringTooLong String`. Phase 1 always produces 'Right';
-  -- 'StringTooLong' becomes reachable in phase 2.x when length validation
-  -- moves into the runtime.
+  -- returns `Either StringTooLong String`. The 'Left StringTooLong' arm
+  -- is produced by every backend's '__concat' runtime helper when the
+  -- combined UTF-16 length would exceed 'maxStringLengthUtf16CodeUnits'.
   EInfix sp OpConcat l r -> do
     tl <- typeOfExpr conEnv tcm env l
     tr <- typeOfExpr conEnv tcm env r

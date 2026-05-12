@@ -1,7 +1,7 @@
 -- | Editor-facing diagnostic representation.
 --
 -- The unit of feedback the compiler emits to consumers (CLI @--json@,
--- @awsum-vscode@, future LSP). Mirrors 'vscode.Diagnostic' +
+-- @awsum-vscode@, @awsum lsp@). Mirrors 'vscode.Diagnostic' +
 -- 'vscode.CodeAction' so producing JSON is the only translation needed.
 -- Separates 'TypeError'/'Warning' producers (semantic) from JSON
 -- rendering (here), so editors can evolve without touching the

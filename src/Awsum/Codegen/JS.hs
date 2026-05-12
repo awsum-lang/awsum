@@ -381,39 +381,75 @@ emitDecl = \case
 --   • 'CCase' dispatches through @switch@ and recurses into statement form
 --     for each arm's body, because any arm might itself be a 'CContinue'.
 --   • Anything else is a final value — we return it.
+-- | Emit @body@ in tail position. Threads a 'pending' stack of
+-- 'CDrop'-named parameters; the stack drains at every terminator.
+-- For 'CContinue' the drains land between the buffered
+-- arg-evaluations and the param updates, so each dropped parameter's
+-- old reference is overwritten with @null@ before the next iteration
+-- reads the buffered value. (JS variables are GC roots until
+-- reassigned; nulling the slot lets V8 collect the old graph one
+-- iteration sooner.) For a value-producing tail, the drains fire
+-- after the value is captured, then @return@.
 emitStmt :: [Name] -> CExpr -> Text
-emitStmt params = go
+emitStmt params = go []
   where
-    go :: CExpr -> Text
-    go = \case
+    -- 'CDrop' on a function parameter assigns @null@ to the
+    -- (mutable) param slot — managed-GC early root snip.
+    -- 'CDrop' on a 'CCase' arm-binder is a no-op: case-binders
+    -- are declared with @const@ (V8 can't reassign), and the
+    -- block-scoped slot dies as soon as the arm closes, so GC
+    -- collects naturally.
+    isParam :: Name -> Bool
+    isParam n = n `elem` params
+
+    go :: [Name] -> CExpr -> Text
+    go pending = \case
       CContinue newArgs ->
         let temps = ["__t" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
             declLines =
               [ "    const " <> t <> " = " <> emitExpr a <> ";"
               | (t, a) <- zip temps newArgs
               ]
+            freeLines =
+              [ "    " <> mangle n <> " = null;"
+              | n <- pending,
+                isParam n
+              ]
             assignLines =
               [ "    " <> mangle p <> " = " <> t <> ";"
               | (p, t) <- zip params temps
               ]
-         in unlines (declLines <> assignLines <> ["    continue;"])
+         in unlines (declLines <> freeLines <> assignLines <> ["    continue;"])
       CCase scrut alts ->
         "    {\n      const __s = "
           <> emitExpr scrut
           <> ";\n      switch (__s[0]) {\n"
-          <> T.concat (map emitStmtAlt alts)
+          <> T.concat (map (emitStmtAlt pending) alts)
           <> "      }\n    }\n"
       CRowCase scrut alts ->
         "    {\n      const __s = "
           <> emitExpr scrut
           <> ";\n      switch (__s[0]) {\n"
-          <> T.concat (map emitStmtRowAlt alts)
+          <> T.concat (map (emitStmtRowAlt pending) alts)
           <> "      }\n    }\n"
+      -- Push the drop onto 'pending'; drain at the next terminator.
+      CDrop _ n body -> go (n : pending) body
       e ->
-        "    return " <> emitExpr e <> ";\n"
+        let valExpr = emitExpr e
+            paramPending = filter isParam pending
+         in if null paramPending
+              then "    return " <> valExpr <> ";\n"
+              else
+                "    {\n"
+                  <> "      const __d = "
+                  <> valExpr
+                  <> ";\n"
+                  <> T.concat ["      " <> mangle n <> " = null;\n" | n <- paramPending]
+                  <> "      return __d;\n"
+                  <> "    }\n"
 
-    emitStmtAlt :: (Int, [Name], CExpr) -> Text
-    emitStmtAlt (tag, vars, body) =
+    emitStmtAlt :: [Name] -> (Int, [Name], CExpr) -> Text
+    emitStmtAlt pending (tag, vars, body) =
       let bindings =
             T.concat
               [ "          const " <> mangle v <> " = __s[" <> show (i :: Int) <> "];\n"
@@ -423,18 +459,18 @@ emitStmt params = go
             <> show tag
             <> ": {\n"
             <> bindings
-            <> reindentStmt (emitStmt params body)
+            <> reindentStmt (go pending body)
             <> "        }\n"
 
-    emitStmtRowAlt :: (Word32, Name, CExpr) -> Text
-    emitStmtRowAlt (tag, var, body) =
+    emitStmtRowAlt :: [Name] -> (Word32, Name, CExpr) -> Text
+    emitStmtRowAlt pending (tag, var, body) =
       "        case "
         <> show tag
         <> ": {\n"
         <> "          const "
         <> mangle var
         <> " = __s[1];\n"
-        <> reindentStmt (emitStmt params body)
+        <> reindentStmt (go pending body)
         <> "        }\n"
 
     -- 'emitStmt' produces lines indented for @while (true)@ depth (4 spaces).
@@ -472,6 +508,23 @@ emitExpr = \case
   -- practice.
   CRow tag v ->
     "[" <> show tag <> ", " <> emitExpr v <> "]"
+  -- Liveness annotation; backends treat as a transparent wrapper
+  -- since the managed GC handles reclaim.
+  CDrop _ _ body -> emitExpr body
+  -- Cell reuse. In-place mutation of the JS array at
+  -- @n@: assign each slot then return the array. Emitted as a
+  -- single comma expression so the whole construct is still a
+  -- value-producing JS expression usable in any argument position.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the array has at
+  -- least @1 + length fields@ slots.
+  CReuse n tag fields ->
+    let v = mangle n
+        tagStore = v <> "[0] = " <> show tag
+        fieldStores =
+          [v <> "[" <> show (i :: Int) <> "] = " <> emitExpr fld | (fld, i) <- zip fields [1 ..]]
+     in "(" <> T.intercalate ", " (tagStore : fieldStores <> [v]) <> ")"
   CCase scrut alts ->
     "((s) => { switch(s[0]) { "
       <> T.intercalate " " (map emitAlt alts)
@@ -590,10 +643,12 @@ emitExpr = \case
         error ("JS codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ ->
         "(" <> emitExpr f <> ")(" <> T.intercalate ", " (map emitExpr xs) <> ")"
-  -- 'untcoProgram' strips these before emission. Reaching them signals a
-  -- pipeline misorder (TCO ran but its inverse didn't), so crash loudly.
-  CLoop _ -> error "JS codegen: CLoop survived untcoProgram (pipeline bug)"
-  CContinue _ -> error "JS codegen: CContinue survived untcoProgram (pipeline bug)"
+  -- 'CLoop' / 'CContinue' should only appear at function-body-tail and
+  -- inside a 'CLoop' body respectively; the tail walker in 'emitFun'
+  -- handles those positions directly. Hitting either here signals a
+  -- pipeline bug, so crash loudly.
+  CLoop _ -> error "JS codegen: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
+  CContinue _ -> error "JS codegen: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
   where
     emitAlt (tag, vars, body) =
       let bindings = T.concat [" const " <> mangle v <> " = s[" <> show (i :: Int) <> "];" | (v, i) <- zip vars [1 ..]]

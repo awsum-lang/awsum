@@ -95,6 +95,8 @@ freeVars = \case
   CRowCase s alts -> freeVars s <> foldMap rowArmFv alts
   CLoop b -> freeVars b
   CContinue xs -> foldMap freeVars xs
+  CDrop _ n b -> Set.delete n (freeVars b)
+  CReuse n _ fs -> Set.insert n (foldMap freeVars fs)
   where
     armFv (_, bound, body) = freeVars body `Set.difference` Set.fromList bound
     rowArmFv (_, bound, body) = freeVars body `Set.difference` Set.singleton bound
@@ -317,6 +319,15 @@ goNonTail env expr kont = case expr of
     error "Awsum.Cps: CLoop reached goNonTail — Cps must run before Tco"
   CContinue _ ->
     error "Awsum.Cps: CContinue reached goNonTail — Cps must run before Tco"
+  -- 'CDrop' is produced by 'Awsum.Lifetime.insertDrops' /after/ Tco,
+  -- so seeing it here would also be a pipeline bug.
+  CDrop {} ->
+    error "Awsum.Cps: CDrop reached goNonTail — Cps must run before insertDrops"
+  -- 'CReuse' is produced by 'Awsum.Reuse.insertReuse' /after/
+  -- insertDrops (which is after Tco, which is after Cps), so seeing
+  -- it here would also be a pipeline bug.
+  CReuse {} ->
+    error "Awsum.Cps: CReuse reached goNonTail — Cps must run before insertReuse"
 
 -- | Build the body of @$apply$f@.
 --
@@ -371,6 +382,12 @@ alphaRename from to = go
       CRowCase s alts -> CRowCase (go s) (map goRowAlt alts)
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
+      CDrop k n b
+        | n == from -> CDrop k n b -- the drop kills 'from'; stop descending
+        | otherwise -> CDrop k n (go b)
+      CReuse n t fs
+        | n == from -> CReuse to t (map go fs)
+        | otherwise -> CReuse n t (map go fs)
 
     goAlt (t, vs, b)
       | from `elem` vs = (t, vs, b) -- shadowed; don't rename further in

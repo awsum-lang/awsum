@@ -382,7 +382,13 @@ runOnTarget progType target ptags core input = case target of
     withSystemTempDirectory "awsum" $ \dir -> do
       let wasmPath = dir </> "out.wasm"
       writeFileBS wasmPath (assembleWASM ptags core)
-      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
+      -- Bump max wasm stack so '__free_recursive' can cascade
+      -- through deep continuation chains. The iterative
+      -- helper only tail-jumps on the last ptr slot, so non-tail
+      -- children (e.g. continuation $k in slot 1) still recurse.
+      -- 256 MiB covers a few-million-deep chain with one i32 ptr
+      -- per frame plus room for the actual call-graph above.
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" ["-W", "max-wasm-stack=268435456", wasmPath, toString input] ""
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)

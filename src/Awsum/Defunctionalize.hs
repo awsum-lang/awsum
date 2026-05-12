@@ -1,10 +1,15 @@
 -- | Defunctionalisation pass.
 --
--- Eliminates first-class function values by specialising every
--- higher-order-function call site for the closure statically flowing
--- into it. After this pass no 'CCall' has a function-typed argument
--- and no 'CVar' resolves to a function value — the program is
--- first-order, the form every backend natively handles.
+-- Eliminates first-class function values at call sites where the
+-- closure can be resolved statically: each such HOF call has its
+-- @fn@-typed slot replaced with a first-order specialisation whose
+-- parameter list adds the closure's captures up front. Residual
+-- closures that flow through positions this pass cannot specialise
+-- (stored in constructor fields, passed through case-arm-binders,
+-- captured into partial applications inside non-statically-resolvable
+-- HOFs) are handled by the next pass, 'Awsum.LowerClosures'. After
+-- the two passes run in sequence, no first-class function value
+-- remains in any reachable position.
 --
 -- ## What is a closure?
 --
@@ -44,18 +49,22 @@
 -- /before/ the body is walked, so the recursive call resolves to the
 -- in-flight name.
 --
--- ## Not handled today
+-- ## Not handled here (deferred to 'Awsum.LowerClosures')
 --
 --   * Function values stored in constructor fields (@type FnBox =
 --     FnBox (Int32 -> Int32)@). 'asClosure' returns 'Nothing' on
---     such a 'CCon' field; nothing breaks here, but a HOF consuming
---     the value would attempt a first-class application downstream.
---   * Function values returned from a HOF (@makeAdder : Int32 ->
---     (Int32 -> Int32)@). Rejected downstream; no test fixture today.
+--     such a 'CCon' field, so the closure survives this pass.
+--   * Function values flowing through case-arm-binders and partial
+--     applications inside non-statically-resolvable HOFs.
+--
+-- 'Awsum.LowerClosures' encodes each surviving closure as a tagged
+-- 'CCon' and routes every residual call through a per-arity @$applyN@
+-- dispatcher, so by the end of the two passes nothing function-typed
+-- remains in any reachable position.
 --
 -- ## Pipeline position
 --
--- Between the post-lowering tree-shake and 'saturateProgram'. Tree-shake
+-- Between the post-lowering tree-shake and 'Awsum.LowerClosures'. Tree-shake
 -- re-runs afterwards to drop the now-unreachable original HOFs.
 module Awsum.Defunctionalize (defunctionalizeProgram) where
 
@@ -183,6 +192,8 @@ transformExpr env = go
         pure (CRowCase s' alts')
       CLoop b -> CLoop <$> go b
       CContinue xs -> CContinue <$> traverse go xs
+      CDrop k n b -> CDrop k n <$> go b
+      CReuse n t fs -> CReuse n t <$> traverse go fs
       CCall callee args -> transformCall env callee args
 
 -- | Transform a 'CCall'. Three shapes matter:
