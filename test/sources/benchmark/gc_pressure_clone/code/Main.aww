@@ -1,0 +1,66 @@
+{- GC pressure demo: build a list, then deep-clone it many times,
+   walking and discarding each clone.
+
+   The structure is opt-resistant in the strict sense:
+     * 'sumList cloned' depends on every cell of the final clone, so
+       'cloneN' cannot be elided — its result is what main prints.
+     * 'clone' walks every cell of its input and allocates a fresh
+       Cons for each, so the optimiser cannot fold it to a no-op
+       (the result is structurally distinct, even if value-equal).
+     * Every intermediate clone becomes unreferenced once the next
+       'clone' returns, so a tracing GC reclaims it; without one the
+       cells stay in the heap forever.
+
+   With 'cloneN 3000 (repeat 100000 1)':
+     * Cumulative allocation: 3000 × 100 000 cells × ~24 bytes each
+       ≈ 7 GiB on LLVM, ~5 GiB on WASM.
+     * Steady-state live set with a tracing GC: at most ~2 lists,
+       i.e. ~5 MiB.
+
+   On JVM/CLR/JS: prints 100000 in seconds, peak heap ~few MiB.
+   On WASM: cumulative crosses the wasm32 4 GiB linear-memory cap;
+     '__alloc' detects 'memory.grow == -1' and traps via
+     'unreachable', exiting with 'wasm trap: unreachable executed'.
+   On LLVM: 'malloc' has no 'free', so peak RSS grows to ~7 GiB and
+     stays there until exit. On a 48 GiB host the program completes
+     (the OS lets virtual memory cover it); on a smaller machine, or
+     with 'cloneN 50000' instead of 3000, the OS OOM-kills the
+     process. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type IntList = Nil | Cons Int32 IntList
+
+repeat : Int32 -> Int32 -> IntList
+repeat n value = case eqInt32 n zero of
+  True -> Nil
+  False -> case predInt32 n of
+    Left _e -> Nil
+    Right m -> Cons value (repeat m value)
+
+clone : IntList -> IntList
+clone lst = case lst of
+  Nil -> Nil
+  Cons x xs -> Cons x (clone xs)
+
+cloneN : Int32 -> IntList -> IntList
+cloneN times lst = case eqInt32 times zero of
+  True -> lst
+  False -> case predInt32 times of
+    Left _e -> lst
+    Right m -> cloneN m (clone lst)
+
+sumList : IntList -> Int32 -> Int32
+sumList lst acc = case lst of
+  Nil -> acc
+  Cons x xs -> case addInt32 acc x of
+    Left _e -> acc
+    Right next -> sumList xs next
+
+main : IO Never Unit
+main =
+  let original : IntList = repeat 100000 1
+      cloned : IntList = cloneN 3000 original
+   in IO.Stdout.print (showInt32 (sumList cloned zero))
