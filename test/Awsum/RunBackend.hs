@@ -19,7 +19,7 @@ where
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags)
+import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
@@ -127,12 +127,12 @@ compileLLVMBin code = do
   -- at the wrong LLVM, e.g. Stack on Windows prepending GHC's bundled
   -- mingw clang) pin an absolute path. Empty/unset → fall back to PATH.
   clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
-  -- Linker flags must match the IR's footer choice (see awsum/Main.hs):
-  -- 'llvmHostLinkerFlags' returns the right -l flags for whichever host
-  -- the IR was generated for. The text passed in here was always built
-  -- by 'compileFromText' from 'codegenLLVM llvmHostFromSystem core', so
-  -- the host used for codegen and the host used for linking match.
-  (ec, out, err) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llFile, "-o", binFile] <> llvmHostLinkerFlags llvmHostFromSystem) ""
+  -- Linker flags come from the link-host axis ('LLVMLinkHost'), not
+  -- the IR-shape axis ('LLVMHost'): macOS and Linux share the POSIX
+  -- IR footer but use incompatible stack-size flag syntaxes (ld64's
+  -- '-stack_size' vs ELF's '-z stack-size'). See awsum/Main.hs for
+  -- the same split on the CLI side.
+  (ec, out, err) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llFile, "-o", binFile] <> llvmHostLinkerFlags llvmLinkHostFromSystem) ""
   case ec of
     ExitFailure n ->
       error

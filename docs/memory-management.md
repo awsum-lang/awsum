@@ -8,12 +8,12 @@ Every heap-allocated cell — ADT constructor, boxed primitive, string — is re
 
 Identical reclaim semantics across all five backends. The mechanism differs by target:
 
-| Backend | Reclaim mechanism |
-| ------- | ----------------- |
-| JVM     | Host JVM garbage collector (G1/ZGC) |
-| CLR     | Host CLR generational garbage collector |
-| JS      | Host JS engine garbage collector (V8/JSC) |
-| LLVM    | Compiler-emitted reference counting over libc `malloc` / `free` |
+| Backend | Reclaim mechanism                                                                 |
+| ------- | --------------------------------------------------------------------------------- |
+| JVM     | Host JVM garbage collector (G1/ZGC)                                               |
+| CLR     | Host CLR generational garbage collector                                           |
+| JS      | Host JS engine garbage collector (V8/JSC)                                         |
+| LLVM    | Compiler-emitted reference counting over libc `malloc` / `free`                   |
 | WASM    | Compiler-emitted reference counting over a per-size-bin freelist in linear memory |
 
 ## Why reference counting on LLVM and WASM

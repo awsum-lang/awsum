@@ -18,7 +18,7 @@ module Main (main) where
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
-import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags)
+import Awsum.Codegen.LLVM (codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
 import Awsum.Core (CoreProgram, PreludeTags)
 import Awsum.ElaborateLower (elaborateLowerProgram)
@@ -171,7 +171,7 @@ buildLLVMBin dir ll = do
     readProcessWithExitCode
       clangPath
       ( ["-O2", "-Wno-override-module", llFile, "-o", binFile]
-          <> llvmHostLinkerFlags llvmHostFromSystem
+          <> llvmHostLinkerFlags llvmLinkHostFromSystem
       )
       ""
   case ec of

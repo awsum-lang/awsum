@@ -30,6 +30,8 @@ module Awsum.Codegen.LLVM
     allLLVMHosts,
     llvmHostName,
     llvmHostFromSystem,
+    LLVMLinkHost,
+    llvmLinkHostFromSystem,
     llvmHostLinkerFlags,
   )
 where
@@ -49,12 +51,17 @@ import System.Info qualified as Info
 -- Public API
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | The host environment the emitted IR is meant to be linked and run on.
---   Decides which @main@ entry point shape we generate (POSIX argv vs the
---   Windows GetCommandLineW path) and which extra @-l@ flags clang needs at
---   link time. The CLI derives this from 'System.Info.os' once via
---   'llvmHostFromSystem'; the snapshot test framework iterates all values
---   so per-host IR is asserted on every CI host.
+-- | The IR shape variant — which @main@ entry point we emit.
+--   POSIX uses the standard @int main(int argc, char** argv)@; Windows
+--   ignores that argv (MSVCRT mangles it through the ANSI code page)
+--   and re-fetches the UTF-16 command line through @GetCommandLineW@ /
+--   @CommandLineToArgvW@ before handing off to @v_main@. macOS and
+--   Linux share the POSIX variant — the footer is byte-identical for
+--   both. The link-host axis (which linker flags @clang@ needs) is
+--   tracked separately by 'LLVMLinkHost' because there macOS and Linux
+--   diverge. The CLI derives this from 'System.Info.os' once via
+--   'llvmHostFromSystem'; the snapshot test framework iterates all
+--   values so per-host IR is asserted on every CI host.
 data LLVMHost = LLVMPosix | LLVMWindows
   deriving stock (Eq, Ord, Show, Enum, Bounded)
 
@@ -78,13 +85,36 @@ llvmHostFromSystem
   | Info.os == "mingw32" = LLVMWindows
   | otherwise = LLVMPosix
 
--- | Extra clang flags required to actually link the IR for a given host.
---   Windows needs explicit @-lshell32 -lkernel32@ because @footerWindows@
---   calls 'CommandLineToArgvW' and friends — mingw-w64 auto-links those,
---   but MSVC's CRT only carries kernel32, so the explicit flag is what
---   closes @LNK2019: unresolved external symbol CommandLineToArgvW@.
+-- | The linker flavour @clang@ will hand the IR off to. This is a
+--   separate axis from 'LLVMHost' because macOS and Linux share the
+--   POSIX IR footer but use completely different linkers with
+--   incompatible flag spellings: macOS goes through ld64 (or its LLD
+--   port @ld64.lld@), Linux through GNU @ld@ or @ld.lld@. Detected
+--   independently via 'llvmLinkHostFromSystem'.
+data LLVMLinkHost = LinkMacOS | LinkLinux | LinkWindows
+  deriving stock (Eq, Ord, Show, Enum, Bounded)
+
+-- | Detect the link host for the awsum binary running this code.
+--   GHC reports @"darwin"@ for macOS, @"mingw32"@ for any Windows
+--   build; everything else (Linux/FreeBSD/…) falls through to the
+--   ELF/GNU-ld branch.
+llvmLinkHostFromSystem :: LLVMLinkHost
+llvmLinkHostFromSystem
+  | Info.os == "darwin" = LinkMacOS
+  | Info.os == "mingw32" = LinkWindows
+  | otherwise = LinkLinux
+
+-- | Extra clang flags required to actually link the IR on each host.
+--   On macOS, ld64 accepts @-stack_size@ as a single-dash separate
+--   argument; on Linux, both GNU @ld@ and @ld.lld@ instead express
+--   the same setting through the ELF-specific @-z stack-size=N@.
+--   Windows needs explicit @-lshell32 -lkernel32@ because
+--   'footerWindows' calls 'CommandLineToArgvW' and friends —
+--   mingw-w64 auto-links those, but MSVC's CRT only carries kernel32,
+--   so the explicit flag is what closes
+--   @LNK2019: unresolved external symbol CommandLineToArgvW@.
 --   Harmless on mingw-w64 (already in the auto-link line).
-llvmHostLinkerFlags :: LLVMHost -> [String]
+llvmHostLinkerFlags :: LLVMLinkHost -> [String]
 llvmHostLinkerFlags = \case
   -- Bump the link-time stack size so '__free_recursive' can
   -- cascade through deep continuation chains without
@@ -94,8 +124,9 @@ llvmHostLinkerFlags = \case
   -- (e.g. continuation $k in slot 1) still recurse. 256 MiB
   -- covers a few-million-deep chain at one i64 ptr per frame
   -- with room for the actual call-graph above.
-  LLVMPosix -> ["-Wl,--stack_size,0x10000000"]
-  LLVMWindows -> ["-lshell32", "-lkernel32"]
+  LinkMacOS -> ["-Wl,-stack_size,0x10000000"]
+  LinkLinux -> ["-Wl,-z,stack-size=0x10000000"]
+  LinkWindows -> ["-lshell32", "-lkernel32"]
 
 -- | Produce a complete LLVM IR module from a Core program for a given host.
 codegenLLVM :: LLVMHost -> PreludeTags -> CoreProgram -> Text
