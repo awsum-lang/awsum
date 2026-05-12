@@ -8,6 +8,9 @@
 
   (memory (export "memory") 1)
   (global $heap (mut i32) (i32.const 208))
+  (global $__wl_buf (mut i32) (i32.const 0))
+  (global $__wl_top (mut i32) (i32.const 0))
+  (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\10\00\00\00\10\00\00\000123456789abcdef")
   (data (i32.const 120) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00string-too-long")
@@ -122,27 +125,91 @@
       (i32.add (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1))))
 
 
+  (func $__free_worklist_push (param $p i32)
+    (local $top i32)
+    (local $cap i32)
+    (local $new_cap i32)
+    (local $new_buf i32)
+    (local $old_buf i32)
+    (local $i i32)
+    (local.set $top (global.get $__wl_top))
+    (local.set $cap (global.get $__wl_cap))
+    (if (i32.eq (local.get $top) (local.get $cap))
+      (then
+        (if (i32.eqz (local.get $cap))
+          (then (local.set $new_cap (i32.const 16)))
+          (else (local.set $new_cap (i32.shl (local.get $cap) (i32.const 1)))))
+        (local.set $new_buf
+          (call $__alloc_shaped (i32.shl (local.get $new_cap) (i32.const 2)) (i32.const 0)))
+        (local.set $old_buf (global.get $__wl_buf))
+        ;; Copy old worklist contents.
+        (local.set $i (i32.const 0))
+        (block $copy_break
+          (loop $copy_loop
+            (br_if $copy_break (i32.ge_u (local.get $i) (local.get $top)))
+            (i32.store
+              (i32.add (local.get $new_buf) (i32.shl (local.get $i) (i32.const 2)))
+              (i32.load
+                (i32.add (local.get $old_buf) (i32.shl (local.get $i) (i32.const 2)))))
+            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+            (br $copy_loop)))
+        (if (local.get $old_buf)
+          (then (call $__free (local.get $old_buf))))
+        (global.set $__wl_buf (local.get $new_buf))
+        (global.set $__wl_cap (local.get $new_cap))))
+    (i32.store
+      (i32.add (global.get $__wl_buf) (i32.shl (local.get $top) (i32.const 2)))
+      (local.get $p))
+    (global.set $__wl_top (i32.add (local.get $top) (i32.const 1))))
+
+
   (func $__free_recursive (param $p i32)
     (local $flag i32)
     (local $rc i32)
     (local $shape i32)
     (local $i i32)
-    (local $child i32)
-    (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
-    (if (i32.eqz (local.get $flag)) (then (return)))
-    (local.set $rc (i32.sub (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1)))
-    (i32.store (i32.sub (local.get $p) (i32.const 8)) (local.get $rc))
-    (if (local.get $rc) (then (return)))
-    (local.set $shape (i32.load (i32.sub (local.get $p) (i32.const 4))))
-    (local.set $i (i32.const 1))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.gt_u (local.get $i) (local.get $shape)))
-        (local.set $child (i32.load (i32.add (local.get $p) (i32.mul (local.get $i) (i32.const 4)))))
-        (call $__free_recursive (local.get $child))
-        (local.set $i (i32.add (local.get $i) (i32.const 1)))
-        (br $loop)))
-    (call $__free (local.get $p)))
+    (local $top i32)
+    (block $done
+      (loop $outer
+        (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
+        (block $next
+          (br_if $next (i32.eqz (local.get $flag)))
+          (local.set $rc
+            (i32.sub (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1)))
+          (i32.store (i32.sub (local.get $p) (i32.const 8)) (local.get $rc))
+          (br_if $next (local.get $rc))
+          (local.set $shape (i32.load (i32.sub (local.get $p) (i32.const 4))))
+          (if (i32.eqz (local.get $shape))
+            (then
+              (call $__free (local.get $p))
+              (br $next)))
+          ;; Push non-last children (slots 1..shape-1) onto the worklist.
+          (local.set $i (i32.const 1))
+          (block $push_break
+            (loop $push_loop
+              (br_if $push_break (i32.ge_u (local.get $i) (local.get $shape)))
+              (call $__free_worklist_push
+                (i32.load
+                  (i32.add (local.get $p) (i32.shl (local.get $i) (i32.const 2)))))
+              (local.set $i (i32.add (local.get $i) (i32.const 1)))
+              (br $push_loop)))
+          ;; Last slot: consume iteratively as the new $p, free the
+          ;; current block, re-enter $outer with $p := child.
+          (local.set $i
+            (i32.load
+              (i32.add (local.get $p) (i32.shl (local.get $shape) (i32.const 2)))))
+          (call $__free (local.get $p))
+          (local.set $p (local.get $i))
+          (br $outer))
+        ;; Pop the next pending pointer; exit on empty.
+        (local.set $top (global.get $__wl_top))
+        (br_if $done (i32.eqz (local.get $top)))
+        (local.set $top (i32.sub (local.get $top) (i32.const 1)))
+        (global.set $__wl_top (local.get $top))
+        (local.set $p
+          (i32.load
+            (i32.add (global.get $__wl_buf) (i32.shl (local.get $top) (i32.const 2)))))
+        (br $outer))))
 
 
   (func $__memcpy (param $dst i32) (param $src i32) (param $len i32)

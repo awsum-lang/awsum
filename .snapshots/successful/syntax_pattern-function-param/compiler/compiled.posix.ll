@@ -1,5 +1,6 @@
 ; External C declarations
 declare ptr @malloc(i64)
+declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
 declare i64 @strlen(ptr)
@@ -52,27 +53,56 @@ skip_inc:
   ret void
 }
 
+@__free_worklist = internal global ptr null
+@__free_worklist_top = internal global i64 0
+@__free_worklist_cap = internal global i64 0
+
+define internal void @__free_worklist_push(ptr %p) {
+entry:
+  %top = load i64, ptr @__free_worklist_top
+  %cap = load i64, ptr @__free_worklist_cap
+  %is_full = icmp eq i64 %top, %cap
+  br i1 %is_full, label %grow, label %store
+grow:
+  %cap_zero = icmp eq i64 %cap, 0
+  %doubled = shl i64 %cap, 1
+  %new_cap = select i1 %cap_zero, i64 16, i64 %doubled
+  %bytes = mul i64 %new_cap, 8
+  %old_buf = load ptr, ptr @__free_worklist
+  %new_buf = call ptr @realloc(ptr %old_buf, i64 %bytes)
+  store ptr %new_buf, ptr @__free_worklist
+  store i64 %new_cap, ptr @__free_worklist_cap
+  br label %store
+store:
+  %buf = load ptr, ptr @__free_worklist
+  %slot = getelementptr ptr, ptr %buf, i64 %top
+  store ptr %p, ptr %slot
+  %top_new = add i64 %top, 1
+  store i64 %top_new, ptr @__free_worklist_top
+  ret void
+}
+
 define internal void @__free_recursive(ptr %p_arg) {
 entry:
   br label %top
 top:
-  %p = phi ptr [ %p_arg, %entry ], [ %p_next, %tail_jump ]
+  %p = phi ptr [ %p_arg, %entry ], [ %p_after, %continue ]
   %hdr_ptr = getelementptr i8, ptr %p, i64 -12
   %flag = load i32, ptr %hdr_ptr
   %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_dec, label %skip_dec
+  br i1 %is_heap, label %do_dec, label %try_pop
 do_dec:
   %rc_p = getelementptr i8, ptr %p, i64 -8
   %rc_old = load i32, ptr %rc_p
   %rc_new = sub i32 %rc_old, 1
   store i32 %rc_new, ptr %rc_p
   %is_zero = icmp eq i32 %rc_new, 0
-  br i1 %is_zero, label %do_cascade, label %skip_dec
+  br i1 %is_zero, label %do_cascade, label %try_pop
 do_cascade:
   %shape_p = getelementptr i8, ptr %p, i64 -4
   %shape = load i32, ptr %shape_p
   %shape_zero = icmp eq i32 %shape, 0
-  br i1 %shape_zero, label %loop_done, label %loop_check
+  br i1 %shape_zero, label %free_and_pop, label %loop_check
 loop_check:
   %i = phi i32 [ 1, %do_cascade ], [ %i_next, %loop_body ]
   %cmp = icmp ult i32 %i, %shape
@@ -81,21 +111,33 @@ loop_body:
   %i64 = zext i32 %i to i64
   %slot_p = getelementptr ptr, ptr %p, i64 %i64
   %child = load ptr, ptr %slot_p
-  call void @__free_recursive(ptr %child)
+  call void @__free_worklist_push(ptr %child)
   %i_next = add i32 %i, 1
   br label %loop_check
 tail_jump_prep:
   %shape64 = zext i32 %shape to i64
   %last_slot_p = getelementptr ptr, ptr %p, i64 %shape64
-  %p_next = load ptr, ptr %last_slot_p
+  %p_next_tail = load ptr, ptr %last_slot_p
   call void @free(ptr %hdr_ptr)
-  br label %tail_jump
-tail_jump:
+  br label %continue
+free_and_pop:
+  call void @free(ptr %hdr_ptr)
+  br label %try_pop
+try_pop:
+  %top_old = load i64, ptr @__free_worklist_top
+  %is_empty = icmp eq i64 %top_old, 0
+  br i1 %is_empty, label %done, label %do_pop
+do_pop:
+  %top_new = sub i64 %top_old, 1
+  store i64 %top_new, ptr @__free_worklist_top
+  %wl_buf = load ptr, ptr @__free_worklist
+  %wl_slot = getelementptr ptr, ptr %wl_buf, i64 %top_new
+  %p_popped = load ptr, ptr %wl_slot
+  br label %continue
+continue:
+  %p_after = phi ptr [ %p_next_tail, %tail_jump_prep ], [ %p_popped, %do_pop ]
   br label %top
-loop_done:
-  call void @free(ptr %hdr_ptr)
-  br label %skip_dec
-skip_dec:
+done:
   ret void
 }
 
