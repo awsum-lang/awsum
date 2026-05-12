@@ -1,0 +1,7 @@
+{- Direct test of `showUnpairedUtf16Surrogate`: renders the sentinel
+   returned by `IO.Args.getArgs` on inputs containing an unpaired
+   UTF-16 surrogate. -}
+import IO.Stdout
+
+main : IO Never Unit
+main = IO.Stdout.print (showUnpairedUtf16Surrogate UnpairedUtf16Surrogate)

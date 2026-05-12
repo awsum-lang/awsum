@@ -1,0 +1,6 @@
+{- Direct test of `showParseError`: renders the sentinel returned by
+   `parseInt32` / `parseUInt8` / `parseUInt32` on malformed input. -}
+import IO.Stdout
+
+main : IO Never Unit
+main = IO.Stdout.print (showParseError ParseError)

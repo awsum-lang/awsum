@@ -1,0 +1,24 @@
+{- Direct test of `mapRight`: maps the success value of an Either,
+   leaving the Left arm unchanged. -}
+import IO.Stdout
+
+type Err = Err
+
+ok : Either Err Int32
+ok = Right 10
+
+bad : Either Err Int32
+bad = Left Err
+
+main : IO Never Unit
+main =
+  let mappedOk : Either Err Int32 = mapRight ok (\n -> n)
+      mappedBad : Either Err Int32 = mapRight bad (\n -> n)
+      msg : Either StringTooLong String = case mappedOk of
+        Left Err -> Right "ok-Err"
+        Right n -> case mappedBad of
+          Left Err -> "ok-Right " ++ showInt32 n
+          Right _m -> Right "bad-Right"
+   in case msg of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

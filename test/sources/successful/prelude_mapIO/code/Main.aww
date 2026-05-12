@@ -1,0 +1,12 @@
+{- Direct test of `mapIO`: rewrites the success value of an IO
+   action while preserving the IO tree structure. The pure source
+   is composed with `bindIO` and the platform built-in
+   `IO.Stdout.print` passed as a value — this shape relies on the
+   built-in eta-wrapper lowering to compile correctly. -}
+import IO.Stdout
+
+source : IO Never String
+source = pureIO "before"
+
+main : IO Never Unit
+main = bindIO (mapIO source (\_s -> "after")) IO.Stdout.print
