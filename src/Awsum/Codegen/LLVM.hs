@@ -94,7 +94,7 @@ llvmHostLinkerFlags = \case
   -- (e.g. continuation $k in slot 1) still recurse. 256 MiB
   -- covers a few-million-deep chain at one i64 ptr per frame
   -- with room for the actual call-graph above.
-  LLVMPosix -> ["-Wl,-stack_size,0x10000000"]
+  LLVMPosix -> ["-Wl,--stack_size,0x10000000"]
   LLVMWindows -> ["-lshell32", "-lkernel32"]
 
 -- | Produce a complete LLVM IR module from a Core program for a given host.
