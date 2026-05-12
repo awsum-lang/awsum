@@ -1,5 +1,5 @@
 (* Awsum surface grammar — EBNF.
-   Applies-to: Awsum 0.0.3
+   Applies-to: Awsum 0.0.4
 *)
 
 Program             = { Import }, { TopItem , Terminator }, [ Terminator ] ;
