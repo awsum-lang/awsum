@@ -332,11 +332,12 @@ runOnTarget progType target ptags core input = case target of
       -- the PATH-resolved 'clang' points at an outdated LLVM (e.g. GHC's
       -- bundled mingw clang on Windows when invoked through Stack).
       clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
-      -- IR shape (POSIX vs Windows footer) and link-host flags are
-      -- separate axes: macOS and Linux share the POSIX footer but
-      -- need different stack-size syntaxes (ld64's -stack_size vs
-      -- ELF's -z stack-size). 'llvmLinkHostFromSystem' detects the
-      -- linker independently of 'llvmHostFromSystem'.
+      -- IR shape (POSIX vs Windows footer) and link-host flags
+      -- are separate axes: macOS and Linux share the POSIX
+      -- footer; Windows needs explicit shell32/kernel32 links
+      -- ('llvmHostLinkerFlags' for the per-host detail).
+      -- 'llvmLinkHostFromSystem' detects the linker
+      -- independently of 'llvmHostFromSystem'.
       (exitClang, stdoutClang, stderrClang) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llPath, "-o", binPath] <> llvmHostLinkerFlags llvmLinkHostFromSystem) ""
       case exitClang of
         ExitFailure n ->
@@ -381,13 +382,7 @@ runOnTarget progType target ptags core input = case target of
     withSystemTempDirectory "awsum" $ \dir -> do
       let wasmPath = dir </> "out.wasm"
       writeFileBS wasmPath (assembleWASM ptags core)
-      -- Bump max wasm stack so '__free_recursive' can cascade
-      -- through deep continuation chains. The iterative
-      -- helper only tail-jumps on the last ptr slot, so non-tail
-      -- children (e.g. continuation $k in slot 1) still recurse.
-      -- 256 MiB covers a few-million-deep chain with one i32 ptr
-      -- per frame plus room for the actual call-graph above.
-      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" ["-W", "max-wasm-stack=268435456", wasmPath, toString input] ""
+      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
       case exit of
         ExitSuccess -> putTextLn (toText stdoutS)
         ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)

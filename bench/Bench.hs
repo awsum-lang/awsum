@@ -194,7 +194,7 @@ runOne :: Int -> FilePath -> Artifacts -> Backend -> IO RunResult
 runOne t _dir a LLVM = runWithStats t a.aLLVMBin []
 runOne t _dir a JVM = runWithStats t "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", a.aJVMDir, "AwsumMain"]
 runOne t _dir a CLR = runWithStats t "dotnet" [a.aCLRDll]
-runOne t _dir a WASM = runWithStats t "wasmtime" ["-W", "max-wasm-stack=268435456", a.aWASM]
+runOne t _dir a WASM = runWithStats t "wasmtime" [a.aWASM]
 runOne t _dir a JS = runWithStats t "node" [a.aJS]
 
 -- | Wrap a command with @\/usr\/bin\/time -l gtimeout TIMEOUT@ and

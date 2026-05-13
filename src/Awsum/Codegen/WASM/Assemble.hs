@@ -125,8 +125,8 @@ opI32GeS = 0x4E
 -- 'CDrop' until full RC lands on WASM binary). Defining the
 -- index here documents the runtime ABI and stops GHC from
 -- warning that the binding is unused.
-_referenceIdxFreeForFutureUse :: (Word32, Word32, Word32, Word32)
-_referenceIdxFreeForFutureUse = (idxFree, idxAllocShaped, idxIncRef, idxFreeRecursive)
+_referenceIdxFreeForFutureUse :: (Word32, Word32, Word32, Word32, Word32)
+_referenceIdxFreeForFutureUse = (idxFree, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush)
 
 -- Ctz / Clz / Shl / LeU / Return for '$__alloc' and '$__free'
 -- freelist arithmetic.
@@ -209,15 +209,16 @@ importCount = 3
 -- __splitOnFirst, __parseInt32, __parseUInt8, __parseUInt32,
 -- __lengthCodePoints, __lengthUtf16CodeUnits, __lengthUtf8Bytes,
 -- __get_arg, __entryArgEither, __utf16_of_range, __getArgs,
--- __alloc_shaped, __inc_ref, __free_recursive
+-- __alloc_shaped, __inc_ref, __free_recursive, __free_worklist_push
 runtimeCount :: Word32
-runtimeCount = 39
+runtimeCount = 40
 
 -- Runtime helper function indices (after imports). '$__free' slots
 -- in right after '$__alloc'. The RC helpers (@__alloc_shaped,
--- __inc_ref, __free_recursive@) sit at the end so the earlier
--- indices stay stable when new helpers are appended.
-idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxAllocShaped, idxIncRef, idxFreeRecursive :: Word32
+-- __inc_ref, __free_recursive, __free_worklist_push@) sit at the
+-- end so the earlier indices stay stable when new helpers are
+-- appended.
+idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush :: Word32
 idxAlloc = importCount
 idxFree = importCount + 1
 idxMemcpy = importCount + 2
@@ -257,6 +258,7 @@ idxGetArgs = importCount + 35
 idxAllocShaped = importCount + 36
 idxIncRef = importCount + 37
 idxFreeRecursive = importCount + 38
+idxFreeWorklistPush = importCount + 39
 
 buildInfo :: PreludeTags -> CoreProgram -> WasmInfo
 buildInfo ptags prog@(CoreProgram decls) =
@@ -412,7 +414,8 @@ buildTypeSection info (CoreProgram decls) =
                FuncType 2 True, -- __utf16_of_range(p, len) (dedup with __concat)
                FuncType 2 True, -- __alloc_shaped(size, shape)->i32 (dedup with __concat)
                FuncType 1 False, -- __inc_ref(p)->void (dedup with __free)
-               FuncType 1 False -- __free_recursive(p)->void (dedup with __free)
+               FuncType 1 False, -- __free_recursive(p)->void (dedup with __free)
+               FuncType 1 False -- __free_worklist_push(p)->void (dedup with __free)
              ]
           -- User functions
           <> [funcTypeOfDecl d | d <- decls]
@@ -505,7 +508,8 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 0 True) typeMap, -- __getArgs
           lookupType (FuncType 2 True) typeMap, -- __alloc_shaped
           lookupType (FuncType 1 False) typeMap, -- __inc_ref
-          lookupType (FuncType 1 False) typeMap -- __free_recursive
+          lookupType (FuncType 1 False) typeMap, -- __free_recursive
+          lookupType (FuncType 1 False) typeMap -- __free_worklist_push
         ]
           -- User declarations
           <> [lookupType (funcTypeOfDecl d) typeMap | d <- decls]
@@ -560,12 +564,24 @@ wasmPageSize = 65536
 
 buildGlobalSection :: WasmInfo -> [Word8]
 buildGlobalSection info =
-  let content =
+  let mutI32Init :: Int -> [Word8]
+      mutI32Init initial =
+        [valtypeI32, 0x01]
+          <> [opI32Const]
+          <> encodeSLEB128 (fromIntegral initial)
+          <> [opEnd]
+      content =
         encodeVec
-          [ [valtypeI32, 0x01] -- i32, mutable
-              <> [opI32Const]
-              <> encodeSLEB128 (fromIntegral info.wiHeapStart)
-              <> [opEnd]
+          [ mutI32Init info.wiHeapStart,
+            -- '$__wl_buf' / '$__wl_top' / '$__wl_cap': worklist
+            -- state backing '$__free_recursive' — see the matching
+            -- WAT comment in 'Awsum.Codegen.WASM.global'. Indices
+            -- 1 / 2 / 3 in the global section; the existing
+            -- '$heap' stays at index 0 so '__alloc' / bump-path
+            -- references remain valid.
+            mutI32Init 0,
+            mutI32Init 0,
+            mutI32Init 0
           ]
    in buildSection 6 content
 
@@ -648,7 +664,8 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeGetArgs,
           codeAllocShaped,
           codeIncRef,
-          codeFreeRecursive
+          codeFreeRecursive,
+          codeFreeWorklistPush
         ]
           -- User declarations
           <> map (codeUserDecl info typeMap) decls
@@ -924,23 +941,36 @@ codeIncRef =
       ]
 
 -- '$__free_recursive(p)' dec's refcount at @p - 8@. On
--- hitting 0 it reads shape at @p - 4@ and recurses on slots
--- 1..shape-1, then tail-jumps on slot[shape] (linear chains
--- unwind without growing the system stack), finally returning
--- the block via '$__free'. Literals (flag == 0) short-circuit.
+-- hitting 0 it reads shape at @p - 4@ and cascades: non-last
+-- children are pushed onto the global worklist (see
+-- '$__free_worklist_push' / WAT 'rtFreeRecursive' for the matching
+-- text-form rationale); the last slot is taken as the new @$p@ in
+-- the outer loop and the current block is returned to its bin via
+-- '$__free'. When the current cell needs no further work
+-- (literal, refcount > 0, or shape == 0) the helper pops the next
+-- pending pointer from the worklist; on an empty worklist it
+-- returns. The system-stack footprint is O(1) regardless of
+-- cascade shape: deep frontiers grow the worklist (heap), not
+-- the stack. Awsum immutability keeps the cell graph acyclic so
+-- the cascade terminates.
 --
 -- Locals (in addition to '$p' param at slot 0):
 --   slot 1 = $flag
 --   slot 2 = $rc
 --   slot 3 = $shape
---   slot 4 = $i
+--   slot 4 = $i (push-loop index, then tail-jump child temp)
+--   slot 5 = $top (worklist top during pop)
 codeFreeRecursive :: [Word8]
 codeFreeRecursive =
-  encodeBody (encodeLocals 4)
+  encodeBody (encodeLocals 5)
     $ concat
-      [ -- Outer loop for tail-jump on the last ptr slot.
+      [ -- (block $done   — outermost wrapper, br depth N+1 from any
+        --                  enclosed point exits the helper.
+        [opBlock, blocktypeVoid],
+        -- (loop $outer   — re-entered for every new @$p@ (tail-jump
+        --                  or worklist pop).
         [opLoop, blocktypeVoid],
-        -- flag = load (p - 12); if 0, return.
+        -- Load: flag = (p - 12)
         [opLocalGet],
         encodeULEB128 0,
         [opI32Const],
@@ -949,13 +979,18 @@ codeFreeRecursive =
         [opI32Load, 0x02, 0x00],
         [opLocalSet],
         encodeULEB128 1,
+        -- (block $next   — fall-through here moves to the pop
+        --                  section. br $next (depth 0 from inside)
+        --                  is the "this cell needs no cascading
+        --                  work" exit.
+        [opBlock, blocktypeVoid],
+        -- br_if to next if flag == 0 (literal short-circuit)
         [opLocalGet],
         encodeULEB128 1,
         [opI32Eqz],
-        [opIf, blocktypeVoid],
-        [opReturn],
-        [opEnd],
-        -- rc = load (p - 8) - 1; store; if rc != 0, return.
+        [opBrIf],
+        encodeULEB128 0,
+        -- Load: rc = (p - 8) - 1
         [opLocalGet],
         encodeULEB128 0,
         [opI32Const],
@@ -967,6 +1002,7 @@ codeFreeRecursive =
         [opI32Sub],
         [opLocalSet],
         encodeULEB128 2,
+        -- store(p - 8, $rc)
         [opLocalGet],
         encodeULEB128 0,
         [opI32Const],
@@ -975,12 +1011,12 @@ codeFreeRecursive =
         [opLocalGet],
         encodeULEB128 2,
         [opI32Store, 0x02, 0x00],
+        -- br_if $next if $rc != 0 (still shared)
         [opLocalGet],
         encodeULEB128 2,
-        [opIf, blocktypeVoid],
-        [opReturn],
-        [opEnd],
-        -- shape = load (p - 4)
+        [opBrIf],
+        encodeULEB128 0,
+        -- Load: shape = (p - 4)
         [opLocalGet],
         encodeULEB128 0,
         [opI32Const],
@@ -989,7 +1025,8 @@ codeFreeRecursive =
         [opI32Load, 0x02, 0x00],
         [opLocalSet],
         encodeULEB128 3,
-        -- if shape == 0: __free(p); return.
+        -- if $shape == 0: __free(p); br $next (depth 1 from inside
+        -- the (if (then ...)): 0=if, 1=$next).
         [opLocalGet],
         encodeULEB128 3,
         [opI32Eqz],
@@ -998,16 +1035,19 @@ codeFreeRecursive =
         encodeULEB128 0,
         [opCall],
         encodeULEB128 idxFree,
-        [opReturn],
-        [opEnd],
-        -- Recurse on slots 1..shape-1. i = 1; while (i < shape) { ... }
+        [opBr],
+        encodeULEB128 1,
+        [opEnd], -- end if
+        -- Push children at slots 1..shape-1 onto the worklist.
+        -- Init: i = 1
         [opI32Const],
         encodeSLEB128 1,
         [opLocalSet],
         encodeULEB128 4,
+        -- (block $push_break (loop $push_loop ...))
         [opBlock, blocktypeVoid],
         [opLoop, blocktypeVoid],
-        -- if i >= shape: break.
+        -- br_if $push_break (depth 1) if $i >= $shape
         [opLocalGet],
         encodeULEB128 4,
         [opLocalGet],
@@ -1015,7 +1055,7 @@ codeFreeRecursive =
         [opI32GeU],
         [opBrIf],
         encodeULEB128 1,
-        -- call __free_recursive(load(p + i*4))
+        -- call $__free_worklist_push(load(p + i*4))
         [opLocalGet],
         encodeULEB128 0,
         [opLocalGet],
@@ -1026,8 +1066,8 @@ codeFreeRecursive =
         [opI32Add],
         [opI32Load, 0x02, 0x00],
         [opCall],
-        encodeULEB128 idxFreeRecursive,
-        -- i = i + 1
+        encodeULEB128 idxFreeWorklistPush,
+        -- i++
         [opLocalGet],
         encodeULEB128 4,
         [opI32Const],
@@ -1035,12 +1075,13 @@ codeFreeRecursive =
         [opI32Add],
         [opLocalSet],
         encodeULEB128 4,
+        -- br $push_loop (depth 0)
         [opBr],
         encodeULEB128 0,
-        [opEnd], -- end loop
-        [opEnd], -- end block
-        -- Tail-jump on slot[shape]: load child = load(p + shape*4),
-        -- __free(p), p := child, continue outer loop.
+        [opEnd], -- end $push_loop
+        [opEnd], -- end $push_break
+        -- Tail-jump: $i = load(p + shape*4); __free(p); p = $i;
+        -- br $outer (depth 1: 0=$next, 1=$outer).
         [opLocalGet],
         encodeULEB128 0,
         [opLocalGet],
@@ -1051,18 +1092,218 @@ codeFreeRecursive =
         [opI32Add],
         [opI32Load, 0x02, 0x00],
         [opLocalSet],
-        encodeULEB128 1, -- reuse slot 1 (flag) as temp; we re-read flag at loop top
+        encodeULEB128 4,
         [opLocalGet],
         encodeULEB128 0,
         [opCall],
         encodeULEB128 idxFree,
         [opLocalGet],
-        encodeULEB128 1,
+        encodeULEB128 4,
         [opLocalSet],
         encodeULEB128 0,
         [opBr],
+        encodeULEB128 1,
+        [opEnd], -- end $next
+        -- Pop section (control falls here on flag == 0 / rc != 0 /
+        -- shape == 0). Try to pop the next pointer; if the
+        -- worklist is empty, exit via $done.
+        -- Load: top = global __wl_top
+        [opGlobalGet],
+        encodeULEB128 2,
+        [opLocalSet],
+        encodeULEB128 5,
+        -- br_if $done (depth 1: 0=$outer, 1=$done) if top == 0
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1,
+        -- Decrement: top = top - 1; __wl_top = top
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Sub],
+        [opLocalSet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opGlobalSet],
+        encodeULEB128 2,
+        -- Load: p = (__wl_buf + top*4)
+        [opGlobalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
         encodeULEB128 0,
-        [opEnd] -- end outer loop
+        -- br $outer (depth 0)
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end $outer
+        [opEnd] -- end $done
+      ]
+
+-- '$__free_worklist_push(p)' appends @$p@ onto the worklist
+-- buffer pointed to by '$__wl_buf' (i32 indices: 0=$heap,
+-- 1=$__wl_buf, 2=$__wl_top, 3=$__wl_cap). Grows the buffer
+-- (initial 16 entries, doubles thereafter) when @$top == $cap@.
+-- Old buffers that fit a size class (≤ 4096 bytes ⇔ ≤ 1024
+-- entries) are returned to the bin via '$__free' on grow; larger
+-- ones leak — total leak stays ≤ 2× current capacity because
+-- doubling halves each predecessor.
+--
+-- Locals (in addition to '$p' param at slot 0):
+--   slot 1 = $top
+--   slot 2 = $cap
+--   slot 3 = $new_cap
+--   slot 4 = $new_buf
+--   slot 5 = $old_buf
+--   slot 6 = $i (copy-loop index)
+codeFreeWorklistPush :: [Word8]
+codeFreeWorklistPush =
+  encodeBody (encodeLocals 6)
+    $ concat
+      [ -- Load: top = global __wl_top
+        [opGlobalGet],
+        encodeULEB128 2,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- Load: cap = global __wl_cap
+        [opGlobalGet],
+        encodeULEB128 3,
+        [opLocalSet],
+        encodeULEB128 2,
+        -- if top == cap: grow
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        -- Pick new_cap = (cap == 0) ? 16 : (cap << 1)
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Eqz],
+        [opIf, blocktypeI32],
+        [opI32Const],
+        encodeSLEB128 16,
+        [opElse],
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Shl],
+        [opEnd], -- end if blocktypeI32
+        [opLocalSet],
+        encodeULEB128 3,
+        -- Alloc: new_buf = __alloc_shaped(new_cap << 2, 0)
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Const],
+        encodeSLEB128 0,
+        [opCall],
+        encodeULEB128 idxAllocShaped,
+        [opLocalSet],
+        encodeULEB128 4,
+        -- Stash: old_buf = global __wl_buf
+        [opGlobalGet],
+        encodeULEB128 1,
+        [opLocalSet],
+        encodeULEB128 5,
+        -- Copy old contents: for i in 0..top: new_buf[i*4] = old_buf[i*4]
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        -- br_if $copy_break (depth 1) if i >= top
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32GeU],
+        [opBrIf],
+        encodeULEB128 1,
+        -- new_buf[i*4] = old_buf[i*4]
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opLocalGet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opI32Store, 0x02, 0x00],
+        -- i++
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 6,
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block $copy_break
+        -- if old_buf != 0: __free(old_buf)
+        [opLocalGet],
+        encodeULEB128 5,
+        [opIf, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 5,
+        [opCall],
+        encodeULEB128 idxFree,
+        [opEnd],
+        -- Store: __wl_buf = new_buf; __wl_cap = new_cap
+        [opLocalGet],
+        encodeULEB128 4,
+        [opGlobalSet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opGlobalSet],
+        encodeULEB128 3,
+        [opEnd], -- end if (top == cap)
+        -- Store: __wl_buf[top*4] = p
+        [opGlobalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Store, 0x02, 0x00],
+        -- Store: __wl_top = top + 1
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opGlobalSet],
+        encodeULEB128 2
       ]
 
 -- '$__free(p)' returns a block to the matching bin

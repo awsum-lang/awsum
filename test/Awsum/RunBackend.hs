@@ -127,11 +127,10 @@ compileLLVMBin code = do
   -- at the wrong LLVM, e.g. Stack on Windows prepending GHC's bundled
   -- mingw clang) pin an absolute path. Empty/unset → fall back to PATH.
   clangPath <- fromMaybe "clang" . mfilter (not . null) <$> lookupEnv "AWSUM_CLANG"
-  -- Linker flags come from the link-host axis ('LLVMLinkHost'), not
-  -- the IR-shape axis ('LLVMHost'): macOS and Linux share the POSIX
-  -- IR footer but use incompatible stack-size flag syntaxes (ld64's
-  -- '-stack_size' vs ELF's '-z stack-size'). See awsum/Main.hs for
-  -- the same split on the CLI side.
+  -- Linker flags come from the link-host axis ('LLVMLinkHost'),
+  -- not the IR-shape axis ('LLVMHost'): macOS and Linux share
+  -- the POSIX IR footer; Windows needs explicit shell32/kernel32
+  -- links. See awsum/Main.hs for the same split on the CLI side.
   (ec, out, err) <- readProcessWithExitCode clangPath (["-O2", "-Wno-override-module", llFile, "-o", binFile] <> llvmHostLinkerFlags llvmLinkHostFromSystem) ""
   case ec of
     ExitFailure n ->
@@ -223,9 +222,7 @@ runWASM :: ByteString -> Text -> IO (Either Text Text)
 runWASM wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
   let wasmFile = dir </> "out.wasm"
   writeFileBS wasmFile wasmBytes
-  -- Bump max wasm stack so '__free_recursive' cascades through
-  -- deep chains without overflowing — see Main.hs comment.
-  eRes <- try @IOException (readProcessWithExitCode "wasmtime" ["-W", "max-wasm-stack=268435456", wasmFile, toString input] "")
+  eRes <- try @IOException (readProcessWithExitCode "wasmtime" [wasmFile, toString input] "")
   case eRes of
     Left ex -> pure (Left ("failed to start wasmtime: " <> show ex))
     Right (ExitSuccess, out, _) -> pure (Right (toText out))

@@ -60,7 +60,9 @@ Four helpers are emitted once per program (gated on whether the program referenc
   - LLVM: if `flag == 1`, call libc `free(p - 12)`; otherwise no-op.
   - WASM: if `flag == 0`, no-op; if `flag > 4096`, leak (no matching bin); otherwise push the block onto `bin[flag]`, storing the previous head as the next-pointer at block offset 8 (`user_ptr - 4`).
 - **`__inc_ref(p)`** — increment the refcount at `user_ptr - 8`. No-op on literals (`flag == 0`).
-- **`__free_recursive(p)`** — decrement the refcount. On reaching zero, read `shape`, recurse on slots `1..shape-1`, then return the block via `__free`. For linear chains (lists, continuation chains) the last pointer slot is tail-jumped iteratively in the helper itself so the system stack does not grow with chain depth. Immutability makes the cell graph acyclic, so the recursion terminates.
+- **`__free_recursive(p)`** — decrement the refcount. On reaching zero, read `shape`, push slots `1..shape-1` onto the global worklist (see below), iterate the outer loop with `slot[shape]` as the new `p`, and return the current block via `__free`. When the current cell does no cascading work (literal, refcount > 0, shape == 0) the helper pops the next pending pointer from the worklist; on empty it returns. System-stack footprint is O(1) regardless of cascade shape. Immutability makes the cell graph acyclic, so the cascade terminates.
+
+  The worklist lives off the system stack — a heap-allocated pointer buffer, doubled on overflow (initial 16 entries), single-threaded global state shared across all `__free_recursive` calls. On LLVM, three module-level globals (`@__free_worklist`, `@__free_worklist_top`, `@__free_worklist_cap`) plus a `@__free_worklist_push` helper backed by `realloc`. On WASM, three WASM globals (`$__wl_buf`, `$__wl_top`, `$__wl_cap`) plus a `$__free_worklist_push` helper backed by `__alloc_shaped` (old buffers ≤ 4096 bytes return to a bin via `__free`; larger ones leak with total leak ≤ 2× current capacity because doubling halves each predecessor). `top` is 0 between every top-level `__free_recursive` call — the helper drains its own pushes before returning — so no state leaks across calls. Awsum is single-threaded and runtime helpers never call user code, so the global buffer is non-reentrant by construction.
 
 ## The inc/dec discipline
 
@@ -92,10 +94,9 @@ A third class of decs — for parameters that survive to a non-`CContinue` termi
 
 ## Stack safety of the cascade
 
-`__free_recursive` walks linear chains iteratively (tail-jumping on the last pointer slot) and recurses on earlier slots. To absorb the residual recursion on cells with more than one pointer field at deep nesting, both targets reserve a large reclamation stack:
+`__free_recursive` makes O(1) use of the system stack on every cascade shape: non-last children of cells with `shape > 1` are pushed onto the global worklist (see the `__free_recursive(p)` entry above) and processed in the helper's own outer loop, instead of recursed via `call __free_recursive`. The previous implementation tail-jumped only on the last slot and called recursively on the rest; that required a 256 MiB stack reservation (`-Wl,-stack_size,0x10000000` on POSIX, `-W max-wasm-stack=268435456` on wasmtime) sized to the *iteration count*, which is wrong — stack size should be a function of the program, not of how many times its loops run. With the worklist the reservation is gone; platform-default stacks (typically 8 MiB on POSIX, 1 MiB inside wasmtime) cover the residual user-call graph already bounded by [Awsum.StackSafety](../src/Awsum/StackSafety.hs).
 
-- LLVM links with `-Wl,-stack_size,0x10000000` on POSIX (256 MiB).
-- The test runner and `awsum run -t wasm` invoke `wasmtime` with `-W max-wasm-stack=268435456` (256 MiB).
+The worklist itself grows on the heap with each cascade's max in-flight frontier — a function of data shape, not iteration count.
 
 ## Cell reuse
 

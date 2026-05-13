@@ -116,16 +116,21 @@ llvmLinkHostFromSystem
 --   Harmless on mingw-w64 (already in the auto-link line).
 llvmHostLinkerFlags :: LLVMLinkHost -> [String]
 llvmHostLinkerFlags = \case
-  -- Bump the link-time stack size so '__free_recursive' can
-  -- cascade through deep continuation chains without
-  -- overflowing. POSIX default thread stack is 512 KiB-8 MiB
-  -- depending on platform; the iterative tail-jump in the runtime
-  -- helper only covers the last ptr slot, so non-tail children
-  -- (e.g. continuation $k in slot 1) still recurse. 256 MiB
-  -- covers a few-million-deep chain at one i64 ptr per frame
-  -- with room for the actual call-graph above.
-  LinkMacOS -> ["-Wl,-stack_size,0x10000000"]
-  LinkLinux -> ["-Wl,-z,stack-size=0x10000000"]
+  -- POSIX hosts need nothing beyond the toolchain default: the
+  -- runtime helper '@__free_recursive' uses a global heap-backed
+  -- worklist for non-last cascade children, so its C-stack
+  -- footprint is O(1) regardless of data shape or iteration
+  -- count. The platform-default 8 MiB thread stack is enough for
+  -- the remaining user call graph (already shaped to bounded
+  -- depth by 'Awsum.StackSafety').
+  LinkMacOS -> []
+  LinkLinux -> []
+  -- Windows needs explicit @-lshell32 -lkernel32@ because
+  -- 'footerWindows' calls 'CommandLineToArgvW' and friends —
+  -- mingw-w64 auto-links those, but MSVC's CRT only carries kernel32,
+  -- so the explicit flag is what closes
+  -- @LNK2019: unresolved external symbol CommandLineToArgvW@.
+  -- Harmless on mingw-w64 (already in the auto-link line).
   LinkWindows -> ["-lshell32", "-lkernel32"]
 
 -- | Produce a complete LLVM IR module from a Core program for a given host.
@@ -317,6 +322,7 @@ header builtIns =
   unlines
     $ [ "; External C declarations",
         "declare ptr @malloc(i64)",
+        "declare ptr @realloc(ptr, i64)",
         "declare void @free(ptr)",
         "declare ptr @memcpy(ptr, ptr, i64)",
         -- 'strlen' is used only at the boundary between OS argv[1]
@@ -430,40 +436,93 @@ header builtIns =
          "  ret void",
          "}",
          "",
+         -- '@__free_worklist' / '@__free_worklist_top' /
+         -- '@__free_worklist_cap' back '@__free_recursive''s
+         -- cascade. Non-last children of cells with shape > 1 go
+         -- onto this heap-backed buffer instead of the C stack;
+         -- the helper drains the buffer in its own outer loop, so
+         -- system-stack usage is O(1) independent of cascade
+         -- shape. Storage is single-threaded (Awsum is
+         -- single-threaded; the helper never calls user code) and
+         -- reused across every '@__free_recursive' invocation;
+         -- 'top' returns to 0 by the time the helper returns, so
+         -- no state leaks between top-level calls. Buffer doubles
+         -- on overflow ('realloc'); it is never shrunk because
+         -- past peak depth is a good predictor of future peak
+         -- depth.
+         "@__free_worklist = internal global ptr null",
+         "@__free_worklist_top = internal global i64 0",
+         "@__free_worklist_cap = internal global i64 0",
+         "",
+         -- Push @%p@ onto '@__free_worklist'. Grows the buffer
+         -- (initial 16 entries, doubles thereafter) when @top ==
+         -- cap@; otherwise reuses the existing allocation. Each
+         -- entry is a pointer (8 bytes on the only platform LLVM
+         -- targets here).
+         "define internal void @__free_worklist_push(ptr %p) {",
+         "entry:",
+         "  %top = load i64, ptr @__free_worklist_top",
+         "  %cap = load i64, ptr @__free_worklist_cap",
+         "  %is_full = icmp eq i64 %top, %cap",
+         "  br i1 %is_full, label %grow, label %store",
+         "grow:",
+         "  %cap_zero = icmp eq i64 %cap, 0",
+         "  %doubled = shl i64 %cap, 1",
+         "  %new_cap = select i1 %cap_zero, i64 16, i64 %doubled",
+         "  %bytes = mul i64 %new_cap, 8",
+         "  %old_buf = load ptr, ptr @__free_worklist",
+         "  %new_buf = call ptr @realloc(ptr %old_buf, i64 %bytes)",
+         "  store ptr %new_buf, ptr @__free_worklist",
+         "  store i64 %new_cap, ptr @__free_worklist_cap",
+         "  br label %store",
+         "store:",
+         "  %buf = load ptr, ptr @__free_worklist",
+         "  %slot = getelementptr ptr, ptr %buf, i64 %top",
+         "  store ptr %p, ptr %slot",
+         "  %top_new = add i64 %top, 1",
+         "  store i64 %top_new, ptr @__free_worklist_top",
+         "  ret void",
+         "}",
+         "",
          -- '@__free_recursive' decrements the refcount of
-         -- @user_ptr@. When the refcount reaches 0, it reads @shape@
-         -- (number of ptr fields starting at slot 1) and recursively
-         -- frees each child before reclaiming the block itself via
-         -- libc 'free'. Literals (flag == 0) are unaffected. The
-         -- cascade is safe under Awsum's immutability invariant: a
-         -- cell can only reference cells allocated before it, so
-         -- the graph is acyclic.
+         -- @user_ptr@. When the refcount reaches 0 it reads
+         -- @shape@ (number of ptr fields starting at slot 1) and
+         -- cascades: non-last children go onto the global
+         -- worklist, the last slot is consumed iteratively as the
+         -- next @p@ in the outer loop, the current block is
+         -- freed via libc 'free'. When the local cell is done
+         -- (cleared, or its refcount stayed > 0, or shape == 0),
+         -- the helper pops the next pointer from the worklist
+         -- and continues; when the worklist is empty, it
+         -- returns. This makes the C-stack footprint O(1)
+         -- regardless of how deep the cascade goes — large
+         -- frontiers grow the worklist (heap) instead of the
+         -- stack. Literals (flag == 0) and live cells (rc > 0)
+         -- pop the next pending without touching the cell
+         -- further. The cascade is safe under Awsum's
+         -- immutability invariant: a cell can only reference
+         -- cells allocated before it, so the graph is acyclic.
          "define internal void @__free_recursive(ptr %p_arg) {",
          "entry:",
          "  br label %top",
          "top:",
-         -- Walk linked-list-shaped cascade chains iteratively
-         -- (tail-jumping on the last ptr slot) so freeing a deep
-         -- continuation chain doesn't blow the system stack. Cells
-         -- with more than one ptr-field recurse on slots 1..shape-1
-         -- and tail-jump on the final slot.
-         "  %p = phi ptr [ %p_arg, %entry ], [ %p_next, %tail_jump ]",
+         "  %p = phi ptr [ %p_arg, %entry ], [ %p_after, %continue ]",
          "  %hdr_ptr = getelementptr i8, ptr %p, i64 -12",
          "  %flag = load i32, ptr %hdr_ptr",
          "  %is_heap = icmp eq i32 %flag, 1",
-         "  br i1 %is_heap, label %do_dec, label %skip_dec",
+         "  br i1 %is_heap, label %do_dec, label %try_pop",
          "do_dec:",
          "  %rc_p = getelementptr i8, ptr %p, i64 -8",
          "  %rc_old = load i32, ptr %rc_p",
          "  %rc_new = sub i32 %rc_old, 1",
          "  store i32 %rc_new, ptr %rc_p",
          "  %is_zero = icmp eq i32 %rc_new, 0",
-         "  br i1 %is_zero, label %do_cascade, label %skip_dec",
+         "  br i1 %is_zero, label %do_cascade, label %try_pop",
          "do_cascade:",
          "  %shape_p = getelementptr i8, ptr %p, i64 -4",
          "  %shape = load i32, ptr %shape_p",
          "  %shape_zero = icmp eq i32 %shape, 0",
-         "  br i1 %shape_zero, label %loop_done, label %loop_check",
+         "  br i1 %shape_zero, label %free_and_pop, label %loop_check",
          "loop_check:",
          "  %i = phi i32 [ 1, %do_cascade ], [ %i_next, %loop_body ]",
          "  %cmp = icmp ult i32 %i, %shape",
@@ -472,24 +531,38 @@ header builtIns =
          "  %i64 = zext i32 %i to i64",
          "  %slot_p = getelementptr ptr, ptr %p, i64 %i64",
          "  %child = load ptr, ptr %slot_p",
-         "  call void @__free_recursive(ptr %child)",
+         "  call void @__free_worklist_push(ptr %child)",
          "  %i_next = add i32 %i, 1",
          "  br label %loop_check",
          "tail_jump_prep:",
          -- Load the last ptr slot, free the current block, then
-         -- tail-jump on the child. This unwinds deep linear chains
-         -- (continuations, lists) without growing the system stack.
+         -- iterate the outer loop with the child as the new @p@.
+         -- This consumes one cell of any linear chain (lists,
+         -- continuation chains) per outer iteration without
+         -- pushing onto the worklist.
          "  %shape64 = zext i32 %shape to i64",
          "  %last_slot_p = getelementptr ptr, ptr %p, i64 %shape64",
-         "  %p_next = load ptr, ptr %last_slot_p",
+         "  %p_next_tail = load ptr, ptr %last_slot_p",
          "  call void @free(ptr %hdr_ptr)",
-         "  br label %tail_jump",
-         "tail_jump:",
+         "  br label %continue",
+         "free_and_pop:",
+         "  call void @free(ptr %hdr_ptr)",
+         "  br label %try_pop",
+         "try_pop:",
+         "  %top_old = load i64, ptr @__free_worklist_top",
+         "  %is_empty = icmp eq i64 %top_old, 0",
+         "  br i1 %is_empty, label %done, label %do_pop",
+         "do_pop:",
+         "  %top_new = sub i64 %top_old, 1",
+         "  store i64 %top_new, ptr @__free_worklist_top",
+         "  %wl_buf = load ptr, ptr @__free_worklist",
+         "  %wl_slot = getelementptr ptr, ptr %wl_buf, i64 %top_new",
+         "  %p_popped = load ptr, ptr %wl_slot",
+         "  br label %continue",
+         "continue:",
+         "  %p_after = phi ptr [ %p_next_tail, %tail_jump_prep ], [ %p_popped, %do_pop ]",
          "  br label %top",
-         "loop_done:",
-         "  call void @free(ptr %hdr_ptr)",
-         "  br label %skip_dec",
-         "skip_dec:",
+         "done:",
          "  ret void",
          "}"
        ]
