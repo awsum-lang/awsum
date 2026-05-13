@@ -48,7 +48,7 @@ import Common.File (readFileTextUtf8)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Relude
-import System.Directory (doesDirectoryExist, doesFileExist, findExecutable, getCurrentDirectory, listDirectory)
+import System.Directory (doesDirectoryExist, doesFileExist, getCurrentDirectory, listDirectory)
 import System.FilePath ((</>))
 import System.IO (hClose)
 import System.IO.Temp (withSystemTempFile)
@@ -64,7 +64,7 @@ spec = describe "Property tests" $ describe "tree-sitter-awsum" $ do
     Nothing ->
       it "tree-sitter-awsum infrastructure available"
         $ pendingWith
-          "Need `tree-sitter` on PATH and tree-sitter-awsum next to the compiler repo (or TREE_SITTER_AWSUM_DIR set)."
+          "Need a tree-sitter-awsum checkout next to the compiler repo (or TREE_SITTER_AWSUM_DIR set), with `npm ci` already run inside it so node_modules/.bin/tree-sitter exists."
     Just (treeSitter, grammarDir) -> do
       corpusSpec treeSitter grammarDir
       queriesSpec treeSitter grammarDir
@@ -226,9 +226,18 @@ runQueriesOnPath treeSitter grammarDir queryFiles awwPath =
 
 discover :: IO (Maybe (FilePath, FilePath))
 discover = do
-  mTs <- findExecutable "tree-sitter"
   mDir <- findGrammarDir
-  pure $ (,) <$> mTs <*> mDir
+  case mDir of
+    Nothing -> pure Nothing
+    Just dir -> do
+      -- Use the tree-sitter CLI pinned by the grammar's package-lock.json
+      -- (resolved into node_modules/.bin/tree-sitter on `npm ci`). Any global
+      -- `tree-sitter` on PATH may be a different version and would silently
+      -- rewrite src/parser.c's generated-by header — drift this property test
+      -- itself helped surface.
+      let local' = dir </> "node_modules" </> ".bin" </> "tree-sitter"
+      hasLocal <- doesFileExist local'
+      pure $ if hasLocal then Just (local', dir) else Nothing
 
 findGrammarDir :: IO (Maybe FilePath)
 findGrammarDir = do
