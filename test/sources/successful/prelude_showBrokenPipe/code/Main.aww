@@ -1,0 +1,7 @@
+{- Direct test of `showBrokenPipe`: renders the placeholder sentinel
+   reserved for the eventual `IO.Stdout.print : String -> IO BrokenPipe Unit`
+   signature. -}
+import IO.Stdout
+
+main : IO Never Unit
+main = IO.Stdout.print (showBrokenPipe BrokenPipe)

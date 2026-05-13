@@ -81,9 +81,10 @@ opCall = 0x10
 opCallIndirect = 0x11
 opDrop = 0x1A
 
-opLocalGet, opLocalSet, opGlobalGet, opGlobalSet :: Word8
+opLocalGet, opLocalSet, opLocalTee, opGlobalGet, opGlobalSet :: Word8
 opLocalGet = 0x20
 opLocalSet = 0x21
+opLocalTee = 0x22
 opGlobalGet = 0x23
 opGlobalSet = 0x24
 
@@ -118,6 +119,23 @@ opI32RemU = 0x70
 opI32LtS = 0x48
 opI32Xor = 0x73
 opI32GeS = 0x4E
+
+-- Keep '$__free' in the runtime even though no codegen path
+-- currently calls it (transitional stub no-ops every
+-- 'CDrop' until full RC lands on WASM binary). Defining the
+-- index here documents the runtime ABI and stops GHC from
+-- warning that the binding is unused.
+_referenceIdxFreeForFutureUse :: (Word32, Word32, Word32, Word32, Word32)
+_referenceIdxFreeForFutureUse = (idxFree, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush)
+
+-- Ctz / Clz / Shl / LeU / Return for '$__alloc' and '$__free'
+-- freelist arithmetic.
+opI32Clz, opI32Ctz, opI32Shl, opI32LeU, opReturn :: Word8
+opI32Clz = 0x67
+opI32Ctz = 0x68
+opI32Shl = 0x74
+opI32LeU = 0x4D
+opReturn = 0x0F
 
 opI64Const, opI64Add, opI64Sub, opI64Mul, opI64Shl, opI64LtS, opI64GtS, opI64GtU, opI32WrapI64, opI64ExtendI32S, opI64ExtendI32U :: Word8
 opI64Const = 0x42
@@ -183,54 +201,64 @@ storeTagBytes cellLocal tagValue =
 importCount :: Word32
 importCount = 3
 
--- Runtime helper count: __alloc, __memcpy, __concat, __print,
--- __box_i32, __show_i32, __show_u32, __predInt32, __predUInt8, __predUInt32,
--- __succInt32, __succUInt8, __succUInt32, __eq_i32, __addInt32, __subInt32,
--- __mulInt32, __negInt32, __addUInt8, __subUInt8, __mulUInt8, __addUInt32,
--- __subUInt32, __mulUInt32, __splitOnFirst, __parseInt32, __parseUInt8,
--- __parseUInt32, __lengthCodePoints, __lengthUtf16CodeUnits,
--- __lengthUtf8Bytes, __get_arg, __entryArgEither, __utf16_of_range,
--- __getArgs
+-- Runtime helper count: __alloc, __free, __memcpy,
+-- __concat, __print, __box_i32, __show_i32, __show_u32, __predInt32,
+-- __predUInt8, __predUInt32, __succInt32, __succUInt8, __succUInt32,
+-- __eq_i32, __addInt32, __subInt32, __mulInt32, __negInt32, __addUInt8,
+-- __subUInt8, __mulUInt8, __addUInt32, __subUInt32, __mulUInt32,
+-- __splitOnFirst, __parseInt32, __parseUInt8, __parseUInt32,
+-- __lengthCodePoints, __lengthUtf16CodeUnits, __lengthUtf8Bytes,
+-- __get_arg, __entryArgEither, __utf16_of_range, __getArgs,
+-- __alloc_shaped, __inc_ref, __free_recursive, __free_worklist_push
 runtimeCount :: Word32
-runtimeCount = 35
+runtimeCount = 40
 
--- Runtime helper function indices (after imports)
-idxAlloc, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs :: Word32
+-- Runtime helper function indices (after imports). '$__free' slots
+-- in right after '$__alloc'. The RC helpers (@__alloc_shaped,
+-- __inc_ref, __free_recursive, __free_worklist_push@) sit at the
+-- end so the earlier indices stay stable when new helpers are
+-- appended.
+idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush :: Word32
 idxAlloc = importCount
-idxMemcpy = importCount + 1
-idxConcat = importCount + 2
-idxPrint = importCount + 3
-idxBoxI32 = importCount + 4
-idxShowI32 = importCount + 5
-idxShowU32 = importCount + 6
-idxPredI32 = importCount + 7
-idxPredU8 = importCount + 8
-idxPredU32 = importCount + 9
-idxSuccI32 = importCount + 10
-idxSuccU8 = importCount + 11
-idxSuccU32 = importCount + 12
-idxEqI32 = importCount + 13
-idxAddI32 = importCount + 14
-idxSubI32 = importCount + 15
-idxMulI32 = importCount + 16
-idxNegI32 = importCount + 17
-idxAddU8 = importCount + 18
-idxSubU8 = importCount + 19
-idxMulU8 = importCount + 20
-idxAddU32 = importCount + 21
-idxSubU32 = importCount + 22
-idxMulU32 = importCount + 23
-idxSplitOnFirst = importCount + 24
-idxParseI32 = importCount + 25
-idxParseU8 = importCount + 26
-idxParseU32 = importCount + 27
-idxLengthCodePoints = importCount + 28
-idxLengthUtf16CodeUnits = importCount + 29
-idxLengthBytesAsUtf8 = importCount + 30
-idxGetArg = importCount + 31
-idxEntryArgEither = importCount + 32
-idxUtf16OfRange = importCount + 33
-idxGetArgs = importCount + 34
+idxFree = importCount + 1
+idxMemcpy = importCount + 2
+idxConcat = importCount + 3
+idxPrint = importCount + 4
+idxBoxI32 = importCount + 5
+idxShowI32 = importCount + 6
+idxShowU32 = importCount + 7
+idxPredI32 = importCount + 8
+idxPredU8 = importCount + 9
+idxPredU32 = importCount + 10
+idxSuccI32 = importCount + 11
+idxSuccU8 = importCount + 12
+idxSuccU32 = importCount + 13
+idxEqI32 = importCount + 14
+idxAddI32 = importCount + 15
+idxSubI32 = importCount + 16
+idxMulI32 = importCount + 17
+idxNegI32 = importCount + 18
+idxAddU8 = importCount + 19
+idxSubU8 = importCount + 20
+idxMulU8 = importCount + 21
+idxAddU32 = importCount + 22
+idxSubU32 = importCount + 23
+idxMulU32 = importCount + 24
+idxSplitOnFirst = importCount + 25
+idxParseI32 = importCount + 26
+idxParseU8 = importCount + 27
+idxParseU32 = importCount + 28
+idxLengthCodePoints = importCount + 29
+idxLengthUtf16CodeUnits = importCount + 30
+idxLengthBytesAsUtf8 = importCount + 31
+idxGetArg = importCount + 32
+idxEntryArgEither = importCount + 33
+idxUtf16OfRange = importCount + 34
+idxGetArgs = importCount + 35
+idxAllocShaped = importCount + 36
+idxIncRef = importCount + 37
+idxFreeRecursive = importCount + 38
+idxFreeWorklistPush = importCount + 39
 
 buildInfo :: PreludeTags -> CoreProgram -> WasmInfo
 buildInfo ptags prog@(CoreProgram decls) =
@@ -273,26 +301,36 @@ declName = \case
 scratchSize :: Int
 scratchSize = 64
 
--- | 8-byte header (utf8_bytes : i32 LE, utf16_units : i32 LE) prepended
---   to every string in the pool. Pointers into the pool point at the
---   header; runtime helpers reach the payload at offset 8. No NUL
---   terminator. Mirrors 'Awsum.Codegen.WASM.stringHeaderSize'.
+-- | 20-byte header prepended to every string in the pool. Layout:
+--   12-byte allocator header (flag + refcount + shape) + 8-byte
+--   string length header (utf8_bytes : i32 LE, utf16_units : i32
+--   LE). The user pointer is @flag_start + 12@; from the user
+--   pointer the legacy layout holds (byte_count at +0, utf16 at +4,
+--   payload at +8). No NUL terminator. Mirrors
+--   'Awsum.Codegen.WASM.stringHeaderSize'.
 stringHeaderSize :: Int
-stringHeaderSize = 8
+stringHeaderSize = 20
 
 -- | UTF-16 code unit count (BMP -> 1, supplementary -> 2). Mirrors
 --   'Awsum.Codegen.WASM.utf16CountOfText'.
 utf16CountOfText :: Text -> Int
 utf16CountOfText = T.foldl' (\n c -> n + if Char.ord c > 0xFFFF then 2 else 1) (0 :: Int)
 
+-- | Each string entry has a 12-byte @{i32 flag = 0, i32
+--   refcount = 0, i32 shape = 0}@ prefix in front of the legacy 8-byte
+--   length header. The map values are USER pointers (flag_start + 12);
+--   from a user pointer the layout is unchanged (byte_count at +0,
+--   utf16 at +4, payload at +8).
 buildStringPool :: CoreProgram -> (Map Text Int, Int, Int)
 buildStringPool (CoreProgram decls) =
   let strs = ordNub $ "" : concatMap stringsInDecl decls
       entrySize s = stringHeaderSize + BS.length (encodeUtf8 s)
-      offsets = scanl (\off s -> off + entrySize s) scratchSize strs
-      pool = Map.fromList (zip strs offsets)
-      emptyOff = fromMaybe scratchSize (Map.lookup "" pool)
-      heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last (zipWith (\s o -> o + entrySize s) strs offsets)
+      flagStartScan = scanl (+) scratchSize (map entrySize strs)
+      flagStarts = take (length strs) flagStartScan
+      userPtrs = map (+ 12) flagStarts
+      pool = Map.fromList (zip strs userPtrs)
+      emptyOff = fromMaybe (scratchSize + 12) (Map.lookup "" pool)
+      heapStart = fromMaybe scratchSize $ viaNonEmpty Relude.last flagStartScan
    in (pool, emptyOff, heapStart)
 
 stringsInDecl :: CDecl -> [Text]
@@ -313,6 +351,8 @@ stringsInExpr = \case
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
+  CDrop _ _ body -> stringsInExpr body
+  CReuse _ _ fs -> concatMap stringsInExpr fs
 
 collectIndirectArities :: CoreProgram -> Set Text -> Set Int
 collectIndirectArities (CoreProgram decls) funNames =
@@ -365,12 +405,17 @@ buildTypeSection info (CoreProgram decls) =
             ]
           -- Runtime helpers
           <> [ FuncType 1 True, -- __alloc(i32)->i32
+               FuncType 1 False, -- __free(i32)->void
                FuncType 3 False, -- __memcpy(i32,i32,i32)->void
                FuncType 2 True, -- __concat (dedup with args_sizes_get)
                FuncType 1 True, -- __print (dedup with __alloc)
                FuncType 0 True, -- __get_arg()->i32
                FuncType 0 True, -- __getArgs()->i32 (dedup with __get_arg)
-               FuncType 2 True -- __utf16_of_range(p, len) (dedup with __concat)
+               FuncType 2 True, -- __utf16_of_range(p, len) (dedup with __concat)
+               FuncType 2 True, -- __alloc_shaped(size, shape)->i32 (dedup with __concat)
+               FuncType 1 False, -- __inc_ref(p)->void (dedup with __free)
+               FuncType 1 False, -- __free_recursive(p)->void (dedup with __free)
+               FuncType 1 False -- __free_worklist_push(p)->void (dedup with __free)
              ]
           -- User functions
           <> [funcTypeOfDecl d | d <- decls]
@@ -426,6 +471,7 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
       localTypes =
         -- Runtime helpers
         [ lookupType (FuncType 1 True) typeMap, -- __alloc
+          lookupType (FuncType 1 False) typeMap, -- __free
           lookupType (FuncType 3 False) typeMap, -- __memcpy
           lookupType (FuncType 2 True) typeMap, -- __concat
           lookupType (FuncType 1 True) typeMap, -- __print
@@ -459,7 +505,11 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 0 True) typeMap, -- __get_arg
           lookupType (FuncType 1 True) typeMap, -- __entryArgEither
           lookupType (FuncType 2 True) typeMap, -- __utf16_of_range
-          lookupType (FuncType 0 True) typeMap -- __getArgs
+          lookupType (FuncType 0 True) typeMap, -- __getArgs
+          lookupType (FuncType 2 True) typeMap, -- __alloc_shaped
+          lookupType (FuncType 1 False) typeMap, -- __inc_ref
+          lookupType (FuncType 1 False) typeMap, -- __free_recursive
+          lookupType (FuncType 1 False) typeMap -- __free_worklist_push
         ]
           -- User declarations
           <> [lookupType (funcTypeOfDecl d) typeMap | d <- decls]
@@ -514,12 +564,24 @@ wasmPageSize = 65536
 
 buildGlobalSection :: WasmInfo -> [Word8]
 buildGlobalSection info =
-  let content =
+  let mutI32Init :: Int -> [Word8]
+      mutI32Init initial =
+        [valtypeI32, 0x01]
+          <> [opI32Const]
+          <> encodeSLEB128 (fromIntegral initial)
+          <> [opEnd]
+      content =
         encodeVec
-          [ [valtypeI32, 0x01] -- i32, mutable
-              <> [opI32Const]
-              <> encodeSLEB128 (fromIntegral info.wiHeapStart)
-              <> [opEnd]
+          [ mutI32Init info.wiHeapStart,
+            -- '$__wl_buf' / '$__wl_top' / '$__wl_cap': worklist
+            -- state backing '$__free_recursive' — see the matching
+            -- WAT comment in 'Awsum.Codegen.WASM.global'. Indices
+            -- 1 / 2 / 3 in the global section; the existing
+            -- '$heap' stays at index 0 so '__alloc' / bump-path
+            -- references remain valid.
+            mutI32Init 0,
+            mutI32Init 0,
+            mutI32Init 0
           ]
    in buildSection 6 content
 
@@ -565,6 +627,7 @@ buildCodeSection info typeMap (CoreProgram decls) =
   let bodies =
         -- Runtime helpers
         [ codeAlloc,
+          codeFree,
           codeMemcpy,
           codeConcat info,
           codePrint info,
@@ -598,7 +661,11 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeGetArg info,
           codeEntryArgEither info,
           codeUtf16OfRange,
-          codeGetArgs
+          codeGetArgs,
+          codeAllocShaped,
+          codeIncRef,
+          codeFreeRecursive,
+          codeFreeWorklistPush
         ]
           -- User declarations
           <> map (codeUserDecl info typeMap) decls
@@ -623,14 +690,140 @@ encodeLocals n
 -- Runtime helper bodies
 -- ════════════════════════════════════════════════════════════════════════════
 
--- __alloc(size: i32) -> i32
--- local $ptr: i32
+-- '$__alloc(size)' is a thin wrapper that calls
+-- '$__alloc_shaped(size, 0)'. Existing helper alloc sites that
+-- allocate scalars / strings / nullary cells keep their default
+-- shape=0; CCon emit and helpers that build ADT cells with ptr
+-- fields call '$__alloc_shaped' directly with the cell's arity.
 codeAlloc :: [Word8]
 codeAlloc =
-  encodeBody
-    (encodeLocals 1)
+  encodeBody (encodeLocals 0)
     $ concat
-      [ -- ptr = (heap + 3) & ~3  (4-byte align)
+      [ [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 0,
+        [opCall],
+        encodeULEB128 idxAllocShaped
+      ]
+
+-- '$__alloc_shaped(size, shape)' does the actual bump +
+-- per-size-bin freelist work and stores the caller-supplied
+-- @shape@ into the cell header at offset 8 (relative to block
+-- start).
+--
+-- Locals (in addition to '$size'=slot 0, '$shape'=slot 1 params):
+--   slot 2 = $rounded   — size rounded up to power-of-2, min 8
+--   slot 3 = $bin_addr  — linear-memory address of bin head pointer
+--   slot 4 = $head      — current bin head (potential reuse block)
+--   slot 5 = $ptr       — bump-path block start
+--
+-- Bin heads live in linear memory at offsets 24..63 (10 size
+-- classes, bytes 0..23 reserved for WASI scratch). Free-block
+-- layout while in bin: flag at block+0 preserved (size class).
+-- Next-ptr stashed at block+8 (the shape slot, repurposed while
+-- free). On pop: reload next-ptr, re-init refcount=1, shape=@$shape@.
+codeAllocShaped :: [Word8]
+codeAllocShaped =
+  encodeBody (encodeLocals 4)
+    $ concat
+      [ -- rounded = 1 << (32 - clz(size - 1))
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Const],
+        encodeSLEB128 32,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Sub],
+        [opI32Clz],
+        [opI32Sub],
+        [opI32Shl],
+        [opLocalSet],
+        encodeULEB128 2,
+        -- if rounded < 8: rounded = 8
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32LtU],
+        [opIf, blocktypeVoid],
+        [opI32Const],
+        encodeSLEB128 8,
+        [opLocalSet],
+        encodeULEB128 2,
+        [opEnd],
+        -- if rounded <= 4096: try popping bin
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 4096,
+        [opI32LeU],
+        [opIf, blocktypeVoid],
+        -- bin_addr = 24 + ((ctz(rounded) - 3) << 2)  (bins live at 24..63)
+        [opI32Const],
+        encodeSLEB128 24,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Ctz],
+        [opI32Const],
+        encodeSLEB128 3,
+        [opI32Sub],
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- head = i32.load bin_addr
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 4,
+        -- if head != 0: pop bin, re-init header, return head + 12
+        [opLocalGet],
+        encodeULEB128 4,
+        [opIf, blocktypeVoid],
+        -- bin_addr := load(head + 8)  ; pop next-ptr from shape slot
+        [opLocalGet],
+        encodeULEB128 3,
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opI32Store, 0x02, 0x00],
+        -- store(head + 4) := 1  ; refcount = 1
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Add],
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Store, 0x02, 0x00],
+        -- store(head + 8) := shape
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Add],
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Store, 0x02, 0x00],
+        -- return head + 12
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Add],
+        [opReturn],
+        [opEnd], -- end inner if
+        [opEnd], -- end outer if (rounded <= 4096)
+        -- Bump path: ptr = (heap + 3) & ~3
         [opGlobalGet],
         encodeULEB128 0,
         [opI32Const],
@@ -640,26 +833,22 @@ codeAlloc =
         encodeSLEB128 (-4),
         [opI32And],
         [opLocalSet],
-        encodeULEB128 1,
-        -- global.set $heap (ptr + size)
+        encodeULEB128 5,
+        -- heap = ptr + 12 + rounded
         [opLocalGet],
-        encodeULEB128 1, -- ptr
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Add],
         [opLocalGet],
-        encodeULEB128 0, -- size
+        encodeULEB128 2,
         [opI32Add],
         [opGlobalSet],
         encodeULEB128 0,
-        -- Grow loop: while heap > memory.size * 65536, grow by 1 page.
-        -- A single grow is not enough when one allocation (or one CPS
-        -- non-tail unwind) overshoots memory by more than one page;
-        -- keep growing until the heap fits. Trap on grow failure
-        -- (memory.grow returns -1 at the wasm32 4 GiB cap or any
-        -- engine memory limit) so OOM surfaces as an immediate wasm
-        -- trap instead of an infinite loop in the allocator. Falls
-        -- through when the heap fits.
+        -- Grow loop.
         [opLoop, blocktypeVoid],
         [opGlobalGet],
-        encodeULEB128 0, -- heap
+        encodeULEB128 0,
         [opMemorySize, 0x00],
         [opI32Const],
         encodeSLEB128 65536,
@@ -667,21 +856,534 @@ codeAlloc =
         [opI32GtU],
         [opIf, blocktypeVoid],
         [opI32Const],
-        encodeSLEB128 1, -- 1 page
-        [opMemoryGrow, 0x00], -- grows memory, pushes old size or -1
+        encodeSLEB128 1,
+        [opMemoryGrow, 0x00],
         [opI32Const],
         encodeSLEB128 (-1),
         [opI32Eq],
         [opIf, blocktypeVoid],
         [opUnreachable],
         [opEnd], -- end inner if (trap branch)
-        [opBr], -- br $grow_loop (restart the outer loop)
-        encodeULEB128 1, -- 1 level up: past the outer 'if', back to the loop
+        [opBr],
+        encodeULEB128 1, -- restart loop
         [opEnd], -- end outer if
         [opEnd], -- end loop
-        -- return ptr
+        -- store flag at ptr[0] = rounded
         [opLocalGet],
-        encodeULEB128 1
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Store, 0x02, 0x00],
+        -- store refcount at ptr[4] = 1
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Add],
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Store, 0x02, 0x00],
+        -- store shape at ptr[8] = $shape
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Add],
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Store, 0x02, 0x00],
+        -- return ptr + 12
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Add]
+      ]
+
+-- '$__inc_ref(p)' bumps the refcount at @p - 8@ unless
+-- the cell is a literal (flag == 0).
+codeIncRef :: [Word8]
+codeIncRef =
+  encodeBody (encodeLocals 1)
+    $ concat
+      [ -- flag = load (p - 12)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Sub],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 1,
+        -- if flag == 0: return
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Eqz],
+        [opIf, blocktypeVoid],
+        [opReturn],
+        [opEnd],
+        -- store (p - 8) := load (p - 8) + 1
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Sub],
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Sub],
+        [opI32Load, 0x02, 0x00],
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opI32Store, 0x02, 0x00]
+      ]
+
+-- '$__free_recursive(p)' dec's refcount at @p - 8@. On
+-- hitting 0 it reads shape at @p - 4@ and cascades: non-last
+-- children are pushed onto the global worklist (see
+-- '$__free_worklist_push' / WAT 'rtFreeRecursive' for the matching
+-- text-form rationale); the last slot is taken as the new @$p@ in
+-- the outer loop and the current block is returned to its bin via
+-- '$__free'. When the current cell needs no further work
+-- (literal, refcount > 0, or shape == 0) the helper pops the next
+-- pending pointer from the worklist; on an empty worklist it
+-- returns. The system-stack footprint is O(1) regardless of
+-- cascade shape: deep frontiers grow the worklist (heap), not
+-- the stack. Awsum immutability keeps the cell graph acyclic so
+-- the cascade terminates.
+--
+-- Locals (in addition to '$p' param at slot 0):
+--   slot 1 = $flag
+--   slot 2 = $rc
+--   slot 3 = $shape
+--   slot 4 = $i (push-loop index, then tail-jump child temp)
+--   slot 5 = $top (worklist top during pop)
+codeFreeRecursive :: [Word8]
+codeFreeRecursive =
+  encodeBody (encodeLocals 5)
+    $ concat
+      [ -- (block $done   — outermost wrapper, br depth N+1 from any
+        --                  enclosed point exits the helper.
+        [opBlock, blocktypeVoid],
+        -- (loop $outer   — re-entered for every new @$p@ (tail-jump
+        --                  or worklist pop).
+        [opLoop, blocktypeVoid],
+        -- Load: flag = (p - 12)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Sub],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 1,
+        -- (block $next   — fall-through here moves to the pop
+        --                  section. br $next (depth 0 from inside)
+        --                  is the "this cell needs no cascading
+        --                  work" exit.
+        [opBlock, blocktypeVoid],
+        -- br_if to next if flag == 0 (literal short-circuit)
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 0,
+        -- Load: rc = (p - 8) - 1
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Sub],
+        [opI32Load, 0x02, 0x00],
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Sub],
+        [opLocalSet],
+        encodeULEB128 2,
+        -- store(p - 8, $rc)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Sub],
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Store, 0x02, 0x00],
+        -- br_if $next if $rc != 0 (still shared)
+        [opLocalGet],
+        encodeULEB128 2,
+        [opBrIf],
+        encodeULEB128 0,
+        -- Load: shape = (p - 4)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Sub],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- if $shape == 0: __free(p); br $next (depth 1 from inside
+        -- the (if (then ...)): 0=if, 1=$next).
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Eqz],
+        [opIf, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 0,
+        [opCall],
+        encodeULEB128 idxFree,
+        [opBr],
+        encodeULEB128 1,
+        [opEnd], -- end if
+        -- Push children at slots 1..shape-1 onto the worklist.
+        -- Init: i = 1
+        [opI32Const],
+        encodeSLEB128 1,
+        [opLocalSet],
+        encodeULEB128 4,
+        -- (block $push_break (loop $push_loop ...))
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        -- br_if $push_break (depth 1) if $i >= $shape
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32GeU],
+        [opBrIf],
+        encodeULEB128 1,
+        -- call $__free_worklist_push(load(p + i*4))
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opCall],
+        encodeULEB128 idxFreeWorklistPush,
+        -- i++
+        [opLocalGet],
+        encodeULEB128 4,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 4,
+        -- br $push_loop (depth 0)
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end $push_loop
+        [opEnd], -- end $push_break
+        -- Tail-jump: $i = load(p + shape*4); __free(p); p = $i;
+        -- br $outer (depth 1: 0=$next, 1=$outer).
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opCall],
+        encodeULEB128 idxFree,
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalSet],
+        encodeULEB128 0,
+        [opBr],
+        encodeULEB128 1,
+        [opEnd], -- end $next
+        -- Pop section (control falls here on flag == 0 / rc != 0 /
+        -- shape == 0). Try to pop the next pointer; if the
+        -- worklist is empty, exit via $done.
+        -- Load: top = global __wl_top
+        [opGlobalGet],
+        encodeULEB128 2,
+        [opLocalSet],
+        encodeULEB128 5,
+        -- br_if $done (depth 1: 0=$outer, 1=$done) if top == 0
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1,
+        -- Decrement: top = top - 1; __wl_top = top
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Sub],
+        [opLocalSet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opGlobalSet],
+        encodeULEB128 2,
+        -- Load: p = (__wl_buf + top*4)
+        [opGlobalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 5,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 0,
+        -- br $outer (depth 0)
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end $outer
+        [opEnd] -- end $done
+      ]
+
+-- '$__free_worklist_push(p)' appends @$p@ onto the worklist
+-- buffer pointed to by '$__wl_buf' (i32 indices: 0=$heap,
+-- 1=$__wl_buf, 2=$__wl_top, 3=$__wl_cap). Grows the buffer
+-- (initial 16 entries, doubles thereafter) when @$top == $cap@.
+-- Old buffers that fit a size class (≤ 4096 bytes ⇔ ≤ 1024
+-- entries) are returned to the bin via '$__free' on grow; larger
+-- ones leak — total leak stays ≤ 2× current capacity because
+-- doubling halves each predecessor.
+--
+-- Locals (in addition to '$p' param at slot 0):
+--   slot 1 = $top
+--   slot 2 = $cap
+--   slot 3 = $new_cap
+--   slot 4 = $new_buf
+--   slot 5 = $old_buf
+--   slot 6 = $i (copy-loop index)
+codeFreeWorklistPush :: [Word8]
+codeFreeWorklistPush =
+  encodeBody (encodeLocals 6)
+    $ concat
+      [ -- Load: top = global __wl_top
+        [opGlobalGet],
+        encodeULEB128 2,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- Load: cap = global __wl_cap
+        [opGlobalGet],
+        encodeULEB128 3,
+        [opLocalSet],
+        encodeULEB128 2,
+        -- if top == cap: grow
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        -- Pick new_cap = (cap == 0) ? 16 : (cap << 1)
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Eqz],
+        [opIf, blocktypeI32],
+        [opI32Const],
+        encodeSLEB128 16,
+        [opElse],
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Shl],
+        [opEnd], -- end if blocktypeI32
+        [opLocalSet],
+        encodeULEB128 3,
+        -- Alloc: new_buf = __alloc_shaped(new_cap << 2, 0)
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Const],
+        encodeSLEB128 0,
+        [opCall],
+        encodeULEB128 idxAllocShaped,
+        [opLocalSet],
+        encodeULEB128 4,
+        -- Stash: old_buf = global __wl_buf
+        [opGlobalGet],
+        encodeULEB128 1,
+        [opLocalSet],
+        encodeULEB128 5,
+        -- Copy old contents: for i in 0..top: new_buf[i*4] = old_buf[i*4]
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        -- br_if $copy_break (depth 1) if i >= top
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32GeU],
+        [opBrIf],
+        encodeULEB128 1,
+        -- new_buf[i*4] = old_buf[i*4]
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opLocalGet],
+        encodeULEB128 5,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opI32Store, 0x02, 0x00],
+        -- i++
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 6,
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block $copy_break
+        -- if old_buf != 0: __free(old_buf)
+        [opLocalGet],
+        encodeULEB128 5,
+        [opIf, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 5,
+        [opCall],
+        encodeULEB128 idxFree,
+        [opEnd],
+        -- Store: __wl_buf = new_buf; __wl_cap = new_cap
+        [opLocalGet],
+        encodeULEB128 4,
+        [opGlobalSet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opGlobalSet],
+        encodeULEB128 3,
+        [opEnd], -- end if (top == cap)
+        -- Store: __wl_buf[top*4] = p
+        [opGlobalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Store, 0x02, 0x00],
+        -- Store: __wl_top = top + 1
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opGlobalSet],
+        encodeULEB128 2
+      ]
+
+-- '$__free(p)' returns a block to the matching bin
+-- freelist, or no-ops on literal pointers (flag=0). Block layout:
+-- block[0..4] preserved as 'flag' (= size class); block[8..12]
+-- becomes the next-ptr in the freelist (the shape slot is repurposed
+-- while free; '__alloc' re-initialises it to 0 on pop).
+--
+-- Locals (in addition to '$p' param at slot 0):
+--   slot 1 = $flag     — i32 read from p - 12
+--   slot 2 = $bin_addr — same arithmetic as in '__alloc'
+--   slot 3 = $cur      — current bin head (becomes the new next-ptr)
+codeFree :: [Word8]
+codeFree =
+  encodeBody (encodeLocals 3)
+    $ concat
+      [ -- flag = i32.load (p - 12)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Sub],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 1,
+        -- if flag == 0: return (literal)
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Eqz],
+        [opIf, blocktypeVoid],
+        [opReturn],
+        [opEnd],
+        -- if flag > 4096: return (huge, no bin)
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 4096,
+        [opI32GtU],
+        [opIf, blocktypeVoid],
+        [opReturn],
+        [opEnd],
+        -- bin_addr = 24 + ((ctz(flag) - 3) << 2)
+        [opI32Const],
+        encodeSLEB128 24,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Ctz],
+        [opI32Const],
+        encodeSLEB128 3,
+        [opI32Sub],
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Shl],
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        -- cur = i32.load bin_addr
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- store cur into (p - 4) (next-ptr lives at block+8 = p - 4)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Sub],
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Store, 0x02, 0x00],
+        -- store (p - 12) into *bin_addr (new bin head = block)
+        [opLocalGet],
+        encodeULEB128 2,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Sub],
+        [opI32Store, 0x02, 0x00]
       ]
 
 -- __memcpy(dst: i32, src: i32, len: i32)
@@ -877,7 +1579,7 @@ codeConcat info =
             [opI32Const],
             encodeSLEB128 134217728,
             [opI32GtU],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left StringTooLong
             --   stl = __alloc(4); store StringTooLong tag
             [opI32Const],
@@ -894,8 +1596,10 @@ codeConcat info =
             --   cell = __alloc(8); store Left tag; store offset=4 cell stl
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 9,
             [opLocalGet],
@@ -908,8 +1612,6 @@ codeConcat info =
             [opLocalGet],
             encodeULEB128 8,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 9,
             [opElse],
             -- else: bsum = ba + bb; buf = alloc(8 + bsum)
             [opLocalGet],
@@ -976,8 +1678,10 @@ codeConcat info =
             --   cell = __alloc(8); store Right tag; store offset=4 cell buf
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 9,
             [opLocalGet],
@@ -990,9 +1694,12 @@ codeConcat info =
             [opLocalGet],
             encodeULEB128 10,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 9,
-            [opEnd]
+            encodeULEB128 9
           ]
 
 -- __print(s: i32) -> i32
@@ -1047,6 +1754,8 @@ codePrint info =
             [opLocalSet],
             encodeULEB128 2,
             storeTagBytes 2 (ptUnit ptags),
+            -- Callee takes ownership; dec the string arg before return.
+            decArgBin 0,
             [opLocalGet],
             encodeULEB128 2
           ]
@@ -1070,13 +1779,13 @@ codePredI32 info =
             [opI32Load, 0x02, 0x00],
             [opLocalSet],
             encodeULEB128 1,
-            -- if (v == INT32_MIN) result i32
+            -- if (v == INT32_MIN)
             [opLocalGet],
             encodeULEB128 1,
             [opI32Const],
             encodeSLEB128 (-2147483648),
             [opI32Eq],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left UnderflowError
             -- ue = __alloc(4); store UnderflowError tag
             [opI32Const],
@@ -1089,8 +1798,10 @@ codePredI32 info =
             -- cell = __alloc(8); store Left tag; store[offset=4] ue
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -1099,8 +1810,6 @@ codePredI32 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             -- else: Right (v - 1)
             -- box = __alloc(4); store (v - 1)
@@ -1121,8 +1830,10 @@ codePredI32 info =
             -- cell = __alloc(8); store Right tag; store[offset=4] box
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -1131,9 +1842,12 @@ codePredI32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
+            -- return cell
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __predUInt8(p: i32) -> i32
@@ -1154,11 +1868,11 @@ codePredU8 info =
             [opI32Load, 0x02, 0x00],
             [opLocalSet],
             encodeULEB128 1,
-            -- if (i32.eqz v) result i32
+            -- if (i32.eqz v)
             [opLocalGet],
             encodeULEB128 1,
             [opI32Eqz],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left UnderflowError
             -- ue = __alloc(4); store UnderflowError tag
             [opI32Const],
@@ -1171,8 +1885,10 @@ codePredU8 info =
             -- cell = __alloc(8); store Left tag; store[offset=4] ue
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -1181,8 +1897,6 @@ codePredU8 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             -- else: Right (v - 1)
             -- box = __alloc(4); store (v - 1)
@@ -1203,8 +1917,10 @@ codePredU8 info =
             -- cell = __alloc(8); store Right tag; store[offset=4] box
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -1213,9 +1929,11 @@ codePredU8 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __succInt32(p: i32) -> i32
@@ -1237,13 +1955,13 @@ codeSuccI32 info =
             [opI32Load, 0x02, 0x00],
             [opLocalSet],
             encodeULEB128 1,
-            -- if (v == INT32_MAX) result i32
+            -- if (v == INT32_MAX)
             [opLocalGet],
             encodeULEB128 1,
             [opI32Const],
             encodeSLEB128 2147483647,
             [opI32Eq],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left OverflowError
             -- oe = __alloc(4); store OverflowError tag
             [opI32Const],
@@ -1256,8 +1974,10 @@ codeSuccI32 info =
             -- cell = __alloc(8); store Left tag; store[offset=4] oe
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -1266,8 +1986,6 @@ codeSuccI32 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             -- else: Right (v + 1)
             -- box = __alloc(4); store (v + 1)
@@ -1288,8 +2006,10 @@ codeSuccI32 info =
             -- cell = __alloc(8); store Right tag; store[offset=4] box
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -1298,9 +2018,12 @@ codeSuccI32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
+            -- return cell
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __succUInt8(p: i32) -> i32
@@ -1320,13 +2043,13 @@ codeSuccU8 info =
             [opI32Load, 0x02, 0x00],
             [opLocalSet],
             encodeULEB128 1,
-            -- if (v == 255) result i32
+            -- if (v == 255)
             [opLocalGet],
             encodeULEB128 1,
             [opI32Const],
             encodeSLEB128 255,
             [opI32Eq],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left OverflowError
             -- oe = __alloc(4); store OverflowError tag
             [opI32Const],
@@ -1339,8 +2062,10 @@ codeSuccU8 info =
             -- cell = __alloc(8); store Left tag; store[offset=4] oe
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -1349,8 +2074,6 @@ codeSuccU8 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             -- else: Right (v + 1)
             -- box = __alloc(4); store (v + 1)
@@ -1371,8 +2094,10 @@ codeSuccU8 info =
             -- cell = __alloc(8); store Right tag; store[offset=4] box
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -1381,9 +2106,11 @@ codeSuccU8 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __eq_i32(a: i32, b: i32) -> i32
@@ -1405,7 +2132,7 @@ codeEqI32 info =
             encodeULEB128 idxAlloc,
             [opLocalSet],
             encodeULEB128 2,
-            -- if (i32.load(a) == i32.load(b)) result i32
+            -- if (i32.load(a) == i32.load(b))
             [opLocalGet],
             encodeULEB128 0,
             [opI32Load, 0x02, 0x00],
@@ -1413,17 +2140,19 @@ codeEqI32 info =
             encodeULEB128 1,
             [opI32Load, 0x02, 0x00],
             [opI32Eq],
-            [opIf, blocktypeI32],
-            -- then: store True tag, return cell
+            [opIf, blocktypeVoid],
+            -- then: store True tag
             storeTagBytes 2 (ptTrue ptags),
-            [opLocalGet],
-            encodeULEB128 2,
             [opElse],
-            -- else: store False tag, return cell
+            -- else: store False tag
             storeTagBytes 2 (ptFalse ptags),
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
+            -- return cell
             [opLocalGet],
-            encodeULEB128 2,
-            [opEnd]
+            encodeULEB128 2
           ]
 
 -- __addInt32(pa: i32, pb: i32) -> i32
@@ -1488,7 +2217,7 @@ codeAddI32 info =
             [opI32Const],
             encodeSLEB128 0,
             [opI32LtS],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left (CRow rowTag (CCon (UnderflowError|OverflowError) [])).
             -- inner = __alloc(4); store ctor-tag (OverflowError if a >= 0, UnderflowError otherwise)
             [opI32Const],
@@ -1516,8 +2245,10 @@ codeAddI32 info =
             --                   store inner at offset=4
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             [opLocalGet],
@@ -1543,8 +2274,10 @@ codeAddI32 info =
             -- cell = __alloc(8); store Left tag; store row at offset=4
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 8,
             storeTagBytes 8 (ptLeft ptags),
@@ -1553,8 +2286,6 @@ codeAddI32 info =
             [opLocalGet],
             encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 8,
             [opElse],
             -- else: Right s
             -- box = __alloc(4); store s
@@ -1572,8 +2303,10 @@ codeAddI32 info =
             -- cell = __alloc(8); store Right tag; store offset=4 box
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 8,
             storeTagBytes 8 (ptRight ptags),
@@ -1582,9 +2315,13 @@ codeAddI32 info =
             [opLocalGet],
             encodeULEB128 7,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
+            -- return cell
             [opLocalGet],
-            encodeULEB128 8,
-            [opEnd]
+            encodeULEB128 8
           ]
 
 -- __addUInt8(pa: i32, pb: i32) -> i32
@@ -1612,7 +2349,7 @@ codeAddU8 info =
             [opI32Const],
             encodeSLEB128 255,
             [opI32GtU],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -1622,8 +2359,10 @@ codeAddU8 info =
             storeTagBytes 3 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -1632,8 +2371,6 @@ codeAddU8 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -1648,8 +2385,10 @@ codeAddU8 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -1658,9 +2397,12 @@ codeAddU8 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 5,
-            [opEnd]
+            encodeULEB128 5
           ]
 
 -- __subInt32(pa: i32, pb: i32) -> i32
@@ -1707,7 +2449,7 @@ codeSubI32 info =
             [opI32Const],
             encodeSLEB128 0,
             [opI32LtS],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -1731,8 +2473,10 @@ codeSubI32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             [opLocalGet],
@@ -1757,8 +2501,10 @@ codeSubI32 info =
             [opI32Store, 0x02, 0x04],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 8,
             storeTagBytes 8 (ptLeft ptags),
@@ -1767,8 +2513,6 @@ codeSubI32 info =
             [opLocalGet],
             encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 8,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -1783,8 +2527,10 @@ codeSubI32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 8,
             storeTagBytes 8 (ptRight ptags),
@@ -1793,9 +2539,12 @@ codeSubI32 info =
             [opLocalGet],
             encodeULEB128 7,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 8,
-            [opEnd]
+            encodeULEB128 8
           ]
 
 -- __mulInt32(pa: i32, pb: i32) -> i32
@@ -1838,7 +2587,7 @@ codeMulI32 info =
             [opI64Const],
             encodeSLEB128 2147483647,
             [opI64GtS],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -1848,8 +2597,10 @@ codeMulI32 info =
             storeTagBytes 3 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             [opLocalGet],
@@ -1864,8 +2615,10 @@ codeMulI32 info =
             [opI32Store, 0x02, 0x04],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -1874,15 +2627,13 @@ codeMulI32 info =
             [opLocalGet],
             encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             [opLocalGet],
             encodeULEB128 2,
             [opI64Const],
             encodeSLEB128 (-2147483648),
             [opI64LtS],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -1892,8 +2643,10 @@ codeMulI32 info =
             storeTagBytes 3 (ptUnderflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             [opLocalGet],
@@ -1908,8 +2661,10 @@ codeMulI32 info =
             [opI32Store, 0x02, 0x04],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -1918,8 +2673,6 @@ codeMulI32 info =
             [opLocalGet],
             encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -1935,8 +2688,10 @@ codeMulI32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -1945,10 +2700,13 @@ codeMulI32 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opEnd],
-            [opEnd]
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
+            [opLocalGet],
+            encodeULEB128 5
           ]
 
 -- __negInt32(p: i32) -> i32
@@ -1971,7 +2729,7 @@ codeNegI32 info =
             [opI32Const],
             encodeSLEB128 (-2147483648),
             [opI32Eq],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -1981,8 +2739,10 @@ codeNegI32 info =
             storeTagBytes 2 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -1991,8 +2751,6 @@ codeNegI32 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -2010,8 +2768,10 @@ codeNegI32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -2020,9 +2780,11 @@ codeNegI32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __subUInt8(pa: i32, pb: i32) -> i32
@@ -2046,13 +2808,13 @@ codeSubU8 info =
             [opI32Sub],
             [opLocalSet],
             encodeULEB128 2,
-            -- if (d < 0) result i32
+            -- if (d < 0)
             [opLocalGet],
             encodeULEB128 2,
             [opI32Const],
             encodeSLEB128 0,
             [opI32LtS],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left UnderflowError
             [opI32Const],
             encodeSLEB128 4,
@@ -2063,8 +2825,10 @@ codeSubU8 info =
             storeTagBytes 3 (ptUnderflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -2073,8 +2837,6 @@ codeSubU8 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             -- else: Right d
             [opI32Const],
@@ -2090,8 +2852,10 @@ codeSubU8 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -2100,9 +2864,12 @@ codeSubU8 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 5,
-            [opEnd]
+            encodeULEB128 5
           ]
 
 -- __mulUInt8(pa: i32, pb: i32) -> i32
@@ -2126,13 +2893,13 @@ codeMulU8 info =
             [opI32Mul],
             [opLocalSet],
             encodeULEB128 2,
-            -- if (p > 255) result i32
+            -- if (p > 255)
             [opLocalGet],
             encodeULEB128 2,
             [opI32Const],
             encodeSLEB128 255,
             [opI32GtU],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left OverflowError
             [opI32Const],
             encodeSLEB128 4,
@@ -2143,8 +2910,10 @@ codeMulU8 info =
             storeTagBytes 3 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -2153,8 +2922,6 @@ codeMulU8 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             -- else: Right p
             [opI32Const],
@@ -2170,8 +2937,10 @@ codeMulU8 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -2180,9 +2949,12 @@ codeMulU8 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 5,
-            [opEnd]
+            encodeULEB128 5
           ]
 
 -- __predUInt32(p: i32) -> i32
@@ -2204,7 +2976,7 @@ codePredU32 info =
             [opLocalGet],
             encodeULEB128 1,
             [opI32Eqz],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -2214,8 +2986,10 @@ codePredU32 info =
             storeTagBytes 2 (ptUnderflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -2224,8 +2998,6 @@ codePredU32 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -2243,8 +3015,10 @@ codePredU32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -2253,9 +3027,11 @@ codePredU32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __succUInt32(p: i32) -> i32
@@ -2280,7 +3056,7 @@ codeSuccU32 info =
             [opI32Const],
             encodeSLEB128 (-1),
             [opI32Eq],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -2290,8 +3066,10 @@ codeSuccU32 info =
             storeTagBytes 2 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptLeft ptags),
@@ -2300,8 +3078,6 @@ codeSuccU32 info =
             [opLocalGet],
             encodeULEB128 2,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 4,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -2319,8 +3095,10 @@ codeSuccU32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 4,
             storeTagBytes 4 (ptRight ptags),
@@ -2329,9 +3107,11 @@ codeSuccU32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 4,
-            [opEnd]
+            encodeULEB128 4
           ]
 
 -- __addUInt32(pa: i32, pb: i32) -> i32
@@ -2366,7 +3146,7 @@ codeAddU32 info =
             [opI64Const],
             encodeSLEB128I64 4294967295,
             [opI64GtU],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left OverflowError
             [opI32Const],
             encodeSLEB128 4,
@@ -2377,8 +3157,10 @@ codeAddU32 info =
             storeTagBytes 3 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -2387,8 +3169,6 @@ codeAddU32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             -- else: Right (i32.wrap_i64 s)
             [opI32Const],
@@ -2405,8 +3185,10 @@ codeAddU32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -2415,9 +3197,12 @@ codeAddU32 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 5,
-            [opEnd]
+            encodeULEB128 5
           ]
 
 -- __subUInt32(pa: i32, pb: i32) -> i32
@@ -2449,7 +3234,7 @@ codeSubU32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32LtU],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left UnderflowError
             [opI32Const],
             encodeSLEB128 4,
@@ -2460,8 +3245,10 @@ codeSubU32 info =
             storeTagBytes 4 (ptUnderflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             storeTagBytes 6 (ptLeft ptags),
@@ -2470,8 +3257,6 @@ codeSubU32 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 6,
             [opElse],
             -- else: Right (a - b)
             [opI32Const],
@@ -2490,8 +3275,10 @@ codeSubU32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             storeTagBytes 6 (ptRight ptags),
@@ -2500,9 +3287,12 @@ codeSubU32 info =
             [opLocalGet],
             encodeULEB128 5,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 6,
-            [opEnd]
+            encodeULEB128 6
           ]
 
 -- __mulUInt32(pa: i32, pb: i32) -> i32
@@ -2536,7 +3326,7 @@ codeMulU32 info =
             [opI64Const],
             encodeSLEB128I64 4294967295,
             [opI64GtU],
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- then: Left OverflowError
             [opI32Const],
             encodeSLEB128 4,
@@ -2547,8 +3337,10 @@ codeMulU32 info =
             storeTagBytes 3 (ptOverflowError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -2557,8 +3349,6 @@ codeMulU32 info =
             [opLocalGet],
             encodeULEB128 3,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             -- else: Right (i32.wrap_i64 p)
             [opI32Const],
@@ -2575,8 +3365,10 @@ codeMulU32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -2585,9 +3377,12 @@ codeMulU32 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
+            [opEnd],
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 5,
-            [opEnd]
+            encodeULEB128 5
           ]
 
 -- __splitOnFirst(sep: i32, str: i32) -> i32
@@ -2736,8 +3531,8 @@ codeSplitOnFirst info =
             [opI32Const],
             encodeSLEB128 (-1),
             [opI32Eq],
-            [opIf, blocktypeI32],
-            --   Nothing: cell = alloc 4; store tag; return cell
+            [opIf, blocktypeVoid],
+            --   Nothing: cell = alloc 4; store tag
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -2745,8 +3540,6 @@ codeSplitOnFirst info =
             [opLocalSet],
             encodeULEB128 11,
             storeTagBytes 11 (ptNothing ptags),
-            [opLocalGet],
-            encodeULEB128 11,
             [opElse],
             --   prefix = alloc(8 + pos) — length-prefixed.
             [opLocalGet],
@@ -2872,8 +3665,10 @@ codeSplitOnFirst info =
             --   tuple = alloc 12; [Tuple2 tag, prefix, suffix]
             [opI32Const],
             encodeSLEB128 12,
+            [opI32Const],
+            encodeSLEB128 2,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 10, -- tuple
             storeTagBytes 10 (ptTuple2 ptags),
@@ -2890,8 +3685,10 @@ codeSplitOnFirst info =
             --   cell = alloc 8; [Just tag, tuple]
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 11, -- cell
             storeTagBytes 11 (ptJust ptags),
@@ -2900,9 +3697,12 @@ codeSplitOnFirst info =
             [opLocalGet],
             encodeULEB128 10,
             [opI32Store, 0x02, 0x04],
+            [opEnd], -- end if/else (cell in slot 11)
+            -- Callee takes ownership; dec both args before return.
+            decArgBin 0,
+            decArgBin 1,
             [opLocalGet],
-            encodeULEB128 11,
-            [opEnd] -- end if (cell now on stack as result)
+            encodeULEB128 11
           ]
 
 -- __parseInt32(s: i32) -> i32
@@ -3119,7 +3919,7 @@ codeParseInt32 info =
             -- if ($failed) Left else Right
             [opLocalGet],
             encodeULEB128 8,
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             -- pe = alloc 4; store ParseError tag
             [opI32Const],
             encodeSLEB128 4,
@@ -3131,8 +3931,10 @@ codeParseInt32 info =
             -- cell = alloc 8; Left tag; offset 4 = pe
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             storeTagBytes 6 (ptLeft ptags),
@@ -3141,8 +3943,6 @@ codeParseInt32 info =
             [opLocalGet],
             encodeULEB128 7,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 6,
             [opElse],
             -- box = alloc 4; store wrap_i64($acc)
             [opI32Const],
@@ -3160,8 +3960,10 @@ codeParseInt32 info =
             -- cell = alloc 8; Right tag; offset 4 = box
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             storeTagBytes 6 (ptRight ptags),
@@ -3170,9 +3972,11 @@ codeParseInt32 info =
             [opLocalGet],
             encodeULEB128 5,
             [opI32Store, 0x02, 0x04],
+            [opEnd], -- end if/else (cell in slot 6)
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 6,
-            [opEnd] -- end if
+            encodeULEB128 6
           ]
 
 -- __parseUInt8(s: i32) -> i32
@@ -3304,7 +4108,7 @@ codeParseUInt8 info =
             -- if ($failed) Left else Right
             [opLocalGet],
             encodeULEB128 8,
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -3314,8 +4118,10 @@ codeParseUInt8 info =
             storeTagBytes 7 (ptParseError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             storeTagBytes 6 (ptLeft ptags),
@@ -3324,8 +4130,6 @@ codeParseUInt8 info =
             [opLocalGet],
             encodeULEB128 7,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 6,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -3340,8 +4144,10 @@ codeParseUInt8 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             storeTagBytes 6 (ptRight ptags),
@@ -3350,9 +4156,11 @@ codeParseUInt8 info =
             [opLocalGet],
             encodeULEB128 5,
             [opI32Store, 0x02, 0x04],
+            [opEnd], -- end if/else (cell in slot 6)
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 6,
-            [opEnd]
+            encodeULEB128 6
           ]
 
 -- __parseUInt32(s: i32) -> i32
@@ -3500,7 +4308,7 @@ codeParseUInt32 info =
             -- if ($failed) Left ParseError else Right (wrap_i64 acc)
             [opLocalGet],
             encodeULEB128 7,
-            [opIf, blocktypeI32],
+            [opIf, blocktypeVoid],
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
@@ -3510,8 +4318,10 @@ codeParseUInt32 info =
             storeTagBytes 6 (ptParseError ptags),
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptLeft ptags),
@@ -3520,8 +4330,6 @@ codeParseUInt32 info =
             [opLocalGet],
             encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            [opLocalGet],
-            encodeULEB128 5,
             [opElse],
             [opI32Const],
             encodeSLEB128 4,
@@ -3537,8 +4345,10 @@ codeParseUInt32 info =
             [opI32Store, 0x02, 0x00],
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 5,
             storeTagBytes 5 (ptRight ptags),
@@ -3547,9 +4357,11 @@ codeParseUInt32 info =
             [opLocalGet],
             encodeULEB128 4,
             [opI32Store, 0x02, 0x04],
+            [opEnd], -- end if/else (cell in slot 5)
+            -- Callee takes ownership; dec the arg before return.
+            decArgBin 0,
             [opLocalGet],
-            encodeULEB128 5,
-            [opEnd]
+            encodeULEB128 5
           ]
 
 -- __box_i32(v: i32) -> i32
@@ -3769,6 +4581,8 @@ codeShowI32 _info =
         [opLocalGet],
         encodeULEB128 7,
         [opI32Store, 0x02, 0x04],
+        -- Callee takes ownership; dec the arg before return.
+        decArgBin 0,
         -- return buf
         [opLocalGet],
         encodeULEB128 2
@@ -3911,6 +4725,8 @@ codeShowU32 _info =
         [opLocalGet],
         encodeULEB128 4,
         [opI32Store, 0x02, 0x04],
+        -- Callee takes ownership; dec the arg before return.
+        decArgBin 0,
         -- return buf
         [opLocalGet],
         encodeULEB128 2
@@ -3938,6 +4754,8 @@ codeLengthBytesAsUtf8 =
         encodeULEB128 0,
         [opI32Load, 0x02, 0x00],
         [opI32Store, 0x02, 0x00],
+        -- Callee takes ownership; dec the arg before return.
+        decArgBin 0,
         -- return box
         [opLocalGet],
         encodeULEB128 1
@@ -4039,6 +4857,8 @@ codeLengthCodePoints =
         [opLocalGet],
         encodeULEB128 2,
         [opI32Store, 0x02, 0x00],
+        -- Callee takes ownership; dec the arg before return.
+        decArgBin 0,
         [opLocalGet],
         encodeULEB128 4
       ]
@@ -4068,6 +4888,8 @@ codeLengthUtf16CodeUnits =
         encodeULEB128 0,
         [opI32Load, 0x02, 0x04],
         [opI32Store, 0x02, 0x00],
+        -- Callee takes ownership; dec the arg before return.
+        decArgBin 0,
         [opLocalGet],
         encodeULEB128 1
       ]
@@ -4163,7 +4985,7 @@ codeGetArg info =
 --   * Right(arg)                  on fit + no surrogates
 --   * Left StringTooLong          on cap overflow (regardless of surrogates)
 --   * Left UnpairedUtf16Surrogate on surrogates with cap respected
--- Mirrors the WAT-text 'rtEntryArgEither' byte-for-byte semantically.
+-- Mirrors the WAT-text 'rtEntryArgEither' (identical observable behaviour).
 -- Cap value and FNV-1a row tags for "StringTooLong" /
 -- "UnpairedUtf16Surrogate" must stay in sync with
 -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
@@ -4324,8 +5146,10 @@ codeEntryArgEither info =
             --   row = __alloc(8); store row stringTooLongTag; store offset=4 row inner
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             [opLocalGet],
@@ -4341,8 +5165,10 @@ codeEntryArgEither info =
             --   cell = __alloc(8); store cell Left tag; store offset=4 cell row
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 7,
             storeTagBytes 7 (ptLeft ptags),
@@ -4370,8 +5196,10 @@ codeEntryArgEither info =
             --   row = __alloc(8); store row unpairedSurrogateTag; store offset=4 row inner
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 6,
             [opLocalGet],
@@ -4387,8 +5215,10 @@ codeEntryArgEither info =
             --   cell = __alloc(8); store cell Left tag; store offset=4 cell row
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 7,
             storeTagBytes 7 (ptLeft ptags),
@@ -4439,8 +5269,10 @@ codeEntryArgEither info =
             --   cell = __alloc(8); store cell Right tag; store offset=4 cell wrapped
             [opI32Const],
             encodeSLEB128 8,
+            [opI32Const],
+            encodeSLEB128 1,
             [opCall],
-            encodeULEB128 idxAlloc,
+            encodeULEB128 idxAllocShaped,
             [opLocalSet],
             encodeULEB128 7,
             storeTagBytes 7 (ptRight ptags),
@@ -4474,6 +5306,7 @@ exprMaxConDepth = \case
   CCall f xs -> foldl' max (exprMaxConDepth f) (map exprMaxConDepth xs)
   CLoop b -> exprMaxConDepth b
   CContinue xs -> foldl' max 0 (map exprMaxConDepth xs)
+  CDrop _ _ b -> exprMaxConDepth b
   _ -> 0
 
 exprHasCCase :: CExpr -> Bool
@@ -4483,6 +5316,7 @@ exprHasCCase = \case
   CCall f xs -> exprHasCCase f || any exprHasCCase xs
   CLoop b -> exprHasCCase b
   CContinue xs -> any exprHasCCase xs
+  CDrop _ _ b -> exprHasCCase b
   _ -> False
 
 -- | Worst-case concurrently-live case-arm binding count. Outer-arm
@@ -4498,12 +5332,40 @@ exprMaxBoundVars = \case
   CCon _ fs -> foldl' max 0 (map exprMaxBoundVars fs)
   CLoop b -> exprMaxBoundVars b
   CContinue xs -> foldl' max 0 (map exprMaxBoundVars xs)
+  CDrop _ _ b -> exprMaxBoundVars b
+  _ -> 0
+
+-- | Max stack depth of fresh case-scrutinees concurrently
+-- alive on any execution path. Each 'CCase'/'CRowCase' whose scrut
+-- isn't a 'CVar' (borrow) pushes one onto the stash stack and pops
+-- it at the arm terminator; nested fresh-scrut cases require
+-- distinct slots so the WASM binary can dec each at its own arm
+-- terminator without losing the outer's pointer.
+exprMaxFreshScrutDepth :: CExpr -> Int
+exprMaxFreshScrutDepth = \case
+  CCase scrut alts ->
+    let scrutFresh = isNothing (sourceCVarBin scrut)
+        scrutD = exprMaxFreshScrutDepth scrut
+        armsD = foldl' max 0 [exprMaxFreshScrutDepth b | (_, _, b) <- alts]
+     in max scrutD ((if scrutFresh then 1 else 0) + armsD)
+  CRowCase scrut alts ->
+    let scrutFresh = isNothing (sourceCVarBin scrut)
+        scrutD = exprMaxFreshScrutDepth scrut
+        armsD = foldl' max 0 [exprMaxFreshScrutDepth b | (_, _, b) <- alts]
+     in max scrutD ((if scrutFresh then 1 else 0) + armsD)
+  CRow _ v -> exprMaxFreshScrutDepth v
+  CCall f xs -> foldl' max 0 (exprMaxFreshScrutDepth f : map exprMaxFreshScrutDepth xs)
+  CCon _ fs -> foldl' max 0 (map exprMaxFreshScrutDepth fs)
+  CLoop b -> exprMaxFreshScrutDepth b
+  CContinue xs -> foldl' max 0 (map exprMaxFreshScrutDepth xs)
+  CDrop _ _ b -> exprMaxFreshScrutDepth b
+  CReuse _ _ fs -> foldl' max 0 (map exprMaxFreshScrutDepth fs)
   _ -> 0
 
 codeUserDecl :: WasmInfo -> Map FuncType Word32 -> CDecl -> [Word8]
 codeUserDecl info typeMap = \case
   -- TCO-wrapped body. WASM params are already mutable locals, so we only
-  -- need 'nParams' extra slots to stage 'CContinue' arguments (so a new
+  -- need 'nParams' extra slots to buffer 'CContinue' arguments (so a new
   -- value computed from the old parameter doesn't see a half-updated
   -- slot). The whole body runs inside @(loop $tco_top (result i32))@,
   -- and 'CContinue' becomes @br@ targeting this loop at the current depth.
@@ -4520,7 +5382,12 @@ codeUserDecl info typeMap = \case
         maxBV = exprMaxBoundVars body
         nextAfterBound = boundBase + fromIntegral maxBV
         tcoTempBase = nextAfterBound
-        totalSlots = tcoTempBase + nParams
+        afterTco = tcoTempBase + nParams
+        dropTmpSlot = afterTco
+        incRefTempSlot = dropTmpSlot + 1
+        freshScrutBase = incRefTempSlot + 1
+        freshScrutNeeded = fromIntegral (exprMaxFreshScrutDepth body) :: Word32
+        totalSlots = freshScrutBase + freshScrutNeeded
         nExtraLocals = fromIntegral (totalSlots - nParams) :: Int
         ctx =
           ExprCtx
@@ -4537,7 +5404,11 @@ codeUserDecl info typeMap = \case
               ecConBaseSlot = conBaseSlot,
               ecConDepth = 0,
               ecScrutSlot = scrutSlot,
-              ecBoundBase = boundBase
+              ecBoundBase = boundBase,
+              ecDropTmpSlot = dropTmpSlot,
+              ecIncRefTempSlot = incRefTempSlot,
+              ecFreshScrutBase = freshScrutBase,
+              ecArmPatternByScrut = Map.empty
             }
         bodyBytes = emitTailBin tcoTempBase args 0 ctx body
      in encodeBody
@@ -4554,7 +5425,12 @@ codeUserDecl info typeMap = \case
         nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
         boundBase = nextAfterScrut
         maxBV = exprMaxBoundVars body
-        totalSlots = boundBase + fromIntegral maxBV
+        afterBound = boundBase + fromIntegral maxBV
+        dropTmpSlot = afterBound
+        incRefTempSlot = dropTmpSlot + 1
+        freshScrutBase = incRefTempSlot + 1
+        freshScrutNeeded = fromIntegral (exprMaxFreshScrutDepth body) :: Word32
+        totalSlots = freshScrutBase + freshScrutNeeded
         nExtraLocals = fromIntegral (totalSlots - nParams) :: Int
         ctx =
           ExprCtx
@@ -4571,9 +5447,13 @@ codeUserDecl info typeMap = \case
               ecConBaseSlot = conBaseSlot,
               ecConDepth = 0,
               ecScrutSlot = scrutSlot,
-              ecBoundBase = boundBase
+              ecBoundBase = boundBase,
+              ecDropTmpSlot = dropTmpSlot,
+              ecIncRefTempSlot = incRefTempSlot,
+              ecFreshScrutBase = freshScrutBase,
+              ecArmPatternByScrut = Map.empty
             }
-     in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx body)
+     in encodeBody (encodeLocals nExtraLocals) (emitNonLoopBodyBin ctx args body)
   CValDef _nm rhs ->
     let conDepthNeeded = exprMaxConDepth rhs
         needsScrut = exprHasCCase rhs
@@ -4583,7 +5463,12 @@ codeUserDecl info typeMap = \case
         nextAfterScrut = if needsScrut then scrutSlot + 1 else scrutSlot
         boundBase = nextAfterScrut
         maxBV = exprMaxBoundVars rhs
-        totalSlots = boundBase + fromIntegral maxBV
+        afterBound = boundBase + fromIntegral maxBV
+        dropTmpSlot = afterBound
+        incRefTempSlot = dropTmpSlot + 1
+        freshScrutBase = incRefTempSlot + 1
+        freshScrutNeeded = fromIntegral (exprMaxFreshScrutDepth rhs) :: Word32
+        totalSlots = freshScrutBase + freshScrutNeeded
         nExtraLocals = fromIntegral totalSlots :: Int
         ctx =
           ExprCtx
@@ -4600,7 +5485,11 @@ codeUserDecl info typeMap = \case
               ecConBaseSlot = conBaseSlot,
               ecConDepth = 0,
               ecScrutSlot = scrutSlot,
-              ecBoundBase = boundBase
+              ecBoundBase = boundBase,
+              ecDropTmpSlot = dropTmpSlot,
+              ecIncRefTempSlot = incRefTempSlot,
+              ecFreshScrutBase = freshScrutBase,
+              ecArmPatternByScrut = Map.empty
             }
      in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx rhs)
 
@@ -4650,7 +5539,19 @@ data ExprCtx = ExprCtx
     ecConBaseSlot :: Word32, -- first local slot for $__con_N
     ecConDepth :: Int, -- current CCon nesting depth
     ecScrutSlot :: Word32, -- local slot for $__scrut
-    ecBoundBase :: Word32 -- first local slot for case-bound variables
+    ecBoundBase :: Word32, -- first local slot for case-bound variables
+    ecDropTmpSlot :: Word32, -- Local slot for $__drop_tmp
+    ecIncRefTempSlot :: Word32, -- Scratch slot for inc-on-CVar tees
+    ecFreshScrutBase :: Word32, -- First slot of the fresh-scrut stash
+
+    -- | Linear-scrutinee elision: for each in-scope 'CCase' /
+    -- 'CRowCase' whose scrutinee is a 'CVar n', records the arm's
+    -- pattern variables. 'CReuse n t fs' inside the arm body
+    -- checks @ecArmPatternByScrut[n]@ to detect self-move slots
+    -- (@fs[i] == CVar vs[i]@) and skip their dec-old + inc-new
+    -- + store entirely — the slot's pointer is already what we
+    -- wanted.
+    ecArmPatternByScrut :: Map Text [Text]
   }
 
 emitExpr :: ExprCtx -> CExpr -> [Word8]
@@ -4681,14 +5582,18 @@ emitExpr ctx = \case
           <> encodeULEB128 idxBoxI32
   CCon tag fields ->
     let nSlots = 1 + length fields
+        nFields = length fields
         conSlot = ctx.ecConBaseSlot + fromIntegral ctx.ecConDepth
         nestedCtx = ctx {ecConDepth = ctx.ecConDepth + 1}
-        -- allocate (nSlots * 4) bytes, store pointer to conSlot
+        -- Allocate (nSlots * 4) bytes with shape inline
+        -- via '$__alloc_shaped(size, shape)'.
         allocCode =
           [opI32Const]
             <> encodeSLEB128 (fromIntegral (nSlots * 4))
+            <> [opI32Const]
+            <> encodeSLEB128 (fromIntegral nFields)
             <> [opCall]
-            <> encodeULEB128 idxAlloc
+            <> encodeULEB128 idxAllocShaped
             <> [opLocalSet]
             <> encodeULEB128 conSlot
         -- store tag at offset 0
@@ -4700,7 +5605,7 @@ emitExpr ctx = \case
             <> [opI32Store]
             <> encodeULEB128 2
             <> encodeULEB128 0
-        -- store each field at offset (i+1)*4
+        -- store each field at offset (i+1)*4 then inc-on-CVar
         storeField (fld, i) =
           [opLocalGet]
             <> encodeULEB128 conSlot
@@ -4708,6 +5613,7 @@ emitExpr ctx = \case
             <> [opI32Store]
             <> encodeULEB128 2
             <> encodeULEB128 (fromIntegral ((i + 1) * 4 :: Int))
+            <> incStoredFieldBin nestedCtx conSlot (i + 1) fld
         fieldCode = concatMap storeField (zip fields [0 :: Int ..])
         -- return pointer
         retCode = [opLocalGet] <> encodeULEB128 conSlot
@@ -4724,7 +5630,7 @@ emitExpr ctx = \case
     case f of
       CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxPrint
       -- 'BuiltIn.internalGetArgs' — call '__getArgs', which re-reads
@@ -4736,49 +5642,49 @@ emitExpr ctx = \case
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxShowI32
       CBuiltIn "showUInt32"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxShowU32
       CBuiltIn "predInt32"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxPredI32
       CBuiltIn "predUInt8"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxPredU8
       CBuiltIn "predUInt32"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxPredU32
       CBuiltIn "succInt32"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxSuccI32
       CBuiltIn "succUInt8"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxSuccU8
       CBuiltIn "succUInt32"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxSuccU32
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
           [a, b] <- xs ->
-            emitExpr ctx a
-              <> emitExpr ctx b
+            emitArgWithIncBin ctx a
+              <> emitArgWithIncBin ctx b
               <> [opCall]
               <> encodeULEB128 idxEqI32
       CBuiltIn name
@@ -4794,19 +5700,19 @@ emitExpr ctx = \case
                   "mulInt32" -> idxMulI32
                   "mulUInt32" -> idxMulU32
                   _ -> idxMulU8
-             in emitExpr ctx a
-                  <> emitExpr ctx b
+             in emitArgWithIncBin ctx a
+                  <> emitArgWithIncBin ctx b
                   <> [opCall]
                   <> encodeULEB128 idx
       CBuiltIn "negInt32"
         | [x] <- xs ->
-            emitExpr ctx x
+            emitArgWithIncBin ctx x
               <> [opCall]
               <> encodeULEB128 idxNegI32
       CBuiltIn "splitOnFirst"
         | [a, b] <- xs ->
-            emitExpr ctx a
-              <> emitExpr ctx b
+            emitArgWithIncBin ctx a
+              <> emitArgWithIncBin ctx b
               <> [opCall]
               <> encodeULEB128 idxSplitOnFirst
       CBuiltIn name
@@ -4816,7 +5722,7 @@ emitExpr ctx = \case
                   "parseInt32" -> idxParseI32
                   "parseUInt32" -> idxParseU32
                   _ -> idxParseU8
-             in emitExpr ctx x
+             in emitArgWithIncBin ctx x
                   <> [opCall]
                   <> encodeULEB128 idx
       CBuiltIn name
@@ -4826,33 +5732,202 @@ emitExpr ctx = \case
                   "lengthCodePoints" -> idxLengthCodePoints
                   "lengthUtf16CodeUnits" -> idxLengthUtf16CodeUnits
                   _ -> idxLengthBytesAsUtf8
-             in emitExpr ctx x
+             in emitArgWithIncBin ctx x
                   <> [opCall]
                   <> encodeULEB128 idx
       CBuiltIn "concatString"
         | [a, b] <- xs ->
-            emitExpr ctx a
-              <> emitExpr ctx b
+            emitArgWithIncBin ctx a
+              <> emitArgWithIncBin ctx b
               <> [opCall]
               <> encodeULEB128 idxConcat
       CBuiltIn n ->
         error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
         | n `Set.member` ctx.ecFunDefs ->
+            -- User CCall — caller-side inc on each CVar
+            -- ptr-arg (borrow that needs its own ref for the
+            -- callee's param slot). Builtins above bypass this:
+            -- they only READ args, never store them.
             let fIdx = fromMaybe 0 (Map.lookup n ctx.ecFuncIdx)
-             in concatMap (emitExpr ctx) xs
+             in concatMap (emitArgWithIncBin ctx) xs
                   <> [opCall]
                   <> encodeULEB128 fIdx
       _ ->
+        -- Indirect user CCall (HOF dispatched through $applyN
+        -- after Cps/LowerClosures). Same caller-side inc rule.
         let arity = length xs
             typeIdx = lookupType (FuncType arity True) ctx.ecTypeMap
-         in concatMap (emitExpr ctx) xs
+         in concatMap (emitArgWithIncBin ctx) xs
               <> emitExpr ctx f
               <> [opCallIndirect]
               <> encodeULEB128 typeIdx
               <> encodeULEB128 0 -- table index 0
-  CLoop _ -> error "WASM Assemble: CLoop survived untcoProgram (pipeline bug)"
-  CContinue _ -> error "WASM Assemble: CContinue survived untcoProgram (pipeline bug)"
+  CLoop _ -> error "WASM Assemble: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
+  CContinue _ -> error "WASM Assemble: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
+  -- Evaluate body, stash its value in $__drop_tmp,
+  -- call $__free_recursive on the binder, then reload the captured
+  -- result. If the body's tail itself is @CVar n@ (we're returning
+  -- the same binder we're about to dec), inc the result first so
+  -- the dec balances and the returned cell stays alive — same
+  -- move-semantics rule the LLVM CDrop emit uses.
+  CDrop _ n body ->
+    let bodyBytes = emitExpr ctx body
+        slot = lookupBinderSlot ctx n
+        moveInc = case sourceCVarBin body of
+          Just m
+            | m == n ->
+                [opLocalGet]
+                  <> encodeULEB128 ctx.ecDropTmpSlot
+                  <> [opCall]
+                  <> encodeULEB128 idxIncRef
+          _ -> []
+     in [opBlock, blocktypeI32]
+          <> bodyBytes
+          <> [opLocalSet]
+          <> encodeULEB128 ctx.ecDropTmpSlot
+          <> moveInc
+          <> [opLocalGet]
+          <> encodeULEB128 slot
+          <> [opCall]
+          <> encodeULEB128 idxFreeRecursive
+          <> [opLocalGet]
+          <> encodeULEB128 ctx.ecDropTmpSlot
+          <> [opEnd]
+  -- Cell reuse. In-place mutation of the user-pointer
+  -- at @n@: write tag at offset 0, fields at offsets 4, 8, …
+  -- No '__alloc' (skip bin pop), no '__free' (skip bin push).
+  -- The flag header at @n - 4@ stays untouched so a later 'CDrop'
+  -- correctly returns the cell to the per-size bin freelist.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the cell has at
+  -- least @1 + length fields@ slots — every store stays in bounds.
+  CReuse n tag fields ->
+    let nSlot = lookupBinderSlot ctx n
+        nFields = length fields
+        -- Self-move elision: when @fields[i] == CVar v@
+        -- where @v@ is the arm-pattern binder at the same slot
+        -- index, the slot already holds the matching pointer —
+        -- dec-old + store + inc-new cancel. Lookup goes through
+        -- 'ecArmPatternByScrut[n]'.
+        armVars = Map.findWithDefault [] n ctx.ecArmPatternByScrut
+        nthMaybe :: Int -> [a] -> Maybe a
+        nthMaybe i xs = listToMaybe (drop i xs)
+        isSelfMoveAt :: Int -> Bool
+        isSelfMoveAt slotIdx =
+          case (nthMaybe (slotIdx - 1) fields, nthMaybe (slotIdx - 1) armVars) of
+            (Just (CVar v), Just w) -> v == w
+            _ -> False
+        -- Dec each old slot value before overwrite (the
+        -- cell's existing ref-via-slot dies). Self-move slots
+        -- skip dec entirely (slot value is preserved).
+        decOldSlot i
+          | isSelfMoveAt (i + 1) = []
+          | otherwise =
+              [opLocalGet]
+                <> encodeULEB128 nSlot
+                <> [opI32Load]
+                <> encodeULEB128 2
+                <> encodeULEB128 (fromIntegral ((i + 1) * 4 :: Int))
+                <> [opCall]
+                <> encodeULEB128 idxFreeRecursive
+        decOldCode = concatMap decOldSlot [0 .. nFields - 1]
+        -- store tag at offset 0
+        tagCode =
+          [opLocalGet]
+            <> encodeULEB128 nSlot
+            <> [opI32Const]
+            <> encodeSLEB128 (fromIntegral tag)
+            <> [opI32Store]
+            <> encodeULEB128 2
+            <> encodeULEB128 0
+        -- Store each field at offset (i+1)*4 with the
+        -- inc-on-CVar discipline (same rule as CCon — the new
+        -- slot takes its own reference iff source is a heap
+        -- borrow). Self-move slots skip store + inc entirely.
+        storeField (fld, i)
+          | isSelfMoveAt (i + 1) = []
+          | otherwise =
+              [opLocalGet]
+                <> encodeULEB128 nSlot
+                <> emitExpr ctx fld
+                <> [opI32Store]
+                <> encodeULEB128 2
+                <> encodeULEB128 (fromIntegral ((i + 1) * 4 :: Int))
+                <> incStoredFieldBin ctx nSlot (i + 1) fld
+        fieldCode = concatMap storeField (zip fields [0 :: Int ..])
+        -- return pointer
+        retCode = [opLocalGet] <> encodeULEB128 nSlot
+     in decOldCode <> tagCode <> fieldCode <> retCode
+
+-- | Resolve a parameter or case-arm binder name to its WASM local slot.
+-- 'CDrop' only ever drops names introduced as function
+-- parameters ('ecParams') or case/row-case binders ('ecLocals'); a
+-- lookup miss is a pipeline bug.
+lookupBinderSlot :: ExprCtx -> Text -> Word32
+lookupBinderSlot ctx n
+  | Just slot <- Map.lookup n ctx.ecLocals = slot
+  | Just slot <- Map.lookup n ctx.ecParams = slot
+  | otherwise = error $ "WASM Assemble: CDrop on unknown binder: " <> show n
+
+-- | WASM-binary mirror of LLVM's 'sourceCVar' — return the
+-- binder name if the expression's tail is a 'CVar' (possibly under
+-- 'CDrop' wrappers). Used to detect borrow positions that need a
+-- caller-side @__inc_ref@.
+sourceCVarBin :: CExpr -> Maybe Text
+sourceCVarBin = \case
+  CVar n -> Just n
+  CDrop _ _ body -> sourceCVarBin body
+  _ -> Nothing
+
+-- | Does the expression's tail produce a /heap-allocated
+-- borrow/ — a 'CVar' that resolves to a param or case-pattern
+-- binder, not a fn-table reference or a 'CValDef' getter call.
+-- Function references on WASM are i32 table indices (small
+-- integers), and 'CValDef' references compile to a getter call
+-- that returns a fresh allocation; both look like 'CVar n' in IR
+-- but neither is a heap-pointer borrow, so they must not be
+-- inc'd. The LLVM backend doesn't care because @__inc_ref@ on
+-- non-heap addresses reads a stray byte and skips on flag != 1.
+isHeapBorrow :: ExprCtx -> CExpr -> Bool
+isHeapBorrow ctx = \case
+  CVar n -> not (Set.member n ctx.ecValDefs || Set.member n ctx.ecFunDefs)
+  CDrop _ _ body -> isHeapBorrow ctx body
+  _ -> False
+
+-- | After storing a ptr value at @conSlot + slotIdx*4@, if
+-- the source expression's tail is a heap-borrow 'CVar', emit
+-- @(call $__inc_ref (i32.load offset=slotIdx*4 conSlot))@. Mirrors
+-- 'incIfCVarStored' in 'Awsum.Codegen.WASM' (text codegen).
+incStoredFieldBin :: ExprCtx -> Word32 -> Int -> CExpr -> [Word8]
+incStoredFieldBin ctx conSlot slotIdx fld
+  | isHeapBorrow ctx fld =
+      [opLocalGet]
+        <> encodeULEB128 conSlot
+        <> [opI32Load]
+        <> encodeULEB128 2
+        <> encodeULEB128 (fromIntegral (slotIdx * 4 :: Int))
+        <> [opCall]
+        <> encodeULEB128 idxIncRef
+  | otherwise = []
+
+-- | Emit a value and, when its tail is a heap-borrow
+-- 'CVar', tee the result through @$__inc_ref_temp@ and call
+-- @$__inc_ref@ before yielding the value back on the stack. Used
+-- at user-CCall arg evaluation and 'CContinue' arg evaluation
+-- where there's no destination slot to load back from.
+emitArgWithIncBin :: ExprCtx -> CExpr -> [Word8]
+emitArgWithIncBin ctx fld
+  | isHeapBorrow ctx fld =
+      emitExpr ctx fld
+        <> [opLocalTee]
+        <> encodeULEB128 ctx.ecIncRefTempSlot
+        <> [opCall]
+        <> encodeULEB128 idxIncRef
+        <> [opLocalGet]
+        <> encodeULEB128 ctx.ecIncRefTempSlot
+  | otherwise = emitExpr ctx fld
 
 -- | Emit a case expression as nested if/else in binary WASM.
 -- Stores scrutinee pointer to $__scrut, loads tag, then chains if/else arms.
@@ -4860,21 +5935,44 @@ emitCaseChain :: ExprCtx -> CExpr -> [(Int, [Text], CExpr)] -> [Word8]
 emitCaseChain _ctx _scrut [] = [opI32Const] <> encodeSLEB128 0 -- unreachable
 emitCaseChain ctx scrut alts =
   let scrutSlot = ctx.ecScrutSlot
+      scrutFresh = isNothing (sourceCVarBin scrut)
+      scrutName = sourceCVarBin scrut
       -- evaluate scrutinee and store to scrut local
       storeCode =
         emitExpr ctx scrut
           <> [opLocalSet]
           <> encodeULEB128 scrutSlot
-   in storeCode <> emitArmChain ctx alts
+   in storeCode <> emitArmChain ctx scrutName scrutFresh alts
+
+-- | Dec the scrut after 'bindArmVars' has extracted the
+-- arm's binders. Case-binders were inc'd at extract so their cells
+-- survive even if cascade-free of scrut decs the slot-ref. Only
+-- fires when @scrutFresh@ — borrowed scruts (CVar source) keep
+-- their original owner.
+scrutDecAfterBind :: ExprCtx -> Bool -> [Word8]
+scrutDecAfterBind ctx scrutFresh
+  | scrutFresh =
+      [opLocalGet]
+        <> encodeULEB128 ctx.ecScrutSlot
+        <> [opCall]
+        <> encodeULEB128 idxFreeRecursive
+  | otherwise = []
 
 -- | Emit the if/else chain for case arms (scrutinee already in $__scrut).
-emitArmChain :: ExprCtx -> [(Int, [Text], CExpr)] -> [Word8]
-emitArmChain _ctx [] = [opI32Const] <> encodeSLEB128 0
-emitArmChain ctx [(_, vars, body)] =
+-- @scrutFresh@ marks whether the scrut is a fresh allocation that
+-- must be dec'd after each arm's bindArmVars (no other owner once
+-- the case completes). @scrutName@ is the binder name of the
+-- scrutinee when it's a 'CVar' — recorded in
+-- 'ecArmPatternByScrut' so a nested 'CReuse' can detect
+-- self-moves.
+emitArmChain :: ExprCtx -> Maybe Text -> Bool -> [(Int, [Text], CExpr)] -> [Word8]
+emitArmChain _ctx _scrutName _scrutFresh [] = [opI32Const] <> encodeSLEB128 0
+emitArmChain ctx scrutName scrutFresh [(_, vars, body)] =
   -- Last arm: bind vars and emit body, no tag comparison needed
   let (bindCode, ctx') = bindArmVars ctx vars
-   in bindCode <> emitExpr ctx' body
-emitArmChain ctx ((tag, vars, body) : rest) =
+      ctx'' = recordArmPattern ctx' scrutName vars
+   in bindCode <> scrutDecAfterBind ctx scrutFresh <> emitExpr ctx'' body
+emitArmChain ctx scrutName scrutFresh ((tag, vars, body) : rest) =
   let scrutSlot = ctx.ecScrutSlot
       -- load tag from scrutinee container (i32 at offset 0)
       loadTag =
@@ -4888,14 +5986,23 @@ emitArmChain ctx ((tag, vars, body) : rest) =
           <> encodeSLEB128 (fromIntegral tag)
           <> [0x46] -- i32.eq
       (bindCode, ctx') = bindArmVars ctx vars
+      ctx'' = recordArmPattern ctx' scrutName vars
    in loadTag
         <> cmpCode
         <> [opIf, blocktypeI32]
         <> bindCode
-        <> emitExpr ctx' body
+        <> scrutDecAfterBind ctx scrutFresh
+        <> emitExpr ctx'' body
         <> [opElse]
-        <> emitArmChain ctx rest
+        <> emitArmChain ctx scrutName scrutFresh rest
         <> [opEnd]
+
+-- | Linear-scrutinee elision helper: extend 'ecArmPatternByScrut' if
+-- the scrut is a 'CVar' (Just name). No-op otherwise.
+recordArmPattern :: ExprCtx -> Maybe Text -> [Text] -> ExprCtx
+recordArmPattern ctx scrutName vars = case scrutName of
+  Just n -> ctx {ecArmPatternByScrut = Map.insert n vars ctx.ecArmPatternByScrut}
+  Nothing -> ctx
 
 -- | Bind case arm variables: load fields from scrutinee container into locals.
 -- The returned context advances 'ecBoundBase' past the fresh slots so any
@@ -4909,6 +6016,9 @@ bindArmVars ctx vars =
       bindOne v i =
         let slot = base + fromIntegral i
             offset = fromIntegral ((i + 1) * 4 :: Int)
+            -- Inc each extracted ptr-binder so the local
+            -- binding takes its own ref. The matching dec at arm
+            -- end is the 'CDrop' wrap that 'Awsum.Lifetime' adds.
             bc =
               [opLocalGet]
                 <> encodeULEB128 scrutSlot
@@ -4917,6 +6027,10 @@ bindArmVars ctx vars =
                 <> encodeULEB128 offset
                 <> [opLocalSet]
                 <> encodeULEB128 slot
+                <> [opLocalGet]
+                <> encodeULEB128 slot
+                <> [opCall]
+                <> encodeULEB128 idxIncRef
          in (bc, (v, slot))
       results = zipWith bindOne vars [0 :: Int ..]
       code = concatMap fst results
@@ -4936,18 +6050,134 @@ bindArmVars ctx vars =
 -- value that becomes the loop's (and the function's) result.
 --
 -- The @tcoTempBase@ slot is the first of @arity@ scratch locals used to
--- stage 'CContinue' arguments, so a new value that reads a still-old
+-- buffer 'CContinue' arguments, so a new value that reads a still-old
 -- parameter sees the old binding rather than a half-updated one.
 emitTailBin :: Word32 -> [Text] -> Word32 -> ExprCtx -> CExpr -> [Word8]
-emitTailBin tcoTempBase params depth ctx = \case
+emitTailBin tcoTempBase params depth ctx =
+  emitTailBinPending tcoTempBase params depth ctx [] 0
+
+-- | Emit `(call $__free_recursive (local.get freshScrutSlot[i]))`
+-- for every fresh-scrut stash slot in current scope (depths 0..n-1).
+-- Slots live at `ecFreshScrutBase + i`.
+emitFreshScrutDecs :: ExprCtx -> Int -> [Word8]
+emitFreshScrutDecs ctx freshScrutDepth =
+  concat
+    [ [opLocalGet]
+        <> encodeULEB128 (ctx.ecFreshScrutBase + fromIntegral i)
+        <> [opCall]
+        <> encodeULEB128 idxFreeRecursive
+    | i <- [0 .. freshScrutDepth - 1]
+    ]
+
+-- | Emit a non-'CLoop' 'CFunDef' body with value-tail
+-- param decs. Mirror of 'emitNonLoopBody' in LLVM: walks the
+-- tail-form and emits dec at each terminal, with per-arm
+-- precision for 'CCase'/'CRowCase' bodies so an arm returning a
+-- 'CVar' param is "moved" out instead of being freed.
+emitNonLoopBodyBin :: ExprCtx -> [Text] -> CExpr -> [Word8]
+emitNonLoopBodyBin ctx0 params = go ctx0 [] 0
+  where
+    go :: ExprCtx -> [Text] -> Int -> CExpr -> [Word8]
+    go ctx pending freshScrutDepth = \case
+      CCase scrut alts ->
+        let sorted = sortWith (\(t, _, _) -> t) alts
+            scrutFresh = isNothing (sourceCVarBin scrut)
+            scrutName = sourceCVarBin scrut
+            freshStashSlot = ctx.ecFreshScrutBase + fromIntegral freshScrutDepth
+            scrutCode =
+              if scrutFresh
+                then
+                  emitExpr ctx scrut
+                    <> [opLocalTee]
+                    <> encodeULEB128 freshStashSlot
+                    <> [opLocalSet]
+                    <> encodeULEB128 ctx.ecScrutSlot
+                else
+                  emitExpr ctx scrut
+                    <> [opLocalSet]
+                    <> encodeULEB128 ctx.ecScrutSlot
+            freshScrutDepth' = if scrutFresh then freshScrutDepth + 1 else freshScrutDepth
+         in scrutCode <> goCaseChain ctx scrutName pending freshScrutDepth' sorted
+      CRowCase scrut alts ->
+        go ctx pending freshScrutDepth (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+      CDrop _ n body -> go ctx (n : pending) freshScrutDepth body
+      other ->
+        let resultName = sourceCVarBin other
+            inResult m = Just m == resultName
+            pendingToDec = filter (not . inResult) pending
+            paramsToDec =
+              [ p
+              | p <- params,
+                not (inResult p),
+                p `notElem` pending
+              ]
+            toDec = pendingToDec <> paramsToDec
+            scrutDecs = emitFreshScrutDecs ctx freshScrutDepth
+         in drainPendingBin ctx toDec (scrutDecs <> emitExpr ctx other)
+
+    -- Per-arm dec: each arm body emits its own (potentially
+    -- different) param decs based on its own tail-form. Each arm
+    -- self-terminates with a value (the function's 'if (result
+    -- i32) ...' chain unifies them through WASM's structured
+    -- control flow).
+    goCaseChain :: ExprCtx -> Maybe Text -> [Text] -> Int -> [(Int, [Text], CExpr)] -> [Word8]
+    goCaseChain _ _ _ _ [] = [opI32Const] <> encodeSLEB128 0 -- unreachable
+    goCaseChain ctx scrutName pending freshScrutDepth [(_, vars, body)] =
+      let (bindCode, ctx') = bindArmVars ctx vars
+          ctx'' = recordArmPattern ctx' scrutName vars
+       in bindCode <> go ctx'' pending freshScrutDepth body
+    goCaseChain ctx scrutName pending freshScrutDepth ((tag, vars, body) : rest) =
+      [opLocalGet]
+        <> encodeULEB128 ctx.ecScrutSlot
+        <> [opI32Load]
+        <> encodeULEB128 2
+        <> encodeULEB128 0
+        <> [opI32Const]
+        <> encodeSLEB128 (fromIntegral tag)
+        <> [opI32Eq]
+        <> [opIf, blocktypeI32]
+        <> ( let (bindCode, ctx') = bindArmVars ctx vars
+                 ctx'' = recordArmPattern ctx' scrutName vars
+              in bindCode <> go ctx'' pending freshScrutDepth body
+           )
+        <> [opElse]
+        <> goCaseChain ctx scrutName pending freshScrutDepth rest
+        <> [opEnd]
+
+-- | Walk a tail-position expression, accumulating 'CDrop' binders into
+-- a 'pending' stack drained at every terminator (CContinue / value).
+-- 'CCase' arms inherit the same 'pending' through 'emitTailArmChain'.
+-- @freshScrutDepth@ counts how many fresh case-scrutinees are
+-- currently stashed in `ecFreshScrutBase`-indexed slots; each
+-- terminator dec's them.
+emitTailBinPending :: Word32 -> [Text] -> Word32 -> ExprCtx -> [Text] -> Int -> CExpr -> [Word8]
+emitTailBinPending tcoTempBase params depth ctx pending freshScrutDepth = \case
   CContinue newArgs ->
-    let evals =
+    let -- Buffer each new arg into the scratch slot (so a new value
+        -- that reads an old param sees the pre-update value).
+        evals =
           concat
             [ emitExpr ctx a
                 <> [opLocalSet]
                 <> encodeULEB128 (tcoTempBase + fromIntegral i)
             | (i, a) <- zip [0 :: Int ..] newArgs
             ]
+        -- Inc each ptr-arg whose source is a CVar (borrow
+        -- → the next-iter slot takes its own ref). Fresh sources
+        -- carry their @+1@ from @$__alloc@.
+        incs =
+          concat
+            [ case sourceCVarBin a of
+                Just _ ->
+                  [opLocalGet]
+                    <> encodeULEB128 (tcoTempBase + fromIntegral i)
+                    <> [opCall]
+                    <> encodeULEB128 idxIncRef
+                Nothing -> []
+            | (i, a) <- zip [0 :: Int ..] newArgs
+            ]
+        scrutDecs = emitFreshScrutDecs ctx freshScrutDepth
+        frees = concatMap (emitFreeOf ctx) pending
         paramSlots =
           [ fromMaybe (error $ "WASM Assemble: no param slot for " <> show p) (Map.lookup p ctx.ecParams)
           | p <- params
@@ -4960,26 +6190,98 @@ emitTailBin tcoTempBase params depth ctx = \case
                 <> encodeULEB128 ps
             | (i, ps) <- zip [0 :: Int ..] paramSlots
             ]
-     in evals <> copies <> [opBr] <> encodeULEB128 depth
+     in evals <> incs <> scrutDecs <> frees <> copies <> [opBr] <> encodeULEB128 depth
   CCase scrut alts ->
     let sorted = sortWith (\(t, _, _) -> t) alts
+        scrutFresh = isNothing (sourceCVarBin scrut)
+        scrutName = sourceCVarBin scrut
+        freshStashSlot = ctx.ecFreshScrutBase + fromIntegral freshScrutDepth
+        -- If scrut is fresh, tee through the fresh-scrut stash
+        -- slot before storing to ecScrutSlot so arm terminators
+        -- can dec it later (the dispatch slot may be overwritten
+        -- by inner cases, but the stash survives).
         scrutCode =
-          emitExpr ctx scrut
-            <> [opLocalSet]
-            <> encodeULEB128 ctx.ecScrutSlot
-     in scrutCode <> emitTailArmChain tcoTempBase params depth ctx sorted
-  other -> emitExpr ctx other
+          if scrutFresh
+            then
+              emitExpr ctx scrut
+                <> [opLocalTee]
+                <> encodeULEB128 freshStashSlot
+                <> [opLocalSet]
+                <> encodeULEB128 ctx.ecScrutSlot
+            else
+              emitExpr ctx scrut
+                <> [opLocalSet]
+                <> encodeULEB128 ctx.ecScrutSlot
+        freshScrutDepth' = if scrutFresh then freshScrutDepth + 1 else freshScrutDepth
+     in scrutCode <> emitTailArmChain tcoTempBase params depth ctx scrutName pending freshScrutDepth' sorted
+  -- Push the drop onto the pending stack; drain at terminator.
+  CDrop _ n body -> emitTailBinPending tcoTempBase params depth ctx (n : pending) freshScrutDepth body
+  other ->
+    let -- Value-tail decs with move-semantics carve-out.
+        -- Result-CVar matching a pending or param is "moved" out;
+        -- everything else is dec'd.
+        resultName = sourceCVarBin other
+        inResult m = Just m == resultName
+        pendingToDec = filter (not . inResult) pending
+        paramsToDec =
+          [ p
+          | p <- params,
+            not (inResult p),
+            p `notElem` pending
+          ]
+        toDec = pendingToDec <> paramsToDec
+        scrutDecs = emitFreshScrutDecs ctx freshScrutDepth
+     in drainPendingBin ctx toDec (scrutDecs <> emitExpr ctx other)
+
+-- | Drain pending drops at a value-producing tail. Wraps the value
+-- expression in @(block (result i32) (local.set $__drop_tmp …) …frees…
+-- (local.get $__drop_tmp))@. Empty pending → no wrapping.
+drainPendingBin :: ExprCtx -> [Text] -> [Word8] -> [Word8]
+drainPendingBin _ [] valueBytes = valueBytes
+drainPendingBin ctx pending valueBytes =
+  [opBlock, blocktypeI32]
+    <> valueBytes
+    <> [opLocalSet]
+    <> encodeULEB128 ctx.ecDropTmpSlot
+    <> concatMap (emitFreeOf ctx) pending
+    <> [opLocalGet]
+    <> encodeULEB128 ctx.ecDropTmpSlot
+    <> [opEnd]
+
+-- | Emit @(call $__free_recursive (local.get $<binder>))@.
+-- The binder must be a function param ('ecParams') or a
+-- case-pattern binder ('ecLocals') already in scope.
+emitFreeOf :: ExprCtx -> Text -> [Word8]
+emitFreeOf ctx n =
+  let slot = lookupBinderSlot ctx n
+   in [opLocalGet]
+        <> encodeULEB128 slot
+        <> [opCall]
+        <> encodeULEB128 idxFreeRecursive
+
+-- | Emit @(call $__free_recursive (local.get N))@ for a
+-- builtin-helper arg in slot N. Builtins take ownership of their
+-- args (same model as user CCalls): caller-side inc-on-CVar (via
+-- 'emitArgWithIncBin') balances callee-side dec at helper exit.
+-- Used inside the @code…@ helper bodies.
+decArgBin :: Word32 -> [Word8]
+decArgBin slot =
+  [opLocalGet]
+    <> encodeULEB128 slot
+    <> [opCall]
+    <> encodeULEB128 idxFreeRecursive
 
 -- | Tail version of 'emitArmChain': each arm is emitted in tail form so
 -- it either produces an @i32@ result or terminates with a @br@ back to
 -- the loop. Nesting into an @opIf@ increases 'depth' by one for both the
 -- then-body and the else-continuation.
-emitTailArmChain :: Word32 -> [Text] -> Word32 -> ExprCtx -> [(Int, [Text], CExpr)] -> [Word8]
-emitTailArmChain _ _ _ _ [] = [opI32Const] <> encodeSLEB128 0
-emitTailArmChain tcoTempBase params depth ctx [(_, vars, body)] =
+emitTailArmChain :: Word32 -> [Text] -> Word32 -> ExprCtx -> Maybe Text -> [Text] -> Int -> [(Int, [Text], CExpr)] -> [Word8]
+emitTailArmChain _ _ _ _ _ _ _ [] = [opI32Const] <> encodeSLEB128 0
+emitTailArmChain tcoTempBase params depth ctx scrutName pending freshScrutDepth [(_, vars, body)] =
   let (bindCode, ctx') = bindArmVars ctx vars
-   in bindCode <> emitTailBin tcoTempBase params depth ctx' body
-emitTailArmChain tcoTempBase params depth ctx ((tag, vars, body) : rest) =
+      ctx'' = recordArmPattern ctx' scrutName vars
+   in bindCode <> emitTailBinPending tcoTempBase params depth ctx'' pending freshScrutDepth body
+emitTailArmChain tcoTempBase params depth ctx scrutName pending freshScrutDepth ((tag, vars, body) : rest) =
   let scrutSlot = ctx.ecScrutSlot
       loadTag =
         [opLocalGet]
@@ -4992,13 +6294,14 @@ emitTailArmChain tcoTempBase params depth ctx ((tag, vars, body) : rest) =
           <> encodeSLEB128 (fromIntegral tag)
           <> [0x46] -- i32.eq
       (bindCode, ctx') = bindArmVars ctx vars
+      ctx'' = recordArmPattern ctx' scrutName vars
    in loadTag
         <> cmpCode
         <> [opIf, blocktypeI32]
         <> bindCode
-        <> emitTailBin tcoTempBase params (depth + 1) ctx' body
+        <> emitTailBinPending tcoTempBase params (depth + 1) ctx'' pending freshScrutDepth body
         <> [opElse]
-        <> emitTailArmChain tcoTempBase params (depth + 1) ctx rest
+        <> emitTailArmChain tcoTempBase params (depth + 1) ctx scrutName pending freshScrutDepth rest
         <> [opEnd]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -5008,14 +6311,24 @@ emitTailArmChain tcoTempBase params depth ctx ((tag, vars, body) : rest) =
 buildDataSection :: WasmInfo -> [Word8]
 buildDataSection info =
   let pool = sortWith snd (Map.toList info.wiStringPool)
-      mkSegment (s, off) =
+      mkSegment (s, userPtr) =
         let payload = BS.unpack (encodeUtf8 s)
             byteCount = length payload
             utf16Count = utf16CountOfText s
-            header = i32LeBytes byteCount <> i32LeBytes utf16Count
+            -- 12-byte {flag=0, refcount=0, shape=0} prefix
+            -- marks the segment as a literal so '$__free' and
+            -- '$__free_recursive' no-op on it. user_ptr =
+            -- flag_start + 12, so the data write starts at user_ptr - 12.
+            header =
+              i32LeBytes 0 -- flag
+                <> i32LeBytes 0 -- refcount
+                <> i32LeBytes 0 -- shape
+                <> i32LeBytes byteCount
+                <> i32LeBytes utf16Count
+            flagStart = userPtr - 12
          in [0x00] -- active, memory 0
               <> [opI32Const]
-              <> encodeSLEB128 (fromIntegral off)
+              <> encodeSLEB128 (fromIntegral flagStart)
               <> [opEnd]
               <> encodeBytes (header <> payload)
       content = encodeVec (map mkSegment pool)

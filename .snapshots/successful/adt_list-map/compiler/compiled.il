@@ -120,6 +120,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -228,8 +232,8 @@
     stloc.1
     pop
     ldloc.1
-    ldc.i4.3
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 24
@@ -243,6 +247,10 @@
     ldc.i4.2
     ldloc.0
     stelem.ref
+    ldnull
+    starg.s 1
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -285,8 +293,8 @@
     stloc.1
     pop
     ldloc.0
-    ldc.i4.3
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 19
@@ -300,6 +308,10 @@
     ldc.i4.2
     ldarg.1
     stelem.ref
+    ldnull
+    starg.s 1
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -430,8 +442,8 @@
     stloc.1
     pop
     ldloc.1
-    ldc.i4.3
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 26
@@ -445,6 +457,10 @@
     ldc.i4.2
     ldloc.0
     stelem.ref
+    ldnull
+    starg.s 1
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -487,8 +503,8 @@
     stloc.1
     pop
     ldloc.0
-    ldc.i4.3
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 19
@@ -503,6 +519,10 @@
     ldc.i4.2
     ldarg.1
     stelem.ref
+    ldnull
+    starg.s 1
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -571,6 +591,13 @@
     ldloc.2
     stelem.ref
     ldarg.1
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -625,6 +652,9 @@
     ldloc.2
     stelem.ref
     call object AwsumMain::v__apply__scc_show_showCons(object, object)
+
+
+
     ret
   IL_tco_arm_4:
     dup
@@ -643,8 +673,8 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
-    ldc.i4.3
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 28
@@ -658,6 +688,11 @@
     ldc.i4.2
     ldloc.2
     stelem.ref
+    ldnull
+    starg.s 1
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -700,8 +735,8 @@
     stloc.2
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -711,6 +746,11 @@
     ldc.i4.1
     ldloc.2
     stelem.ref
+    ldnull
+    starg.s 0
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -735,8 +775,8 @@
     stloc.3
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -746,6 +786,12 @@
     ldc.i4.1
     ldloc.3
     stelem.ref
+    ldnull
+    starg.s 0
+
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -759,6 +805,14 @@
     ldloc.3
     ldloc.2
     call object AwsumMain::__concat(object, object)
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop

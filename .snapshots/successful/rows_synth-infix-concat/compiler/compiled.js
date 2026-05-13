@@ -22,6 +22,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -62,6 +63,8 @@ function v_double(v_n, v_s){
                       const v_s2 = __s[1];
                       const __t0 = v_m;
                       const __t1 = v_s2;
+                      v_s = null;
+                      v_n = null;
                       v_n = __t0;
                       v_s = __t1;
                       continue;

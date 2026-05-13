@@ -1,0 +1,17 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+captureFn:
+  param           k                               count=1
+
+$lam$7:
+  param           k                               count=1
+  param           _n                              count=0
+
+$df$apply$0:
+  param           x                               count=1
+  param           $df$apply$0$cap0$0              count=1
+

@@ -1,0 +1,35 @@
+not:
+  param           b                               count=1
+
+and:
+  param           a                               count=1
+  param           b                               count=1
+
+or:
+  param           a                               count=1
+  param           b                               count=1
+
+showBool:
+  param           b                               count=1
+
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+main:
+  case-pattern    $do_e_7_9                       count=1
+  case-pattern    s0                              count=1
+  case-pattern    $do_e_8_9                       count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_9_9                       count=1
+  case-pattern    s2                              count=1
+  case-pattern    $do_e_10_9                      count=1
+  case-pattern    s3                              count=1
+
+$let$7:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

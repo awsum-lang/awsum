@@ -1,0 +1,10 @@
+{- Direct test of `bindIO`: sequences two IO actions, threading the
+   success value of the first into the continuation. The runtime
+   walks the resulting tree in order. -}
+import IO.Stdout
+
+emit : String -> IO Never Unit
+emit s = IO.Stdout.print s
+
+main : IO Never Unit
+main = bindIO (emit "a") (\_u -> bindIO (emit "b") (\_v -> emit "c"))

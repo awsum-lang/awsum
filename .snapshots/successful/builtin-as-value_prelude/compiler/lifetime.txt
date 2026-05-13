@@ -1,0 +1,12 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$bi$showInt32:
+  param           $x0                             count=1
+
+$df$apply$0:
+  param           x                               count=1
+

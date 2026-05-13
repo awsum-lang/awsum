@@ -20,7 +20,7 @@
 --     Right b -> pureEither (Tuple2 a b)
 -- @
 --
--- Inlining the bind pattern at this stage means @do@ continuations
+-- Inlining the bind pattern here means @do@ continuations
 -- never appear as surface lambdas, so multi-bind blocks where later
 -- steps reference earlier-bound variables compile end-to-end without
 -- the runtime needing first-class closures. Each synthetic @$do_e_…@
@@ -115,12 +115,13 @@ desugarExpr = \case
 --   to the rest of the block.
 --
 --   Inlining the @bindEither@ pattern at desugar time means
---   continuations never appear as surface lambdas, so the lambda-
---   lifting / closure machinery (which currently can't carry
---   captured locals through a runtime function value) doesn't have
---   to come into play. Multi-bind do-blocks where later steps
---   reference earlier-bound variables — the common shape — work
---   end-to-end.
+--   continuations never appear as surface lambdas. The downstream
+--   defunctionalization / closure-lowering passes could handle them
+--   if they did, but generating a direct nested 'case' shape skips
+--   the round-trip and keeps the generated Core simpler — useful for
+--   reading 'awsum core' output. Multi-bind do-blocks where later
+--   steps reference earlier-bound variables — the common shape —
+--   work end-to-end.
 --
 --   Each generated @$do_e_<line>_<col>@ name is unique by source
 --   position so nested do-blocks don't trip the same-module no-

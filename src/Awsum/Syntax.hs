@@ -193,7 +193,9 @@ data Decl
 -- | Constructor definition inside a 'TypeDecl'.
 --   The 'SrcSpan' covers just the constructor's name in the source so
 --   quick-fixes (e.g. rename '_C' to 'C') can target it precisely.
---   Field types are stored for future use (e.g. @Just a@); empty for nullary constructors.
+--   The field list is empty for nullary constructors and carries the parsed
+--   field types for parametric / structural constructors (e.g. @Just a@,
+--   @Node (Tree a) a (Tree a)@), consumed by the typechecker and codegen.
 data ConDef = ConDef SrcSpan Name [Type']
   deriving stock (Show, Eq)
 
@@ -279,7 +281,7 @@ data Expr
   | -- | Explicit parentheses as written by the user.
     --   Kept to make render ∘ parse an identity in tests.
     EParens SrcSpan Expr
-  | -- | Literal (currently only strings).
+  | -- | Literal — string or integer (see 'Literal').
     ELit SrcSpan Literal
   | -- | Constructor reference (uppercase, e.g. @True@, @Nothing@).
     ECon SrcSpan Name
@@ -454,15 +456,17 @@ isBlockBody = \case
   ECon {} -> False
   EBuiltIn {} -> False
 
--- | Patterns for @case@ alternatives.
---   Currently only constructor patterns; variable and wildcard are for future use.
+-- | Patterns for @case@ alternatives, @let@ LHS, function/lambda parameters,
+--   and @<-@ bind targets in @do@-blocks. Five shapes: constructor, variable,
+--   wildcard, type-ascribed (for structural-sum discrimination), and parenthesised.
 data Pattern
   = -- | Constructor pattern, e.g. @Just x@. The 'SrcSpan' covers the
     --   constructor's name in the source so quick-fixes targeting the
     --   pattern (e.g. rename '_C' to 'C') can edit precisely.
     --   Fields are empty for nullary constructors.
     PCon SrcSpan Name [Pattern]
-  | -- | Variable binding (future). Span covers just the identifier.
+  | -- | Variable binding, e.g. the @x@ in @case e of Just x -> x@. Span
+    --   covers just the identifier.
     PVar SrcSpan Name
   | -- | Wildcard @_@. Span covers the underscore so diagnostics
     --   targeting the wildcard (e.g. 'RowCatchAllPattern') can point

@@ -1,0 +1,55 @@
+{- Non-tail self-recursion through a closure stored in a constructor
+   field, under runtime load.
+
+   'countWithBox' has a non-tail self-call (the recursive 'countWithBox
+   b m' is the case scrutinee), so 'Awsum.Cps' emits a K-chain. The
+   post-call expression also unpacks 'Box f' and calls 'f v' — a call
+   through a case-arm-binder of function type, which 'Awsum.LowerClosures'
+   rewrites to '$apply1 f v' (dispatch over a tag-encoded closure).
+   Three compiler machineries on the same hot path: Cps for stack
+   safety, LowerClosures for first-class function values, and the K-cell
+   ADT travels with the captured 'b' (a heap pointer) inside each K_i.
+
+   Per inner iter (one Cons-cell-equivalent of work):
+     * predInt32 alloc (Either Right)
+     * K_1 cell alloc capturing 'b' and parent continuation
+     * (on the return walk) $apply1 dispatch on closure tag → identity
+     * Either Right alloc for the result wrap
+
+   Sizing: 100 outer × 100_000 inner = 10⁷ K-cell allocations + 10⁷
+   $apply1 dispatches + ~10⁷ Either Right allocations. Tests RC + K-
+   chain + LowerClosures dispatch composing under load. Output 'ok' if
+   no underflow. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type Box = Box (Int32 -> Int32)
+
+identity : Int32 -> Int32
+identity n = n
+
+countWithBox : Box -> Int32 -> Either UnderflowError Int32
+countWithBox b n = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> case countWithBox b m of
+      Left e -> Left e
+      Right v -> case b of
+        Box f -> Right (f v)
+
+outerLoop : Box -> Int32 -> Either UnderflowError Int32
+outerLoop b k = case eqInt32 k zero of
+  True -> Right zero
+  False -> case predInt32 k of
+    Left e -> Left e
+    Right m -> case countWithBox b 100_000 of
+      Left e -> Left e
+      Right _v -> outerLoop b m
+
+main : IO Never Unit
+main = case outerLoop (Box identity) 100 of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right _v -> IO.Stdout.print "ok"

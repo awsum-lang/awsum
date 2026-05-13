@@ -1332,7 +1332,7 @@ lengthUtf8BytesMethod =
 --   passes (since `acc <= 2147483648` ⇒ `-acc >= -2147483648`); the
 --   positive path range-checks against `maxInt32` (2147483647). Slot 4
 --   carries the negative-flag during parsing and is later reused to
---   stage the boxed `ParseError` on the L_parseInt32_fail path — JVM
+--   hold the boxed `ParseError` on the L_parseInt32_fail path — JVM
 --   slot reuse is fine because the verifier tracks the type after each
 --   instruction.
 parseInt32Method :: PreludeTags -> Text
@@ -2047,6 +2047,42 @@ emitExprText ctx paramMap = \case
               <> ["  invokevirtual java/lang/invoke/MethodHandle/invoke" <> desc]
   CLoop _ -> error "JVM codegen: CLoop reached emitExprText (non-tail position)"
   CContinue _ -> error "JVM codegen: CContinue reached emitExprText (non-tail position)"
+  -- Liveness annotation; backend treats as a transparent wrapper
+  -- since the managed GC handles reclaim (null-assignment is the
+  -- early-root-snip equivalent).
+  CDrop _ _ body -> emitExprText ctx paramMap body
+  -- Cell reuse. In-place mutation of the existing
+  -- 'Object[]' at slot of @n@: write tag at index 0, fields at
+  -- indices 1..k via 'aastore'. No fresh 'anewarray' — the JIT
+  -- can hoist the still-allocated array out of repeated young-gen
+  -- pressure. Net stack: leaves the reused array on the operand
+  -- stack, identical shape to 'CCon'.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the array already
+  -- has at least @1 + length fields@ slots.
+  CReuse n tag fields ->
+    let slot =
+          fromMaybe (error $ "JVM codegen: CReuse on unknown binder " <> show n)
+            $ Map.lookup n paramMap
+        -- 'aload' pushes 'java/lang/Object'; 'aastore' wants
+        -- '[Ljava/lang/Object;', so insert a 'checkcast' as in CCase.
+        loadCell = "  aload" <> aloadSuffix slot <> "\n  checkcast [Ljava/lang/Object;"
+        storeTag =
+          [ "  dup",
+            emitIconst 0,
+            emitIconst tag,
+            "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
+            "  aastore"
+          ]
+        storeFields =
+          [ "  dup\n" <> emitIconst (i :: Int) <> "\n" <> emitExprText ctx paramMap fld <> "\n  aastore"
+          | (fld, i) <- zip fields [1 ..]
+          ]
+     in T.intercalate "\n"
+          $ [loadCell]
+          <> storeTag
+          <> storeFields
 
 -- | Emit @body@ in tail position under @L_tco_loop:@. 'CContinue'
 -- evaluates new argument values onto the operand stack (so old reads of
@@ -2054,20 +2090,37 @@ emitExprText ctx paramMap = \case
 -- locals in reverse (LIFO stack), and @goto L_tco_loop@. Any other tail
 -- shape evaluates a value and ends with @areturn@. 'CCase' chains via
 -- @lookupswitch@ where each arm self-terminates — no @goto L_join@.
+-- 'CDrop' wrappers accumulate as a 'pending' stack. At every
+-- terminator the stack drains as @aconst_null; astore <slot>@
+-- sequences — one per dropped binder. On a 'CContinue' the drains
+-- land between the buffered arg evaluations and the param @astore@s
+-- (operand stack net-effect zero per drain, so the buffered values are
+-- still on top in order). On a value-producing tail they land between
+-- the result computation and @areturn@. All Awsum heap values are
+-- @Object[]@ references on the JVM, so the slots are reference-typed
+-- and @astore@ is always legal; no per-kind dispatch is needed.
 emitTailText :: Ctx -> Map Text Int -> [Text] -> CExpr -> Text
-emitTailText ctx paramMap params = go paramMap
+emitTailText ctx paramMap params = go paramMap []
   where
-    go :: Map Text Int -> CExpr -> Text
-    go pmap = \case
+    go :: Map Text Int -> [Text] -> CExpr -> Text
+    go pmap pending = \case
       CContinue newArgs ->
         let evals = T.intercalate "\n" [emitExprText ctx pmap a | a <- newArgs]
+            frees =
+              T.intercalate
+                "\n"
+                [ "  aconst_null\n  astore" <> astoreSuffix s
+                | n <- pending,
+                  Just s <- [binderSlot pmap n]
+                ]
             astores =
               T.intercalate
                 "\n"
                 [ "  astore" <> astoreSuffix (paramSlot p)
                 | p <- reverse params
                 ]
-         in evals <> "\n" <> astores <> "\n  goto L_tco_loop"
+            sep s = if T.null s then "" else s <> "\n"
+         in evals <> "\n" <> sep frees <> astores <> "\n  goto L_tco_loop"
       CCase scrut alts ->
         let sorted = sortWith (\(t, _, _) -> t) alts
             scrutText = emitExprText ctx pmap scrut
@@ -2095,17 +2148,35 @@ emitTailText ctx paramMap params = go paramMap
                       | ((_, slot), i) <- zip bindings [1 :: Int ..]
                       ]
                   pmap' = foldl' (\m (v, slot) -> Map.insert v slot m) pmap bindings
-               in lbl <> ":\n" <> storeCode <> "  pop\n" <> go pmap' armBody
+               in lbl <> ":\n" <> storeCode <> "  pop\n" <> go pmap' pending armBody
             armTexts = [emitArm alt lbl | (alt, lbl) <- zip sorted armLabels]
          in T.intercalate "\n"
               $ [scrutText, extractTag, switchText]
               <> armTexts
+      -- Push the drop onto 'pending'; drain at the next terminator.
+      CDrop _ n body -> go pmap (n : pending) body
       other ->
-        emitExprText ctx pmap other <> "\n  areturn"
+        let valText = emitExprText ctx pmap other
+            frees =
+              T.intercalate
+                "\n"
+                [ "  aconst_null\n  astore" <> astoreSuffix s
+                | n <- pending,
+                  Just s <- [binderSlot pmap n]
+                ]
+            sep s = if T.null s then "" else s <> "\n"
+         in valText <> "\n" <> sep frees <> "  areturn"
 
     paramSlot :: Text -> Int
     paramSlot p =
       fromMaybe (error $ "JVM codegen: no slot for param " <> show p) (Map.lookup p paramMap)
+
+    -- Arm-binder CDrops may come through 'pending' before
+    -- 'pmap' has the binder (corner cases in tail-case emission).
+    -- Returning @Nothing@ skips emit — managed GC handles the
+    -- block-scoped slot naturally.
+    binderSlot :: Map Text Int -> Text -> Maybe Int
+    binderSlot pmap n = Map.lookup n pmap
 
 emitIconst :: Int -> Text
 emitIconst n

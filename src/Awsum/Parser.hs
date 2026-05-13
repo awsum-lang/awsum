@@ -846,7 +846,7 @@ pStringLitNoLineComments = lexemeNoLine $ do
 --
 --   The '-' must be adjacent to the first digit (no whitespace), so future
 --   binary operators will not collide with negative literals. Range validation
---   happens at the type-check stage against the declared type.
+--   happens in the typechecker against the declared type.
 pIntLitNoLineComments :: Parser Integer
 pIntLitNoLineComments = lexemeNoLine $ do
   -- 'try' is restricted to the [-]?digit prefix so that backtracking

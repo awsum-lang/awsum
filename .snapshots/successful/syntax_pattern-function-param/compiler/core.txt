@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -41,41 +48,52 @@ CoreProgram
                         , "b"
                         , "c"
                         ]
-                    , CCase
-                        ( CCall
-                            ( CBuiltIn "addInt32" )
-                            [ CVar "a"
-                            , CVar "b"
-                            ]
-                        )
-                        [
-                            ( 3
-                            , [ "__w0" ]
-                            , CIntLit 0 TInt32
-                            )
-                        ,
-                            ( 4
-                            , [ "ab" ]
-                            , CCase
-                                ( CCall
-                                    ( CBuiltIn "addInt32" )
-                                    [ CVar "ab"
-                                    , CVar "c"
+                    , CDrop DropFreeUnchecked "a"
+                        ( CDrop DropFreeUnchecked "b"
+                            ( CDrop DropFreeUnchecked "c"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "addInt32" )
+                                        [ CVar "a"
+                                        , CVar "b"
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "__w0" ]
+                                        , CDrop DropFreeUnchecked "__w0"
+                                            ( CIntLit 0 TInt32 )
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "ab" ]
+                                        , CDrop DropFreeUnchecked "ab"
+                                            ( CCase
+                                                ( CCall
+                                                    ( CBuiltIn "addInt32" )
+                                                    [ CVar "ab"
+                                                    , CVar "c"
+                                                    ]
+                                                )
+                                                [
+                                                    ( 3
+                                                    , [ "__w0" ]
+                                                    , CDrop DropFreeUnchecked "__w0"
+                                                        ( CIntLit 0 TInt32 )
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "abc" ]
+                                                    , CDrop DropFreeUnchecked "abc"
+                                                        ( CVar "abc" )
+                                                    )
+                                                ]
+                                            )
+                                        )
                                     ]
                                 )
-                                [
-                                    ( 3
-                                    , [ "__w0" ]
-                                    , CIntLit 0 TInt32
-                                    )
-                                ,
-                                    ( 4
-                                    , [ "abc" ]
-                                    , CVar "abc"
-                                    )
-                                ]
                             )
-                        ]
+                        )
                     )
                 ]
             )
@@ -88,24 +106,30 @@ CoreProgram
                         [ "a"
                         , "b"
                         ]
-                    , CCase
-                        ( CCall
-                            ( CBuiltIn "addInt32" )
-                            [ CVar "a"
-                            , CVar "b"
-                            ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CDrop DropFreeUnchecked "b"
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "addInt32" )
+                                    [ CVar "a"
+                                    , CVar "b"
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "__w0" ]
+                                    , CDrop DropFreeUnchecked "__w0"
+                                        ( CIntLit 0 TInt32 )
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "s" ]
+                                    , CDrop DropFreeUnchecked "s"
+                                        ( CVar "s" )
+                                    )
+                                ]
+                            )
                         )
-                        [
-                            ( 3
-                            , [ "__w0" ]
-                            , CIntLit 0 TInt32
-                            )
-                        ,
-                            ( 4
-                            , [ "s" ]
-                            , CVar "s"
-                            )
-                        ]
                     )
                 ]
             )
@@ -136,20 +160,24 @@ CoreProgram
                 [
                     ( 3
                     , [ "__w0" ]
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ]
             )
@@ -162,13 +190,17 @@ CoreProgram
                         [ "a"
                         , "b"
                         ]
-                    , CCall
-                        ( CVar "sumPair" )
-                        [ CCon 11
-                            [ CVar "a"
-                            , CVar "b"
-                            ]
-                        ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CDrop DropFreeUnchecked "b"
+                            ( CCall
+                                ( CVar "sumPair" )
+                                [ CCon 11
+                                    [ CVar "a"
+                                    , CVar "b"
+                                    ]
+                                ]
+                            )
+                        )
                     )
                 ]
             )
@@ -190,19 +222,23 @@ CoreProgram
                     [
                         ( 3
                         , [ "$do_e_30_9" ]
-                        , CCon 3
-                            [ CVar "$do_e_30_9" ]
+                        , CDrop DropFreeUnchecked "$do_e_30_9"
+                            ( CCon 3
+                                [ CVar "$do_e_30_9" ]
+                            )
                         )
                     ,
                         ( 4
                         , [ "s0" ]
-                        , CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "s0"
-                            , CCall
-                                ( CBuiltIn "showInt32" )
-                                [ CVar "m" ]
-                            ]
+                        , CDrop DropFreeUnchecked "s0"
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CVar "m" ]
+                                ]
+                            )
                         )
                     ]
                 ]

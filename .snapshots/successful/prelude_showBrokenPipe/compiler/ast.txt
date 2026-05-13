@@ -1,0 +1,131 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Direct test of `showBrokenPipe`: renders the placeholder sentinel
+               reserved for the eventual `IO.Stdout.print : String -> IO BrokenPipe Unit`
+               signature. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 6
+            , spanStartCol = 1
+            , spanEndLine = 6
+            , spanEndCol = 21
+            }
+        ) "main"
+        ( TyApp
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 8
+                , spanEndLine = 6
+                , spanEndCol = 21
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 8
+                    , spanEndLine = 6
+                    , spanEndCol = 16
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 8
+                        , spanEndLine = 6
+                        , spanEndCol = 10
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 11
+                        , spanEndLine = 6
+                        , spanEndCol = 16
+                        }
+                    ) "Never"
+                )
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 17
+                    , spanEndLine = 6
+                    , spanEndCol = 21
+                    }
+                ) "Unit"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 7
+                , spanEndCol = 51
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 8
+                    , spanEndLine = 7
+                    , spanEndCol = 51
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 8
+                        , spanEndLine = 7
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 24
+                        , spanEndLine = 7
+                        , spanEndCol = 51
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 7
+                            , spanStartCol = 25
+                            , spanEndLine = 7
+                            , spanEndCol = 50
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 25
+                                , spanEndLine = 7
+                                , spanEndCol = 40
+                                }
+                            )
+                            ( QName [] "showBrokenPipe" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 7
+                                , spanStartCol = 40
+                                , spanEndLine = 7
+                                , spanEndCol = 50
+                                }
+                            ) "BrokenPipe"
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

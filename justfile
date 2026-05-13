@@ -88,6 +88,19 @@ build-tests:
 build-tests-watch:
   stack build --pedantic --test --no-run-tests --file-watch
 
+# Aggregate linearity statistics across every program under test/sources/successful/.
+# Phase A.2 of the memory-safety roadmap: see how big a fraction of binders is linear (count==1)
+# vs unused (==0) vs multi (>1), broken down by binder kind (Param / CasePattern / RowCaseBinder).
+stat-linearity:
+  stack run awsum-stats --
+
+# Run a single benchmark program through every backend with timing + peak RSS
+# (per-backend timeout via gtimeout — default 60s; override with `just benchmark NAME 90`).
+# Sources live under test/sources/benchmark/<NAME>/code/Main.aww.
+# macOS-only at the moment (BSD `/usr/bin/time -l`, `gtimeout` from coreutils).
+benchmark TEST timeout="60":
+  stack run awsum-bench -- {{TEST}} --timeout {{timeout}}
+
 show-binary-sizes:
   #!/bin/sh
   set -eu

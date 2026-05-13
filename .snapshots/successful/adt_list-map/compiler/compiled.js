@@ -20,6 +20,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -50,7 +51,8 @@ function v__cps__lift_7(v___input, v__k){
           const v___f0 = __s[1];
           const v___f1 = __s[2];
           const __t0 = v___f1;
-          const __t1 = [24, v__k, v___f0];
+          const __t1 = (v___input[0] = 24, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+          v__k = null;
           v___input = __t0;
           v__k = __t1;
           continue;
@@ -75,7 +77,8 @@ function v__apply__lift_7(v__k, v__x){
           const v__pk_24 = __s[1];
           const v___f0 = __s[2];
           const __t0 = v__pk_24;
-          const __t1 = [19, v___f0, v__x];
+          const __t1 = (v__k[0] = 19, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -114,7 +117,8 @@ function v__cps__df_map_0(v_list, v__k){
           const v_head = __s[1];
           const v_tail = __s[2];
           const __t0 = v_tail;
-          const __t1 = [26, v__k, v_head];
+          const __t1 = (v_list[0] = 26, v_list[1] = v__k, v_list[2] = v_head, v_list);
+          v__k = null;
           v_list = __t0;
           v__k = __t1;
           continue;
@@ -139,7 +143,8 @@ function v__apply__df_map_0(v__k, v__x){
           const v__pk_26 = __s[1];
           const v_head = __s[2];
           const __t0 = v__pk_26;
-          const __t1 = [19, (v_shout)(v_head), v__x];
+          const __t1 = (v__k[0] = 19, v__k[1] = (v_shout)(v_head), v__k[2] = v__x, v__k);
+          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -168,6 +173,8 @@ function v__cps__scc_show_showCons(v__args, v__k){
                 const v_t = __s[2];
                 const __t0 = [22, v_h, v_t];
                 const __t1 = v__k;
+                v__k = null;
+                v__args = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -191,7 +198,8 @@ function v__cps__scc_show_showCons(v__args, v__k){
               case 4: {
                 const v_hStr = __s[1];
                 const __t0 = [21, v_t];
-                const __t1 = [28, v__k, v_hStr];
+                const __t1 = (v__args[0] = 28, v__args[1] = v__k, v__args[2] = v_hStr, v__args);
+                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -221,7 +229,8 @@ function v__apply__scc_show_showCons(v__k, v__x){
               case 3: {
                 const v__do_e_19_3 = __s[1];
                 const __t0 = v__pk_28;
-                const __t1 = [3, v__do_e_19_3];
+                const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_19_3, v__x);
+                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -234,7 +243,8 @@ function v__apply__scc_show_showCons(v__k, v__x){
                     case 3: {
                       const v__do_e_20_3 = __s[1];
                       const __t0 = v__pk_28;
-                      const __t1 = [3, v__do_e_20_3];
+                      const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_20_3, v__x);
+                      v__k = null;
                       v__k = __t0;
                       v__x = __t1;
                       continue;
@@ -243,6 +253,8 @@ function v__apply__scc_show_showCons(v__k, v__x){
                       const v_comma = __s[1];
                       const __t0 = v__pk_28;
                       const __t1 = __concat(v_comma, v_rest);
+                      v__x = null;
+                      v__k = null;
                       v__k = __t0;
                       v__x = __t1;
                       continue;

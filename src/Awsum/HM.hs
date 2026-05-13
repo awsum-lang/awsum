@@ -489,7 +489,7 @@ generalize envVars t =
 --   get distinct tyvars and can be constrained independently. Returns
 --   the body type with the substitution applied.
 --
---   The fresh tyvars carry 'noSpan' — at this stage we don't track
+--   The fresh tyvars carry 'noSpan' — at this point we don't track
 --   provenance for instantiated tyvars; if a unifier-driven mismatch
 --   later surfaces them, the surrounding diagnostic span still pins
 --   the user's source location.

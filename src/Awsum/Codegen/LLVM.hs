@@ -2,23 +2,36 @@
 --
 -- Design goals:
 --   * Emit textual LLVM IR (.ll) that can be compiled with @clang@.
---   * Keep a tiny C-based runtime (malloc/strlen/strcpy/strcat/printf).
---   * Mirror JS backend semantics for cross-backend equivalence.
+--   * Keep a tiny C-based runtime: @malloc@/@free@/@write@ plus a
+--     refcount-aware allocator layer ('__alloc_shaped',
+--     '__inc_ref', '__free_recursive').
+--   * Mirror JS / JVM / CLR / WASM backend semantics for cross-backend
+--     equivalence; identical stdout is verified on every commit.
 --
 -- Semantics & assumptions:
 --   * All values are opaque pointers (@ptr@, LLVM 15+).
---   * Strings are null-terminated C strings (@ptr@ to @[N x i8]@).
---   * Concatenation: @strlen + malloc + strcpy + strcat@.
---   * Print: @printf("%s", s)@ — buffered, flushed on exit.
+--   * Strings are length-prefixed: 12-byte refcount header
+--     ([flag | refcount | shape]) + 8-byte length header
+--     (utf8_bytes : i32 LE, utf16_units : i32 LE) + UTF-8 payload, no
+--     NUL terminator. Pointers address the refcount header start.
+--   * Concatenation pre-checks the combined UTF-16 length against
+--     'maxStringLengthUtf16CodeUnits' and returns @Left StringTooLong@
+--     on overflow; otherwise allocates a fresh cell and copies bytes.
+--   * Print: @write(STDOUT_FILENO, payload, byte_count)@ — exact-length,
+--     so embedded NULs don't truncate.
 --   * Zero-arg surface defs ('CValDef') become zero-arg LLVM functions.
 --     Pure expressions, so recomputation is safe.
---   * The C @main@ entry point reads @argv[1]@ and calls @v_main@.
+--   * The C @main@ entry point calls @v_runIO(v_main())@. Argv is read
+--     lazily via 'IOGetArgs' during 'runIO' if and only if the program
+--     uses @IO.Args.getArgs@.
 module Awsum.Codegen.LLVM
   ( codegenLLVM,
     LLVMHost,
     allLLVMHosts,
     llvmHostName,
     llvmHostFromSystem,
+    LLVMLinkHost,
+    llvmLinkHostFromSystem,
     llvmHostLinkerFlags,
   )
 where
@@ -38,12 +51,17 @@ import System.Info qualified as Info
 -- Public API
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | The host environment the emitted IR is meant to be linked and run on.
---   Decides which @main@ entry point shape we generate (POSIX argv vs the
---   Windows GetCommandLineW path) and which extra @-l@ flags clang needs at
---   link time. The CLI derives this from 'System.Info.os' once via
---   'llvmHostFromSystem'; the snapshot test framework iterates all values
---   so per-host IR is asserted on every CI host.
+-- | The IR shape variant — which @main@ entry point we emit.
+--   POSIX uses the standard @int main(int argc, char** argv)@; Windows
+--   ignores that argv (MSVCRT mangles it through the ANSI code page)
+--   and re-fetches the UTF-16 command line through @GetCommandLineW@ /
+--   @CommandLineToArgvW@ before handing off to @v_main@. macOS and
+--   Linux share the POSIX variant — the footer is byte-identical for
+--   both. The link-host axis (which linker flags @clang@ needs) is
+--   tracked separately by 'LLVMLinkHost' because there macOS and Linux
+--   diverge. The CLI derives this from 'System.Info.os' once via
+--   'llvmHostFromSystem'; the snapshot test framework iterates all
+--   values so per-host IR is asserted on every CI host.
 data LLVMHost = LLVMPosix | LLVMWindows
   deriving stock (Eq, Ord, Show, Enum, Bounded)
 
@@ -67,23 +85,60 @@ llvmHostFromSystem
   | Info.os == "mingw32" = LLVMWindows
   | otherwise = LLVMPosix
 
--- | Extra clang flags required to actually link the IR for a given host.
---   Windows needs explicit @-lshell32 -lkernel32@ because @footerWindows@
---   calls 'CommandLineToArgvW' and friends — mingw-w64 auto-links those,
---   but MSVC's CRT only carries kernel32, so the explicit flag is what
---   closes @LNK2019: unresolved external symbol CommandLineToArgvW@.
+-- | The linker flavour @clang@ will hand the IR off to. This is a
+--   separate axis from 'LLVMHost' because macOS and Linux share the
+--   POSIX IR footer but use completely different linkers with
+--   incompatible flag spellings: macOS goes through ld64 (or its LLD
+--   port @ld64.lld@), Linux through GNU @ld@ or @ld.lld@. Detected
+--   independently via 'llvmLinkHostFromSystem'.
+data LLVMLinkHost = LinkMacOS | LinkLinux | LinkWindows
+  deriving stock (Eq, Ord, Show, Enum, Bounded)
+
+-- | Detect the link host for the awsum binary running this code.
+--   GHC reports @"darwin"@ for macOS, @"mingw32"@ for any Windows
+--   build; everything else (Linux/FreeBSD/…) falls through to the
+--   ELF/GNU-ld branch.
+llvmLinkHostFromSystem :: LLVMLinkHost
+llvmLinkHostFromSystem
+  | Info.os == "darwin" = LinkMacOS
+  | Info.os == "mingw32" = LinkWindows
+  | otherwise = LinkLinux
+
+-- | Extra clang flags required to actually link the IR on each host.
+--   On macOS, ld64 accepts @-stack_size@ as a single-dash separate
+--   argument; on Linux, both GNU @ld@ and @ld.lld@ instead express
+--   the same setting through the ELF-specific @-z stack-size=N@.
+--   Windows needs explicit @-lshell32 -lkernel32@ because
+--   'footerWindows' calls 'CommandLineToArgvW' and friends —
+--   mingw-w64 auto-links those, but MSVC's CRT only carries kernel32,
+--   so the explicit flag is what closes
+--   @LNK2019: unresolved external symbol CommandLineToArgvW@.
 --   Harmless on mingw-w64 (already in the auto-link line).
-llvmHostLinkerFlags :: LLVMHost -> [String]
+llvmHostLinkerFlags :: LLVMLinkHost -> [String]
 llvmHostLinkerFlags = \case
-  LLVMPosix -> []
-  LLVMWindows -> ["-lshell32", "-lkernel32"]
+  -- POSIX hosts need nothing beyond the toolchain default: the
+  -- runtime helper '@__free_recursive' uses a global heap-backed
+  -- worklist for non-last cascade children, so its C-stack
+  -- footprint is O(1) regardless of data shape or iteration
+  -- count. The platform-default 8 MiB thread stack is enough for
+  -- the remaining user call graph (already shaped to bounded
+  -- depth by 'Awsum.StackSafety').
+  LinkMacOS -> []
+  LinkLinux -> []
+  -- Windows needs explicit @-lshell32 -lkernel32@ because
+  -- 'footerWindows' calls 'CommandLineToArgvW' and friends —
+  -- mingw-w64 auto-links those, but MSVC's CRT only carries kernel32,
+  -- so the explicit flag is what closes
+  -- @LNK2019: unresolved external symbol CommandLineToArgvW@.
+  -- Harmless on mingw-w64 (already in the auto-link line).
+  LinkWindows -> ["-lshell32", "-lkernel32"]
 
 -- | Produce a complete LLVM IR module from a Core program for a given host.
 codegenLLVM :: LLVMHost -> PreludeTags -> CoreProgram -> Text
 codegenLLVM host ptags prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
-      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing}
+      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing, armPatternByScrut = Map.empty}
       userCode = evalState (T.intercalate "\n\n" <$> traverse (emitDecl ctx) decls) 0
       builtIns = usedBuiltIns prog
    in T.intercalate
@@ -109,7 +164,14 @@ data EmitCtx = EmitCtx
     -- Carries the label / alloca-slot names the TCO pass's 'CContinue'
     -- and the implicit @ret@ need. 'Nothing' outside a loop, so emitting
     -- a 'CContinue' there is a pipeline bug, not a code path.
-    loopCtx :: Maybe LoopCtx
+    loopCtx :: Maybe LoopCtx,
+    -- | Linear-scrutinee elision: for each in-scope 'CCase' / 'CRowCase'
+    -- whose scrutinee is a 'CVar n', records the arm's pattern
+    -- variables. 'CReuse n t fs' inside the arm body checks
+    -- @armPatternByScrut[n]@ to detect self-move slots (@fs[i] ==
+    -- CVar vs[i]@) and skip their dec-old + inc-new + store entirely
+    -- — the slot's pointer is already what we wanted.
+    armPatternByScrut :: Map Text [Text]
   }
 
 -- | Scaffolding the 'CFunDef' prologue sets up so 'emitTail' can emit
@@ -172,13 +234,24 @@ stringsInExpr = \case
   CCall f xs -> stringsInExpr f <> concatMap stringsInExpr xs
   CLoop b -> stringsInExpr b
   CContinue xs -> concatMap stringsInExpr xs
+  CDrop _ _ body -> stringsInExpr body
+  CReuse _ _ fs -> concatMap stringsInExpr fs
 
 -- | Emit string-pool constants in the language-fixed length-prefixed
---   layout: @{i32 utf8_bytes, i32 utf16_units, [N x i8] payload}@. No
---   NUL terminator. Pointer to the global is the pointer to the
---   header's first byte; runtime helpers @load i32@ at offset 0 / 4
---   for byte / UTF-16 length, and @gep i8, ptr s, i64 8@ for the
---   payload start.
+--   layout, prefixed by a 12-byte @{i32 flag = 0, i32 refcount = 0,
+--   i32 shape = 0}@ header so '@__free' /
+--   '@__free_recursive' recognise the literal (flag == 0 short-
+--   circuits both) and no-op on it. Refcount stays 0 across the run
+--   — inc/dec on literals is also flag-gated. Shape == 0 means
+--   '__free_recursive' will not descend into the string payload as
+--   if it were pointer fields.
+--
+--   The user-facing pointer is @getelementptr i8, ptr @.str.N, i64
+--   12@ — runtime helpers then @load i32@ at user_ptr+0 / +4 for
+--   byte / UTF-16 length, and @gep i8, ptr s, i64 8@ for the payload
+--   start, with no offset shift relative to the pre-header layout.
+--   See 'stringLiteralUserPtr' for the constexpr that produces the
+--   user pointer at every reference site.
 emitStringConstants :: StringPool -> Text
 emitStringConstants pool
   | Map.null pool = ""
@@ -196,15 +269,27 @@ emitStringConstants pool
             | otherwise = payloadType <> " c\"" <> escaped <> "\""
        in "@.str."
             <> show i
-            <> " = private unnamed_addr constant {i32, i32, "
+            <> " = private unnamed_addr constant {i32, i32, i32, i32, i32, "
             <> payloadType
-            <> "} { i32 "
+            <> "} { i32 0, i32 0, i32 0, i32 "
             <> show byteCount
             <> ", i32 "
             <> show utf16Count
             <> ", "
             <> payloadInit
             <> " }"
+
+-- | Constexpr that yields the user-pointer for a string literal.
+--   Adds 12 to skip the literal's flag/refcount/shape header,
+--   matching the layout produced by 'emitStringConstants'.
+stringLiteralUserPtr :: Int -> Text
+stringLiteralUserPtr i =
+  "getelementptr inbounds (i8, ptr @.str." <> show i <> ", i64 12)"
+
+-- | Constexpr for the '@.empty' user-pointer. Same shape as
+--   'stringLiteralUserPtr' but for the language-fixed empty literal.
+emptyStringUserPtr :: Text
+emptyStringUserPtr = "getelementptr inbounds (i8, ptr @.empty, i64 12)"
 
 -- | Escape a string for LLVM IR constant syntax. ASCII printable bytes pass
 --   through; everything else (including non-ASCII codepoints, which encode
@@ -237,6 +322,8 @@ header builtIns =
   unlines
     $ [ "; External C declarations",
         "declare ptr @malloc(i64)",
+        "declare ptr @realloc(ptr, i64)",
+        "declare void @free(ptr)",
         "declare ptr @memcpy(ptr, ptr, i64)",
         -- 'strlen' is used only at the boundary between OS argv[1]
         -- (a C-string from libc) and our internal length-prefixed layout
@@ -272,12 +359,12 @@ header builtIns =
          "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
          "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\"",
          -- '@.empty' is the language-fixed empty string in length-prefixed
-         -- form: 8-byte header with both lengths zero, no payload. Used as
-         -- the fallback when 'argv[1]' is absent ('with_arg' phi in the
-         -- footer). All runtime helpers handle a zero-length payload via
-         -- the standard 'load i32' at offset 0 / 4 — no NUL byte, no
-         -- special-case path.
-         "@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }",
+         -- form. The 4-byte 'i32 flag = 0' prefix
+         -- tells '@__free' this is a literal — passing the user-pointer
+         -- through 'CDrop' is safe and no-ops. The user pointer is
+         -- '@.empty + 4'; existing readers see byte_count at user_ptr+0
+         -- and utf16 at user_ptr+4 unchanged.
+         "@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }",
          -- '@.cli_arg' caches the entry-point's @argv[1]@ pointer (or
          -- @.empty@ when absent) so 'BuiltIn.internalGetArgs' can re-
          -- read it from the prelude's 'runIO' arm without threading
@@ -286,7 +373,198 @@ header builtIns =
          -- the no-memoisation principle is on the Awsum side (each
          -- 'IO.Args.getArgs' call yields a fresh 'Either' cell), not
          -- the C-level argv read.
-         "@.cli_arg = internal global ptr null"
+         "@.cli_arg = internal global ptr null",
+         -- '__alloc' / '__free' wrap libc 'malloc' / 'free' with a
+         -- 12-byte header: each block is prefixed
+         -- with @flag@ (4 bytes: 1 for heap, 0 for string literals
+         -- which carry the same prefix in their global layout — see
+         -- 'emitStringConstants'), @refcount@ (4 bytes, initial 1 = the
+         -- single owner returned by 'alloc'), and @shape@ (4 bytes:
+         -- number of ptr fields starting at slot 1, used by
+         -- '__free_recursive' to recurse into ADT cells; 0 = no ptr
+         -- fields, so strings/boxed scalars/nullary constructors get
+         -- the default without explicit override). The user-facing
+         -- pointer always points 12 bytes past the malloc'd block, so
+         -- existing readers (string headers at user_ptr+0/+4, ADT
+         -- cells at user_ptr+0 for tag, …) keep working without offset
+         -- shifts. '__free' reads the flag and only releases when it
+         -- is 1, making @call __free@ safe on literal pointers (no-op)
+         -- as well as heap pointers. 'CDrop' lowers to
+         -- '__free_recursive' in emitExpr / emitTail so the refcount
+         -- decrements and the shape-driven cascade fires; '__free'
+         -- itself is the per-block release the cascade ends in.
+         "",
+         "define internal ptr @__alloc(i64 %sz, i32 %shape) {",
+         "  %total = add i64 %sz, 12",
+         "  %raw = call ptr @malloc(i64 %total)",
+         "  store i32 1, ptr %raw",
+         "  %rc_p = getelementptr i8, ptr %raw, i64 4",
+         "  store i32 1, ptr %rc_p",
+         "  %shape_p = getelementptr i8, ptr %raw, i64 8",
+         "  store i32 %shape, ptr %shape_p",
+         "  %user = getelementptr i8, ptr %raw, i64 12",
+         "  ret ptr %user",
+         "}",
+         "",
+         "define internal void @__free(ptr %p) {",
+         "  %hdr_ptr = getelementptr i8, ptr %p, i64 -12",
+         "  %flag = load i32, ptr %hdr_ptr",
+         "  %is_heap = icmp eq i32 %flag, 1",
+         "  br i1 %is_heap, label %do_free, label %skip",
+         "do_free:",
+         "  call void @free(ptr %hdr_ptr)",
+         "  br label %skip",
+         "skip:",
+         "  ret void",
+         "}",
+         "",
+         -- '@__inc_ref' increments the refcount of the cell
+         -- at @user_ptr@. Literals (flag == 0) are unaffected — their
+         -- refcount field stays at 0 and they never get freed.
+         "define internal void @__inc_ref(ptr %p) {",
+         "  %hdr_ptr = getelementptr i8, ptr %p, i64 -12",
+         "  %flag = load i32, ptr %hdr_ptr",
+         "  %is_heap = icmp eq i32 %flag, 1",
+         "  br i1 %is_heap, label %do_inc, label %skip_inc",
+         "do_inc:",
+         "  %rc_p = getelementptr i8, ptr %p, i64 -8",
+         "  %rc_old = load i32, ptr %rc_p",
+         "  %rc_new = add i32 %rc_old, 1",
+         "  store i32 %rc_new, ptr %rc_p",
+         "  br label %skip_inc",
+         "skip_inc:",
+         "  ret void",
+         "}",
+         "",
+         -- '@__free_worklist' / '@__free_worklist_top' /
+         -- '@__free_worklist_cap' back '@__free_recursive''s
+         -- cascade. Non-last children of cells with shape > 1 go
+         -- onto this heap-backed buffer instead of the C stack;
+         -- the helper drains the buffer in its own outer loop, so
+         -- system-stack usage is O(1) independent of cascade
+         -- shape. Storage is single-threaded (Awsum is
+         -- single-threaded; the helper never calls user code) and
+         -- reused across every '@__free_recursive' invocation;
+         -- 'top' returns to 0 by the time the helper returns, so
+         -- no state leaks between top-level calls. Buffer doubles
+         -- on overflow ('realloc'); it is never shrunk because
+         -- past peak depth is a good predictor of future peak
+         -- depth.
+         "@__free_worklist = internal global ptr null",
+         "@__free_worklist_top = internal global i64 0",
+         "@__free_worklist_cap = internal global i64 0",
+         "",
+         -- Push @%p@ onto '@__free_worklist'. Grows the buffer
+         -- (initial 16 entries, doubles thereafter) when @top ==
+         -- cap@; otherwise reuses the existing allocation. Each
+         -- entry is a pointer (8 bytes on the only platform LLVM
+         -- targets here).
+         "define internal void @__free_worklist_push(ptr %p) {",
+         "entry:",
+         "  %top = load i64, ptr @__free_worklist_top",
+         "  %cap = load i64, ptr @__free_worklist_cap",
+         "  %is_full = icmp eq i64 %top, %cap",
+         "  br i1 %is_full, label %grow, label %store",
+         "grow:",
+         "  %cap_zero = icmp eq i64 %cap, 0",
+         "  %doubled = shl i64 %cap, 1",
+         "  %new_cap = select i1 %cap_zero, i64 16, i64 %doubled",
+         "  %bytes = mul i64 %new_cap, 8",
+         "  %old_buf = load ptr, ptr @__free_worklist",
+         "  %new_buf = call ptr @realloc(ptr %old_buf, i64 %bytes)",
+         "  store ptr %new_buf, ptr @__free_worklist",
+         "  store i64 %new_cap, ptr @__free_worklist_cap",
+         "  br label %store",
+         "store:",
+         "  %buf = load ptr, ptr @__free_worklist",
+         "  %slot = getelementptr ptr, ptr %buf, i64 %top",
+         "  store ptr %p, ptr %slot",
+         "  %top_new = add i64 %top, 1",
+         "  store i64 %top_new, ptr @__free_worklist_top",
+         "  ret void",
+         "}",
+         "",
+         -- '@__free_recursive' decrements the refcount of
+         -- @user_ptr@. When the refcount reaches 0 it reads
+         -- @shape@ (number of ptr fields starting at slot 1) and
+         -- cascades: non-last children go onto the global
+         -- worklist, the last slot is consumed iteratively as the
+         -- next @p@ in the outer loop, the current block is
+         -- freed via libc 'free'. When the local cell is done
+         -- (cleared, or its refcount stayed > 0, or shape == 0),
+         -- the helper pops the next pointer from the worklist
+         -- and continues; when the worklist is empty, it
+         -- returns. This makes the C-stack footprint O(1)
+         -- regardless of how deep the cascade goes — large
+         -- frontiers grow the worklist (heap) instead of the
+         -- stack. Literals (flag == 0) and live cells (rc > 0)
+         -- pop the next pending without touching the cell
+         -- further. The cascade is safe under Awsum's
+         -- immutability invariant: a cell can only reference
+         -- cells allocated before it, so the graph is acyclic.
+         "define internal void @__free_recursive(ptr %p_arg) {",
+         "entry:",
+         "  br label %top",
+         "top:",
+         "  %p = phi ptr [ %p_arg, %entry ], [ %p_after, %continue ]",
+         "  %hdr_ptr = getelementptr i8, ptr %p, i64 -12",
+         "  %flag = load i32, ptr %hdr_ptr",
+         "  %is_heap = icmp eq i32 %flag, 1",
+         "  br i1 %is_heap, label %do_dec, label %try_pop",
+         "do_dec:",
+         "  %rc_p = getelementptr i8, ptr %p, i64 -8",
+         "  %rc_old = load i32, ptr %rc_p",
+         "  %rc_new = sub i32 %rc_old, 1",
+         "  store i32 %rc_new, ptr %rc_p",
+         "  %is_zero = icmp eq i32 %rc_new, 0",
+         "  br i1 %is_zero, label %do_cascade, label %try_pop",
+         "do_cascade:",
+         "  %shape_p = getelementptr i8, ptr %p, i64 -4",
+         "  %shape = load i32, ptr %shape_p",
+         "  %shape_zero = icmp eq i32 %shape, 0",
+         "  br i1 %shape_zero, label %free_and_pop, label %loop_check",
+         "loop_check:",
+         "  %i = phi i32 [ 1, %do_cascade ], [ %i_next, %loop_body ]",
+         "  %cmp = icmp ult i32 %i, %shape",
+         "  br i1 %cmp, label %loop_body, label %tail_jump_prep",
+         "loop_body:",
+         "  %i64 = zext i32 %i to i64",
+         "  %slot_p = getelementptr ptr, ptr %p, i64 %i64",
+         "  %child = load ptr, ptr %slot_p",
+         "  call void @__free_worklist_push(ptr %child)",
+         "  %i_next = add i32 %i, 1",
+         "  br label %loop_check",
+         "tail_jump_prep:",
+         -- Load the last ptr slot, free the current block, then
+         -- iterate the outer loop with the child as the new @p@.
+         -- This consumes one cell of any linear chain (lists,
+         -- continuation chains) per outer iteration without
+         -- pushing onto the worklist.
+         "  %shape64 = zext i32 %shape to i64",
+         "  %last_slot_p = getelementptr ptr, ptr %p, i64 %shape64",
+         "  %p_next_tail = load ptr, ptr %last_slot_p",
+         "  call void @free(ptr %hdr_ptr)",
+         "  br label %continue",
+         "free_and_pop:",
+         "  call void @free(ptr %hdr_ptr)",
+         "  br label %try_pop",
+         "try_pop:",
+         "  %top_old = load i64, ptr @__free_worklist_top",
+         "  %is_empty = icmp eq i64 %top_old, 0",
+         "  br i1 %is_empty, label %done, label %do_pop",
+         "do_pop:",
+         "  %top_new = sub i64 %top_old, 1",
+         "  store i64 %top_new, ptr @__free_worklist_top",
+         "  %wl_buf = load ptr, ptr @__free_worklist",
+         "  %wl_slot = getelementptr ptr, ptr %wl_buf, i64 %top_new",
+         "  %p_popped = load ptr, ptr %wl_slot",
+         "  br label %continue",
+         "continue:",
+         "  %p_after = phi ptr [ %p_next_tail, %tail_jump_prep ], [ %p_popped, %do_pop ]",
+         "  br label %top",
+         "done:",
+         "  ret void",
+         "}"
        ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -414,22 +692,22 @@ runtime ptags builtIns =
           "too_long:",
           -- Build 'Left StringTooLong'. StringTooLong is a single-ctor
           -- type so its tag is 0; Either's Left tag is 0.
-          "  %stl = call ptr @malloc(i64 8)",
+          "  %stl = call ptr @__alloc(i64 8, i32 0)",
           "  %stl_tag = inttoptr i64 " <> stlLit <> " to ptr",
           "  store ptr %stl_tag, ptr %stl",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %stl, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           -- Allocate header (8 bytes) + ba + bb byte payload.
           "  %ba64 = zext i32 %ba to i64",
           "  %bb64 = zext i32 %bb to i64",
           "  %bsum64 = add i64 %ba64, %bb64",
           "  %alloc64 = add i64 %bsum64, 8",
-          "  %buf = call ptr @malloc(i64 %alloc64)",
+          "  %buf = call ptr @__alloc(i64 %alloc64, i32 0)",
           -- Write header: byte count at offset 0, utf16 count at offset 4.
           "  %bsum32 = trunc i64 %bsum64 to i32",
           "  store i32 %bsum32, ptr %buf",
@@ -444,12 +722,17 @@ runtime ptags builtIns =
           "  %b_payload = getelementptr i8, ptr %b, i64 8",
           "  call ptr @memcpy(ptr %buf_payload_b, ptr %b_payload, i64 %bb64)",
           -- Wrap in 'Right'. Either's Right tag is 1.
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %buf, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %too_long], [%right, %ok]",
+          "  call void @__free_recursive(ptr %a)",
+          "  call void @__free_recursive(ptr %b)",
+          "  ret ptr %result",
           "}"
         ]
     -- '__print' uses 'write(2)' rather than 'printf("%s", …)' so a NUL
@@ -466,10 +749,11 @@ runtime ptags builtIns =
           -- Build Unit value (single ptr slot, tag 0) — same shape as
           -- every other nullary CCon, so 'runIO' reads it via the
           -- standard CCase tag check.
-          "  %unit = call ptr @malloc(i64 8)",
+          "  %unit = call ptr @__alloc(i64 8, i32 0)",
           "  %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0",
           "  %unit_tag = inttoptr i64 " <> unitLit <> " to ptr",
           "  store ptr %unit_tag, ptr %unit_tag_ptr",
+          "  call void @__free_recursive(ptr %s)",
           "  ret ptr %unit",
           "}"
         ]
@@ -486,12 +770,13 @@ runtime ptags builtIns =
       unlines
         [ "define internal ptr @__showInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
-          "  %buf = call ptr @malloc(i64 24)",
+          "  %buf = call ptr @__alloc(i64 24, i32 0)",
           "  %payload = getelementptr i8, ptr %buf, i64 8",
           "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_i32, i32 %v)",
           "  store i32 %n, ptr %buf",
           "  %u16p = getelementptr i8, ptr %buf, i64 4",
           "  store i32 %n, ptr %u16p",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %buf",
           "}"
         ]
@@ -500,12 +785,13 @@ runtime ptags builtIns =
         [ "define internal ptr @__showUInt8(ptr %p) {",
           "  %b = load i8, ptr %p",
           "  %v = zext i8 %b to i32",
-          "  %buf = call ptr @malloc(i64 24)",
+          "  %buf = call ptr @__alloc(i64 24, i32 0)",
           "  %payload = getelementptr i8, ptr %buf, i64 8",
           "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_u8, i32 %v)",
           "  store i32 %n, ptr %buf",
           "  %u16p = getelementptr i8, ptr %buf, i64 4",
           "  store i32 %n, ptr %u16p",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %buf",
           "}"
         ]
@@ -521,24 +807,26 @@ runtime ptags builtIns =
           "  %is_min = icmp eq i32 %v, -2147483648",
           "  br i1 %is_min, label %overflow, label %ok",
           "overflow:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = sub i32 %v, 1",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -553,24 +841,26 @@ runtime ptags builtIns =
           "  %is_zero = icmp eq i8 %v, 0",
           "  br i1 %is_zero, label %overflow, label %ok",
           "overflow:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = sub i8 %v, 1",
-          "  %box = call ptr @malloc(i64 1)",
+          "  %box = call ptr @__alloc(i64 1, i32 0)",
           "  store i8 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -585,24 +875,26 @@ runtime ptags builtIns =
           "  %is_max = icmp eq i32 %v, 2147483647",
           "  br i1 %is_max, label %overflow, label %ok",
           "overflow:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = add i32 %v, 1",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -617,24 +909,26 @@ runtime ptags builtIns =
           "  %is_max = icmp eq i8 %v, 255",
           "  br i1 %is_max, label %overflow, label %ok",
           "overflow:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = add i8 %v, 1",
-          "  %box = call ptr @malloc(i64 1)",
+          "  %box = call ptr @__alloc(i64 1, i32 0)",
           "  store i8 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -648,9 +942,11 @@ runtime ptags builtIns =
           "  %vb = load i32, ptr %b",
           "  %eq = icmp eq i32 %va, %vb",
           "  %tag = select i1 %eq, i64 " <> trueLit <> ", i64 " <> falseLit <> "",
-          "  %box = call ptr @malloc(i64 8)",
+          "  %box = call ptr @__alloc(i64 8, i32 0)",
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
+          "  call void @__free_recursive(ptr %a)",
+          "  call void @__free_recursive(ptr %b)",
           "  ret ptr %box",
           "}"
         ]
@@ -661,9 +957,11 @@ runtime ptags builtIns =
           "  %vb = load i8, ptr %b",
           "  %eq = icmp eq i8 %va, %vb",
           "  %tag = select i1 %eq, i64 " <> trueLit <> ", i64 " <> falseLit <> "",
-          "  %box = call ptr @malloc(i64 8)",
+          "  %box = call ptr @__alloc(i64 8, i32 0)",
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
+          "  call void @__free_recursive(ptr %a)",
+          "  call void @__free_recursive(ptr %b)",
           "  ret ptr %box",
           "}"
         ]
@@ -691,29 +989,34 @@ runtime ptags builtIns =
           "  %is_pos = icmp sge i32 %a, 0",
           "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowRowTag <> ", i64 " <> underflowRowTag,
           "  %inner_tag_idx = select i1 %is_pos, i64 " <> oeLit <> ", i64 " <> ueLit,
-          "  %inner = call ptr @malloc(i64 8)",
+          "  %inner = call ptr @__alloc(i64 8, i32 0)",
           "  %inner_tag = inttoptr i64 %inner_tag_idx to ptr",
           "  store ptr %inner_tag, ptr %inner",
-          "  %row = call ptr @malloc(i64 16)",
+          "  %row = call ptr @__alloc(i64 16, i32 1)",
           "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
           "  store ptr %row_tag, ptr %row",
           "  %row_f = getelementptr ptr, ptr %row, i32 1",
           "  store ptr %inner, ptr %row_f",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %row, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %sum, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- subInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
@@ -738,29 +1041,34 @@ runtime ptags builtIns =
           "  %is_pos = icmp sge i32 %a, 0",
           "  %row_tag_idx = select i1 %is_pos, i64 " <> overflowRowTag <> ", i64 " <> underflowRowTag,
           "  %inner_tag_idx = select i1 %is_pos, i64 " <> oeLit <> ", i64 " <> ueLit,
-          "  %inner = call ptr @malloc(i64 8)",
+          "  %inner = call ptr @__alloc(i64 8, i32 0)",
           "  %inner_tag = inttoptr i64 %inner_tag_idx to ptr",
           "  store ptr %inner_tag, ptr %inner",
-          "  %row = call ptr @malloc(i64 16)",
+          "  %row = call ptr @__alloc(i64 16, i32 1)",
           "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
           "  store ptr %row_tag, ptr %row",
           "  %row_f = getelementptr ptr, ptr %row, i32 1",
           "  store ptr %inner, ptr %row_f",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %row, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %diff, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- mulInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
@@ -785,29 +1093,34 @@ runtime ptags builtIns =
           "  %xor_ab = xor i32 %a, %b",
           "  %same_sign = icmp sge i32 %xor_ab, 0",
           "  %row_tag_idx = select i1 %same_sign, i64 " <> overflowRowTag <> ", i64 " <> underflowRowTag,
-          "  %inner = call ptr @malloc(i64 8)",
+          "  %inner = call ptr @__alloc(i64 8, i32 0)",
           "  %inner_tag = inttoptr i64 0 to ptr",
           "  store ptr %inner_tag, ptr %inner",
-          "  %row = call ptr @malloc(i64 16)",
+          "  %row = call ptr @__alloc(i64 16, i32 1)",
           "  %row_tag = inttoptr i64 %row_tag_idx to ptr",
           "  store ptr %row_tag, ptr %row",
           "  %row_f = getelementptr ptr, ptr %row, i32 1",
           "  store ptr %inner, ptr %row_f",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %row, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %prod, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- negInt32 : Int32 -> Either OverflowError Int32.
@@ -822,24 +1135,26 @@ runtime ptags builtIns =
           "  %is_min = icmp eq i32 %v, -2147483648",
           "  br i1 %is_min, label %overflow, label %ok",
           "overflow:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = sub i32 0, %v",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -860,25 +1175,30 @@ runtime ptags builtIns =
           "  %ovf = icmp ugt i32 %sum32, 255",
           "  br i1 %ovf, label %err, label %ok",
           "err:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           "  %newv = trunc i32 %sum32 to i8",
-          "  %box = call ptr @malloc(i64 1)",
+          "  %box = call ptr @__alloc(i64 1, i32 0)",
           "  store i8 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- mulUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8.
@@ -897,25 +1217,30 @@ runtime ptags builtIns =
           "  %ovf = icmp ugt i32 %prod32, 255",
           "  br i1 %ovf, label %err, label %ok",
           "err:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           "  %newv = trunc i32 %prod32 to i8",
-          "  %box = call ptr @malloc(i64 1)",
+          "  %box = call ptr @__alloc(i64 1, i32 0)",
           "  store i8 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- subUInt8 : UInt8 -> UInt8 -> Either UnderflowError UInt8.
@@ -934,26 +1259,31 @@ runtime ptags builtIns =
           "  %unf = icmp ult i32 %a32, %b32",
           "  br i1 %unf, label %err, label %ok",
           "err:",
-          "  %ue = call ptr @malloc(i64 8)",
+          "  %ue = call ptr @__alloc(i64 8, i32 0)",
           "  %ue_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %ue_tag, ptr %ue",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %ue, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           "  %diff32 = sub i32 %a32, %b32",
           "  %newv = trunc i32 %diff32 to i8",
-          "  %box = call ptr @malloc(i64 1)",
+          "  %box = call ptr @__alloc(i64 1, i32 0)",
           "  store i8 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- splitOnFirst : String -> String -> Maybe (Tuple2 String String).
@@ -1021,7 +1351,7 @@ runtime ptags builtIns =
           -- Build prefix string with its own UTF-16 count.
           "  %prefix_u16 = call i32 @__utf16OfRange(ptr %str_payload, i64 %prefix_blen)",
           "  %prefix_alloc = add i64 %prefix_blen, 8",
-          "  %prefix = call ptr @malloc(i64 %prefix_alloc)",
+          "  %prefix = call ptr @__alloc(i64 %prefix_alloc, i32 0)",
           "  %prefix_blen32 = trunc i64 %prefix_blen to i32",
           "  store i32 %prefix_blen32, ptr %prefix",
           "  %prefix_u16p = getelementptr i8, ptr %prefix, i64 4",
@@ -1031,7 +1361,7 @@ runtime ptags builtIns =
           -- Build suffix string with its own UTF-16 count.
           "  %suffix_u16 = call i32 @__utf16OfRange(ptr %suffix_start, i64 %suffix_blen)",
           "  %suffix_alloc = add i64 %suffix_blen, 8",
-          "  %suffix = call ptr @malloc(i64 %suffix_alloc)",
+          "  %suffix = call ptr @__alloc(i64 %suffix_alloc, i32 0)",
           "  %suffix_blen32 = trunc i64 %suffix_blen to i32",
           "  store i32 %suffix_blen32, ptr %suffix",
           "  %suffix_u16p = getelementptr i8, ptr %suffix, i64 4",
@@ -1039,24 +1369,29 @@ runtime ptags builtIns =
           "  %suffix_payload = getelementptr i8, ptr %suffix, i64 8",
           "  call ptr @memcpy(ptr %suffix_payload, ptr %suffix_start, i64 %suffix_blen)",
           -- Tuple2 prefix suffix → Just (Tuple2 prefix suffix).
-          "  %tuple = call ptr @malloc(i64 24)",
+          "  %tuple = call ptr @__alloc(i64 24, i32 2)",
           "  %tuple_tag = inttoptr i64 " <> tuple2Lit <> " to ptr",
           "  store ptr %tuple_tag, ptr %tuple",
           "  %tuple_a = getelementptr ptr, ptr %tuple, i32 1",
           "  store ptr %prefix, ptr %tuple_a",
           "  %tuple_b = getelementptr ptr, ptr %tuple, i32 2",
           "  store ptr %suffix, ptr %tuple_b",
-          "  %just = call ptr @malloc(i64 16)",
+          "  %just = call ptr @__alloc(i64 16, i32 1)",
           "  %just_tag = inttoptr i64 " <> justLit <> " to ptr",
           "  store ptr %just_tag, ptr %just",
           "  %just_f = getelementptr ptr, ptr %just, i32 1",
           "  store ptr %tuple, ptr %just_f",
-          "  ret ptr %just",
+          "  br label %join",
           "not_found:",
-          "  %nothing = call ptr @malloc(i64 8)",
+          "  %nothing = call ptr @__alloc(i64 8, i32 0)",
           "  %nothing_tag = inttoptr i64 " <> nothingLit <> " to ptr",
           "  store ptr %nothing_tag, ptr %nothing",
-          "  ret ptr %nothing",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%just, %match], [%nothing, %not_found]",
+          "  call void @__free_recursive(ptr %sep)",
+          "  call void @__free_recursive(ptr %str)",
+          "  ret ptr %result",
           "}",
           "",
           -- Inline byte-walker: count UTF-16 code units in [%p, %p+%len).
@@ -1183,24 +1518,28 @@ runtime ptags builtIns =
           "  br label %build_right",
           "build_right:",
           "  %result = phi i32 [%result_pos, %ok_pos], [%result_neg, %ok_neg]",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %result, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
           "fail:",
-          "  %pe = call ptr @malloc(i64 8)",
+          "  %pe = call ptr @__alloc(i64 8, i32 0)",
           "  %pe_tag = inttoptr i64 " <> peLit <> " to ptr",
           "  store ptr %pe_tag, ptr %pe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %pe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
+          "join:",
+          "  %res = phi ptr [%right, %build_right], [%left, %fail]",
+          "  call void @__free_recursive(ptr %s)",
+          "  ret ptr %res",
           "}"
         ]
     -- parseUInt8 : String -> Either ParseError UInt8.
@@ -1248,24 +1587,28 @@ runtime ptags builtIns =
           "  br label %loop_head",
           "ok:",
           "  %result_i8 = trunc i32 %acc to i8",
-          "  %box = call ptr @malloc(i64 1)",
+          "  %box = call ptr @__alloc(i64 1, i32 0)",
           "  store i8 %result_i8, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
           "fail:",
-          "  %pe = call ptr @malloc(i64 8)",
+          "  %pe = call ptr @__alloc(i64 8, i32 0)",
           "  %pe_tag = inttoptr i64 " <> peLit <> " to ptr",
           "  store ptr %pe_tag, ptr %pe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %pe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
+          "join:",
+          "  %res = phi ptr [%right, %ok], [%left, %fail]",
+          "  call void @__free_recursive(ptr %s)",
+          "  ret ptr %res",
           "}"
         ]
     -- showUInt32: load i32, snprintf with the shared @.fmt_u8 ("%u")
@@ -1277,12 +1620,13 @@ runtime ptags builtIns =
       unlines
         [ "define internal ptr @__showUInt32(ptr %p) {",
           "  %v = load i32, ptr %p",
-          "  %buf = call ptr @malloc(i64 24)",
+          "  %buf = call ptr @__alloc(i64 24, i32 0)",
           "  %payload = getelementptr i8, ptr %buf, i64 8",
           "  %n = call i32 (ptr, i64, ptr, ...) @snprintf(ptr %payload, i64 16, ptr @.fmt_u8, i32 %v)",
           "  store i32 %n, ptr %buf",
           "  %u16p = getelementptr i8, ptr %buf, i64 4",
           "  store i32 %n, ptr %u16p",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %buf",
           "}"
         ]
@@ -1296,24 +1640,26 @@ runtime ptags builtIns =
           "  %is_zero = icmp eq i32 %v, 0",
           "  br i1 %is_zero, label %overflow, label %ok",
           "overflow:",
-          "  %ue = call ptr @malloc(i64 8)",
+          "  %ue = call ptr @__alloc(i64 8, i32 0)",
           "  %ue_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %ue_tag, ptr %ue",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %ue, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = sub i32 %v, 1",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -1328,24 +1674,26 @@ runtime ptags builtIns =
           "  %is_max = icmp eq i32 %v, -1",
           "  br i1 %is_max, label %overflow, label %ok",
           "overflow:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %left",
           "ok:",
           "  %newv = add i32 %v, 1",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
+          "  call void @__free_recursive(ptr %p)",
           "  ret ptr %right",
           "}"
         ]
@@ -1358,9 +1706,11 @@ runtime ptags builtIns =
           "  %vb = load i32, ptr %b",
           "  %eq = icmp eq i32 %va, %vb",
           "  %tag = select i1 %eq, i64 " <> trueLit <> ", i64 " <> falseLit <> "",
-          "  %box = call ptr @malloc(i64 8)",
+          "  %box = call ptr @__alloc(i64 8, i32 0)",
           "  %tag_ptr = inttoptr i64 %tag to ptr",
           "  store ptr %tag_ptr, ptr %box",
+          "  call void @__free_recursive(ptr %a)",
+          "  call void @__free_recursive(ptr %b)",
           "  ret ptr %box",
           "}"
         ]
@@ -1379,25 +1729,30 @@ runtime ptags builtIns =
           "  %ovf = icmp ugt i64 %sum64, 4294967295",
           "  br i1 %ovf, label %err, label %ok",
           "err:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           "  %newv = trunc i64 %sum64 to i32",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- subUInt32: Either UnderflowError UInt32. Compare 'a < b' as
@@ -1411,25 +1766,30 @@ runtime ptags builtIns =
           "  %unf = icmp ult i32 %a, %b",
           "  br i1 %unf, label %err, label %ok",
           "err:",
-          "  %ue = call ptr @malloc(i64 8)",
+          "  %ue = call ptr @__alloc(i64 8, i32 0)",
           "  %ue_tag = inttoptr i64 " <> ueLit <> " to ptr",
           "  store ptr %ue_tag, ptr %ue",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %ue, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           "  %newv = sub i32 %a, %b",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- mulUInt32: Either OverflowError UInt32. Widen both operands to i64
@@ -1447,25 +1807,30 @@ runtime ptags builtIns =
           "  %ovf = icmp ugt i64 %prod64, 4294967295",
           "  br i1 %ovf, label %err, label %ok",
           "err:",
-          "  %oe = call ptr @malloc(i64 8)",
+          "  %oe = call ptr @__alloc(i64 8, i32 0)",
           "  %oe_tag = inttoptr i64 " <> oeLit <> " to ptr",
           "  store ptr %oe_tag, ptr %oe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %oe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
           "ok:",
           "  %newv = trunc i64 %prod64 to i32",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %newv, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
+          "join:",
+          "  %result = phi ptr [%left, %err], [%right, %ok]",
+          "  call void @__free_recursive(ptr %pa)",
+          "  call void @__free_recursive(ptr %pb)",
+          "  ret ptr %result",
           "}"
         ]
     -- lengthUtf8Bytes: O(1) — load the byte count from the string's
@@ -1475,8 +1840,9 @@ runtime ptags builtIns =
       unlines
         [ "define internal ptr @__lengthUtf8Bytes(ptr %s) {",
           "  %len32 = load i32, ptr %s",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %len32, ptr %box",
+          "  call void @__free_recursive(ptr %s)",
           "  ret ptr %box",
           "}"
         ]
@@ -1519,8 +1885,9 @@ runtime ptags builtIns =
           "  br label %head",
           "done:",
           "  %nf = load i32, ptr %n_p",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %nf, ptr %box",
+          "  call void @__free_recursive(ptr %s)",
           "  ret ptr %box",
           "}"
         ]
@@ -1536,8 +1903,9 @@ runtime ptags builtIns =
           -- payload; the new length-prefixed layout caches this directly.
           "  %u16p = getelementptr i8, ptr %s, i64 4",
           "  %u16 = load i32, ptr %u16p",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %u16, ptr %box",
+          "  call void @__free_recursive(ptr %s)",
           "  ret ptr %box",
           "}"
         ]
@@ -1662,14 +2030,14 @@ runtime ptags builtIns =
           "  %byte_count_64 = load i64, ptr %i_p",
           "  %byte_count_32 = trunc i64 %byte_count_64 to i32",
           "  %alloc_size_64 = add i64 %byte_count_64, 8",
-          "  %wrapped = call ptr @malloc(i64 %alloc_size_64)",
+          "  %wrapped = call ptr @__alloc(i64 %alloc_size_64, i32 0)",
           "  store i32 %byte_count_32, ptr %wrapped",
           "  %wrapped_u16p = getelementptr i8, ptr %wrapped, i64 4",
           "  store i32 %n_final, ptr %wrapped_u16p",
           "  %wrapped_payload = getelementptr i8, ptr %wrapped, i64 8",
           "  call ptr @memcpy(ptr %wrapped_payload, ptr %arg, i64 %byte_count_64)",
           -- Right(wrapped): tag=1, payload=wrapped length-prefixed string.
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
@@ -1677,16 +2045,16 @@ runtime ptags builtIns =
           "  ret ptr %right",
           "too_long:",
           -- inner: StringTooLong CCon (single ctor, tag 0).
-          "  %tl_inner = call ptr @malloc(i64 8)",
+          "  %tl_inner = call ptr @__alloc(i64 8, i32 0)",
           "  %tl_inner_tag = inttoptr i64 " <> stlLit <> " to ptr",
           "  store ptr %tl_inner_tag, ptr %tl_inner",
           -- row: CRow box keyed by FNV-1a hash of "StringTooLong".
-          "  %tl_row = call ptr @malloc(i64 16)",
+          "  %tl_row = call ptr @__alloc(i64 16, i32 1)",
           "  %tl_row_tag = inttoptr i64 " <> stringTooLongRowTag <> " to ptr",
           "  store ptr %tl_row_tag, ptr %tl_row",
           "  %tl_row_f = getelementptr ptr, ptr %tl_row, i32 1",
           "  store ptr %tl_inner, ptr %tl_row_f",
-          "  %tl_left = call ptr @malloc(i64 16)",
+          "  %tl_left = call ptr @__alloc(i64 16, i32 1)",
           "  %tl_left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %tl_left_tag, ptr %tl_left",
           "  %tl_left_f = getelementptr ptr, ptr %tl_left, i32 1",
@@ -1694,16 +2062,16 @@ runtime ptags builtIns =
           "  ret ptr %tl_left",
           "unpaired:",
           -- inner: UnpairedUtf16Surrogate CCon (single ctor, tag 0).
-          "  %us_inner = call ptr @malloc(i64 8)",
+          "  %us_inner = call ptr @__alloc(i64 8, i32 0)",
           "  %us_inner_tag = inttoptr i64 " <> usLit <> " to ptr",
           "  store ptr %us_inner_tag, ptr %us_inner",
           -- row: CRow box keyed by FNV-1a hash of "UnpairedUtf16Surrogate".
-          "  %us_row = call ptr @malloc(i64 16)",
+          "  %us_row = call ptr @__alloc(i64 16, i32 1)",
           "  %us_row_tag = inttoptr i64 " <> unpairedSurrogateRowTag <> " to ptr",
           "  store ptr %us_row_tag, ptr %us_row",
           "  %us_row_f = getelementptr ptr, ptr %us_row, i32 1",
           "  store ptr %us_inner, ptr %us_row_f",
-          "  %us_left = call ptr @malloc(i64 16)",
+          "  %us_left = call ptr @__alloc(i64 16, i32 1)",
           "  %us_left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %us_left_tag, ptr %us_left",
           "  %us_left_f = getelementptr ptr, ptr %us_left, i32 1",
@@ -1752,24 +2120,28 @@ runtime ptags builtIns =
           "  br label %loop_head",
           "ok:",
           "  %result_i32 = trunc i64 %acc to i32",
-          "  %box = call ptr @malloc(i64 4)",
+          "  %box = call ptr @__alloc(i64 4, i32 0)",
           "  store i32 %result_i32, ptr %box",
-          "  %right = call ptr @malloc(i64 16)",
+          "  %right = call ptr @__alloc(i64 16, i32 1)",
           "  %right_tag = inttoptr i64 " <> rightLit <> " to ptr",
           "  store ptr %right_tag, ptr %right",
           "  %right_f = getelementptr ptr, ptr %right, i32 1",
           "  store ptr %box, ptr %right_f",
-          "  ret ptr %right",
+          "  br label %join",
           "fail:",
-          "  %pe = call ptr @malloc(i64 8)",
+          "  %pe = call ptr @__alloc(i64 8, i32 0)",
           "  %pe_tag = inttoptr i64 " <> peLit <> " to ptr",
           "  store ptr %pe_tag, ptr %pe",
-          "  %left = call ptr @malloc(i64 16)",
+          "  %left = call ptr @__alloc(i64 16, i32 1)",
           "  %left_tag = inttoptr i64 " <> leftLit <> " to ptr",
           "  store ptr %left_tag, ptr %left",
           "  %left_f = getelementptr ptr, ptr %left, i32 1",
           "  store ptr %pe, ptr %left_f",
-          "  ret ptr %left",
+          "  br label %join",
+          "join:",
+          "  %res = phi ptr [%right, %ok], [%left, %fail]",
+          "  call void @__free_recursive(ptr %s)",
+          "  ret ptr %res",
           "}"
         ]
 
@@ -1803,7 +2175,7 @@ footerPosix =
       "no_arg:",
       "  br label %call_main",
       "call_main:",
-      "  %input = phi ptr [%arg, %with_arg], [@.empty, %no_arg]",
+      "  %input = phi ptr [%arg, %with_arg], [" <> emptyStringUserPtr <> ", %no_arg]",
       -- Cache argv[1] for 'BuiltIn.internalGetArgs' (called from
       -- 'runIO''s 'IOGetArgs' arm). 'main' itself takes no arguments
       -- (its signature is 'IO Never Unit'); user code that wants the
@@ -1869,13 +2241,13 @@ footerWindows =
       "  br i1 %need_ok, label %do_convert, label %no_arg",
       "do_convert:",
       "  %needed64 = sext i32 %needed to i64",
-      "  %buf = call ptr @malloc(i64 %needed64)",
+      "  %buf = call ptr @__alloc(i64 %needed64, i32 0)",
       "  %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)",
       "  br label %call_main",
       "no_arg:",
       "  br label %call_main",
       "call_main:",
-      "  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]",
+      "  %input = phi ptr [%buf, %do_convert], [" <> emptyStringUserPtr <> ", %no_arg]",
       -- Cache argv[1] for 'BuiltIn.internalGetArgs'; see footerPosix.
       "  store ptr %input, ptr @.cli_arg",
       -- Same IO-tree handoff as the POSIX path; see footerPosix.
@@ -1907,18 +2279,22 @@ emitDecl ctx = \case
     -- visible across the loop back-edge.
     paramSlotPairs <- forM args $ \a -> do
       slot <- freshTemp
-      pure (mangle a, slot)
+      -- Keep the original (unmangled) name so 'lcParamSlots' can
+      -- be used as a name source for 'emitTail' value-tail param
+      -- decs — 'lookupBinderSSA' resolves names against 'locals'
+      -- which is keyed by the original name.
+      pure (a, slot)
     let entryAllocs =
           T.concat
             [ "  "
                 <> slot
                 <> " = alloca ptr\n"
                 <> "  store ptr %"
-                <> mangledName
+                <> mangle origName
                 <> ", ptr "
                 <> slot
                 <> "\n"
-            | (mangledName, slot) <- paramSlotPairs
+            | (origName, slot) <- paramSlotPairs
             ]
         retAlloc = "  " <> retSlot <> " = alloca ptr\n"
     -- At the loop head, pull each parameter back into an SSA value. These
@@ -1981,17 +2357,20 @@ emitDecl ctx = \case
     let paramSet = Set.fromList args
         localCtx = ctx {params = paramSet}
         llvmArgs = T.intercalate ", " (map (\a -> "ptr %" <> mangle a) args)
-    (instrs, result) <- emitExpr localCtx body
+    -- Emit body via 'emitNonLoopBody' which walks the tail-form
+    -- and emits the value-tail param decs at each terminal, with
+    -- per-arm precision for 'CCase' / 'CRowCase' bodies so an arm
+    -- returning a 'CVar' param is "moved" out without freeing the
+    -- just-returned cell.
+    bodyEmit <- emitNonLoopBody localCtx args body
     pure
       $ "define internal ptr @"
       <> mangle nm
       <> "("
       <> llvmArgs
       <> ") {\n"
-      <> instrs
-      <> "  ret ptr "
-      <> result
-      <> "\n}"
+      <> bodyEmit
+      <> "}"
   CValDef nm rhs -> do
     put 0
     let localCtx = ctx {params = Set.empty}
@@ -2004,6 +2383,118 @@ emitDecl ctx = \case
       <> "  ret ptr "
       <> result
       <> "\n}"
+
+-- | Emit a non-CLoop 'CFunDef' body with proper value-tail
+-- param decs. Walks the tail-form, emitting dec per terminal: for
+-- 'CCase' / 'CRowCase' bodies each arm computes its own dec list
+-- (so an arm returning a @CVar p@ doesn't free the cell the
+-- function is about to return); for a bare @CVar n@ the matching
+-- param is "moved" out; for any fresh source (CCon, CCall,
+-- CIntLit, etc.) all params are dec'd.
+emitNonLoopBody :: EmitCtx -> [Name] -> CExpr -> CodegenM Text
+emitNonLoopBody ctx0 params = go ctx0 [] []
+  where
+    -- 'pending' accumulates 'CDrop'-bound binders during the tail
+    -- walk; 'freshScruts' accumulates fresh case-scrutinee SSAs
+    -- (no live binding-side owner once the case is over). Both
+    -- get dec'd at every terminal, with move-semantics carve-out
+    -- for the result-CVar on 'pending'/params (scruts have no
+    -- name so they're dec'd unconditionally).
+    go :: EmitCtx -> [Name] -> [Text] -> CExpr -> CodegenM Text
+    go ctx pending freshScruts = \case
+      CCase scrut alts -> goCase ctx pending freshScruts scrut alts
+      CRowCase scrut alts ->
+        goCase ctx pending freshScruts scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+      CDrop _ n body -> go ctx (n : pending) freshScruts body
+      other -> do
+        (instrs, result) <- emitExpr ctx other
+        let resultName = sourceCVar other
+            inResult m = Just m == resultName
+            pendingToDec = filter (not . inResult) pending
+            paramsToDec =
+              [ p
+              | p <- params,
+                not (inResult p),
+                p `notElem` pending
+              ]
+            scrutDecs = T.concat ["  call void @__free_recursive(ptr " <> s <> ")\n" | s <- freshScruts]
+            frees =
+              scrutDecs
+                <> T.concat [emitFree ctx n | n <- pendingToDec]
+                <> T.concat [emitFree ctx p | p <- paramsToDec]
+        pure (instrs <> frees <> "  ret ptr " <> result <> "\n")
+
+    -- Per-arm dec: each arm body emits its own (potentially
+    -- different) param decs based on its own tail-form. Each arm
+    -- self-terminates with a @ret@, so no phi join is needed.
+    goCase :: EmitCtx -> [Name] -> [Text] -> CExpr -> [(Int, [Name], CExpr)] -> CodegenM Text
+    goCase ctx pending freshScruts scrut alts = do
+      (instrS, resS) <- emitExpr ctx scrut
+      tagSlot <- freshTemp
+      tagLoaded <- freshTemp
+      tagTmp <- freshTemp
+      let tagInstr =
+            "  "
+              <> tagSlot
+              <> " = getelementptr ptr, ptr "
+              <> resS
+              <> ", i32 0\n"
+              <> "  "
+              <> tagLoaded
+              <> " = load ptr, ptr "
+              <> tagSlot
+              <> "\n"
+              <> "  "
+              <> tagTmp
+              <> " = ptrtoint ptr "
+              <> tagLoaded
+              <> " to i64\n"
+      defLabel <- freshLabel "case.default"
+      -- Thread fresh scrut SSA through each arm so its terminator
+      -- dec's it.
+      let freshScruts' = case sourceCVar scrut of
+            Just _ -> freshScruts
+            Nothing -> resS : freshScruts
+      arms <- forM alts $ \(tag, vars, body) -> do
+        lbl <- freshLabel ("case.arm." <> show tag)
+        varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
+          slotT <- freshTemp
+          valT <- freshTemp
+          pure
+            ( "  "
+                <> slotT
+                <> " = getelementptr ptr, ptr "
+                <> resS
+                <> ", i32 "
+                <> show idx
+                <> "\n"
+                <> "  "
+                <> valT
+                <> " = load ptr, ptr "
+                <> slotT
+                <> "\n"
+                <> "  call void @__inc_ref(ptr "
+                <> valT
+                <> ")\n",
+              (v, valT)
+            )
+        let varCode = T.concat (map fst varInstrs)
+            varBindings = map snd varInstrs
+            -- Linear-scrutinee elision: see 'emitExpr' 'CCase'.
+            ctx' =
+              let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+               in case scrut of
+                    CVar n -> withLocals {armPatternByScrut = Map.insert n vars (armPatternByScrut withLocals)}
+                    _ -> withLocals
+        armBody <- go ctx' pending freshScruts' body
+        pure (tag, lbl, varCode <> armBody)
+      let switchCases =
+            T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _) <- arms]
+          switchInstr = "  switch i64 " <> tagTmp <> ", label %" <> defLabel <> " [" <> switchCases <> " ]\n"
+          armBlocks =
+            T.concat [lbl <> ":\n" <> blk | (_, lbl, blk) <- arms]
+          defBlock = defLabel <> ":\n  unreachable\n"
+      pure (instrS <> tagInstr <> switchInstr <> armBlocks <> defBlock)
 
 -- | Emit @body@ in tail position under a 'CLoop'. Guarantees the current
 -- basic block is terminated (by @br@ to either the loop head or the exit
@@ -2021,15 +2512,29 @@ emitDecl ctx = \case
 emitTail :: EmitCtx -> CExpr -> CodegenM Text
 emitTail ctx expr = case ctx.loopCtx of
   Nothing -> error "LLVM codegen: emitTail called without LoopCtx (pipeline bug)"
-  Just lctx -> go lctx expr
+  Just lctx -> go ctx lctx [] [] expr
   where
-    go :: LoopCtx -> CExpr -> CodegenM Text
-    go lctx = \case
+    -- 'freshScruts' accumulates SSA names of fresh case-scrutinees
+    -- (those whose source isn't a 'CVar', so they have no live
+    -- binding-side owner once the case is over). Each terminator
+    -- (CContinue, value-tail) dec's them after the inc-on-CVar
+    -- pass for new args/result so cascade-free of slot values
+    -- happens after the new owners have bumped their refcount.
+    go :: EmitCtx -> LoopCtx -> [Name] -> [Text] -> CExpr -> CodegenM Text
+    go ctx' lctx pending freshScruts = \case
       CContinue newArgs -> do
-        -- Evaluate all args before storing: a new value computed from the
-        -- old parameter must read the old value, never a half-updated slot.
-        argResults <- traverse (emitExpr ctx) newArgs
+        argResults <- traverse (emitExpr ctx') newArgs
         let (argInstrsList, argNames) = unzip argResults
+            -- Inc each ptr-arg whose source is a CVar (borrow →
+            -- the next-iter slot takes its own ref). Fresh sources
+            -- carry their @+1@ from @__alloc@.
+            incs =
+              T.concat
+                [ emitIncIfCVar e r
+                | (e, r) <- zip newArgs argNames
+                ]
+            scrutDecs = T.concat ["  call void @__free_recursive(ptr " <> s <> ")\n" | s <- freshScruts]
+            frees = T.concat [emitFree ctx' n | n <- pending]
             stores =
               T.concat
                 [ "  store ptr " <> r <> ", ptr " <> slot <> "\n"
@@ -2037,12 +2542,15 @@ emitTail ctx expr = case ctx.loopCtx of
                 ]
         pure
           $ T.concat argInstrsList
+          <> incs
+          <> scrutDecs
+          <> frees
           <> stores
           <> "  br label %"
           <> lctx.lcLoopLabel
           <> "\n"
       CCase scrut alts -> do
-        (instrS, resS) <- emitExpr ctx scrut
+        (instrS, resS) <- emitExpr ctx' scrut
         tagSlot <- freshTemp
         tagLoaded <- freshTemp
         tagTmp <- freshTemp
@@ -2063,10 +2571,15 @@ emitTail ctx expr = case ctx.loopCtx of
                 <> tagLoaded
                 <> " to i64\n"
         defLabel <- freshLabel "tco.case.default"
-        -- Each arm lives in its own labelled block and self-terminates
-        -- (either to loop head or exit). No join / phi needed.
+        -- If the scrut is fresh, thread its SSA through to each
+        -- arm so the arm's terminator dec's it.
+        let freshScruts' = case sourceCVar scrut of
+              Just _ -> freshScruts
+              Nothing -> resS : freshScruts
         armBlocks <- forM alts $ \(tag, vars, body) -> do
           lbl <- freshLabel ("tco.case.arm." <> show tag)
+          -- Inc each extracted ptr-binder (see the non-tail
+          -- 'CCase' in 'emitExpr' for the rationale).
           varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
             slotT <- freshTemp
             valT <- freshTemp
@@ -2082,13 +2595,22 @@ emitTail ctx expr = case ctx.loopCtx of
                   <> valT
                   <> " = load ptr, ptr "
                   <> slotT
-                  <> "\n",
+                  <> "\n"
+                  <> "  call void @__inc_ref(ptr "
+                  <> valT
+                  <> ")\n",
                 (v, valT)
               )
           let varCode = T.concat (map fst varInstrs)
               varBindings = map snd varInstrs
-              ctx' = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
-          bodyInstrs <- emitTail ctx' body
+              -- Linear-scrutinee elision: see the matching comment
+              -- in 'emitExpr' 'CCase' for the rationale.
+              ctx'' =
+                let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx' varBindings
+                 in case scrut of
+                      CVar n -> withLocals {armPatternByScrut = Map.insert n vars (armPatternByScrut withLocals)}
+                      _ -> withLocals
+          bodyInstrs <- go ctx'' lctx pending freshScruts' body
           pure (tag, lbl, varCode <> bodyInstrs)
         let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _) <- armBlocks]
             switchInstr = "  switch i64 " <> tagTmp <> ", label %" <> defLabel <> " [" <> switchCases <> " ]\n"
@@ -2100,13 +2622,44 @@ emitTail ctx expr = case ctx.loopCtx of
           <> switchInstr
           <> armsEmitted
           <> defBlock
-      -- Row dispatch shares 'CCase''s ptr-tagged layout — delegate.
       CRowCase scrut alts ->
-        emitTail ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+        go ctx' lctx pending freshScruts (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
+      CDrop _ n body -> go ctx' lctx (n : pending) freshScruts body
       other -> do
-        (instrs, result) <- emitExpr ctx other
+        (instrs, result) <- emitExpr ctx' other
+        -- Value-tail decs.
+        --
+        --   * If the result is a 'CVar m', exclude @m@ from the dec
+        --     list — the function transfers ownership to the caller
+        --     (move-semantics). Without this, the dec of @m@ would
+        --     drop the cell we just returned, leaving the caller
+        --     with a dangling pointer.
+        --   * 'freshScruts' SSAs are dec'd unconditionally (they
+        --     have no name to match for move-semantics).
+        --   * Pending (the binders accumulated from outer 'CDrop's
+        --     during tail recursion) are dec'd with the same
+        --     move-semantics carve-out.
+        --   * Function params are dec'd here too — 'addContinueDrops'
+        --     only emits param drops at 'CContinue' paths, so the
+        --     value-tail path needs an explicit pass.
+        let resultName = sourceCVar other
+            inResult n = Just n == resultName
+            pendingToDec = filter (not . inResult) pending
+            paramNames = [p | (p, _) <- lctx.lcParamSlots]
+            paramsToDec =
+              [ p
+              | p <- paramNames,
+                not (inResult p),
+                p `notElem` pending
+              ]
+            scrutDecs = T.concat ["  call void @__free_recursive(ptr " <> s <> ")\n" | s <- freshScruts]
+            frees =
+              scrutDecs
+                <> T.concat [emitFree ctx' n | n <- pendingToDec]
+                <> T.concat [emitFree ctx' p | p <- paramsToDec]
         pure
           $ instrs
+          <> frees
           <> "  store ptr "
           <> result
           <> ", ptr "
@@ -2115,6 +2668,48 @@ emitTail ctx expr = case ctx.loopCtx of
           <> "  br label %"
           <> lctx.lcExitLabel
           <> "\n"
+
+lookupBinderSSA :: EmitCtx -> Name -> Text
+lookupBinderSSA ctx n
+  | Just t <- Map.lookup n ctx.locals = t
+  | n `Set.member` ctx.params = "%" <> mangle n
+  | otherwise = error $ "LLVM codegen: CDrop on unknown binder: " <> show n
+
+-- | Lower a 'CDrop' to a cascading-free dec. Reads the
+-- cell's refcount, on hitting 0 walks @shape@ and dec's each ptr
+-- field, then releases the block. Literals (flag == 0) short-circuit.
+emitFree :: EmitCtx -> Name -> Text
+emitFree ctx n = "  call void @__free_recursive(ptr " <> lookupBinderSSA ctx n <> ")\n"
+
+-- | If an expression's value flows through to a long-lived store
+-- position (a cell slot, a 'CContinue' phi, a 'CCall' arg, a
+-- 'CRow' wrap, a 'CReuse' field) and its source is a @CVar@
+-- (possibly under @CDrop@ wrappers), return that binder's name.
+-- The caller emits a @__inc_ref@ on the loaded SSA so the store
+-- position takes its own reference; otherwise the source is a
+-- fresh allocation (CCon/CCall/CIntLit/CString) whose @+1@ from
+-- @__alloc@ is already accounted for by the receiving position.
+sourceCVar :: CExpr -> Maybe Name
+sourceCVar = \case
+  CVar n -> Just n
+  CDrop _ _ body -> sourceCVar body
+  _ -> Nothing
+
+-- | Emit a @__inc_ref@ call for the loaded SSA iff the source
+-- expression was a @CVar@ at its tail position. See 'sourceCVar'.
+emitIncIfCVar :: CExpr -> Text -> Text
+emitIncIfCVar expr ssa = case sourceCVar expr of
+  Just _ -> "  call void @__inc_ref(ptr " <> ssa <> ")\n"
+  Nothing -> ""
+
+-- | Emit an argument expression in a transfer position
+-- (@CCall@ argument). Equivalent to 'emitExpr' followed by an
+-- inc-on-CVar — keeps every CCall-arg evaluator inc'd consistently
+-- without forcing each builtin's inline emit to remember the rule.
+emitArgWithInc :: EmitCtx -> CExpr -> CodegenM (Text, Text)
+emitArgWithInc ctx expr = do
+  (instrs, ssa) <- emitExpr ctx expr
+  pure (instrs <> emitIncIfCVar expr ssa, ssa)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expressions
@@ -2128,11 +2723,11 @@ emitExpr ctx = \case
     let idx = case Map.lookup s ctx.stringPool of
           Just i -> i
           Nothing -> error $ "string not in pool: " <> show s
-    -- '@.str.N' is the length-prefixed layout (header at offset 0, payload
-    -- at offset 8); the global pointer is exactly the runtime string ptr,
-    -- no GEP / cast needed. With opaque pointers (LLVM 15+) the constant's
-    -- declared aggregate type doesn't bind here.
-    pure ("", "@.str." <> show idx)
+    -- The literal's storage is '{i32 flag=0, i32 byte_count, i32 utf16,
+    -- [N x i8]}'; the user-facing pointer is '@.str.N + 4', i.e. it
+    -- points at byte_count so all existing readers work unchanged.
+    -- See 'emitStringConstants' / 'stringLiteralUserPtr'.
+    pure ("", stringLiteralUserPtr idx)
   CVar n
     | Just tmp <- Map.lookup n ctx.locals ->
         pure ("", tmp)
@@ -2159,9 +2754,9 @@ emitExpr ctx = \case
     pure
       ( "  "
           <> buf
-          <> " = call ptr @malloc(i64 "
+          <> " = call ptr @__alloc(i64 "
           <> show bytes
-          <> ")\n"
+          <> ", i32 0)\n"
           <> "  store "
           <> llvmTy
           <> " "
@@ -2174,10 +2769,21 @@ emitExpr ctx = \case
   CBuiltIn _ ->
     pure ("", "null") -- invariant: not a standalone term; dispatched from CCall
   CCon tag fields -> do
-    -- Allocate container: [tag_as_ptr, field1, field2, ...]
+    -- Allocate container: [tag_as_ptr, field1, field2, ...]. Shape
+    -- = number of ptr fields starting at slot 1 (== arity), so
+    -- '__free_recursive' cascades correctly. Nullary constructors
+    -- bake @shape = 0@; everything else passes its arity.
     let nSlots = 1 + length fields
+        nFields = length fields
     arrTmp <- freshTemp
-    let allocInstr = "  " <> arrTmp <> " = call ptr @malloc(i64 " <> show (nSlots * 8 :: Int) <> ")\n"
+    let allocInstr =
+          "  "
+            <> arrTmp
+            <> " = call ptr @__alloc(i64 "
+            <> show (nSlots * 8 :: Int)
+            <> ", i32 "
+            <> show nFields
+            <> ")\n"
     -- Store tag at index 0
     tagPtr <- freshTemp
     tagSlot <- freshTemp
@@ -2197,12 +2803,16 @@ emitExpr ctx = \case
             <> ", ptr "
             <> tagSlot
             <> "\n"
-    -- Store each field
+    -- Store each field. Inc-on-store: if the field source is a
+    -- CVar (borrow), inc its refcount — the new cell's slot
+    -- takes its own reference. Fresh sources (CCon/CCall/CIntLit/
+    -- CString) bring their @+1@ from @__alloc@ and need no inc.
     fieldInstrs <- forM (zip fields [1 :: Int ..]) $ \(fExpr, idx) -> do
       (instrF, resF) <- emitExpr ctx fExpr
       slotTmp <- freshTemp
       pure
         ( instrF
+            <> emitIncIfCVar fExpr resF
             <> "  "
             <> slotTmp
             <> " = getelementptr ptr, ptr "
@@ -2224,6 +2834,250 @@ emitExpr ctx = \case
   -- emit machinery; the runtime layout (tag at offset 0, value at
   -- offset 1) is identical for one-field constructors.
   CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
+  -- Lower CDrop: evaluate body, then dec the dropped binder.
+  -- If the body's tail value is the dropped binder itself, inc the
+  -- result first so the dec balances out (move-semantics on
+  -- single-binder shadowing). This matches the @emitTail@ value-tail
+  -- carve-out and prevents a cascade-free of the just-returned cell.
+  CDrop _ n body -> do
+    (bodyInstrs, bodyResult) <- emitExpr ctx body
+    let incInstr = case sourceCVar body of
+          Just m | m == n -> "  call void @__inc_ref(ptr " <> bodyResult <> ")\n"
+          _ -> ""
+    pure (bodyInstrs <> incInstr <> emitFree ctx n, bodyResult)
+  -- Cell reuse. In-place mutation: write tag at slot 0
+  -- and each field at slot i+1 of the existing user-pointer at @n@.
+  -- No '__alloc', no '__free' — the matched-out cell is recycled.
+  -- The flag header at @user_ptr - 4@ stays intact (still flag=1
+  -- heap), so a later 'CDrop' on this binder's flow still
+  -- correctly recognises the cell as heap-allocated.
+  --
+  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
+  -- equals the matched arm's pattern arity, so the cell has at
+  -- least @1 + length fields@ slots — every store stays in bounds.
+  CReuse n tag fields -> do
+    -- Reuse-under-RC coexistence: CReuse is in-place mutation,
+    -- which is safe only if the cell is uniquely owned (refcount
+    -- == 1). Under RC the cell may be shared (refcount > 1) when
+    -- the matched binder aliases another live binding; in that
+    -- case we copy-on-write instead, leaving the shared cell
+    -- intact and producing a fresh one. The runtime branch is
+    -- ~3 cycles on the linear path (load refcount + compare +
+    -- predicted branch).
+    --
+    -- Linear-scrutinee elision (self-move): if a field is exactly
+    -- @CVar v@ where @v@ is the arm-pattern binder at the
+    -- corresponding slot index, the slot's stored pointer is
+    -- already what we'd write — dec-old + inc-new + store cancel
+    -- out and we can skip all three. The arm-pattern lookup goes
+    -- through 'ctx.armPatternByScrut[n]'.
+    let nPtr = lookupBinderSSA ctx n
+        nFields = length fields
+        armVars = Map.findWithDefault [] n ctx.armPatternByScrut
+        nthMaybe :: Int -> [a] -> Maybe a
+        nthMaybe i xs = listToMaybe (drop i xs)
+        isSelfMoveAt :: Int -> Bool
+        isSelfMoveAt slotIdx =
+          case (nthMaybe (slotIdx - 1) fields, nthMaybe (slotIdx - 1) armVars) of
+            (Just (CVar v), Just w) -> v == w
+            _ -> False
+    -- Pre-evaluate fields once — both branches need the same
+    -- field SSAs to either store-in-place or store-into-fresh.
+    fieldResults <- forM fields (emitExpr ctx)
+    let (fieldInstrsList, fieldNames) = unzip fieldResults
+        fieldInstrsCat = T.concat fieldInstrsList
+        zippedFields = zip3 fields fieldNames [1 :: Int ..]
+    rcPtr <- freshTemp
+    rcVal <- freshTemp
+    isUnique <- freshTemp
+    reuseLbl <- freshLabel "reuse.in_place"
+    copyLbl <- freshLabel "reuse.copy"
+    joinLbl <- freshLabel "reuse.join"
+    let rcCheck =
+          "  "
+            <> rcPtr
+            <> " = getelementptr i8, ptr "
+            <> nPtr
+            <> ", i64 -8\n"
+            <> "  "
+            <> rcVal
+            <> " = load i32, ptr "
+            <> rcPtr
+            <> "\n"
+            <> "  "
+            <> isUnique
+            <> " = icmp eq i32 "
+            <> rcVal
+            <> ", 1\n"
+            <> "  br i1 "
+            <> isUnique
+            <> ", label %"
+            <> reuseLbl
+            <> ", label %"
+            <> copyLbl
+            <> "\n"
+    -- In-place reuse path — uniquely owned cell. Before overwriting
+    -- slots we dec each old slot value (the cell's existing
+    -- references-via-slot dies); then inc each new CVar source
+    -- (the cell's new slot takes its own reference). Fresh
+    -- sources (CCon/CCall/CIntLit/CString) bring their @+1@ from
+    -- @__alloc@ and need no inc — same rule as the CCon-store
+    -- discipline. The cell's own refcount stays at 1.
+    -- Self-move slots: skip dec-old entirely (the slot value is
+    -- preserved across the CReuse).
+    inPlaceOldDecs <- forM [1 .. nFields] $ \idx ->
+      if isSelfMoveAt idx
+        then pure ""
+        else do
+          oldSlotPtr <- freshTemp
+          oldVal <- freshTemp
+          pure
+            ( "  "
+                <> oldSlotPtr
+                <> " = getelementptr ptr, ptr "
+                <> nPtr
+                <> ", i32 "
+                <> show idx
+                <> "\n"
+                <> "  "
+                <> oldVal
+                <> " = load ptr, ptr "
+                <> oldSlotPtr
+                <> "\n"
+                <> "  call void @__free_recursive(ptr "
+                <> oldVal
+                <> ")\n"
+            )
+    -- Self-move slots: skip store + inc-new entirely (the slot
+    -- already has the right pointer, no new ref needed).
+    inPlaceFieldStores <- forM zippedFields $ \(fExpr, resF, idx) ->
+      if isSelfMoveAt idx
+        then pure ""
+        else do
+          slotTmp <- freshTemp
+          pure
+            ( emitIncIfCVar fExpr resF
+                <> "  "
+                <> slotTmp
+                <> " = getelementptr ptr, ptr "
+                <> nPtr
+                <> ", i32 "
+                <> show idx
+                <> "\n"
+                <> "  store ptr "
+                <> resF
+                <> ", ptr "
+                <> slotTmp
+                <> "\n"
+            )
+    inPlaceTag <- freshTemp
+    inPlaceTagSlot <- freshTemp
+    let inPlaceBlock =
+          reuseLbl
+            <> ":\n"
+            <> T.concat inPlaceOldDecs
+            <> "  "
+            <> inPlaceTag
+            <> " = inttoptr i64 "
+            <> show tag
+            <> " to ptr\n"
+            <> "  "
+            <> inPlaceTagSlot
+            <> " = getelementptr ptr, ptr "
+            <> nPtr
+            <> ", i32 0\n"
+            <> "  store ptr "
+            <> inPlaceTag
+            <> ", ptr "
+            <> inPlaceTagSlot
+            <> "\n"
+            <> T.concat inPlaceFieldStores
+            <> "  br label %"
+            <> joinLbl
+            <> "\n"
+    -- Copy path — allocate a fresh cell with proper shape, store
+    -- tag + fields (with inc-on-CVar so the new cell takes its
+    -- own refs), then dec @n@ to balance the missing reuse-path
+    -- consumption.
+    copyTmp <- freshTemp
+    copyTagPtr <- freshTemp
+    copyTagSlot <- freshTemp
+    let copyAlloc =
+          "  "
+            <> copyTmp
+            <> " = call ptr @__alloc(i64 "
+            <> show ((1 + nFields) * 8 :: Int)
+            <> ", i32 "
+            <> show nFields
+            <> ")\n"
+        copyTag =
+          "  "
+            <> copyTagPtr
+            <> " = inttoptr i64 "
+            <> show tag
+            <> " to ptr\n"
+            <> "  "
+            <> copyTagSlot
+            <> " = getelementptr ptr, ptr "
+            <> copyTmp
+            <> ", i32 0\n"
+            <> "  store ptr "
+            <> copyTagPtr
+            <> ", ptr "
+            <> copyTagSlot
+            <> "\n"
+    copyFieldStores <- forM zippedFields $ \(fExpr, resF, idx) -> do
+      slotTmp <- freshTemp
+      pure
+        ( emitIncIfCVar fExpr resF
+            <> "  "
+            <> slotTmp
+            <> " = getelementptr ptr, ptr "
+            <> copyTmp
+            <> ", i32 "
+            <> show idx
+            <> "\n"
+            <> "  store ptr "
+            <> resF
+            <> ", ptr "
+            <> slotTmp
+            <> "\n"
+        )
+    let copyDecN = "  call void @__free_recursive(ptr " <> nPtr <> ")\n"
+        copyBlock =
+          copyLbl
+            <> ":\n"
+            <> copyAlloc
+            <> copyTag
+            <> T.concat copyFieldStores
+            <> copyDecN
+            <> "  br label %"
+            <> joinLbl
+            <> "\n"
+    -- Join — phi the result pointer from both paths.
+    phiTmp <- freshTemp
+    let joinBlock =
+          joinLbl
+            <> ":\n"
+            <> "  "
+            <> phiTmp
+            <> " = phi ptr [ "
+            <> nPtr
+            <> ", %"
+            <> reuseLbl
+            <> " ], [ "
+            <> copyTmp
+            <> ", %"
+            <> copyLbl
+            <> " ]\n"
+    pure
+      ( fieldInstrsCat
+          <> rcCheck
+          <> inPlaceBlock
+          <> copyBlock
+          <> joinBlock,
+        phiTmp
+      )
   CRowCase scrut alts ->
     emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
   CCase scrut alts -> do
@@ -2254,7 +3108,11 @@ emitExpr ctx = \case
     altLabelsAndBodies <- forM alts $ \(tag, vars, body) -> do
       lbl <- freshLabel ("case.arm." <> show tag)
       endLbl <- freshLabel ("case.end." <> show tag)
-      -- Extract bound variables from container fields
+      -- Extract bound variables from container fields. Each
+      -- ptr-binder is inc'd on extract so the local binding takes
+      -- its own reference (the scrut cell's slot still holds a ref
+      -- too). The matching dec fires at arm end via the 'CDrop'
+      -- that 'Awsum.Lifetime' wraps around every arm.
       varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
         slotT <- freshTemp
         valT <- freshTemp
@@ -2270,13 +3128,23 @@ emitExpr ctx = \case
               <> valT
               <> " = load ptr, ptr "
               <> slotT
-              <> "\n",
+              <> "\n"
+              <> "  call void @__inc_ref(ptr "
+              <> valT
+              <> ")\n",
             (v, valT)
           )
       let varInstrCode = T.concat (map fst varInstrs)
           varBindings = map snd varInstrs
-      -- Emit body with bound variables in context
-      let ctx' = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+      -- Emit body with bound variables in context. Linear-scrutinee
+      -- elision: if the scrut is 'CVar n', record this arm's @vars@
+      -- under @n@ so a nested 'CReuse n t fs' can detect self-move
+      -- slots.
+      let ctx' =
+            let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+             in case scrut of
+                  CVar n -> withLocals {armPatternByScrut = Map.insert n vars (armPatternByScrut withLocals)}
+                  _ -> withLocals
       (instrB, resB) <- emitExpr ctx' body
       pure (tag, lbl, endLbl, varInstrCode <> instrB, resB)
     -- switch instruction
@@ -2294,8 +3162,18 @@ emitExpr ctx = \case
     phiTmp <- freshTemp
     let phiIncoming = T.intercalate ", " ["[" <> resB <> ", %" <> endLbl <> "]" | (_, _, endLbl, _, resB) <- altLabelsAndBodies]
         joinBlock = joinLabel <> ":\n  " <> phiTmp <> " = phi ptr " <> phiIncoming <> "\n"
+        -- If the scrut's tail isn't a 'CVar' it's a fresh
+        -- allocation (CCon/CCall/…) whose @+1@ refcount has no
+        -- other owner once the case is over — dec it after the
+        -- phi so the cell is reclaimed. Case-binders inc'd at
+        -- extract retain their own refs to the cell's slot
+        -- values, so the cascade-free of those slots only drops
+        -- back the slot-via-cell ref and the binders survive.
+        scrutDec = case sourceCVar scrut of
+          Just _ -> ""
+          Nothing -> "  call void @__free_recursive(ptr " <> resS <> ")\n"
     pure
-      ( instrS <> tagInstr <> switchInstr <> armBlocks <> defBlock <> joinBlock,
+      ( instrS <> tagInstr <> switchInstr <> armBlocks <> defBlock <> joinBlock <> scrutDec,
         phiTmp
       )
   CCall f xs ->
@@ -2307,7 +3185,7 @@ emitExpr ctx = \case
       CBuiltIn "internalStdoutPrint" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__print(ptr " <> resX <> ")\n",
@@ -2330,7 +3208,7 @@ emitExpr ctx = \case
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of
               [x] -> do
-                (instrX, resX) <- emitExpr ctx x
+                (instrX, resX) <- emitArgWithInc ctx x
                 tmp <- freshTemp
                 let fn :: Text
                     fn = case name of
@@ -2345,7 +3223,7 @@ emitExpr ctx = \case
       CBuiltIn "predInt32" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__predInt32(ptr " <> resX <> ")\n",
@@ -2355,7 +3233,7 @@ emitExpr ctx = \case
       CBuiltIn "predUInt8" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__predUInt8(ptr " <> resX <> ")\n",
@@ -2365,7 +3243,7 @@ emitExpr ctx = \case
       CBuiltIn "predUInt32" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__predUInt32(ptr " <> resX <> ")\n",
@@ -2375,7 +3253,7 @@ emitExpr ctx = \case
       CBuiltIn "succInt32" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__succInt32(ptr " <> resX <> ")\n",
@@ -2385,7 +3263,7 @@ emitExpr ctx = \case
       CBuiltIn "succUInt8" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__succUInt8(ptr " <> resX <> ")\n",
@@ -2395,7 +3273,7 @@ emitExpr ctx = \case
       CBuiltIn "succUInt32" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__succUInt32(ptr " <> resX <> ")\n",
@@ -2406,8 +3284,8 @@ emitExpr ctx = \case
         | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" ->
             case xs of
               [a, b] -> do
-                (instrA, resA) <- emitExpr ctx a
-                (instrB, resB) <- emitExpr ctx b
+                (instrA, resA) <- emitArgWithInc ctx a
+                (instrB, resB) <- emitArgWithInc ctx b
                 tmp <- freshTemp
                 let fn :: Text
                     fn = case name of
@@ -2423,8 +3301,8 @@ emitExpr ctx = \case
         | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32" ->
             case xs of
               [a, b] -> do
-                (instrA, resA) <- emitExpr ctx a
-                (instrB, resB) <- emitExpr ctx b
+                (instrA, resA) <- emitArgWithInc ctx a
+                (instrB, resB) <- emitArgWithInc ctx b
                 tmp <- freshTemp
                 let fn :: Text
                     fn = case name of
@@ -2445,7 +3323,7 @@ emitExpr ctx = \case
       CBuiltIn "negInt32" ->
         case xs of
           [x] -> do
-            (instrX, resX) <- emitExpr ctx x
+            (instrX, resX) <- emitArgWithInc ctx x
             tmp <- freshTemp
             pure
               ( instrX <> "  " <> tmp <> " = call ptr @__negInt32(ptr " <> resX <> ")\n",
@@ -2455,8 +3333,8 @@ emitExpr ctx = \case
       CBuiltIn "concatString" ->
         case xs of
           [a, b] -> do
-            (instrA, resA) <- emitExpr ctx a
-            (instrB, resB) <- emitExpr ctx b
+            (instrA, resA) <- emitArgWithInc ctx a
+            (instrB, resB) <- emitArgWithInc ctx b
             tmp <- freshTemp
             pure
               ( instrA <> instrB <> "  " <> tmp <> " = call ptr @__concat(ptr " <> resA <> ", ptr " <> resB <> ")\n",
@@ -2466,8 +3344,8 @@ emitExpr ctx = \case
       CBuiltIn "splitOnFirst" ->
         case xs of
           [a, b] -> do
-            (instrA, resA) <- emitExpr ctx a
-            (instrB, resB) <- emitExpr ctx b
+            (instrA, resA) <- emitArgWithInc ctx a
+            (instrB, resB) <- emitArgWithInc ctx b
             tmp <- freshTemp
             pure
               ( instrA <> instrB <> "  " <> tmp <> " = call ptr @__splitOnFirst(ptr " <> resA <> ", ptr " <> resB <> ")\n",
@@ -2478,7 +3356,7 @@ emitExpr ctx = \case
         | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32" ->
             case xs of
               [a] -> do
-                (instrA, resA) <- emitExpr ctx a
+                (instrA, resA) <- emitArgWithInc ctx a
                 tmp <- freshTemp
                 let fn :: Text
                     fn = case name of
@@ -2494,7 +3372,7 @@ emitExpr ctx = \case
         | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes" ->
             case xs of
               [a] -> do
-                (instrA, resA) <- emitExpr ctx a
+                (instrA, resA) <- emitArgWithInc ctx a
                 tmp <- freshTemp
                 let fn :: Text
                     fn = case name of
@@ -2510,7 +3388,7 @@ emitExpr ctx = \case
         error ("LLVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       _ -> do
         (instrF, resF) <- emitExpr ctx f
-        argsResults <- traverse (emitExpr ctx) xs
+        argsResults <- traverse (emitArgWithInc ctx) xs
         let allInstrs = instrF <> mconcat (map fst argsResults)
             argList = T.intercalate ", " (map (\(_, r) -> "ptr " <> r) argsResults)
         tmp <- freshTemp
@@ -2518,8 +3396,8 @@ emitExpr ctx = \case
           ( allInstrs <> "  " <> tmp <> " = call ptr " <> resF <> "(" <> argList <> ")\n",
             tmp
           )
-  CLoop _ -> error "LLVM codegen: CLoop survived untcoProgram (pipeline bug)"
-  CContinue _ -> error "LLVM codegen: CContinue survived untcoProgram (pipeline bug)"
+  CLoop _ -> error "LLVM codegen: CLoop in non-tail position (pipeline bug — should only appear at function-body-tail)"
+  CContinue _ -> error "LLVM codegen: CContinue in non-tail position (pipeline bug — should only appear inside a CLoop)"
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Name mangling

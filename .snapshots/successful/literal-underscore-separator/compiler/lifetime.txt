@@ -1,0 +1,14 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+line:
+  case-pattern    $do_e_19_3                      count=1
+  case-pattern    s                               count=1
+
+main:
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=1
+

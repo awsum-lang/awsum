@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -78,24 +85,34 @@ CoreProgram
                             [
                                 ( 3
                                 , [ "e" ]
-                                , CCall
-                                    ( CVar "$apply$countWithBox" )
-                                    [ CVar "$k"
-                                    , CCon 3
-                                        [ CVar "e" ]
-                                    ]
+                                , CDrop DropFreeUnchecked "e"
+                                    ( CCall
+                                        ( CVar "$apply$countWithBox" )
+                                        [ CVar "$k"
+                                        , CCon 3
+                                            [ CVar "e" ]
+                                        ]
+                                    )
                                 )
                             ,
                                 ( 4
                                 , [ "m" ]
-                                , CContinue
-                                    [ CVar "b"
-                                    , CVar "m"
-                                    , CCon 22
-                                        [ CVar "$k"
-                                        , CVar "b"
-                                        ]
-                                    ]
+                                , CDrop DropFreeUnchecked "m"
+                                    ( CDrop DropFreeUnchecked "b"
+                                        ( CDrop DropFreeUnchecked "n"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CVar "b"
+                                                    , CVar "m"
+                                                    , CCon 22
+                                                        [ CVar "$k"
+                                                        , CVar "b"
+                                                        ]
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
                                 )
                             ]
                         )
@@ -120,39 +137,53 @@ CoreProgram
                             [ "$pk_22"
                             , "b"
                             ]
-                        , CCase
-                            ( CVar "$x" )
-                            [
-                                ( 3
-                                , [ "e" ]
-                                , CContinue
-                                    [ CVar "$pk_22"
-                                    , CCon 3
-                                        [ CVar "e" ]
-                                    ]
-                                )
-                            ,
-                                ( 4
-                                , [ "v" ]
-                                , CCase
-                                    ( CVar "b" )
+                        , CDrop DropFreeUnchecked "$pk_22"
+                            ( CDrop DropFreeUnchecked "b"
+                                ( CCase
+                                    ( CVar "$x" )
                                     [
-                                        ( 19
-                                        , [ "f" ]
-                                        , CContinue
-                                            [ CVar "$pk_22"
-                                            , CCon 4
-                                                [ CCall
-                                                    ( CVar "$apply1" )
-                                                    [ CVar "f"
-                                                    , CVar "v"
+                                        ( 3
+                                        , [ "e" ]
+                                        , CDrop DropFreeUnchecked "e"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CVar "$pk_22"
+                                                    , CReuse "$x" 3
+                                                        [ CVar "e" ]
                                                     ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "v" ]
+                                        , CDrop DropFreeUnchecked "v"
+                                            ( CCase
+                                                ( CVar "b" )
+                                                [
+                                                    ( 19
+                                                    , [ "f" ]
+                                                    , CDrop DropFreeUnchecked "f"
+                                                        ( CDrop DropFreeUnchecked "$k"
+                                                            ( CContinue
+                                                                [ CVar "$pk_22"
+                                                                , CReuse "$x" 4
+                                                                    [ CCall
+                                                                        ( CVar "$apply1" )
+                                                                        [ CVar "f"
+                                                                        , CVar "v"
+                                                                        ]
+                                                                    ]
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
                                                 ]
-                                            ]
+                                            )
                                         )
                                     ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )

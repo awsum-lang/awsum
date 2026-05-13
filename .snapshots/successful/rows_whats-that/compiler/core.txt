@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -37,41 +44,47 @@ CoreProgram
                 [
                     ( 1454647603
                     , "__rw"
-                    , CCase
-                        ( CVar "__rw" )
-                        [
-                            ( 9
-                            , []
-                            , CCon 4
-                                [ CString "Nothing" ]
-                            )
-                        ,
-                            ( 10
-                            , [ "__pa0" ]
-                            , CRowCase
-                                ( CVar "__pa0" )
-                                [
-                                    ( 796142685
-                                    , "b"
-                                    , CCase
-                                        ( CVar "b" )
+                    , CDrop DropFreeUnchecked "__rw"
+                        ( CCase
+                            ( CVar "__rw" )
+                            [
+                                ( 9
+                                , []
+                                , CCon 4
+                                    [ CString "Nothing" ]
+                                )
+                            ,
+                                ( 10
+                                , [ "__pa0" ]
+                                , CDrop DropFreeUnchecked "__pa0"
+                                    ( CRowCase
+                                        ( CVar "__pa0" )
                                         [
-                                            ( 1
-                                            , []
-                                            , CCon 4
-                                                [ CString "Just True" ]
-                                            )
-                                        ,
-                                            ( 2
-                                            , []
-                                            , CCon 4
-                                                [ CString "Just False" ]
+                                            ( 796142685
+                                            , "b"
+                                            , CDrop DropFreeUnchecked "b"
+                                                ( CCase
+                                                    ( CVar "b" )
+                                                    [
+                                                        ( 1
+                                                        , []
+                                                        , CCon 4
+                                                            [ CString "Just True" ]
+                                                        )
+                                                    ,
+                                                        ( 2
+                                                        , []
+                                                        , CCon 4
+                                                            [ CString "Just False" ]
+                                                        )
+                                                    ]
+                                                )
                                             )
                                         ]
                                     )
-                                ]
-                            )
-                        ]
+                                )
+                            ]
+                        )
                     )
                 ]
             )
@@ -101,10 +114,12 @@ CoreProgram
                 ,
                     ( 10
                     , [ "__f0" ]
-                    , CCon 10
-                        [ CRow 796142685
-                            ( CVar "__f0" )
-                        ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 10
+                            [ CRow 796142685
+                                ( CVar "__f0" )
+                            ]
+                        )
                     )
                 ]
             )
@@ -114,20 +129,24 @@ CoreProgram
                 [
                     ( 3
                     , [ "__w0" ]
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ]
             )

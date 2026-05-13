@@ -1,0 +1,38 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$let$7:
+  param           msg                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+
+$lam$8:
+  param           _a                              count=0
+
+$let$9:
+  param           renamedBad                      count=1
+  param           renamedGood                     count=1
+  case-pattern    __p0                            count=0
+  case-pattern    __p0                            count=0
+  case-pattern    n                               count=0
+  case-pattern    __w0                            count=0
+
+$lam$10:
+  param           _a                              count=0
+
+$let$11:
+  param           renamedBad                      count=1
+
+$df$mapLeft$0:
+  param           x                               count=1
+  case-pattern    e                               count=0
+  case-pattern    a                               count=0
+
+$df$mapLeft$1:
+  param           x                               count=1
+  case-pattern    e                               count=0
+  case-pattern    a                               count=0
+

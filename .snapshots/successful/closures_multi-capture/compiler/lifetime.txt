@@ -1,0 +1,31 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+both:
+  param           a                               count=1
+  param           b                               count=1
+
+bothBody:
+  param           a                               count=1
+  param           b                               count=1
+  case-pattern    $do_e_15_3                      count=0
+  case-pattern    s0                              count=0
+
+$lam$7:
+  param           a                               count=1
+  param           b                               count=1
+  param           _n                              count=0
+
+$let$8:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+
+$df$apply$0:
+  param           x                               count=1
+  param           $df$apply$0$cap0$0              count=1
+  param           $df$apply$0$cap0$1              count=1
+

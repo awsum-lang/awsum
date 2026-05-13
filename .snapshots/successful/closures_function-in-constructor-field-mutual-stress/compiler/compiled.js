@@ -21,6 +21,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -49,6 +50,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
             switch (__s[0]) {
               case 20: {
                 const __t0 = [22, v__arg0];
+                v__args = null;
                 v__args = __t0;
                 continue;
               }
@@ -57,7 +59,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
         }
         case 22: {
           const v_n = __s[1];
-          const __t0 = [24, v_n];
+          const __t0 = (v__args[0] = 24, v__args[1] = v_n, v__args);
           v__args = __t0;
           continue;
         }
@@ -85,6 +87,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
                           case 19: {
                             const v_f = __s[1];
                             const __t0 = [21, v_f, v_m];
+                            v__args = null;
                             v__args = __t0;
                             continue;
                           }
@@ -115,7 +118,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
                     }
                     case 4: {
                       const v_m = __s[1];
-                      const __t0 = [23, v_m];
+                      const __t0 = (v__args[0] = 23, v__args[1] = v_m, v__args);
                       v__args = __t0;
                       continue;
                     }

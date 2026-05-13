@@ -23,6 +23,8 @@ module Awsum.Core
     CDecl (..),
     CoreProgram (..),
     PreludeTags (..),
+    CDropKind (..),
+    BinderKindMap,
     usedBuiltIns,
     usesIntLit,
     nextFreshConTag,
@@ -63,6 +65,41 @@ intTypeName = \case
   TInt32 -> "Int32"
   TUInt8 -> "UInt8"
   TUInt32 -> "UInt32"
+
+-- | How a 'CDrop' should be lowered by codegen. The kind is set at
+--   the point a binder is introduced (function parameter,
+--   case-pattern binder, row-case binder) based on the binder's
+--   type-erased runtime shape, and propagated through every synthetic
+--   pass that mints fresh binders.
+--
+--     * 'DropFreeUnchecked' — binder holds a heap pointer that is
+--       known to be heap-allocated (ADT cell, boxed primitive).
+--       Codegen emits the per-target free directly (LLVM
+--       @call free@, WASM freelist return, JVM/CLR/JS slot nullify).
+--     * 'DropFreeStringChecked' — binder holds a 'String' pointer
+--       that may be either a static-data literal (@.str.N@ on LLVM,
+--       data-section on WASM) or a heap allocation. Codegen emits
+--       the per-target safe free helper that reads the cell's flag
+--       header and frees only when the block is heap-allocated.
+--       JVM/CLR/JS use plain nullify (no header on managed-runtime
+--       strings).
+--     * 'DropNoop' — binder is an unboxed scalar ('Int32', 'UInt8',
+--       …). No memory to reclaim; codegen emits nothing.
+data CDropKind = DropFreeUnchecked | DropFreeStringChecked | DropNoop
+  deriving stock (Show, Eq, Ord)
+
+-- | Side table mapping every binder name in a Core program — function
+--   parameter, case-pattern binder, row-case binder — to its
+--   'CDropKind'. Built up during lowering and synthetic passes
+--   (everywhere a binder is introduced, the producing pass knows the
+--   binder's type-erased shape and records it here) and consumed by
+--   'Awsum.Lifetime.insertDrops' to attach the right kind to every
+--   emitted 'CDrop'.
+--
+--   Names in Core are unique within a top-level declaration's scope
+--   (source-level no-shadowing + fresh-mint counters in synthetic
+--   passes), so a flat name-keyed map suffices.
+type BinderKindMap = Map Name CDropKind
 
 -- | Core expressions.
 data CExpr
@@ -114,6 +151,50 @@ data CExpr
     --   parameter values. Produced by the TCO pass in place of a self-tail
     --   call. Arity must match the enclosing function's parameter list.
     CContinue [CExpr]
+  | -- | Liveness annotation produced by 'Awsum.Lifetime.insertDrops':
+    --   @CDrop k n body@ asserts that the binder @n@ becomes dead
+    --   /after/ @body@ has been fully evaluated. The expression's
+    --   value is the value of @body@. Codegen emits the per-target
+    --   reclaim for @n@ after @body@'s value has been produced,
+    --   dispatching on @k@ ('DropFreeUnchecked' → immediate free;
+    --   'DropFreeStringChecked' → safe header-checking free;
+    --   'DropNoop' → emit nothing).
+    --
+    --   The kind is redundant with the kind annotation on @n@'s
+    --   binder declaration (function parameter, case-pattern binder,
+    --   row-case binder); it is duplicated here so codegen does not
+    --   need to maintain a binder-name → kind lookup.
+    --
+    --   Semantics: "n dead /after/ body", so the same placement is
+    --   safe under both linear free (LLVM/WASM) and slot-nullify
+    --   (JVM/CLR/JS). See 'Awsum.Lifetime' for the placement algorithm
+    --   and ownership discipline (CCall/CCon/CContinue arg uses
+    --   transfer ownership; no drop is emitted for transferred
+    --   binders).
+    CDrop CDropKind Name CExpr
+  | -- | Cell reuse à la Lean 4. @CReuse n tag fields@ writes @tag@
+    --   into slot 0 of the existing user-pointer at @n@ and the
+    --   @fields@ values into slots 1, 2, …, length fields. The result
+    --   value of the expression is @n@ itself — same physical pointer
+    --   as before, just with new contents.
+    --
+    --   Produced by 'Awsum.Reuse.insertReuse' from a 'CCon' whose
+    --   surrounding 'CCase' scrutinee is a linear 'CVar n' followed by
+    --   a 'CDrop n' wrap. The reuse pass removes the 'CDrop' (since
+    --   the cell is reused, not freed) and rewrites the nested 'CCon'
+    --   in place.
+    --
+    --   Invariant: the cell at @n@ has at least @1 + length fields@
+    --   slots. Currently the reuse pass only matches when the matched
+    --   arm's pattern has exactly @length fields@ binders (so the
+    --   slot count is exact) — see 'Awsum.Reuse.rewriteFirstCCon'.
+    --
+    --   Backend lowering: in-place stores into the existing block, no
+    --   '__alloc' / '__free' call. The pre-existing refcount header
+    --   on LLVM/WASM is left intact — the block is still
+    --   heap-allocated, so on a later 'CDrop' '__free_recursive' will
+    --   correctly recognise it.
+    CReuse Name Int [CExpr]
   deriving stock (Show, Eq)
 
 -- | Top-level Core declarations.
@@ -179,6 +260,8 @@ usedBuiltIns (CoreProgram ds) = foldMap declBuiltIns ds
       CRowCase s alts -> exprBuiltIns s <> foldMap (\(_, _, b) -> exprBuiltIns b) alts
       CLoop b -> exprBuiltIns b
       CContinue xs -> foldMap exprBuiltIns xs
+      CDrop _ _ b -> exprBuiltIns b
+      CReuse _ _ fs -> foldMap exprBuiltIns fs
 
 -- | Smallest 'Int' strictly greater than every constructor tag used
 --   anywhere in the program ('CCon' construction sites and 'CCase'
@@ -209,6 +292,8 @@ nextFreshConTag (CoreProgram ds) =
       CRowCase s alts -> exprConTags s <> concatMap (\(_, _, b) -> exprConTags b) alts
       CLoop b -> exprConTags b
       CContinue xs -> concatMap exprConTags xs
+      CDrop _ _ b -> exprConTags b
+      CReuse _ t fs -> t : concatMap exprConTags fs
       CVar _ -> []
       CString _ -> []
       CIntLit _ _ -> []
@@ -234,3 +319,5 @@ usesIntLit (CoreProgram ds) = any declHasInt ds
       CRowCase s alts -> exprHasInt s || any (\(_, _, b) -> exprHasInt b) alts
       CLoop b -> exprHasInt b
       CContinue xs -> any exprHasInt xs
+      CDrop _ _ b -> exprHasInt b
+      CReuse _ _ fs -> any exprHasInt fs

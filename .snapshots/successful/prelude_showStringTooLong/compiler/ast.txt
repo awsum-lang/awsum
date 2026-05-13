@@ -1,0 +1,130 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Direct test of `showStringTooLong`: renders the sentinel error to
+               its canonical name. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 5
+            , spanStartCol = 1
+            , spanEndLine = 5
+            , spanEndCol = 21
+            }
+        ) "main"
+        ( TyApp
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 8
+                , spanEndLine = 5
+                , spanEndCol = 21
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 8
+                    , spanEndLine = 5
+                    , spanEndCol = 16
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 8
+                        , spanEndLine = 5
+                        , spanEndCol = 10
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 11
+                        , spanEndLine = 5
+                        , spanEndCol = 16
+                        }
+                    ) "Never"
+                )
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 17
+                    , spanEndLine = 5
+                    , spanEndCol = 21
+                    }
+                ) "Unit"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 57
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 8
+                    , spanEndLine = 6
+                    , spanEndCol = 57
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 8
+                        , spanEndLine = 6
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 24
+                        , spanEndLine = 6
+                        , spanEndCol = 57
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 25
+                            , spanEndLine = 6
+                            , spanEndCol = 56
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 25
+                                , spanEndLine = 6
+                                , spanEndCol = 43
+                                }
+                            )
+                            ( QName [] "showStringTooLong" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 43
+                                , spanEndLine = 6
+                                , spanEndCol = 56
+                                }
+                            ) "StringTooLong"
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

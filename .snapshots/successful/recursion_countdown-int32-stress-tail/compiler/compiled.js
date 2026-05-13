@@ -22,6 +22,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -56,6 +57,7 @@ function v_countDown(v_n){
               case 4: {
                 const v_m = __s[1];
                 const __t0 = v_m;
+                v_n = null;
                 v_n = __t0;
                 continue;
               }

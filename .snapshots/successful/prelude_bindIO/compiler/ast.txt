@@ -1,0 +1,407 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Direct test of `bindIO`: sequences two IO actions, threading the
+               success value of the first into the continuation. The runtime
+               walks the resulting tree in order. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 6
+            , spanStartCol = 1
+            , spanEndLine = 6
+            , spanEndCol = 31
+            }
+        ) "emit"
+        ( TyArrow
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 8
+                , spanEndLine = 6
+                , spanEndCol = 31
+                }
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 8
+                    , spanEndLine = 6
+                    , spanEndCol = 14
+                    }
+                ) "String"
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 18
+                    , spanEndLine = 6
+                    , spanEndCol = 31
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 18
+                        , spanEndLine = 6
+                        , spanEndCol = 26
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 18
+                            , spanEndLine = 6
+                            , spanEndCol = 20
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 21
+                            , spanEndLine = 6
+                            , spanEndCol = 26
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 27
+                        , spanEndLine = 6
+                        , spanEndCol = 31
+                        }
+                    ) "Unit"
+                )
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 7
+                , spanStartCol = 1
+                , spanEndLine = 7
+                , spanEndCol = 27
+                }
+            ) "emit"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 6
+                    , spanEndLine = 7
+                    , spanEndCol = 7
+                    }
+                ) "s"
+            ]
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 7
+                    , spanStartCol = 10
+                    , spanEndLine = 7
+                    , spanEndCol = 27
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 10
+                        , spanEndLine = 7
+                        , spanEndCol = 26
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 7
+                        , spanStartCol = 26
+                        , spanEndLine = 7
+                        , spanEndCol = 27
+                        }
+                    )
+                    ( QName [] "s" )
+                )
+            ) Nothing
+        , Sig
+            ( SrcSpan
+                { spanStartLine = 9
+                , spanStartCol = 1
+                , spanEndLine = 9
+                , spanEndCol = 21
+                }
+            ) "main"
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 9
+                    , spanStartCol = 8
+                    , spanEndLine = 9
+                    , spanEndCol = 21
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 8
+                        , spanEndLine = 9
+                        , spanEndCol = 16
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 8
+                            , spanEndLine = 9
+                            , spanEndCol = 10
+                            }
+                        ) "IO"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 9
+                            , spanStartCol = 11
+                            , spanEndLine = 9
+                            , spanEndCol = 16
+                            }
+                        ) "Never"
+                    )
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 9
+                        , spanStartCol = 17
+                        , spanEndLine = 9
+                        , spanEndCol = 21
+                        }
+                    ) "Unit"
+                )
+            ) Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 70
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 10
+                    , spanStartCol = 8
+                    , spanEndLine = 10
+                    , spanEndCol = 70
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 8
+                        , spanEndLine = 10
+                        , spanEndCol = 26
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 8
+                            , spanEndLine = 10
+                            , spanEndCol = 15
+                            }
+                        )
+                        ( QName [] "bindIO" )
+                    )
+                    ( EParens
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 15
+                            , spanEndLine = 10
+                            , spanEndCol = 26
+                            }
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 16
+                                , spanEndLine = 10
+                                , spanEndCol = 24
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 16
+                                    , spanEndLine = 10
+                                    , spanEndCol = 21
+                                    }
+                                )
+                                ( QName [] "emit" )
+                            )
+                            ( ELit
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 21
+                                    , spanEndLine = 10
+                                    , spanEndCol = 24
+                                    }
+                                )
+                                ( LString "a" )
+                            )
+                        )
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 10
+                        , spanStartCol = 26
+                        , spanEndLine = 10
+                        , spanEndCol = 70
+                        }
+                    )
+                    ( ELam
+                        ( SrcSpan
+                            { spanStartLine = 10
+                            , spanStartCol = 27
+                            , spanEndLine = 10
+                            , spanEndCol = 69
+                            }
+                        )
+                        [ Param
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 28
+                                , spanEndLine = 10
+                                , spanEndCol = 30
+                                }
+                            ) "_u"
+                        ]
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 10
+                                , spanStartCol = 34
+                                , spanEndLine = 10
+                                , spanEndCol = 69
+                                }
+                            )
+                            ( EApp
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 34
+                                    , spanEndLine = 10
+                                    , spanEndCol = 52
+                                    }
+                                )
+                                ( EVar
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 34
+                                        , spanEndLine = 10
+                                        , spanEndCol = 41
+                                        }
+                                    )
+                                    ( QName [] "bindIO" )
+                                )
+                                ( EParens
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 41
+                                        , spanEndLine = 10
+                                        , spanEndCol = 52
+                                        }
+                                    )
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 42
+                                            , spanEndLine = 10
+                                            , spanEndCol = 50
+                                            }
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 42
+                                                , spanEndLine = 10
+                                                , spanEndCol = 47
+                                                }
+                                            )
+                                            ( QName [] "emit" )
+                                        )
+                                        ( ELit
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 47
+                                                , spanEndLine = 10
+                                                , spanEndCol = 50
+                                                }
+                                            )
+                                            ( LString "b" )
+                                        )
+                                    )
+                                )
+                            )
+                            ( EParens
+                                ( SrcSpan
+                                    { spanStartLine = 10
+                                    , spanStartCol = 52
+                                    , spanEndLine = 10
+                                    , spanEndCol = 69
+                                    }
+                                )
+                                ( ELam
+                                    ( SrcSpan
+                                        { spanStartLine = 10
+                                        , spanStartCol = 53
+                                        , spanEndLine = 10
+                                        , spanEndCol = 68
+                                        }
+                                    )
+                                    [ Param
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 54
+                                            , spanEndLine = 10
+                                            , spanEndCol = 56
+                                            }
+                                        ) "_v"
+                                    ]
+                                    ( EApp
+                                        ( SrcSpan
+                                            { spanStartLine = 10
+                                            , spanStartCol = 60
+                                            , spanEndLine = 10
+                                            , spanEndCol = 68
+                                            }
+                                        )
+                                        ( EVar
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 60
+                                                , spanEndLine = 10
+                                                , spanEndCol = 65
+                                                }
+                                            )
+                                            ( QName [] "emit" )
+                                        )
+                                        ( ELit
+                                            ( SrcSpan
+                                                { spanStartLine = 10
+                                                , spanStartCol = 65
+                                                , spanEndLine = 10
+                                                , spanEndCol = 68
+                                                }
+                                            )
+                                            ( LString "c" )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

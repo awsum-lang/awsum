@@ -1,0 +1,428 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "failIO" [ "e" ]
+            ( CCon 6
+                [ CVar "e" ]
+            )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "io"
+                                ( CContinue
+                                    [ CCall
+                                        ( CVar "$apply1" )
+                                        [ CVar "cont"
+                                        , CCall
+                                            ( CBuiltIn "internalGetArgs" ) []
+                                        ]
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "action"
+            ( CCall
+                ( CVar "failIO" )
+                [ CCon 19 [] ]
+            )
+        , CFunDef "handler" [ "_b" ]
+            ( CCon 7
+                [ CString "ErrB"
+                , CCon 5
+                    [ CCon 0 [] ]
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$8" )
+                [ CCall
+                    ( CVar "$df$mapIOError$0" )
+                    [ CVar "action" ]
+                ]
+            )
+        , CFunDef "$lam$7" [ "_a" ]
+            ( CCon 20 [] )
+        , CFunDef "$let$8" [ "renamed" ]
+            ( CCall
+                ( CVar "$df$handleErrorIO$2" )
+                [ CVar "renamed" ]
+            )
+        , CFunDef "$df$mapIOError$0" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$mapIOError$0" )
+                [ CVar "io"
+                , CCon 26 []
+                ]
+            )
+        , CFunDef "$cps$$df$mapIOError$0"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CDrop DropFreeUnchecked "a"
+                            ( CCall
+                                ( CVar "$apply$$df$mapIOError$0" )
+                                [ CVar "$k"
+                                , CCon 5
+                                    [ CVar "a" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CDrop DropFreeUnchecked "e"
+                            ( CCall
+                                ( CVar "$apply$$df$mapIOError$0" )
+                                [ CVar "$k"
+                                , CCon 6
+                                    [ CCall
+                                        ( CVar "$lam$7" )
+                                        [ CVar "e" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse "io" 27
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$mapIOError$0" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 21
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$mapIOError$0"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 26
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 27
+                        ,
+                            [ "$pk_27"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_27"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_27"
+                                        , CReuse "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$df$handleErrorIO$2" [ "io" ]
+            ( CCall
+                ( CVar "$cps$$df$handleErrorIO$2" )
+                [ CVar "io"
+                , CCon 28 []
+                ]
+            )
+        , CFunDef "$cps$$df$handleErrorIO$2"
+            [ "io"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "a" ]
+                        , CDrop DropFreeUnchecked "a"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$2" )
+                                [ CVar "$k"
+                                , CCon 5
+                                    [ CVar "a" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 6
+                        , [ "e" ]
+                        , CDrop DropFreeUnchecked "e"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$2" )
+                                [ CVar "$k"
+                                , CCall
+                                    ( CVar "handler" )
+                                    [ CVar "e" ]
+                                ]
+                            )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "next"
+                                        , CReuse "io" 29
+                                            [ CVar "$k"
+                                            , CVar "s"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 8
+                        , [ "cont" ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CCall
+                                ( CVar "$apply$$df$handleErrorIO$2" )
+                                [ CVar "$k"
+                                , CCon 8
+                                    [ CCon 22
+                                        [ CVar "cont" ]
+                                    ]
+                                ]
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply$$df$handleErrorIO$2"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 28
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 29
+                        ,
+                            [ "$pk_29"
+                            , "s"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_29"
+                            ( CDrop DropFreeUnchecked "s"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_29"
+                                        , CReuse "$k" 7
+                                            [ CVar "s"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$scc$$apply1_$df$$lam$5$1_$df$$lam$6$3" [ "$args" ]
+            ( CCall
+                ( CVar "$cps$$scc$$apply1_$df$$lam$5$1_$df$$lam$6$3" )
+                [ CVar "$args"
+                , CCon 30 []
+                ]
+            )
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$5$1_$df$$lam$6$3"
+            [ "$args"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$args" )
+                    [
+                        ( 23
+                        ,
+                            [ "$cl"
+                            , "$arg0"
+                            ]
+                        , CDrop DropFreeUnchecked "$cl"
+                            ( CDrop DropFreeUnchecked "$arg0"
+                                ( CCase
+                                    ( CVar "$cl" )
+                                    [
+                                        ( 21
+                                        , [ "$cap21_0" ]
+                                        , CDrop DropFreeUnchecked "$cap21_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 24
+                                                        [ CVar "$cap21_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ,
+                                        ( 22
+                                        , [ "$cap22_0" ]
+                                        , CDrop DropFreeUnchecked "$cap22_0"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CReuse "$args" 25
+                                                        [ CVar "$cap22_0"
+                                                        , CVar "$arg0"
+                                                        ]
+                                                    , CVar "$k"
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ,
+                        ( 24
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 23
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 31
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ,
+                        ( 25
+                        ,
+                            [ "cont"
+                            , "result"
+                            ]
+                        , CDrop DropFreeUnchecked "cont"
+                            ( CDrop DropFreeUnchecked "result"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CReuse "$args" 23
+                                            [ CVar "cont"
+                                            , CVar "result"
+                                            ]
+                                        , CCon 32
+                                            [ CVar "$k" ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "$apply1"
+            [ "$cl"
+            , "$arg0"
+            ]
+            ( CCall
+                ( CVar "$scc$$apply1_$df$$lam$5$1_$df$$lam$6$3" )
+                [ CCon 23
+                    [ CVar "$cl"
+                    , CVar "$arg0"
+                    ]
+                ]
+            )
+        ]
+    }

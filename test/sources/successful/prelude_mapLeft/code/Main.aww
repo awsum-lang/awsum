@@ -1,0 +1,25 @@
+{- Direct test of `mapLeft`: rewrites the error type of an Either,
+   leaving the Right arm unchanged. -}
+import IO.Stdout
+
+type ErrA = ErrA
+type ErrB = ErrB
+
+bad : Either ErrA Int32
+bad = Left ErrA
+
+good : Either ErrA Int32
+good = Right 42
+
+main : IO Never Unit
+main =
+  let renamedBad : Either ErrB Int32 = mapLeft bad (\_a -> ErrB)
+      renamedGood : Either ErrB Int32 = mapLeft good (\_a -> ErrB)
+      msg : Either StringTooLong String = case renamedBad of
+        Left ErrB -> case renamedGood of
+          Left ErrB -> Right "bad-Left bad-Left"
+          Right n -> "bad-Left good-Right " ++ showInt32 n
+        Right _ -> Right "WAT"
+   in case msg of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

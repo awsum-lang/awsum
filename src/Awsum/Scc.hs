@@ -176,6 +176,8 @@ rewriteCrossCalls memberSet mergedName memberOrder tagOf = go
       CRowCase s alts -> CRowCase (go s) [(t, v, go b) | (t, v, b) <- alts]
       CLoop b -> CLoop (go b)
       CContinue xs -> CContinue (map go xs)
+      CDrop k n b -> CDrop k n (go b)
+      CReuse n t fs -> CReuse n t (map go fs)
       e@(CVar _) -> e
       e@(CString _) -> e
       e@(CIntLit _ _) -> e

@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -42,35 +49,43 @@ CoreProgram
                 [
                     ( 3
                     , [ "$do_e_7_3" ]
-                    , CCon 3
-                        [ CVar "$do_e_7_3" ]
+                    , CDrop DropFreeUnchecked "$do_e_7_3"
+                        ( CCon 3
+                            [ CVar "$do_e_7_3" ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "p" ]
-                    , CCase
-                        ( CCall
-                            ( CBuiltIn "concatString" )
-                            [ CVar "p"
-                            , CString "]"
-                            ]
-                        )
-                        [
-                            ( 3
-                            , [ "$do_e_8_3" ]
-                            , CCon 3
-                                [ CVar "$do_e_8_3" ]
-                            )
-                        ,
-                            ( 4
-                            , [ "q" ]
-                            , CCall
+                    , CDrop DropFreeUnchecked "p"
+                        ( CCase
+                            ( CCall
                                 ( CBuiltIn "concatString" )
-                                [ CVar "q"
-                                , CVar "q"
+                                [ CVar "p"
+                                , CString "]"
                                 ]
                             )
-                        ]
+                            [
+                                ( 3
+                                , [ "$do_e_8_3" ]
+                                , CDrop DropFreeUnchecked "$do_e_8_3"
+                                    ( CCon 3
+                                        [ CVar "$do_e_8_3" ]
+                                    )
+                                )
+                            ,
+                                ( 4
+                                , [ "q" ]
+                                , CDrop DropFreeUnchecked "q"
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "q"
+                                        , CVar "q"
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
                     )
                 ]
             )
@@ -124,20 +139,24 @@ CoreProgram
                 [
                     ( 3
                     , [ "__w0" ]
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ]
             )

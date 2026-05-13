@@ -195,6 +195,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -407,6 +411,8 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
+
+
     ret
   IL_tco_arm_4:
     dup
@@ -430,6 +436,10 @@
     ldc.i4 0
     box [System.Runtime]System.Int32
     stelem.ref
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_9:
@@ -465,6 +475,8 @@
     ldc.i4 0
     box [System.Runtime]System.Int32
     stelem.ref
+
+
     ret
   IL_tco_arm_2:
     pop
@@ -492,6 +504,9 @@
     ldc.i4.1
     ldloc.2
     stelem.ref
+
+
+
     ret
   IL_tco_arm_4:
     dup
@@ -510,6 +525,11 @@
     ldc.i4.1
     ldloc.2
     stelem.ref
+    ldnull
+    starg.s 0
+
+
+
     starg.s 0
     br IL_tco_loop
   }

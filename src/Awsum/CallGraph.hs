@@ -66,6 +66,8 @@ buildCallGraph (CoreProgram ds) =
       CVar n -> Set.singleton n
       CLoop b -> calls b
       CContinue xs -> foldMap calls xs
+      CDrop _ _ b -> calls b
+      CReuse _ _ fs -> foldMap calls fs
       CString _ -> mempty
       CIntLit _ _ -> mempty
       CBuiltIn _ -> mempty
@@ -95,6 +97,8 @@ hasNonTailSelfCall f = inTail
       CCon _ fs -> any inNonTail fs
       CLoop b -> inTail b
       CContinue xs -> any inNonTail xs
+      CDrop _ _ b -> inTail b
+      CReuse _ _ fs -> any inNonTail fs
       CVar _ -> False
       CString _ -> False
       CIntLit _ _ -> False
@@ -109,6 +113,8 @@ hasNonTailSelfCall f = inTail
       CCon _ fs -> any inNonTail fs
       CLoop b -> inNonTail b
       CContinue xs -> any inNonTail xs
+      CDrop _ _ b -> inNonTail b
+      CReuse _ _ fs -> any inNonTail fs
       _ -> False
 
 -- | Any call to @f@ anywhere in this sub-expression (tail or not).

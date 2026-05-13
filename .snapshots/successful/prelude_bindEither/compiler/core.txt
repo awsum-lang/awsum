@@ -1,0 +1,177 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CValDef "opA"
+            ( CCon 4
+                [ CIntLit 1 TInt32 ]
+            )
+        , CFunDef "opB" [ "n" ]
+            ( CCon 4
+                [ CVar "n" ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$8" )
+                [ CCall
+                    ( CVar "$df$bindEither$0" )
+                    [ CVar "opA" ]
+                ]
+            )
+        , CFunDef "$lift$0" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 3
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 3
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 4
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$7" [ "msg" ]
+            ( CCase
+                ( CVar "msg" )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$8" [ "chained" ]
+            ( CCall
+                ( CVar "$let$7" )
+                [ CCase
+                    ( CVar "chained" )
+                    [
+                        ( 3
+                        , [ "__pa0" ]
+                        , CDrop DropFreeUnchecked "__pa0"
+                            ( CRowCase
+                                ( CVar "__pa0" )
+                                [
+                                    ( 2252990199
+                                    , "_a"
+                                    , CDrop DropFreeUnchecked "_a"
+                                        ( CCon 4
+                                            [ CString "ErrA" ]
+                                        )
+                                    )
+                                ,
+                                    ( 2269767818
+                                    , "_b"
+                                    , CDrop DropFreeUnchecked "_b"
+                                        ( CCon 4
+                                            [ CString "ErrB" ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ,
+                        ( 4
+                        , [ "n" ]
+                        , CDrop DropFreeUnchecked "n"
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CString "Ok "
+                                , CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CVar "n" ]
+                                ]
+                            )
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$df$bindEither$0" [ "x" ]
+            ( CCase
+                ( CVar "x" )
+                [
+                    ( 3
+                    , [ "e" ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCon 3
+                            [ CVar "e" ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCall
+                            ( CVar "$lift$0" )
+                            [ CCall
+                                ( CVar "opB" )
+                                [ CVar "a" ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }

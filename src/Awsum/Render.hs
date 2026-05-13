@@ -1,9 +1,10 @@
 -- | Surface /renderer/ (pretty-printer) for 'Awsum.Syntax'.
 --
 -- Precedence (low → high):
---   1. @++@          (left-associative)
---   2. application   (left-associative)
---   3. atoms
+--   1. @|>@          (left-associative; lowest)
+--   2. @++@          (left-associative)
+--   3. application   (left-associative)
+--   4. atoms
 --
 -- Notes:
 --   • We add a trailing newline to the whole program for friendlier CLI UX.

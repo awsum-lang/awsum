@@ -22,7 +22,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -30,18 +31,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -54,24 +61,28 @@ CoreProgram
                 [
                     ( 3
                     , [ "e" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "left: "
-                        , CCall
-                            ( CVar "showUnderflowError" )
-                            [ CVar "e" ]
-                        ]
+                    , CDrop DropFreeUnchecked "e"
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "left: "
+                            , CCall
+                                ( CVar "showUnderflowError" )
+                                [ CVar "e" ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "b" ]
-                    , CCall
-                        ( CBuiltIn "concatString" )
-                        [ CString "right: "
-                        , CCall
-                            ( CVar "showBool" )
-                            [ CVar "b" ]
-                        ]
+                    , CDrop DropFreeUnchecked "b"
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "right: "
+                            , CCall
+                                ( CVar "showBool" )
+                                [ CVar "b" ]
+                            ]
+                        )
                     )
                 ]
             )
@@ -92,20 +103,24 @@ CoreProgram
                 [
                     ( 3
                     , [ "__w0" ]
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ]
             )
@@ -116,86 +131,98 @@ CoreProgram
                     [
                         ( 8
                         , [ "n" ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "eqInt32" )
-                                [ CVar "n"
-                                , CIntLit 0 TInt32
-                                ]
-                            )
-                            [
-                                ( 1
-                                , []
-                                , CCon 4
-                                    [ CCon 1 [] ]
-                                )
-                            ,
-                                ( 2
-                                , []
-                                , CCase
-                                    ( CCall
-                                        ( CBuiltIn "predInt32" )
-                                        [ CVar "n" ]
-                                    )
-                                    [
-                                        ( 3
-                                        , [ "e" ]
-                                        , CCon 3
-                                            [ CVar "e" ]
-                                        )
-                                    ,
-                                        ( 4
-                                        , [ "m" ]
-                                        , CContinue
-                                            [ CCon 9
-                                                [ CVar "m" ]
-                                            ]
-                                        )
+                        , CDrop DropFreeUnchecked "n"
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "eqInt32" )
+                                    [ CVar "n"
+                                    , CIntLit 0 TInt32
                                     ]
                                 )
-                            ]
+                                [
+                                    ( 1
+                                    , []
+                                    , CCon 4
+                                        [ CCon 1 [] ]
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CCase
+                                        ( CCall
+                                            ( CBuiltIn "predInt32" )
+                                            [ CVar "n" ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "e" ]
+                                            , CDrop DropFreeUnchecked "e"
+                                                ( CCon 3
+                                                    [ CVar "e" ]
+                                                )
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "m" ]
+                                            , CDrop DropFreeUnchecked "m"
+                                                ( CContinue
+                                                    [ CReuse "$args" 9
+                                                        [ CVar "m" ]
+                                                    ]
+                                                )
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
                         )
                     ,
                         ( 9
                         , [ "n" ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "eqInt32" )
-                                [ CVar "n"
-                                , CIntLit 0 TInt32
-                                ]
-                            )
-                            [
-                                ( 1
-                                , []
-                                , CCon 4
-                                    [ CCon 2 [] ]
-                                )
-                            ,
-                                ( 2
-                                , []
-                                , CCase
-                                    ( CCall
-                                        ( CBuiltIn "predInt32" )
-                                        [ CVar "n" ]
-                                    )
-                                    [
-                                        ( 3
-                                        , [ "e" ]
-                                        , CCon 3
-                                            [ CVar "e" ]
-                                        )
-                                    ,
-                                        ( 4
-                                        , [ "m" ]
-                                        , CContinue
-                                            [ CCon 8
-                                                [ CVar "m" ]
-                                            ]
-                                        )
+                        , CDrop DropFreeUnchecked "n"
+                            ( CCase
+                                ( CCall
+                                    ( CBuiltIn "eqInt32" )
+                                    [ CVar "n"
+                                    , CIntLit 0 TInt32
                                     ]
                                 )
-                            ]
+                                [
+                                    ( 1
+                                    , []
+                                    , CCon 4
+                                        [ CCon 2 [] ]
+                                    )
+                                ,
+                                    ( 2
+                                    , []
+                                    , CCase
+                                        ( CCall
+                                            ( CBuiltIn "predInt32" )
+                                            [ CVar "n" ]
+                                        )
+                                        [
+                                            ( 3
+                                            , [ "e" ]
+                                            , CDrop DropFreeUnchecked "e"
+                                                ( CCon 3
+                                                    [ CVar "e" ]
+                                                )
+                                            )
+                                        ,
+                                            ( 4
+                                            , [ "m" ]
+                                            , CDrop DropFreeUnchecked "m"
+                                                ( CContinue
+                                                    [ CReuse "$args" 8
+                                                        [ CVar "m" ]
+                                                    ]
+                                                )
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
                         )
                     ]
                 )

@@ -43,6 +43,8 @@ L_tco_arm_5:
   astore_1
   pop
   aload_1
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_7:
   dup
@@ -67,6 +69,12 @@ L_tco_arm_7:
 L_tco_arm_0:
   pop
   aload_2
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 .end method
@@ -153,6 +161,10 @@ L_tco_arm_19:
   pop
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_20:
   pop
@@ -173,6 +185,12 @@ L_tco_arm_20:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_22:
@@ -195,6 +213,8 @@ L_tco_arm_19:
   pop
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_20:
   pop
@@ -214,6 +234,10 @@ L_tco_arm_20:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
+  aconst_null
+  astore_0
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 .end method

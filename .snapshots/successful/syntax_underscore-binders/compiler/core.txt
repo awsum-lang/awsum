@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -39,7 +46,8 @@ CoreProgram
                 [
                     ( 19
                     , [ "__w0" ]
-                    , CString "unwrapped"
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CString "unwrapped" )
                     )
                 ]
             )
@@ -49,7 +57,8 @@ CoreProgram
                 [
                     ( 19
                     , [ "_v" ]
-                    , CString "unwrapped-named"
+                    , CDrop DropFreeUnchecked "_v"
+                        ( CString "unwrapped-named" )
                     )
                 ]
             )
@@ -62,7 +71,10 @@ CoreProgram
                         [ "__w0"
                         , "__w1"
                         ]
-                    , CString "paired"
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CDrop DropFreeUnchecked "__w1"
+                            ( CString "paired" )
+                        )
                     )
                 ]
             )
@@ -188,20 +200,24 @@ CoreProgram
                 [
                     ( 3
                     , [ "__w0" ]
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ]
             )

@@ -195,6 +195,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -305,6 +309,8 @@
     ldloc.1
     stelem.ref
     stelem.ref
+
+
     ret
   IL_tco_arm_4:
     dup
@@ -347,6 +353,9 @@
     ldloc.2
     stelem.ref
     stelem.ref
+
+
+
     ret
   IL_tco_arm_4:
     dup
@@ -356,6 +365,13 @@
     pop
     ldloc.0
     ldloc.2
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop

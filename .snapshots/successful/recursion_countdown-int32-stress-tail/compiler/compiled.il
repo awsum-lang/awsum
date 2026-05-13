@@ -195,6 +195,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -268,6 +272,9 @@
     stloc.0
     pop
     ldloc.0
+    ldnull
+    starg.s 0
+
     starg.s 0
     br IL_tco_loop
   }

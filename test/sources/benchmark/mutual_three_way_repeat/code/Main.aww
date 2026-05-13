@@ -1,0 +1,59 @@
+{- Three-way mutual tail recursion under runtime load.
+
+   'stepA → stepB → stepC → stepA' is fused by 'Awsum.Scc' into one
+   self-recursive '$scc$stepA_stepB_stepC' whose single arg is a
+   sum-typed CCon tagged 0/1/2. Each cross-call becomes a tail self-
+   call on the merged function with a different tag; TCO folds the
+   whole thing into a CLoop that dispatches tag → predInt32 →
+   continue. No K-cells (every recursive call is tail), no Cps
+   transformation, no Phase D in-place reuse opportunities (the
+   only heap allocation is the 'Either Right' cell from predInt32
+   each iter).
+
+   Per inner iter: tag-dispatch in CCase + builtin predInt32 (which
+   allocates one Either Right cell + decrements its predecessor) +
+   one CContinue to itself with the next tag. Steady-state working
+   set: one Either cell, kept hot in cache.
+
+   Sizing: 100 outer × 1_000_000 inner = 10⁸ tail-cross-hops + 10⁸
+   Either Right allocations + frees. Measures TCO loop throughput
+   and per-iter Either RC overhead on each backend. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+stepA : Int32 -> Either UnderflowError Int32
+stepA n = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> stepB m
+
+stepB : Int32 -> Either UnderflowError Int32
+stepB n = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> stepC m
+
+stepC : Int32 -> Either UnderflowError Int32
+stepC n = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> stepA m
+
+outerLoop : Int32 -> Either UnderflowError Int32
+outerLoop k = case eqInt32 k zero of
+  True -> Right zero
+  False -> case predInt32 k of
+    Left e -> Left e
+    Right m -> case stepA 1_000_000 of
+      Left e -> Left e
+      Right _v -> outerLoop m
+
+main : IO Never Unit
+main = case outerLoop 100 of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right _v -> IO.Stdout.print "ok"

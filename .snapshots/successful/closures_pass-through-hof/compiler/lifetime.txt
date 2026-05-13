@@ -1,0 +1,15 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+incr:
+  param           n                               count=1
+
+$df$apply$1:
+  param           x                               count=1
+
+$df$applyTwice$0:
+  param           x                               count=1
+

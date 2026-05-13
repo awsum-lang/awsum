@@ -1,0 +1,59 @@
+{- Multi-child non-tail recursion benchmark, K-cell churn variant.
+
+   'sumTree' has an inner non-tail self-call whose result feeds the
+   outer tail self-call:
+
+     sumTree (Node l v r) acc = sumTree r (sumTree l (acc + v))
+
+   Cps allocates one K_1 per Node visited to carry the outer call's
+   remaining arg ('r') forward across the inner call's return, and
+   the K_1 apply arm tail-calls '$cps$sumTree' — the same '$cps$f' ⇄
+   '$apply$f' cycle as 'tree_mirror_repeat' but with one K per Node
+   instead of two and no fresh Node allocation per iter. Pure K-cell
+   churn under the post-Cps SCC merge.
+
+   Shape: a left-spine tree of depth 10_000 is summed 1000 times.
+   Each sumTree call walks the spine producing 10_000 K_1 allocations;
+   the K cells are short-lived (one per call stack frame, released as
+   the chain unwinds). Total allocation: 10⁷ K cells.
+
+   Output: '10000' (sum of 10_000 ones). The tree itself is built once
+   and shared across all 1000 reps, so steady-state live set is one
+   tree (~10_000 Node cells) + the current K chain (≤ 10_000 cells). -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type Tree
+  = Leaf
+  | Node Tree Int32 Tree
+
+buildLeft : Int32 -> Tree -> Either UnderflowError Tree
+buildLeft n acc = case eqInt32 n zero of
+  True -> Right acc
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> buildLeft m (Node acc 1 Leaf)
+
+addOr0 : Int32 -> Int32 -> Int32
+addOr0 a b = case addInt32 a b of
+  Left _e -> 0
+  Right v -> v
+
+sumTree : Tree -> Int32 -> Int32
+sumTree t acc = case t of
+  Leaf -> acc
+  Node l v r -> sumTree r (sumTree l (addOr0 acc v))
+
+repeatSum : Int32 -> Tree -> Int32 -> Int32
+repeatSum n t acc = case eqInt32 n zero of
+  True -> acc
+  False -> case predInt32 n of
+    Left _e -> acc
+    Right m -> repeatSum m t (sumTree t zero)
+
+main : IO Never Unit
+main = case buildLeft 10_000 Leaf of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right t -> IO.Stdout.print (showInt32 (repeatSum 1000 t zero))

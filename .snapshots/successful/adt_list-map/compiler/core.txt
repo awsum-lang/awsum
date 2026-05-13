@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -81,13 +88,19 @@ CoreProgram
                             [ "__f0"
                             , "__f1"
                             ]
-                        , CContinue
-                            [ CVar "__f1"
-                            , CCon 24
-                                [ CVar "$k"
-                                , CVar "__f0"
-                                ]
-                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 24
+                                            [ CVar "$k"
+                                            , CVar "__f0"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
                         )
                     ,
                         ( 20
@@ -119,13 +132,19 @@ CoreProgram
                             [ "$pk_24"
                             , "__f0"
                             ]
-                        , CContinue
-                            [ CVar "$pk_24"
-                            , CCon 19
-                                [ CVar "__f0"
-                                , CVar "$x"
-                                ]
-                            ]
+                        , CDrop DropFreeUnchecked "$pk_24"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_24"
+                                        , CReuse "$k" 19
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
                         )
                     ]
                 )
@@ -136,20 +155,24 @@ CoreProgram
                 [
                     ( 3
                     , [ "__w0" ]
-                    , CCon 7
-                        [ CString "STRING_TOO_LONG"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ,
                     ( 4
                     , [ "s" ]
-                    , CCon 7
-                        [ CVar "s"
-                        , CCon 5
-                            [ CCon 0 [] ]
-                        ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
                     )
                 ]
             )
@@ -173,13 +196,19 @@ CoreProgram
                             [ "head"
                             , "tail"
                             ]
-                        , CContinue
-                            [ CVar "tail"
-                            , CCon 26
-                                [ CVar "$k"
-                                , CVar "head"
-                                ]
-                            ]
+                        , CDrop DropFreeUnchecked "head"
+                            ( CDrop DropFreeUnchecked "tail"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "tail"
+                                        , CReuse "list" 26
+                                            [ CVar "$k"
+                                            , CVar "head"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
                         )
                     ,
                         ( 20
@@ -211,15 +240,21 @@ CoreProgram
                             [ "$pk_26"
                             , "head"
                             ]
-                        , CContinue
-                            [ CVar "$pk_26"
-                            , CCon 19
-                                [ CCall
-                                    ( CVar "shout" )
-                                    [ CVar "head" ]
-                                , CVar "$x"
-                                ]
-                            ]
+                        , CDrop DropFreeUnchecked "$pk_26"
+                            ( CDrop DropFreeUnchecked "head"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_26"
+                                        , CReuse "$k" 19
+                                            [ CCall
+                                                ( CVar "shout" )
+                                                [ CVar "head" ]
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
                         )
                     ]
                 )
@@ -241,33 +276,43 @@ CoreProgram
                     [
                         ( 21
                         , [ "xs" ]
-                        , CCase
-                            ( CVar "xs" )
-                            [
-                                ( 19
-                                ,
-                                    [ "h"
-                                    , "t"
-                                    ]
-                                , CContinue
-                                    [ CCon 22
-                                        [ CVar "h"
-                                        , CVar "t"
+                        , CDrop DropFreeUnchecked "xs"
+                            ( CCase
+                                ( CVar "xs" )
+                                [
+                                    ( 19
+                                    ,
+                                        [ "h"
+                                        , "t"
                                         ]
-                                    , CVar "$k"
-                                    ]
-                                )
-                            ,
-                                ( 20
-                                , []
-                                , CCall
-                                    ( CVar "$apply$$scc$show_showCons" )
-                                    [ CVar "$k"
-                                    , CCon 4
-                                        [ CString "" ]
-                                    ]
-                                )
-                            ]
+                                    , CDrop DropFreeUnchecked "h"
+                                        ( CDrop DropFreeUnchecked "t"
+                                            ( CDrop DropFreeUnchecked "$args"
+                                                ( CDrop DropFreeUnchecked "$k"
+                                                    ( CContinue
+                                                        [ CCon 22
+                                                            [ CVar "h"
+                                                            , CVar "t"
+                                                            ]
+                                                        , CVar "$k"
+                                                        ]
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                ,
+                                    ( 20
+                                    , []
+                                    , CCall
+                                        ( CVar "$apply$$scc$show_showCons" )
+                                        [ CVar "$k"
+                                        , CCon 4
+                                            [ CString "" ]
+                                        ]
+                                    )
+                                ]
+                            )
                         )
                     ,
                         ( 22
@@ -275,31 +320,41 @@ CoreProgram
                             [ "h"
                             , "t"
                             ]
-                        , CCase
-                            ( CVar "h" )
-                            [
-                                ( 3
-                                , [ "$do_e_18_3" ]
-                                , CCall
-                                    ( CVar "$apply$$scc$show_showCons" )
-                                    [ CVar "$k"
-                                    , CCon 3
-                                        [ CVar "$do_e_18_3" ]
+                        , CDrop DropFreeUnchecked "h"
+                            ( CDrop DropFreeUnchecked "t"
+                                ( CCase
+                                    ( CVar "h" )
+                                    [
+                                        ( 3
+                                        , [ "$do_e_18_3" ]
+                                        , CDrop DropFreeUnchecked "$do_e_18_3"
+                                            ( CCall
+                                                ( CVar "$apply$$scc$show_showCons" )
+                                                [ CVar "$k"
+                                                , CCon 3
+                                                    [ CVar "$do_e_18_3" ]
+                                                ]
+                                            )
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "hStr" ]
+                                        , CDrop DropFreeUnchecked "hStr"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CCon 21
+                                                        [ CVar "t" ]
+                                                    , CReuse "$args" 28
+                                                        [ CVar "$k"
+                                                        , CVar "hStr"
+                                                        ]
+                                                    ]
+                                                )
+                                            )
+                                        )
                                     ]
                                 )
-                            ,
-                                ( 4
-                                , [ "hStr" ]
-                                , CContinue
-                                    [ CCon 21
-                                        [ CVar "t" ]
-                                    , CCon 28
-                                        [ CVar "$k"
-                                        , CVar "hStr"
-                                        ]
-                                    ]
-                                )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -322,51 +377,71 @@ CoreProgram
                             [ "$pk_28"
                             , "hStr"
                             ]
-                        , CCase
-                            ( CVar "$x" )
-                            [
-                                ( 3
-                                , [ "$do_e_19_3" ]
-                                , CContinue
-                                    [ CVar "$pk_28"
-                                    , CCon 3
-                                        [ CVar "$do_e_19_3" ]
-                                    ]
-                                )
-                            ,
-                                ( 4
-                                , [ "rest" ]
-                                , CCase
-                                    ( CCall
-                                        ( CBuiltIn "concatString" )
-                                        [ CVar "hStr"
-                                        , CString ","
-                                        ]
-                                    )
+                        , CDrop DropFreeUnchecked "$pk_28"
+                            ( CDrop DropFreeUnchecked "hStr"
+                                ( CCase
+                                    ( CVar "$x" )
                                     [
                                         ( 3
-                                        , [ "$do_e_20_3" ]
-                                        , CContinue
-                                            [ CVar "$pk_28"
-                                            , CCon 3
-                                                [ CVar "$do_e_20_3" ]
-                                            ]
+                                        , [ "$do_e_19_3" ]
+                                        , CDrop DropFreeUnchecked "$do_e_19_3"
+                                            ( CDrop DropFreeUnchecked "$k"
+                                                ( CContinue
+                                                    [ CVar "$pk_28"
+                                                    , CReuse "$x" 3
+                                                        [ CVar "$do_e_19_3" ]
+                                                    ]
+                                                )
+                                            )
                                         )
                                     ,
                                         ( 4
-                                        , [ "comma" ]
-                                        , CContinue
-                                            [ CVar "$pk_28"
-                                            , CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "comma"
-                                                , CVar "rest"
+                                        , [ "rest" ]
+                                        , CDrop DropFreeUnchecked "rest"
+                                            ( CCase
+                                                ( CCall
+                                                    ( CBuiltIn "concatString" )
+                                                    [ CVar "hStr"
+                                                    , CString ","
+                                                    ]
+                                                )
+                                                [
+                                                    ( 3
+                                                    , [ "$do_e_20_3" ]
+                                                    , CDrop DropFreeUnchecked "$do_e_20_3"
+                                                        ( CDrop DropFreeUnchecked "$k"
+                                                            ( CContinue
+                                                                [ CVar "$pk_28"
+                                                                , CReuse "$x" 3
+                                                                    [ CVar "$do_e_20_3" ]
+                                                                ]
+                                                            )
+                                                        )
+                                                    )
+                                                ,
+                                                    ( 4
+                                                    , [ "comma" ]
+                                                    , CDrop DropFreeUnchecked "comma"
+                                                        ( CDrop DropFreeUnchecked "$k"
+                                                            ( CDrop DropFreeUnchecked "$x"
+                                                                ( CContinue
+                                                                    [ CVar "$pk_28"
+                                                                    , CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CVar "comma"
+                                                                        , CVar "rest"
+                                                                        ]
+                                                                    ]
+                                                                )
+                                                            )
+                                                        )
+                                                    )
                                                 ]
-                                            ]
+                                            )
                                         )
                                     ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )

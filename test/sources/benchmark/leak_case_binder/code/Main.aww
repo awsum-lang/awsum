@@ -1,0 +1,80 @@
+{- Phase C/E candidate — boxed scalars leak through unused
+   case-pattern binders.
+
+   The leak this benchmark demonstrates: a 'case' arm binds a
+   heap-allocated field but never references it. The matched-out
+   container cell goes through 'addContinueDrops' (it's the loop
+   accumulator, so 'Awsum.Lifetime.insertDrops' wraps the
+   'CContinue' in a 'CDrop'), but '__free' on the container is
+   shallow — the field's heap cell still sits in memory, no
+   binder names it, no drop reclaims it.
+
+   Hot loop:
+
+     case xs of
+       Nil -> acc
+       Cons _h t -> length t (succInt32 acc)
+
+   Per iter the 'Cons' cell is freed (3-slot block back to bin),
+   but the boxed 'Int32' that slot 1 used to point at leaks. With
+   list length N and outer-loop iters M, cumulative leak is M*N
+   boxed 'Int32' cells.
+
+   What "LCA-placement for non-loop binders" would do: detect
+   that '_h' is bound but unreferenced in the arm body, and emit
+   'CDrop _ _h <arm-body>' as the smallest sub-expression that
+   contains every (zero) use of '_h'. The codegen then lowers it
+   to '__free(_h)' before the 'CContinue', and the boxed cells
+   return to the freelist on every iter.
+
+   Sizing: 'iters * listLen = 1000 * 10000 = 10^7' Cons walked /
+   boxed-Int32 leaked. Per-cell allocator overhead is ~8 bytes
+   (WASM, rounded to power of two = 16 bytes including header)
+   and libc malloc bookkeeping (~32 bytes on macOS aarch64), so
+   the leaked footprint is ~150-300 MiB on LLVM/WASM. JVM/CLR/JS
+   reclaim through GC and shouldn't see a leak.
+
+   Output: cumulative element count, printed once at the end via
+   'showInt32'. 1000 outer * 10000 per pass = 10^7. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type IntList = Nil | Cons Int32 IntList
+
+-- Tail-recursive build: each iter consumes 'n' and 'acc' (both
+-- transferred into 'Cons n acc'), and the new 'm' becomes the
+-- next 'n'. No build-side leak.
+build : Int32 -> IntList -> IntList
+build n acc = case eqInt32 n zero of
+  True -> acc
+  False -> case predInt32 n of
+    Left _e -> acc
+    Right m -> build m (Cons n acc)
+
+-- Walks the list counting elements; '_h' is bound from each
+-- 'Cons' cell's slot 1 but never referenced. Tail-recursive so
+-- 'xs' and 'acc' are loop accumulators dropped by Phase B; '_h'
+-- is a case-pattern binder, not a parameter, and leaks.
+length : IntList -> Int32 -> Int32
+length xs acc = case xs of
+  Nil -> acc
+  Cons _h t -> case succInt32 acc of
+    Left _e -> acc
+    Right a -> length t a
+
+-- Outer loop: build a fresh list, walk it counting elements,
+-- accumulate the count. 'iters * listLen' Cons cells walked,
+-- equal number of boxed Int32 cells leaked on LLVM/WASM.
+runN : Int32 -> Int32 -> Int32 -> Int32
+runN iters listLen accSum = case eqInt32 iters zero of
+  True -> accSum
+  False -> case predInt32 iters of
+    Left _e -> accSum
+    Right i -> case addInt32 accSum (length (build listLen Nil) zero) of
+      Left _e -> accSum
+      Right s -> runN i listLen s
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (runN 1000 10000 zero))

@@ -141,6 +141,8 @@ L_tco_arm_5:
   astore_1
   pop
   aload_1
+  aconst_null
+  astore_1
   areturn
 L_tco_arm_7:
   dup
@@ -165,6 +167,12 @@ L_tco_arm_7:
 L_tco_arm_0:
   pop
   aload_2
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 L_tco_arm_8:
@@ -176,6 +184,10 @@ L_tco_arm_8:
   aload_1
   invokestatic AwsumMain/__getArgs()Ljava/lang/Object;
   invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_0
+  aconst_null
+  astore_1
   astore_0
   goto L_tco_loop
 .end method
@@ -507,6 +519,8 @@ L_tco_arm_5:
   aload_2
   aastore
   invokestatic AwsumMain/v__apply__lift_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_6:
   dup
@@ -527,6 +541,8 @@ L_tco_arm_6:
   aload_2
   aastore
   invokestatic AwsumMain/v__apply__lift_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_7:
   dup
@@ -539,8 +555,8 @@ L_tco_arm_7:
   astore_3
   pop
   aload_3
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 22
@@ -554,6 +570,12 @@ L_tco_arm_7:
   iconst_2
   aload_2
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -586,6 +608,8 @@ L_tco_arm_8:
   aastore
   aastore
   invokestatic AwsumMain/v__apply__lift_1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 .end method
 
@@ -617,8 +641,8 @@ L_tco_arm_22:
   astore_3
   pop
   aload_2
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 7
@@ -632,6 +656,12 @@ L_tco_arm_22:
   iconst_2
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -831,6 +861,8 @@ L_tco_arm_5:
   aload_2
   aastore
   invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_6:
   dup
@@ -842,6 +874,8 @@ L_tco_arm_6:
   aload_2
   invokestatic AwsumMain/v_handleInputErr(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_7:
   dup
@@ -854,8 +888,8 @@ L_tco_arm_7:
   astore_3
   pop
   aload_3
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 24
@@ -869,6 +903,12 @@ L_tco_arm_7:
   iconst_2
   aload_2
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -901,6 +941,8 @@ L_tco_arm_8:
   aastore
   aastore
   invokestatic AwsumMain/v__apply__df_handleErrorIO_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 .end method
 
@@ -932,8 +974,8 @@ L_tco_arm_24:
   astore_3
   pop
   aload_2
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 7
@@ -947,6 +989,12 @@ L_tco_arm_24:
   iconst_2
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -992,6 +1040,8 @@ L_tco_arm_5:
   invokestatic AwsumMain/v_processInput(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__df_andThenIO_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_6:
   dup
@@ -1012,6 +1062,8 @@ L_tco_arm_6:
   aload_2
   aastore
   invokestatic AwsumMain/v__apply__df_andThenIO_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_7:
   dup
@@ -1024,8 +1076,8 @@ L_tco_arm_7:
   astore_3
   pop
   aload_3
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 26
@@ -1039,6 +1091,12 @@ L_tco_arm_7:
   iconst_2
   aload_2
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1071,6 +1129,8 @@ L_tco_arm_8:
   aastore
   aastore
   invokestatic AwsumMain/v__apply__df_andThenIO_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_2
   areturn
 .end method
 
@@ -1102,8 +1162,8 @@ L_tco_arm_26:
   astore_3
   pop
   aload_2
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 7
@@ -1117,6 +1177,12 @@ L_tco_arm_26:
   iconst_2
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1179,8 +1245,8 @@ L_tco_arm_13:
   aaload
   astore 4
   pop
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 18
@@ -1195,6 +1261,14 @@ L_tco_arm_13:
   aload_3
   aastore
   aload_1
+  aconst_null
+  astore_1
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1204,8 +1278,8 @@ L_tco_arm_14:
   aaload
   astore 4
   pop
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 19
@@ -1220,6 +1294,14 @@ L_tco_arm_14:
   aload_3
   aastore
   aload_1
+  aconst_null
+  astore_1
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1229,6 +1311,10 @@ L_tco_arm_15:
   aload_3
   invokestatic AwsumMain/v__io_getargs_cont(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v__apply__scc__apply1__df__lam_3_3__df__lam_6_1__lift_2(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   areturn
 L_tco_arm_16:
   dup
@@ -1236,8 +1322,8 @@ L_tco_arm_16:
   aaload
   astore 4
   pop
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 20
@@ -1252,6 +1338,14 @@ L_tco_arm_16:
   aload_3
   aastore
   aload_1
+  aconst_null
+  astore_1
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1265,8 +1359,8 @@ L_tco_arm_18:
   aaload
   astore_3
   pop
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 17
@@ -1291,6 +1385,12 @@ L_tco_arm_18:
   iconst_1
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1304,8 +1404,8 @@ L_tco_arm_19:
   aaload
   astore_3
   pop
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 17
@@ -1330,6 +1430,12 @@ L_tco_arm_19:
   iconst_1
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1343,8 +1449,8 @@ L_tco_arm_20:
   aaload
   astore_3
   pop
-  iconst_3
-  anewarray java/lang/Object
+  aload_0
+  checkcast [Ljava/lang/Object;
   dup
   iconst_0
   bipush 17
@@ -1369,6 +1475,12 @@ L_tco_arm_20:
   iconst_1
   aload_1
   aastore
+  aconst_null
+  astore_1
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1402,6 +1514,12 @@ L_tco_arm_28:
   aload_2
   aload_1
   invokestatic AwsumMain/v__df_andThenIO_2(Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_1
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1414,6 +1532,12 @@ L_tco_arm_29:
   aload_2
   aload_1
   invokestatic AwsumMain/v__df_handleErrorIO_0(Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_1
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop
@@ -1426,6 +1550,12 @@ L_tco_arm_30:
   aload_2
   aload_1
   invokestatic AwsumMain/v__lift_1(Ljava/lang/Object;)Ljava/lang/Object;
+  aconst_null
+  astore_1
+  aconst_null
+  astore_0
+  aconst_null
+  astore_2
   astore_1
   astore_0
   goto L_tco_loop

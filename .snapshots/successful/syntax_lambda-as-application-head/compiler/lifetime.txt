@@ -1,0 +1,12 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+$lam$7:
+  param           x                               count=1
+
+$lam$8:
+  param           n                               count=1
+

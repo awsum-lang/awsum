@@ -24,7 +24,7 @@ When a trade-off appears, the compiler follows this order:
 
 "Heap frames instead of stack frames" costs a boxed allocation per non-tail recursive call. Heap is typically larger than the system stack and configurable; the allocation cost is the price of the correctness guarantee, and the priority order accepts it.
 
-## The three passes
+## The passes
 
 ```
 Source (.aww) → Parser → AST → withPrelude → TypeChecker
@@ -37,7 +37,9 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker
                                      ↓
                               ┌─── Awsum.Scc ───┐   (mutual recursion → self-recursion)
                               │                 │
-                              └─── Awsum.Cps ───┘   (non-tail self-recursion → tail-self via K chain)
+                              ├─── Awsum.Cps ───┤   (non-tail self-recursion → tail-self via K chain)
+                              │                 │
+                              └─── Awsum.Scc ───┘   (multi-non-tail-call $cps$f ↔ $apply$f cycle → self-recursion)
                                      ↓
                                 Awsum.Tco             (self-tail-call → CLoop/CContinue)
                                      ↓
@@ -46,7 +48,7 @@ Source (.aww) → Parser → AST → withPrelude → TypeChecker
                         LLVM / JVM / CLR / WASM / JS
 ```
 
-Between Cps and Tco, [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) verifies that none of those invariants slipped — see below.
+Between the second Scc and Tco, [`Awsum.StackSafety`](../src/Awsum/StackSafety.hs) verifies that none of the recursion-related invariants slipped — see below.
 
 Each pass is Core-to-Core. None add new Core IR constructs or need backend-specific support beyond what the backend already does for ordinary ADTs and functions.
 
@@ -116,9 +118,23 @@ the pass produces [this Core](../.snapshots/successful/countdown-int32-stress/co
 
 **Why `$k → $pk_<tag>` in the apply arm.** The obvious alternative is to rebind the arm-captured parent continuation to `$k` itself (Core-level shadowing of the apply function's parameter). This works everywhere except JavaScript: the JS codegen emits arm-bound names as `const`, and the TCO-driven reassignment of the parameter slot at the loop bottom would then be a write to a `const`. The alpha-rename to `$pk_<tag>` sidesteps the clash without constraining codegen.
 
-**Works on any non-tail position.** The transformer walks `goTail`, `goNonTail`, and `goArgs` in strict evaluation order. A non-tail self-call buried inside a constructor field (`Cons (f head) (map f tail)`), inside a call argument (`g (f x)`), or inside an arbitrary case scrutinee all generate their own `K_i` with the right captures. Multiple non-tail calls in one expression chain naturally: the apply-handler of the first `K_i` can itself emit a tail call to `$cps$f` with a later `K_j`, so a pair of sibling self-calls produces a pair of Ks that ping-pong through `$apply$f` as the first's result becomes the trigger for the second.
+**Works on any non-tail position.** The transformer walks `goTail`, `goNonTail`, and `goArgs` in strict evaluation order. A non-tail self-call buried inside a constructor field (`Cons (f head) (map f tail)`), inside a call argument (`g (f x)`), or inside an arbitrary case scrutinee all generate their own `K_i` with the right captures. Multiple non-tail calls in one expression chain naturally: the apply-handler of an earlier `K_i` emits a tail call to `$cps$f` with the later `K_j` once the first call returns, so a pair of sibling self-calls produces a pair of Ks that ping-pong through `$apply$f`. The catch — `$apply$f` now tail-calls `$cps$f`, creating a mutual cycle between the two, which the next pass absorbs.
 
-### 3. `Awsum.StackSafety` — post-pass verifier (guard rail)
+### 3. `Awsum.Scc` again — post-Cps merge for multi-non-tail-call cycles
+
+The same SCC pass that fused user-level mutual recursion before CPS runs a second time after it. The mechanism is the same; the cycle it absorbs is one CPS itself can introduce.
+
+**When the cycle appears.** For a function with one non-tail self-call (e.g. `countDown`), `$cps$f` calls `$apply$f` (tail flows wrap through `applyK`) but `$apply$f` never calls `$cps$f` back — the single `K_1`'s apply arm just reconstructs the post-call expression. No cycle. The second SCC pass sees only size-1 SCCs and is a no-op.
+
+For a function with two or more non-tail self-calls in one expression (`mirror t = Node (mirror r) v (mirror l)` or `sumTree t acc = sumTree r (sumTree l (acc + v))`), CPS allocates one `K_i` per call. The earlier `K_i`'s apply arm needs to start the next call — so it tail-calls `$cps$f` with the later `K_j`. Now `$cps$f` → `$apply$f` (always) and `$apply$f` → `$cps$f` (from the multi-call case); the two functions are in one SCC of size 2.
+
+**What the merge does.** Tarjan finds the `{$cps$f, $apply$f}` SCC; SCC-merge fuses them into one self-recursive `$scc$$apply$f_$cps$f` with a tag distinguishing "compute mode" (`$cps$f`) from "dispatch mode" (`$apply$f`). The two members have different arities (`$cps$f` is `(args, $k)`, `$apply$f` is `($k, $x)`), which the existing sum-typed-arg machinery handles directly: the merged parameter is a `CCon` with one tag per member, fields = that member's original parameters. Cross-calls become self-calls with a different tag. Tail flow now stays inside the merged function; TCO folds it into a `CLoop`.
+
+**Why re-running the same pass is enough.** SCC-merge does not care how the cycle was constructed — it operates on call-graph shape. The cycle CPS introduces is just another mutual cycle, with the special property that all of its edges are tail. SCC-merge fuses it into a self-recursive function whose every call is tail, so TCO can take it from there. The single-non-tail-call case skips this work because there is no cycle to merge; output is unchanged in that path.
+
+**Why not bake this into Cps directly.** Cps could emit one combined function from the start, but that means re-implementing SCC's tagged-dispatch inside Cps and coupling the two passes. Letting CPS produce its natural `$cps$f` / `$apply$f` pair and letting SCC absorb the resulting cycle keeps each pass single-purpose, reuses the existing different-arity merge code, and means single-call CPS output stays identical to what it has always been.
+
+### 4. `Awsum.StackSafety` — post-pass verifier (guard rail)
 
 [Source](../src/Awsum/StackSafety.hs). Runs between CPS and TCO. Input invariant: after SCC and CPS, the Core program should contain no non-trivial call-graph cycle and no non-tail self-call in any `CFunDef`. This module checks exactly that and refuses to lower the program (via a `TypeError`) on any violation.
 
@@ -139,7 +155,7 @@ bar = foo
 
 See [`test/sources/errors/mutually-recursive-values`](../test/sources/errors/mutually-recursive-values/code/Main.aww) for the snapshot.
 
-### 4. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
+### 5. `Awsum.Tco` — self-tail-call → `CLoop` / `CContinue`
 
 [Source](../src/Awsum/Tco.hs). Runs last in the Core pipeline. Input invariant: every self-call is in tail position (enforced by the two preceding passes plus whatever the user wrote). Output: the body is wrapped in a `CLoop`, and each self-tail-call is rewritten to `CContinue` carrying the new argument values.
 
@@ -149,18 +165,19 @@ No transformation is applied to functions that lack a self-tail-call; their Core
 
 Per-backend emission details (how `CLoop` / `CContinue` lower to a jump on each target) live in [targets.md — Recursion and tail calls](targets.md#recursion-and-tail-calls).
 
-## Why these three passes compose
+## Why these passes compose
 
 Each pass has a tightly-defined precondition and postcondition. The preconditions of the later pass match the postconditions of the earlier one:
 
-| Pass          | Precondition (input)                                                   | Postcondition (output)                                   |
-| ------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
-| `Scc`         | any Core program                                                       | no call-graph cycle of size > 1 among mergeable members  |
-| `Cps`         | no mergeable call-graph cycle                                          | every self-call is in tail position                      |
-| `StackSafety` | both of the above                                                      | `TypeError` on any violation; unchanged Core on success  |
-| `Tco`         | every self-call is in tail position                                    | self-tail-calls are `CContinue` in a `CLoop`             |
+| Pass          | Precondition (input)                                                              | Postcondition (output)                                                |
+| ------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `Scc` (1st)   | any Core program                                                                  | no user-level call-graph cycle of size > 1 among mergeable members    |
+| `Cps`         | no user-level mergeable call-graph cycle                                          | every self-call is in tail position; may introduce a `$cps$f`/`$apply$f` cycle for multi-non-tail-call bodies |
+| `Scc` (2nd)   | every self-call is in tail position                                               | no call-graph cycle of size > 1; every self-call still in tail position |
+| `StackSafety` | both of the above                                                                 | `TypeError` on any violation; unchanged Core on success               |
+| `Tco`         | every self-call is in tail position                                               | self-tail-calls are `CContinue` in a `CLoop`                          |
 
-This is what the earlier design document called "applying Reynolds' defunctionalization to two different objects": SCC defunctionalizes **which function is active**, CPS defunctionalizes **what to do after the current call returns**. Both produce ordinary ADTs dispatched by ordinary `case` expressions, which the backends already handle.
+This is what the earlier design document called "applying Reynolds' defunctionalization to two different objects": SCC defunctionalizes **which function is active**, CPS defunctionalizes **what to do after the current call returns**. Both produce ordinary ADTs dispatched by ordinary `case` expressions, which the backends already handle. Re-running SCC after CPS closes the loop: the cycle CPS introduces is just another instance of "multiple functions, which one is active", and the same primitive fuses it the same way.
 
 When recursion passes through a closure stored in a constructor field, [`Awsum.LowerClosures`](../src/Awsum/LowerClosures.hs) routes the call through a synthetic `$applyN` dispatcher (see [pipeline.md](pipeline.md)); the dispatcher is an ordinary top-level fn, so it participates in the call graph and the SCC + CPS + TCO machinery sees it like any other vertex. Stack safety is preserved across the closure-conversion boundary — verified by [`closures_function-in-constructor-field-non-tail-stress`](../test/sources/successful/closures_function-in-constructor-field-non-tail-stress) and [`closures_function-in-constructor-field-mutual-stress`](../test/sources/successful/closures_function-in-constructor-field-mutual-stress) at depth 1 000 000.
 
@@ -178,7 +195,9 @@ When recursion passes through a closure stored in a constructor field, [`Awsum.L
 | [`mutual-different-arity-smoke`](../test/sources/successful/mutual-different-arity-smoke/code/Main.aww)   | mutual, heterogeneous arity (1 arg ⇄ 2 args)      | small     | Shape regression anchor: SCC merges members of different arity via sum-typed args `CCon`.                                                                            |
 | [`mutual-different-arity-stress`](../test/sources/successful/mutual-different-arity-stress/code/Main.aww) | mutual, heterogeneous arity, all tail             | 100 000   | `pingOne` (1 arg) ⇄ `pongTwo` (2 args) alternating — the sum-typed merge threads the right number of fields per iteration, TCO folds the fused function into a loop. |
 | [`mutual-three-way-stress`](../test/sources/successful/mutual-three-way-stress/code/Main.aww)             | mutual, three-way cycle, all tail                 | 1 000 000 | `stepA → stepB → stepC → stepA`: SCC handles cycles of arbitrary length; the merged function dispatches over three tags but each iteration stays on the same frame.  |
-| [`recursive-function-call`](../test/sources/successful/recursive-function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
+| [`recursive-function-call`](../test/sources/successful/recursion_function-call/code/Main.aww)             | tail self via small ADT                           | small     | Smoke test for direct TCO through an enum-driven loop.                                                                                                               |
+| [`tree-mirror-stress`](../test/sources/successful/recursion_tree-mirror-stress/code/Main.aww)             | multi-non-tail-call self, two K_i per Node        | 100 000   | `mirror`'s `Node (mirror r) v (mirror l)` allocates K_1 and K_2 per Node and induces a `$cps$mirror` ⇄ `$apply$mirror` cycle that the second SCC pass fuses.         |
+| [`tree-sumTree-stress`](../test/sources/successful/recursion_tree-sumTree-stress/code/Main.aww)           | non-tail call whose result feeds a tail self-call | 100 000   | `sumTree r (sumTree l (acc + v))` — the inner non-tail self-call's K must feed its result back into the outer tail self-call, the same mutual cycle as `mirror`.     |
 
 Every test in the table runs on all five backends with identical stdout via `ProgramSnapshotsSpec`.
 

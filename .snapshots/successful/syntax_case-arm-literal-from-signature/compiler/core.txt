@@ -7,7 +7,8 @@ CoreProgram
                     [
                         ( 5
                         , [ "u" ]
-                        , CVar "u"
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
                         )
                     ,
                         ( 7
@@ -15,18 +16,24 @@ CoreProgram
                             [ "s"
                             , "next"
                             ]
-                        , CCase
-                            ( CCall
-                                ( CBuiltIn "internalStdoutPrint" )
-                                [ CVar "s" ]
-                            )
-                            [
-                                ( 0
-                                , []
-                                , CContinue
-                                    [ CVar "next" ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
                                 )
-                            ]
+                            )
                         )
                     ]
                 )
@@ -42,19 +49,22 @@ CoreProgram
                 ,
                     ( 10
                     , [ "__p0" ]
-                    , CCase
-                        ( CVar "__p0" )
-                        [
-                            ( 9
-                            , []
-                            , CIntLit 0 TInt32
-                            )
-                        ,
-                            ( 10
-                            , [ "n" ]
-                            , CVar "n"
-                            )
-                        ]
+                    , CDrop DropFreeUnchecked "__p0"
+                        ( CCase
+                            ( CVar "__p0" )
+                            [
+                                ( 9
+                                , []
+                                , CIntLit 0 TInt32
+                                )
+                            ,
+                                ( 10
+                                , [ "n" ]
+                                , CDrop DropFreeUnchecked "n"
+                                    ( CVar "n" )
+                                )
+                            ]
+                        )
                     )
                 ]
             )
@@ -84,8 +94,10 @@ CoreProgram
                 ,
                     ( 10
                     , [ "__f0" ]
-                    , CCon 10
-                        [ CVar "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 10
+                            [ CVar "__f0" ]
+                        )
                     )
                 ]
             )

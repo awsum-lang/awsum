@@ -1,0 +1,11 @@
+{- A prelude built-in (`showInt32`) passed as a value into a
+   higher-order combinator (`apply`). The same lowering path as
+   the platform-effect case but keyed by the unqualified prelude
+   name — the eta-wrapper is `$bi$showInt32`. -}
+import IO.Stdout
+
+apply : (a -> b) -> a -> b
+apply f x = f x
+
+main : IO Never Unit
+main = IO.Stdout.print (apply showInt32 42)

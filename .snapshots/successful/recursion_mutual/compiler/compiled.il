@@ -120,6 +120,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -267,8 +271,8 @@
     switch (IL_tco_arm_19, IL_tco_arm_20, IL_tco_arm_21, IL_tco_arm_22)
   IL_tco_arm_19:
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 24
@@ -295,13 +299,16 @@
     ldc.i4.1
     ldarg.1
     stelem.ref
+    ldnull
+    starg.s 1
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_20:
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 24
@@ -312,13 +319,16 @@
     ldloc.0
     stelem.ref
     ldarg.1
+    ldnull
+    starg.s 1
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_21:
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 24
@@ -329,6 +339,9 @@
     ldloc.0
     stelem.ref
     ldarg.1
+    ldnull
+    starg.s 1
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -362,8 +375,8 @@
     switch (IL_tco_arm_19, IL_tco_arm_20, IL_tco_arm_21, IL_tco_arm_22)
   IL_tco_arm_19:
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 23
@@ -374,13 +387,16 @@
     ldloc.0
     stelem.ref
     ldarg.1
+    ldnull
+    starg.s 1
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_20:
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 23
@@ -407,13 +423,16 @@
     ldc.i4.1
     ldarg.1
     stelem.ref
+    ldnull
+    starg.s 1
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_21:
     pop
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 23
@@ -440,6 +459,9 @@
     ldc.i4.1
     ldarg.1
     stelem.ref
+    ldnull
+    starg.s 1
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -494,8 +516,8 @@
     stloc.1
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -505,6 +527,10 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
+    ldnull
+    starg.s 0
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -518,6 +544,12 @@
     ldstr "A"
     ldloc.1
     call object AwsumMain::__concat(object, object)
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -540,8 +572,8 @@
     stloc.1
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -551,6 +583,10 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
+    ldnull
+    starg.s 0
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -564,6 +600,12 @@
     ldstr "B"
     ldloc.1
     call object AwsumMain::__concat(object, object)
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -586,8 +628,8 @@
     stloc.1
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -597,6 +639,10 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
+    ldnull
+    starg.s 0
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -610,6 +656,12 @@
     ldstr "C"
     ldloc.1
     call object AwsumMain::__concat(object, object)
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop

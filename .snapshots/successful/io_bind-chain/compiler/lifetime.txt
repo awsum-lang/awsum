@@ -1,0 +1,86 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$lift$1:
+  param           __input                         count=1
+
+$cps$$lift$1:
+  param           __input                         count=2
+  param           $k                              count=3
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f0                            count=0
+
+$apply$$lift$1:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_17                          count=0
+  case-pattern    __f0                            count=0
+
+$lam$7:
+  param           _u                              count=0
+
+$lift$8:
+  param           __input                         count=1
+
+$cps$$lift$8:
+  param           __input                         count=2
+  param           $k                              count=3
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f0                            count=0
+
+$apply$$lift$8:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_19                          count=0
+  case-pattern    __f0                            count=0
+
+$df$andThenIO$0:
+  param           io                              count=1
+
+$cps$$df$andThenIO$0:
+  param           io                              count=2
+  param           $k                              count=3
+  case-pattern    a                               count=0
+  case-pattern    e                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+  case-pattern    cont                            count=0
+
+$apply$$df$andThenIO$0:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_21                          count=0
+  case-pattern    s                               count=0
+
+$scc$$apply1_$df$$lam$3$1_$lift$2_$lift$9:
+  param           $args                           count=1
+
+$cps$$scc$$apply1_$df$$lam$3$1_$lift$2_$lift$9:
+  param           $args                           count=7
+  param           $k                              count=0
+  case-pattern    $cl                             count=0
+  case-pattern    $arg0                           count=0
+  case-pattern    $cap9_0                         count=0
+  case-pattern    $cap10_0                        count=0
+  case-pattern    $cap11_0                        count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    __f                             count=0
+  case-pattern    __arg                           count=0
+  case-pattern    __f                             count=0
+  case-pattern    __arg                           count=0
+
+$apply1:
+  param           $cl                             count=1
+  param           $arg0                           count=1
+

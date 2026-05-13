@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           awsum
-version:        0.0.3
+version:        0.0.4
 description:    Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
 license:        MIT
 license-file:   LICENSE
@@ -48,6 +48,7 @@ library
       Awsum.ElaborateLower
       Awsum.Format
       Awsum.HM
+      Awsum.Lifetime
       Awsum.LowerClosures
       Awsum.Lsp
       Awsum.Normalize
@@ -56,6 +57,7 @@ library
       Awsum.Program
       Awsum.Program.Cli
       Awsum.Render
+      Awsum.Reuse
       Awsum.Scc
       Awsum.StackSafety
       Awsum.Symbols
@@ -114,6 +116,55 @@ executable awsum
     , process
     , relude
     , temporary
+  default-language: GHC2024
+
+executable awsum-bench
+  main-is: Bench.hs
+  other-modules:
+      Paths_awsum
+  hs-source-dirs:
+      bench
+  default-extensions:
+      NoImplicitPrelude
+      DeriveAnyClass
+      DerivingVia
+      DuplicateRecordFields
+      OverloadedRecordDot
+      OverloadedStrings
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      awsum
+    , base >=4.7 && <5
+    , filepath
+    , optparse-applicative
+    , process
+    , relude
+    , temporary
+    , text
+    , time
+  default-language: GHC2024
+
+executable awsum-stats
+  main-is: Stats.hs
+  other-modules:
+      Paths_awsum
+  hs-source-dirs:
+      stats
+  default-extensions:
+      NoImplicitPrelude
+      DeriveAnyClass
+      DerivingVia
+      DuplicateRecordFields
+      OverloadedRecordDot
+      OverloadedStrings
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      awsum
+    , base >=4.7 && <5
+    , directory
+    , filepath
+    , relude
+    , text
   default-language: GHC2024
 
 test-suite awsum-test

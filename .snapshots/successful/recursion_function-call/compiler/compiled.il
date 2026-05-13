@@ -66,6 +66,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -82,8 +86,8 @@
     switch (IL_tco_arm_19, IL_tco_arm_20, IL_tco_arm_21)
   IL_tco_arm_19:
     pop
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 20
@@ -93,8 +97,8 @@
     br IL_tco_loop
   IL_tco_arm_20:
     pop
-    ldc.i4.1
-    newarr [System.Runtime]System.Object
+    ldarg.0
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.s 21

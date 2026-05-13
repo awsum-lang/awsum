@@ -25,6 +25,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -95,8 +96,9 @@ function v__cps__scc__df_andThenEither_0__lam_7_build(v__args, v__k){
               }
               case 4: {
                 const v_a = __s[1];
-                const __t0 = [9, v__df_andThenEither_0_cap0_0, v_a];
+                const __t0 = (v__args[0] = 9, v__args[1] = v__df_andThenEither_0_cap0_0, v__args[2] = v_a, v__args);
                 const __t1 = [12, v__k];
+                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -107,8 +109,9 @@ function v__cps__scc__df_andThenEither_0__lam_7_build(v__args, v__k){
         case 9: {
           const v_m = __s[1];
           const v_doubled = __s[2];
-          const __t0 = [10, v_m, v_doubled];
+          const __t0 = (v__args[0] = 10, v__args[1] = v_m, v__args[2] = v_doubled, v__args);
           const __t1 = v__k;
+          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -125,8 +128,9 @@ function v__cps__scc__df_andThenEither_0__lam_7_build(v__args, v__k){
               }
               case 4: {
                 const v_m = __s[1];
-                const __t0 = [8, (v__lift_8)(__concat(v_acc, v_acc)), v_m];
+                const __t0 = (v__args[0] = 8, v__args[1] = (v__lift_8)(__concat(v_acc, v_acc)), v__args[2] = v_m, v__args);
                 const __t1 = v__k;
+                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -151,6 +155,8 @@ function v__apply__scc__df_andThenEither_0__lam_7_build(v__k, v__x){
           const v__pk_12 = __s[1];
           const __t0 = v__pk_12;
           const __t1 = (v__lift_0)(v__x);
+          v__x = null;
+          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;

@@ -1,0 +1,39 @@
+{- Multi-child non-tail self-recursion at depth 100_000: 'mirror' has
+   two non-tail self-calls in one expression ('Node (mirror r) v (mirror l)').
+   Cps emits a '$cps$mirror' / '$apply$mirror' pair whose K_1 arm tail-calls
+   '$cps$mirror' — a mutual cycle. The second SCC-merge pass fuses the pair
+   into a single self-recursive function before TCO; the resulting loop
+   runs in bounded stack on every backend. -}
+import IO.Stdout
+
+type Tree
+  = Leaf
+  | Node Tree Int32 Tree
+
+{- Build a right-spine tree of depth n tail-recursively. Values descend
+   from n at the outermost Node down to 1 at the deepest. -}
+buildRight : Int32 -> Tree -> Either UnderflowError Tree
+buildRight n acc = case eqInt32 n 0 of
+  True -> Right acc
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> buildRight m (Node Leaf n acc)
+
+mirror : Tree -> Tree
+mirror t = case t of
+  Leaf -> Leaf
+  Node l v r -> Node (mirror r) v (mirror l)
+
+{- Tail-recursive walk of a left-spine, keeping the deepest non-Leaf
+   value seen. After 'mirror' of a right-spine, the result is a left-
+   spine with the same values, so the deepest left-spine value equals
+   the original tree's depth. -}
+spineLast : Tree -> Int32 -> Int32
+spineLast t lastV = case t of
+  Leaf -> lastV
+  Node l v _r -> spineLast l v
+
+main : IO Never Unit
+main = case buildRight 100_000 Leaf of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right t -> IO.Stdout.print (showInt32 (spineLast (mirror t) 0))

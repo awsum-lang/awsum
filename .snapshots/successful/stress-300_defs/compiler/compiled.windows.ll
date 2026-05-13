@@ -1,5 +1,7 @@
 ; External C declarations
 declare ptr @malloc(i64)
+declare ptr @realloc(ptr, i64)
+declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
 declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
@@ -8,21 +10,149 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32} { i32 0, i32 0 }
+@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
 @.cli_arg = internal global ptr null
 
-@.str.0 = private unnamed_addr constant {i32, i32, [4 x i8]} { i32 4, i32 4, [4 x i8] c"True" }
-@.str.1 = private unnamed_addr constant {i32, i32, [5 x i8]} { i32 5, i32 5, [5 x i8] c"False" }
+define internal ptr @__alloc(i64 %sz, i32 %shape) {
+  %total = add i64 %sz, 12
+  %raw = call ptr @malloc(i64 %total)
+  store i32 1, ptr %raw
+  %rc_p = getelementptr i8, ptr %raw, i64 4
+  store i32 1, ptr %rc_p
+  %shape_p = getelementptr i8, ptr %raw, i64 8
+  store i32 %shape, ptr %shape_p
+  %user = getelementptr i8, ptr %raw, i64 12
+  ret ptr %user
+}
+
+define internal void @__free(ptr %p) {
+  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
+  %flag = load i32, ptr %hdr_ptr
+  %is_heap = icmp eq i32 %flag, 1
+  br i1 %is_heap, label %do_free, label %skip
+do_free:
+  call void @free(ptr %hdr_ptr)
+  br label %skip
+skip:
+  ret void
+}
+
+define internal void @__inc_ref(ptr %p) {
+  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
+  %flag = load i32, ptr %hdr_ptr
+  %is_heap = icmp eq i32 %flag, 1
+  br i1 %is_heap, label %do_inc, label %skip_inc
+do_inc:
+  %rc_p = getelementptr i8, ptr %p, i64 -8
+  %rc_old = load i32, ptr %rc_p
+  %rc_new = add i32 %rc_old, 1
+  store i32 %rc_new, ptr %rc_p
+  br label %skip_inc
+skip_inc:
+  ret void
+}
+
+@__free_worklist = internal global ptr null
+@__free_worklist_top = internal global i64 0
+@__free_worklist_cap = internal global i64 0
+
+define internal void @__free_worklist_push(ptr %p) {
+entry:
+  %top = load i64, ptr @__free_worklist_top
+  %cap = load i64, ptr @__free_worklist_cap
+  %is_full = icmp eq i64 %top, %cap
+  br i1 %is_full, label %grow, label %store
+grow:
+  %cap_zero = icmp eq i64 %cap, 0
+  %doubled = shl i64 %cap, 1
+  %new_cap = select i1 %cap_zero, i64 16, i64 %doubled
+  %bytes = mul i64 %new_cap, 8
+  %old_buf = load ptr, ptr @__free_worklist
+  %new_buf = call ptr @realloc(ptr %old_buf, i64 %bytes)
+  store ptr %new_buf, ptr @__free_worklist
+  store i64 %new_cap, ptr @__free_worklist_cap
+  br label %store
+store:
+  %buf = load ptr, ptr @__free_worklist
+  %slot = getelementptr ptr, ptr %buf, i64 %top
+  store ptr %p, ptr %slot
+  %top_new = add i64 %top, 1
+  store i64 %top_new, ptr @__free_worklist_top
+  ret void
+}
+
+define internal void @__free_recursive(ptr %p_arg) {
+entry:
+  br label %top
+top:
+  %p = phi ptr [ %p_arg, %entry ], [ %p_after, %continue ]
+  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
+  %flag = load i32, ptr %hdr_ptr
+  %is_heap = icmp eq i32 %flag, 1
+  br i1 %is_heap, label %do_dec, label %try_pop
+do_dec:
+  %rc_p = getelementptr i8, ptr %p, i64 -8
+  %rc_old = load i32, ptr %rc_p
+  %rc_new = sub i32 %rc_old, 1
+  store i32 %rc_new, ptr %rc_p
+  %is_zero = icmp eq i32 %rc_new, 0
+  br i1 %is_zero, label %do_cascade, label %try_pop
+do_cascade:
+  %shape_p = getelementptr i8, ptr %p, i64 -4
+  %shape = load i32, ptr %shape_p
+  %shape_zero = icmp eq i32 %shape, 0
+  br i1 %shape_zero, label %free_and_pop, label %loop_check
+loop_check:
+  %i = phi i32 [ 1, %do_cascade ], [ %i_next, %loop_body ]
+  %cmp = icmp ult i32 %i, %shape
+  br i1 %cmp, label %loop_body, label %tail_jump_prep
+loop_body:
+  %i64 = zext i32 %i to i64
+  %slot_p = getelementptr ptr, ptr %p, i64 %i64
+  %child = load ptr, ptr %slot_p
+  call void @__free_worklist_push(ptr %child)
+  %i_next = add i32 %i, 1
+  br label %loop_check
+tail_jump_prep:
+  %shape64 = zext i32 %shape to i64
+  %last_slot_p = getelementptr ptr, ptr %p, i64 %shape64
+  %p_next_tail = load ptr, ptr %last_slot_p
+  call void @free(ptr %hdr_ptr)
+  br label %continue
+free_and_pop:
+  call void @free(ptr %hdr_ptr)
+  br label %try_pop
+try_pop:
+  %top_old = load i64, ptr @__free_worklist_top
+  %is_empty = icmp eq i64 %top_old, 0
+  br i1 %is_empty, label %done, label %do_pop
+do_pop:
+  %top_new = sub i64 %top_old, 1
+  store i64 %top_new, ptr @__free_worklist_top
+  %wl_buf = load ptr, ptr @__free_worklist
+  %wl_slot = getelementptr ptr, ptr %wl_buf, i64 %top_new
+  %p_popped = load ptr, ptr %wl_slot
+  br label %continue
+continue:
+  %p_after = phi ptr [ %p_next_tail, %tail_jump_prep ], [ %p_popped, %do_pop ]
+  br label %top
+done:
+  ret void
+}
+
+@.str.0 = private unnamed_addr constant {i32, i32, i32, i32, i32, [4 x i8]} { i32 0, i32 0, i32 0, i32 4, i32 4, [4 x i8] c"True" }
+@.str.1 = private unnamed_addr constant {i32, i32, i32, i32, i32, [5 x i8]} { i32 0, i32 0, i32 0, i32 5, i32 5, [5 x i8] c"False" }
 
 define internal ptr @__print(ptr %s) {
   %byte_count = load i32, ptr %s
   %byte_count_64 = zext i32 %byte_count to i64
   %payload = getelementptr i8, ptr %s, i64 8
   call i64 @write(i32 1, ptr %payload, i64 %byte_count_64)
-  %unit = call ptr @malloc(i64 8)
+  %unit = call ptr @__alloc(i64 8, i32 0)
   %unit_tag_ptr = getelementptr ptr, ptr %unit, i32 0
   %unit_tag = inttoptr i64 0 to ptr
   store ptr %unit_tag, ptr %unit_tag_ptr
+  call void @__free_recursive(ptr %s)
   ret ptr %unit
 }
 
@@ -31,44 +161,35 @@ define internal ptr @v_and(ptr %v_a, ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_a, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 1, label %case.arm.1.5 i64 2, label %case.arm.2.7 ]
-case.arm.1.5:
-  br label %case.end.1.6
-case.end.1.6:
-  br label %case.join.4
-case.arm.2.7:
-  %t9 = call ptr @malloc(i64 8)
-  %t10 = inttoptr i64 2 to ptr
-  %t11 = getelementptr ptr, ptr %t9, i32 0
-  store ptr %t10, ptr %t11
-  br label %case.end.2.8
-case.end.2.8:
-  br label %case.join.4
+  switch i64 %t2, label %case.default.3 [ i64 1, label %case.arm.1.4 i64 2, label %case.arm.2.5 ]
+case.arm.1.4:
+  call void @__free_recursive(ptr %v_a)
+  ret ptr %v_b
+case.arm.2.5:
+  %t6 = call ptr @__alloc(i64 8, i32 0)
+  %t7 = inttoptr i64 2 to ptr
+  %t8 = getelementptr ptr, ptr %t6, i32 0
+  store ptr %t7, ptr %t8
+  call void @__free_recursive(ptr %v_a)
+  call void @__free_recursive(ptr %v_b)
+  ret ptr %t6
 case.default.3:
   unreachable
-case.join.4:
-  %t12 = phi ptr [%v_b, %case.end.1.6], [%t9, %case.end.2.8]
-  ret ptr %t12
 }
 
 define internal ptr @v_showBool(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 1, label %case.arm.1.5 i64 2, label %case.arm.2.7 ]
-case.arm.1.5:
-  br label %case.end.1.6
-case.end.1.6:
-  br label %case.join.4
-case.arm.2.7:
-  br label %case.end.2.8
-case.end.2.8:
-  br label %case.join.4
+  switch i64 %t2, label %case.default.3 [ i64 1, label %case.arm.1.4 i64 2, label %case.arm.2.5 ]
+case.arm.1.4:
+  call void @__free_recursive(ptr %v_b)
+  ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
+case.arm.2.5:
+  call void @__free_recursive(ptr %v_b)
+  ret ptr getelementptr inbounds (i8, ptr @.str.1, i64 12)
 case.default.3:
   unreachable
-case.join.4:
-  %t9 = phi ptr [@.str.0, %case.end.1.6], [@.str.1, %case.end.2.8]
-  ret ptr %t9
 }
 
 define internal ptr @v_runIO(ptr %v_io) {
@@ -86,19 +207,29 @@ tco.loop.0:
 tco.case.arm.5.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
+  call void @__inc_ref(ptr %t11)
+  call void @__free_recursive(ptr %t4)
   store ptr %t11, ptr %t2
   br label %tco.exit.1
 tco.case.arm.7.12:
   %t13 = getelementptr ptr, ptr %t4, i32 1
   %t14 = load ptr, ptr %t13
+  call void @__inc_ref(ptr %t14)
   %t15 = getelementptr ptr, ptr %t4, i32 2
   %t16 = load ptr, ptr %t15
+  call void @__inc_ref(ptr %t16)
+  call void @__inc_ref(ptr %t14)
   %t17 = call ptr @__print(ptr %t14)
   %t18 = getelementptr ptr, ptr %t17, i32 0
   %t19 = load ptr, ptr %t18
   %t20 = ptrtoint ptr %t19 to i64
   switch i64 %t20, label %tco.case.default.21 [ i64 0, label %tco.case.arm.0.22 ]
 tco.case.arm.0.22:
+  call void @__inc_ref(ptr %t16)
+  call void @__free_recursive(ptr %t17)
+  call void @__free_recursive(ptr %t4)
+  call void @__free_recursive(ptr %t16)
+  call void @__free_recursive(ptr %t14)
   store ptr %t16, ptr %t3
   br label %tco.loop.0
 tco.case.default.21:
@@ -111,7 +242,7 @@ tco.exit.1:
 }
 
 define internal ptr @v_b1() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -119,7 +250,7 @@ define internal ptr @v_b1() {
 }
 
 define internal ptr @v_b2() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -127,7 +258,7 @@ define internal ptr @v_b2() {
 }
 
 define internal ptr @v_b3() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -135,7 +266,7 @@ define internal ptr @v_b3() {
 }
 
 define internal ptr @v_b4() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -143,7 +274,7 @@ define internal ptr @v_b4() {
 }
 
 define internal ptr @v_b5() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -151,7 +282,7 @@ define internal ptr @v_b5() {
 }
 
 define internal ptr @v_b6() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -159,7 +290,7 @@ define internal ptr @v_b6() {
 }
 
 define internal ptr @v_b7() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -167,7 +298,7 @@ define internal ptr @v_b7() {
 }
 
 define internal ptr @v_b8() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -175,7 +306,7 @@ define internal ptr @v_b8() {
 }
 
 define internal ptr @v_b9() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -183,7 +314,7 @@ define internal ptr @v_b9() {
 }
 
 define internal ptr @v_b10() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -191,7 +322,7 @@ define internal ptr @v_b10() {
 }
 
 define internal ptr @v_b11() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -199,7 +330,7 @@ define internal ptr @v_b11() {
 }
 
 define internal ptr @v_b12() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -207,7 +338,7 @@ define internal ptr @v_b12() {
 }
 
 define internal ptr @v_b13() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -215,7 +346,7 @@ define internal ptr @v_b13() {
 }
 
 define internal ptr @v_b14() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -223,7 +354,7 @@ define internal ptr @v_b14() {
 }
 
 define internal ptr @v_b15() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -231,7 +362,7 @@ define internal ptr @v_b15() {
 }
 
 define internal ptr @v_b16() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -239,7 +370,7 @@ define internal ptr @v_b16() {
 }
 
 define internal ptr @v_b17() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -247,7 +378,7 @@ define internal ptr @v_b17() {
 }
 
 define internal ptr @v_b18() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -255,7 +386,7 @@ define internal ptr @v_b18() {
 }
 
 define internal ptr @v_b19() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -263,7 +394,7 @@ define internal ptr @v_b19() {
 }
 
 define internal ptr @v_b20() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -271,7 +402,7 @@ define internal ptr @v_b20() {
 }
 
 define internal ptr @v_b21() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -279,7 +410,7 @@ define internal ptr @v_b21() {
 }
 
 define internal ptr @v_b22() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -287,7 +418,7 @@ define internal ptr @v_b22() {
 }
 
 define internal ptr @v_b23() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -295,7 +426,7 @@ define internal ptr @v_b23() {
 }
 
 define internal ptr @v_b24() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -303,7 +434,7 @@ define internal ptr @v_b24() {
 }
 
 define internal ptr @v_b25() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -311,7 +442,7 @@ define internal ptr @v_b25() {
 }
 
 define internal ptr @v_b26() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -319,7 +450,7 @@ define internal ptr @v_b26() {
 }
 
 define internal ptr @v_b27() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -327,7 +458,7 @@ define internal ptr @v_b27() {
 }
 
 define internal ptr @v_b28() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -335,7 +466,7 @@ define internal ptr @v_b28() {
 }
 
 define internal ptr @v_b29() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -343,7 +474,7 @@ define internal ptr @v_b29() {
 }
 
 define internal ptr @v_b30() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -351,7 +482,7 @@ define internal ptr @v_b30() {
 }
 
 define internal ptr @v_b31() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -359,7 +490,7 @@ define internal ptr @v_b31() {
 }
 
 define internal ptr @v_b32() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -367,7 +498,7 @@ define internal ptr @v_b32() {
 }
 
 define internal ptr @v_b33() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -375,7 +506,7 @@ define internal ptr @v_b33() {
 }
 
 define internal ptr @v_b34() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -383,7 +514,7 @@ define internal ptr @v_b34() {
 }
 
 define internal ptr @v_b35() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -391,7 +522,7 @@ define internal ptr @v_b35() {
 }
 
 define internal ptr @v_b36() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -399,7 +530,7 @@ define internal ptr @v_b36() {
 }
 
 define internal ptr @v_b37() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -407,7 +538,7 @@ define internal ptr @v_b37() {
 }
 
 define internal ptr @v_b38() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -415,7 +546,7 @@ define internal ptr @v_b38() {
 }
 
 define internal ptr @v_b39() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -423,7 +554,7 @@ define internal ptr @v_b39() {
 }
 
 define internal ptr @v_b40() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -431,7 +562,7 @@ define internal ptr @v_b40() {
 }
 
 define internal ptr @v_b41() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -439,7 +570,7 @@ define internal ptr @v_b41() {
 }
 
 define internal ptr @v_b42() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -447,7 +578,7 @@ define internal ptr @v_b42() {
 }
 
 define internal ptr @v_b43() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -455,7 +586,7 @@ define internal ptr @v_b43() {
 }
 
 define internal ptr @v_b44() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -463,7 +594,7 @@ define internal ptr @v_b44() {
 }
 
 define internal ptr @v_b45() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -471,7 +602,7 @@ define internal ptr @v_b45() {
 }
 
 define internal ptr @v_b46() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -479,7 +610,7 @@ define internal ptr @v_b46() {
 }
 
 define internal ptr @v_b47() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -487,7 +618,7 @@ define internal ptr @v_b47() {
 }
 
 define internal ptr @v_b48() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -495,7 +626,7 @@ define internal ptr @v_b48() {
 }
 
 define internal ptr @v_b49() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -503,7 +634,7 @@ define internal ptr @v_b49() {
 }
 
 define internal ptr @v_b50() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -511,7 +642,7 @@ define internal ptr @v_b50() {
 }
 
 define internal ptr @v_b51() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -519,7 +650,7 @@ define internal ptr @v_b51() {
 }
 
 define internal ptr @v_b52() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -527,7 +658,7 @@ define internal ptr @v_b52() {
 }
 
 define internal ptr @v_b53() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -535,7 +666,7 @@ define internal ptr @v_b53() {
 }
 
 define internal ptr @v_b54() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -543,7 +674,7 @@ define internal ptr @v_b54() {
 }
 
 define internal ptr @v_b55() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -551,7 +682,7 @@ define internal ptr @v_b55() {
 }
 
 define internal ptr @v_b56() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -559,7 +690,7 @@ define internal ptr @v_b56() {
 }
 
 define internal ptr @v_b57() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -567,7 +698,7 @@ define internal ptr @v_b57() {
 }
 
 define internal ptr @v_b58() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -575,7 +706,7 @@ define internal ptr @v_b58() {
 }
 
 define internal ptr @v_b59() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -583,7 +714,7 @@ define internal ptr @v_b59() {
 }
 
 define internal ptr @v_b60() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -591,7 +722,7 @@ define internal ptr @v_b60() {
 }
 
 define internal ptr @v_b61() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -599,7 +730,7 @@ define internal ptr @v_b61() {
 }
 
 define internal ptr @v_b62() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -607,7 +738,7 @@ define internal ptr @v_b62() {
 }
 
 define internal ptr @v_b63() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -615,7 +746,7 @@ define internal ptr @v_b63() {
 }
 
 define internal ptr @v_b64() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -623,7 +754,7 @@ define internal ptr @v_b64() {
 }
 
 define internal ptr @v_b65() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -631,7 +762,7 @@ define internal ptr @v_b65() {
 }
 
 define internal ptr @v_b66() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -639,7 +770,7 @@ define internal ptr @v_b66() {
 }
 
 define internal ptr @v_b67() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -647,7 +778,7 @@ define internal ptr @v_b67() {
 }
 
 define internal ptr @v_b68() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -655,7 +786,7 @@ define internal ptr @v_b68() {
 }
 
 define internal ptr @v_b69() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -663,7 +794,7 @@ define internal ptr @v_b69() {
 }
 
 define internal ptr @v_b70() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -671,7 +802,7 @@ define internal ptr @v_b70() {
 }
 
 define internal ptr @v_b71() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -679,7 +810,7 @@ define internal ptr @v_b71() {
 }
 
 define internal ptr @v_b72() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -687,7 +818,7 @@ define internal ptr @v_b72() {
 }
 
 define internal ptr @v_b73() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -695,7 +826,7 @@ define internal ptr @v_b73() {
 }
 
 define internal ptr @v_b74() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -703,7 +834,7 @@ define internal ptr @v_b74() {
 }
 
 define internal ptr @v_b75() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -711,7 +842,7 @@ define internal ptr @v_b75() {
 }
 
 define internal ptr @v_b76() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -719,7 +850,7 @@ define internal ptr @v_b76() {
 }
 
 define internal ptr @v_b77() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -727,7 +858,7 @@ define internal ptr @v_b77() {
 }
 
 define internal ptr @v_b78() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -735,7 +866,7 @@ define internal ptr @v_b78() {
 }
 
 define internal ptr @v_b79() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -743,7 +874,7 @@ define internal ptr @v_b79() {
 }
 
 define internal ptr @v_b80() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -751,7 +882,7 @@ define internal ptr @v_b80() {
 }
 
 define internal ptr @v_b81() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -759,7 +890,7 @@ define internal ptr @v_b81() {
 }
 
 define internal ptr @v_b82() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -767,7 +898,7 @@ define internal ptr @v_b82() {
 }
 
 define internal ptr @v_b83() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -775,7 +906,7 @@ define internal ptr @v_b83() {
 }
 
 define internal ptr @v_b84() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -783,7 +914,7 @@ define internal ptr @v_b84() {
 }
 
 define internal ptr @v_b85() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -791,7 +922,7 @@ define internal ptr @v_b85() {
 }
 
 define internal ptr @v_b86() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -799,7 +930,7 @@ define internal ptr @v_b86() {
 }
 
 define internal ptr @v_b87() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -807,7 +938,7 @@ define internal ptr @v_b87() {
 }
 
 define internal ptr @v_b88() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -815,7 +946,7 @@ define internal ptr @v_b88() {
 }
 
 define internal ptr @v_b89() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -823,7 +954,7 @@ define internal ptr @v_b89() {
 }
 
 define internal ptr @v_b90() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -831,7 +962,7 @@ define internal ptr @v_b90() {
 }
 
 define internal ptr @v_b91() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -839,7 +970,7 @@ define internal ptr @v_b91() {
 }
 
 define internal ptr @v_b92() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -847,7 +978,7 @@ define internal ptr @v_b92() {
 }
 
 define internal ptr @v_b93() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -855,7 +986,7 @@ define internal ptr @v_b93() {
 }
 
 define internal ptr @v_b94() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -863,7 +994,7 @@ define internal ptr @v_b94() {
 }
 
 define internal ptr @v_b95() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -871,7 +1002,7 @@ define internal ptr @v_b95() {
 }
 
 define internal ptr @v_b96() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -879,7 +1010,7 @@ define internal ptr @v_b96() {
 }
 
 define internal ptr @v_b97() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -887,7 +1018,7 @@ define internal ptr @v_b97() {
 }
 
 define internal ptr @v_b98() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -895,7 +1026,7 @@ define internal ptr @v_b98() {
 }
 
 define internal ptr @v_b99() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -903,7 +1034,7 @@ define internal ptr @v_b99() {
 }
 
 define internal ptr @v_b100() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -911,7 +1042,7 @@ define internal ptr @v_b100() {
 }
 
 define internal ptr @v_b101() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -919,7 +1050,7 @@ define internal ptr @v_b101() {
 }
 
 define internal ptr @v_b102() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -927,7 +1058,7 @@ define internal ptr @v_b102() {
 }
 
 define internal ptr @v_b103() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -935,7 +1066,7 @@ define internal ptr @v_b103() {
 }
 
 define internal ptr @v_b104() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -943,7 +1074,7 @@ define internal ptr @v_b104() {
 }
 
 define internal ptr @v_b105() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -951,7 +1082,7 @@ define internal ptr @v_b105() {
 }
 
 define internal ptr @v_b106() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -959,7 +1090,7 @@ define internal ptr @v_b106() {
 }
 
 define internal ptr @v_b107() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -967,7 +1098,7 @@ define internal ptr @v_b107() {
 }
 
 define internal ptr @v_b108() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -975,7 +1106,7 @@ define internal ptr @v_b108() {
 }
 
 define internal ptr @v_b109() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -983,7 +1114,7 @@ define internal ptr @v_b109() {
 }
 
 define internal ptr @v_b110() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -991,7 +1122,7 @@ define internal ptr @v_b110() {
 }
 
 define internal ptr @v_b111() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -999,7 +1130,7 @@ define internal ptr @v_b111() {
 }
 
 define internal ptr @v_b112() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1007,7 +1138,7 @@ define internal ptr @v_b112() {
 }
 
 define internal ptr @v_b113() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1015,7 +1146,7 @@ define internal ptr @v_b113() {
 }
 
 define internal ptr @v_b114() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1023,7 +1154,7 @@ define internal ptr @v_b114() {
 }
 
 define internal ptr @v_b115() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1031,7 +1162,7 @@ define internal ptr @v_b115() {
 }
 
 define internal ptr @v_b116() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1039,7 +1170,7 @@ define internal ptr @v_b116() {
 }
 
 define internal ptr @v_b117() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1047,7 +1178,7 @@ define internal ptr @v_b117() {
 }
 
 define internal ptr @v_b118() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1055,7 +1186,7 @@ define internal ptr @v_b118() {
 }
 
 define internal ptr @v_b119() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1063,7 +1194,7 @@ define internal ptr @v_b119() {
 }
 
 define internal ptr @v_b120() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1071,7 +1202,7 @@ define internal ptr @v_b120() {
 }
 
 define internal ptr @v_b121() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1079,7 +1210,7 @@ define internal ptr @v_b121() {
 }
 
 define internal ptr @v_b122() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1087,7 +1218,7 @@ define internal ptr @v_b122() {
 }
 
 define internal ptr @v_b123() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1095,7 +1226,7 @@ define internal ptr @v_b123() {
 }
 
 define internal ptr @v_b124() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1103,7 +1234,7 @@ define internal ptr @v_b124() {
 }
 
 define internal ptr @v_b125() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1111,7 +1242,7 @@ define internal ptr @v_b125() {
 }
 
 define internal ptr @v_b126() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1119,7 +1250,7 @@ define internal ptr @v_b126() {
 }
 
 define internal ptr @v_b127() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1127,7 +1258,7 @@ define internal ptr @v_b127() {
 }
 
 define internal ptr @v_b128() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1135,7 +1266,7 @@ define internal ptr @v_b128() {
 }
 
 define internal ptr @v_b129() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1143,7 +1274,7 @@ define internal ptr @v_b129() {
 }
 
 define internal ptr @v_b130() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1151,7 +1282,7 @@ define internal ptr @v_b130() {
 }
 
 define internal ptr @v_b131() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1159,7 +1290,7 @@ define internal ptr @v_b131() {
 }
 
 define internal ptr @v_b132() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1167,7 +1298,7 @@ define internal ptr @v_b132() {
 }
 
 define internal ptr @v_b133() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1175,7 +1306,7 @@ define internal ptr @v_b133() {
 }
 
 define internal ptr @v_b134() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1183,7 +1314,7 @@ define internal ptr @v_b134() {
 }
 
 define internal ptr @v_b135() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1191,7 +1322,7 @@ define internal ptr @v_b135() {
 }
 
 define internal ptr @v_b136() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1199,7 +1330,7 @@ define internal ptr @v_b136() {
 }
 
 define internal ptr @v_b137() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1207,7 +1338,7 @@ define internal ptr @v_b137() {
 }
 
 define internal ptr @v_b138() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1215,7 +1346,7 @@ define internal ptr @v_b138() {
 }
 
 define internal ptr @v_b139() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1223,7 +1354,7 @@ define internal ptr @v_b139() {
 }
 
 define internal ptr @v_b140() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1231,7 +1362,7 @@ define internal ptr @v_b140() {
 }
 
 define internal ptr @v_b141() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1239,7 +1370,7 @@ define internal ptr @v_b141() {
 }
 
 define internal ptr @v_b142() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1247,7 +1378,7 @@ define internal ptr @v_b142() {
 }
 
 define internal ptr @v_b143() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1255,7 +1386,7 @@ define internal ptr @v_b143() {
 }
 
 define internal ptr @v_b144() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1263,7 +1394,7 @@ define internal ptr @v_b144() {
 }
 
 define internal ptr @v_b145() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1271,7 +1402,7 @@ define internal ptr @v_b145() {
 }
 
 define internal ptr @v_b146() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1279,7 +1410,7 @@ define internal ptr @v_b146() {
 }
 
 define internal ptr @v_b147() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1287,7 +1418,7 @@ define internal ptr @v_b147() {
 }
 
 define internal ptr @v_b148() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1295,7 +1426,7 @@ define internal ptr @v_b148() {
 }
 
 define internal ptr @v_b149() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1303,7 +1434,7 @@ define internal ptr @v_b149() {
 }
 
 define internal ptr @v_b150() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1311,7 +1442,7 @@ define internal ptr @v_b150() {
 }
 
 define internal ptr @v_b151() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1319,7 +1450,7 @@ define internal ptr @v_b151() {
 }
 
 define internal ptr @v_b152() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1327,7 +1458,7 @@ define internal ptr @v_b152() {
 }
 
 define internal ptr @v_b153() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1335,7 +1466,7 @@ define internal ptr @v_b153() {
 }
 
 define internal ptr @v_b154() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1343,7 +1474,7 @@ define internal ptr @v_b154() {
 }
 
 define internal ptr @v_b155() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1351,7 +1482,7 @@ define internal ptr @v_b155() {
 }
 
 define internal ptr @v_b156() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1359,7 +1490,7 @@ define internal ptr @v_b156() {
 }
 
 define internal ptr @v_b157() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1367,7 +1498,7 @@ define internal ptr @v_b157() {
 }
 
 define internal ptr @v_b158() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1375,7 +1506,7 @@ define internal ptr @v_b158() {
 }
 
 define internal ptr @v_b159() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1383,7 +1514,7 @@ define internal ptr @v_b159() {
 }
 
 define internal ptr @v_b160() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1391,7 +1522,7 @@ define internal ptr @v_b160() {
 }
 
 define internal ptr @v_b161() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1399,7 +1530,7 @@ define internal ptr @v_b161() {
 }
 
 define internal ptr @v_b162() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1407,7 +1538,7 @@ define internal ptr @v_b162() {
 }
 
 define internal ptr @v_b163() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1415,7 +1546,7 @@ define internal ptr @v_b163() {
 }
 
 define internal ptr @v_b164() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1423,7 +1554,7 @@ define internal ptr @v_b164() {
 }
 
 define internal ptr @v_b165() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1431,7 +1562,7 @@ define internal ptr @v_b165() {
 }
 
 define internal ptr @v_b166() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1439,7 +1570,7 @@ define internal ptr @v_b166() {
 }
 
 define internal ptr @v_b167() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1447,7 +1578,7 @@ define internal ptr @v_b167() {
 }
 
 define internal ptr @v_b168() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1455,7 +1586,7 @@ define internal ptr @v_b168() {
 }
 
 define internal ptr @v_b169() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1463,7 +1594,7 @@ define internal ptr @v_b169() {
 }
 
 define internal ptr @v_b170() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1471,7 +1602,7 @@ define internal ptr @v_b170() {
 }
 
 define internal ptr @v_b171() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1479,7 +1610,7 @@ define internal ptr @v_b171() {
 }
 
 define internal ptr @v_b172() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1487,7 +1618,7 @@ define internal ptr @v_b172() {
 }
 
 define internal ptr @v_b173() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1495,7 +1626,7 @@ define internal ptr @v_b173() {
 }
 
 define internal ptr @v_b174() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1503,7 +1634,7 @@ define internal ptr @v_b174() {
 }
 
 define internal ptr @v_b175() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1511,7 +1642,7 @@ define internal ptr @v_b175() {
 }
 
 define internal ptr @v_b176() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1519,7 +1650,7 @@ define internal ptr @v_b176() {
 }
 
 define internal ptr @v_b177() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1527,7 +1658,7 @@ define internal ptr @v_b177() {
 }
 
 define internal ptr @v_b178() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1535,7 +1666,7 @@ define internal ptr @v_b178() {
 }
 
 define internal ptr @v_b179() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1543,7 +1674,7 @@ define internal ptr @v_b179() {
 }
 
 define internal ptr @v_b180() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1551,7 +1682,7 @@ define internal ptr @v_b180() {
 }
 
 define internal ptr @v_b181() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1559,7 +1690,7 @@ define internal ptr @v_b181() {
 }
 
 define internal ptr @v_b182() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1567,7 +1698,7 @@ define internal ptr @v_b182() {
 }
 
 define internal ptr @v_b183() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1575,7 +1706,7 @@ define internal ptr @v_b183() {
 }
 
 define internal ptr @v_b184() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1583,7 +1714,7 @@ define internal ptr @v_b184() {
 }
 
 define internal ptr @v_b185() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1591,7 +1722,7 @@ define internal ptr @v_b185() {
 }
 
 define internal ptr @v_b186() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1599,7 +1730,7 @@ define internal ptr @v_b186() {
 }
 
 define internal ptr @v_b187() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1607,7 +1738,7 @@ define internal ptr @v_b187() {
 }
 
 define internal ptr @v_b188() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1615,7 +1746,7 @@ define internal ptr @v_b188() {
 }
 
 define internal ptr @v_b189() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1623,7 +1754,7 @@ define internal ptr @v_b189() {
 }
 
 define internal ptr @v_b190() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1631,7 +1762,7 @@ define internal ptr @v_b190() {
 }
 
 define internal ptr @v_b191() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1639,7 +1770,7 @@ define internal ptr @v_b191() {
 }
 
 define internal ptr @v_b192() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1647,7 +1778,7 @@ define internal ptr @v_b192() {
 }
 
 define internal ptr @v_b193() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1655,7 +1786,7 @@ define internal ptr @v_b193() {
 }
 
 define internal ptr @v_b194() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1663,7 +1794,7 @@ define internal ptr @v_b194() {
 }
 
 define internal ptr @v_b195() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1671,7 +1802,7 @@ define internal ptr @v_b195() {
 }
 
 define internal ptr @v_b196() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1679,7 +1810,7 @@ define internal ptr @v_b196() {
 }
 
 define internal ptr @v_b197() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1687,7 +1818,7 @@ define internal ptr @v_b197() {
 }
 
 define internal ptr @v_b198() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1695,7 +1826,7 @@ define internal ptr @v_b198() {
 }
 
 define internal ptr @v_b199() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1703,7 +1834,7 @@ define internal ptr @v_b199() {
 }
 
 define internal ptr @v_b200() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1711,7 +1842,7 @@ define internal ptr @v_b200() {
 }
 
 define internal ptr @v_b201() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1719,7 +1850,7 @@ define internal ptr @v_b201() {
 }
 
 define internal ptr @v_b202() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1727,7 +1858,7 @@ define internal ptr @v_b202() {
 }
 
 define internal ptr @v_b203() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1735,7 +1866,7 @@ define internal ptr @v_b203() {
 }
 
 define internal ptr @v_b204() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1743,7 +1874,7 @@ define internal ptr @v_b204() {
 }
 
 define internal ptr @v_b205() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1751,7 +1882,7 @@ define internal ptr @v_b205() {
 }
 
 define internal ptr @v_b206() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1759,7 +1890,7 @@ define internal ptr @v_b206() {
 }
 
 define internal ptr @v_b207() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1767,7 +1898,7 @@ define internal ptr @v_b207() {
 }
 
 define internal ptr @v_b208() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1775,7 +1906,7 @@ define internal ptr @v_b208() {
 }
 
 define internal ptr @v_b209() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1783,7 +1914,7 @@ define internal ptr @v_b209() {
 }
 
 define internal ptr @v_b210() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1791,7 +1922,7 @@ define internal ptr @v_b210() {
 }
 
 define internal ptr @v_b211() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1799,7 +1930,7 @@ define internal ptr @v_b211() {
 }
 
 define internal ptr @v_b212() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1807,7 +1938,7 @@ define internal ptr @v_b212() {
 }
 
 define internal ptr @v_b213() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1815,7 +1946,7 @@ define internal ptr @v_b213() {
 }
 
 define internal ptr @v_b214() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1823,7 +1954,7 @@ define internal ptr @v_b214() {
 }
 
 define internal ptr @v_b215() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1831,7 +1962,7 @@ define internal ptr @v_b215() {
 }
 
 define internal ptr @v_b216() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1839,7 +1970,7 @@ define internal ptr @v_b216() {
 }
 
 define internal ptr @v_b217() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1847,7 +1978,7 @@ define internal ptr @v_b217() {
 }
 
 define internal ptr @v_b218() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1855,7 +1986,7 @@ define internal ptr @v_b218() {
 }
 
 define internal ptr @v_b219() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1863,7 +1994,7 @@ define internal ptr @v_b219() {
 }
 
 define internal ptr @v_b220() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1871,7 +2002,7 @@ define internal ptr @v_b220() {
 }
 
 define internal ptr @v_b221() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1879,7 +2010,7 @@ define internal ptr @v_b221() {
 }
 
 define internal ptr @v_b222() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1887,7 +2018,7 @@ define internal ptr @v_b222() {
 }
 
 define internal ptr @v_b223() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1895,7 +2026,7 @@ define internal ptr @v_b223() {
 }
 
 define internal ptr @v_b224() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1903,7 +2034,7 @@ define internal ptr @v_b224() {
 }
 
 define internal ptr @v_b225() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1911,7 +2042,7 @@ define internal ptr @v_b225() {
 }
 
 define internal ptr @v_b226() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1919,7 +2050,7 @@ define internal ptr @v_b226() {
 }
 
 define internal ptr @v_b227() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1927,7 +2058,7 @@ define internal ptr @v_b227() {
 }
 
 define internal ptr @v_b228() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1935,7 +2066,7 @@ define internal ptr @v_b228() {
 }
 
 define internal ptr @v_b229() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1943,7 +2074,7 @@ define internal ptr @v_b229() {
 }
 
 define internal ptr @v_b230() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1951,7 +2082,7 @@ define internal ptr @v_b230() {
 }
 
 define internal ptr @v_b231() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1959,7 +2090,7 @@ define internal ptr @v_b231() {
 }
 
 define internal ptr @v_b232() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1967,7 +2098,7 @@ define internal ptr @v_b232() {
 }
 
 define internal ptr @v_b233() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1975,7 +2106,7 @@ define internal ptr @v_b233() {
 }
 
 define internal ptr @v_b234() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1983,7 +2114,7 @@ define internal ptr @v_b234() {
 }
 
 define internal ptr @v_b235() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1991,7 +2122,7 @@ define internal ptr @v_b235() {
 }
 
 define internal ptr @v_b236() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -1999,7 +2130,7 @@ define internal ptr @v_b236() {
 }
 
 define internal ptr @v_b237() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2007,7 +2138,7 @@ define internal ptr @v_b237() {
 }
 
 define internal ptr @v_b238() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2015,7 +2146,7 @@ define internal ptr @v_b238() {
 }
 
 define internal ptr @v_b239() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2023,7 +2154,7 @@ define internal ptr @v_b239() {
 }
 
 define internal ptr @v_b240() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2031,7 +2162,7 @@ define internal ptr @v_b240() {
 }
 
 define internal ptr @v_b241() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2039,7 +2170,7 @@ define internal ptr @v_b241() {
 }
 
 define internal ptr @v_b242() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2047,7 +2178,7 @@ define internal ptr @v_b242() {
 }
 
 define internal ptr @v_b243() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2055,7 +2186,7 @@ define internal ptr @v_b243() {
 }
 
 define internal ptr @v_b244() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2063,7 +2194,7 @@ define internal ptr @v_b244() {
 }
 
 define internal ptr @v_b245() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2071,7 +2202,7 @@ define internal ptr @v_b245() {
 }
 
 define internal ptr @v_b246() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2079,7 +2210,7 @@ define internal ptr @v_b246() {
 }
 
 define internal ptr @v_b247() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2087,7 +2218,7 @@ define internal ptr @v_b247() {
 }
 
 define internal ptr @v_b248() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2095,7 +2226,7 @@ define internal ptr @v_b248() {
 }
 
 define internal ptr @v_b249() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2103,7 +2234,7 @@ define internal ptr @v_b249() {
 }
 
 define internal ptr @v_b250() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2111,7 +2242,7 @@ define internal ptr @v_b250() {
 }
 
 define internal ptr @v_b251() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2119,7 +2250,7 @@ define internal ptr @v_b251() {
 }
 
 define internal ptr @v_b252() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2127,7 +2258,7 @@ define internal ptr @v_b252() {
 }
 
 define internal ptr @v_b253() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2135,7 +2266,7 @@ define internal ptr @v_b253() {
 }
 
 define internal ptr @v_b254() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2143,7 +2274,7 @@ define internal ptr @v_b254() {
 }
 
 define internal ptr @v_b255() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2151,7 +2282,7 @@ define internal ptr @v_b255() {
 }
 
 define internal ptr @v_b256() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2159,7 +2290,7 @@ define internal ptr @v_b256() {
 }
 
 define internal ptr @v_b257() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2167,7 +2298,7 @@ define internal ptr @v_b257() {
 }
 
 define internal ptr @v_b258() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2175,7 +2306,7 @@ define internal ptr @v_b258() {
 }
 
 define internal ptr @v_b259() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2183,7 +2314,7 @@ define internal ptr @v_b259() {
 }
 
 define internal ptr @v_b260() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2191,7 +2322,7 @@ define internal ptr @v_b260() {
 }
 
 define internal ptr @v_b261() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2199,7 +2330,7 @@ define internal ptr @v_b261() {
 }
 
 define internal ptr @v_b262() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2207,7 +2338,7 @@ define internal ptr @v_b262() {
 }
 
 define internal ptr @v_b263() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2215,7 +2346,7 @@ define internal ptr @v_b263() {
 }
 
 define internal ptr @v_b264() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2223,7 +2354,7 @@ define internal ptr @v_b264() {
 }
 
 define internal ptr @v_b265() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2231,7 +2362,7 @@ define internal ptr @v_b265() {
 }
 
 define internal ptr @v_b266() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2239,7 +2370,7 @@ define internal ptr @v_b266() {
 }
 
 define internal ptr @v_b267() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2247,7 +2378,7 @@ define internal ptr @v_b267() {
 }
 
 define internal ptr @v_b268() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2255,7 +2386,7 @@ define internal ptr @v_b268() {
 }
 
 define internal ptr @v_b269() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2263,7 +2394,7 @@ define internal ptr @v_b269() {
 }
 
 define internal ptr @v_b270() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2271,7 +2402,7 @@ define internal ptr @v_b270() {
 }
 
 define internal ptr @v_b271() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2279,7 +2410,7 @@ define internal ptr @v_b271() {
 }
 
 define internal ptr @v_b272() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2287,7 +2418,7 @@ define internal ptr @v_b272() {
 }
 
 define internal ptr @v_b273() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2295,7 +2426,7 @@ define internal ptr @v_b273() {
 }
 
 define internal ptr @v_b274() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2303,7 +2434,7 @@ define internal ptr @v_b274() {
 }
 
 define internal ptr @v_b275() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2311,7 +2442,7 @@ define internal ptr @v_b275() {
 }
 
 define internal ptr @v_b276() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2319,7 +2450,7 @@ define internal ptr @v_b276() {
 }
 
 define internal ptr @v_b277() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2327,7 +2458,7 @@ define internal ptr @v_b277() {
 }
 
 define internal ptr @v_b278() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2335,7 +2466,7 @@ define internal ptr @v_b278() {
 }
 
 define internal ptr @v_b279() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2343,7 +2474,7 @@ define internal ptr @v_b279() {
 }
 
 define internal ptr @v_b280() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2351,7 +2482,7 @@ define internal ptr @v_b280() {
 }
 
 define internal ptr @v_b281() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2359,7 +2490,7 @@ define internal ptr @v_b281() {
 }
 
 define internal ptr @v_b282() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2367,7 +2498,7 @@ define internal ptr @v_b282() {
 }
 
 define internal ptr @v_b283() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2375,7 +2506,7 @@ define internal ptr @v_b283() {
 }
 
 define internal ptr @v_b284() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2383,7 +2514,7 @@ define internal ptr @v_b284() {
 }
 
 define internal ptr @v_b285() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2391,7 +2522,7 @@ define internal ptr @v_b285() {
 }
 
 define internal ptr @v_b286() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2399,7 +2530,7 @@ define internal ptr @v_b286() {
 }
 
 define internal ptr @v_b287() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2407,7 +2538,7 @@ define internal ptr @v_b287() {
 }
 
 define internal ptr @v_b288() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2415,7 +2546,7 @@ define internal ptr @v_b288() {
 }
 
 define internal ptr @v_b289() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2423,7 +2554,7 @@ define internal ptr @v_b289() {
 }
 
 define internal ptr @v_b290() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2431,7 +2562,7 @@ define internal ptr @v_b290() {
 }
 
 define internal ptr @v_b291() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2439,7 +2570,7 @@ define internal ptr @v_b291() {
 }
 
 define internal ptr @v_b292() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2447,7 +2578,7 @@ define internal ptr @v_b292() {
 }
 
 define internal ptr @v_b293() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2455,7 +2586,7 @@ define internal ptr @v_b293() {
 }
 
 define internal ptr @v_b294() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2463,7 +2594,7 @@ define internal ptr @v_b294() {
 }
 
 define internal ptr @v_b295() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2471,7 +2602,7 @@ define internal ptr @v_b295() {
 }
 
 define internal ptr @v_b296() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2479,7 +2610,7 @@ define internal ptr @v_b296() {
 }
 
 define internal ptr @v_b297() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2487,7 +2618,7 @@ define internal ptr @v_b297() {
 }
 
 define internal ptr @v_b298() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2495,7 +2626,7 @@ define internal ptr @v_b298() {
 }
 
 define internal ptr @v_b299() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2503,7 +2634,7 @@ define internal ptr @v_b299() {
 }
 
 define internal ptr @v_b300() {
-  %t0 = call ptr @malloc(i64 8)
+  %t0 = call ptr @__alloc(i64 8, i32 0)
   %t1 = inttoptr i64 1 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
@@ -2512,305 +2643,605 @@ define internal ptr @v_b300() {
 
 define internal ptr @v_res() {
   %t0 = call ptr @v_b1()
+  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v_b2()
+  call void @__inc_ref(ptr %t1)
   %t2 = call ptr @v_b3()
+  call void @__inc_ref(ptr %t2)
   %t3 = call ptr @v_b4()
+  call void @__inc_ref(ptr %t3)
   %t4 = call ptr @v_b5()
+  call void @__inc_ref(ptr %t4)
   %t5 = call ptr @v_b6()
+  call void @__inc_ref(ptr %t5)
   %t6 = call ptr @v_b7()
+  call void @__inc_ref(ptr %t6)
   %t7 = call ptr @v_b8()
+  call void @__inc_ref(ptr %t7)
   %t8 = call ptr @v_b9()
+  call void @__inc_ref(ptr %t8)
   %t9 = call ptr @v_b10()
+  call void @__inc_ref(ptr %t9)
   %t10 = call ptr @v_b11()
+  call void @__inc_ref(ptr %t10)
   %t11 = call ptr @v_b12()
+  call void @__inc_ref(ptr %t11)
   %t12 = call ptr @v_b13()
+  call void @__inc_ref(ptr %t12)
   %t13 = call ptr @v_b14()
+  call void @__inc_ref(ptr %t13)
   %t14 = call ptr @v_b15()
+  call void @__inc_ref(ptr %t14)
   %t15 = call ptr @v_b16()
+  call void @__inc_ref(ptr %t15)
   %t16 = call ptr @v_b17()
+  call void @__inc_ref(ptr %t16)
   %t17 = call ptr @v_b18()
+  call void @__inc_ref(ptr %t17)
   %t18 = call ptr @v_b19()
+  call void @__inc_ref(ptr %t18)
   %t19 = call ptr @v_b20()
+  call void @__inc_ref(ptr %t19)
   %t20 = call ptr @v_b21()
+  call void @__inc_ref(ptr %t20)
   %t21 = call ptr @v_b22()
+  call void @__inc_ref(ptr %t21)
   %t22 = call ptr @v_b23()
+  call void @__inc_ref(ptr %t22)
   %t23 = call ptr @v_b24()
+  call void @__inc_ref(ptr %t23)
   %t24 = call ptr @v_b25()
+  call void @__inc_ref(ptr %t24)
   %t25 = call ptr @v_b26()
+  call void @__inc_ref(ptr %t25)
   %t26 = call ptr @v_b27()
+  call void @__inc_ref(ptr %t26)
   %t27 = call ptr @v_b28()
+  call void @__inc_ref(ptr %t27)
   %t28 = call ptr @v_b29()
+  call void @__inc_ref(ptr %t28)
   %t29 = call ptr @v_b30()
+  call void @__inc_ref(ptr %t29)
   %t30 = call ptr @v_b31()
+  call void @__inc_ref(ptr %t30)
   %t31 = call ptr @v_b32()
+  call void @__inc_ref(ptr %t31)
   %t32 = call ptr @v_b33()
+  call void @__inc_ref(ptr %t32)
   %t33 = call ptr @v_b34()
+  call void @__inc_ref(ptr %t33)
   %t34 = call ptr @v_b35()
+  call void @__inc_ref(ptr %t34)
   %t35 = call ptr @v_b36()
+  call void @__inc_ref(ptr %t35)
   %t36 = call ptr @v_b37()
+  call void @__inc_ref(ptr %t36)
   %t37 = call ptr @v_b38()
+  call void @__inc_ref(ptr %t37)
   %t38 = call ptr @v_b39()
+  call void @__inc_ref(ptr %t38)
   %t39 = call ptr @v_b40()
+  call void @__inc_ref(ptr %t39)
   %t40 = call ptr @v_b41()
+  call void @__inc_ref(ptr %t40)
   %t41 = call ptr @v_b42()
+  call void @__inc_ref(ptr %t41)
   %t42 = call ptr @v_b43()
+  call void @__inc_ref(ptr %t42)
   %t43 = call ptr @v_b44()
+  call void @__inc_ref(ptr %t43)
   %t44 = call ptr @v_b45()
+  call void @__inc_ref(ptr %t44)
   %t45 = call ptr @v_b46()
+  call void @__inc_ref(ptr %t45)
   %t46 = call ptr @v_b47()
+  call void @__inc_ref(ptr %t46)
   %t47 = call ptr @v_b48()
+  call void @__inc_ref(ptr %t47)
   %t48 = call ptr @v_b49()
+  call void @__inc_ref(ptr %t48)
   %t49 = call ptr @v_b50()
+  call void @__inc_ref(ptr %t49)
   %t50 = call ptr @v_b51()
+  call void @__inc_ref(ptr %t50)
   %t51 = call ptr @v_b52()
+  call void @__inc_ref(ptr %t51)
   %t52 = call ptr @v_b53()
+  call void @__inc_ref(ptr %t52)
   %t53 = call ptr @v_b54()
+  call void @__inc_ref(ptr %t53)
   %t54 = call ptr @v_b55()
+  call void @__inc_ref(ptr %t54)
   %t55 = call ptr @v_b56()
+  call void @__inc_ref(ptr %t55)
   %t56 = call ptr @v_b57()
+  call void @__inc_ref(ptr %t56)
   %t57 = call ptr @v_b58()
+  call void @__inc_ref(ptr %t57)
   %t58 = call ptr @v_b59()
+  call void @__inc_ref(ptr %t58)
   %t59 = call ptr @v_b60()
+  call void @__inc_ref(ptr %t59)
   %t60 = call ptr @v_b61()
+  call void @__inc_ref(ptr %t60)
   %t61 = call ptr @v_b62()
+  call void @__inc_ref(ptr %t61)
   %t62 = call ptr @v_b63()
+  call void @__inc_ref(ptr %t62)
   %t63 = call ptr @v_b64()
+  call void @__inc_ref(ptr %t63)
   %t64 = call ptr @v_b65()
+  call void @__inc_ref(ptr %t64)
   %t65 = call ptr @v_b66()
+  call void @__inc_ref(ptr %t65)
   %t66 = call ptr @v_b67()
+  call void @__inc_ref(ptr %t66)
   %t67 = call ptr @v_b68()
+  call void @__inc_ref(ptr %t67)
   %t68 = call ptr @v_b69()
+  call void @__inc_ref(ptr %t68)
   %t69 = call ptr @v_b70()
+  call void @__inc_ref(ptr %t69)
   %t70 = call ptr @v_b71()
+  call void @__inc_ref(ptr %t70)
   %t71 = call ptr @v_b72()
+  call void @__inc_ref(ptr %t71)
   %t72 = call ptr @v_b73()
+  call void @__inc_ref(ptr %t72)
   %t73 = call ptr @v_b74()
+  call void @__inc_ref(ptr %t73)
   %t74 = call ptr @v_b75()
+  call void @__inc_ref(ptr %t74)
   %t75 = call ptr @v_b76()
+  call void @__inc_ref(ptr %t75)
   %t76 = call ptr @v_b77()
+  call void @__inc_ref(ptr %t76)
   %t77 = call ptr @v_b78()
+  call void @__inc_ref(ptr %t77)
   %t78 = call ptr @v_b79()
+  call void @__inc_ref(ptr %t78)
   %t79 = call ptr @v_b80()
+  call void @__inc_ref(ptr %t79)
   %t80 = call ptr @v_b81()
+  call void @__inc_ref(ptr %t80)
   %t81 = call ptr @v_b82()
+  call void @__inc_ref(ptr %t81)
   %t82 = call ptr @v_b83()
+  call void @__inc_ref(ptr %t82)
   %t83 = call ptr @v_b84()
+  call void @__inc_ref(ptr %t83)
   %t84 = call ptr @v_b85()
+  call void @__inc_ref(ptr %t84)
   %t85 = call ptr @v_b86()
+  call void @__inc_ref(ptr %t85)
   %t86 = call ptr @v_b87()
+  call void @__inc_ref(ptr %t86)
   %t87 = call ptr @v_b88()
+  call void @__inc_ref(ptr %t87)
   %t88 = call ptr @v_b89()
+  call void @__inc_ref(ptr %t88)
   %t89 = call ptr @v_b90()
+  call void @__inc_ref(ptr %t89)
   %t90 = call ptr @v_b91()
+  call void @__inc_ref(ptr %t90)
   %t91 = call ptr @v_b92()
+  call void @__inc_ref(ptr %t91)
   %t92 = call ptr @v_b93()
+  call void @__inc_ref(ptr %t92)
   %t93 = call ptr @v_b94()
+  call void @__inc_ref(ptr %t93)
   %t94 = call ptr @v_b95()
+  call void @__inc_ref(ptr %t94)
   %t95 = call ptr @v_b96()
+  call void @__inc_ref(ptr %t95)
   %t96 = call ptr @v_b97()
+  call void @__inc_ref(ptr %t96)
   %t97 = call ptr @v_b98()
+  call void @__inc_ref(ptr %t97)
   %t98 = call ptr @v_b99()
+  call void @__inc_ref(ptr %t98)
   %t99 = call ptr @v_b100()
+  call void @__inc_ref(ptr %t99)
   %t100 = call ptr @v_b101()
+  call void @__inc_ref(ptr %t100)
   %t101 = call ptr @v_b102()
+  call void @__inc_ref(ptr %t101)
   %t102 = call ptr @v_b103()
+  call void @__inc_ref(ptr %t102)
   %t103 = call ptr @v_b104()
+  call void @__inc_ref(ptr %t103)
   %t104 = call ptr @v_b105()
+  call void @__inc_ref(ptr %t104)
   %t105 = call ptr @v_b106()
+  call void @__inc_ref(ptr %t105)
   %t106 = call ptr @v_b107()
+  call void @__inc_ref(ptr %t106)
   %t107 = call ptr @v_b108()
+  call void @__inc_ref(ptr %t107)
   %t108 = call ptr @v_b109()
+  call void @__inc_ref(ptr %t108)
   %t109 = call ptr @v_b110()
+  call void @__inc_ref(ptr %t109)
   %t110 = call ptr @v_b111()
+  call void @__inc_ref(ptr %t110)
   %t111 = call ptr @v_b112()
+  call void @__inc_ref(ptr %t111)
   %t112 = call ptr @v_b113()
+  call void @__inc_ref(ptr %t112)
   %t113 = call ptr @v_b114()
+  call void @__inc_ref(ptr %t113)
   %t114 = call ptr @v_b115()
+  call void @__inc_ref(ptr %t114)
   %t115 = call ptr @v_b116()
+  call void @__inc_ref(ptr %t115)
   %t116 = call ptr @v_b117()
+  call void @__inc_ref(ptr %t116)
   %t117 = call ptr @v_b118()
+  call void @__inc_ref(ptr %t117)
   %t118 = call ptr @v_b119()
+  call void @__inc_ref(ptr %t118)
   %t119 = call ptr @v_b120()
+  call void @__inc_ref(ptr %t119)
   %t120 = call ptr @v_b121()
+  call void @__inc_ref(ptr %t120)
   %t121 = call ptr @v_b122()
+  call void @__inc_ref(ptr %t121)
   %t122 = call ptr @v_b123()
+  call void @__inc_ref(ptr %t122)
   %t123 = call ptr @v_b124()
+  call void @__inc_ref(ptr %t123)
   %t124 = call ptr @v_b125()
+  call void @__inc_ref(ptr %t124)
   %t125 = call ptr @v_b126()
+  call void @__inc_ref(ptr %t125)
   %t126 = call ptr @v_b127()
+  call void @__inc_ref(ptr %t126)
   %t127 = call ptr @v_b128()
+  call void @__inc_ref(ptr %t127)
   %t128 = call ptr @v_b129()
+  call void @__inc_ref(ptr %t128)
   %t129 = call ptr @v_b130()
+  call void @__inc_ref(ptr %t129)
   %t130 = call ptr @v_b131()
+  call void @__inc_ref(ptr %t130)
   %t131 = call ptr @v_b132()
+  call void @__inc_ref(ptr %t131)
   %t132 = call ptr @v_b133()
+  call void @__inc_ref(ptr %t132)
   %t133 = call ptr @v_b134()
+  call void @__inc_ref(ptr %t133)
   %t134 = call ptr @v_b135()
+  call void @__inc_ref(ptr %t134)
   %t135 = call ptr @v_b136()
+  call void @__inc_ref(ptr %t135)
   %t136 = call ptr @v_b137()
+  call void @__inc_ref(ptr %t136)
   %t137 = call ptr @v_b138()
+  call void @__inc_ref(ptr %t137)
   %t138 = call ptr @v_b139()
+  call void @__inc_ref(ptr %t138)
   %t139 = call ptr @v_b140()
+  call void @__inc_ref(ptr %t139)
   %t140 = call ptr @v_b141()
+  call void @__inc_ref(ptr %t140)
   %t141 = call ptr @v_b142()
+  call void @__inc_ref(ptr %t141)
   %t142 = call ptr @v_b143()
+  call void @__inc_ref(ptr %t142)
   %t143 = call ptr @v_b144()
+  call void @__inc_ref(ptr %t143)
   %t144 = call ptr @v_b145()
+  call void @__inc_ref(ptr %t144)
   %t145 = call ptr @v_b146()
+  call void @__inc_ref(ptr %t145)
   %t146 = call ptr @v_b147()
+  call void @__inc_ref(ptr %t146)
   %t147 = call ptr @v_b148()
+  call void @__inc_ref(ptr %t147)
   %t148 = call ptr @v_b149()
+  call void @__inc_ref(ptr %t148)
   %t149 = call ptr @v_b150()
+  call void @__inc_ref(ptr %t149)
   %t150 = call ptr @v_b151()
+  call void @__inc_ref(ptr %t150)
   %t151 = call ptr @v_b152()
+  call void @__inc_ref(ptr %t151)
   %t152 = call ptr @v_b153()
+  call void @__inc_ref(ptr %t152)
   %t153 = call ptr @v_b154()
+  call void @__inc_ref(ptr %t153)
   %t154 = call ptr @v_b155()
+  call void @__inc_ref(ptr %t154)
   %t155 = call ptr @v_b156()
+  call void @__inc_ref(ptr %t155)
   %t156 = call ptr @v_b157()
+  call void @__inc_ref(ptr %t156)
   %t157 = call ptr @v_b158()
+  call void @__inc_ref(ptr %t157)
   %t158 = call ptr @v_b159()
+  call void @__inc_ref(ptr %t158)
   %t159 = call ptr @v_b160()
+  call void @__inc_ref(ptr %t159)
   %t160 = call ptr @v_b161()
+  call void @__inc_ref(ptr %t160)
   %t161 = call ptr @v_b162()
+  call void @__inc_ref(ptr %t161)
   %t162 = call ptr @v_b163()
+  call void @__inc_ref(ptr %t162)
   %t163 = call ptr @v_b164()
+  call void @__inc_ref(ptr %t163)
   %t164 = call ptr @v_b165()
+  call void @__inc_ref(ptr %t164)
   %t165 = call ptr @v_b166()
+  call void @__inc_ref(ptr %t165)
   %t166 = call ptr @v_b167()
+  call void @__inc_ref(ptr %t166)
   %t167 = call ptr @v_b168()
+  call void @__inc_ref(ptr %t167)
   %t168 = call ptr @v_b169()
+  call void @__inc_ref(ptr %t168)
   %t169 = call ptr @v_b170()
+  call void @__inc_ref(ptr %t169)
   %t170 = call ptr @v_b171()
+  call void @__inc_ref(ptr %t170)
   %t171 = call ptr @v_b172()
+  call void @__inc_ref(ptr %t171)
   %t172 = call ptr @v_b173()
+  call void @__inc_ref(ptr %t172)
   %t173 = call ptr @v_b174()
+  call void @__inc_ref(ptr %t173)
   %t174 = call ptr @v_b175()
+  call void @__inc_ref(ptr %t174)
   %t175 = call ptr @v_b176()
+  call void @__inc_ref(ptr %t175)
   %t176 = call ptr @v_b177()
+  call void @__inc_ref(ptr %t176)
   %t177 = call ptr @v_b178()
+  call void @__inc_ref(ptr %t177)
   %t178 = call ptr @v_b179()
+  call void @__inc_ref(ptr %t178)
   %t179 = call ptr @v_b180()
+  call void @__inc_ref(ptr %t179)
   %t180 = call ptr @v_b181()
+  call void @__inc_ref(ptr %t180)
   %t181 = call ptr @v_b182()
+  call void @__inc_ref(ptr %t181)
   %t182 = call ptr @v_b183()
+  call void @__inc_ref(ptr %t182)
   %t183 = call ptr @v_b184()
+  call void @__inc_ref(ptr %t183)
   %t184 = call ptr @v_b185()
+  call void @__inc_ref(ptr %t184)
   %t185 = call ptr @v_b186()
+  call void @__inc_ref(ptr %t185)
   %t186 = call ptr @v_b187()
+  call void @__inc_ref(ptr %t186)
   %t187 = call ptr @v_b188()
+  call void @__inc_ref(ptr %t187)
   %t188 = call ptr @v_b189()
+  call void @__inc_ref(ptr %t188)
   %t189 = call ptr @v_b190()
+  call void @__inc_ref(ptr %t189)
   %t190 = call ptr @v_b191()
+  call void @__inc_ref(ptr %t190)
   %t191 = call ptr @v_b192()
+  call void @__inc_ref(ptr %t191)
   %t192 = call ptr @v_b193()
+  call void @__inc_ref(ptr %t192)
   %t193 = call ptr @v_b194()
+  call void @__inc_ref(ptr %t193)
   %t194 = call ptr @v_b195()
+  call void @__inc_ref(ptr %t194)
   %t195 = call ptr @v_b196()
+  call void @__inc_ref(ptr %t195)
   %t196 = call ptr @v_b197()
+  call void @__inc_ref(ptr %t196)
   %t197 = call ptr @v_b198()
+  call void @__inc_ref(ptr %t197)
   %t198 = call ptr @v_b199()
+  call void @__inc_ref(ptr %t198)
   %t199 = call ptr @v_b200()
+  call void @__inc_ref(ptr %t199)
   %t200 = call ptr @v_b201()
+  call void @__inc_ref(ptr %t200)
   %t201 = call ptr @v_b202()
+  call void @__inc_ref(ptr %t201)
   %t202 = call ptr @v_b203()
+  call void @__inc_ref(ptr %t202)
   %t203 = call ptr @v_b204()
+  call void @__inc_ref(ptr %t203)
   %t204 = call ptr @v_b205()
+  call void @__inc_ref(ptr %t204)
   %t205 = call ptr @v_b206()
+  call void @__inc_ref(ptr %t205)
   %t206 = call ptr @v_b207()
+  call void @__inc_ref(ptr %t206)
   %t207 = call ptr @v_b208()
+  call void @__inc_ref(ptr %t207)
   %t208 = call ptr @v_b209()
+  call void @__inc_ref(ptr %t208)
   %t209 = call ptr @v_b210()
+  call void @__inc_ref(ptr %t209)
   %t210 = call ptr @v_b211()
+  call void @__inc_ref(ptr %t210)
   %t211 = call ptr @v_b212()
+  call void @__inc_ref(ptr %t211)
   %t212 = call ptr @v_b213()
+  call void @__inc_ref(ptr %t212)
   %t213 = call ptr @v_b214()
+  call void @__inc_ref(ptr %t213)
   %t214 = call ptr @v_b215()
+  call void @__inc_ref(ptr %t214)
   %t215 = call ptr @v_b216()
+  call void @__inc_ref(ptr %t215)
   %t216 = call ptr @v_b217()
+  call void @__inc_ref(ptr %t216)
   %t217 = call ptr @v_b218()
+  call void @__inc_ref(ptr %t217)
   %t218 = call ptr @v_b219()
+  call void @__inc_ref(ptr %t218)
   %t219 = call ptr @v_b220()
+  call void @__inc_ref(ptr %t219)
   %t220 = call ptr @v_b221()
+  call void @__inc_ref(ptr %t220)
   %t221 = call ptr @v_b222()
+  call void @__inc_ref(ptr %t221)
   %t222 = call ptr @v_b223()
+  call void @__inc_ref(ptr %t222)
   %t223 = call ptr @v_b224()
+  call void @__inc_ref(ptr %t223)
   %t224 = call ptr @v_b225()
+  call void @__inc_ref(ptr %t224)
   %t225 = call ptr @v_b226()
+  call void @__inc_ref(ptr %t225)
   %t226 = call ptr @v_b227()
+  call void @__inc_ref(ptr %t226)
   %t227 = call ptr @v_b228()
+  call void @__inc_ref(ptr %t227)
   %t228 = call ptr @v_b229()
+  call void @__inc_ref(ptr %t228)
   %t229 = call ptr @v_b230()
+  call void @__inc_ref(ptr %t229)
   %t230 = call ptr @v_b231()
+  call void @__inc_ref(ptr %t230)
   %t231 = call ptr @v_b232()
+  call void @__inc_ref(ptr %t231)
   %t232 = call ptr @v_b233()
+  call void @__inc_ref(ptr %t232)
   %t233 = call ptr @v_b234()
+  call void @__inc_ref(ptr %t233)
   %t234 = call ptr @v_b235()
+  call void @__inc_ref(ptr %t234)
   %t235 = call ptr @v_b236()
+  call void @__inc_ref(ptr %t235)
   %t236 = call ptr @v_b237()
+  call void @__inc_ref(ptr %t236)
   %t237 = call ptr @v_b238()
+  call void @__inc_ref(ptr %t237)
   %t238 = call ptr @v_b239()
+  call void @__inc_ref(ptr %t238)
   %t239 = call ptr @v_b240()
+  call void @__inc_ref(ptr %t239)
   %t240 = call ptr @v_b241()
+  call void @__inc_ref(ptr %t240)
   %t241 = call ptr @v_b242()
+  call void @__inc_ref(ptr %t241)
   %t242 = call ptr @v_b243()
+  call void @__inc_ref(ptr %t242)
   %t243 = call ptr @v_b244()
+  call void @__inc_ref(ptr %t243)
   %t244 = call ptr @v_b245()
+  call void @__inc_ref(ptr %t244)
   %t245 = call ptr @v_b246()
+  call void @__inc_ref(ptr %t245)
   %t246 = call ptr @v_b247()
+  call void @__inc_ref(ptr %t246)
   %t247 = call ptr @v_b248()
+  call void @__inc_ref(ptr %t247)
   %t248 = call ptr @v_b249()
+  call void @__inc_ref(ptr %t248)
   %t249 = call ptr @v_b250()
+  call void @__inc_ref(ptr %t249)
   %t250 = call ptr @v_b251()
+  call void @__inc_ref(ptr %t250)
   %t251 = call ptr @v_b252()
+  call void @__inc_ref(ptr %t251)
   %t252 = call ptr @v_b253()
+  call void @__inc_ref(ptr %t252)
   %t253 = call ptr @v_b254()
+  call void @__inc_ref(ptr %t253)
   %t254 = call ptr @v_b255()
+  call void @__inc_ref(ptr %t254)
   %t255 = call ptr @v_b256()
+  call void @__inc_ref(ptr %t255)
   %t256 = call ptr @v_b257()
+  call void @__inc_ref(ptr %t256)
   %t257 = call ptr @v_b258()
+  call void @__inc_ref(ptr %t257)
   %t258 = call ptr @v_b259()
+  call void @__inc_ref(ptr %t258)
   %t259 = call ptr @v_b260()
+  call void @__inc_ref(ptr %t259)
   %t260 = call ptr @v_b261()
+  call void @__inc_ref(ptr %t260)
   %t261 = call ptr @v_b262()
+  call void @__inc_ref(ptr %t261)
   %t262 = call ptr @v_b263()
+  call void @__inc_ref(ptr %t262)
   %t263 = call ptr @v_b264()
+  call void @__inc_ref(ptr %t263)
   %t264 = call ptr @v_b265()
+  call void @__inc_ref(ptr %t264)
   %t265 = call ptr @v_b266()
+  call void @__inc_ref(ptr %t265)
   %t266 = call ptr @v_b267()
+  call void @__inc_ref(ptr %t266)
   %t267 = call ptr @v_b268()
+  call void @__inc_ref(ptr %t267)
   %t268 = call ptr @v_b269()
+  call void @__inc_ref(ptr %t268)
   %t269 = call ptr @v_b270()
+  call void @__inc_ref(ptr %t269)
   %t270 = call ptr @v_b271()
+  call void @__inc_ref(ptr %t270)
   %t271 = call ptr @v_b272()
+  call void @__inc_ref(ptr %t271)
   %t272 = call ptr @v_b273()
+  call void @__inc_ref(ptr %t272)
   %t273 = call ptr @v_b274()
+  call void @__inc_ref(ptr %t273)
   %t274 = call ptr @v_b275()
+  call void @__inc_ref(ptr %t274)
   %t275 = call ptr @v_b276()
+  call void @__inc_ref(ptr %t275)
   %t276 = call ptr @v_b277()
+  call void @__inc_ref(ptr %t276)
   %t277 = call ptr @v_b278()
+  call void @__inc_ref(ptr %t277)
   %t278 = call ptr @v_b279()
+  call void @__inc_ref(ptr %t278)
   %t279 = call ptr @v_b280()
+  call void @__inc_ref(ptr %t279)
   %t280 = call ptr @v_b281()
+  call void @__inc_ref(ptr %t280)
   %t281 = call ptr @v_b282()
+  call void @__inc_ref(ptr %t281)
   %t282 = call ptr @v_b283()
+  call void @__inc_ref(ptr %t282)
   %t283 = call ptr @v_b284()
+  call void @__inc_ref(ptr %t283)
   %t284 = call ptr @v_b285()
+  call void @__inc_ref(ptr %t284)
   %t285 = call ptr @v_b286()
+  call void @__inc_ref(ptr %t285)
   %t286 = call ptr @v_b287()
+  call void @__inc_ref(ptr %t286)
   %t287 = call ptr @v_b288()
+  call void @__inc_ref(ptr %t287)
   %t288 = call ptr @v_b289()
+  call void @__inc_ref(ptr %t288)
   %t289 = call ptr @v_b290()
+  call void @__inc_ref(ptr %t289)
   %t290 = call ptr @v_b291()
+  call void @__inc_ref(ptr %t290)
   %t291 = call ptr @v_b292()
+  call void @__inc_ref(ptr %t291)
   %t292 = call ptr @v_b293()
+  call void @__inc_ref(ptr %t292)
   %t293 = call ptr @v_b294()
+  call void @__inc_ref(ptr %t293)
   %t294 = call ptr @v_b295()
+  call void @__inc_ref(ptr %t294)
   %t295 = call ptr @v_b296()
+  call void @__inc_ref(ptr %t295)
   %t296 = call ptr @v_b297()
+  call void @__inc_ref(ptr %t296)
   %t297 = call ptr @v_b298()
+  call void @__inc_ref(ptr %t297)
   %t298 = call ptr @v_b299()
+  call void @__inc_ref(ptr %t298)
   %t299 = call ptr @v_b300()
+  call void @__inc_ref(ptr %t299)
   %t300 = call ptr @v_and(ptr %t298, ptr %t299)
   %t301 = call ptr @v_and(ptr %t297, ptr %t300)
   %t302 = call ptr @v_and(ptr %t296, ptr %t301)
@@ -3114,19 +3545,20 @@ define internal ptr @v_res() {
 }
 
 define internal ptr @v_main() {
-  %t0 = call ptr @malloc(i64 24)
+  %t0 = call ptr @__alloc(i64 24, i32 2)
   %t1 = inttoptr i64 7 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v_res()
+  call void @__inc_ref(ptr %t3)
   %t4 = call ptr @v_showBool(ptr %t3)
   %t5 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t4, ptr %t5
-  %t6 = call ptr @malloc(i64 16)
+  %t6 = call ptr @__alloc(i64 16, i32 1)
   %t7 = inttoptr i64 5 to ptr
   %t8 = getelementptr ptr, ptr %t6, i32 0
   store ptr %t7, ptr %t8
-  %t9 = call ptr @malloc(i64 8)
+  %t9 = call ptr @__alloc(i64 8, i32 0)
   %t10 = inttoptr i64 0 to ptr
   %t11 = getelementptr ptr, ptr %t9, i32 0
   store ptr %t10, ptr %t11
@@ -3157,13 +3589,13 @@ with_arg:
   br i1 %need_ok, label %do_convert, label %no_arg
 do_convert:
   %needed64 = sext i32 %needed to i64
-  %buf = call ptr @malloc(i64 %needed64)
+  %buf = call ptr @__alloc(i64 %needed64, i32 0)
   %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)
   br label %call_main
 no_arg:
   br label %call_main
 call_main:
-  %input = phi ptr [%buf, %do_convert], [@.empty, %no_arg]
+  %input = phi ptr [%buf, %do_convert], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
   store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)

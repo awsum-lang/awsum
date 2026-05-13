@@ -19,6 +19,7 @@ function v_runIO(v_io){
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
+                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -36,12 +37,12 @@ function v_advanceStep(v_x){
       const __s = v_x;
       switch (__s[0]) {
         case 19: {
-          const __t0 = [20];
+          const __t0 = (v_x[0] = 20, v_x);
           v_x = __t0;
           continue;
         }
         case 20: {
-          const __t0 = [21];
+          const __t0 = (v_x[0] = 21, v_x);
           v_x = __t0;
           continue;
         }

@@ -1,0 +1,94 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+dispatchInner:
+  param           x                               count=1
+  row-case        b                               count=0
+
+describeMaybe:
+  param           m                               count=1
+  case-pattern    inner                           count=0
+
+describeLst:
+  param           xs                              count=1
+
+$cps$describeLst:
+  param           xs                              count=2
+  param           $k                              count=1
+  case-pattern    h                               count=0
+  case-pattern    t                               count=0
+
+$apply$describeLst:
+  param           $k                              count=1
+  param           $x                              count=3
+  case-pattern    $pk_23                          count=0
+  case-pattern    h                               count=0
+  case-pattern    $do_e_35_5                      count=0
+  case-pattern    rest                            count=0
+
+describeEither:
+  param           r                               count=1
+  case-pattern    _e                              count=0
+  case-pattern    m                               count=0
+
+summary:
+  case-pattern    $do_e_45_3                      count=1
+  case-pattern    a                               count=1
+  case-pattern    $do_e_46_3                      count=1
+  case-pattern    b                               count=1
+  case-pattern    $do_e_47_3                      count=1
+  case-pattern    c                               count=1
+  case-pattern    $do_e_48_3                      count=1
+  case-pattern    s0                              count=1
+  case-pattern    $do_e_49_3                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_50_3                      count=1
+  case-pattern    s2                              count=1
+
+$lift$7:
+  param           __input                         count=1
+
+$cps$$lift$7:
+  param           __input                         count=2
+  param           $k                              count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+
+$apply$$lift$7:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_25                          count=0
+  case-pattern    __f0                            count=0
+
+$lift$8:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+
+$lift$9:
+  param           __input                         count=1
+
+$cps$$lift$9:
+  param           __input                         count=2
+  param           $k                              count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+
+$apply$$lift$9:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_27                          count=0
+  case-pattern    __f0                            count=0
+
+$lift$10:
+  param           __input                         count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f0                            count=0
+
+$let$11:
+  param           res                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+

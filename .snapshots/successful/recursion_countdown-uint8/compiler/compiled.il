@@ -195,6 +195,10 @@
   IL_tco_arm_0:
     pop
     ldloc.1
+    ldnull
+    starg.s 0
+
+
     starg.s 0
     br IL_tco_loop
   }
@@ -312,6 +316,11 @@
     ldc.i4.2
     ldarg.0
     stelem.ref
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -354,8 +363,8 @@
     stloc.2
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -365,6 +374,11 @@
     ldc.i4.1
     ldloc.2
     stelem.ref
+    ldnull
+    starg.s 0
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -390,8 +404,8 @@
     stloc.3
     pop
     ldloc.0
-    ldc.i4.2
-    newarr [System.Runtime]System.Object
+    ldarg.1
+    castclass object[]
     dup
     ldc.i4.0
     ldc.i4.3
@@ -411,6 +425,12 @@
     ldloc.3
     stelem.ref
     stelem.ref
+    ldnull
+    starg.s 0
+
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -424,6 +444,14 @@
     ldloc.3
     ldloc.2
     call object AwsumMain::__concat(object, object)
+    ldnull
+    starg.s 1
+    ldnull
+    starg.s 0
+
+
+
+
     starg.s 1
     starg.s 0
     br IL_tco_loop

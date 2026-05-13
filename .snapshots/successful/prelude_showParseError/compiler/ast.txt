@@ -1,0 +1,130 @@
+Program
+    { imports =
+        [ ImportDecl
+            [ BlockComment " Direct test of `showParseError`: renders the sentinel returned by
+               `parseInt32` / `parseUInt8` / `parseUInt32` on malformed input. " ]
+            ( "IO" :| [ "Stdout" ] ) Nothing
+        ]
+    , decls = Sig
+        ( SrcSpan
+            { spanStartLine = 5
+            , spanStartCol = 1
+            , spanEndLine = 5
+            , spanEndCol = 21
+            }
+        ) "main"
+        ( TyApp
+            ( SrcSpan
+                { spanStartLine = 5
+                , spanStartCol = 8
+                , spanEndLine = 5
+                , spanEndCol = 21
+                }
+            )
+            ( TyApp
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 8
+                    , spanEndLine = 5
+                    , spanEndCol = 16
+                    }
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 8
+                        , spanEndLine = 5
+                        , spanEndCol = 10
+                        }
+                    ) "IO"
+                )
+                ( TyCon
+                    ( SrcSpan
+                        { spanStartLine = 5
+                        , spanStartCol = 11
+                        , spanEndLine = 5
+                        , spanEndCol = 16
+                        }
+                    ) "Never"
+                )
+            )
+            ( TyCon
+                ( SrcSpan
+                    { spanStartLine = 5
+                    , spanStartCol = 17
+                    , spanEndLine = 5
+                    , spanEndCol = 21
+                    }
+                ) "Unit"
+            )
+        ) Nothing :|
+        [ FunDef
+            ( SrcSpan
+                { spanStartLine = 6
+                , spanStartCol = 1
+                , spanEndLine = 6
+                , spanEndCol = 51
+                }
+            ) "main" []
+            ( EApp
+                ( SrcSpan
+                    { spanStartLine = 6
+                    , spanStartCol = 8
+                    , spanEndLine = 6
+                    , spanEndCol = 51
+                    }
+                )
+                ( EVar
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 8
+                        , spanEndLine = 6
+                        , spanEndCol = 24
+                        }
+                    )
+                    ( QName
+                        [ "IO"
+                        , "Stdout"
+                        ] "print"
+                    )
+                )
+                ( EParens
+                    ( SrcSpan
+                        { spanStartLine = 6
+                        , spanStartCol = 24
+                        , spanEndLine = 6
+                        , spanEndCol = 51
+                        }
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 6
+                            , spanStartCol = 25
+                            , spanEndLine = 6
+                            , spanEndCol = 50
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 25
+                                , spanEndLine = 6
+                                , spanEndCol = 40
+                                }
+                            )
+                            ( QName [] "showParseError" )
+                        )
+                        ( ECon
+                            ( SrcSpan
+                                { spanStartLine = 6
+                                , spanStartCol = 40
+                                , spanEndLine = 6
+                                , spanEndCol = 50
+                                }
+                            ) "ParseError"
+                        )
+                    )
+                )
+            ) Nothing
+        ]
+    }

@@ -7,23 +7,77 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 87))
-  (data (i32.const 64) "\00\00\00\00\00\00\00\00")
-  (data (i32.const 72) "\07\00\00\00\07\00\00\00wrapped")
+  (global $heap (mut i32) (i32.const 111))
+  (global $__wl_buf (mut i32) (i32.const 0))
+  (global $__wl_top (mut i32) (i32.const 0))
+  (global $__wl_cap (mut i32) (i32.const 0))
+  (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
+  (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00wrapped")
   (table 4 funcref)
   (elem (i32.const 0) $v_runIO $v_unwrap $v__con_Box $v__df_wrap_0)
 
+;; ──────────────────────────────────────────────────────────────
+;; Per-size-bin freelist allocator with 12-byte header.
+;;
+;; Each block carries a 12-byte header:
+;;   block[0..4]  = flag (size class for heap, 0 for literal)
+;;   block[4..8]  = refcount (1 on alloc, dec on drop, 0 → free)
+;;   block[8..12] = shape (#ptr fields starting at slot 1; 0 by
+;;                  default — strings/boxed/nullary keep it,
+;;                  CCon/CRow emit override it to arity)
+;; flag values:
+;;   flag == 0           — literal (data-section string), no reclaim
+;;   flag == 8|16|…|4096 — heap, size class encoded in flag
+;;   flag >  4096        — heap, too large for any bin (leaks on free)
+;; user_ptr = block + 12. Existing readers (byte_count at
+;; user_ptr+0, ADT tag at user_ptr+0, payload at user_ptr+8, …)
+;; keep working unchanged.
+;;
+;; Bin freelist heads live in linear memory at offsets 24, 28,
+;; 32, …, 60 (10 i32 slots for size classes 8, 16, 32, 64, 128,
+;; 256, 512, 1024, 2048, 4096). Memory is zero-initialised by the
+;; WASM runtime so all bins start empty. Bytes 0..19 stay
+;; reserved for WASI scratch (see '$__drop_tmp' comment).
+;;
+;; Free block layout: block[0..4] flag preserved across free→alloc;
+;; block[8..12] re-used to hold next-ptr in freelist while free.
+;; (Using slot 8 not slot 4 because refcount at slot 4 sits in the
+;; user-visible area and pollutes future user reads if not cleared.)
   (func $__alloc (param $size i32) (result i32)
+    (return (call $__alloc_shaped (local.get $size) (i32.const 0))))
+  (func $__alloc_shaped (param $size i32) (param $shape i32) (result i32)
+    (local $rounded i32)
+    (local $bin_addr i32)
+    (local $head i32)
     (local $ptr i32)
+    ;; Round up to next power-of-2 (min 8): 1 << (32 - clz(size - 1)).
+    (local.set $rounded
+      (i32.shl (i32.const 1)
+        (i32.sub (i32.const 32) (i32.clz (i32.sub (local.get $size) (i32.const 1))))))
+    (if (i32.lt_u (local.get $rounded) (i32.const 8))
+      (then (local.set $rounded (i32.const 8))))
+    ;; If rounded ≤ 4096 try popping the matching bin first.
+    (if (i32.le_u (local.get $rounded) (i32.const 4096))
+      (then
+        ;; bin_addr = 24 + (ctz(rounded) - 3) * 4
+        (local.set $bin_addr
+          (i32.add (i32.const 24)
+            (i32.shl (i32.sub (i32.ctz (local.get $rounded)) (i32.const 3)) (i32.const 2))))
+        (local.set $head (i32.load (local.get $bin_addr)))
+        (if (local.get $head)
+          (then
+            ;; Pop: bin head := next-ptr stashed in block[8..12] while
+            ;; the block was free. Flag at head[0] still equals
+            ;; 'rounded'. Re-initialise refcount=1, shape=$shape.
+            (i32.store (local.get $bin_addr)
+              (i32.load (i32.add (local.get $head) (i32.const 8))))
+            (i32.store (i32.add (local.get $head) (i32.const 4)) (i32.const 1))
+            (i32.store (i32.add (local.get $head) (i32.const 8)) (local.get $shape))
+            (return (i32.add (local.get $head) (i32.const 12)))))))
+    ;; Bump path: 4-byte aligned, store flag/refcount/shape header,
+    ;; grow memory on demand.
     (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))
-    (global.set $heap (i32.add (local.get $ptr) (local.get $size)))
-    ;; Grow until the heap fits. A single 'memory.grow 1' is not
-    ;; enough when a single allocation (or the cumulative demand
-    ;; of a CPS-defunc'd non-tail recursion) overshoots by more
-    ;; than one page. Trap on grow failure (memory.grow returns -1
-    ;; at the wasm32 4 GiB cap or any engine memory limit) — OOM
-    ;; surfaces as an immediate wasm trap instead of an infinite
-    ;; loop in the allocator.
+    (global.set $heap (i32.add (i32.add (local.get $ptr) (i32.const 12)) (local.get $rounded)))
     (block $grow_done
       (loop $grow_loop
         (br_if $grow_done
@@ -32,7 +86,127 @@
         (if (i32.eq (memory.grow (i32.const 1)) (i32.const -1))
           (then (unreachable)))
         (br $grow_loop)))
-    (local.get $ptr))
+    (i32.store (local.get $ptr) (local.get $rounded))
+    (i32.store (i32.add (local.get $ptr) (i32.const 4)) (i32.const 1))
+    (i32.store (i32.add (local.get $ptr) (i32.const 8)) (local.get $shape))
+    (i32.add (local.get $ptr) (i32.const 12)))
+
+
+;; '$__free' reads the 4-byte flag prefix at (p - 12):
+;;   flag == 0 → literal, no-op (safe to call on '@.empty' / pool ptr).
+;;   flag > 4096 → huge alloc, no bin can hold it, leak.
+;;   otherwise → push block onto bin[flag] freelist. Block's first
+;;     4 bytes (flag) are preserved; next-ptr is stored at slot 8 of
+;;     the user area (= p - 4 in absolute terms, since user starts
+;;     at block + 12 and we want to write at block + 8).
+  (func $__free (param $p i32)
+    (local $flag i32)
+    (local $bin_addr i32)
+    (local $cur i32)
+    (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
+    (if (i32.eqz (local.get $flag)) (then (return)))
+    (if (i32.gt_u (local.get $flag) (i32.const 4096)) (then (return)))
+    (local.set $bin_addr
+      (i32.add (i32.const 24)
+        (i32.shl (i32.sub (i32.ctz (local.get $flag)) (i32.const 3)) (i32.const 2))))
+    (local.set $cur (i32.load (local.get $bin_addr)))
+    (i32.store (i32.sub (local.get $p) (i32.const 4)) (local.get $cur))
+    (i32.store (local.get $bin_addr) (i32.sub (local.get $p) (i32.const 12))))
+
+
+  (func $__inc_ref (param $p i32)
+    (local $flag i32)
+    (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
+    (if (i32.eqz (local.get $flag)) (then (return)))
+    (i32.store (i32.sub (local.get $p) (i32.const 8))
+      (i32.add (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1))))
+
+
+  (func $__free_worklist_push (param $p i32)
+    (local $top i32)
+    (local $cap i32)
+    (local $new_cap i32)
+    (local $new_buf i32)
+    (local $old_buf i32)
+    (local $i i32)
+    (local.set $top (global.get $__wl_top))
+    (local.set $cap (global.get $__wl_cap))
+    (if (i32.eq (local.get $top) (local.get $cap))
+      (then
+        (if (i32.eqz (local.get $cap))
+          (then (local.set $new_cap (i32.const 16)))
+          (else (local.set $new_cap (i32.shl (local.get $cap) (i32.const 1)))))
+        (local.set $new_buf
+          (call $__alloc_shaped (i32.shl (local.get $new_cap) (i32.const 2)) (i32.const 0)))
+        (local.set $old_buf (global.get $__wl_buf))
+        ;; Copy old worklist contents.
+        (local.set $i (i32.const 0))
+        (block $copy_break
+          (loop $copy_loop
+            (br_if $copy_break (i32.ge_u (local.get $i) (local.get $top)))
+            (i32.store
+              (i32.add (local.get $new_buf) (i32.shl (local.get $i) (i32.const 2)))
+              (i32.load
+                (i32.add (local.get $old_buf) (i32.shl (local.get $i) (i32.const 2)))))
+            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+            (br $copy_loop)))
+        (if (local.get $old_buf)
+          (then (call $__free (local.get $old_buf))))
+        (global.set $__wl_buf (local.get $new_buf))
+        (global.set $__wl_cap (local.get $new_cap))))
+    (i32.store
+      (i32.add (global.get $__wl_buf) (i32.shl (local.get $top) (i32.const 2)))
+      (local.get $p))
+    (global.set $__wl_top (i32.add (local.get $top) (i32.const 1))))
+
+
+  (func $__free_recursive (param $p i32)
+    (local $flag i32)
+    (local $rc i32)
+    (local $shape i32)
+    (local $i i32)
+    (local $top i32)
+    (block $done
+      (loop $outer
+        (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
+        (block $next
+          (br_if $next (i32.eqz (local.get $flag)))
+          (local.set $rc
+            (i32.sub (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1)))
+          (i32.store (i32.sub (local.get $p) (i32.const 8)) (local.get $rc))
+          (br_if $next (local.get $rc))
+          (local.set $shape (i32.load (i32.sub (local.get $p) (i32.const 4))))
+          (if (i32.eqz (local.get $shape))
+            (then
+              (call $__free (local.get $p))
+              (br $next)))
+          ;; Push non-last children (slots 1..shape-1) onto the worklist.
+          (local.set $i (i32.const 1))
+          (block $push_break
+            (loop $push_loop
+              (br_if $push_break (i32.ge_u (local.get $i) (local.get $shape)))
+              (call $__free_worklist_push
+                (i32.load
+                  (i32.add (local.get $p) (i32.shl (local.get $i) (i32.const 2)))))
+              (local.set $i (i32.add (local.get $i) (i32.const 1)))
+              (br $push_loop)))
+          ;; Last slot: consume iteratively as the new $p, free the
+          ;; current block, re-enter $outer with $p := child.
+          (local.set $i
+            (i32.load
+              (i32.add (local.get $p) (i32.shl (local.get $shape) (i32.const 2)))))
+          (call $__free (local.get $p))
+          (local.set $p (local.get $i))
+          (br $outer))
+        ;; Pop the next pending pointer; exit on empty.
+        (local.set $top (global.get $__wl_top))
+        (br_if $done (i32.eqz (local.get $top)))
+        (local.set $top (i32.sub (local.get $top) (i32.const 1)))
+        (global.set $__wl_top (local.get $top))
+        (local.set $p
+          (i32.load
+            (i32.add (global.get $__wl_buf) (i32.shl (local.get $top) (i32.const 2)))))
+        (br $outer))))
 
 
   (func $__memcpy (param $dst i32) (param $src i32) (param $len i32)
@@ -56,6 +230,7 @@
     (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
     (local.set $unit (call $__alloc (i32.const 4)))
     (i32.store (local.get $unit) (i32.const 0))
+    (call $__free_recursive (local.get $s))
     (local.get $unit))
 
 
@@ -86,10 +261,10 @@
       (then
         (local.set $inner (call $__alloc (i32.const 4)))
         (i32.store (local.get $inner) (i32.const 15))
-        (local.set $row (call $__alloc (i32.const 8)))
+        (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $row) (i32.const 589989748))
         (i32.store offset=4 (local.get $row) (local.get $inner))
-        (local.set $cell (call $__alloc (i32.const 8)))
+        (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $cell) (i32.const 3))
         (i32.store offset=4 (local.get $cell) (local.get $row))
         (local.get $cell))
@@ -98,10 +273,10 @@
           (then
             (local.set $inner (call $__alloc (i32.const 4)))
             (i32.store (local.get $inner) (i32.const 16))
-            (local.set $row (call $__alloc (i32.const 8)))
+            (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
             (i32.store (local.get $row) (i32.const 502975519))
             (i32.store offset=4 (local.get $row) (local.get $inner))
-            (local.set $cell (call $__alloc (i32.const 8)))
+            (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
             (i32.store (local.get $cell) (i32.const 3))
             (i32.store offset=4 (local.get $cell) (local.get $row))
             (local.get $cell))
@@ -110,7 +285,7 @@
             (i32.store (local.get $wrapped) (local.get $i))
             (i32.store offset=4 (local.get $wrapped) (local.get $n))
             (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
-            (local.set $cell (call $__alloc (i32.const 8)))
+            (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
             (i32.store (local.get $cell) (i32.const 4))
             (i32.store offset=4 (local.get $cell) (local.get $wrapped))
             (local.get $cell))))))
@@ -120,7 +295,7 @@
     (local $argv_buf i32) (local $ptrs i32)
     (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
     (if (result i32) (i32.lt_u (i32.load (i32.const 12)) (i32.const 2))
-      (then (i32.const 64))
+      (then (i32.const 76))
       (else
         (local.set $argv_buf (call $__alloc (i32.load (i32.const 16))))
         (local.set $ptrs (call $__alloc (i32.mul (i32.load (i32.const 12)) (i32.const 4))))
@@ -136,26 +311,31 @@
     (local $v_s i32)
     (local $v_u i32)
     (local $__scrut i32)
+    (local $__drop_tmp i32)
     (local $__k0 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (local.get $v_u)) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (block (result i32) (local.set $__scrut (call $__print (local.get $v_s))) (local.set $__k0 (local.get $v_next)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
+    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_u)) (block (result i32) (local.set $__drop_tmp (local.get $v_u)) (call $__free_recursive (local.get $v_io)) (local.get $__drop_tmp))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s)) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (call $__inc_ref (local.get $v_next)) (block (result i32) (local.set $__scrut (call $__print (block (result i32) (local.set $__inc_tmp (local.get $v_s)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))) (local.set $__k0 (local.get $v_next)) (call $__inc_ref (local.get $__k0)) (call $__free_recursive (local.get $v_io)) (call $__free_recursive (local.get $v_next)) (call $__free_recursive (local.get $v_s)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
 
   (func $v_unwrap (param $v_b i32) (result i32)
     (local $v_value i32)
     (local $__scrut i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (local.get $v_value)))
+    (local $__drop_tmp i32)
+    (block (result i32) (local.set $__scrut (local.get $v_b)) (local.set $v_value (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_value)) (block (result i32) (local.set $__drop_tmp (local.get $v_value)) (call $__inc_ref (local.get $__drop_tmp)) (call $__free_recursive (local.get $v_value)) (local.get $__drop_tmp))))
 
   (func $v_main (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 12))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $v_unwrap (call $v__df_wrap_0 (i32.const 72)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc (i32.const 8))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc (i32.const 4))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+    (local $__drop_tmp i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $v_unwrap (call $v__df_wrap_0 (i32.const 96)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
 
   (func $v__con_Box (param $v__x0 i32) (result i32)
     (local $__con_0 i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc (i32.const 8))) (i32.const 19)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (local.get $__con_0)))
+    (local $__drop_tmp i32)
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 19)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0)))
 
   (func $v__df_wrap_0 (param $v_x i32) (result i32)
-    (call $v__con_Box (local.get $v_x)))
+    (local $__drop_tmp i32)
+    (call $v__con_Box (block (result i32) (local.set $__inc_tmp (local.get $v_x)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
 
   (func $_start (export "_start")
     (drop (call $v_runIO (call $v_main))))

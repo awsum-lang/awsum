@@ -405,7 +405,7 @@ instance Arbitrary NoOverflowSubInt32NonMinB where
     pure (NoOverflowSubInt32NonMinB (a, fromInteger bI))
 
 -- | (a, b, c) such that a+b, b+c and a+b+c are all in Int32 range.
---   Constructed in three stages: a uniform, b uniform from the
+--   Constructed in three steps: a uniform, b uniform from the
 --   shrunken interval that keeps a+b in range, c uniform from the
 --   intersection of intervals that keep both b+c and (a+b)+c in range.
 --   Both intervals contain 0, so the intersection is non-empty.
