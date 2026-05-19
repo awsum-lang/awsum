@@ -1,4 +1,5 @@
 {- Both branches unify to the same type variable (`Result a a -> a`). -}
+
 import IO.Stdout
 
 type Result a e = Ok a | Err e

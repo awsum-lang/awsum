@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":7,"startCol":8,"endLine":8,"endCol":29,"message":"Non-exhaustive case on structural sum Int32 | String: missing alternative String","fixes":[]}]
+[{"severity":"error","startLine":8,"startCol":8,"endLine":9,"endCol":29,"message":"Non-exhaustive case on structural sum Int32 | String: missing alternative String","fixes":[]}]

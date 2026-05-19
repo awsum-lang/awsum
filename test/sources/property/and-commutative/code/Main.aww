@@ -1,7 +1,8 @@
--- Property: `and a b == and b a`. The property emits
--- `boolToStr (and a b) ++ boolToStr (and b a)` — both halves
--- should match Haskell's independently computed `(a && b)`.
--- Input format: "a:b" with a, b as "0" / "1" decimal strings.
+{- Property: `and a b == and b a`. The property emits
+   `boolToStr (and a b) ++ boolToStr (and b a)` — both halves
+   should match Haskell's independently computed `(a && b)`.
+   Input format: "a:b" with a, b as "0" / "1" decimal strings. -}
+
 import IO.Stdout
 import IO.Stdin
 

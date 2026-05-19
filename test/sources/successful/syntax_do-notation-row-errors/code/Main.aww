@@ -1,5 +1,6 @@
 {- `do` over three `Either`-returning steps with distinct error labels;
    overall error is the row union, dispatched by row-tag. -}
+
 import IO.Stdout
 
 type ErrorA = ErrorA

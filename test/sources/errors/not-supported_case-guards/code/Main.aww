@@ -1,8 +1,9 @@
--- Not yet supported: pattern guards in `case` arms
--- (`Just x | x > 0 -> …`). The arm grammar is `Pattern "->" Expr`
--- with no slot for a `|` guard expression between the pattern and
--- the arrow. Workaround: nest a `case` in the arm body that
--- branches on the guard's result.
+{- Not yet supported: pattern guards in `case` arms
+   (`Just x | x > 0 -> …`). The arm grammar is `Pattern "->" Expr`
+   with no slot for a `|` guard expression between the pattern and
+   the arrow. Workaround: nest a `case` in the arm body that
+   branches on the guard's result. -}
+
 import IO.Stdout
 
 describe : Maybe Int32 -> String

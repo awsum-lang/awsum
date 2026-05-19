@@ -1,4 +1,5 @@
 {- 300 nullary constructors: branch encoding and case depth. -}
+
 import IO.Stdout
 
 type T

@@ -353,8 +353,10 @@ elidableArmBinders scrut vs body =
   Set.fromList [v | v <- vs, isElidable v]
   where
     isElidable v =
-      countAllUses v body == 1
-        && countReuseFieldUses scrut v body == 1
+      countAllUses v body
+        == 1
+        && countReuseFieldUses scrut v body
+        == 1
 
 -- | Count every @CVar target@ occurrence inside @e@. Unlike
 -- 'countUses', this does not short-circuit at @CDrop _ target _@ —

@@ -1,5 +1,6 @@
--- Property: `parseUInt8 (showUInt8 x) == Right x` for any UInt8 0..255.
--- Mirror of `parseInt32-show-roundtrip` for the unsigned 8-bit type.
+{- Property: `parseUInt8 (showUInt8 x) == Right x` for any UInt8 0..255.
+   Mirror of `parseInt32-show-roundtrip` for the unsigned 8-bit type. -}
+
 import IO.Stdout
 import IO.Stdin
 

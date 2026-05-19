@@ -1,47 +1,47 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " `Unit` and `showUnit` from prelude (no import). " ]
+    { moduleComment = Just " `Unit` and `showUnit` from prelude (no import). "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 4
+            { spanStartLine = 5
             , spanStartCol = 1
-            , spanEndLine = 4
+            , spanEndLine = 5
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 4
+                { spanStartLine = 5
                 , spanStartCol = 8
-                , spanEndLine = 4
+                , spanEndLine = 5
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 4
+                    { spanStartLine = 5
                     , spanStartCol = 8
-                    , spanEndLine = 4
+                    , spanEndLine = 5
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 4
+                        { spanStartLine = 5
                         , spanStartCol = 8
-                        , spanEndLine = 4
+                        , spanEndLine = 5
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 4
+                        { spanStartLine = 5
                         , spanStartCol = 11
-                        , spanEndLine = 4
+                        , spanEndLine = 5
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -49,9 +49,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 4
+                    { spanStartLine = 5
                     , spanStartCol = 17
-                    , spanEndLine = 4
+                    , spanEndLine = 5
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -59,25 +59,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 5
+                { spanStartLine = 6
                 , spanStartCol = 1
-                , spanEndLine = 5
+                , spanEndLine = 6
                 , spanEndCol = 39
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 5
+                    { spanStartLine = 6
                     , spanStartCol = 8
-                    , spanEndLine = 5
+                    , spanEndLine = 6
                     , spanEndCol = 39
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 5
+                        { spanStartLine = 6
                         , spanStartCol = 8
-                        , spanEndLine = 5
+                        , spanEndLine = 6
                         , spanEndCol = 24
                         }
                     )
@@ -89,25 +89,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 5
+                        { spanStartLine = 6
                         , spanStartCol = 24
-                        , spanEndLine = 5
+                        , spanEndLine = 6
                         , spanEndCol = 39
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 5
+                            { spanStartLine = 6
                             , spanStartCol = 25
-                            , spanEndLine = 5
+                            , spanEndLine = 6
                             , spanEndCol = 38
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 5
+                                { spanStartLine = 6
                                 , spanStartCol = 25
-                                , spanEndLine = 5
+                                , spanEndLine = 6
                                 , spanEndCol = 34
                                 }
                             )
@@ -115,9 +115,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 5
+                                { spanStartLine = 6
                                 , spanStartCol = 34
-                                , spanEndLine = 5
+                                , spanEndLine = 6
                                 , spanEndCol = 38
                                 }
                             ) "Unit"

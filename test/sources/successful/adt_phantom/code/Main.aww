@@ -1,4 +1,5 @@
 {- Phantom type parameter (unused in any constructor). -}
+
 import IO.Stdout
 
 type Phantom _tag = Phantom

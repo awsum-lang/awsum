@@ -1,4 +1,5 @@
 {- Chain of 300 non-recursive function calls. -}
+
 import IO.Stdout
 
 main : IO Never Unit

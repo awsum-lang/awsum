@@ -1,0 +1,28 @@
+{- Top-level definitions whose bodies are bare lambdas. Signature
+   provides the expected arrow type; the elaborator eta-contracts the
+   lambda into the FunDef's LHS — Core is identical to the
+   explicit-LHS form. Covers single-param, multi-param-single-layer,
+   and curried multi-layer shapes. -}
+
+import IO.Stdout
+
+f : Int32 -> Int32
+f = \n -> n
+
+constFst : Int32 -> Int32 -> Int32
+constFst = \a _b -> a
+
+curryFst : Int32 -> Int32 -> Int32
+curryFst = \a -> \b -> a
+
+main : IO Never Unit
+main =
+  let res : Either StringTooLong String = (do
+        s0 <- showInt32 (f 42) ++ " "
+        s1 <- s0 ++ showInt32 (constFst 7 99)
+        s2 <- s1 ++ " "
+        s2 ++ showInt32 (curryFst 3 9)
+      )
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

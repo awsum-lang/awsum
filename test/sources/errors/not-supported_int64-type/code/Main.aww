@@ -1,8 +1,9 @@
--- Not yet supported: 64-bit integer types (`Int64`, `UInt64`,
--- `Int16`, etc.). The only built-in numeric types in this iteration
--- are `Int32` and `UInt8`; widening / narrowing types and BigInt are
--- on the roadmap but not implemented. The typechecker reports an
--- unknown type constructor on first use.
+{- Not yet supported: 64-bit integer types (`Int64`, `UInt64`,
+   `Int16`, etc.). The only built-in numeric types in this iteration
+   are `Int32` and `UInt8`; widening / narrowing types and BigInt are
+   on the roadmap but not implemented. The typechecker reports an
+   unknown type constructor on first use. -}
+
 import IO.Stdout
 
 n : Int64

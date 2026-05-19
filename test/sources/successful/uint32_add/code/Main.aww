@@ -1,4 +1,5 @@
 {- `addUInt32`: `Left OverflowError` above 2^32-1; `maxUInt32 + maxUInt32` traps signedness on JVM/CLR. -}
+
 import IO.Stdout
 
 render : Either OverflowError UInt32 -> Either StringTooLong String

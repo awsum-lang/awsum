@@ -15,6 +15,21 @@ extra-source-files:
     CHANGELOG.md
     stdlib/Prelude.aww
 
+flag textmate-tests
+  description: Build the `textmate-tests` test-suite, which exercises the
+               `awsum.tmLanguage.json` TextMate grammar shipped in
+               `awsum-vscode/`. Shells out to a small Node script that
+               tokenizes every `.aww` in the corpus and every arbitrary-
+               generated `Program` through `vscode-textmate` — the same
+               engine VSCode runs in production — and asserts invariants on
+               the resulting scope stacks. Disabled by default so CI's main
+               suite doesn't depend on Node or a sibling `../awsum-vscode/`
+               checkout with `npm install` already run inside it. Enable
+               with `stack test --flag awsum:textmate-tests` (or via the
+               `just test-textmate[-property]` recipes).
+  manual: True
+  default: False
+
 flag tree-sitter-tests
   description: Build the `tree-sitter-tests` test-suite, which exercises the
                external `tree-sitter-awsum` grammar by parsing every `.aww`
@@ -179,8 +194,10 @@ test-suite awsum-test
       Awsum.PropertySpec
       Awsum.RunBackend
       Awsum.StringLiteralCapSpec
+      Awsum.TextMateSpec
       Awsum.TreeSitterSpec
       Matchers
+      TextMateMain
       TreeSitterMain
       Paths_awsum
   hs-source-dirs:
@@ -195,6 +212,7 @@ test-suite awsum-test
   ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
+    , aeson
     , async
     , awsum
     , base >=4.7 && <5
@@ -206,7 +224,40 @@ test-suite awsum-test
     , process
     , relude
     , temporary
+    , text
   default-language: GHC2024
+
+test-suite textmate-tests
+  type: exitcode-stdio-1.0
+  main-is: TextMateMain.hs
+  other-modules:
+      Awsum.ArbitraryInstances
+      Awsum.TextMateSpec
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      DeriveAnyClass
+      DerivingVia
+      DuplicateRecordFields
+      OverloadedRecordDot
+      OverloadedStrings
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N -main-is TextMateMain
+  build-depends:
+      QuickCheck
+    , aeson
+    , awsum
+    , base >=4.7 && <5
+    , directory
+    , filepath
+    , hspec
+    , process
+    , relude
+    , temporary
+    , text
+  default-language: GHC2024
+  if !flag(textmate-tests)
+    buildable: False
 
 test-suite tree-sitter-tests
   type: exitcode-stdio-1.0

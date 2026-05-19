@@ -1,4 +1,5 @@
 {- Lambda as the head of an application: `(\x -> x) 5`. -}
+
 import IO.Stdout
 
 runMe : Int32

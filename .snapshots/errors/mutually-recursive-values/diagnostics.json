@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":12,"startCol":7,"endLine":12,"endCol":13,"message":"Mutually recursive top-level values cannot be evaluated: bar, foo. The values reference each other in a cycle with no base case, so there is no computable result.","fixes":[]}]
+[{"severity":"error","startLine":13,"startCol":7,"endLine":13,"endCol":13,"message":"Mutually recursive top-level values cannot be evaluated: bar, foo. The values reference each other in a cycle with no base case, so there is no computable result.","fixes":[]}]

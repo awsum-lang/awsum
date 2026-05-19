@@ -1,4 +1,5 @@
--- Error: reference to undefined variable x
+{- Error: reference to undefined variable x -}
+
 import IO.Stdout
 
 main : IO Never Unit

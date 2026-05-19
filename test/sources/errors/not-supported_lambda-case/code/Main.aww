@@ -1,8 +1,9 @@
--- Not yet supported: `\case` lambda-case sugar. Awsum's `Lambda`
--- form is `"\" LIdent { LIdent } "->" Expr`; `case` is reserved and
--- can't be used as the lambda's parameter name, so the lexer rejects
--- the shape outright. Workaround: introduce an explicit parameter
--- and case on it: `\m -> case m of …`.
+{- Not yet supported: `\case` lambda-case sugar. Awsum's `Lambda`
+   form is `"\" LIdent { LIdent } "->" Expr`; `case` is reserved and
+   can't be used as the lambda's parameter name, so the lexer rejects
+   the shape outright. Workaround: introduce an explicit parameter
+   and case on it: `\m -> case m of …`. -}
+
 import IO.Stdout
 
 describe : Maybe Int32 -> String

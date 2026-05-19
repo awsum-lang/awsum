@@ -1,4 +1,5 @@
 {- HOF over recursive ADT; case branches reconstruct the parametric type. -}
+
 import IO.Stdout
 
 type List a = Cons a (List a) | Nil

@@ -1,6 +1,7 @@
--- Warning: 'tag' is declared but never used in any constructor field.
--- The quick-fix renames it to '_tag' to mark it as an intentionally phantom
--- parameter. (Using '_tag' up-front suppresses the warning.)
+{- Warning: 'tag' is declared but never used in any constructor field.
+   The quick-fix renames it to '_tag' to mark it as an intentionally phantom
+   parameter. (Using '_tag' up-front suppresses the warning.) -}
+
 import IO.Stdout
 
 type Phantom tag = Phantom

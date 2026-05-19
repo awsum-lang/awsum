@@ -1,4 +1,5 @@
--- Error: the 'x' in `Box x` shadows the outer function parameter 'x'.
+{- Error: the 'x' in `Box x` shadows the outer function parameter 'x'. -}
+
 import IO.Stdout
 
 type Box a = Box a

@@ -1,5 +1,6 @@
 {- Tail self-recursion at depth 100_000 on Int32; TCO must fold the
    self-call into a jump. -}
+
 import IO.Stdout
 
 countDown : Int32 -> Either UnderflowError Int32

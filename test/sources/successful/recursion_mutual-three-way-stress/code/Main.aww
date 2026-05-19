@@ -1,5 +1,6 @@
 {- Three-way mutual tail recursion at depth 1_000_000; SCC must merge
    the three-member cluster, TCO folds dispatch-by-tag into a loop. -}
+
 import IO.Stdout
 
 stepA : Int32 -> Either UnderflowError Int32

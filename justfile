@@ -68,6 +68,39 @@ test-tree-sitter-property:
   stack test --pedantic --flag awsum:tree-sitter-tests awsum:test:tree-sitter-tests --ta '--match "tree-sitter-awsum/property"'
   echo "\n\n✅ tree-sitter property completed!\n\n"
 
+# Run the awsum-vscode TextMate grammar fast tests:
+#   * `corpus`  — tokenize every .aww under test/sources/successful/,
+#                 test/sources/property/ and test/sources/formatting/
+#                 through the same `vscode-textmate` engine VSCode
+#                 runs in production and assert invariants on the
+#                 resulting scope stacks (keywords get keyword.*,
+#                 strings are balanced per line, no comment scope
+#                 inside a string scope, numeric literals get
+#                 constant.numeric.*).
+# Skipped silently inside the spec if ../awsum-vscode is missing
+# (override the path with AWSUM_VSCODE_DIR) or its node_modules
+# isn't installed, or `node` isn't on PATH.
+test-textmate:
+  #!/bin/sh
+  set -eu
+  if [ -d "../awsum-vscode" ]; then
+    (cd ../awsum-vscode && [ -d node_modules ] || npm install)
+  fi
+  stack test --pedantic --flag awsum:textmate-tests awsum:test:textmate-tests --ta '--match "awsum-vscode-textmate/" --skip "awsum-vscode-textmate/property"'
+  echo "\n\n✅ awsum-vscode textmate corpus completed!\n\n"
+
+# Run the awsum-vscode TextMate property test (~100 generated
+# programs against the same grammar). Use after `just test-textmate`
+# is green.
+test-textmate-property:
+  #!/bin/sh
+  set -eu
+  if [ -d "../awsum-vscode" ]; then
+    (cd ../awsum-vscode && [ -d node_modules ] || npm install)
+  fi
+  stack test --pedantic --flag awsum:textmate-tests awsum:test:textmate-tests --ta '--match "awsum-vscode-textmate/property"'
+  echo "\n\n✅ awsum-vscode textmate property completed!\n\n"
+
 # Clean build artefacts (may help with weird compilation issues)
 clean:
   stack clean

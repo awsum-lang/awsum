@@ -1,4 +1,5 @@
 {- Smoke: string concat, helper function, `IO.Stdout.print`. -}
+
 import IO.Stdout
 import IO.Args
 

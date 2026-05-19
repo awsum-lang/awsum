@@ -56,9 +56,9 @@ CoreProgram
                 ( CVar "sum" )
                 [
                     ( 3
-                    , [ "$do_e_19_3" ]
+                    , [ "$do_e_20_3" ]
                     , CCon 3
-                        [ CVar "$do_e_19_3" ]
+                        [ CVar "$do_e_20_3" ]
                     )
                 ,
                     ( 4

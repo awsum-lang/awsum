@@ -1,7 +1,8 @@
--- Property: `predInt32 (succInt32 x) == Right x` for any Int32 with
--- `x /= maxInt32`. Mirror of `succPred-roundtrip-int32` in the
--- opposite direction. The Haskell-side generator excludes maxInt32,
--- so neither succ nor pred should fail on a well-formed input.
+{- Property: `predInt32 (succInt32 x) == Right x` for any Int32 with
+   `x /= maxInt32`. Mirror of `succPred-roundtrip-int32` in the
+   opposite direction. The Haskell-side generator excludes maxInt32,
+   so neither succ nor pred should fail on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

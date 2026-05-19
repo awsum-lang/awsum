@@ -1,4 +1,5 @@
 {- `Either a b` from prelude (no import). -}
+
 import IO.Stdout
 
 unwrap : Either String String -> Either StringTooLong String

@@ -1,7 +1,8 @@
--- Property: `succInt32 x` fails (returns `Left _`) iff `x == maxInt32`.
--- Both branches must be exercised, so the Haskell-side generator
--- biases towards `maxInt32` via QuickCheck `frequency` (~10% chance)
--- so the boundary case shows up regularly in 100-test runs.
+{- Property: `succInt32 x` fails (returns `Left _`) iff `x == maxInt32`.
+   Both branches must be exercised, so the Haskell-side generator
+   biases towards `maxInt32` via QuickCheck `frequency` (~10% chance)
+   so the boundary case shows up regularly in 100-test runs. -}
+
 import IO.Stdout
 import IO.Stdin
 

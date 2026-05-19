@@ -1,6 +1,7 @@
--- Property: `addInt32 a 0 == Right a`. Right-identity of zero under
--- addition. Single Int32 input. Adding 0 is always in range, so
--- neither UNDERFLOW nor OVERFLOW can fire on a well-formed input.
+{- Property: `addInt32 a 0 == Right a`. Right-identity of zero under
+   addition. Single Int32 input. Adding 0 is always in range, so
+   neither UNDERFLOW nor OVERFLOW can fire on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

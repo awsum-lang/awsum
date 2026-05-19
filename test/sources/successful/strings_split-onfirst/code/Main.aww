@@ -1,4 +1,5 @@
 {- `splitOnFirst`: covers all cases from the prelude docstring. -}
+
 import IO.Stdout
 
 render : Maybe (Tuple2 String String) -> Either StringTooLong String

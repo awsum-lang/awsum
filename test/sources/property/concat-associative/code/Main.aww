@@ -1,8 +1,9 @@
--- Property: `(a ++ b) ++ c == a ++ (b ++ c)` for every triple of
--- Strings (over an alphabet that excludes ':'). Input: "a:b:c".
--- The property emits both groupings separated by ':' so Haskell
--- can verify each half against an independently computed
--- concatenation.
+{- Property: `(a ++ b) ++ c == a ++ (b ++ c)` for every triple of
+   Strings (over an alphabet that excludes ':'). Input: "a:b:c".
+   The property emits both groupings separated by ':' so Haskell
+   can verify each half against an independently computed
+   concatenation. -}
+
 import IO.Stdout
 import IO.Stdin
 

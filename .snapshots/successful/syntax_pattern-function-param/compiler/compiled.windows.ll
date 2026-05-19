@@ -315,19 +315,19 @@ tco.exit.1:
   ret ptr %t23
 }
 
-define internal ptr @v_sumTriple(ptr %v__arg_5_11) {
-  %t0 = getelementptr ptr, ptr %v__arg_5_11, i32 0
+define internal ptr @v_sumTriple(ptr %v__arg_6_11) {
+  %t0 = getelementptr ptr, ptr %v__arg_6_11, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 13, label %case.arm.13.4 ]
 case.arm.13.4:
-  %t5 = getelementptr ptr, ptr %v__arg_5_11, i32 1
+  %t5 = getelementptr ptr, ptr %v__arg_6_11, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
-  %t7 = getelementptr ptr, ptr %v__arg_5_11, i32 2
+  %t7 = getelementptr ptr, ptr %v__arg_6_11, i32 2
   %t8 = load ptr, ptr %t7
   call void @__inc_ref(ptr %t8)
-  %t9 = getelementptr ptr, ptr %v__arg_5_11, i32 3
+  %t9 = getelementptr ptr, ptr %v__arg_6_11, i32 3
   %t10 = load ptr, ptr %t9
   call void @__inc_ref(ptr %t10)
   call void @__inc_ref(ptr %t6)
@@ -348,7 +348,7 @@ case.arm.3.16:
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v__arg_5_11)
+  call void @__free_recursive(ptr %v__arg_6_11)
   ret ptr %t19
 case.arm.4.20:
   %t21 = getelementptr ptr, ptr %t11, i32 1
@@ -374,7 +374,7 @@ case.arm.3.28:
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v__arg_5_11)
+  call void @__free_recursive(ptr %v__arg_6_11)
   ret ptr %t31
 case.arm.4.32:
   %t33 = getelementptr ptr, ptr %t23, i32 1
@@ -386,7 +386,7 @@ case.arm.4.32:
   call void @__free_recursive(ptr %t10)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v__arg_5_11)
+  call void @__free_recursive(ptr %v__arg_6_11)
   ret ptr %t34
 case.default.27:
   unreachable
@@ -396,16 +396,16 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v_sumPair(ptr %v__arg_15_9) {
-  %t0 = getelementptr ptr, ptr %v__arg_15_9, i32 0
+define internal ptr @v_sumPair(ptr %v__arg_16_9) {
+  %t0 = getelementptr ptr, ptr %v__arg_16_9, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 12, label %case.arm.12.4 ]
 case.arm.12.4:
-  %t5 = getelementptr ptr, ptr %v__arg_15_9, i32 1
+  %t5 = getelementptr ptr, ptr %v__arg_16_9, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
-  %t7 = getelementptr ptr, ptr %v__arg_15_9, i32 2
+  %t7 = getelementptr ptr, ptr %v__arg_16_9, i32 2
   %t8 = load ptr, ptr %t7
   call void @__inc_ref(ptr %t8)
   call void @__inc_ref(ptr %t6)
@@ -425,7 +425,7 @@ case.arm.3.14:
   call void @__free_recursive(ptr %t16)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v__arg_15_9)
+  call void @__free_recursive(ptr %v__arg_16_9)
   ret ptr %t17
 case.arm.4.18:
   %t19 = getelementptr ptr, ptr %t9, i32 1
@@ -434,7 +434,7 @@ case.arm.4.18:
   call void @__free_recursive(ptr %t9)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v__arg_15_9)
+  call void @__free_recursive(ptr %v__arg_16_9)
   ret ptr %t20
 case.default.13:
   unreachable
@@ -545,16 +545,16 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lam_13(ptr %v__arg_28_19) {
-  %t0 = getelementptr ptr, ptr %v__arg_28_19, i32 0
+define internal ptr @v__lam_13(ptr %v__arg_29_19) {
+  %t0 = getelementptr ptr, ptr %v__arg_29_19, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
   switch i64 %t2, label %case.default.3 [ i64 12, label %case.arm.12.4 ]
 case.arm.12.4:
-  %t5 = getelementptr ptr, ptr %v__arg_28_19, i32 1
+  %t5 = getelementptr ptr, ptr %v__arg_29_19, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
-  %t7 = getelementptr ptr, ptr %v__arg_28_19, i32 2
+  %t7 = getelementptr ptr, ptr %v__arg_29_19, i32 2
   %t8 = load ptr, ptr %t7
   call void @__inc_ref(ptr %t8)
   %t9 = call ptr @__alloc(i64 24, i32 2)
@@ -570,7 +570,7 @@ case.arm.12.4:
   %t14 = call ptr @v_sumPair(ptr %t9)
   call void @__free_recursive(ptr %t8)
   call void @__free_recursive(ptr %t6)
-  call void @__free_recursive(ptr %v__arg_28_19)
+  call void @__free_recursive(ptr %v__arg_29_19)
   ret ptr %t14
 case.default.3:
   unreachable
@@ -638,12 +638,15 @@ define internal ptr @v__df_apply_0(ptr %v_t) {
   ret ptr %t0
 }
 
+declare i32 @_setmode(i32, i32)
 declare ptr @GetCommandLineW()
 declare ptr @CommandLineToArgvW(ptr, ptr)
 declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)
 
 define i32 @main(i32 %argc_posix, ptr %argv_posix) {
 entry:
+  call i32 @_setmode(i32 1, i32 32768)
+  call i32 @_setmode(i32 0, i32 32768)
   %cmdline = call ptr @GetCommandLineW()
   %argc_slot = alloca i32
   %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)

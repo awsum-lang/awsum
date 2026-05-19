@@ -9,7 +9,7 @@ double:
 
 triple:
   param           n                               count=3
-  case-pattern    $do_e_16_3                      count=0
+  case-pattern    $do_e_17_3                      count=0
   case-pattern    m                               count=0
 
 callBox:
@@ -18,11 +18,11 @@ callBox:
   case-pattern    f                               count=0
 
 formatOutputs:
-  case-pattern    $do_e_25_3                      count=1
-  case-pattern    d                               count=1
   case-pattern    $do_e_26_3                      count=1
-  case-pattern    t                               count=1
+  case-pattern    d                               count=1
   case-pattern    $do_e_27_3                      count=1
+  case-pattern    t                               count=1
+  case-pattern    $do_e_28_3                      count=1
   case-pattern    ds                              count=1
 
 main:

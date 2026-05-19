@@ -2,6 +2,7 @@
    as an `IOPure` cell. Composed with `bindIO` whose continuation
    is the platform built-in `IO.Stdout.print` passed as a value —
    this shape used to crash before built-in eta-wrappers landed. -}
+
 import IO.Stdout
 
 main : IO Never Unit

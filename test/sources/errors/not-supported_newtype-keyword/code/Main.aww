@@ -1,10 +1,11 @@
--- Not yet supported: Haskell-style `newtype` keyword. Awsum has only
--- `type`, with no separate compile-time-only single-constructor form
--- (every `type` is the same thing in Core regardless of arity).
--- `newtype` is not reserved and parses as an identifier expected to
--- start a signature. Workaround: a single-constructor `type` carries
--- the same information; runtime representation is the compiler's
--- concern.
+{- Not yet supported: Haskell-style `newtype` keyword. Awsum has only
+   `type`, with no separate compile-time-only single-constructor form
+   (every `type` is the same thing in Core regardless of arity).
+   `newtype` is not reserved and parses as an identifier expected to
+   start a signature. Workaround: a single-constructor `type` carries
+   the same information; runtime representation is the compiler's
+   concern. -}
+
 import IO.Stdout
 
 newtype Wrap = Wrap Int32

@@ -1,6 +1,7 @@
--- Error: '_tag' is marked as intentionally unused, but the constructor
--- references it anyway — that contradicts the '_' opt-out convention.
--- Drop the reference (keeping the param phantom) or rename '_tag' to 'tag'.
+{- Error: '_tag' is marked as intentionally unused, but the constructor
+   references it anyway — that contradicts the '_' opt-out convention.
+   Drop the reference (keeping the param phantom) or rename '_tag' to 'tag'. -}
+
 import IO.Stdout
 
 type Phantom _tag = Phantom _tag

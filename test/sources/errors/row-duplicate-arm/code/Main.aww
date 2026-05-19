@@ -1,5 +1,6 @@
--- Error: the same row alternative ('Int32') is matched by two arms.
--- Second arm is unreachable.
+{- Error: the same row alternative ('Int32') is matched by two arms.
+   Second arm is unreachable. -}
+
 import IO.Stdout
 
 _f : (Int32 | String) -> String

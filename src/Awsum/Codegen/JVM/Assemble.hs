@@ -3637,8 +3637,8 @@ mkStdinReadAll = do
                    fromIntegral ((totalLen `div` 256) `mod` 256),
                    fromIntegral (totalLen `mod` 256)
                  ]
-          <> [0, 2] -- 2 entries
-          <> smtEntries
+                   <> [0, 2] -- 2 entries
+                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0008,

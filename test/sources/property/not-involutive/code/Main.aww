@@ -1,7 +1,8 @@
--- Property: `not (not b) == b` for every Bool. Bool is encoded as a
--- decimal "0" / "1" string on the way in (Awsum has no String->Bool
--- builtin and no eqString); the property emits "T" / "F" so Haskell
--- can compare against its own boolPrint of the original input.
+{- Property: `not (not b) == b` for every Bool. Bool is encoded as a
+   decimal "0" / "1" string on the way in (Awsum has no String->Bool
+   builtin and no eqString); the property emits "T" / "F" so Haskell
+   can compare against its own boolPrint of the original input. -}
+
 import IO.Stdout
 import IO.Stdin
 

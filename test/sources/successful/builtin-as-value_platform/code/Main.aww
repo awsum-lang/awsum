@@ -4,6 +4,7 @@
    slot, violating `Awsum.LowerClosures`'s invariant and crashing
    `$applyN` at runtime. Now `lowerExprM` re-routes through the
    synthesised `$bi$IO.Stdout.print` wrapper. -}
+
 import IO.Stdout
 
 main : IO Never Unit

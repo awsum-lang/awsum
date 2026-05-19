@@ -1,8 +1,9 @@
--- Property: if `splitOnFirst sep s == Just (Tuple2 a b)`, then
--- `a ++ sep ++ b == s`. Input: "sep:s" where sep is non-empty; s
--- has been constructed Haskell-side as `a ++ sep ++ b` so the
--- split is guaranteed to find a match. The property emits the
--- round-tripped string; Haskell expects `s` back.
+{- Property: if `splitOnFirst sep s == Just (Tuple2 a b)`, then
+   `a ++ sep ++ b == s`. Input: "sep:s" where sep is non-empty; s
+   has been constructed Haskell-side as `a ++ sep ++ b` so the
+   split is guaranteed to find a match. The property emits the
+   round-tripped string; Haskell expects `s` back. -}
+
 import IO.Stdout
 import IO.Stdin
 

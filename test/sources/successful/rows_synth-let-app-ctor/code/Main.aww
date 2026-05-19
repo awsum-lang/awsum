@@ -9,6 +9,7 @@
    `_letBind` placeholder, the inner case-binder `x` would type at
    `TyVar "a"`, and `dispatch x` would dispatch against the first
    row label (`Int32`) regardless of `x`'s actual runtime type. -}
+
 import IO.Stdout
 
 dispatch : (Int32 | String) -> String

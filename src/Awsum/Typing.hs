@@ -989,7 +989,17 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
   -- to other top-levels are real uses — without this, helpers used
   -- solely from a '_'-prefixed def would be reported as unused even
   -- though deleting them would break the kept def.
-  let callGraph = M.fromList [(n, freeNames body) | (_sp, n, _args, body) <- defsList]
+  -- 'freeNames body' collects every unqualified name the body mentions, but
+  -- a top-level def's own parameters are also unqualified — without
+  -- subtracting them, a one-letter param name leaks into the reachable set
+  -- and silently masks an identically-named top-level. (E.g. '(++) a b =
+  -- BuiltIn.concatString a b' would otherwise mark every user-level 'a'
+  -- defined alongside it as reachable from main.)
+  let callGraph =
+        M.fromList
+          [ (n, freeNames body `S.difference` S.fromList (map paramName args))
+          | (_sp, n, args, body) <- defsList
+          ]
       topLevelWarnings = case M.lookup "main" sigEnv of
         Nothing -> []
         Just _ ->
@@ -1538,6 +1548,20 @@ typeOfExpr conEnv tcm env = \case
   -- through 'bindEither' whose return rows accumulate only when the
   -- surrounding context constrains them.
   EDo sp _ -> Left (DoInSynthesisPosition sp)
+  -- Expression-level type ascription @(e : T)@: bidirectional anchor.
+  -- The user-written @T@ becomes the expected type for the inner
+  -- expression, then is also the synthesised result. This is what
+  -- makes @(42 : Int32)@, @pureEither (42 : Int32)@, etc. work —
+  -- the ascription pins a context that synthesis alone cannot.
+  -- 'crossExempt' resets to 'S.empty' at this synth boundary, same
+  -- convention as 'ELet' / 'ECase' here.
+  --
+  -- If the surrounding context disagrees with @T@, the 'checkExpr'
+  -- catch-all subsumes the synthesised @T@ against the ambient
+  -- expected and reports any mismatch pointing at the @(e : T)@ form.
+  EAscribe _sp e ty -> do
+    checkExpr conEnv tcm S.empty env ty e
+    Right ty
 
 -- | Shared case-analysis: validate the scrutinee, type-check every arm
 --   with the supplied body action, and verify exhaustiveness.
@@ -2032,15 +2056,17 @@ freeNames = go
       EApp _ f x -> go f <> go x
       EInfix _ _ l r -> go l <> go r
       EParens _ e -> go e
+      EAscribe _ e _ -> go e
       ELit _ _ -> S.empty
       ECon _ _ -> S.empty
       EBuiltIn _ _ -> S.empty
       ECase _ scrut alts _ ->
-        go scrut <> foldMap (go . caseAltBody) (toList alts)
+        go scrut <> foldMap goAlt (toList alts)
       ELam _ params body ->
         go body `S.difference` S.fromList (map paramName params)
       EDo _ stmts -> goDoStmts stmts
       ELet _ pat _ e body -> go e <> (go body `S.difference` patternBoundNames pat)
+    goAlt alt = go (caseAltBody alt) `S.difference` patternBoundNames (caseAltPattern alt)
     goDoStmts [] = S.empty
     goDoStmts (s : rest) = case s of
       DoBind _ pat e ->

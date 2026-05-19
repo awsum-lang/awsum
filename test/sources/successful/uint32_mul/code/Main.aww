@@ -1,4 +1,5 @@
 {- `mulUInt32`: `Left OverflowError` above 4294967295; `65535 * 65537 = 4294967295` is the largest in-range product (boundary), `65536 * 65536 = 4294967296` is the smallest overflow. `maxUInt32 * maxUInt32` exceeds Int64.MaxValue and traps signed-lcmp on JVM. -}
+
 import IO.Stdout
 
 render : Either OverflowError UInt32 -> Either StringTooLong String

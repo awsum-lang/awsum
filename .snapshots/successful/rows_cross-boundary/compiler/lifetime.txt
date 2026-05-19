@@ -26,7 +26,7 @@ $apply$describeLst:
   param           $x                              count=3
   case-pattern    $pk_24                          count=0
   case-pattern    h                               count=0
-  case-pattern    $do_e_35_5                      count=0
+  case-pattern    $do_e_36_5                      count=0
   case-pattern    rest                            count=0
 
 describeEither:
@@ -35,17 +35,17 @@ describeEither:
   case-pattern    m                               count=0
 
 summary:
-  case-pattern    $do_e_45_3                      count=1
-  case-pattern    a                               count=1
   case-pattern    $do_e_46_3                      count=1
-  case-pattern    b                               count=1
+  case-pattern    a                               count=1
   case-pattern    $do_e_47_3                      count=1
-  case-pattern    c                               count=1
+  case-pattern    b                               count=1
   case-pattern    $do_e_48_3                      count=1
-  case-pattern    s0                              count=1
+  case-pattern    c                               count=1
   case-pattern    $do_e_49_3                      count=1
-  case-pattern    s1                              count=1
+  case-pattern    s0                              count=1
   case-pattern    $do_e_50_3                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_51_3                      count=1
   case-pattern    s2                              count=1
 
 $lift$12:

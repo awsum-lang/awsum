@@ -1,8 +1,9 @@
--- Property: `addUInt32 (addUInt32 a b) c == addUInt32 a (addUInt32 b c)`
--- whenever every intermediate sum stays in range. Input format:
--- "a:b:c". The Haskell-side generator picks triples constructively
--- from the no-overflow region, so OVERFLOW is never expected to
--- fire on a well-formed input.
+{- Property: `addUInt32 (addUInt32 a b) c == addUInt32 a (addUInt32 b c)`
+   whenever every intermediate sum stays in range. Input format:
+   "a:b:c". The Haskell-side generator picks triples constructively
+   from the no-overflow region, so OVERFLOW is never expected to
+   fire on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

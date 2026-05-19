@@ -8,6 +8,7 @@
    (e.g. routing through the host's ANSI code page on Windows) will
    diverge from the others, while a backend whose argv decoder is
    broken — but whose stdout is fine — will still match. -}
+
 import IO.Stdout
 
 main : IO Never Unit

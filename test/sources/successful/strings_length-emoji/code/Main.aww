@@ -3,6 +3,7 @@
    but a UTF-16 surrogate pair (D83D + DD25 = 2 code units) and a
    four-byte UTF-8 sequence (F0 9F 94 A5). Each `case` arm asserts the
    exact value the prelude contract promises. -}
+
 import IO.Stdout
 
 check : UInt32 -> UInt32 -> String -> Either StringTooLong String

@@ -1,4 +1,5 @@
 {- Uninhabited type as `Err` branch; exhaustiveness skips empty constructors. -}
+
 import IO.Stdout
 
 type Result a e = Ok a | Err e

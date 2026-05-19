@@ -1,5 +1,6 @@
 {- Lazy IO: an `IO` value bound by `let` but never reached by `runIO`
    produces no output. Output: `🔥`, not `💩🔥`. -}
+
 import IO.Stdout
 
 main : IO Never Unit

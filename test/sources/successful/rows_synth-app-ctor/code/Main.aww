@@ -12,6 +12,7 @@
    row-injection wrapper falls through `coercible`'s TyVar src rule,
    and `find` returns the first-coercible label in the row — i.e.
    `Int32`, regardless of `x`'s actual runtime type. -}
+
 import IO.Stdout
 
 dispatch : (Int32 | String) -> String

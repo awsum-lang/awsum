@@ -1,8 +1,9 @@
--- Not yet supported: `if`/`then`/`else` expressions. Awsum has no
--- conditional sugar in this iteration — `if` is not a reserved word,
--- so the parser accepts it as an ordinary `LIdent` and the
--- typechecker reaches `Unknown variable: if` first. Workaround:
--- pattern-match on `Bool` directly with `case b of True -> … ; False -> …`.
+{- Not yet supported: `if`/`then`/`else` expressions. Awsum has no
+   conditional sugar in this iteration — `if` is not a reserved word,
+   so the parser accepts it as an ordinary `LIdent` and the
+   typechecker reaches `Unknown variable: if` first. Workaround:
+   pattern-match on `Bool` directly with `case b of True -> … ; False -> …`. -}
+
 import IO.Stdout
 
 pick : Bool -> String

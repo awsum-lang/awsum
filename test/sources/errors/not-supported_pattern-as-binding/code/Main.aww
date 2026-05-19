@@ -1,8 +1,9 @@
--- Not yet supported: as-patterns / @-patterns
--- (`whole@(Just x) -> …`). The grammar has no `@` token at pattern
--- position; `Pattern` is only a constructor-application, a name, or
--- a type-ascribed pattern. Workaround: bind the whole scrutinee in
--- a `let` outside the `case` and refer to it by that name.
+{- Not yet supported: as-patterns / @-patterns
+   (`whole@(Just x) -> …`). The grammar has no `@` token at pattern
+   position; `Pattern` is only a constructor-application, a name, or
+   a type-ascribed pattern. Workaround: bind the whole scrutinee in
+   a `let` outside the `case` and refer to it by that name. -}
+
 import IO.Stdout
 
 describe : Maybe Int32 -> String

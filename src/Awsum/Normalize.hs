@@ -83,6 +83,13 @@ normalizeExpr = \case
   EInfix sp OpConcat l r -> EInfix sp OpConcat (normalizeExpr l) (normalizeExpr r)
   EInfix sp OpPipe l r -> EInfix sp OpPipe (normalizeExpr l) (normalizeExpr r)
   EParens _sp e -> normalizeExpr e
+  -- Type ascription is NOT erased here: it carries the user-written
+  -- @Type'@ that the typechecker honours as the inner expression's
+  -- pinned type. Two ASTs that differ by ascription presence are not
+  -- the same program (e.g. @(42 : Int32)@ vs @42@ — the latter is
+  -- ambiguous in synth position). Recurse into the inner expression
+  -- only.
+  EAscribe sp e ty -> EAscribe sp (normalizeExpr e) ty
   ECon sp n -> ECon sp n
   EBuiltIn sp n -> EBuiltIn sp n
   ECase sp scrut alts cs -> ECase sp (normalizeExpr scrut) (fmap normalizeAlt alts) cs

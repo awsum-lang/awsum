@@ -298,6 +298,7 @@ freeReferences = go
       EApp _ f x -> go f <> go x
       EInfix _ _ l r -> go l <> go r
       EParens _ e -> go e
+      EAscribe _ e _ -> go e
       ELit _ _ -> Set.empty
       ECon _ _ -> Set.empty
       EBuiltIn _ _ -> Set.empty
@@ -1179,7 +1180,7 @@ freeVars = \case
 --   the initial 'Locals' set so that any 'ELam' inside the body
 --   knows which names it can capture.
 lowerDeclM :: LowerEnv -> M.Map Name Type' -> Decl -> LowerM (Maybe CDecl)
-lowerDeclM env sigMap = \case
+lowerDeclM env sigMap decl0 = case etaContractTopLambdas sigMap decl0 of
   Sig {} -> pure Nothing
   CommentDecl _ -> pure Nothing
   TypeDecl {} -> pure Nothing
@@ -1188,7 +1189,7 @@ lowerDeclM env sigMap = \case
     | Just ty <- M.lookup n sigMap,
       let (argTys, _) = splitArrow ty,
       not (null argTys) -> do
-        body' <- lowerExprM env Set.empty Nothing body
+        body' <- lowerExprM env Set.empty (Just ty) body
         let etas = ["$eta" <> show (i :: Int) | i <- [0 .. length argTys - 1]]
             call = CCall body' (map CVar etas)
         pure $ Just $ CFunDef n etas call
@@ -1217,6 +1218,34 @@ splitArrowN = go []
     go acc 0 t = (reverse acc, Just t)
     go acc k (TyArrow _ a b) = go (a : acc) (k - 1) b
     go acc _ _ = (reverse acc, Nothing)
+
+-- | Surface rewrite applied at the start of 'lowerDeclM': when a
+--   top-level definition has zero LHS parameters but its body is one
+--   or more nested 'ELam' layers whose arities fit into the
+--   signature's arrow chain, move the lambda parameters onto the
+--   'FunDef' LHS. After this rewrite, @f = \\n -> n@ with signature
+--   @Int32 -> Int32@ is indistinguishable from @f n = n@ — no
+--   synthetic '$lam$N' helper is emitted, and the existing
+--   FunDef-with-args lowering path applies unchanged. Curried forms
+--   like @f = \\a -> \\b -> body@ are peeled recursively.
+etaContractTopLambdas :: M.Map Name Type' -> Decl -> Decl
+etaContractTopLambdas sigMap = \case
+  FunDef sp n [] body cmt
+    | Just ty <- M.lookup n sigMap,
+      let (extracted, inner) = peel body ty,
+      not (null extracted) ->
+        FunDef sp n extracted inner cmt
+  d -> d
+  where
+    peel (ELam _ ps lamBody) ty
+      | (argTys, _) <- splitArrowN (length ps) ty,
+        length argTys == length ps =
+          let (rest, finalBody) = peel lamBody (dropArrows (length ps) ty)
+           in (ps <> rest, finalBody)
+    peel e _ = ([], e)
+    dropArrows 0 t = t
+    dropArrows k (TyArrow _ _ b) = dropArrows (k - 1) b
+    dropArrows _ t = t
 
 -- | Add extra name→type entries to a 'LowerEnv' (e.g. function parameters).
 extendLowerEnv :: LowerEnv -> [(QName, Type')] -> LowerEnv
@@ -1256,6 +1285,14 @@ freshenWildcardArgs = go (0 :: Int)
 lowerExprM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
 lowerExprM env locals expected = \case
   EParens _sp e -> lowerExprM env locals expected e
+  -- Expression-level type ascription is erased to the inner expression,
+  -- with the ascription's @Type'@ overriding any ambient @expected@.
+  -- This is exactly what makes @(42 : Int32)@ legitimate at lowering
+  -- time: the integer literal needs a numeric type pin, and the
+  -- ascription is the one place a user can write that pin inside an
+  -- expression. Surface AST -> Core erases the boundary; no @CAscribe@
+  -- node exists.
+  EAscribe _sp e ty -> lowerExprM env locals (Just ty) e
   EVar _sp qn -> liftEither (lowerVar env qn)
   ELit _sp (LString t) -> pure (CString t)
   ELit sp (LInt n) -> case expected of
@@ -1366,6 +1403,7 @@ lowerExprM env locals expected = \case
         let isLamHead = \case
               ELam {} -> True
               EParens _ inner -> isLamHead inner
+              EAscribe _ inner _ -> isLamHead inner
               _ -> False
             mHeadTy = case f0 of
               EVar _ qn -> leTypeOf env qn
@@ -1420,6 +1458,7 @@ lowerExprM env locals expected = \case
 argSubst :: LowerEnv -> Type' -> Expr -> Subst
 argSubst env expected = \case
   EParens _ inner -> argSubst env expected inner
+  EAscribe _ inner _ -> argSubst env expected inner
   EVar _ qn -> case leTypeOf env qn of
     Just t -> fromRight mempty (unify expected t)
     Nothing -> mempty
@@ -1603,6 +1642,7 @@ lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
               pure (CRow tag v)
             _ -> liftEither $ Left (TELowering "lowering: integer literal in row position has no unique int label")
           EParens _ inner -> lowerArgWithRowInjectionM env locals mExpected inner
+          EAscribe _ inner _ -> lowerArgWithRowInjectionM env locals mExpected inner
           _ -> case synthLabelType env x of
             Just lbl@(TyVar _ _)
               | lbl `elem` labels ->
@@ -1844,6 +1884,12 @@ synthLabelType env = \case
   ELit _ (LString _) -> Just (TyCon noSpan "String")
   ELit _ (LInt _) -> Nothing -- caller resolves via row's int label
   EParens _ inner -> synthLabelType env inner
+  -- Ascription pins the type at lowering time without a synthesis
+  -- attempt on the inner: the user has stated the answer. (If the
+  -- inner shape is itself non-synthesisable — e.g. a lambda — the
+  -- ascription still gives the row-injection / dispatch a concrete
+  -- label to work with, which is the whole point of writing it.)
+  EAscribe _ _ ty -> Just ty
   EInfix _ OpConcat _ _ -> case lookupBuiltIn "concatString" of
     Just t -> snd (splitArrowN 2 t)
     Nothing -> Nothing

@@ -9,6 +9,7 @@
 
    Runtime path: failingComputation fails with E1; handleE1 catches
    E1 and prints. Output: "got E1". -}
+
 import IO.Stdout
 
 empty type SecondNever

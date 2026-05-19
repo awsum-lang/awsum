@@ -1,4 +1,4 @@
--- Error: same function name defined twice
+{- Error: same function name defined twice -}
 
 foo = foo
 

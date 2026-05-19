@@ -1,4 +1,5 @@
 {- Function-typed parameter flows through one HOF into another. -}
+
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

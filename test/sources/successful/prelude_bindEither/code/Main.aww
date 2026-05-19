@@ -2,9 +2,11 @@
    result type unions the two error rows. The `do`-notation desugar
    uses this function, but this test exercises a direct call so the
    function shows up in `awsum core` output. -}
+
 import IO.Stdout
 
 type ErrA = ErrA
+
 type ErrB = ErrB
 
 opA : Either ErrA Int32
@@ -16,10 +18,11 @@ opB n = Right n
 main : IO Never Unit
 main =
   let chained : Either (ErrA | ErrB) Int32 = bindEither opA opB
-      msg : Either StringTooLong String = case chained of
+      msg : Either StringTooLong String = (case chained of
         Left (_a : ErrA) -> Right "ErrA"
         Left (_b : ErrB) -> Right "ErrB"
         Right n -> "Ok " ++ showInt32 n
+      )
    in case msg of
         Left _ -> IO.Stdout.print "STRING_TOO_LONG"
         Right s -> IO.Stdout.print s

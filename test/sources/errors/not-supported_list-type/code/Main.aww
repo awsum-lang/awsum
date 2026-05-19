@@ -1,9 +1,10 @@
--- Not yet supported: a built-in `List` type. The prelude does not
--- define one in this iteration — there is no `[]` / `:` syntax
--- and no lazy-list machinery. Workaround: declare a user-level
--- `type List a = Nil | Cons a (List a)` and operate on it with
--- ordinary recursion (Awsum's recursion pipeline lowers it to a
--- stack-safe loop).
+{- Not yet supported: a built-in `List` type. The prelude does not
+   define one in this iteration — there is no `[]` / `:` syntax
+   and no lazy-list machinery. Workaround: declare a user-level
+   `type List a = Nil | Cons a (List a)` and operate on it with
+   ordinary recursion (Awsum's recursion pipeline lowers it to a
+   stack-safe loop). -}
+
 import IO.Stdout
 
 xs : List Int32

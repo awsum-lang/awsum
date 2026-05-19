@@ -1,6 +1,7 @@
 {- Non-tail self-recursion at depth 100_000 on Int32; recursive call sits
    inside `case … of`, so the CPS pass must hoist continuations off the
    system stack before TCO can fold to a loop. -}
+
 import IO.Stdout
 
 countDown : Int32 -> Either UnderflowError Int32

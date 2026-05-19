@@ -1,4 +1,5 @@
--- Error: applying a String value as if it were a function
+{- Error: applying a String value as if it were a function -}
+
 import IO.Stdout
 
 notAFn : String

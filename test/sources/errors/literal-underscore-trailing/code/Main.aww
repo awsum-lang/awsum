@@ -1,6 +1,7 @@
--- Trailing '_' in an integer literal is rejected at parse time.
--- '_' is allowed only between digits — `1_` has nothing on the
--- right and is a syntax error. Workaround: drop the trailing '_'.
+{- Trailing '_' in an integer literal is rejected at parse time.
+   '_' is allowed only between digits — `1_` has nothing on the
+   right and is a syntax error. Workaround: drop the trailing '_'. -}
+
 import IO.Stdout
 
 bad : Int32

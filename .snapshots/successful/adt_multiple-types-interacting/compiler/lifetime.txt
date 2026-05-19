@@ -16,7 +16,7 @@ showResult:
   case-pattern    box                             count=0
 
 main:
-  case-pattern    $do_e_31_9                      count=1
+  case-pattern    $do_e_32_9                      count=1
   case-pattern    s0                              count=1
 
 $let$12:

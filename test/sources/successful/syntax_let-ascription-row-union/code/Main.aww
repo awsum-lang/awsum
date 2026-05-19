@@ -1,5 +1,6 @@
 {- `let n : T = e in body`: ascription pushes the expected row-union
    down through a do-block; without it the do-block can't synthesise. -}
+
 import IO.Stdout
 
 type ErrA = ErrA

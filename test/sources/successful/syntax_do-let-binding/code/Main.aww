@@ -1,6 +1,7 @@
 {- `let` between two `<-` binds: lifted helper must capture both the
    previous bind and the let-binder, and keep the let in scope through
    the rest of the do-block. -}
+
 import IO.Stdout
 
 step1 : Int32 -> Either String Int32

@@ -1,4 +1,5 @@
 {- `mulInt32`: row-union boundaries; `minInt32 * (-1)` overflows (negation doesn't fit). -}
+
 import IO.Stdout
 
 render : Either (UnderflowError | OverflowError) Int32 -> Either StringTooLong String

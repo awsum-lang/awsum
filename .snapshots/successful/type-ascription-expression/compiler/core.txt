@@ -1,0 +1,161 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "identity" [ "x" ]
+            ( CVar "x" )
+        , CValDef "direct"
+            ( CCall
+                ( CBuiltIn "showInt32" )
+                [ CIntLit 42 TInt32 ]
+            )
+        , CValDef "throughHof"
+            ( CCall
+                ( CBuiltIn "showInt32" )
+                [ CCall
+                    ( CVar "identity" )
+                    [ CIntLit 10 TInt32 ]
+                ]
+            )
+        , CValDef "ascribedCall"
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "predInt32" )
+                    [ CIntLit 5 TInt32 ]
+                )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CString "FAIL"
+                    )
+                ,
+                    ( 4
+                    , [ "n" ]
+                    , CCall
+                        ( CBuiltIn "showInt32" )
+                        [ CVar "n" ]
+                    )
+                ]
+            )
+        , CValDef "joined"
+            ( CCase
+                ( CCall
+                    ( CBuiltIn "concatString" )
+                    [ CVar "direct"
+                    , CString " "
+                    ]
+                )
+                [
+                    ( 3
+                    , [ "$do_e_35_3" ]
+                    , CCon 3
+                        [ CVar "$do_e_35_3" ]
+                    )
+                ,
+                    ( 4
+                    , [ "ab" ]
+                    , CCase
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CVar "ab"
+                            , CVar "throughHof"
+                            ]
+                        )
+                        [
+                            ( 3
+                            , [ "$do_e_36_3" ]
+                            , CCon 3
+                                [ CVar "$do_e_36_3" ]
+                            )
+                        ,
+                            ( 4
+                            , [ "abc" ]
+                            , CCase
+                                ( CCall
+                                    ( CBuiltIn "concatString" )
+                                    [ CVar "abc"
+                                    , CString " "
+                                    ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$do_e_37_3" ]
+                                    , CCon 3
+                                        [ CVar "$do_e_37_3" ]
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "abcd" ]
+                                    , CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "abcd"
+                                        , CVar "ascribedCall"
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCase
+                ( CVar "joined" )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CCon 7
+                        [ CString "OVERFLOW"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CCon 7
+                        [ CVar "s"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ]
+            )
+        ]
+    }

@@ -1,4 +1,5 @@
 {- `Maybe a` from prelude (no import). -}
+
 import IO.Stdout
 
 unwrap : Maybe String -> Either StringTooLong String

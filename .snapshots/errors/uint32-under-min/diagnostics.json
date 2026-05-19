@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":8,"startCol":12,"endLine":8,"endCol":14,"message":"Integer literal -1 out of range for UInt32 (valid range: 0..4294967295)","fixes":[]}]
+[{"severity":"error","startLine":9,"startCol":12,"endLine":9,"endCol":14,"message":"Integer literal -1 out of range for UInt32 (valid range: 0..4294967295)","fixes":[]}]

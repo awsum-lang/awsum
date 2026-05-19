@@ -1,7 +1,8 @@
--- Property: `not (and a b) == or (not a) (not b)`. The property
--- emits `boolToStr (not (and a b)) ++ boolToStr (or (not a) (not b))`
--- — both halves should equal Haskell's `not (a && b)`. Input
--- format: "a:b" with a, b as "0" / "1" decimal strings.
+{- Property: `not (and a b) == or (not a) (not b)`. The property
+   emits `boolToStr (not (and a b)) ++ boolToStr (or (not a) (not b))`
+   — both halves should equal Haskell's `not (a && b)`. Input
+   format: "a:b" with a, b as "0" / "1" decimal strings. -}
+
 import IO.Stdout
 import IO.Stdin
 

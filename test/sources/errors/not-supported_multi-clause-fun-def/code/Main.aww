@@ -1,9 +1,10 @@
--- Not yet supported: multi-clause function definitions in
--- ML/Haskell style (`f Nothing = …` / `f (Just x) = …`). Each
--- top-level name corresponds to exactly one `FunDef`; a second
--- equation with the same name is a `Duplicate definition` error,
--- not an additional pattern arm. Workaround: write one `FunDef`
--- whose body is a `case` over the parameter.
+{- Not yet supported: multi-clause function definitions in
+   ML/Haskell style (`f Nothing = …` / `f (Just x) = …`). Each
+   top-level name corresponds to exactly one `FunDef`; a second
+   equation with the same name is a `Duplicate definition` error,
+   not an additional pattern arm. Workaround: write one `FunDef`
+   whose body is a `case` over the parameter. -}
+
 import IO.Stdout
 
 describe : Maybe Int32 -> String

@@ -1,4 +1,5 @@
--- Error: Int32 literal 1 below lower bound (-2^31 - 1)
+{- Error: Int32 literal 1 below lower bound (-2^31 - 1) -}
+
 import IO.Stdout
 
 main : IO Never Unit

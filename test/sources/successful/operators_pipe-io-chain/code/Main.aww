@@ -4,6 +4,7 @@
    `|>` wants on its right-hand side, so three actions chain
    left-to-right in execution order without nested lambdas and
    without a user-defined helper. -}
+
 import IO.Stdout
 
 main : IO Never Unit

@@ -1,4 +1,5 @@
 {- Single nullary constructor; pattern match. -}
+
 import IO.Stdout
 
 type CustomUnit = CustomUnit

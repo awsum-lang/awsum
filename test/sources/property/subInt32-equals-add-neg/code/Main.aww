@@ -1,8 +1,9 @@
--- Property: `subInt32 a b == addInt32 a (negInt32 b)` whenever every
--- intermediate value (negB, subResult, addResult) stays in Int32
--- range. Input format: "a:b". The Haskell-side generator picks
--- pairs constructively, so neither UNDERFLOW nor OVERFLOW is
--- expected to fire.
+{- Property: `subInt32 a b == addInt32 a (negInt32 b)` whenever every
+   intermediate value (negB, subResult, addResult) stays in Int32
+   range. Input format: "a:b". The Haskell-side generator picks
+   pairs constructively, so neither UNDERFLOW nor OVERFLOW is
+   expected to fire. -}
+
 import IO.Stdout
 import IO.Stdin
 

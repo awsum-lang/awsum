@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":5,"startCol":25,"endLine":5,"endCol":47,"message":"Type mismatch: expected String, got String -> IO Never Unit","fixes":[]}]
+[{"severity":"error","startLine":6,"startCol":25,"endLine":6,"endCol":47,"message":"Type mismatch: expected String, got String -> IO Never Unit","fixes":[]}]

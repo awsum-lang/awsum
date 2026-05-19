@@ -14,7 +14,7 @@ User-facing description of Awsum's type system — concepts and examples of prog
 | Function types `a -> b`              | done                                                          |
 | Pattern matching, exhaustiveness     | done                                                          |
 | Structural sums `(A \| B)`           | done                                                          |
-| Type-ascription patterns `(x : T)`   | done                                                          |
+| Type ascription `(e : T)` / `(p : T)` | done — expression-position pins the type; pattern-position also binds `p` |
 | Implicit injection into a row        | done                                                          |
 | `do`-notation for `Either`           | done                                                          |
 | `IO e a` as lazy data + `bindIO`/`mapIO` | done                                                       |
@@ -336,7 +336,7 @@ An unused non-`_` name is a warning with a quick-fix to add the underscore. `aws
 | `True`, `Nothing`, …  | nullary constructors      | tag-equal at runtime                          |
 | `Just x`, `Cons x xs` | constructor with bindings | binds each field to a name                    |
 | `Just _`              | constructor, ignore field | wildcard — no binding                         |
-| `(p : T)`             | type-ascription pattern   | only valid against a structural-sum scrutinee |
+| `(p : T)`             | type-ascription pattern   | see [Type ascription](#type-ascription) below; row-elimination form covered in [Structural sums](#structural-sums-row-types) |
 
 Nested patterns work as expected.
 
@@ -349,6 +349,40 @@ firstZero x = case x of
 ```
 
 Literals inside an arm's body pick up their type from the enclosing function's signature.
+
+---
+
+## Type ascription
+
+`(value : T)` everywhere means **"the value at this node has type `T`"**. The form appears in two syntactic positions:
+
+- **Expression position** — `(e : T)` pins the type of an expression at the use site. Useful where bidirectional inference alone has too little context — most often a bare integer literal flowing into a polymorphic argument:
+
+  ```awsum
+  identity : a -> a
+  identity x = x
+
+  -- Without ascription: 'identity 42' has no synth form (the literal
+  -- needs a numeric type pin), and 'a' is unresolved.
+  pinned : Int32
+  pinned = identity (42 : Int32)
+  ```
+
+  The ascription becomes the expected type for the inner expression. Integer literals validate against the ascribed range; polymorphic call sites resolve their `a` to the ascribed type; row-injection picks the right alternative.
+
+- **Pattern position** — `(x : T)` matches the alternative `T` of a structural-sum scrutinee and binds `x` to that alternative. Covered in [Structural sums](#structural-sums-row-types) below.
+
+The principle is identical in both positions; the difference is that patterns also bind names (because patterns introduce them), expressions do not.
+
+The expression form requires parens — bare `e : T` would be ambiguous in positions like `let n = e : T in body`. The pattern form requires parens for the same reason.
+
+```awsum
+-- error: ascription doesn't fit the value
+-- bad : String
+-- bad = (42 : String)
+--       ^^^^^^^^^^^^^
+-- The integer literal 42 cannot have type String.
+```
 
 ---
 

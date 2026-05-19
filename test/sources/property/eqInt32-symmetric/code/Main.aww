@@ -1,7 +1,8 @@
--- Property: `eqInt32 a b == eqInt32 b a` for any (a, b). Both sides
--- must agree, even when `a /= b`. Input format: "a:b". The property
--- has no failable inner ops, so the only error path is a parse
--- failure.
+{- Property: `eqInt32 a b == eqInt32 b a` for any (a, b). Both sides
+   must agree, even when `a /= b`. Input format: "a:b". The property
+   has no failable inner ops, so the only error path is a parse
+   failure. -}
+
 import IO.Stdout
 import IO.Stdin
 

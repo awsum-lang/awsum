@@ -1,4 +1,5 @@
 {- `eqInt32`: returns prelude `Bool`. -}
+
 import IO.Stdout
 
 render : Bool -> String

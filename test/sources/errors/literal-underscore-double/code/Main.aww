@@ -1,7 +1,8 @@
--- Two consecutive '_' in an integer literal are rejected at parse
--- time. '_' is a single separator between digits — `1__2` has '_'
--- followed by '_' instead of a digit and is a syntax error.
--- Workaround: collapse to a single '_' between digits.
+{- Two consecutive '_' in an integer literal are rejected at parse
+   time. '_' is a single separator between digits — `1__2` has '_'
+   followed by '_' instead of a digit and is a syntax error.
+   Workaround: collapse to a single '_' between digits. -}
+
 import IO.Stdout
 
 bad : Int32

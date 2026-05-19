@@ -1,4 +1,5 @@
 {- File-leading block comment. -}
+
 import IO.Stdout -- Import trailing comment
 import IO.Args -- Args import trailing
 

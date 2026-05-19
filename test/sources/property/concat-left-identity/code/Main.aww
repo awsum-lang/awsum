@@ -1,7 +1,8 @@
--- Property: `"" ++ s == s` for every String. Mirrors
--- `concat-right-identity` on the other side. There's nothing to
--- parse and nothing that can fail, so the property runs over
--- 'main raw' directly — Haskell expects the input back.
+{- Property: `"" ++ s == s` for every String. Mirrors
+   `concat-right-identity` on the other side. There's nothing to
+   parse and nothing that can fail, so the property runs over
+   'main raw' directly — Haskell expects the input back. -}
+
 import IO.Stdout
 import IO.Stdin
 

@@ -1,4 +1,5 @@
 {- Non-parametric single-constructor wrapper over a concrete field. -}
+
 import IO.Stdout
 
 type Wrapper = Wrap String

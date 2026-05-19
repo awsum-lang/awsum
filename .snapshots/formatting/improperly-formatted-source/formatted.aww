@@ -1,9 +1,5 @@
--- top file comment
-{- block comment
-before imports -}
-{- no space -}
-{- extra spaces -}
-{- newline -}
+{- top file comment -}
+
 import IO.Stdout -- import trailing comment
 
 {- block

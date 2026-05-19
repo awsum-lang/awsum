@@ -1,9 +1,10 @@
--- Not yet supported: user-defined infix operators. The `DeclName`
--- rule accepts only `LIdent` or the literal token `(++)` — and that
--- single carve-out exists solely so the prelude can declare its own
--- `(++) = BuiltIn.concatString`. Other operator names fail to parse.
--- User-defined operators (with their own precedence / associativity)
--- are not on the near-term roadmap.
+{- Not yet supported: user-defined infix operators. The `DeclName`
+   rule accepts only `LIdent` or the literal token `(++)` — and that
+   single carve-out exists solely so the prelude can declare its own
+   `(++) = BuiltIn.concatString`. Other operator names fail to parse.
+   User-defined operators (with their own precedence / associativity)
+   are not on the near-term roadmap. -}
+
 import IO.Stdout
 
 (+) : Int32 -> Int32 -> Int32

@@ -1,4 +1,5 @@
 {- Single ADT mixing data-bearing and nullary constructors. -}
+
 import IO.Stdout
 
 type Token

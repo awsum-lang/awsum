@@ -1,47 +1,47 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " `showUInt32`: full range; values 2^31..2^32-1 trap signed-int divergence on JVM/CLR. " ]
+    { moduleComment = Just " `showUInt32`: full range; values 2^31..2^32-1 trap signed-int divergence on JVM/CLR. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 4
+            { spanStartLine = 5
             , spanStartCol = 1
-            , spanEndLine = 4
+            , spanEndLine = 5
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 4
+                { spanStartLine = 5
                 , spanStartCol = 8
-                , spanEndLine = 4
+                , spanEndLine = 5
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 4
+                    { spanStartLine = 5
                     , spanStartCol = 8
-                    , spanEndLine = 4
+                    , spanEndLine = 5
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 4
+                        { spanStartLine = 5
                         , spanStartCol = 8
-                        , spanEndLine = 4
+                        , spanEndLine = 5
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 4
+                        { spanStartLine = 5
                         , spanStartCol = 11
-                        , spanEndLine = 4
+                        , spanEndLine = 5
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -49,9 +49,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 4
+                    { spanStartLine = 5
                     , spanStartCol = 17
-                    , spanEndLine = 4
+                    , spanEndLine = 5
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -59,25 +59,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 5
+                { spanStartLine = 6
                 , spanStartCol = 1
-                , spanEndLine = 18
+                , spanEndLine = 19
                 , spanEndCol = 37
                 }
             ) "main" []
             ( ELet
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 7
-                    , spanEndLine = 15
+                    , spanEndLine = 16
                     , spanEndCol = 8
                     }
                 )
                 ( PVar
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 7
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 10
                         }
                     ) "res"
@@ -85,34 +85,34 @@ Program
                 ( Just
                     ( TyApp
                         ( SrcSpan
-                            { spanStartLine = 6
+                            { spanStartLine = 7
                             , spanStartCol = 13
-                            , spanEndLine = 6
+                            , spanEndLine = 7
                             , spanEndCol = 40
                             }
                         )
                         ( TyApp
                             ( SrcSpan
-                                { spanStartLine = 6
+                                { spanStartLine = 7
                                 , spanStartCol = 13
-                                , spanEndLine = 6
+                                , spanEndLine = 7
                                 , spanEndCol = 33
                                 }
                             )
                             ( TyCon
                                 ( SrcSpan
-                                    { spanStartLine = 6
+                                    { spanStartLine = 7
                                     , spanStartCol = 13
-                                    , spanEndLine = 6
+                                    , spanEndLine = 7
                                     , spanEndCol = 19
                                     }
                                 ) "Either"
                             )
                             ( TyCon
                                 ( SrcSpan
-                                    { spanStartLine = 6
+                                    { spanStartLine = 7
                                     , spanStartCol = 20
-                                    , spanEndLine = 6
+                                    , spanEndLine = 7
                                     , spanEndCol = 33
                                     }
                                 ) "StringTooLong"
@@ -120,9 +120,9 @@ Program
                         )
                         ( TyCon
                             ( SrcSpan
-                                { spanStartLine = 6
+                                { spanStartLine = 7
                                 , spanStartCol = 34
-                                , spanEndLine = 6
+                                , spanEndLine = 7
                                 , spanEndCol = 40
                                 }
                             ) "String"
@@ -131,58 +131,58 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 43
-                        , spanEndLine = 15
+                        , spanEndLine = 16
                         , spanEndCol = 8
                         }
                     )
                     ( EDo
                         ( SrcSpan
-                            { spanStartLine = 6
+                            { spanStartLine = 7
                             , spanStartCol = 44
-                            , spanEndLine = 14
+                            , spanEndLine = 15
                             , spanEndCol = 35
                             }
                         )
                         [ DoBind
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 9
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 43
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 7
+                                    { spanStartLine = 8
                                     , spanStartCol = 9
-                                    , spanEndLine = 7
+                                    , spanEndLine = 8
                                     , spanEndCol = 11
                                     }
                                 ) "s0"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 7
+                                    { spanStartLine = 8
                                     , spanStartCol = 15
-                                    , spanEndLine = 7
+                                    , spanEndLine = 8
                                     , spanEndCol = 43
                                     }
                                 ) OpConcat
                                 ( EApp
                                     ( SrcSpan
-                                        { spanStartLine = 7
+                                        { spanStartLine = 8
                                         , spanStartCol = 15
-                                        , spanEndLine = 7
+                                        , spanEndLine = 8
                                         , spanEndCol = 36
                                         }
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 7
+                                            { spanStartLine = 8
                                             , spanStartCol = 15
-                                            , spanEndLine = 7
+                                            , spanEndLine = 8
                                             , spanEndCol = 26
                                             }
                                         )
@@ -190,9 +190,9 @@ Program
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 7
+                                            { spanStartLine = 8
                                             , spanStartCol = 26
-                                            , spanEndLine = 7
+                                            , spanEndLine = 8
                                             , spanEndCol = 36
                                             }
                                         )
@@ -201,9 +201,9 @@ Program
                                 )
                                 ( ELit
                                     ( SrcSpan
-                                        { spanStartLine = 7
+                                        { spanStartLine = 8
                                         , spanStartCol = 39
-                                        , spanEndLine = 7
+                                        , spanEndLine = 8
                                         , spanEndCol = 43
                                         }
                                     )
@@ -212,34 +212,34 @@ Program
                             )
                         , DoBind
                             ( SrcSpan
-                                { spanStartLine = 8
+                                { spanStartLine = 9
                                 , spanStartCol = 9
-                                , spanEndLine = 8
+                                , spanEndLine = 9
                                 , spanEndCol = 34
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 8
+                                    { spanStartLine = 9
                                     , spanStartCol = 9
-                                    , spanEndLine = 8
+                                    , spanEndLine = 9
                                     , spanEndCol = 11
                                     }
                                 ) "s1"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 8
+                                    { spanStartLine = 9
                                     , spanStartCol = 15
-                                    , spanEndLine = 8
+                                    , spanEndLine = 9
                                     , spanEndCol = 34
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 8
+                                        { spanStartLine = 9
                                         , spanStartCol = 15
-                                        , spanEndLine = 8
+                                        , spanEndLine = 9
                                         , spanEndCol = 18
                                         }
                                     )
@@ -247,17 +247,17 @@ Program
                                 )
                                 ( EApp
                                     ( SrcSpan
-                                        { spanStartLine = 8
+                                        { spanStartLine = 9
                                         , spanStartCol = 21
-                                        , spanEndLine = 8
+                                        , spanEndLine = 9
                                         , spanEndCol = 34
                                         }
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 8
+                                            { spanStartLine = 9
                                             , spanStartCol = 21
-                                            , spanEndLine = 8
+                                            , spanEndLine = 9
                                             , spanEndCol = 32
                                             }
                                         )
@@ -265,9 +265,9 @@ Program
                                     )
                                     ( ELit
                                         ( SrcSpan
-                                            { spanStartLine = 8
+                                            { spanStartLine = 9
                                             , spanStartCol = 32
-                                            , spanEndLine = 8
+                                            , spanEndLine = 9
                                             , spanEndCol = 34
                                             }
                                         )
@@ -277,34 +277,34 @@ Program
                             )
                         , DoBind
                             ( SrcSpan
-                                { spanStartLine = 9
+                                { spanStartLine = 10
                                 , spanStartCol = 9
-                                , spanEndLine = 9
+                                , spanEndLine = 10
                                 , spanEndCol = 25
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 9
+                                    { spanStartLine = 10
                                     , spanStartCol = 9
-                                    , spanEndLine = 9
+                                    , spanEndLine = 10
                                     , spanEndCol = 11
                                     }
                                 ) "s2"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 9
+                                    { spanStartLine = 10
                                     , spanStartCol = 15
-                                    , spanEndLine = 9
+                                    , spanEndLine = 10
                                     , spanEndCol = 25
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 9
+                                        { spanStartLine = 10
                                         , spanStartCol = 15
-                                        , spanEndLine = 9
+                                        , spanEndLine = 10
                                         , spanEndCol = 18
                                         }
                                     )
@@ -312,9 +312,9 @@ Program
                                 )
                                 ( ELit
                                     ( SrcSpan
-                                        { spanStartLine = 9
+                                        { spanStartLine = 10
                                         , spanStartCol = 21
-                                        , spanEndLine = 9
+                                        , spanEndLine = 10
                                         , spanEndCol = 25
                                         }
                                     )
@@ -323,34 +323,34 @@ Program
                             )
                         , DoBind
                             ( SrcSpan
-                                { spanStartLine = 10
+                                { spanStartLine = 11
                                 , spanStartCol = 9
-                                , spanEndLine = 10
+                                , spanEndLine = 11
                                 , spanEndCol = 45
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 10
+                                    { spanStartLine = 11
                                     , spanStartCol = 9
-                                    , spanEndLine = 10
+                                    , spanEndLine = 11
                                     , spanEndCol = 11
                                     }
                                 ) "s3"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 10
+                                    { spanStartLine = 11
                                     , spanStartCol = 15
-                                    , spanEndLine = 10
+                                    , spanEndLine = 11
                                     , spanEndCol = 45
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 10
+                                        { spanStartLine = 11
                                         , spanStartCol = 15
-                                        , spanEndLine = 10
+                                        , spanEndLine = 11
                                         , spanEndCol = 18
                                         }
                                     )
@@ -358,17 +358,17 @@ Program
                                 )
                                 ( EApp
                                     ( SrcSpan
-                                        { spanStartLine = 10
+                                        { spanStartLine = 11
                                         , spanStartCol = 21
-                                        , spanEndLine = 10
+                                        , spanEndLine = 11
                                         , spanEndCol = 45
                                         }
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 10
+                                            { spanStartLine = 11
                                             , spanStartCol = 21
-                                            , spanEndLine = 10
+                                            , spanEndLine = 11
                                             , spanEndCol = 32
                                             }
                                         )
@@ -376,9 +376,9 @@ Program
                                     )
                                     ( ELit
                                         ( SrcSpan
-                                            { spanStartLine = 10
+                                            { spanStartLine = 11
                                             , spanStartCol = 32
-                                            , spanEndLine = 10
+                                            , spanEndLine = 11
                                             , spanEndCol = 45
                                             }
                                         )
@@ -388,34 +388,34 @@ Program
                             )
                         , DoBind
                             ( SrcSpan
-                                { spanStartLine = 11
+                                { spanStartLine = 12
                                 , spanStartCol = 9
-                                , spanEndLine = 11
+                                , spanEndLine = 12
                                 , spanEndCol = 25
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 11
+                                    { spanStartLine = 12
                                     , spanStartCol = 9
-                                    , spanEndLine = 11
+                                    , spanEndLine = 12
                                     , spanEndCol = 11
                                     }
                                 ) "s4"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 11
+                                    { spanStartLine = 12
                                     , spanStartCol = 15
-                                    , spanEndLine = 11
+                                    , spanEndLine = 12
                                     , spanEndCol = 25
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 11
+                                        { spanStartLine = 12
                                         , spanStartCol = 15
-                                        , spanEndLine = 11
+                                        , spanEndLine = 12
                                         , spanEndCol = 18
                                         }
                                     )
@@ -423,9 +423,9 @@ Program
                                 )
                                 ( ELit
                                     ( SrcSpan
-                                        { spanStartLine = 11
+                                        { spanStartLine = 12
                                         , spanStartCol = 21
-                                        , spanEndLine = 11
+                                        , spanEndLine = 12
                                         , spanEndCol = 25
                                         }
                                     )
@@ -434,34 +434,34 @@ Program
                             )
                         , DoBind
                             ( SrcSpan
-                                { spanStartLine = 12
+                                { spanStartLine = 13
                                 , spanStartCol = 9
-                                , spanEndLine = 12
+                                , spanEndLine = 13
                                 , spanEndCol = 45
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 12
+                                    { spanStartLine = 13
                                     , spanStartCol = 9
-                                    , spanEndLine = 12
+                                    , spanEndLine = 13
                                     , spanEndCol = 11
                                     }
                                 ) "s5"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 12
+                                    { spanStartLine = 13
                                     , spanStartCol = 15
-                                    , spanEndLine = 12
+                                    , spanEndLine = 13
                                     , spanEndCol = 45
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 12
+                                        { spanStartLine = 13
                                         , spanStartCol = 15
-                                        , spanEndLine = 12
+                                        , spanEndLine = 13
                                         , spanEndCol = 18
                                         }
                                     )
@@ -469,17 +469,17 @@ Program
                                 )
                                 ( EApp
                                     ( SrcSpan
-                                        { spanStartLine = 12
+                                        { spanStartLine = 13
                                         , spanStartCol = 21
-                                        , spanEndLine = 12
+                                        , spanEndLine = 13
                                         , spanEndCol = 45
                                         }
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 12
+                                            { spanStartLine = 13
                                             , spanStartCol = 21
-                                            , spanEndLine = 12
+                                            , spanEndLine = 13
                                             , spanEndCol = 32
                                             }
                                         )
@@ -487,9 +487,9 @@ Program
                                     )
                                     ( ELit
                                         ( SrcSpan
-                                            { spanStartLine = 12
+                                            { spanStartLine = 13
                                             , spanStartCol = 32
-                                            , spanEndLine = 12
+                                            , spanEndLine = 13
                                             , spanEndCol = 45
                                             }
                                         )
@@ -499,34 +499,34 @@ Program
                             )
                         , DoBind
                             ( SrcSpan
-                                { spanStartLine = 13
+                                { spanStartLine = 14
                                 , spanStartCol = 9
-                                , spanEndLine = 13
+                                , spanEndLine = 14
                                 , spanEndCol = 25
                                 }
                             )
                             ( PVar
                                 ( SrcSpan
-                                    { spanStartLine = 13
+                                    { spanStartLine = 14
                                     , spanStartCol = 9
-                                    , spanEndLine = 13
+                                    , spanEndLine = 14
                                     , spanEndCol = 11
                                     }
                                 ) "s6"
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 13
+                                    { spanStartLine = 14
                                     , spanStartCol = 15
-                                    , spanEndLine = 13
+                                    , spanEndLine = 14
                                     , spanEndCol = 25
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 13
+                                        { spanStartLine = 14
                                         , spanStartCol = 15
-                                        , spanEndLine = 13
+                                        , spanEndLine = 14
                                         , spanEndCol = 18
                                         }
                                     )
@@ -534,9 +534,9 @@ Program
                                 )
                                 ( ELit
                                     ( SrcSpan
-                                        { spanStartLine = 13
+                                        { spanStartLine = 14
                                         , spanStartCol = 21
-                                        , spanEndLine = 13
+                                        , spanEndLine = 14
                                         , spanEndCol = 25
                                         }
                                     )
@@ -545,25 +545,25 @@ Program
                             )
                         , DoExpr
                             ( SrcSpan
-                                { spanStartLine = 14
+                                { spanStartLine = 15
                                 , spanStartCol = 9
-                                , spanEndLine = 14
+                                , spanEndLine = 15
                                 , spanEndCol = 35
                                 }
                             )
                             ( EInfix
                                 ( SrcSpan
-                                    { spanStartLine = 14
+                                    { spanStartLine = 15
                                     , spanStartCol = 9
-                                    , spanEndLine = 14
+                                    , spanEndLine = 15
                                     , spanEndCol = 35
                                     }
                                 ) OpConcat
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 14
+                                        { spanStartLine = 15
                                         , spanStartCol = 9
-                                        , spanEndLine = 14
+                                        , spanEndLine = 15
                                         , spanEndCol = 12
                                         }
                                     )
@@ -571,17 +571,17 @@ Program
                                 )
                                 ( EApp
                                     ( SrcSpan
-                                        { spanStartLine = 14
+                                        { spanStartLine = 15
                                         , spanStartCol = 15
-                                        , spanEndLine = 14
+                                        , spanEndLine = 15
                                         , spanEndCol = 35
                                         }
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 14
+                                            { spanStartLine = 15
                                             , spanStartCol = 15
-                                            , spanEndLine = 14
+                                            , spanEndLine = 15
                                             , spanEndCol = 26
                                             }
                                         )
@@ -589,9 +589,9 @@ Program
                                     )
                                     ( EVar
                                         ( SrcSpan
-                                            { spanStartLine = 14
+                                            { spanStartLine = 15
                                             , spanStartCol = 26
-                                            , spanEndLine = 14
+                                            , spanEndLine = 15
                                             , spanEndCol = 35
                                             }
                                         )
@@ -604,17 +604,17 @@ Program
                 )
                 ( ECase
                     ( SrcSpan
-                        { spanStartLine = 16
+                        { spanStartLine = 17
                         , spanStartCol = 7
-                        , spanEndLine = 18
+                        , spanEndLine = 19
                         , spanEndCol = 37
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 16
+                            { spanStartLine = 17
                             , spanStartCol = 12
-                            , spanEndLine = 16
+                            , spanEndLine = 17
                             , spanEndCol = 16
                             }
                         )
@@ -623,17 +623,17 @@ Program
                     ( CaseAltLeaf []
                         ( PCon
                             ( SrcSpan
-                                { spanStartLine = 17
+                                { spanStartLine = 18
                                 , spanStartCol = 9
-                                , spanEndLine = 17
+                                , spanEndLine = 18
                                 , spanEndCol = 13
                                 }
                             ) "Left"
                             [ PWild
                                 ( SrcSpan
-                                    { spanStartLine = 17
+                                    { spanStartLine = 18
                                     , spanStartCol = 14
-                                    , spanEndLine = 17
+                                    , spanEndLine = 18
                                     , spanEndCol = 15
                                     }
                                 )
@@ -641,17 +641,17 @@ Program
                         )
                         ( EApp
                             ( SrcSpan
-                                { spanStartLine = 17
+                                { spanStartLine = 18
                                 , spanStartCol = 19
-                                , spanEndLine = 17
+                                , spanEndLine = 18
                                 , spanEndCol = 52
                                 }
                             )
                             ( EVar
                                 ( SrcSpan
-                                    { spanStartLine = 17
+                                    { spanStartLine = 18
                                     , spanStartCol = 19
-                                    , spanEndLine = 17
+                                    , spanEndLine = 18
                                     , spanEndCol = 35
                                     }
                                 )
@@ -663,9 +663,9 @@ Program
                             )
                             ( ELit
                                 ( SrcSpan
-                                    { spanStartLine = 17
+                                    { spanStartLine = 18
                                     , spanStartCol = 35
-                                    , spanEndLine = 17
+                                    , spanEndLine = 18
                                     , spanEndCol = 52
                                     }
                                 )
@@ -675,17 +675,17 @@ Program
                         [ CaseAltLeaf []
                             ( PCon
                                 ( SrcSpan
-                                    { spanStartLine = 18
+                                    { spanStartLine = 19
                                     , spanStartCol = 9
-                                    , spanEndLine = 18
+                                    , spanEndLine = 19
                                     , spanEndCol = 14
                                     }
                                 ) "Right"
                                 [ PVar
                                     ( SrcSpan
-                                        { spanStartLine = 18
+                                        { spanStartLine = 19
                                         , spanStartCol = 15
-                                        , spanEndLine = 18
+                                        , spanEndLine = 19
                                         , spanEndCol = 16
                                         }
                                     ) "s"
@@ -693,17 +693,17 @@ Program
                             )
                             ( EApp
                                 ( SrcSpan
-                                    { spanStartLine = 18
+                                    { spanStartLine = 19
                                     , spanStartCol = 20
-                                    , spanEndLine = 18
+                                    , spanEndLine = 19
                                     , spanEndCol = 37
                                     }
                                 )
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 18
+                                        { spanStartLine = 19
                                         , spanStartCol = 20
-                                        , spanEndLine = 18
+                                        , spanEndLine = 19
                                         , spanEndCol = 36
                                         }
                                     )
@@ -715,9 +715,9 @@ Program
                                 )
                                 ( EVar
                                     ( SrcSpan
-                                        { spanStartLine = 18
+                                        { spanStartLine = 19
                                         , spanStartCol = 36
-                                        , spanEndLine = 18
+                                        , spanEndLine = 19
                                         , spanEndCol = 37
                                         }
                                     )

@@ -21,6 +21,7 @@
    reports `string-too-long`. Memory peak during the recursion is
    ~167 MB at the moment the cap-check fires (two 83 MB operands;
    the would-be-allocated 167 MB output is rejected). -}
+
 import IO.Stdout
 
 double : Int32 -> String -> Either (UnderflowError | StringTooLong) String

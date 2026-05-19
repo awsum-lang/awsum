@@ -1,4 +1,5 @@
 {- Nested monomorphic Result; flat 4-arm inline patterns. -}
+
 import IO.Stdout
 
 type Result a e = Ok a | Err e

@@ -1,5 +1,6 @@
 {- Partial application produces a first-class function value
    that another HOF (`apply`) can then invoke. -}
+
 import IO.Stdout
 
 type Box a = Box a

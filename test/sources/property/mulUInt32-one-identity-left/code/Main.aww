@@ -1,6 +1,7 @@
--- Property: `mulUInt32 1 a == Right a`. Left-identity of one under
--- multiplication. Single UInt32 input. Multiplying by 1 is always in
--- range, so OVERFLOW cannot fire on a well-formed input.
+{- Property: `mulUInt32 1 a == Right a`. Left-identity of one under
+   multiplication. Single UInt32 input. Multiplying by 1 is always in
+   range, so OVERFLOW cannot fire on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

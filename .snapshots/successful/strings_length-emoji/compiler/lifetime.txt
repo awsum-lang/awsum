@@ -8,27 +8,27 @@ check:
   param           expected                        count=2
   param           actual                          count=2
   param           label                           count=2
-  case-pattern    $do_e_12_5                      count=0
-  case-pattern    s0                              count=0
   case-pattern    $do_e_13_5                      count=0
-  case-pattern    s1                              count=0
+  case-pattern    s0                              count=0
   case-pattern    $do_e_14_5                      count=0
-  case-pattern    s2                              count=0
+  case-pattern    s1                              count=0
   case-pattern    $do_e_15_5                      count=0
+  case-pattern    s2                              count=0
+  case-pattern    $do_e_16_5                      count=0
   case-pattern    s3                              count=0
 
 run:
-  case-pattern    $do_e_20_3                      count=1
-  case-pattern    a                               count=1
   case-pattern    $do_e_21_3                      count=1
-  case-pattern    b                               count=1
+  case-pattern    a                               count=1
   case-pattern    $do_e_22_3                      count=1
-  case-pattern    c                               count=1
+  case-pattern    b                               count=1
   case-pattern    $do_e_23_3                      count=1
-  case-pattern    s0                              count=1
+  case-pattern    c                               count=1
   case-pattern    $do_e_24_3                      count=1
-  case-pattern    s1                              count=1
+  case-pattern    s0                              count=1
   case-pattern    $do_e_25_3                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_26_3                      count=1
   case-pattern    s2                              count=1
 
 main:

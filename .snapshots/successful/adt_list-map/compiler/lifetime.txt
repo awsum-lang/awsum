@@ -53,7 +53,7 @@ $cps$$scc$show_showCons:
   case-pattern    t                               count=0
   case-pattern    h                               count=0
   case-pattern    t                               count=0
-  case-pattern    $do_e_18_3                      count=0
+  case-pattern    $do_e_19_3                      count=0
   case-pattern    hStr                            count=0
 
 $apply$$scc$show_showCons:
@@ -61,9 +61,9 @@ $apply$$scc$show_showCons:
   param           $x                              count=4
   case-pattern    $pk_29                          count=0
   case-pattern    hStr                            count=0
-  case-pattern    $do_e_19_3                      count=0
-  case-pattern    rest                            count=0
   case-pattern    $do_e_20_3                      count=0
+  case-pattern    rest                            count=0
+  case-pattern    $do_e_21_3                      count=0
   case-pattern    comma                           count=0
 
 show:

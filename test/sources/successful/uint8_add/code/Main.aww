@@ -1,4 +1,5 @@
 {- `addUInt8`: `Left OverflowError` above 255; `255 + 255` traps sign-extension on JVM/CLR. -}
+
 import IO.Stdout
 
 render : Either OverflowError UInt8 -> Either StringTooLong String

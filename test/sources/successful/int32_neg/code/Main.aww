@@ -1,4 +1,5 @@
 {- `negInt32`: ordinary `Right (-x)`; `Left OverflowError` only at `minInt32` (negation doesn't fit). -}
+
 import IO.Stdout
 
 render : Either OverflowError Int32 -> Either StringTooLong String

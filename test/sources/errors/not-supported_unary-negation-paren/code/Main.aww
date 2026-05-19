@@ -1,9 +1,10 @@
--- Not yet supported: unary negation of a parenthesised expression
--- (`-(5)`). The `Int` literal lexer reads `-` only when it is
--- *immediately* followed by a digit; `-(` is rejected after the
--- `-`. There is no unary-minus operator in the expression grammar.
--- Workaround: write the literal directly (`-5`) or call a named
--- `negInt32` once it lands in the prelude.
+{- Not yet supported: unary negation of a parenthesised expression
+   (`-(5)`). The `Int` literal lexer reads `-` only when it is
+   *immediately* followed by a digit; `-(` is rejected after the
+   `-`. There is no unary-minus operator in the expression grammar.
+   Workaround: write the literal directly (`-5`) or call a named
+   `negInt32` once it lands in the prelude. -}
+
 import IO.Stdout
 
 n : Int32

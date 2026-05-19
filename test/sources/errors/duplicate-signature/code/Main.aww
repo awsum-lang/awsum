@@ -1,4 +1,4 @@
--- Error: same type signature declared twice
+{- Error: same type signature declared twice -}
 
 foo : String -> IO Never Unit
 

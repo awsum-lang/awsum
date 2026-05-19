@@ -1,4 +1,5 @@
--- Error: function defined with more parameters than its signature allows
+{- Error: function defined with more parameters than its signature allows -}
+
 import IO.Stdout
 
 foo : String -> IO Never Unit

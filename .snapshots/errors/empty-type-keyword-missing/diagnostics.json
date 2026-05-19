@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":17,"startCol":11,"endLine":17,"endCol":17,"message":"Type mismatch: expected IO Label2 Unit, got IO Label1 Unit","fixes":[]}]
+[{"severity":"error","startLine":18,"startCol":11,"endLine":18,"endCol":17,"message":"Type mismatch: expected IO Label2 Unit, got IO Label1 Unit","fixes":[]}]

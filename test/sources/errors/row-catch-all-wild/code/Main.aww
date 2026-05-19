@@ -1,6 +1,7 @@
--- Error: wildcard pattern on a structural-sum scrutinee.
--- Catch-all on rows is forbidden by design — exhaustiveness without
--- wildcards is a load-bearing invariant of the language.
+{- Error: wildcard pattern on a structural-sum scrutinee.
+   Catch-all on rows is forbidden by design — exhaustiveness without
+   wildcards is a load-bearing invariant of the language. -}
+
 import IO.Stdout
 
 _f : (Int32 | String) -> String

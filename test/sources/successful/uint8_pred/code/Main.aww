@@ -1,4 +1,5 @@
 {- `predUInt8`: `Left UnderflowError` at 0; `predUInt8 255` traps signed-byte clipping on JVM. -}
+
 import IO.Stdout
 
 render : Either UnderflowError UInt8 -> Either StringTooLong String
