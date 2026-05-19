@@ -21,51 +21,13 @@ module Awsum.PropertySpec (spec) where
 
 import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAllStdin)
 import Data.ByteString qualified as BS
-import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
 import System.FilePath ((</>))
-import System.Info qualified as Info
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 import Test.QuickCheck (Arbitrary (..), Gen, chooseBoundedIntegral, chooseInteger, counterexample, elements, forAll, frequency, ioProperty, listOf, listOf1)
 import Test.QuickCheck qualified as QC
-
--- ════════════════════════════════════════════════════════════════════════════
--- Known-broken (OS, backend, propName) registry
--- ════════════════════════════════════════════════════════════════════════════
-
--- | Host OS for gating cross-backend assertions. Detected from
---   'System.Info.os' so the harness picks the right entry without any
---   per-CI configuration.
-data OS = Windows | Linux | MacOS | UnknownOS
-  deriving stock (Show, Eq, Ord)
-
-currentOS :: OS
-currentOS = case Info.os of
-  "mingw32" -> Windows
-  "linux" -> Linux
-  "darwin" -> MacOS
-  _ -> UnknownOS
-
--- | (OS, backend, propName) combinations that are known to diverge
---   while a real fix is pending. The compile + run still happens — only
---   the cross-backend equivalence assertion excludes the listed
---   backend, so the property keeps providing signal on the unaffected
---   backends. Removing the entry once the bug is fixed re-enables
---   assertion automatically.
---
---   Current debt: none. The 5 (Windows, JVM, *) entries that previously
---   tracked the 'sun.jnu.encoding' mangling of supplementary-plane
---   characters in argv were dropped once property tests moved to
---   'IO.Stdin.readAll' — the JVM startup decoder doesn't touch stdin,
---   so the divergence is resolved at the source rather than via skip.
-temporarilyBroken :: Set (OS, Backend, Text)
-temporarilyBroken = Set.empty
-
-isSkipped :: Text -> Backend -> Bool
-isSkipped propName backend =
-  Set.member (currentOS, backend, propName) temporarilyBroken
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Framework
@@ -112,26 +74,21 @@ runProperty artifacts p =
     let input = p.propEncode a
         expected = p.propExpectedOutput a
     results <- runOnAllStdin artifacts input
-    let asserted = filter (\(b, _) -> not (isSkipped p.propName b)) results
     pure
-      $ counterexample (toString (formatFailure p.propName input expected results))
-      $ allMatch expected asserted
+      $ counterexample (toString (formatFailure input expected results))
+      $ allMatch expected results
 
 allMatch :: Text -> [(Backend, Either Text Text)] -> Bool
 allMatch expected = all $ \(_, r) -> case r of
   Right out -> out == expected
   Left _ -> False
 
-formatFailure :: Text -> Text -> Text -> [(Backend, Either Text Text)] -> Text
-formatFailure propName input expected results =
+formatFailure :: Text -> Text -> [(Backend, Either Text Text)] -> Text
+formatFailure input expected results =
   unlines
     $ ["input:    " <> show input, "expected: " <> show expected, "results:"]
-    <> ["  " <> show b <> ": " <> formatOne b r | (b, r) <- results]
+    <> ["  " <> show b <> ": " <> formatRaw r | (b, r) <- results]
   where
-    formatOne :: Backend -> Either Text Text -> Text
-    formatOne b r
-      | isSkipped propName b = "[skipped on " <> show currentOS <> "] " <> formatRaw r
-      | otherwise = formatRaw r
     formatRaw :: Either Text Text -> Text
     formatRaw (Right o)
       | o == expected = "OK"
