@@ -69,7 +69,7 @@ Four helpers are emitted once per program (gated on whether the program referenc
 Every cell follows a balanced `+1` / `-1` history:
 
 - **Allocation** brings `+1` (the owner returned by `__alloc`).
-- **Transfer** brings `+1` per new holder. A transfer position is any place a borrowed binder is stored into long-lived state — `CCall` arg, `CCon` field, `CRow` value, `CContinue` arg, `CReuse` field, `CCase` arm-binder extract. Codegen emits `__inc_ref` whenever the source expression is a `CVar` (see `sourceCVar` / `emitIncIfCVar` in [Awsum.Codegen.LLVM](../src/Awsum/Codegen/LLVM.hs)). Fresh-allocation sources (`CCon`, `CCall` to an alloc-producing helper, `CIntLit`, `CString`) already carry their `+1` from `__alloc` and need no inc.
+- **Transfer** brings `+1` per new holder. A transfer position is any place a borrowed binder is stored into long-lived state — `CCall` arg, `CCon` field, `CRow` value, `CContinue` arg, `CReuse` field, `CCase` arm-binder extract. Codegen emits `__inc_ref` whenever the source expression resolves to a borrowed local or function parameter (see `borrowedSource` / `emitIncIfCVar` in [Awsum.Codegen.LLVM](../src/Awsum/Codegen/LLVM.hs)). Fresh-allocation sources need no inc — they bring their own `+1` from `__alloc`. This includes `CCon`, `CCall`, `CIntLit`, `CString`, and `CVar` references to top-level `CValDef`s (each such reference lowers to a `call @v_name()` whose body re-allocates a fresh cell).
 - **Built-in `CCall`** uses callee-owns args: every built-in helper dec's its incoming pointers at the end via `__free_recursive`, and the caller adds the same inc-on-`CVar` rule that applies to user calls. The discipline is uniform between user and built-in calls.
 - **Drop** brings `-1`. Drop placement is described next.
 
@@ -110,8 +110,14 @@ where `inner` contains a `CCon t fields` with `length fields == k` (matching the
 
 Backend lowering of `CReuse n t fields` is in-place mutation guarded by a runtime refcount check:
 
-- **`refcount == 1`** (uniquely owned): write `t` into slot 0 and the field values into slots 1..k of the existing cell at `n`. For each slot, dec the old value before overwriting; for each new `CVar` field source, inc; for each fresh source (`CCon`/`CCall`/`CIntLit`/`CString`) no inc (it brings its own `+1`). A self-move (new value equals the arm-pattern binder at the same slot) skips the dec / inc / store entirely. The cell's own refcount stays at 1. The pre-existing flag and shape header are left intact.
-- **`refcount > 1`** (shared with another live holder): copy-on-write. Allocate a fresh cell of the right shape, write `t` and the fields into it (same inc-on-`CVar` rule), then `__free_recursive` on `n` (which dec's its refcount, leaving the other holders intact).
+- **`refcount == 1`** (uniquely owned): write `t` into slot 0 and the field values into slots 1..k of the existing cell at `n`. For each slot, dec the old value before overwriting; for each new `CVar` field source, inc; for each fresh source (`CCon`/`CCall`/`CIntLit`/`CString`) no inc (it brings its own `+1`). The cell's own refcount stays at 1. The pre-existing flag and shape header are left intact.
+
+  Two refcount-bookkeeping elisions fire on this path:
+
+  - **Self-move.** When a new field is `CVar v` and `v` is the arm-pattern binder at the same slot, the slot's stored pointer is already what we'd write — dec-old, inc-new, and store all cancel and are skipped.
+  - **Permutation-move.** When a new field is `CVar v` where `v` is an arm-pattern binder at *some other* slot of the same scrut, the cell still owns `v` after the rewrite (just at a different slot). Codegen skips the dec-old of `v`'s old slot and the inc-new of its new slot; the store at the new slot is still emitted. The arm-binder's own inc-on-extract and CDrop also vanish when `v`'s only use is this one `CReuse` field (the linearity precondition is checked by [`Awsum.Lifetime.elidableArmBinders`](../src/Awsum/Lifetime.hs)).
+
+- **`refcount > 1`** (shared with another live holder): copy-on-write. Allocate a fresh cell of the right shape, write `t` and the fields into it, `__free_recursive` on `n` (which dec's its refcount, leaving the other holders intact). Every `CVar` field gets its own `__inc_ref` here unconditionally — the fresh cell takes its own reference, and the old cell stays alive at `rc-1` still holding its own references; the elisions above apply only to the in-place path.
 
 On JVM, CLR, and JS, `CReuse` lowers to plain field-overwrite of the existing array — `aastore` on JVM, `stelem.ref` on CLR, comma-expression `(n[0] = tag, n[1] = f₁, …, n)` on JS. There is no refcount header on managed-runtime heap blocks, so the runtime branch on uniqueness is absent.
 

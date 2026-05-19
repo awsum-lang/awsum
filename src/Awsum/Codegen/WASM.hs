@@ -1935,7 +1935,7 @@ emitTailWat ctx0 params = go ctx0 []
             incs =
               [ "(call $__inc_ref (local.get " <> t <> "))"
               | (t, a) <- zip temps newArgs,
-                isJust (sourceCVarWat a)
+                isJust (borrowedSourceWat ctx a)
               ]
             frees = [emitFree p | p <- pending]
             rebinds =
@@ -1967,7 +1967,7 @@ emitTailWat ctx0 params = go ctx0 []
             -- plus each function param, with a move-semantics
             -- carve-out for the case where the result expression's
             -- tail is a 'CVar' matching one of them.
-            resultName = sourceCVarWat other
+            resultName = borrowedSourceWat ctx other
             inResult n = Just n == resultName
             pendingToDec = filter (not . inResult) pending
             paramsToDec =
@@ -2024,8 +2024,8 @@ emitFree n = "(call $__free_recursive (local.get $" <> mangle n <> "))"
 -- allocation (CCon/CCall/CIntLit/CString). Used by 'CCon',
 -- 'CContinue', 'CReuse', 'CRow', and user 'CCall' arg stores in
 -- 'WASM' codegen.
-incIfCVarStored :: Text -> Int -> CExpr -> Text
-incIfCVarStored conLocal idx fld = case sourceCVarWat fld of
+incIfCVarStored :: WasmCtx -> Text -> Int -> CExpr -> Text
+incIfCVarStored ctx conLocal idx fld = case borrowedSourceWat ctx fld of
   Just _ ->
     " (call $__inc_ref (i32.load offset="
       <> show (idx * 4 :: Int)
@@ -2034,19 +2034,28 @@ incIfCVarStored conLocal idx fld = case sourceCVarWat fld of
       <> ")))"
   Nothing -> ""
 
--- | WAT mirror of LLVM's 'sourceCVar' — peel 'CDrop' wrappers to
--- find a 'CVar' at the tail position.
-sourceCVarWat :: CExpr -> Maybe Text
-sourceCVarWat = \case
-  CVar n -> Just n
-  CDrop _ _ body -> sourceCVarWat body
+-- | WAT mirror of LLVM's 'borrowedSource' — return the bound name
+-- of a borrowed (local-binder / function-parameter) 'CVar' at the
+-- tail position (under 'CDrop' wrappers), or 'Nothing' if the
+-- expression is a fresh allocation source. Top-level 'CValDef'
+-- references lower to '(call $v_name)' which allocates a fresh
+-- '+1' per reference — treating those as borrowed would emit a
+-- spurious '__inc_ref' over the fresh '+1' and leak the cell on
+-- every reference in a hot loop. See [LLVM borrowedSource] for
+-- the full rationale.
+borrowedSourceWat :: WasmCtx -> CExpr -> Maybe Text
+borrowedSourceWat ctx = \case
+  CVar n
+    | n `Set.member` ctx.wValDefs -> Nothing
+    | otherwise -> Just n
+  CDrop _ _ body -> borrowedSourceWat ctx body
   _ -> Nothing
 
 -- | Inline @(call $__inc_ref <expr>)@ wrapper for a value that's
 -- about to be passed as an arg / stored. Returns the unwrapped
--- expression unchanged for non-CVar sources.
-incIfCVarWrap :: CExpr -> Text -> Text
-incIfCVarWrap fld expr = case sourceCVarWat fld of
+-- expression unchanged for non-borrowed sources. See 'borrowedSourceWat'.
+incIfCVarWrap :: WasmCtx -> CExpr -> Text -> Text
+incIfCVarWrap ctx fld expr = case borrowedSourceWat ctx fld of
   Just _ ->
     "(block (result i32) (local.set $__inc_tmp "
       <> expr
@@ -2104,7 +2113,7 @@ emitExpr ctx = \case
               <> ") "
               <> emitExpr nestedCtx fld
               <> ")"
-              <> incIfCVarStored conLocal i fld
+              <> incIfCVarStored ctx conLocal i fld
           | (fld, i) <- zip fields [1 :: Int ..]
           ]
      in "(block (result i32) "
@@ -2118,7 +2127,7 @@ emitExpr ctx = \case
   -- tail is the same 'CVar n', inc the result first so the dec
   -- balances and the returned cell stays alive (move-semantics).
   CDrop _ n body ->
-    let inc = case sourceCVarWat body of
+    let inc = case borrowedSourceWat ctx body of
           Just m | m == n -> "(call $__inc_ref (local.get $__drop_tmp)) "
           _ -> ""
      in "(block (result i32) (local.set $__drop_tmp "
@@ -2160,7 +2169,7 @@ emitExpr ctx = \case
               <> " "
               <> emitExpr ctx fld
               <> ")"
-              <> incIfCVarStored ("$" <> mangle n) i fld
+              <> incIfCVarStored ctx ("$" <> mangle n) i fld
           | (fld, i) <- zip fields [1 :: Int ..]
           ]
         inPlaceBlock =
@@ -2190,7 +2199,7 @@ emitExpr ctx = \case
               <> ") "
               <> emitExpr nestedCtx fld
               <> ")"
-              <> incIfCVarStored copyLocal i fld
+              <> incIfCVarStored ctx copyLocal i fld
           | (fld, i) <- zip fields [1 :: Int ..]
           ]
         copyDec = "(call $__free_recursive " <> nPtr <> ")"
@@ -2213,7 +2222,7 @@ emitExpr ctx = \case
     case f of
       CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
-            "(call $__print " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__print " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       -- 'BuiltIn.internalGetArgs' — call '$__getArgs', which
       -- re-reads argv via WASI and routes it through
       -- '$__entryArgEither'.
@@ -2222,32 +2231,32 @@ emitExpr ctx = \case
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->
-            "(call $__show_i32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__show_i32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "showUInt32"
         | [x] <- xs ->
-            "(call $__show_u32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__show_u32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "predInt32"
         | [x] <- xs ->
-            "(call $__predInt32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__predInt32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "predUInt8"
         | [x] <- xs ->
-            "(call $__predUInt8 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__predUInt8 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "predUInt32"
         | [x] <- xs ->
-            "(call $__predUInt32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__predUInt32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "succInt32"
         | [x] <- xs ->
-            "(call $__succInt32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__succInt32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "succUInt8"
         | [x] <- xs ->
-            "(call $__succUInt8 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__succUInt8 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "succUInt32"
         | [x] <- xs ->
-            "(call $__succUInt32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__succUInt32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
           [a, b] <- xs ->
-            "(call $__eq_i32 " <> incIfCVarWrap a (emitExpr ctx a) <> " " <> incIfCVarWrap b (emitExpr ctx b) <> ")"
+            "(call $__eq_i32 " <> incIfCVarWrap ctx a (emitExpr ctx a) <> " " <> incIfCVarWrap ctx b (emitExpr ctx b) <> ")"
       CBuiltIn name
         | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
           [a, b] <- xs ->
@@ -2261,13 +2270,13 @@ emitExpr ctx = \case
                   "mulInt32" -> "$__mulInt32"
                   "mulUInt32" -> "$__mulUInt32"
                   _ -> "$__mulUInt8"
-             in "(call " <> fn <> " " <> incIfCVarWrap a (emitExpr ctx a) <> " " <> incIfCVarWrap b (emitExpr ctx b) <> ")"
+             in "(call " <> fn <> " " <> incIfCVarWrap ctx a (emitExpr ctx a) <> " " <> incIfCVarWrap ctx b (emitExpr ctx b) <> ")"
       CBuiltIn "negInt32"
         | [x] <- xs ->
-            "(call $__negInt32 " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+            "(call $__negInt32 " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "splitOnFirst"
         | [a, b] <- xs ->
-            "(call $__splitOnFirst " <> incIfCVarWrap a (emitExpr ctx a) <> " " <> incIfCVarWrap b (emitExpr ctx b) <> ")"
+            "(call $__splitOnFirst " <> incIfCVarWrap ctx a (emitExpr ctx a) <> " " <> incIfCVarWrap ctx b (emitExpr ctx b) <> ")"
       CBuiltIn name
         | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32",
           [x] <- xs ->
@@ -2275,7 +2284,7 @@ emitExpr ctx = \case
                   "parseInt32" -> "$__parseInt32"
                   "parseUInt32" -> "$__parseUInt32"
                   _ -> "$__parseUInt8"
-             in "(call " <> fn <> " " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+             in "(call " <> fn <> " " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn name
         | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs ->
@@ -2283,10 +2292,10 @@ emitExpr ctx = \case
                   "lengthCodePoints" -> "$__lengthCodePoints"
                   "lengthUtf16CodeUnits" -> "$__lengthUtf16CodeUnits"
                   _ -> "$__lengthUtf8Bytes"
-             in "(call " <> fn <> " " <> incIfCVarWrap x (emitExpr ctx x) <> ")"
+             in "(call " <> fn <> " " <> incIfCVarWrap ctx x (emitExpr ctx x) <> ")"
       CBuiltIn "concatString"
         | [a, b] <- xs ->
-            "(call $__concat " <> incIfCVarWrap a (emitExpr ctx a) <> " " <> incIfCVarWrap b (emitExpr ctx b) <> ")"
+            "(call $__concat " <> incIfCVarWrap ctx a (emitExpr ctx a) <> " " <> incIfCVarWrap ctx b (emitExpr ctx b) <> ")"
       CBuiltIn n ->
         error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
@@ -2296,7 +2305,7 @@ emitExpr ctx = \case
               <> " "
               <> T.intercalate
                 " "
-                [incIfCVarWrap a (emitExpr ctx a) | a <- xs]
+                [incIfCVarWrap ctx a (emitExpr ctx a) | a <- xs]
               <> ")"
       _ ->
         let arity = length xs
@@ -2305,7 +2314,7 @@ emitExpr ctx = \case
               <> ") "
               <> T.intercalate
                 " "
-                [incIfCVarWrap a (emitExpr ctx a) | a <- xs]
+                [incIfCVarWrap ctx a (emitExpr ctx a) | a <- xs]
               <> " "
               <> emitExpr ctx f
               <> ")"

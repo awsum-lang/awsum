@@ -58,6 +58,7 @@ module Awsum.Lifetime
     renderLifetime,
     insertDrops,
     freeVars,
+    elidableArmBinders,
   )
 where
 
@@ -319,3 +320,107 @@ addContinueDrops params = goExpr Set.empty
     -- binders in any order — the dec is uniform.
     wrapBinderDrops :: [Name] -> CExpr -> CExpr
     wrapBinderDrops bs body = foldr (CDrop defaultKind) body bs
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Permutation-aware CReuse elision support
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Given a 'CCase'/'CRowCase' arm matching a scrut named @scrut@
+-- with pattern binders @vs@ and arm body @body@, returns the subset
+-- of @vs@ whose only use in @body@ is as a @CVar@ field of a
+-- @CReuse scrut _ fs@ expression. Codegen uses this to elide:
+--
+--   * the inc-on-extract that pairs with the binder's CDrop, and
+--   * inside the matching @CReuse@, the dec-old of the binder's
+--     old slot together with the inc-new of its new slot.
+--
+-- Whether the move is self-move (binder stays in the same slot) or
+-- permutation-move (binder shifts to a different slot of the same
+-- cell), the cell still owns the value through the rewrite, so all
+-- four ops are bookkeeping that cancels to a net-zero refcount
+-- change. The single-use precondition guarantees the binder doesn't
+-- escape to another consumer that would need the inc.
+--
+-- Note on @CDrop@: this analysis runs on post-'insertDrops' IR
+-- where every arm-binder is wrapped in a @CDrop k v armBody@. The
+-- walk descends through @CDrop@ unconditionally — the binder is
+-- still in scope inside @body@ (the CDrop fires after @body@'s
+-- value is produced). This differs from 'countUses' which
+-- short-circuits on @CDrop _ n b | n == target -> 0@ for the
+-- stat-linearity report's own scoping convention.
+elidableArmBinders :: Name -> [Name] -> CExpr -> Set Name
+elidableArmBinders scrut vs body =
+  Set.fromList [v | v <- vs, isElidable v]
+  where
+    isElidable v =
+      countAllUses v body == 1
+        && countReuseFieldUses scrut v body == 1
+
+-- | Count every @CVar target@ occurrence inside @e@. Unlike
+-- 'countUses', this does not short-circuit at @CDrop _ target _@ —
+-- the binder is still in scope inside the @CDrop@'s body.
+countAllUses :: Name -> CExpr -> Int
+countAllUses target = go
+  where
+    go = \case
+      CVar n
+        | n == target -> 1
+        | otherwise -> 0
+      CString _ -> 0
+      CIntLit _ _ -> 0
+      CBuiltIn _ -> 0
+      CCall f xs -> go f + sum (fmap go xs)
+      CCon _ fs -> sum (fmap go fs)
+      CCase s alts ->
+        go s
+          + sum
+            [ if target `elem` ns then 0 else go b
+            | (_, ns, b) <- alts
+            ]
+      CRowCase s alts ->
+        go s
+          + sum
+            [ if target == m then 0 else go b
+            | (_, m, b) <- alts
+            ]
+      CRow _ v -> go v
+      CLoop b -> go b
+      CContinue xs -> sum (fmap go xs)
+      CDrop _ _ b -> go b
+      CReuse n _ fs ->
+        (if n == target then 1 else 0) + sum (fmap go fs)
+
+-- | Count @CVar target@ occurrences that appear as immediate fields
+-- of a @CReuse scrut _ fs@ expression (i.e. one of @fs@). Recurses
+-- through every constructor so a nested CReuse on the same scrut
+-- is also counted.
+countReuseFieldUses :: Name -> Name -> CExpr -> Int
+countReuseFieldUses scrut target = go
+  where
+    go = \case
+      CVar _ -> 0
+      CString _ -> 0
+      CIntLit _ _ -> 0
+      CBuiltIn _ -> 0
+      CCall f xs -> go f + sum (fmap go xs)
+      CCon _ fs -> sum (fmap go fs)
+      CCase s alts ->
+        go s
+          + sum
+            [ if target `elem` ns then 0 else go b
+            | (_, ns, b) <- alts
+            ]
+      CRowCase s alts ->
+        go s
+          + sum
+            [ if target == m then 0 else go b
+            | (_, m, b) <- alts
+            ]
+      CRow _ v -> go v
+      CLoop b -> go b
+      CContinue xs -> sum (fmap go xs)
+      CDrop _ _ b -> go b
+      CReuse n _ fs
+        | n == scrut ->
+            sum [1 | CVar w <- fs, w == target] + sum (fmap go fs)
+        | otherwise -> sum (fmap go fs)
