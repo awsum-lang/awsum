@@ -7,8 +7,8 @@
 -- Workaround: rename the parameter.
 import IO.Stdout
 
-f : a -> a
-f not = not
+_f : a -> a
+_f not = not
 
 main : IO Never Unit
 main = pureIO Unit

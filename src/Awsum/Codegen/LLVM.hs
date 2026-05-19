@@ -356,11 +356,11 @@ header builtIns =
         "declare i32 @snprintf(ptr, i64, ptr, ...)"
       ]
     <> [ -- 'read(2)' is used by '__stdinReadAll' to consume fd 0 to EOF
-         -- regardless of NUL bytes in the input. macOS / Linux / mingw
-         -- libc all expose it as 'read'; MSVC's CRT exposes '_read'
-         -- instead — same Windows-host follow-up as 'write'. Gated so
-         -- programs without 'IO.Stdin.readAll' don't pin libc 'read'.
-         "declare i64 @read(i32, ptr, i64)"
+       -- regardless of NUL bytes in the input. macOS / Linux / mingw
+       -- libc all expose it as 'read'; MSVC's CRT exposes '_read'
+       -- instead — same Windows-host follow-up as 'write'. Gated so
+       -- programs without 'IO.Stdin.readAll' don't pin libc 'read'.
+       "declare i64 @read(i32, ptr, i64)"
        | Set.member "internalStdinReadAllAsUtf16" builtIns
        ]
     <> [ "declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)"
@@ -3223,8 +3223,9 @@ emitExpr ctx = \case
     -- that isn't a top-level 'CValDef' fresh source.
     let copyIncPart fExpr resF =
           case sourceCVarStripDrops fExpr of
-            Just src | src `Set.notMember` ctx.valDefs ->
-              "  call void @__inc_ref(ptr " <> resF <> ")\n"
+            Just src
+              | src `Set.notMember` ctx.valDefs ->
+                  "  call void @__inc_ref(ptr " <> resF <> ")\n"
             _ -> ""
     copyFieldStores <- forM zippedFields $ \(fExpr, resF, idx) -> do
       slotTmp <- freshTemp

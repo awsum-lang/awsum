@@ -989,7 +989,17 @@ typecheckProgram progType preludeNames Program {imports, decls} = do
   -- to other top-levels are real uses — without this, helpers used
   -- solely from a '_'-prefixed def would be reported as unused even
   -- though deleting them would break the kept def.
-  let callGraph = M.fromList [(n, freeNames body) | (_sp, n, _args, body) <- defsList]
+  -- 'freeNames body' collects every unqualified name the body mentions, but
+  -- a top-level def's own parameters are also unqualified — without
+  -- subtracting them, a one-letter param name leaks into the reachable set
+  -- and silently masks an identically-named top-level. (E.g. '(++) a b =
+  -- BuiltIn.concatString a b' would otherwise mark every user-level 'a'
+  -- defined alongside it as reachable from main.)
+  let callGraph =
+        M.fromList
+          [ (n, freeNames body `S.difference` S.fromList (map paramName args))
+          | (_sp, n, args, body) <- defsList
+          ]
       topLevelWarnings = case M.lookup "main" sigEnv of
         Nothing -> []
         Just _ ->
@@ -2036,11 +2046,12 @@ freeNames = go
       ECon _ _ -> S.empty
       EBuiltIn _ _ -> S.empty
       ECase _ scrut alts _ ->
-        go scrut <> foldMap (go . caseAltBody) (toList alts)
+        go scrut <> foldMap goAlt (toList alts)
       ELam _ params body ->
         go body `S.difference` S.fromList (map paramName params)
       EDo _ stmts -> goDoStmts stmts
       ELet _ pat _ e body -> go e <> (go body `S.difference` patternBoundNames pat)
+    goAlt alt = go (caseAltBody alt) `S.difference` patternBoundNames (caseAltPattern alt)
     goDoStmts [] = S.empty
     goDoStmts (s : rest) = case s of
       DoBind _ pat e ->
