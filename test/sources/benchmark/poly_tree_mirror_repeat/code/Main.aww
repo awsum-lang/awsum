@@ -1,0 +1,45 @@
+{- Polymorphic variant of 'tree_mirror_repeat'. Same multi-child
+   non-tail recursion through Cps K-chain, but the tree type is
+   polymorphic ('Tree a = Leaf | Node (Tree a) a (Tree a)') instead
+   of monomorphic ('Tree'). All instantiations at 'a = Int32'.
+   Cell shape after lowering should be identical to the monomorphic
+   variant; any divergence in peak RSS / wall isolates compiler
+   overhead from polymorphic instantiation under K-chain pressure.
+
+   Sizing identical to 'tree_mirror_repeat': left-spine of depth
+   10_000, mirrored 1_000 times. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type Tree a = Leaf | Node (Tree a) a (Tree a)
+
+buildLeft : Int32 -> Tree Int32 -> Either UnderflowError (Tree Int32)
+buildLeft n acc = case eqInt32 n zero of
+  True -> Right acc
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> buildLeft m (Node acc 1 Leaf)
+
+mirror : Tree Int32 -> Tree Int32
+mirror t = case t of
+  Leaf -> Leaf
+  Node l v r -> Node (mirror r) v (mirror l)
+
+repeatMirror : Int32 -> Tree Int32 -> Tree Int32
+repeatMirror n t = case eqInt32 n zero of
+  True -> t
+  False -> case predInt32 n of
+    Left _e -> t
+    Right m -> repeatMirror m (mirror t)
+
+spineLast : Tree Int32 -> Int32 -> Int32
+spineLast t lastV = case t of
+  Leaf -> lastV
+  Node l v _r -> spineLast l v
+
+main : IO Never Unit
+main = case buildLeft 10_000 Leaf of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right t -> IO.Stdout.print (showInt32 (spineLast (repeatMirror 1_000 t) zero))

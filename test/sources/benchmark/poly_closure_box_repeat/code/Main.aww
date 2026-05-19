@@ -1,0 +1,44 @@
+{- Polymorphic variant of 'closure_box_repeat'. Same shape — non-tail
+   self-recursion through a closure stored in a constructor field —
+   but the constructor itself is polymorphic ('Box a = Box (a -> a)')
+   instead of monomorphic ('Box = Box (Int32 -> Int32)'). All call
+   sites instantiate at 'a = Int32', so the runtime cell shape after
+   lowering should be identical to the monomorphic variant; any peak
+   RSS / wall divergence isolates compiler overhead from polymorphic
+   instantiation in this shape.
+
+   Sizing identical to 'closure_box_repeat': 100 outer × 100_000
+   inner = 10⁷ K-cell + $apply1 dispatch iters. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type Box a = Box (a -> a)
+
+identity : Int32 -> Int32
+identity n = n
+
+countWithBox : Box Int32 -> Int32 -> Either UnderflowError Int32
+countWithBox b n = case eqInt32 n zero of
+  True -> Right zero
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> case countWithBox b m of
+      Left e -> Left e
+      Right v -> case b of
+        Box f -> Right (f v)
+
+outerLoop : Box Int32 -> Int32 -> Either UnderflowError Int32
+outerLoop b k = case eqInt32 k zero of
+  True -> Right zero
+  False -> case predInt32 k of
+    Left e -> Left e
+    Right m -> case countWithBox b 100_000 of
+      Left e -> Left e
+      Right _v -> outerLoop b m
+
+main : IO Never Unit
+main = case outerLoop (Box identity) 100 of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right _v -> IO.Stdout.print "ok"

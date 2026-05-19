@@ -1,0 +1,45 @@
+{- Polymorphic variant of 'tree_sum_repeat'. Same K-cell churn shape
+   (inner non-tail self-call feeding outer tail self-call) but the
+   tree type is polymorphic ('Tree a') instead of monomorphic
+   ('Tree'). All instantiations at 'a = Int32'. Cell shape after
+   lowering should be identical; any divergence in peak RSS / wall
+   isolates compiler overhead from polymorphic instantiation under
+   pure K-cell churn.
+
+   Sizing identical to 'tree_sum_repeat': left-spine of depth 10_000,
+   summed 1_000 times. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type Tree a = Leaf | Node (Tree a) a (Tree a)
+
+buildLeft : Int32 -> Tree Int32 -> Either UnderflowError (Tree Int32)
+buildLeft n acc = case eqInt32 n zero of
+  True -> Right acc
+  False -> case predInt32 n of
+    Left e -> Left e
+    Right m -> buildLeft m (Node acc 1 Leaf)
+
+addOr0 : Int32 -> Int32 -> Int32
+addOr0 a b = case addInt32 a b of
+  Left _e -> 0
+  Right v -> v
+
+sumTree : Tree Int32 -> Int32 -> Int32
+sumTree t acc = case t of
+  Leaf -> acc
+  Node l v r -> sumTree r (sumTree l (addOr0 acc v))
+
+repeatSum : Int32 -> Tree Int32 -> Int32 -> Int32
+repeatSum n t acc = case eqInt32 n zero of
+  True -> acc
+  False -> case predInt32 n of
+    Left _e -> acc
+    Right m -> repeatSum m t (sumTree t zero)
+
+main : IO Never Unit
+main = case buildLeft 10_000 Leaf of
+  Left _e -> IO.Stdout.print "UNDERFLOW"
+  Right t -> IO.Stdout.print (showInt32 (repeatSum 1_000 t zero))

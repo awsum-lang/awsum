@@ -1,4 +1,4 @@
-{- Phase D candidate — accumulator-based list reverse, repeated.
+{- Cell-reuse benchmark — accumulator-based list reverse, repeated.
 
    The hot loop is the Lean-4 canonical cell-reuse pattern:
 
@@ -6,26 +6,25 @@
        Nil -> acc
        Cons h t -> revInto (Cons h acc) t
 
-   At every recursive step, the matched-out 'Cons h t' cell is
+   At every recursive step the matched-out 'Cons h t' cell is
    linear (its only use is the case scrutinee), and the arm body
-   constructs a 'Cons h acc' cell of the same arity in tail position.
-   Phase D's uniqueness analysis would recognise this and rewrite
-   the allocation to an in-place mutation: write 'acc' into the
-   tail slot of the matched cell ('h' is unchanged), no '__alloc'
-   call, no '__free' call, no freelist churn.
+   constructs a 'Cons h acc' cell of the same arity in tail
+   position. 'Awsum.Reuse' detects this shape and rewrites the
+   inner 'CCon 20 [h, acc]' to 'CReuse "lst" 20 [h, acc]' — in-
+   place stores on the existing cell rather than '__alloc' /
+   '__free' on every iter. Visible via 'awsum core'.
 
-   Without Phase D: under Stage 4 the matched cell goes to '__free'
-   (pushed onto the 8-byte bin) and the new cell comes from '__alloc'
-   (popped from the same bin). One pair of memory writes per iter
-   becomes 1 freelist push + 1 freelist pop + 1 fresh-block flag
-   write + 1 tail-field write — all redundant, since we end up at
-   the same physical block anyway.
+   On LLVM/WASM the rewrite eliminates the freelist churn: one
+   '__alloc' pop + one '__free' push per cell becomes one tail-
+   field write. On JVM/CLR/JS the codegen still emits a fresh
+   cell allocation — managed GCs promote it to stack via escape
+   analysis once the hot loop is alloc-free.
 
    Sizing: 'repeat 100000 1' builds a 100 000-element list of 1s;
-   'revN 1000' reverses it 1 000 times. Cumulative Cons allocations
-   = 1e5 × 1e3 = 1e8 cells. 'sumList' walks the final reversed list
-   to force the result through addInt32 (so the optimiser cannot
-   elide the recursion). -}
+   'revN 1000' reverses it 1 000 times. Cumulative cell traffic
+   = 1e5 × 1e3 = 1e8 reuse rewrites. 'sumList' walks the final
+   reversed list to force the result through addInt32 (so the
+   optimiser cannot elide the recursion). -}
 import IO.Stdout
 
 zero : Int32
@@ -61,6 +60,6 @@ sumList lst acc = case lst of
 
 main : IO Never Unit
 main =
-  let original : IntList = repeat 100000 1
-      reversed : IntList = revN 1000 original
+  let original : IntList = repeat 100_000 1
+      reversed : IntList = revN 1_000 original
    in IO.Stdout.print (showInt32 (sumList reversed zero))
