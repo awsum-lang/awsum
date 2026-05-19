@@ -2,8 +2,22 @@
    Applies-to: Awsum 0.0.4
 *)
 
-Program             = { Import }, { TopItem , Terminator }, [ Terminator ] ;
+Program             = [ ModuleComment , BlankLine ] ,
+                      [ FirstImport , { Import } ] ,
+                      { TopItem , Terminator } , [ Terminator ] ;
 
+(* Optional single block comment at the very top of the file, separated
+   from the rest by exactly one blank line. Line comments are rejected
+   in this position; multiple block comments are rejected because the
+   second one lacks its own preceding blank line. *)
+ModuleComment       = BlockComment ;
+BlankLine           = NEWLINE , NEWLINE ;
+
+(* The first import (if any) must not carry leading comments — those
+   would be module-comment material. Subsequent imports may have
+   leading comments (a commented-out "import IO.X" between live
+   imports is the motivating case). *)
+FirstImport         = "import" , ModulePath , [ TrailingLineComment ] ;
 Import              = { TopComment , Terminator } , "import" , ModulePath , [ TrailingLineComment ] ;
 ModulePath          = UIdent , { "." , UIdent } ;
 

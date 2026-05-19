@@ -1,4 +1,5 @@
 {- Recursive ADT (List) with recursive show. -}
+
 import IO.Stdout
 
 type List a = Cons a (List a) | Nil

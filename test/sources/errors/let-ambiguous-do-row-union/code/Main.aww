@@ -1,10 +1,11 @@
--- Error: `let res = do { ... }` where the `<-` steps return
--- `Either` with different error labels. The row-union of those
--- errors can't be inferred bottom-up — the typechecker emits
--- `MissingLetAnnotation`, telling the user to write `let res :
--- <type> = …`. This is the standard fix-by-annotation case;
--- compare to `AmbiguousIntLiteral` which fires for the same
--- reason on bare integer literals.
+{- Error: `let res = do { ... }` where the `<-` steps return
+   `Either` with different error labels. The row-union of those
+   errors can't be inferred bottom-up — the typechecker emits
+   `MissingLetAnnotation`, telling the user to write `let res :
+   <type> = …`. This is the standard fix-by-annotation case;
+   compare to `AmbiguousIntLiteral` which fires for the same
+   reason on bare integer literals. -}
+
 import IO.Stdout
 
 type ErrA = ErrA

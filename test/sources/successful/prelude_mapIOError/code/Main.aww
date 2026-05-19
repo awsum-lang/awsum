@@ -1,9 +1,11 @@
 {- Direct test of `mapIOError`: rewrites the error type of an IO
    action while preserving the IO tree structure. Pairs with
    `failIO` to build a non-Never error row, then renames it. -}
+
 import IO.Stdout
 
 type ErrA = ErrA
+
 type ErrB = ErrB
 
 action : IO ErrA Unit

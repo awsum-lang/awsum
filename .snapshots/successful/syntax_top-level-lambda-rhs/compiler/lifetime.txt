@@ -16,11 +16,11 @@ curryFst:
   param           b                               count=0
 
 main:
-  case-pattern    $do_e_20_9                      count=1
-  case-pattern    s0                              count=1
   case-pattern    $do_e_21_9                      count=1
-  case-pattern    s1                              count=1
+  case-pattern    s0                              count=1
   case-pattern    $do_e_22_9                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_23_9                      count=1
   case-pattern    s2                              count=1
 
 $let$12:

@@ -1,4 +1,5 @@
 {- Parametric single-constructor type; pattern match unwraps. -}
+
 import IO.Stdout
 
 type Box a = Box a

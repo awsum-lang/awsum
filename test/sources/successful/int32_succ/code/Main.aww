@@ -1,4 +1,5 @@
 {- `succInt32`: ordinary `Right (x+1)`; `Left OverflowError` at `maxInt32`. -}
+
 import IO.Stdout
 
 render : Either OverflowError Int32 -> Either StringTooLong String

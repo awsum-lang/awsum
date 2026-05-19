@@ -1,4 +1,5 @@
 {- Parametric ADT mixing one data constructor with one nullary constructor. -}
+
 import IO.Stdout
 
 type Lookup a = Found a | NotFound

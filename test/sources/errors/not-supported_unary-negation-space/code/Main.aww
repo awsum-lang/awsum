@@ -1,8 +1,9 @@
--- Not yet supported: a unary minus separated from its operand by
--- whitespace (`- 5`). The `Int` literal lexer requires the `-` to
--- be adjacent to the first digit — the surrounding-whitespace form
--- is rejected at lex time. There is no separate unary-negation
--- operator. Workaround: drop the space (`-5`).
+{- Not yet supported: a unary minus separated from its operand by
+   whitespace (`- 5`). The `Int` literal lexer requires the `-` to
+   be adjacent to the first digit — the surrounding-whitespace form
+   is rejected at lex time. There is no separate unary-negation
+   operator. Workaround: drop the space (`-5`). -}
+
 import IO.Stdout
 
 n : Int32

@@ -4,6 +4,7 @@
    call through the case-arm-binder otherwise reaches a backend as
    a first-class application. Two distinct functions are stored to
    exercise dispatch (one tag per closure shape). -}
+
 import IO.Stdout
 
 type Box a = Box a

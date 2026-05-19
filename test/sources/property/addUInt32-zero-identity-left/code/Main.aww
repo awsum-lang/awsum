@@ -1,6 +1,7 @@
--- Property: `addUInt32 0 a == Right a`. Left-identity of zero under
--- addition. Single UInt32 input. Adding 0 is always in range, so
--- OVERFLOW cannot fire on a well-formed input.
+{- Property: `addUInt32 0 a == Right a`. Left-identity of zero under
+   addition. Single UInt32 input. Adding 0 is always in range, so
+   OVERFLOW cannot fire on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

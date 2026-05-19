@@ -14,6 +14,7 @@
 
    Input: "a:b". The colon is excluded from both operand alphabets
    by the generator (Utf16PairNoColon). -}
+
 import IO.Stdout
 import IO.Stdin
 

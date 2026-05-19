@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":22,"startCol":7,"endLine":26,"endCol":8,"message":"Cannot infer the type of let-binding 'res'. Add an explicit type annotation: `let res : <type> = …`.","fixes":[]}]
+[{"severity":"error","startLine":23,"startCol":7,"endLine":27,"endCol":8,"message":"Cannot infer the type of let-binding 'res'. Add an explicit type annotation: `let res : <type> = …`.","fixes":[]}]

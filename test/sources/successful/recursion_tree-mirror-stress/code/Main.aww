@@ -4,14 +4,14 @@
    '$cps$mirror' — a mutual cycle. The second SCC-merge pass fuses the pair
    into a single self-recursive function before TCO; the resulting loop
    runs in bounded stack on every backend. -}
+
 import IO.Stdout
 
-type Tree
-  = Leaf
-  | Node Tree Int32 Tree
+type Tree = Leaf | Node Tree Int32 Tree
 
 {- Build a right-spine tree of depth n tail-recursively. Values descend
    from n at the outermost Node down to 1 at the deepest. -}
+
 buildRight : Int32 -> Tree -> Either UnderflowError Tree
 buildRight n acc = case eqInt32 n 0 of
   True -> Right acc
@@ -28,6 +28,7 @@ mirror t = case t of
    value seen. After 'mirror' of a right-spine, the result is a left-
    spine with the same values, so the deepest left-spine value equals
    the original tree's depth. -}
+
 spineLast : Tree -> Int32 -> Int32
 spineLast t lastV = case t of
   Leaf -> lastV

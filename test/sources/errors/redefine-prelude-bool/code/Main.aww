@@ -1,7 +1,8 @@
--- Error: `Bool` is defined by the prelude; the user cannot redeclare
--- it. The diagnostic is `Duplicate type definition` on the user's own
--- declaration, because the prelude's `type Bool = True | False` is
--- prepended before the user's typecheck runs.
+{- Error: `Bool` is defined by the prelude; the user cannot redeclare
+   it. The diagnostic is `Duplicate type definition` on the user's own
+   declaration, because the prelude's `type Bool = True | False` is
+   prepended before the user's typecheck runs. -}
+
 import IO.Stdout
 
 type Bool = MyTrue | MyFalse

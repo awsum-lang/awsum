@@ -1,4 +1,5 @@
 {- `eqUInt8`: `255 == 255` smoke-tests the JVM `& 0xFF` mask. -}
+
 import IO.Stdout
 
 render : Bool -> String

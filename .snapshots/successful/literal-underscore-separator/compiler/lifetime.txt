@@ -5,7 +5,7 @@ runIO:
   case-pattern    next                            count=0
 
 line:
-  case-pattern    $do_e_19_3                      count=1
+  case-pattern    $do_e_20_3                      count=1
   case-pattern    s                               count=1
 
 main:

@@ -1,4 +1,5 @@
 {- Self-recursive function with enum-driven termination. -}
+
 import IO.Stdout
 
 type Step

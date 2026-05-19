@@ -1,7 +1,8 @@
--- Property: `succInt32 (predInt32 x) == Right x` for every Int32 with
--- `x /= minInt32`. Mirror of `predSucc-roundtrip-int32` in the
--- opposite direction. The Haskell-side generator excludes minInt32,
--- so neither pred nor succ should fail on a well-formed input.
+{- Property: `succInt32 (predInt32 x) == Right x` for every Int32 with
+   `x /= minInt32`. Mirror of `predSucc-roundtrip-int32` in the
+   opposite direction. The Haskell-side generator excludes minInt32,
+   so neither pred nor succ should fail on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

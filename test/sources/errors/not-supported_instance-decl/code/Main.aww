@@ -1,9 +1,10 @@
--- Not yet supported: type class instance declarations
--- (`instance C T where …`). Type classes are on the roadmap; until
--- they land, neither `class` nor `instance` is in the grammar.
--- `instance` parses as a regular identifier at top level, expected
--- to be followed by `:` for a signature. Workaround: write the
--- specialised function directly with its concrete name.
+{- Not yet supported: type class instance declarations
+   (`instance C T where …`). Type classes are on the roadmap; until
+   they land, neither `class` nor `instance` is in the grammar.
+   `instance` parses as a regular identifier at top level, expected
+   to be followed by `:` for a signature. Workaround: write the
+   specialised function directly with its concrete name. -}
+
 import IO.Stdout
 
 instance Eq Int32 where

@@ -42,8 +42,8 @@ function v_triple(v_n){
       const __s = __addInt32(v_n, v_n);
       switch (__s[0]) {
         case 3: {
-          const v__do_e_16_3 = __s[1];
-          return [3, v__do_e_16_3];
+          const v__do_e_17_3 = __s[1];
+          return [3, v__do_e_17_3];
         }
         case 4: {
           const v_m = __s[1];
@@ -65,7 +65,7 @@ function v_callBox(v_b, v_x){
     }
 }
 
-const v_formatOutputs = ((s) => { switch(s[0]) { case 3: { const v__do_e_25_3 = s[1]; return [3, v__do_e_25_3]; } case 4: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_26_3 = s[1]; return [3, v__do_e_26_3]; } case 4: { const v_t = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_27_3 = s[1]; return [3, [589989748, v__do_e_27_3]]; } case 4: { const v_ds = s[1]; return __concat(v_ds, String(v_t)); } } })(__concat(String(v_d), " ")); } } })((v_callBox)([20, [22]], (7|0))); } } })((v_callBox)([20, [21]], (7|0)));
+const v_formatOutputs = ((s) => { switch(s[0]) { case 3: { const v__do_e_26_3 = s[1]; return [3, v__do_e_26_3]; } case 4: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_27_3 = s[1]; return [3, v__do_e_27_3]; } case 4: { const v_t = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_28_3 = s[1]; return [3, [589989748, v__do_e_28_3]]; } case 4: { const v_ds = s[1]; return __concat(v_ds, String(v_t)); } } })(__concat(String(v_d), " ")); } } })((v_callBox)([20, [22]], (7|0))); } } })((v_callBox)([20, [21]], (7|0)));
 
 const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "error", [5, [0]]]; } case 4: { const v_s = s[1]; return [7, v_s, [5, [0]]]; } } })(v_formatOutputs);
 

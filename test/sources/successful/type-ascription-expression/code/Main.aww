@@ -13,6 +13,7 @@
      3. Ascription on a non-literal expression — '(predInt32 5 : Either UnderflowError Int32)'
         documents the result type at the call site (and would catch
         a refactor that changed 'predInt32''s error row). -}
+
 import IO.Stdout
 
 identity : a -> a

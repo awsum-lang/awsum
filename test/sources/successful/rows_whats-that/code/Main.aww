@@ -1,5 +1,6 @@
 {- Full row-polymorphic pattern repertoire on a single scrutinee:
    row arms, nominal arms (`Just`/`Nothing`) and a nested row inside `Just`. -}
+
 import IO.Stdout
 
 whatsThat : (Int32 | String | Maybe (Bool | Unit)) -> Either StringTooLong String

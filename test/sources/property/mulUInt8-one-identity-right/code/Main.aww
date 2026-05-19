@@ -1,6 +1,7 @@
--- Property: `mulUInt8 a 1 == Right a`. Right-identity of one under
--- multiplication. Single UInt8 input. Multiplying by 1 is always in
--- range, so OVERFLOW cannot fire on a well-formed input.
+{- Property: `mulUInt8 a 1 == Right a`. Right-identity of one under
+   multiplication. Single UInt8 input. Multiplying by 1 is always in
+   range, so OVERFLOW cannot fire on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

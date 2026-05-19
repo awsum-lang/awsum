@@ -1,4 +1,5 @@
 {- Enum: nullary constructors, exhaustive case-of. -}
+
 import IO.Stdout
 
 type Color

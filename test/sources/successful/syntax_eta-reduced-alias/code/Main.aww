@@ -1,4 +1,5 @@
 {- Eta-reduced (point-free) alias for a function-typed value. -}
+
 import IO.Stdout
 import IO.Args
 

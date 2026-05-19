@@ -1,8 +1,9 @@
--- Not yet supported: higher-rank polymorphism
--- (`(forall a. a -> a) -> Int32`). Awsum's polymorphism is rank-1
--- only — every type signature is implicitly universally quantified
--- at the prenex; nested `forall`s are not part of the type grammar.
--- The parser rejects the `forall` token directly.
+{- Not yet supported: higher-rank polymorphism
+   (`(forall a. a -> a) -> Int32`). Awsum's polymorphism is rank-1
+   only — every type signature is implicitly universally quantified
+   at the prenex; nested `forall`s are not part of the type grammar.
+   The parser rejects the `forall` token directly. -}
+
 import IO.Stdout
 
 weird : (forall a. a -> a) -> Int32

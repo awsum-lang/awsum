@@ -39,7 +39,7 @@ const v_negativeBig = (-1000000|0);
 
 const v_sum = __addInt32(v_big, v_negativeBig);
 
-const v_line = ((s) => { switch(s[0]) { case 3: { const v__do_e_19_3 = s[1]; return [3, v__do_e_19_3]; } case 4: { const v_s = s[1]; return __concat("sum=", String(v_s)); } } })(v_sum);
+const v_line = ((s) => { switch(s[0]) { case 3: { const v__do_e_20_3 = s[1]; return [3, v__do_e_20_3]; } case 4: { const v_s = s[1]; return __concat("sum=", String(v_s)); } } })(v_sum);
 
 const main = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return [7, "FAIL", [5, [0]]]; } case 4: { const v_s = s[1]; return [7, v_s, [5, [0]]]; } } })(v_line);
 

@@ -1,7 +1,8 @@
--- Property: `splitOnFirst sep s == Nothing` whenever `sep` is not a
--- substring of `s`. The Haskell-side generator picks `sep` from
--- `[A-Z]+` and `s` from `[a-z]*` — disjoint alphabets guarantee
--- non-occurrence by construction.
+{- Property: `splitOnFirst sep s == Nothing` whenever `sep` is not a
+   substring of `s`. The Haskell-side generator picks `sep` from
+   `[A-Z]+` and `s` from `[a-z]*` — disjoint alphabets guarantee
+   non-occurrence by construction. -}
+
 import IO.Stdout
 import IO.Stdin
 

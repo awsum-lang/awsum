@@ -1,8 +1,9 @@
--- Error: the user aliases `BuiltIn.showInt32`, but declares the wrong
--- signature (UInt8 -> String, while the compiler registers showInt32 as
--- Int32 -> String). The typechecker catches this specifically with
--- 'BuiltInTypeMismatch' — a sig-vs-table disagreement, distinct from
--- ordinary user type errors.
+{- Error: the user aliases `BuiltIn.showInt32`, but declares the wrong
+   signature (UInt8 -> String, while the compiler registers showInt32 as
+   Int32 -> String). The typechecker catches this specifically with
+   'BuiltInTypeMismatch' — a sig-vs-table disagreement, distinct from
+   ordinary user type errors. -}
+
 import IO.Stdout
 
 wrongShow : UInt8 -> String

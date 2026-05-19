@@ -12,6 +12,7 @@
    the underlying buffer as raw bytes instead of as code points
    would land on a different stdout from at least one of the others
    and from the Haskell expectation. -}
+
 import IO.Stdout
 import IO.Stdin
 

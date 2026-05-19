@@ -1,4 +1,5 @@
--- Error: duplicate pattern (Green matched twice) in case expression
+{- Error: duplicate pattern (Green matched twice) in case expression -}
+
 import IO.Stdout
 
 type Color

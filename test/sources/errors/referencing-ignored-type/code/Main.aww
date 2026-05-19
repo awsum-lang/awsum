@@ -1,6 +1,7 @@
--- Error: '_A' is marked as intentionally unused, but the signature of
--- 'foo' references it. Either drop the reference or rename '_A' to 'A'
--- if the type is actually meant to be used.
+{- Error: '_A' is marked as intentionally unused, but the signature of
+   'foo' references it. Either drop the reference or rename '_A' to 'A'
+   if the type is actually meant to be used. -}
+
 import IO.Stdout
 
 type _A = B | C

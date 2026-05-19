@@ -1,48 +1,48 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " Direct test of `showStringTooLong`: renders the sentinel error to
-               its canonical name. " ]
+    { moduleComment = Just " Direct test of `showStringTooLong`: renders the sentinel error to
+         its canonical name. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 5
+            { spanStartLine = 6
             , spanStartCol = 1
-            , spanEndLine = 5
+            , spanEndLine = 6
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 5
+                { spanStartLine = 6
                 , spanStartCol = 8
-                , spanEndLine = 5
+                , spanEndLine = 6
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 5
+                    { spanStartLine = 6
                     , spanStartCol = 8
-                    , spanEndLine = 5
+                    , spanEndLine = 6
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 5
+                        { spanStartLine = 6
                         , spanStartCol = 8
-                        , spanEndLine = 5
+                        , spanEndLine = 6
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 5
+                        { spanStartLine = 6
                         , spanStartCol = 11
-                        , spanEndLine = 5
+                        , spanEndLine = 6
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -50,9 +50,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 5
+                    { spanStartLine = 6
                     , spanStartCol = 17
-                    , spanEndLine = 5
+                    , spanEndLine = 6
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -60,25 +60,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 7
                 , spanStartCol = 1
-                , spanEndLine = 6
+                , spanEndLine = 7
                 , spanEndCol = 57
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 8
-                    , spanEndLine = 6
+                    , spanEndLine = 7
                     , spanEndCol = 57
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 8
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 24
                         }
                     )
@@ -90,25 +90,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 24
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 57
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 6
+                            { spanStartLine = 7
                             , spanStartCol = 25
-                            , spanEndLine = 6
+                            , spanEndLine = 7
                             , spanEndCol = 56
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 6
+                                { spanStartLine = 7
                                 , spanStartCol = 25
-                                , spanEndLine = 6
+                                , spanEndLine = 7
                                 , spanEndCol = 43
                                 }
                             )
@@ -116,9 +116,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 6
+                                { spanStartLine = 7
                                 , spanStartCol = 43
-                                , spanEndLine = 6
+                                , spanEndLine = 7
                                 , spanEndCol = 56
                                 }
                             ) "StringTooLong"

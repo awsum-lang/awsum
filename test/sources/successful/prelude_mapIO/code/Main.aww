@@ -3,6 +3,7 @@
    is composed with `bindIO` and the platform built-in
    `IO.Stdout.print` passed as a value — this shape relies on the
    built-in eta-wrapper lowering to compile correctly. -}
+
 import IO.Stdout
 
 source : IO Never String

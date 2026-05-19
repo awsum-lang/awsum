@@ -1,8 +1,9 @@
--- Not yet supported: record literal syntax `{ field = value }`. Awsum
--- has no record types, no record literal syntax, and no field-projection
--- syntax — `{` is not a recognised token in expressions. Workaround:
--- declare a single-constructor sum (`type Point = Point Int32 Int32`)
--- and build / destructure positionally.
+{- Not yet supported: record literal syntax `{ field = value }`. Awsum
+   has no record types, no record literal syntax, and no field-projection
+   syntax — `{` is not a recognised token in expressions. Workaround:
+   declare a single-constructor sum (`type Point = Point Int32 Int32`)
+   and build / destructure positionally. -}
+
 import IO.Stdout
 
 main : IO Never Unit

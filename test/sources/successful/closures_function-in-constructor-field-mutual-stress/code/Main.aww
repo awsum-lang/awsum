@@ -5,6 +5,7 @@
    `Awsum.Scc` must detect the SCC across the synthetic apply
    vertex to fuse the cluster into one self-recursive function
    that `Awsum.Tco` then folds into a loop. -}
+
 import IO.Stdout
 
 type Box = Box (Int32 -> Either UnderflowError Int32)

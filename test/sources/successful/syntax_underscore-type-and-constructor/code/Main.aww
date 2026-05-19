@@ -1,4 +1,5 @@
 {- `_` prefix on type names: intentionally-unused type compiles. -}
+
 import IO.Stdout
 
 type _A = X | Y

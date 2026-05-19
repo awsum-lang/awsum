@@ -1,4 +1,5 @@
 {- `succUInt8`: `Left OverflowError` at 255; `succUInt8 254` traps signed-byte clipping on JVM. -}
+
 import IO.Stdout
 
 render : Either OverflowError UInt8 -> Either StringTooLong String

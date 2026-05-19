@@ -1,4 +1,5 @@
--- Error: pattern on nested uninhabited constructor (Err (Box Never) is unreachable)
+{- Error: pattern on nested uninhabited constructor (Err (Box Never) is unreachable) -}
+
 import IO.Stdout
 
 type Box a = Box a

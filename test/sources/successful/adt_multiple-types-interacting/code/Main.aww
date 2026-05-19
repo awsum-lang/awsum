@@ -1,4 +1,5 @@
 {- Three ADTs interacting; pattern matches threaded across them. -}
+
 import IO.Stdout
 
 type Color

@@ -1,5 +1,6 @@
 {- Non-tail self-recursion on UInt8 from 255 to 0; recursive call wrapped
    in `case`, frames stay live until termination. -}
+
 import IO.Stdout
 
 countDown : UInt8 -> Either (UnderflowError | StringTooLong) String

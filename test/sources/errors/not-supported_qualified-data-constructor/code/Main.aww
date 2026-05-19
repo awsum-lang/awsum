@@ -1,9 +1,10 @@
--- Not yet supported: qualified data constructors (`Maybe.Just`).
--- The `QName` grammar threads `.`s only through `UIdent`s up to a
--- final `LIdent` head — qualified-constructor-as-expression is not
--- a recognised `Atom`. Workaround: use the unqualified constructor
--- name (`Just 1`); Awsum's whole-program-single-namespace model
--- means there is nothing to disambiguate against today.
+{- Not yet supported: qualified data constructors (`Maybe.Just`).
+   The `QName` grammar threads `.`s only through `UIdent`s up to a
+   final `LIdent` head — qualified-constructor-as-expression is not
+   a recognised `Atom`. Workaround: use the unqualified constructor
+   name (`Just 1`); Awsum's whole-program-single-namespace model
+   means there is nothing to disambiguate against today. -}
+
 import IO.Stdout
 
 m : Maybe Int32

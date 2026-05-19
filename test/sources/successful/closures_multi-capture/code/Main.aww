@@ -1,4 +1,5 @@
 {- Closure capturing two outer parameters at once. -}
+
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

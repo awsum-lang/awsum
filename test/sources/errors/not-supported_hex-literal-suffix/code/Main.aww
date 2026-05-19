@@ -1,10 +1,11 @@
--- Not yet supported: hexadecimal integer literals (`0x10`,
--- `0xff`, etc.). The `Int` lexer is decimal-only; a `0x10` is read
--- as the integer `0` followed by the identifier `x10`. That parse
--- shape is `0` applied to `x10`, which makes the `0` ambiguous
--- (no expected `Int32` / `UInt8` flows in through application),
--- so the typechecker raises `AmbiguousIntLiteral`. Workaround:
--- write the value in decimal.
+{- Not yet supported: hexadecimal integer literals (`0x10`,
+   `0xff`, etc.). The `Int` lexer is decimal-only; a `0x10` is read
+   as the integer `0` followed by the identifier `x10`. That parse
+   shape is `0` applied to `x10`, which makes the `0` ambiguous
+   (no expected `Int32` / `UInt8` flows in through application),
+   so the typechecker raises `AmbiguousIntLiteral`. Workaround:
+   write the value in decimal. -}
+
 import IO.Stdout
 
 n : Int32

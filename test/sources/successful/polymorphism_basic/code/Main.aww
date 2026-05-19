@@ -1,4 +1,5 @@
 {- Polymorphic `identity`, `compose`; `const` from prelude. -}
+
 import IO.Stdout
 
 main : IO Never Unit

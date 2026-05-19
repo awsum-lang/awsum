@@ -1,9 +1,10 @@
--- Property: `mulUInt32 (mulUInt32 a b) c == mulUInt32 a (mulUInt32 b c)`
--- whenever every intermediate product stays in range. Input format:
--- "a:b:c" where a, b, c are decimal UInt32 literals. The Haskell-side
--- generator picks triples constructively from the no-overflow region
--- (see `NoOverflowMulUInt32Triple` in PropertySpec.hs), so the
--- OVERFLOW branch is never expected to fire.
+{- Property: `mulUInt32 (mulUInt32 a b) c == mulUInt32 a (mulUInt32 b c)`
+   whenever every intermediate product stays in range. Input format:
+   "a:b:c" where a, b, c are decimal UInt32 literals. The Haskell-side
+   generator picks triples constructively from the no-overflow region
+   (see `NoOverflowMulUInt32Triple` in PropertySpec.hs), so the
+   OVERFLOW branch is never expected to fire. -}
+
 import IO.Stdout
 import IO.Stdin
 

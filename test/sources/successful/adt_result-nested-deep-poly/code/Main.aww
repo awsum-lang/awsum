@@ -1,4 +1,5 @@
 {- Triple-nested polymorphic Result; flat 8-arm inline patterns. -}
+
 import IO.Stdout
 
 type Result a e = Ok a | Err e

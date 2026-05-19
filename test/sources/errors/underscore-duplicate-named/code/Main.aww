@@ -1,5 +1,6 @@
--- Error: '_x' is a /named/ ignore, so the second '_x' shadows the first.
--- (Multiple bare '_' wildcards would be allowed, since '_' introduces no binding.)
+{- Error: '_x' is a /named/ ignore, so the second '_x' shadows the first.
+   (Multiple bare '_' wildcards would be allowed, since '_' introduces no binding.) -}
+
 import IO.Stdout
 
 type Pair a b = Pair a b

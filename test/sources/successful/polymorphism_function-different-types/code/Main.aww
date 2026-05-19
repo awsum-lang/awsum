@@ -1,4 +1,5 @@
 {- One polymorphic function applied to two different type instantiations. -}
+
 import IO.Stdout
 
 type Box a = Box a

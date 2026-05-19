@@ -1,6 +1,7 @@
--- Property: `succUInt8 x` fails iff `x == 255` (the UInt8 max). Both
--- branches must be exercised, so the Haskell-side generator biases
--- towards 255 to make the boundary case appear in 100-test runs.
+{- Property: `succUInt8 x` fails iff `x == 255` (the UInt8 max). Both
+   branches must be exercised, so the Haskell-side generator biases
+   towards 255 to make the boundary case appear in 100-test runs. -}
+
 import IO.Stdout
 import IO.Stdin
 

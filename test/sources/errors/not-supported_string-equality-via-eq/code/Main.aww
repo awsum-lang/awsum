@@ -1,11 +1,12 @@
--- Not yet supported: a string-equality function in the prelude.
--- The prelude exposes `eqInt32 : Int32 -> Int32 -> Bool` and
--- `eqUInt8 : UInt8 -> UInt8 -> Bool`, but no `eqString` (or any
--- polymorphic `(==)`). Pattern-matching strings is also unsupported.
--- The typechecker reports `eqString` as an unknown variable.
--- Workaround: model the comparison at the call site (e.g. parse
--- the strings into a typed sum first); polymorphic `(==)` lands
--- with type classes.
+{- Not yet supported: a string-equality function in the prelude.
+   The prelude exposes `eqInt32 : Int32 -> Int32 -> Bool` and
+   `eqUInt8 : UInt8 -> UInt8 -> Bool`, but no `eqString` (or any
+   polymorphic `(==)`). Pattern-matching strings is also unsupported.
+   The typechecker reports `eqString` as an unknown variable.
+   Workaround: model the comparison at the call site (e.g. parse
+   the strings into a typed sum first); polymorphic `(==)` lands
+   with type classes. -}
+
 import IO.Stdout
 
 equal : Bool

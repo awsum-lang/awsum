@@ -1,13 +1,14 @@
--- Warning: 'orphan' and 'a' are defined but never reachable from main.
--- The quick-fix renames /both/ the signature and the definition to '_orphan' /
--- '_a' so the file stays type-correct after the rename.
---
--- 'a' is in the fixture specifically to guard against pattern-binder leakage:
--- the prelude binds 'a' in case alternatives (e.g. 'Right a -> k a' inside
--- 'bindEither'). If 'freeNames' fails to subtract pattern-bound names from a
--- case alt's body, 'a' enters the reachable-from-main set and silently masks
--- this top-level — exactly the bug that was fixed for any single-letter name
--- the prelude happens to bind.
+{- Warning: 'orphan' and 'a' are defined but never reachable from main.
+   The quick-fix renames /both/ the signature and the definition to '_orphan' /
+   '_a' so the file stays type-correct after the rename.
+
+   'a' is in the fixture specifically to guard against pattern-binder leakage:
+   the prelude binds 'a' in case alternatives (e.g. 'Right a -> k a' inside
+   'bindEither'). If 'freeNames' fails to subtract pattern-bound names from a
+   case alt's body, 'a' enters the reachable-from-main set and silently masks
+   this top-level — exactly the bug that was fixed for any single-letter name
+   the prelude happens to bind. -}
+
 import IO.Stdout
 
 a : Int32

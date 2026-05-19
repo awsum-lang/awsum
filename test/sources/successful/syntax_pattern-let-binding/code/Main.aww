@@ -1,4 +1,5 @@
 {- Pattern on the LHS of a `let`: `let (Tuple2 a b) = e in …`. -}
+
 import IO.Stdout
 
 threeAndDouble : Int32 -> Tuple2 Int32 Int32

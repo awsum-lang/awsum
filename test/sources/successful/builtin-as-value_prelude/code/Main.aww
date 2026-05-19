@@ -2,6 +2,7 @@
    higher-order combinator (`apply`). The same lowering path as
    the platform-effect case but keyed by the unqualified prelude
    name — the eta-wrapper is `$bi$showInt32`. -}
+
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

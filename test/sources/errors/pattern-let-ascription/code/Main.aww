@@ -1,12 +1,13 @@
--- Type ascription on a destructuring let-binding is rejected:
--- `let (Tuple3 a b c) : T = e in body`. Ascribing the
--- destructured pattern as a whole is ambiguous (does `T`
--- describe the tuple, or does each binder need its own type?),
--- and the desugarer rewrites non-PVar lets to a single-arm
--- `case` which can't carry the ascription anyway.
---
--- Fix: drop the ascription, or use a single-name binder
--- (`let n : T = e`) and destructure inside the body.
+{- Type ascription on a destructuring let-binding is rejected:
+   `let (Tuple3 a b c) : T = e in body`. Ascribing the
+   destructured pattern as a whole is ambiguous (does `T`
+   describe the tuple, or does each binder need its own type?),
+   and the desugarer rewrites non-PVar lets to a single-arm
+   `case` which can't carry the ascription anyway.
+
+   Fix: drop the ascription, or use a single-name binder
+   (`let n : T = e`) and destructure inside the body. -}
+
 import IO.Stdout
 
 makeTriple : Int32 -> Tuple3 Int32 Int32 Int32

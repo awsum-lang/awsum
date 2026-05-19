@@ -463,11 +463,53 @@ instance Arbitrary Decl where
 
 instance Arbitrary Program where
   arbitrary = do
+    -- 'moduleComment' is a syntactic surface feature (a single
+    -- optional block comment at the top of the file separated from
+    -- the rest by a blank line). Property tests exercise the AST
+    -- shape, not the surface header, so always generate 'Nothing'.
+    --
+    -- The FIRST import is constrained: its leading-comments list
+    -- must be empty (the parser rejects leading comments on the
+    -- first import — they would be module-comment material). The
+    -- regular 'Arbitrary ImportDecl' generator is free to attach
+    -- leading comments, so we strip them on whichever import lands
+    -- in head position.
+    --
+    -- The first DECL is similarly constrained when there are no
+    -- imports and no module comment: a leading 'CommentDecl' would
+    -- render as a free-standing top-of-file comment, which the
+    -- parser interprets as a module comment instead (round-tripping
+    -- the AST through render/parse would change 'mc=Nothing' to
+    -- 'mc=Just'). We resample the first decl until it is not a
+    -- 'CommentDecl' in that configuration.
     ims <- listOf arbitrary
+    let imsHead = case ims of
+          [] -> []
+          ImportDecl _ m mc : rest -> ImportDecl [] m mc : rest
     -- at least one top-level declaration
-    d0 <- arbitrary
+    d0 <- arbitrary `suchThat` validFirstDecl imsHead
     ds <- listOf arbitrary
-    pure Program {imports = ims, decls = d0 :| ds}
-  shrink (Program ims ds) =
-    [Program ims' ds | ims' <- shrinkList shrink ims]
-      <> [Program ims ds' | ds' <- shrinkNonEmpty shrink ds]
+    pure Program {moduleComment = Nothing, imports = imsHead, decls = d0 :| ds}
+  shrink (Program mc ims ds) =
+    [ Program mc ims' ds
+    | ims' <- shrinkList shrink ims,
+      validHead ims',
+      validFirstDecl ims' (head ds)
+    ]
+      <> [ Program mc ims ds'
+         | ds' <- shrinkNonEmpty shrink ds,
+           validFirstDecl ims (head ds')
+         ]
+    where
+      validHead = \case
+        ImportDecl [] _ _ : _ -> True
+        [] -> True
+        _ -> False
+
+-- | First-decl constraint mirrored from the parser: when a program has
+--   no imports, a leading 'CommentDecl' becomes the module comment on
+--   parse and so the original 'Decl' shape cannot round-trip through
+--   render/parse. Only relevant when 'imports = []'.
+validFirstDecl :: [ImportDecl] -> Decl -> Bool
+validFirstDecl [] (CommentDecl _) = False
+validFirstDecl _ _ = True

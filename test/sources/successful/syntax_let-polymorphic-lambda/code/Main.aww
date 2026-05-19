@@ -1,5 +1,6 @@
 {- `let id = \x -> x in body` — polymorphic let-bound lambda used at
    multiple types in the body, no annotation needed. -}
+
 import IO.Stdout
 
 type Tri

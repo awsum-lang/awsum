@@ -1,5 +1,6 @@
--- Error: a name with a leading underscore is intentionally unused; the parser
--- does not allow it to appear in expression position, so '_v' here fails.
+{- Error: a name with a leading underscore is intentionally unused; the parser
+   does not allow it to appear in expression position, so '_v' here fails. -}
+
 import IO.Stdout
 
 type Box a = Box a

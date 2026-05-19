@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":11,"startCol":18,"endLine":11,"endCol":26,"message":"Unknown type variable: 'deriving' is not declared as a type parameter","fixes":[]}]
+[{"severity":"error","startLine":12,"startCol":18,"endLine":12,"endCol":26,"message":"Unknown type variable: 'deriving' is not declared as a type parameter","fixes":[]}]

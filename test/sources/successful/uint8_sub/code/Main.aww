@@ -1,4 +1,5 @@
 {- `subUInt8`: `Left UnderflowError` when `a < b`; `0 - 255` traps sign-extension on JVM/CLR. -}
+
 import IO.Stdout
 
 render : Either UnderflowError UInt8 -> Either StringTooLong String

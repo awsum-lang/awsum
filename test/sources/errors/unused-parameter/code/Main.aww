@@ -1,6 +1,7 @@
--- Warning: 'second' is bound but never used in the body.
--- The check produces a 'warning' severity (yellow squiggle in the editor)
--- with two quick-fixes: replace with '_' or rename to '_second'.
+{- Warning: 'second' is bound but never used in the body.
+   The check produces a 'warning' severity (yellow squiggle in the editor)
+   with two quick-fixes: replace with '_' or rename to '_second'. -}
+
 import IO.Stdout
 
 greeting : String -> String -> Either StringTooLong String

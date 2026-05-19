@@ -1,9 +1,10 @@
--- Not yet supported: selective imports (`import Foo (bar, baz)`).
--- The `Import` rule is `"import" ModulePath` — there is no
--- name-list clause. Today, importing a module makes every gated
--- entry from that module available; there is no way to narrow it.
--- Selective and `hiding`-style imports arrive with the full
--- module-system pass.
+{- Not yet supported: selective imports (`import Foo (bar, baz)`).
+   The `Import` rule is `"import" ModulePath` — there is no
+   name-list clause. Today, importing a module makes every gated
+   entry from that module available; there is no way to narrow it.
+   Selective and `hiding`-style imports arrive with the full
+   module-system pass. -}
+
 import IO.Stdout (print)
 
 main : IO Never Unit

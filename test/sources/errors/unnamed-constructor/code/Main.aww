@@ -1,6 +1,7 @@
--- Error: bare '_' is not a valid constructor name. Constructors are
--- referenced from expressions and patterns, so even unused ones must be
--- nameable: use '_C' (or similar).
+{- Error: bare '_' is not a valid constructor name. Constructors are
+   referenced from expressions and patterns, so even unused ones must be
+   nameable: use '_C' (or similar). -}
+
 import IO.Stdout
 
 type A = _

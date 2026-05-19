@@ -1,1 +1,1 @@
-[{"severity":"warning","startLine":7,"startCol":16,"endLine":7,"endCol":22,"message":"Unused parameter: 'second'","fixes":[{"title":"Rename 'second' to '_second'","edits":[{"startLine":7,"startCol":16,"endLine":7,"endCol":22,"newText":"_second"}]}]}]
+[{"severity":"warning","startLine":8,"startCol":16,"endLine":8,"endCol":22,"message":"Unused parameter: 'second'","fixes":[{"title":"Rename 'second' to '_second'","edits":[{"startLine":8,"startCol":16,"endLine":8,"endCol":22,"newText":"_second"}]}]}]

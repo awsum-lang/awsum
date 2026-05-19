@@ -1,10 +1,11 @@
--- Not yet supported: type class declarations (`class C a where …`).
--- Type classes are on the roadmap (prerequisite for polymorphic
--- `show` / `pred` / `succ` / `(==)`), but the surface grammar has no
--- `class` form yet — `class` is not a reserved word, so the parser
--- treats it as an ordinary identifier and expects a `:` for a
--- signature next. Workaround: write monomorphic functions directly
--- (`showInt32`, `eqInt32`, …); polymorphic versions land with classes.
+{- Not yet supported: type class declarations (`class C a where …`).
+   Type classes are on the roadmap (prerequisite for polymorphic
+   `show` / `pred` / `succ` / `(==)`), but the surface grammar has no
+   `class` form yet — `class` is not a reserved word, so the parser
+   treats it as an ordinary identifier and expects a `:` for a
+   signature next. Workaround: write monomorphic functions directly
+   (`showInt32`, `eqInt32`, …); polymorphic versions land with classes. -}
+
 import IO.Stdout
 
 class Eq a where

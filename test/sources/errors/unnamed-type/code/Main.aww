@@ -1,6 +1,7 @@
--- Error: bare '_' is not a valid type name. Even an intentionally-unused
--- type must be addressable from elsewhere (signatures, future modules), so
--- name it explicitly: '_X', '_Foo', etc.
+{- Error: bare '_' is not a valid type name. Even an intentionally-unused
+   type must be addressable from elsewhere (signatures, future modules), so
+   name it explicitly: '_X', '_Foo', etc. -}
+
 import IO.Stdout
 
 type _ = B | C

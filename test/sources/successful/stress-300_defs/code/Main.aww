@@ -1,4 +1,5 @@
 {- 300 top-level Bool constants combined with `and`. -}
+
 import IO.Stdout
 
 b1 : Bool

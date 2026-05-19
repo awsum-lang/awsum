@@ -1,56 +1,56 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " Prints a string literal containing a supplementary-plane code point
-               (U+1F525, 🔥) — one Unicode scalar, two UTF-16 code units, four UTF-8
-               bytes. The input arrives via 'main' but is ignored; only the literal
-               is sent to stdout.
+    { moduleComment = Just " Prints a string literal containing a supplementary-plane code point
+         (U+1F525, 🔥) — one Unicode scalar, two UTF-16 code units, four UTF-8
+         bytes. The input arrives via 'main' but is ignored; only the literal
+         is sent to stdout.
 
-               This isolates the stdout-encoding path from the argv-decoding path:
-               a backend whose stdout layer mishandles supplementary characters
-               (e.g. routing through the host's ANSI code page on Windows) will
-               diverge from the others, while a backend whose argv decoder is
-               broken — but whose stdout is fine — will still match. " ]
+         This isolates the stdout-encoding path from the argv-decoding path:
+         a backend whose stdout layer mishandles supplementary characters
+         (e.g. routing through the host's ANSI code page on Windows) will
+         diverge from the others, while a backend whose argv decoder is
+         broken — but whose stdout is fine — will still match. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 13
+            { spanStartLine = 14
             , spanStartCol = 1
-            , spanEndLine = 13
+            , spanEndLine = 14
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 13
+                { spanStartLine = 14
                 , spanStartCol = 8
-                , spanEndLine = 13
+                , spanEndLine = 14
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 13
+                    { spanStartLine = 14
                     , spanStartCol = 8
-                    , spanEndLine = 13
+                    , spanEndLine = 14
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 13
+                        { spanStartLine = 14
                         , spanStartCol = 8
-                        , spanEndLine = 13
+                        , spanEndLine = 14
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 13
+                        { spanStartLine = 14
                         , spanStartCol = 11
-                        , spanEndLine = 13
+                        , spanEndLine = 14
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -58,9 +58,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 13
+                    { spanStartLine = 14
                     , spanStartCol = 17
-                    , spanEndLine = 13
+                    , spanEndLine = 14
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -68,25 +68,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 14
+                { spanStartLine = 15
                 , spanStartCol = 1
-                , spanEndLine = 14
+                , spanEndLine = 15
                 , spanEndCol = 28
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 14
+                    { spanStartLine = 15
                     , spanStartCol = 8
-                    , spanEndLine = 14
+                    , spanEndLine = 15
                     , spanEndCol = 28
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 14
+                        { spanStartLine = 15
                         , spanStartCol = 8
-                        , spanEndLine = 14
+                        , spanEndLine = 15
                         , spanEndCol = 24
                         }
                     )
@@ -98,9 +98,9 @@ Program
                 )
                 ( ELit
                     ( SrcSpan
-                        { spanStartLine = 14
+                        { spanStartLine = 15
                         , spanStartCol = 24
-                        , spanEndLine = 14
+                        , spanEndLine = 15
                         , spanEndCol = 28
                         }
                     )

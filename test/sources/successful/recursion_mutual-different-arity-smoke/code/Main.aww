@@ -1,5 +1,6 @@
 {- Mutual recursion with mismatched arities; SCC must merge via a
    sum-typed args ADT. -}
+
 import IO.Stdout
 
 type Input = IDone | IStep

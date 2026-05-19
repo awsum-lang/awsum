@@ -1,4 +1,5 @@
--- Error: undefined type constructor X in signature
+{- Error: undefined type constructor X in signature -}
+
 import IO.Stdout
 
 main : X -> IO Never Unit

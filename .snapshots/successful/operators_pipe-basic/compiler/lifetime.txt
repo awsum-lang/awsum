@@ -8,11 +8,11 @@ wrap:
   param           s                               count=1
 
 joined:
-  case-pattern    $do_e_28_3                      count=1
-  case-pattern    a                               count=1
   case-pattern    $do_e_29_3                      count=1
-  case-pattern    b                               count=1
+  case-pattern    a                               count=1
   case-pattern    $do_e_30_3                      count=1
+  case-pattern    b                               count=1
+  case-pattern    $do_e_31_3                      count=1
   case-pattern    c                               count=1
 
 main:

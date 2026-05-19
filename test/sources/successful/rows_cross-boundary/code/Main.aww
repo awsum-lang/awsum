@@ -1,6 +1,7 @@
 {- Non-row values flow into row-typed slots; lift helpers must reconstruct
    under the target row shape. Three shapes: direct nominal wrap, recursive
    ADT (memoised), deep nesting through `Either`/`Maybe`. -}
+
 import IO.Stdout
 
 type ErrA = ErrA

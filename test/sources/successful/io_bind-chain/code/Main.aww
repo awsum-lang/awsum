@@ -3,6 +3,7 @@
    `andThenIO` in the prelude (lowered through Defunctionalize → Cps
    → TCO) produces an IO tree that the runtime walks in order. The
    `|>` form puts the actions in execution order left-to-right. -}
+
 import IO.Stdout
 
 main : IO Never Unit

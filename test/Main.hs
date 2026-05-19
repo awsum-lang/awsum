@@ -97,7 +97,8 @@ parserSpec = do
               ]
           expected =
             Program
-              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
+              { moduleComment = Nothing,
+                imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
@@ -124,7 +125,8 @@ parserSpec = do
               ]
           expected =
             Program
-              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
+              { moduleComment = Nothing,
+                imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
@@ -165,7 +167,7 @@ parserSpec = do
               (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "String"))
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right (Program _ (Sig _ _ ty _ :| _)) -> ty `shouldBe` expectedSig
+        Right (Program _ _ (Sig _ _ ty _ :| _)) -> ty `shouldBe` expectedSig
         Right _ -> expectationFailure "expected first decl to be a Sig"
 
     it "parses: type-ascription pattern '(n : Int32)' inside a case arm" $ do
@@ -251,7 +253,7 @@ parserSpec = do
               (TyCon noSpan "String")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right (Program _ (Sig _ _ ty _ :| _)) -> ty `shouldBe` expectedSig
+        Right (Program _ _ (Sig _ _ ty _ :| _)) -> ty `shouldBe` expectedSig
         Right _ -> expectationFailure "expected first decl to be a Sig"
 
   describe "Render.renderProgram" $ do
@@ -265,7 +267,8 @@ parserSpec = do
               ]
           ast =
             Program
-              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
+              { moduleComment = Nothing,
+                imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef
@@ -292,7 +295,8 @@ parserSpec = do
               ]
           ast =
             Program
-              { imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
+              { moduleComment = Nothing,
+                imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
                   Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
                     :| [ FunDef

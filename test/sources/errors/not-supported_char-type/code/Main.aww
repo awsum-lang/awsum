@@ -1,8 +1,9 @@
--- Not yet supported: a primitive `Char` type (and the matching
--- single-quoted character literal). Awsum has only `String` for
--- text — strings are byte sequences with no per-character
--- primitive. The typechecker reports `Char` as an unknown type
--- constructor. Workaround: use one-byte `String` values.
+{- Not yet supported: a primitive `Char` type (and the matching
+   single-quoted character literal). Awsum has only `String` for
+   text — strings are byte sequences with no per-character
+   primitive. The typechecker reports `Char` as an unknown type
+   constructor. Workaround: use one-byte `String` values. -}
+
 import IO.Stdout
 
 c : Char

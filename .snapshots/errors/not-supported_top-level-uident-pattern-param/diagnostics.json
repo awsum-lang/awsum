@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":13,"startCol":10,"endLine":13,"endCol":10,"message":"unexpected 'N'\nexpecting '(', ':', or '='","fixes":[]}]
+[{"severity":"error","startLine":14,"startCol":10,"endLine":14,"endCol":10,"message":"unexpected 'N'\nexpecting '(', ':', or '='","fixes":[]}]

@@ -1,7 +1,8 @@
--- Property: `predInt32 x` fails iff `x == minInt32`. Symmetric to
--- `succInt32-fails-iff-max`. Property uses the result of `predInt32`
--- as data (success-vs-failure), so it doesn't desugar through `do`
--- — the inner `case` inspects the `Either` directly.
+{- Property: `predInt32 x` fails iff `x == minInt32`. Symmetric to
+   `succInt32-fails-iff-max`. Property uses the result of `predInt32`
+   as data (success-vs-failure), so it doesn't desugar through `do`
+   — the inner `case` inspects the `Either` directly. -}
+
 import IO.Stdout
 import IO.Stdin
 

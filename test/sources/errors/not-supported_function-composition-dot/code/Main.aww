@@ -1,9 +1,10 @@
--- Not yet supported: Haskell's `.` function-composition operator.
--- The `.` token in Awsum is reserved exclusively for module-path
--- qualification inside a `QName` (`IO.Stdout.print`). The parser
--- attempts to read a qualified name where the user wrote a
--- composition and rejects the `.` followed by a lowercase head.
--- Workaround: write a lambda (`\x -> f (g x)`) or a named helper.
+{- Not yet supported: Haskell's `.` function-composition operator.
+   The `.` token in Awsum is reserved exclusively for module-path
+   qualification inside a `QName` (`IO.Stdout.print`). The parser
+   attempts to read a qualified name where the user wrote a
+   composition and rejects the `.` followed by a lowercase head.
+   Workaround: write a lambda (`\x -> f (g x)`) or a named helper. -}
+
 import IO.Stdout
 
 twice : (Int32 -> Int32) -> Int32 -> Int32

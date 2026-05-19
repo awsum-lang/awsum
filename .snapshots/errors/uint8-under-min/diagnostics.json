@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":8,"startCol":12,"endLine":8,"endCol":14,"message":"Integer literal -1 out of range for UInt8 (valid range: 0..255)","fixes":[]}]
+[{"severity":"error","startLine":9,"startCol":12,"endLine":9,"endCol":14,"message":"Integer literal -1 out of range for UInt8 (valid range: 0..255)","fixes":[]}]

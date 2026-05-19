@@ -1,4 +1,5 @@
 {- Uninhabited type detected through deep nesting. -}
+
 import IO.Stdout
 
 type Box a = Box a

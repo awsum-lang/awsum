@@ -1,4 +1,5 @@
 {- `predUInt32`: `Left UnderflowError` at 0; `predUInt32 maxUInt32` traps signed-int clipping on JVM/CLR. -}
+
 import IO.Stdout
 
 render : Either UnderflowError UInt32 -> Either StringTooLong String

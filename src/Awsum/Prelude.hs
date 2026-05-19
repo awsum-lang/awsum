@@ -63,7 +63,10 @@ withPrelude userProg
   | userProg == preludeProgram = userProg
   | otherwise =
       Program
-        { imports = preludeProgram.imports <> userProg.imports,
+        { -- Keep the user's module comment; the prelude is an implicit
+          -- prepend and its own header is an implementation detail.
+          moduleComment = userProg.moduleComment,
+          imports = preludeProgram.imports <> userProg.imports,
           decls = preludeProgram.decls <> userProg.decls
         }
 

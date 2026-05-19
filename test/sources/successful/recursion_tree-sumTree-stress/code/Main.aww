@@ -4,14 +4,14 @@
    forward, and the K_1 apply arm tail-calls '$cps$sumTree' to start the
    second call. The resulting '$cps$sumTree' / '$apply$sumTree' mutual
    cycle is fused by the second SCC-merge pass before TCO. -}
+
 import IO.Stdout
 
-type Tree
-  = Leaf
-  | Node Tree Int32 Tree
+type Tree = Leaf | Node Tree Int32 Tree
 
 {- Build a left-spine tree of depth n tail-recursively. Every value is 1
    so the total sum equals the depth. -}
+
 buildLeft : Int32 -> Tree -> Either UnderflowError Tree
 buildLeft n acc = case eqInt32 n 0 of
   True -> Right acc
@@ -21,6 +21,7 @@ buildLeft n acc = case eqInt32 n 0 of
 
 {- Total Int32 sum of all values in the tree never exceeds the input
    depth here, so 'addInt32' cannot overflow on this input. -}
+
 addOr0 : Int32 -> Int32 -> Int32
 addOr0 a b = case addInt32 a b of
   Left _e -> 0
@@ -29,6 +30,7 @@ addOr0 a b = case addInt32 a b of
 {- Double-recursive sum: both the inner 'sumTree l ...' (non-tail,
    passes its result as the outer call's second argument) and the outer
    'sumTree r ...' run on every Node. -}
+
 sumTree : Tree -> Int32 -> Int32
 sumTree t acc = case t of
   Leaf -> acc

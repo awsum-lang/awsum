@@ -1,8 +1,9 @@
--- Not yet supported: record-style field destructuring in patterns
--- (`Wrap { x = n } -> …`). Awsum has no records and no
--- field-by-name pattern form — `PatternAtom` is `LIdent | UIdent
--- | (Pattern) | (Pattern : Type)`, all positional. Workaround:
--- destructure positionally with the constructor.
+{- Not yet supported: record-style field destructuring in patterns
+   (`Wrap { x = n } -> …`). Awsum has no records and no
+   field-by-name pattern form — `PatternAtom` is `LIdent | UIdent
+   | (Pattern) | (Pattern : Type)`, all positional. Workaround:
+   destructure positionally with the constructor. -}
+
 import IO.Stdout
 
 type Wrap = Wrap Int32

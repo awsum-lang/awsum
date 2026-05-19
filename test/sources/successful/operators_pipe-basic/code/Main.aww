@@ -3,6 +3,7 @@
    form. Three shapes appear here: a basic chain, a left-associative
    chain, and a lambda on the right of `|>`. The program prints one
    line that combines all three results. -}
+
 import IO.Stdout
 
 n : Int32

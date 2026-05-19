@@ -1,4 +1,5 @@
 {- 300 data constructors over a single type parameter. -}
+
 import IO.Stdout
 
 type T a

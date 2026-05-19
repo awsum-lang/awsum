@@ -1,5 +1,6 @@
--- Error: variable pattern as a top-level catch-all on a structural-sum
--- scrutinee. Each alternative must be matched explicitly with '(x : T)'.
+{- Error: variable pattern as a top-level catch-all on a structural-sum
+   scrutinee. Each alternative must be matched explicitly with '(x : T)'. -}
+
 import IO.Stdout
 
 _f : (Int32 | String) -> String

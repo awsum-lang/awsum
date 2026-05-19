@@ -1,1 +1,1 @@
-[{"severity":"warning","startLine":6,"startCol":14,"endLine":6,"endCol":17,"message":"Unused type parameter: 'tag'","fixes":[{"title":"Rename 'tag' to '_tag'","edits":[{"startLine":6,"startCol":14,"endLine":6,"endCol":17,"newText":"_tag"}]}]}]
+[{"severity":"warning","startLine":7,"startCol":14,"endLine":7,"endCol":17,"message":"Unused type parameter: 'tag'","fixes":[{"title":"Rename 'tag' to '_tag'","edits":[{"startLine":7,"startCol":14,"endLine":7,"endCol":17,"newText":"_tag"}]}]}]

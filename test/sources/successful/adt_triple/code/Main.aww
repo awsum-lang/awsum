@@ -1,4 +1,5 @@
 {- ADT with 3 type parameters and a 3-field constructor. -}
+
 import IO.Stdout
 
 type Triple a b c = Triple a b c

@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":7,"startCol":14,"endLine":7,"endCol":15,"message":"Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused","fixes":[]}]
+[{"severity":"error","startLine":8,"startCol":14,"endLine":8,"endCol":15,"message":"Type parameter must have a name; use '_a' (or similar) to mark one as intentionally unused","fixes":[]}]

@@ -16,6 +16,12 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ### Changed
 
+- **Module comment header for `.aww` files.** A single optional `{- … -}` block at the top of a file is now treated as the module comment. Line comments (`-- …`) at the top of a file and multiple block comments in a row are rejected with a parse error: the language never silently attaches text above the first import or declaration. Concrete shapes:
+  - **Before** — `{- header -}` glued directly to `import IO.Stdout` on the next line, or `-- header …` (often multi-line) before `import` / a top-level decl.
+  - **After** — a single `{- header -}` block, then `import …` or the first declaration. The canonical form has one blank line between the header and the next line; the parser accepts both with and without the blank line, and `awsum format` normalises to the form with one. Other shapes (`-- header`, two `{- a -} {- b -}` in a row) are syntax errors.
+
+  Leading comments on the first import are no longer accepted — they were ambiguous with module-comment material; subsequent imports may still carry leading comments (the "`-- import IO.X`" commented-out-import pattern between live imports). AST: `Program` gains a `moduleComment :: Maybe Text` field.
+
 ### Deprecated
 
 ### Removed

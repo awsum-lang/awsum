@@ -1,9 +1,10 @@
--- Not yet supported: `do`-notation for any monad other than
--- `Either e a`. The current desugaring is hard-coded to `bindEither`
--- — a `<-` whose RHS is `IO Never Unit` ends up scrutinised as if it were
--- an `Either`, and the desugar fails before typechecking can produce
--- a more specific diagnostic. `do` for `IO` will arrive together
--- with type-class dispatch (the `Monad` instance for `IO`).
+{- Not yet supported: `do`-notation for any monad other than
+   `Either e a`. The current desugaring is hard-coded to `bindEither`
+   — a `<-` whose RHS is `IO Never Unit` ends up scrutinised as if it were
+   an `Either`, and the desugar fails before typechecking can produce
+   a more specific diagnostic. `do` for `IO` will arrive together
+   with type-class dispatch (the `Monad` instance for `IO`). -}
+
 import IO.Stdout
 
 main : IO Never Unit

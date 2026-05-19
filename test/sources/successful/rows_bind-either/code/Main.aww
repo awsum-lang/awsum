@@ -2,6 +2,7 @@
    the `do`-desugared `case` arms must inject the bare-nominal error
    into the combined `(ErrA | ErrB)` row at lowering time without an
    explicit lift wrapper. -}
+
 import IO.Stdout
 
 type ErrA = ErrA

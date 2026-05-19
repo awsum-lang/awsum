@@ -1,7 +1,8 @@
--- Property: `mulUInt32 a b == mulUInt32 b a` whenever the product stays
--- in range. Input format: "a:b". The Haskell-side generator picks
--- pairs constructively from the no-overflow region, so OVERFLOW is
--- never expected to fire on a well-formed input.
+{- Property: `mulUInt32 a b == mulUInt32 b a` whenever the product stays
+   in range. Input format: "a:b". The Haskell-side generator picks
+   pairs constructively from the no-overflow region, so OVERFLOW is
+   never expected to fire on a well-formed input. -}
+
 import IO.Stdout
 import IO.Stdin
 

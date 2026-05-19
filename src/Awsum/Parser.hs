@@ -307,13 +307,77 @@ withSpan p = do
 
 pProgram :: Parser Program
 pProgram = do
-  imps <- P.many (try pImport)
+  modCom <- pOptionalModuleComment
+  -- Imports come in two flavours: the FIRST import must not carry any
+  -- leading comments (those would be module-comment material that was
+  -- either consumed above or is a syntactic mistake), but later
+  -- imports may have leading comments — that's how a "commented-out
+  -- import" between live imports is expressed. If the file has no
+  -- imports at all the first parser falls through and ordinary
+  -- top-level parsing (CommentDecl, decls) takes over.
+  firstImp <- P.optional (try pImportNoLeading)
+  imps <- case firstImp of
+    Just imp -> do
+      rest <- P.many (try pImport)
+      pure (imp : rest)
+    Nothing -> pure []
   skipBlankLinesNoComments
   ds <- P.some (pTopDeclOrComment <* skipBlankLinesNoComments)
   let declsNE = case ds of
         d : rest -> d :| rest
         [] -> error "impossible: P.some returned []"
-  pure Program {imports = imps, decls = declsNE}
+  pure Program {moduleComment = modCom, imports = imps, decls = declsNE}
+
+-- | Optional single block-comment header at the very top of a file.
+--   Form: exactly one @{- … -}@ block. Whether it is followed by a
+--   blank line or sits glued to the next line is a formatting concern
+--   handled by 'awsum format' — the parser accepts both shapes and
+--   returns the block's text without delimiters.
+--
+--   Forbidden in this position:
+--
+--     * line comments — line comments at the very top of the file are
+--       surfaced as a parse error pointing the user at @{- … -}@.
+--     * a second block comment immediately after the first — the
+--       second @{-@ ends up in "before-first-import" position which
+--       'pProgram' rejects (it tries 'pImportNoLeading' first; with
+--       a stray @{-@ in the way that fails to commit, and the next
+--       attempt parses the @{-@ as a 'CommentDecl' or — if it is
+--       followed by @import@ — falls into 'pImport' which would
+--       attach it as a leading comment of the first import, which
+--       in turn the elaborator catches as misplaced module-comment
+--       material).
+--
+--   When absent (the file does not start with @{-@), returns 'Nothing'
+--   without consuming anything beyond leading blank lines.
+pOptionalModuleComment :: Parser (Maybe Text)
+pOptionalModuleComment = do
+  skipBlankLinesNoComments
+  P.notFollowedBy (P.chunk "--")
+    P.<?> "no line comments allowed at the top of the file (use a {- module comment -} block instead)"
+  P.optional $ do
+    txt <- pBlockCommentText
+    hspaceNoComments
+    void C.eol <|> P.eof
+    skipBlankLinesNoComments
+    pure txt
+
+-- | First-import variant: no leading comments allowed. Such comments
+--   would either be module-comment material (which 'pOptionalModuleComment'
+--   handles above) or a misplaced "commented-out import" before any
+--   live import. We commit on the literal 'import' keyword, so any
+--   stray '{-' or '--' here causes this combinator to fail without
+--   consuming input — letting 'pProgram' fall through to declaration
+--   parsing.
+pImportNoLeading :: Parser ImportDecl
+pImportNoLeading = do
+  skipBlankLinesNoComments
+  hspaceNoComments
+  rwordNoLine "import"
+  modPath <- pModPath
+  tcom <- pTrailingLineCommentMaybe
+  endLineOrEOF
+  pure (ImportDecl [] modPath tcom)
 
 pImport :: Parser ImportDecl
 pImport = do

@@ -88,10 +88,16 @@ type Name = Text
 -- | Qualified module path, e.g. @IO.Stdout@ ⇒ @\"IO\" :| [\"Stdout\"]@.
 type ModulePath = NonEmpty Name
 
--- | A single source file: zero or more imports and a /non-empty/ list of top-level declarations.
+-- | A single source file: an optional module comment, zero or more imports,
+--   and a /non-empty/ list of top-level declarations.
 --   Parser guarantees @decls@ is 'NonEmpty' (empty programs are rejected).
 data Program = Program
-  { -- | @import Foo.Bar@
+  { -- | Optional single @{- … -}@ block at the very top of the file,
+    --   separated from the rest by a blank line. Stored without
+    --   delimiters. Line comments and multiple block comments in this
+    --   position are rejected by the parser.
+    moduleComment :: Maybe Text,
+    -- | @import Foo.Bar@
     imports :: [ImportDecl],
     -- | at least one declaration
     decls :: NonEmpty Decl

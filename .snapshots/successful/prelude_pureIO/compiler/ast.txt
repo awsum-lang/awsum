@@ -1,50 +1,50 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " Direct test of `pureIO`: lifts a pure value into the IO monad
-               as an `IOPure` cell. Composed with `bindIO` whose continuation
-               is the platform built-in `IO.Stdout.print` passed as a value —
-               this shape used to crash before built-in eta-wrappers landed. " ]
+    { moduleComment = Just " Direct test of `pureIO`: lifts a pure value into the IO monad
+         as an `IOPure` cell. Composed with `bindIO` whose continuation
+         is the platform built-in `IO.Stdout.print` passed as a value —
+         this shape used to crash before built-in eta-wrappers landed. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 7
+            { spanStartLine = 8
             , spanStartCol = 1
-            , spanEndLine = 7
+            , spanEndLine = 8
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 7
+                { spanStartLine = 8
                 , spanStartCol = 8
-                , spanEndLine = 7
+                , spanEndLine = 8
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 7
+                    { spanStartLine = 8
                     , spanStartCol = 8
-                    , spanEndLine = 7
+                    , spanEndLine = 8
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 8
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 11
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -52,9 +52,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 7
+                    { spanStartLine = 8
                     , spanStartCol = 17
-                    , spanEndLine = 7
+                    , spanEndLine = 8
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -62,33 +62,33 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 8
+                { spanStartLine = 9
                 , spanStartCol = 1
-                , spanEndLine = 8
+                , spanEndLine = 9
                 , spanEndCol = 53
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 8
+                    { spanStartLine = 9
                     , spanStartCol = 8
-                    , spanEndLine = 8
+                    , spanEndLine = 9
                     , spanEndCol = 53
                     }
                 )
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 8
+                        { spanStartLine = 9
                         , spanStartCol = 8
-                        , spanEndLine = 8
+                        , spanEndLine = 9
                         , spanEndCol = 38
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 8
+                            { spanStartLine = 9
                             , spanStartCol = 8
-                            , spanEndLine = 8
+                            , spanEndLine = 9
                             , spanEndCol = 15
                             }
                         )
@@ -96,25 +96,25 @@ Program
                     )
                     ( EParens
                         ( SrcSpan
-                            { spanStartLine = 8
+                            { spanStartLine = 9
                             , spanStartCol = 15
-                            , spanEndLine = 8
+                            , spanEndLine = 9
                             , spanEndCol = 38
                             }
                         )
                         ( EApp
                             ( SrcSpan
-                                { spanStartLine = 8
+                                { spanStartLine = 9
                                 , spanStartCol = 16
-                                , spanEndLine = 8
+                                , spanEndLine = 9
                                 , spanEndCol = 36
                                 }
                             )
                             ( EVar
                                 ( SrcSpan
-                                    { spanStartLine = 8
+                                    { spanStartLine = 9
                                     , spanStartCol = 16
-                                    , spanEndLine = 8
+                                    , spanEndLine = 9
                                     , spanEndCol = 23
                                     }
                                 )
@@ -122,9 +122,9 @@ Program
                             )
                             ( ELit
                                 ( SrcSpan
-                                    { spanStartLine = 8
+                                    { spanStartLine = 9
                                     , spanStartCol = 23
-                                    , spanEndLine = 8
+                                    , spanEndLine = 9
                                     , spanEndCol = 36
                                     }
                                 )
@@ -135,9 +135,9 @@ Program
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 8
+                        { spanStartLine = 9
                         , spanStartCol = 38
-                        , spanEndLine = 8
+                        , spanEndLine = 9
                         , spanEndCol = 53
                         }
                     )

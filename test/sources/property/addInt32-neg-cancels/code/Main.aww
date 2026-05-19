@@ -1,7 +1,8 @@
--- Property: `negInt32 x + x == 0` for every Int32 except `minInt32`
--- (which can't be negated in two's complement). Single Int32 input.
--- The Haskell-side generator (`NonMinInt32`) excludes `minInt32`,
--- so neither error branch is expected to fire.
+{- Property: `negInt32 x + x == 0` for every Int32 except `minInt32`
+   (which can't be negated in two's complement). Single Int32 input.
+   The Haskell-side generator (`NonMinInt32`) excludes `minInt32`,
+   so neither error branch is expected to fire. -}
+
 import IO.Stdout
 import IO.Stdin
 

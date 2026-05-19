@@ -1,5 +1,6 @@
 {- Mutual tail recursion with mismatched arities at depth 100_000;
    SCC's sum-typed args merge folds the cluster into a loop. -}
+
 import IO.Stdout
 
 pingOne : Int32 -> Either UnderflowError Int32

@@ -14,17 +14,17 @@ whatsInside:
   row-case        u                               count=0
 
 summary:
-  case-pattern    $do_e_15_3                      count=1
-  case-pattern    a                               count=1
   case-pattern    $do_e_16_3                      count=1
-  case-pattern    b                               count=1
+  case-pattern    a                               count=1
   case-pattern    $do_e_17_3                      count=1
-  case-pattern    c                               count=1
+  case-pattern    b                               count=1
   case-pattern    $do_e_18_3                      count=1
-  case-pattern    s0                              count=1
+  case-pattern    c                               count=1
   case-pattern    $do_e_19_3                      count=1
-  case-pattern    s1                              count=1
+  case-pattern    s0                              count=1
   case-pattern    $do_e_20_3                      count=1
+  case-pattern    s1                              count=1
+  case-pattern    $do_e_21_3                      count=1
   case-pattern    s2                              count=1
 
 $lift$12:

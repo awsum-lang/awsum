@@ -1,5 +1,6 @@
 {- Bidirectional check: bare literal in a case-arm picks up its type
    from the enclosing function's return signature. -}
+
 import IO.Stdout
 
 firstZero : Maybe (Maybe Int32) -> Int32

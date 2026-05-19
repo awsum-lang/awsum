@@ -1,8 +1,9 @@
--- Property: `addInt32 a b == addInt32 b a` whenever the sum stays in
--- range. Input format: "a:b" with Int32 decimal literals. The
--- Haskell-side generator picks pairs constructively from the
--- no-overflow region, so neither UNDERFLOW nor OVERFLOW is
--- expected to fire.
+{- Property: `addInt32 a b == addInt32 b a` whenever the sum stays in
+   range. Input format: "a:b" with Int32 decimal literals. The
+   Haskell-side generator picks pairs constructively from the
+   no-overflow region, so neither UNDERFLOW nor OVERFLOW is
+   expected to fire. -}
+
 import IO.Stdout
 import IO.Stdin
 

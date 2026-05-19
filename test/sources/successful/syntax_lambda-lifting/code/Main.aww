@@ -1,5 +1,6 @@
 {- Lambda lifting at lowering: closed lambda passed to a HOF, and a
    `do`-block whose desugaring leaves a real lambda for the lifter. -}
+
 import IO.Stdout
 
 apply : (a -> b) -> a -> b

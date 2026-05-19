@@ -11,6 +11,7 @@
    peak resident bytes during the 20th doubling are ~600 MiB. WASM
    handles this through the `__alloc` `memory.grow` loop documented
    in the WASM-Specific Details section of `docs/targets.md`. -}
+
 import IO.Stdout
 
 block : String

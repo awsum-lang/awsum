@@ -1,4 +1,4 @@
--- Error: function definition without type signature
+{- Error: function definition without type signature -}
 
 foo x = x
 

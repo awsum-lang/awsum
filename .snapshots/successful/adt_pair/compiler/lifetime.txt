@@ -12,11 +12,11 @@ showPair:
 showPairBody:
   param           first                           count=1
   param           second                          count=1
-  case-pattern    $do_e_12_3                      count=0
-  case-pattern    s0                              count=0
   case-pattern    $do_e_13_3                      count=0
-  case-pattern    s1                              count=0
+  case-pattern    s0                              count=0
   case-pattern    $do_e_14_3                      count=0
+  case-pattern    s1                              count=0
+  case-pattern    $do_e_15_3                      count=0
   case-pattern    s2                              count=0
 
 $let$12:

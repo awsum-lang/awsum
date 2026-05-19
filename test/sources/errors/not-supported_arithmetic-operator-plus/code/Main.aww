@@ -1,9 +1,10 @@
--- Not yet supported: infix arithmetic via `+` (and likewise `-`,
--- `*`, `/`). The prelude supplies only the named honest-arithmetic
--- functions (`addInt32`, `subInt32`, `mulInt32`, …) returning
--- `Either ArithErr Int32`; there is no operator sugar. The parser
--- rejects the `+` token outright. Operator sugar lands together
--- with type classes (so `+` can mean `addInt32`, `addUInt8`, etc.).
+{- Not yet supported: infix arithmetic via `+` (and likewise `-`,
+   `*`, `/`). The prelude supplies only the named honest-arithmetic
+   functions (`addInt32`, `subInt32`, `mulInt32`, …) returning
+   `Either ArithErr Int32`; there is no operator sugar. The parser
+   rejects the `+` token outright. Operator sugar lands together
+   with type classes (so `+` can mean `addInt32`, `addUInt8`, etc.). -}
+
 import IO.Stdout
 
 n : Int32

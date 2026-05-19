@@ -1,9 +1,10 @@
--- Property: `parseInt32 (showInt32 x) == Right x` for any Int32. Tests
--- that the show / parse pair round-trips. The property reads the
--- input, parses, and re-shows; Haskell expects the same input
--- back. If the generator picks a value Awsum can't parse or print
--- correctly, the discrepancy shows up immediately on the failing
--- backend.
+{- Property: `parseInt32 (showInt32 x) == Right x` for any Int32. Tests
+   that the show / parse pair round-trips. The property reads the
+   input, parses, and re-shows; Haskell expects the same input
+   back. If the generator picks a value Awsum can't parse or print
+   correctly, the discrepancy shows up immediately on the failing
+   backend. -}
+
 import IO.Stdout
 import IO.Stdin
 

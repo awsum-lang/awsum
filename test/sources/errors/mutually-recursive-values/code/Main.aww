@@ -1,9 +1,10 @@
--- Error: two top-level values reference each other with no function
--- indirection between them. Mutually recursive CValDefs have no fixed
--- point — evaluating @foo@ demands @bar@, which demands @foo@ — and
--- would infinite-loop at initialisation on every backend.
--- Awsum.StackSafety catches this after Scc (which cannot merge SCCs
--- containing a CValDef) and refuses to lower the program.
+{- Error: two top-level values reference each other with no function
+   indirection between them. Mutually recursive CValDefs have no fixed
+   point — evaluating @foo@ demands @bar@, which demands @foo@ — and
+   would infinite-loop at initialisation on every backend.
+   Awsum.StackSafety catches this after Scc (which cannot merge SCCs
+   containing a CValDef) and refuses to lower the program. -}
+
 import IO.Stdout
 
 foo : String

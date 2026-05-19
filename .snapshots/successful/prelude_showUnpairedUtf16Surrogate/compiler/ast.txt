@@ -1,49 +1,49 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " Direct test of `showUnpairedUtf16Surrogate`: renders the sentinel
-               returned by `IO.Args.getArgs` on inputs containing an unpaired
-               UTF-16 surrogate. " ]
+    { moduleComment = Just " Direct test of `showUnpairedUtf16Surrogate`: renders the sentinel
+         returned by `IO.Args.getArgs` on inputs containing an unpaired
+         UTF-16 surrogate. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 6
+            { spanStartLine = 7
             , spanStartCol = 1
-            , spanEndLine = 6
+            , spanEndLine = 7
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 7
                 , spanStartCol = 8
-                , spanEndLine = 6
+                , spanEndLine = 7
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 8
-                    , spanEndLine = 6
+                    , spanEndLine = 7
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 8
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 11
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -51,9 +51,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 17
-                    , spanEndLine = 6
+                    , spanEndLine = 7
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -61,25 +61,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 7
+                { spanStartLine = 8
                 , spanStartCol = 1
-                , spanEndLine = 7
+                , spanEndLine = 8
                 , spanEndCol = 75
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 7
+                    { spanStartLine = 8
                     , spanStartCol = 8
-                    , spanEndLine = 7
+                    , spanEndLine = 8
                     , spanEndCol = 75
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 8
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 24
                         }
                     )
@@ -91,25 +91,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 24
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 75
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 7
+                            { spanStartLine = 8
                             , spanStartCol = 25
-                            , spanEndLine = 7
+                            , spanEndLine = 8
                             , spanEndCol = 74
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 25
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 52
                                 }
                             )
@@ -117,9 +117,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 52
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 74
                                 }
                             ) "UnpairedUtf16Surrogate"

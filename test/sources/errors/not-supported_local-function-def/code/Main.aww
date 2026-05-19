@@ -1,10 +1,11 @@
--- Not yet supported: function-definition shape on the LHS of `let`
--- (`let f x = body in rest`). The `LetBinding` rule's LHS is a
--- `Pattern` — bare names or destructuring patterns — not the
--- multi-parameter shape of a top-level `FunDef`. The parser rejects
--- the second name (the parameter) where it expects `:` or `=`.
--- Workaround: `let f = \x -> body in rest` (a lambda RHS works
--- because the let's expected type can flow into the lambda).
+{- Not yet supported: function-definition shape on the LHS of `let`
+   (`let f x = body in rest`). The `LetBinding` rule's LHS is a
+   `Pattern` — bare names or destructuring patterns — not the
+   multi-parameter shape of a top-level `FunDef`. The parser rejects
+   the second name (the parameter) where it expects `:` or `=`.
+   Workaround: `let f = \x -> body in rest` (a lambda RHS works
+   because the let's expected type can flow into the lambda). -}
+
 import IO.Stdout
 
 main : IO Never Unit

@@ -9,7 +9,7 @@ runIO:
   case-pattern    next                            count=0
 
 main:
-  case-pattern    $do_e_7_9                       count=1
+  case-pattern    $do_e_8_9                       count=1
   case-pattern    ax                              count=1
 
 identity:

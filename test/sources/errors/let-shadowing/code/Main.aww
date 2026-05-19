@@ -1,6 +1,7 @@
--- Error: the inner 'let x = ...' shadows the outer function
--- parameter 'x'. No-shadowing applies to 'let' the same way it does
--- to function parameters and case-pattern binders.
+{- Error: the inner 'let x = ...' shadows the outer function
+   parameter 'x'. No-shadowing applies to 'let' the same way it does
+   to function parameters and case-pattern binders. -}
+
 import IO.Stdout
 
 f : String -> String

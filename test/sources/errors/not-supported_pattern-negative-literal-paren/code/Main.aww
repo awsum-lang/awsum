@@ -1,9 +1,10 @@
--- Not yet supported: parenthesised negative-literal patterns
--- (`(-1)` as a `case` arm). Even with parens, the inner `Pattern`
--- rule is still `UIdent { PatternAtom } | LIdent | (Pattern : Type)`
--- — there is no integer-literal alternative, so the parser rejects
--- the leading `-`. Workaround: compare with `eqInt32 n -1` and
--- branch on the resulting `Bool`.
+{- Not yet supported: parenthesised negative-literal patterns
+   (`(-1)` as a `case` arm). Even with parens, the inner `Pattern`
+   rule is still `UIdent { PatternAtom } | LIdent | (Pattern : Type)`
+   — there is no integer-literal alternative, so the parser rejects
+   the leading `-`. Workaround: compare with `eqInt32 n -1` and
+   branch on the resulting `Bool`. -}
+
 import IO.Stdout
 
 describe : Int32 -> String

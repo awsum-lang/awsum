@@ -1,49 +1,49 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " Direct test of `showBrokenPipe`: renders the placeholder sentinel
-               reserved for the eventual `IO.Stdout.print : String -> IO BrokenPipe Unit`
-               signature. " ]
+    { moduleComment = Just " Direct test of `showBrokenPipe`: renders the placeholder sentinel
+         reserved for the eventual `IO.Stdout.print : String -> IO BrokenPipe Unit`
+         signature. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 6
+            { spanStartLine = 7
             , spanStartCol = 1
-            , spanEndLine = 6
+            , spanEndLine = 7
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 7
                 , spanStartCol = 8
-                , spanEndLine = 6
+                , spanEndLine = 7
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 8
-                    , spanEndLine = 6
+                    , spanEndLine = 7
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 8
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 6
+                        { spanStartLine = 7
                         , spanStartCol = 11
-                        , spanEndLine = 6
+                        , spanEndLine = 7
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -51,9 +51,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 6
+                    { spanStartLine = 7
                     , spanStartCol = 17
-                    , spanEndLine = 6
+                    , spanEndLine = 7
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -61,25 +61,25 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 7
+                { spanStartLine = 8
                 , spanStartCol = 1
-                , spanEndLine = 7
+                , spanEndLine = 8
                 , spanEndCol = 51
                 }
             ) "main" []
             ( EApp
                 ( SrcSpan
-                    { spanStartLine = 7
+                    { spanStartLine = 8
                     , spanStartCol = 8
-                    , spanEndLine = 7
+                    , spanEndLine = 8
                     , spanEndCol = 51
                     }
                 )
                 ( EVar
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 8
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 24
                         }
                     )
@@ -91,25 +91,25 @@ Program
                 )
                 ( EParens
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 24
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 51
                         }
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 7
+                            { spanStartLine = 8
                             , spanStartCol = 25
-                            , spanEndLine = 7
+                            , spanEndLine = 8
                             , spanEndCol = 50
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 25
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 40
                                 }
                             )
@@ -117,9 +117,9 @@ Program
                         )
                         ( ECon
                             ( SrcSpan
-                                { spanStartLine = 7
+                                { spanStartLine = 8
                                 , spanStartCol = 40
-                                , spanEndLine = 7
+                                , spanEndLine = 8
                                 , spanEndCol = 50
                                 }
                             ) "BrokenPipe"

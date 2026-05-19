@@ -1,5 +1,6 @@
 {- Tail self-recursion on UInt8 with accumulator; TCO must fold to
    `CLoop` before codegen. -}
+
 import IO.Stdout
 
 countDown : UInt8 -> String -> Either (UnderflowError | StringTooLong) String

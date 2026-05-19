@@ -1,5 +1,6 @@
 {- Multi-arm row dispatch under a nominal head: two `Just (… : T)`
    ascribed arms merged into one multi-label dispatch. -}
+
 import IO.Stdout
 
 whatsInside : Maybe (Bool | Unit) -> Either StringTooLong String

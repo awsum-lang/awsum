@@ -1,6 +1,7 @@
--- Property: `predUInt32 x` fails iff `x == 0` (the UInt32 min). Both
--- branches must be exercised, so the Haskell-side generator biases
--- towards 0 to make the boundary case appear in 100-test runs.
+{- Property: `predUInt32 x` fails iff `x == 0` (the UInt32 min). Both
+   branches must be exercised, so the Haskell-side generator biases
+   towards 0 to make the boundary case appear in 100-test runs. -}
+
 import IO.Stdout
 import IO.Stdin
 

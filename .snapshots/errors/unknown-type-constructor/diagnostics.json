@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":4,"startCol":8,"endLine":4,"endCol":9,"message":"Unknown type constructor: X","fixes":[]}]
+[{"severity":"error","startLine":5,"startCol":8,"endLine":5,"endCol":9,"message":"Unknown type constructor: X","fixes":[]}]

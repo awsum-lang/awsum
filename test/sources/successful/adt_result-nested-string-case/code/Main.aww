@@ -1,4 +1,5 @@
 {- Nested monomorphic Result; sequential case-of (no nested patterns). -}
+
 import IO.Stdout
 
 type Result a e = Ok a | Err e

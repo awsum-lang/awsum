@@ -1,48 +1,48 @@
 Program
-    { imports =
-        [ ImportDecl
-            [ BlockComment " Lazy IO: an `IO` value bound by `let` but never reached by `runIO`
-               produces no output. Output: `🔥`, not `💩🔥`. " ]
+    { moduleComment = Just " Lazy IO: an `IO` value bound by `let` but never reached by `runIO`
+         produces no output. Output: `🔥`, not `💩🔥`. "
+    , imports =
+        [ ImportDecl []
             ( "IO" :| [ "Stdout" ] ) Nothing
         ]
     , decls = Sig
         ( SrcSpan
-            { spanStartLine = 5
+            { spanStartLine = 6
             , spanStartCol = 1
-            , spanEndLine = 5
+            , spanEndLine = 6
             , spanEndCol = 21
             }
         ) "main"
         ( TyApp
             ( SrcSpan
-                { spanStartLine = 5
+                { spanStartLine = 6
                 , spanStartCol = 8
-                , spanEndLine = 5
+                , spanEndLine = 6
                 , spanEndCol = 21
                 }
             )
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 5
+                    { spanStartLine = 6
                     , spanStartCol = 8
-                    , spanEndLine = 5
+                    , spanEndLine = 6
                     , spanEndCol = 16
                     }
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 5
+                        { spanStartLine = 6
                         , spanStartCol = 8
-                        , spanEndLine = 5
+                        , spanEndLine = 6
                         , spanEndCol = 10
                         }
                     ) "IO"
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 5
+                        { spanStartLine = 6
                         , spanStartCol = 11
-                        , spanEndLine = 5
+                        , spanEndLine = 6
                         , spanEndCol = 16
                         }
                     ) "Never"
@@ -50,9 +50,9 @@ Program
             )
             ( TyCon
                 ( SrcSpan
-                    { spanStartLine = 5
+                    { spanStartLine = 6
                     , spanStartCol = 17
-                    , spanEndLine = 5
+                    , spanEndLine = 6
                     , spanEndCol = 21
                     }
                 ) "Unit"
@@ -60,42 +60,42 @@ Program
         ) Nothing :|
         [ FunDef
             ( SrcSpan
-                { spanStartLine = 6
+                { spanStartLine = 7
                 , spanStartCol = 1
-                , spanEndLine = 8
+                , spanEndLine = 9
                 , spanEndCol = 27
                 }
             ) "main" []
             ( ELet
                 ( SrcSpan
-                    { spanStartLine = 7
+                    { spanStartLine = 8
                     , spanStartCol = 7
-                    , spanEndLine = 7
+                    , spanEndLine = 8
                     , spanEndCol = 34
                     }
                 )
                 ( PVar
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 7
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 11
                         }
                     ) "unit"
                 ) Nothing
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 7
+                        { spanStartLine = 8
                         , spanStartCol = 14
-                        , spanEndLine = 7
+                        , spanEndLine = 8
                         , spanEndCol = 34
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 7
+                            { spanStartLine = 8
                             , spanStartCol = 14
-                            , spanEndLine = 7
+                            , spanEndLine = 8
                             , spanEndCol = 30
                             }
                         )
@@ -107,9 +107,9 @@ Program
                     )
                     ( ELit
                         ( SrcSpan
-                            { spanStartLine = 7
+                            { spanStartLine = 8
                             , spanStartCol = 30
-                            , spanEndLine = 7
+                            , spanEndLine = 8
                             , spanEndCol = 34
                             }
                         )
@@ -118,17 +118,17 @@ Program
                 )
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 8
+                        { spanStartLine = 9
                         , spanStartCol = 7
-                        , spanEndLine = 8
+                        , spanEndLine = 9
                         , spanEndCol = 27
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 8
+                            { spanStartLine = 9
                             , spanStartCol = 7
-                            , spanEndLine = 8
+                            , spanEndLine = 9
                             , spanEndCol = 23
                             }
                         )
@@ -140,9 +140,9 @@ Program
                     )
                     ( ELit
                         ( SrcSpan
-                            { spanStartLine = 8
+                            { spanStartLine = 9
                             , spanStartCol = 23
-                            , spanEndLine = 8
+                            , spanEndLine = 9
                             , spanEndCol = 27
                             }
                         )

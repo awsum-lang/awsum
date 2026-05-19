@@ -12,11 +12,11 @@ ascribedCall:
   case-pattern    n                               count=1
 
 joined:
-  case-pattern    $do_e_34_3                      count=1
-  case-pattern    ab                              count=1
   case-pattern    $do_e_35_3                      count=1
-  case-pattern    abc                             count=1
+  case-pattern    ab                              count=1
   case-pattern    $do_e_36_3                      count=1
+  case-pattern    abc                             count=1
+  case-pattern    $do_e_37_3                      count=1
   case-pattern    abcd                            count=1
 
 main:

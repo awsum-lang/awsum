@@ -1,8 +1,9 @@
--- Not yet supported: floating-point types (`Float32`, `Float64`).
--- IEEE-754 floats need their own design pass (NaN handling,
--- "honest arithmetic" story, representation across all five
--- backends) before Awsum will admit them. Today they are simply
--- unknown type constructors.
+{- Not yet supported: floating-point types (`Float32`, `Float64`).
+   IEEE-754 floats need their own design pass (NaN handling,
+   "honest arithmetic" story, representation across all five
+   backends) before Awsum will admit them. Today they are simply
+   unknown type constructors. -}
+
 import IO.Stdout
 
 pi : Float64

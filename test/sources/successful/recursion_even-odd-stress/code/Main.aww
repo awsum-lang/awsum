@@ -1,5 +1,6 @@
 {- Two-way mutual tail recursion at depth 1_000_000 on Int32; SCC must fuse
    the cluster into a single self-recursive function before TCO folds it. -}
+
 import IO.Stdout
 
 evenInt : Int32 -> Either UnderflowError Bool
