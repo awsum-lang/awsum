@@ -31,9 +31,9 @@ function v_runIO(v_io){
   }
 }
 
-const main = (v__let_7)([7, "💩", [5, [0]]]);
+const main = (v__let_12)([7, "💩", [5, [0]]]);
 
-function v__let_7(v_unit){
+function v__let_12(v_unit){
     return [7, "🔥", [5, [0]]];
 }
 

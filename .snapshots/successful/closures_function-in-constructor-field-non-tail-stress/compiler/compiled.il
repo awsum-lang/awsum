@@ -43,7 +43,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 13
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.1
@@ -165,7 +165,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 21
+    ldc.i4.s 22
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v__cps_countWithBox(object, object, object)
@@ -243,7 +243,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 23
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -276,12 +276,12 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_21, IL_tco_arm_22)
-  IL_tco_arm_21:
+    switch (IL_tco_arm_22, IL_tco_arm_23)
+  IL_tco_arm_22:
     pop
     ldarg.1
     ret
-  IL_tco_arm_22:
+  IL_tco_arm_23:
     dup
     ldc.i4.1
     ldelem.ref
@@ -334,8 +334,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_19)
-  IL_tco_arm_19:
+    switch (IL_tco_arm_20)
+  IL_tco_arm_20:
     dup
     ldc.i4.1
     ldelem.ref
@@ -373,7 +373,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -382,7 +382,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
@@ -483,8 +483,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_20)
-  IL_arm_20:
+    switch (IL_arm_21)
+  IL_arm_21:
     pop
     ldarg.1
     call object AwsumMain::v_identity(object)

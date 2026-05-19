@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __predInt32(x){ return x === -2147483648 ? [3, [13]] : [4, ((x - 1)|0)]; }
+function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 
 function v_runIO(v_io){
@@ -38,7 +38,7 @@ function v_identity(v_n){
 }
 
 function v_countWithBox(v_b, v_n){
-    return (v__cps_countWithBox)(v_b, v_n, [21]);
+    return (v__cps_countWithBox)(v_b, v_n, [22]);
 }
 
 function v__cps_countWithBox(v_b, v_n, v__k){
@@ -61,7 +61,7 @@ function v__cps_countWithBox(v_b, v_n, v__k){
                 const v_m = __s[1];
                 const __t0 = v_b;
                 const __t1 = v_m;
-                const __t2 = [22, v__k, v_b];
+                const __t2 = [23, v__k, v_b];
                 v__k = null;
                 v_n = null;
                 v_b = null;
@@ -83,18 +83,18 @@ function v__apply_countWithBox(v__k, v__x){
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 21: {
+        case 22: {
           return v__x;
         }
-        case 22: {
-          const v__pk_22 = __s[1];
+        case 23: {
+          const v__pk_23 = __s[1];
           const v_b = __s[2];
           {
             const __s = v__x;
             switch (__s[0]) {
               case 3: {
                 const v_e = __s[1];
-                const __t0 = v__pk_22;
+                const __t0 = v__pk_23;
                 const __t1 = (v__x[0] = 3, v__x[1] = v_e, v__x);
                 v__k = null;
                 v__k = __t0;
@@ -106,9 +106,9 @@ function v__apply_countWithBox(v__k, v__x){
                 {
                   const __s = v_b;
                   switch (__s[0]) {
-                    case 19: {
+                    case 20: {
                       const v_f = __s[1];
-                      const __t0 = v__pk_22;
+                      const __t0 = v__pk_23;
                       const __t1 = (v__x[0] = 4, v__x[1] = (v__apply1)(v_f, v_v), v__x);
                       v__k = null;
                       v__k = __t0;
@@ -126,13 +126,13 @@ function v__apply_countWithBox(v__k, v__x){
   }
 }
 
-const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_countWithBox)([19, [20]], (1000000|0)));
+const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_countWithBox)([20, [21]], (1000000|0)));
 
 function v__apply1(v__cl, v__arg0){
     {
       const __s = v__cl;
       switch (__s[0]) {
-        case 20: {
+        case 21: {
           return (v_identity)(v__arg0);
         }
       }

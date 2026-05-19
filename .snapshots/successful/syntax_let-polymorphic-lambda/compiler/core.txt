@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "t" )
                 [
-                    ( 19
+                    ( 20
                     , []
                     , CString "A"
                     )
@@ -54,7 +54,7 @@ CoreProgram
             , "b"
             ]
             ( CCall
-                ( CVar "$df$$let$8$0" )
+                ( CVar "$df$$let$13$0" )
                 [ CVar "b"
                 , CVar "n"
                 , CVar "s"
@@ -62,18 +62,18 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$9" )
+                ( CVar "$let$14" )
                 [ CCall
                     ( CVar "threeTypes" )
                     [ CIntLit 42 TInt32
                     , CString "hello"
-                    , CCon 19 []
+                    , CCon 20 []
                     ]
                 ]
             )
-        , CFunDef "$lam$7" [ "x" ]
+        , CFunDef "$lam$12" [ "x" ]
             ( CVar "x" )
-        , CFunDef "$let$9" [ "res" ]
+        , CFunDef "$let$14" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -100,7 +100,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$df$$let$8$0"
+        , CFunDef "$df$$let$13$0"
             [ "b"
             , "n"
             , "s"
@@ -111,7 +111,7 @@ CoreProgram
                     [ CCall
                         ( CBuiltIn "showInt32" )
                         [ CCall
-                            ( CVar "$lam$7" )
+                            ( CVar "$lam$12" )
                             [ CVar "n" ]
                         ]
                     , CString "/"
@@ -134,7 +134,7 @@ CoreProgram
                                 ( CBuiltIn "concatString" )
                                 [ CVar "s0"
                                 , CCall
-                                    ( CVar "$lam$7" )
+                                    ( CVar "$lam$12" )
                                     [ CVar "s" ]
                                 ]
                             )
@@ -175,7 +175,7 @@ CoreProgram
                                                     , CCall
                                                         ( CVar "showTri" )
                                                         [ CCall
-                                                            ( CVar "$lam$7" )
+                                                            ( CVar "$lam$12" )
                                                             [ CVar "b" ]
                                                         ]
                                                     ]

@@ -35,7 +35,7 @@ function v_unwrap(v_w){
     {
       const __s = v_w;
       switch (__s[0]) {
-        case 19: {
+        case 20: {
           const v_value = __s[1];
           return v_value;
         }
@@ -43,7 +43,7 @@ function v_unwrap(v_w){
     }
 }
 
-const main = [7, (v_unwrap)([19, "hello"]), [5, [0]]];
+const main = [7, (v_unwrap)([20, "hello"]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

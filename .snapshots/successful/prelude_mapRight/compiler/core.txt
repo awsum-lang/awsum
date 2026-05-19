@@ -44,17 +44,17 @@ CoreProgram
             )
         , CValDef "bad"
             ( CCon 3
-                [ CCon 19 [] ]
+                [ CCon 20 [] ]
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$11" )
+                ( CVar "$let$16" )
                 [ CCall
                     ( CVar "$df$mapRight$0" )
                     [ CVar "ok" ]
                 ]
             )
-        , CFunDef "$let$7" [ "msg" ]
+        , CFunDef "$let$12" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -81,14 +81,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$8" [ "n" ]
+        , CFunDef "$lam$13" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$9"
+        , CFunDef "$let$14"
             [ "mappedOk"
             , "mappedBad"
             ]
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCase
                     ( CVar "mappedOk" )
                     [
@@ -98,7 +98,7 @@ CoreProgram
                             ( CCase
                                 ( CVar "__p0" )
                                 [
-                                    ( 19
+                                    ( 20
                                     , []
                                     , CCon 4
                                         [ CString "ok-Err" ]
@@ -119,7 +119,7 @@ CoreProgram
                                         ( CCase
                                             ( CVar "__p0" )
                                             [
-                                                ( 19
+                                                ( 20
                                                 , []
                                                 , CCall
                                                     ( CBuiltIn "concatString" )
@@ -146,11 +146,11 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lam$10" [ "n" ]
+        , CFunDef "$lam$15" [ "n" ]
             ( CVar "n" )
-        , CFunDef "$let$11" [ "mappedOk" ]
+        , CFunDef "$let$16" [ "mappedOk" ]
             ( CCall
-                ( CVar "$let$9" )
+                ( CVar "$let$14" )
                 [ CVar "mappedOk"
                 , CCall
                     ( CVar "$df$mapRight$1" )
@@ -174,7 +174,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "a"
                         ( CCon 4
                             [ CCall
-                                ( CVar "$lam$10" )
+                                ( CVar "$lam$15" )
                                 [ CVar "a" ]
                             ]
                         )
@@ -198,7 +198,7 @@ CoreProgram
                     , CDrop DropFreeUnchecked "a"
                         ( CCon 4
                             [ CCall
-                                ( CVar "$lam$8" )
+                                ( CVar "$lam$13" )
                                 [ CVar "a" ]
                             ]
                         )

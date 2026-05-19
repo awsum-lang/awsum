@@ -35,7 +35,7 @@ function v_identity(v_x){
     return v_x;
 }
 
-const main = [7, ((s) => { switch(s[0]) { case 19: { const v_v = s[1]; return v_v; } } })((v_identity)([19, "one"])), [5, [0]]];
+const main = [7, ((s) => { switch(s[0]) { case 20: { const v_v = s[1]; return v_v; } } })((v_identity)([20, "one"])), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

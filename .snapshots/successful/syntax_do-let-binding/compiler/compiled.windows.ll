@@ -161,7 +161,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 15 to ptr
+  %stl_tag = inttoptr i64 16 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -237,7 +237,7 @@ define internal ptr @__addInt32(ptr %pa, ptr %pb) {
 err:
   %is_pos = icmp sge i32 %a, 0
   %row_tag_idx = select i1 %is_pos, i64 882564211, i64 3768445577
-  %inner_tag_idx = select i1 %is_pos, i64 14, i64 13
+  %inner_tag_idx = select i1 %is_pos, i64 15, i64 14
   %inner = call ptr @__alloc(i64 8, i32 0)
   %inner_tag = inttoptr i64 %inner_tag_idx to ptr
   store ptr %inner_tag, ptr %inner
@@ -477,7 +477,7 @@ case.arm.4.16:
   %t18 = load ptr, ptr %t17
   call void @__inc_ref(ptr %t18)
   call void @__inc_ref(ptr %t18)
-  %t19 = call ptr @v__let_7(ptr %t18, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
+  %t19 = call ptr @v__let_12(ptr %t18, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
   call void @__free_recursive(ptr %t0)
   call void @__free_recursive(ptr %t18)
   call void @__free_recursive(ptr %v_start)
@@ -498,8 +498,8 @@ case.arm.589989748.4:
   %t7 = getelementptr ptr, ptr %t6, i32 0
   %t8 = load ptr, ptr %t7
   %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %case.default.10 [ i64 15, label %case.arm.15.11 ]
-case.arm.15.11:
+  switch i64 %t9, label %case.default.10 [ i64 16, label %case.arm.16.11 ]
+case.arm.16.11:
   %t12 = call ptr @__alloc(i64 16, i32 1)
   %t13 = inttoptr i64 4 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
@@ -635,7 +635,7 @@ case.join.6:
   ret ptr %t66
 }
 
-define internal ptr @v__let_7(ptr %v_a, ptr %v_prefix) {
+define internal ptr @v__let_12(ptr %v_a, ptr %v_prefix) {
   call void @__inc_ref(ptr %v_a)
   %t0 = call ptr @v_step2(ptr %v_a)
   %t1 = getelementptr ptr, ptr %t0, i32 0

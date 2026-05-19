@@ -7,6 +7,7 @@ runIO:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
 
 handleSomeErrors:
   param           e                               count=1
@@ -23,47 +24,55 @@ $df$handleErrorIO$0:
 
 $cps$$df$handleErrorIO$0:
   param           io                              count=2
-  param           $k                              count=3
+  param           $k                              count=4
   case-pattern    a                               count=0
   case-pattern    e                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
+  case-pattern    cont                            count=0
   case-pattern    cont                            count=0
 
 $apply$$df$handleErrorIO$0:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_27                          count=0
+  case-pattern    $pk_32                          count=0
   case-pattern    s                               count=0
 
-$df$handleErrorIO$2:
+$df$handleErrorIO$3:
   param           io                              count=1
 
-$cps$$df$handleErrorIO$2:
+$cps$$df$handleErrorIO$3:
   param           io                              count=2
-  param           $k                              count=3
+  param           $k                              count=4
   case-pattern    a                               count=0
   case-pattern    e                               count=0
   case-pattern    s                               count=0
   case-pattern    next                            count=0
   case-pattern    cont                            count=0
+  case-pattern    cont                            count=0
 
-$apply$$df$handleErrorIO$2:
+$apply$$df$handleErrorIO$3:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_29                          count=0
+  case-pattern    $pk_34                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3:
+$scc$$apply1_$df$$lam$10$1_$df$$lam$10$4_$df$$lam$11$2_$df$$lam$11$5:
   param           $args                           count=1
 
-$cps$$scc$$apply1_$df$$lam$6$1_$df$$lam$6$3:
-  param           $args                           count=5
+$cps$$scc$$apply1_$df$$lam$10$1_$df$$lam$10$4_$df$$lam$11$2_$df$$lam$11$5:
+  param           $args                           count=9
   param           $k                              count=0
   case-pattern    $cl                             count=0
   case-pattern    $arg0                           count=0
-  case-pattern    $cap21_0                        count=0
   case-pattern    $cap22_0                        count=0
+  case-pattern    $cap23_0                        count=0
+  case-pattern    $cap24_0                        count=0
+  case-pattern    $cap25_0                        count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
+  case-pattern    cont                            count=0
+  case-pattern    result                          count=0
   case-pattern    cont                            count=0
   case-pattern    result                          count=0
   case-pattern    cont                            count=0

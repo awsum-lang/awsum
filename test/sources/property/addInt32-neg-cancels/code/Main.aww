@@ -3,7 +3,7 @@
 -- The Haskell-side generator (`NonMinInt32`) excludes `minInt32`,
 -- so neither error branch is expected to fire.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : Int32 -> Either (UnderflowError | OverflowError) Bool
 property x = do
@@ -29,6 +29,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

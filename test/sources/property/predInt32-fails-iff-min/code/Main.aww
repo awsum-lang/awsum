@@ -3,7 +3,7 @@
 -- as data (success-vs-failure), so it doesn't desugar through `do`
 -- — the inner `case` inspects the `Either` directly.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : Int32 -> Bool
 property x = case predInt32 x of
@@ -26,6 +26,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

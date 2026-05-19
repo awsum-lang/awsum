@@ -10,11 +10,11 @@ whatsThat:
   case-pattern    __pa0                           count=0
   row-case        b                               count=0
 
-$lift$7:
+$lift$12:
   param           __input                         count=1
   case-pattern    __f0                            count=0
 
-$let$8:
+$let$13:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

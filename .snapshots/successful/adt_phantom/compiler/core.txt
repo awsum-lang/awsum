@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "p" )
                 [
-                    ( 19
+                    ( 20
                     , []
                     , CString "Phantom"
                     )
@@ -53,20 +53,20 @@ CoreProgram
                 [ CCall
                     ( CVar "show" )
                     [ CCall
-                        ( CVar "$lift$7" )
-                        [ CCon 19 [] ]
+                        ( CVar "$lift$12" )
+                        [ CCon 20 [] ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$7" [ "__input" ]
+        , CFunDef "$lift$12" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 19
+                    ( 20
                     , []
-                    , CCon 19 []
+                    , CCon 20 []
                     )
                 ]
             )

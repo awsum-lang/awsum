@@ -39,7 +39,21 @@ cliPlatformTable =
       -- and 'Right' to 'IOPure'; 'runIO' walks the cell and fires
       -- the cached argv read at that point.
       ( QName ["IO", "Args"] "getArgs",
-        ioArgsDecodeStringTy
+        ioInputDecodeStringTy
+      ),
+      -- Read stdin to EOF as an Awsum 'String' (strict UTF-16). Same
+      -- error row as 'IO.Args.getArgs' — the two decoding failures the
+      -- entry-point validator rejects ('StringTooLong',
+      -- 'UnpairedUtf16Surrogate'). Compiled per-target via
+      -- 'BuiltIn.internalStdinReadAllAsUtf16': the lowering rewrites
+      -- the platform call into an 'IOStdinReadAll' constructor whose
+      -- continuation routes 'Left' to 'IOFail' and 'Right' to 'IOPure';
+      -- 'runIO' walks the cell and fires the read at that point.
+      -- Per the no-memoisation decision (POSIX-honest), each call
+      -- reads whatever bytes remain on fd 0; a second call after EOF
+      -- consequently sees an empty input and decodes to 'Right ""'.
+      ( QName ["IO", "Stdin"] "readAll",
+        ioInputDecodeStringTy
       )
     ]
   where
@@ -57,11 +71,13 @@ cliPlatformTable =
         noSpan
         (TyApp noSpan (TyCon noSpan "IO") (TyEmpty noSpan "Never"))
         (TyCon noSpan "Unit")
-    -- 'IO (StringTooLong | UnpairedUtf16Surrogate) String' for
-    -- 'IO.Args.getArgs' — error row mirrors the same failure
-    -- alphabet the entry-point validator and 'BuiltIn.internalGetArgs'
-    -- already use.
-    ioArgsDecodeStringTy =
+    -- 'IO (StringTooLong | UnpairedUtf16Surrogate) String' — the
+    -- shared result shape of every CLI input primitive that reads
+    -- platform-encoded text and may fail with either decoding error.
+    -- Used by 'IO.Args.getArgs' and 'IO.Stdin.readAll'; mirrors the
+    -- 'inputDecodeRowTy' in 'Awsum.BuiltIn' that types the matching
+    -- low-level 'internalGetArgs' / 'internalStdinReadAllAsUtf16'.
+    ioInputDecodeStringTy =
       TyApp
         noSpan
         ( TyApp

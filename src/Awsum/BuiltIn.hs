@@ -176,7 +176,21 @@ builtIns =
       -- 'IOFail' and 'Right' to 'IOPure'). Per the no-memoisation
       -- decision, each call re-reads argv; deterministic because argv
       -- does not change during program execution.
-      ("internalGetArgs", eitherTy argsDecodeRowTy stringTy)
+      ("internalGetArgs", eitherTy inputDecodeRowTy stringTy),
+      -- internalStdinReadAllAsUtf16 : Either (StringTooLong | UnpairedUtf16Surrogate) String
+      -- Privileged zero-arg low-level primitive: reads the platform's
+      -- raw stdin to EOF and decodes it into Awsum's strict UTF-16
+      -- 'String'; same error row and decoder as 'internalGetArgs', the
+      -- byte source is the only difference. Used exclusively by the
+      -- prelude's 'runIO' to perform the effect of an 'IOStdinReadAll'
+      -- arm during IO-tree walking. The user-facing wrapper is
+      -- 'IO.Stdin.readAll' (a CLI platform built-in that elaborates to
+      -- an 'IOStdinReadAll' constructor whose continuation routes
+      -- 'Left' to 'IOFail' and 'Right' to 'IOPure'). Each call reads
+      -- whatever bytes remain on fd 0; a second call after EOF
+      -- consequently returns 'Right ""'. No per-backend state — the
+      -- OS-natural semantics of a consumed stream is exposed as-is.
+      ("internalStdinReadAllAsUtf16", eitherTy inputDecodeRowTy stringTy)
     ]
   where
     int32Ty = TyCon noSpan "Int32"
@@ -194,10 +208,11 @@ builtIns =
     stringTooLongTy = TyCon noSpan "StringTooLong"
     unpairedUtf16SurrogateTy = TyCon noSpan "UnpairedUtf16Surrogate"
     -- Structural row of the two decode-failure labels — the error side
-    -- of 'internalGetArgs' and any future input-parsing primitive that
-    -- reads platform-encoded text and must report both length-cap and
-    -- surrogate-validity violations.
-    argsDecodeRowTy = TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy
+    -- shared by every primitive that reads platform-encoded text and
+    -- must report both length-cap and surrogate-validity violations
+    -- ('internalGetArgs', 'internalStdinReadAllAsUtf16', and any future
+    -- input-parsing primitive of the same shape).
+    inputDecodeRowTy = TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

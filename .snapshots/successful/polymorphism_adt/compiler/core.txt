@@ -45,12 +45,12 @@ CoreProgram
                 [ CCase
                     ( CCall
                         ( CVar "identity" )
-                        [ CCon 19
+                        [ CCon 20
                             [ CString "one" ]
                         ]
                     )
                     [
-                        ( 19
+                        ( 20
                         , [ "v" ]
                         , CVar "v"
                         )

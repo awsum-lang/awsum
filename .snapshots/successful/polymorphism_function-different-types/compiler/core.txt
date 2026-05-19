@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "box" )
                 [
-                    ( 19
+                    ( 20
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
@@ -53,7 +53,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 20
+                    ( 21
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CVar "a" )
@@ -62,13 +62,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 19
+                            [ CCon 20
                                 [ CString "from box" ]
                             ]
                         , CString " "
@@ -90,8 +90,8 @@ CoreProgram
                                 ( CVar "showResult" )
                                 [ CCall
                                     ( CVar "unwrap" )
-                                    [ CCon 19
-                                        [ CCon 20
+                                    [ CCon 20
+                                        [ CCon 21
                                             [ CString "nested" ]
                                         ]
                                     ]
@@ -101,7 +101,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

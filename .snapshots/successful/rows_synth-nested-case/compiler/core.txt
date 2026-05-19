@@ -56,18 +56,18 @@ CoreProgram
                     [
                         ( 1
                         , []
-                        , CCon 10
+                        , CCon 11
                             [ CString "yes" ]
                         )
                     ,
                         ( 2
                         , []
-                        , CCon 9 []
+                        , CCon 10 []
                         )
                     ]
                 )
                 [
-                    ( 9
+                    ( 10
                     , []
                     , CCon 7
                         [ CString "n"
@@ -76,7 +76,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 10
+                    ( 11
                     , [ "x" ]
                     , CCon 7
                         [ CCall

@@ -31,17 +31,17 @@ function v_runIO(v_io){
   }
 }
 
-const v_runMe = (v__lam_7)((5|0));
+const v_runMe = (v__lam_12)((5|0));
 
-const v_doubled = (v__lam_8)(v_runMe);
+const v_doubled = (v__lam_13)(v_runMe);
 
 const main = [7, String(v_doubled), [5, [0]]];
 
-function v__lam_7(v_x){
+function v__lam_12(v_x){
     return v_x;
 }
 
-function v__lam_8(v_n){
+function v__lam_13(v_n){
     return v_n;
 }
 

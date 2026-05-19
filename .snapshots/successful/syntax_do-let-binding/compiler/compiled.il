@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -127,7 +127,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 15
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -148,7 +148,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 13
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -209,7 +209,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 15
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -230,7 +230,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 13
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -443,7 +443,7 @@
     pop
     ldloc.0
     ldstr "answer="
-    call object AwsumMain::v__let_7(object, object)
+    call object AwsumMain::v__let_12(object, object)
     br.s IL_join
   IL_join:
     ret
@@ -469,8 +469,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_15)
-  IL_arm_15:
+    switch (IL_arm_16)
+  IL_arm_16:
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -645,7 +645,7 @@
   }
 
 
-  .method private hidebysig static object v__let_7(object, object) cil managed
+  .method private hidebysig static object v__let_12(object, object) cil managed
   {
     ldarg.0
     call object AwsumMain::v_step2(object)

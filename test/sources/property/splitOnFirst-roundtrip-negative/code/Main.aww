@@ -3,7 +3,7 @@
 -- `[A-Z]+` and `s` from `[a-z]*` — disjoint alphabets guarantee
 -- non-occurrence by construction.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 parseInput : String -> Either ParseError (Tuple2 String String)
 parseInput raw = case splitOnFirst ":" raw of
@@ -31,6 +31,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

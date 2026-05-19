@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -333,9 +333,9 @@ L_arm_2252990199:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    19: L_arm_19
-    default: L_arm_19
-L_arm_19:
+    20: L_arm_20
+    default: L_arm_20
+L_arm_20:
   pop
   iconst_2
   anewarray java/lang/Object
@@ -364,9 +364,9 @@ L_arm_2269767818:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_arm_20
-    default: L_arm_20
-L_arm_20:
+    21: L_arm_21
+    default: L_arm_21
+L_arm_21:
   pop
   iconst_2
   anewarray java/lang/Object
@@ -482,18 +482,18 @@ L_arm_4:
 L_join:
   goto L_join
 L_join:
-  invokestatic AwsumMain/v__let_8(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method static v__let_8(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -587,7 +587,7 @@ L_join:
 
 .method static v__df_apply_0(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
-  invokestatic AwsumMain/v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -36,7 +36,7 @@ function v_showPair(v_pair){
     {
       const __s = v_pair;
       switch (__s[0]) {
-        case 19: {
+        case 20: {
           const v_first = __s[1];
           const v_second = __s[2];
           return (v_showPairBody)(v_first, v_second);
@@ -85,9 +85,9 @@ function v_showPairBody(v_first, v_second){
     }
 }
 
-const main = (v__let_7)((v_showPair)([19, "hello", "world"]));
+const main = (v__let_12)((v_showPair)([20, "hello", "world"]));
 
-function v__let_7(v_res){
+function v__let_12(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

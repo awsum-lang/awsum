@@ -35,7 +35,7 @@ function v_showBrokenPipe(v__wild0){
     return "BrokenPipe";
 }
 
-const main = [7, (v_showBrokenPipe)([18]), [5, [0]]];
+const main = [7, (v_showBrokenPipe)([19]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

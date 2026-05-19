@@ -39,9 +39,9 @@ const v_opA = [4, (1|0)];
 
 const v_opB = [4, (2|0)];
 
-const main = (v__let_7)(((s) => { switch(s[0]) { case 3: { const v__do_e_18_9 = s[1]; return [3, [2252990199, v__do_e_18_9]]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_19_9 = s[1]; return [3, [2269767818, v__do_e_19_9]]; } case 4: { const v_b = s[1]; return (v_pureEither)(v_b); } } })(v_opB); } } })(v_opA));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_18_9 = s[1]; return [3, [2252990199, v__do_e_18_9]]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_19_9 = s[1]; return [3, [2269767818, v__do_e_19_9]]; } case 4: { const v_b = s[1]; return (v_pureEither)(v_b); } } })(v_opB); } } })(v_opA));
 
-function v__let_7(v_res){
+function v__let_12(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -55,7 +55,7 @@ function v__let_7(v_res){
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 19: {
+                    case 20: {
                       return [7, "ERR_A", [5, [0]]];
                     }
                   }
@@ -66,7 +66,7 @@ function v__let_7(v_res){
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 20: {
+                    case 21: {
                       return [7, "ERR_B", [5, [0]]];
                     }
                   }

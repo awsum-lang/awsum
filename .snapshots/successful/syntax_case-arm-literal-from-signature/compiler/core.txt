@@ -42,23 +42,23 @@ CoreProgram
             ( CCase
                 ( CVar "x" )
                 [
-                    ( 9
+                    ( 10
                     , []
                     , CIntLit 0 TInt32
                     )
                 ,
-                    ( 10
+                    ( 11
                     , [ "__p0" ]
                     , CDrop DropFreeUnchecked "__p0"
                         ( CCase
                             ( CVar "__p0" )
                             [
-                                ( 9
+                                ( 10
                                 , []
                                 , CIntLit 0 TInt32
                                 )
                             ,
-                                ( 10
+                                ( 11
                                 , [ "n" ]
                                 , CDrop DropFreeUnchecked "n"
                                     ( CVar "n" )
@@ -75,27 +75,27 @@ CoreProgram
                     [ CCall
                         ( CVar "firstZero" )
                         [ CCall
-                            ( CVar "$lift$7" )
-                            [ CCon 9 [] ]
+                            ( CVar "$lift$12" )
+                            [ CCon 10 [] ]
                         ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$7" [ "__input" ]
+        , CFunDef "$lift$12" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 9
+                    ( 10
                     , []
-                    , CCon 9 []
+                    , CCon 10 []
                     )
                 ,
-                    ( 10
+                    ( 11
                     , [ "__f0" ]
                     , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 10
+                        ( CCon 11
                             [ CVar "__f0" ]
                         )
                     )

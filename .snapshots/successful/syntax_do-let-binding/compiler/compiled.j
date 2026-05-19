@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -121,7 +121,7 @@ L_addi32_over:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 15
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -143,7 +143,7 @@ L_addi32_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -195,7 +195,7 @@ L_muli32_split:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 15
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -216,7 +216,7 @@ L_muli32_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -464,7 +464,7 @@ L_arm_4:
   pop
   aload_1
   ldc "answer="
-  invokestatic AwsumMain/v__let_7(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   goto L_join
 L_join:
   areturn
@@ -495,9 +495,9 @@ L_arm_589989748:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    15: L_arm_15
-    default: L_arm_15
-L_arm_15:
+    16: L_arm_16
+    default: L_arm_16
+L_arm_16:
   pop
   iconst_2
   anewarray java/lang/Object
@@ -679,7 +679,7 @@ L_join:
 .end method
 
 
-.method static v__let_7(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   invokestatic AwsumMain/v_step2(Ljava/lang/Object;)Ljava/lang/Object;
   dup

@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -136,12 +136,12 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_19, IL_arm_20)
-  IL_arm_19:
+    switch (IL_arm_20, IL_arm_21)
+  IL_arm_20:
     pop
     ldstr "red"
     br.s IL_join
-  IL_arm_20:
+  IL_arm_21:
     pop
     ldstr "green"
     br.s IL_join
@@ -157,8 +157,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_22)
-  IL_arm_22:
+    switch (IL_arm_23)
+  IL_arm_23:
     dup
     ldc.i4.1
     ldelem.ref
@@ -179,8 +179,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_23)
-  IL_arm_23:
+    switch (IL_arm_24)
+  IL_arm_24:
     dup
     ldc.i4.1
     ldelem.ref
@@ -200,7 +200,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 23
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -209,7 +209,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
@@ -250,7 +250,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -259,7 +259,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 23
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -268,7 +268,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
@@ -277,12 +277,12 @@
     call object AwsumMain::__concat(object, object)
     br.s IL_join
   IL_join:
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_12(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__let_12(object) cil managed
   {
     ldarg.0
     dup

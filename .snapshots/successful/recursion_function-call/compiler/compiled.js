@@ -36,17 +36,17 @@ function v_advanceStep(v_x){
     {
       const __s = v_x;
       switch (__s[0]) {
-        case 19: {
-          const __t0 = (v_x[0] = 20, v_x);
-          v_x = __t0;
-          continue;
-        }
         case 20: {
           const __t0 = (v_x[0] = 21, v_x);
           v_x = __t0;
           continue;
         }
         case 21: {
+          const __t0 = (v_x[0] = 22, v_x);
+          v_x = __t0;
+          continue;
+        }
+        case 22: {
           return "Done!";
         }
       }
@@ -54,7 +54,7 @@ function v_advanceStep(v_x){
   }
 }
 
-const main = [7, (v_advanceStep)([19]), [5, [0]]];
+const main = [7, (v_advanceStep)([20]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

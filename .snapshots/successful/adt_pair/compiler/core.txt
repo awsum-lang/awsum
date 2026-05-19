@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "pair" )
                 [
-                    ( 19
+                    ( 20
                     ,
                         [ "first"
                         , "second"
@@ -137,17 +137,17 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCall
                     ( CVar "showPair" )
-                    [ CCon 19
+                    [ CCon 20
                         [ CString "hello"
                         , CString "world"
                         ]
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -294,12 +294,11 @@ header ptags builtIns =
             -- Encoding mirrors the other backends: Right=[1, arg];
             -- Left=[0, [rowTag, [0]]] — three layers (inner CCon, row
             -- wrap, Left).
-            -- '__entryArgEither' is now used only by '__getArgs' (the
-            -- main-entry stub no longer wraps argv in 'Either' since
-            -- 'main : IO Never Unit' takes no parameter). Gate on the
-            -- same builtin so a program without 'IO.Args.getArgs'
-            -- doesn't ship the validator.
-            if Set.member "internalGetArgs" builtIns
+            -- '__entryArgEither' is shared by '__getArgs' (argv source)
+            -- and '__stdinReadAll' (stdin source). Gate on either
+            -- builtin's presence so a program that needs neither pays
+            -- nothing for the validator.
+            if Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns
               then "function __entryArgEither(arg){ if (arg.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; } return [" <> ptR <> ", arg]; }"
               else "",
             -- __getArgs: zero-arg helper called by 'runIO''s 'IOGetArgs'
@@ -311,6 +310,19 @@ header ptags builtIns =
             -- return the same value deterministically.
             if Set.member "internalGetArgs" builtIns
               then "function __getArgs(){ return __entryArgEither(process.argv[2] ?? \"\"); }"
+              else "",
+            -- __stdinReadAll: zero-arg helper for
+            -- 'BuiltIn.internalStdinReadAllAsUtf16', called from
+            -- 'runIO''s 'IOStdinReadAll' arm. Reads fd 0 to EOF via
+            -- 'fs.readFileSync(0)' (which works on POSIX and Windows,
+            -- handles binary input correctly, and blocks until EOF),
+            -- then UTF-8 decodes the resulting Buffer and routes the
+            -- string through '__entryArgEither'. Per the POSIX-honest
+            -- no-memoisation decision, each call reads whatever bytes
+            -- remain on stdin; a second call after EOF reads zero
+            -- bytes and decodes to @Right ""@.
+            if Set.member "internalStdinReadAllAsUtf16" builtIns
+              then "function __stdinReadAll(){ return __entryArgEither(require('fs').readFileSync(0).toString('utf-8')); }"
               else ""
           ]
    in T.intercalate "\n" lns <> "\n"
@@ -552,6 +564,13 @@ emitExpr = \case
         case xs of
           [] -> "__getArgs()"
           _ -> error "__getArgs: arity mismatch"
+      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAll' arm:
+      -- consumes stdin via 'fs.readFileSync(0)' and routes the decoded
+      -- UTF-8 through '__entryArgEither'.
+      CBuiltIn "internalStdinReadAllAsUtf16" ->
+        case xs of
+          [] -> "__stdinReadAll()"
+          _ -> error "__stdinReadAll: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of

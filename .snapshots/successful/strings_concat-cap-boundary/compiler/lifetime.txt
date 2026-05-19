@@ -15,15 +15,15 @@ $lift$0:
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$lift$8:
+$lift$13:
   param           __input                         count=1
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$scc$$df$andThenEither$0_$lam$7_build:
+$scc$$df$andThenEither$0_$lam$12_build:
   param           $args                           count=1
 
-$cps$$scc$$df$andThenEither$0_$lam$7_build:
+$cps$$scc$$df$andThenEither$0_$lam$12_build:
   param           $args                           count=4
   param           $k                              count=2
   case-pattern    x                               count=0
@@ -37,7 +37,7 @@ $cps$$scc$$df$andThenEither$0_$lam$7_build:
   case-pattern    __w0                            count=0
   case-pattern    m                               count=0
 
-$apply$$scc$$df$andThenEither$0_$lam$7_build:
+$apply$$scc$$df$andThenEither$0_$lam$12_build:
   param           $k                              count=1
   param           $x                              count=1
   case-pattern    $pk_12                          count=0

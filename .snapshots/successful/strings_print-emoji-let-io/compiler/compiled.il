@@ -108,12 +108,12 @@
     stelem.ref
     stelem.ref
     stelem.ref
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_12(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__let_12(object) cil managed
   {
     ldc.i4.3
     newarr [System.Runtime]System.Object

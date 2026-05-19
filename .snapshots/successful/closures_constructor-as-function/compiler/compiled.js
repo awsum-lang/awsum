@@ -35,7 +35,7 @@ function v_unwrap(v_b){
     {
       const __s = v_b;
       switch (__s[0]) {
-        case 19: {
+        case 20: {
           const v_value = __s[1];
           return v_value;
         }
@@ -46,7 +46,7 @@ function v_unwrap(v_b){
 const main = [7, (v_unwrap)((v__df_wrap_0)("wrapped")), [5, [0]]];
 
 function v__con_Box(v__x0){
-    return [19, v__x0];
+    return [20, v__x0];
 }
 
 function v__df_wrap_0(v_x){

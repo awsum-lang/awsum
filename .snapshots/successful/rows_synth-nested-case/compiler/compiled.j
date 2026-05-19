@@ -126,7 +126,7 @@ L_arm_1:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -140,7 +140,7 @@ L_arm_2:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 9
+  bipush 10
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join
@@ -151,10 +151,10 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    9: L_arm_9
     10: L_arm_10
-    default: L_arm_9
-L_arm_9:
+    11: L_arm_11
+    default: L_arm_10
+L_arm_10:
   pop
   iconst_3
   anewarray java/lang/Object
@@ -188,7 +188,7 @@ L_arm_9:
   aastore
   aastore
   goto L_join
-L_arm_10:
+L_arm_11:
   dup
   iconst_1
   aaload

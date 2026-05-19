@@ -5,7 +5,7 @@
 -- value" gap. The property prints the computed sum as a decimal
 -- string; Haskell expects `show (a + b)`.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 parseInput : String -> Either ParseError (Tuple2 Int32 Int32)
 parseInput raw = case splitOnFirst ":" raw of
@@ -37,6 +37,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

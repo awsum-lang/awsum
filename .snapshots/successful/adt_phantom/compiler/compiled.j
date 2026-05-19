@@ -88,9 +88,9 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    19: L_arm_19
-    default: L_arm_19
-L_arm_19:
+    20: L_arm_20
+    default: L_arm_20
+L_arm_20:
   pop
   ldc "Phantom"
   goto L_join
@@ -113,10 +113,10 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 19
+  bipush 20
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   dup
@@ -143,7 +143,7 @@ L_join:
 .end method
 
 
-.method static v__lift_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -151,15 +151,15 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    19: L_arm_19
-    default: L_arm_19
-L_arm_19:
+    20: L_arm_20
+    default: L_arm_20
+L_arm_20:
   pop
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 19
+  bipush 20
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join

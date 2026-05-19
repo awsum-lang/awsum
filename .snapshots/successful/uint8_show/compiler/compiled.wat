@@ -5,6 +5,7 @@
   (import "wasi_snapshot_preview1" "fd_write" (func $fd_write (param i32 i32 i32 i32) (result i32)))
   (import "wasi_snapshot_preview1" "args_sizes_get" (func $args_sizes_get (param i32 i32) (result i32)))
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
+  (import "wasi_snapshot_preview1" "fd_read" (func $fd_read (param i32 i32 i32 i32) (result i32)))
 
   (memory (export "memory") 1)
   (global $heap (mut i32) (i32.const 141))
@@ -15,7 +16,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\02\00\00\00, ")
   (data (i32.const 106) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v__let_7)
+  (elem (i32.const 0) $v_runIO $v__let_12)
 
 ;; ──────────────────────────────────────────────────────────────
 ;; Per-size-bin freelist allocator with 12-byte header.
@@ -234,7 +235,7 @@
     (if (i32.gt_u (local.get $usum) (i32.const 134217728))
       (then
         (local.set $stl (call $__alloc (i32.const 4)))
-        (i32.store (local.get $stl) (i32.const 15))
+        (i32.store (local.get $stl) (i32.const 16))
         (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $cell) (i32.const 3))
         (i32.store offset=4 (local.get $cell) (local.get $stl)))
@@ -318,7 +319,7 @@
     (local.get $buf))
 
 
-  (func $__entryArgEither (param $arg i32) (result i32)
+  (func $__entryArgEither (param $arg i32) (param $len i32) (result i32)
     (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
     (local $inner i32) (local $row i32) (local $cell i32)
     (local $wrapped i32)
@@ -327,8 +328,8 @@
     (local.set $surr (i32.const 0))
     (block $break_scan
       (loop $scan_loop
+        (br_if $break_scan (i32.eq (local.get $i) (local.get $len)))
         (local.set $b (i32.load8_u (i32.add (local.get $arg) (local.get $i))))
-        (br_if $break_scan (i32.eqz (local.get $b)))
         (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))
           (then
             (if (i32.eq (local.get $b) (i32.const 0xED))
@@ -344,7 +345,7 @@
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
         (local.set $inner (call $__alloc (i32.const 4)))
-        (i32.store (local.get $inner) (i32.const 15))
+        (i32.store (local.get $inner) (i32.const 16))
         (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $row) (i32.const 589989748))
         (i32.store offset=4 (local.get $row) (local.get $inner))
@@ -356,7 +357,7 @@
         (if (result i32) (local.get $surr)
           (then
             (local.set $inner (call $__alloc (i32.const 4)))
-            (i32.store (local.get $inner) (i32.const 16))
+            (i32.store (local.get $inner) (i32.const 17))
             (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
             (i32.store (local.get $row) (i32.const 502975519))
             (i32.store offset=4 (local.get $row) (local.get $inner))
@@ -388,7 +389,44 @@
 
 
   (func $__getArgs (result i32)
-    (call $__entryArgEither (call $__get_arg)))
+    (local $a i32) (local $l i32)
+    (local.set $a (call $__get_arg))
+    (local.set $l (i32.const 0))
+    (block $break
+      (loop $scan
+        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $a) (local.get $l)))))
+        (local.set $l (i32.add (local.get $l) (i32.const 1)))
+        (br $scan)))
+    (call $__entryArgEither (local.get $a) (local.get $l)))
+
+
+  (func $__stdinReadAll (result i32)
+    (local $buf i32) (local $cap i32) (local $total i32)
+    (local $remain i32) (local $newbuf i32) (local $newcap i32)
+    (local $got i32)
+    (local.set $cap (i32.const 4096))
+    (local.set $buf (call $__alloc (local.get $cap)))
+    (local.set $total (i32.const 0))
+    (block $break_read
+      (loop $read_loop
+        (local.set $remain (i32.sub (local.get $cap) (local.get $total)))
+        (if (i32.lt_u (local.get $remain) (i32.const 4096))
+          (then
+            (local.set $newcap (i32.mul (local.get $cap) (i32.const 2)))
+            (local.set $newbuf (call $__alloc (local.get $newcap)))
+            (call $__memcpy (local.get $newbuf) (local.get $buf) (local.get $total))
+            (local.set $buf (local.get $newbuf))
+            (local.set $cap (local.get $newcap))
+            (local.set $remain (i32.sub (local.get $cap) (local.get $total)))))
+        (i32.store (i32.const 16) (i32.add (local.get $buf) (local.get $total)))
+        (i32.store (i32.const 20) (local.get $remain))
+        (drop (call $fd_read (i32.const 0) (i32.const 16) (i32.const 1) (i32.const 12)))
+        (local.set $got (i32.load (i32.const 12)))
+        (br_if $break_read (i32.eqz (local.get $got)))
+        (local.set $total (i32.add (local.get $total) (local.get $got)))
+        (br $read_loop)))
+    (i32.store8 (i32.add (local.get $buf) (local.get $total)) (i32.const 0))
+    (call $__entryArgEither (local.get $buf) (local.get $total)))
 
   (func $v_runIO (param $v_io i32) (result i32)
     (local $v_next i32)
@@ -421,9 +459,9 @@
     (local $v_s4 i32)
     (local $__scrut i32)
     (local $__drop_tmp i32)
-    (call $v__let_7 (block (result i32) (local.set $__scrut (call $__concat (call $__show_i32 (call $v_minUInt8)) (i32.const 96))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_7_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_7_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_7_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s0 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s0)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s0)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $__show_i32 (call $__box_i32 (i32.const 42))))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_8_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_8_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_8_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s1 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s1)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s1)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (i32.const 96))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_9_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_9_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_9_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s2 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s2)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s2)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $__show_i32 (call $__box_i32 (i32.const 200))))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_10_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_10_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_10_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s3 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s3)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s3)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (i32.const 96))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_11_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_11_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_11_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s4 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s4)) (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s4)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $__show_i32 (call $v_maxUInt8))))))))))))))))))))
+    (call $v__let_12 (block (result i32) (local.set $__scrut (call $__concat (call $__show_i32 (call $v_minUInt8)) (i32.const 96))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_7_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_7_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_7_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s0 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s0)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s0)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $__show_i32 (call $__box_i32 (i32.const 42))))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_8_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_8_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_8_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s1 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s1)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s1)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (i32.const 96))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_9_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_9_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_9_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s2 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s2)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s2)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $__show_i32 (call $__box_i32 (i32.const 200))))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_10_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_10_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_10_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s3 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s3)) (block (result i32) (local.set $__scrut (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s3)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (i32.const 96))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v__do_e_11_9 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v__do_e_11_9)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 3)) (i32.store offset=4 (local.get $__con_0) (local.get $v__do_e_11_9)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0))) (else (local.set $v_s4 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s4)) (call $__concat (block (result i32) (local.set $__inc_tmp (local.get $v_s4)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $__show_i32 (call $v_maxUInt8))))))))))))))))))))
 
-  (func $v__let_7 (param $v_res i32) (result i32)
+  (func $v__let_12 (param $v_res i32) (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)

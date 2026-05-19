@@ -160,7 +160,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 15 to ptr
+  %stl_tag = inttoptr i64 16 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -232,7 +232,7 @@ define internal ptr @__predUInt32(ptr %p) {
   br i1 %is_zero, label %overflow, label %ok
 overflow:
   %ue = call ptr @__alloc(i64 8, i32 0)
-  %ue_tag = inttoptr i64 13 to ptr
+  %ue_tag = inttoptr i64 14 to ptr
   store ptr %ue_tag, ptr %ue
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -650,11 +650,11 @@ case.default.6:
 case.join.7:
   %t179 = phi ptr [%t12, %case.end.3.9], [%t178, %case.end.4.17]
   call void @__free_recursive(ptr %t2)
-  %t180 = call ptr @v__let_7(ptr %t179)
+  %t180 = call ptr @v__let_12(ptr %t179)
   ret ptr %t180
 }
 
-define internal ptr @v__let_7(ptr %v_res) {
+define internal ptr @v__let_12(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

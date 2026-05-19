@@ -52,7 +52,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCase
                     ( CVar "opA" )
                     [
@@ -88,7 +88,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [
@@ -104,7 +104,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 19
+                                            ( 20
                                             , []
                                             , CCon 7
                                                 [ CString "ERR_A"
@@ -122,7 +122,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 20
+                                            ( 21
                                             , []
                                             , CCon 7
                                                 [ CString "ERR_B"

@@ -42,17 +42,17 @@ CoreProgram
             ( CCase
                 ( CVar "c" )
                 [
-                    ( 19
+                    ( 20
                     , []
                     , CString "Red"
                     )
                 ,
-                    ( 20
+                    ( 21
                     , []
                     , CString "Green"
                     )
                 ,
-                    ( 21
+                    ( 22
                     , []
                     , CString "Blue"
                     )
@@ -60,13 +60,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "show" )
-                            [ CCon 19 [] ]
+                            [ CCon 20 [] ]
                         , CString ", "
                         ]
                     )
@@ -85,7 +85,7 @@ CoreProgram
                                 [ CVar "s0"
                                 , CCall
                                     ( CVar "show" )
-                                    [ CCon 20 [] ]
+                                    [ CCon 21 [] ]
                                 ]
                             )
                             [
@@ -118,7 +118,7 @@ CoreProgram
                                             [ CVar "s2"
                                             , CCall
                                                 ( CVar "show" )
-                                                [ CCon 21 [] ]
+                                                [ CCon 22 [] ]
                                             ]
                                         )
                                     ]
@@ -128,7 +128,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -4,7 +4,7 @@
 -- `(a || b)`. Input format: "a:b" with a, b as "0" / "1" decimal
 -- strings.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 intToBool : UInt8 -> Bool
 intToBool n = case eqUInt8 n 0 of
@@ -45,6 +45,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -97,7 +97,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 13
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.1
@@ -218,7 +218,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v__cps_countDown(object, object)
@@ -305,7 +305,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 17
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -335,12 +335,12 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_16, IL_tco_arm_17)
-  IL_tco_arm_16:
+    switch (IL_tco_arm_17, IL_tco_arm_18)
+  IL_tco_arm_17:
     pop
     ldarg.1
     ret
-  IL_tco_arm_17:
+  IL_tco_arm_18:
     dup
     ldc.i4.1
     ldelem.ref
@@ -489,8 +489,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_15)
-  IL_arm_15:
+    switch (IL_arm_16)
+  IL_arm_16:
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -540,12 +540,12 @@
     box [System.Runtime]System.Int32
     call object AwsumMain::v_countDown(object)
     call object AwsumMain::v_showResult(object)
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_12(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__let_12(object) cil managed
   {
     ldarg.0
     dup

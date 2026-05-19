@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -144,9 +144,9 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    19: L_arm_19
-    default: L_arm_19
-L_arm_19:
+    20: L_arm_20
+    default: L_arm_20
+L_arm_20:
   pop
   ldc "A"
   goto L_join
@@ -159,7 +159,7 @@ L_join:
   aload_2
   aload_0
   aload_1
-  invokestatic AwsumMain/v__df__let_8_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__df__let_13_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -172,22 +172,22 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 19
+  bipush 20
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_threeTypes(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_9(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_14(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method static v__let_9(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_14(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -279,9 +279,9 @@ L_join:
 .end method
 
 
-.method static v__df__let_8_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__df__let_13_0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_1
-  invokestatic AwsumMain/v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
   ldc "/"
@@ -321,7 +321,7 @@ L_arm_4:
   pop
   aload_3
   aload_2
-  invokestatic AwsumMain/v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   dup
   iconst_0
@@ -394,7 +394,7 @@ L_arm_4:
   pop
   aload 5
   aload_0
-  invokestatic AwsumMain/v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_showTri(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   goto L_join

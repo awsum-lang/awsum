@@ -200,7 +200,12 @@ imports =
   unlines
     [ "  (import \"wasi_snapshot_preview1\" \"fd_write\" (func $fd_write (param i32 i32 i32 i32) (result i32)))",
       "  (import \"wasi_snapshot_preview1\" \"args_sizes_get\" (func $args_sizes_get (param i32 i32) (result i32)))",
-      "  (import \"wasi_snapshot_preview1\" \"args_get\" (func $args_get (param i32 i32) (result i32)))"
+      "  (import \"wasi_snapshot_preview1\" \"args_get\" (func $args_get (param i32 i32) (result i32)))",
+      -- 'fd_read' powers '$__stdinReadAll'. Signature: fd_read(fd, iovs,
+      -- iovs_len, nread_out) -> errno. We pass fd=0 (stdin), a single
+      -- iovec at a scratch address, and read into a growing buffer until
+      -- nread returns 0 (EOF).
+      "  (import \"wasi_snapshot_preview1\" \"fd_read\" (func $fd_read (param i32 i32 i32 i32) (result i32)))"
     ]
 
 -- | Initial linear-memory pages must cover the scratch + data section
@@ -392,17 +397,18 @@ runtimeHelpers ptags emptyOff builtIns hasIntLit =
             if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
             if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
-            -- '__entryArgEither' / '__get_arg' / '__getArgs' are
-            -- always emitted in the WASM text codegen because the
-            -- binary assembler emits all 35 runtime helpers
-            -- unconditionally (fixed-arity function indices). Gating
-            -- the text would diverge text/binary snapshots without
-            -- changing the binary footprint. A future WASM-binary
-            -- optimisation can drop them per-program; until then,
-            -- text mirrors binary.
+            -- '__entryArgEither' / '__get_arg' / '__getArgs' /
+            -- '__stdinReadAll' are always emitted in the WASM text
+            -- codegen because the binary assembler emits all runtime
+            -- helpers unconditionally (fixed-arity function indices).
+            -- Gating the text would diverge text/binary snapshots
+            -- without changing the binary footprint. A future WASM-
+            -- binary optimisation can drop them per-program; until
+            -- then, text mirrors binary.
             rtEntryArgEither ptags,
             rtGetArg emptyOff,
-            rtGetArgs
+            rtGetArgs,
+            rtStdinReadAll
           ]
    in T.intercalate "\n\n" lns
 
@@ -1735,7 +1741,76 @@ rtGetArgs :: Text
 rtGetArgs =
   unlines
     [ "  (func $__getArgs (result i32)",
-      "    (call $__entryArgEither (call $__get_arg)))"
+      "    (local $a i32) (local $l i32)",
+      -- '$__get_arg' returns a NUL-terminated pointer into a WASI-managed
+      -- buffer. Compute the byte length up-front so the length-aware
+      -- '$__entryArgEither' can scan without re-checking NUL on every
+      -- byte. The NUL terminator at @arg[strlen]@ is the readable byte
+      -- the decoder relies on for its one-past-end surrogate peek.
+      "    (local.set $a (call $__get_arg))",
+      "    (local.set $l (i32.const 0))",
+      "    (block $break",
+      "      (loop $scan",
+      "        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $a) (local.get $l)))))",
+      "        (local.set $l (i32.add (local.get $l) (i32.const 1)))",
+      "        (br $scan)))",
+      "    (call $__entryArgEither (local.get $a) (local.get $l)))"
+    ]
+
+-- | '$__stdinReadAll' is the zero-arg runtime helper for
+--   'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
+--   'IOStdinReadAll' arm. Reads fd 0 via WASI 'fd_read' in chunks into
+--   a growing '$__alloc'-managed buffer (start 4 KiB, double on full),
+--   then writes a 0 sentinel past the data and routes the (buf, len)
+--   pair through the length-aware '$__entryArgEither'.
+--
+--   WASM has no 'realloc'; growing means '$__alloc' a bigger cell and
+--   '$__memcpy' the existing bytes over. The old cell leaks for the
+--   rest of the program — bounded waste, equivalent to a doubling
+--   strategy. Per the POSIX-honest no-memoisation decision, each call
+--   reads whatever bytes remain on fd 0; a second call after EOF reads
+--   zero bytes and decodes to @Right ""@.
+--
+--   Scratch addresses are reused (12 = nread_out, 16/20 = iovec ptr/len
+--   pair). These overlap with '$__get_arg's argv-size scratch (12 and
+--   16) but the two helpers never run concurrently — WASM is
+--   single-threaded.
+rtStdinReadAll :: Text
+rtStdinReadAll =
+  unlines
+    [ "  (func $__stdinReadAll (result i32)",
+      "    (local $buf i32) (local $cap i32) (local $total i32)",
+      "    (local $remain i32) (local $newbuf i32) (local $newcap i32)",
+      "    (local $got i32)",
+      "    (local.set $cap (i32.const 4096))",
+      "    (local.set $buf (call $__alloc (local.get $cap)))",
+      "    (local.set $total (i32.const 0))",
+      "    (block $break_read",
+      "      (loop $read_loop",
+      -- If we have less than 4 KiB free, double the buffer. The first
+      -- iteration always has 4 KiB free so we skip the grow path.
+      "        (local.set $remain (i32.sub (local.get $cap) (local.get $total)))",
+      "        (if (i32.lt_u (local.get $remain) (i32.const 4096))",
+      "          (then",
+      "            (local.set $newcap (i32.mul (local.get $cap) (i32.const 2)))",
+      "            (local.set $newbuf (call $__alloc (local.get $newcap)))",
+      "            (call $__memcpy (local.get $newbuf) (local.get $buf) (local.get $total))",
+      "            (local.set $buf (local.get $newbuf))",
+      "            (local.set $cap (local.get $newcap))",
+      "            (local.set $remain (i32.sub (local.get $cap) (local.get $total)))))",
+      -- iovec at address 16: [buf+total, remain]. nread_out at 12.
+      "        (i32.store (i32.const 16) (i32.add (local.get $buf) (local.get $total)))",
+      "        (i32.store (i32.const 20) (local.get $remain))",
+      "        (drop (call $fd_read (i32.const 0) (i32.const 16) (i32.const 1) (i32.const 12)))",
+      "        (local.set $got (i32.load (i32.const 12)))",
+      "        (br_if $break_read (i32.eqz (local.get $got)))",
+      "        (local.set $total (i32.add (local.get $total) (local.get $got)))",
+      "        (br $read_loop)))",
+      -- Guarantee a readable byte at buf[total] for the decoder's
+      -- one-past-end surrogate peek. We have at least 4 KiB free by
+      -- the doubling rule, so storing one byte is always safe.
+      "    (i32.store8 (i32.add (local.get $buf) (local.get $total)) (i32.const 0))",
+      "    (call $__entryArgEither (local.get $buf) (local.get $total)))"
     ]
 
 rtGetArg :: Int -> Text
@@ -1777,7 +1852,7 @@ rtGetArg emptyOff =
 rtEntryArgEither :: PreludeTags -> Text
 rtEntryArgEither ptags =
   unlines
-    [ "  (func $__entryArgEither (param $arg i32) (result i32)",
+    [ "  (func $__entryArgEither (param $arg i32) (param $len i32) (result i32)",
       "    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)",
       "    (local $inner i32) (local $row i32) (local $cell i32)",
       "    (local $wrapped i32)",
@@ -1786,8 +1861,12 @@ rtEntryArgEither ptags =
       "    (local.set $surr (i32.const 0))",
       "    (block $break_scan",
       "      (loop $scan_loop",
+      -- Length-aware termination. The surrogate-detection branch below
+      -- peeks one byte past the current position; callers guarantee
+      -- @arg[len]@ is a readable byte (NUL after argv strings, a zero
+      -- we write past the end of the stdin buffer).
+      "        (br_if $break_scan (i32.eq (local.get $i) (local.get $len)))",
       "        (local.set $b (i32.load8_u (i32.add (local.get $arg) (local.get $i))))",
-      "        (br_if $break_scan (i32.eqz (local.get $b)))",
       "        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))",
       "          (then",
       "            (if (i32.eq (local.get $b) (i32.const 0xED))",
@@ -2228,6 +2307,11 @@ emitExpr ctx = \case
       -- '$__entryArgEither'.
       CBuiltIn "internalGetArgs"
         | [] <- xs -> "(call $__getArgs)"
+      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAll' arm:
+      -- consumes fd 0 to EOF via WASI 'fd_read' and routes the bytes
+      -- through '$__entryArgEither' for strict-UTF-16 validation.
+      CBuiltIn "internalStdinReadAllAsUtf16"
+        | [] <- xs -> "(call $__stdinReadAll)"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

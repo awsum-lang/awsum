@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "token" )
                 [
-                    ( 19
+                    ( 20
                     , [ "w" ]
                     , CDrop DropFreeUnchecked "w"
                         ( CCall
@@ -53,7 +53,7 @@ CoreProgram
                         )
                     )
                 ,
-                    ( 20
+                    ( 21
                     , [ "n" ]
                     , CDrop DropFreeUnchecked "n"
                         ( CCall
@@ -64,13 +64,13 @@ CoreProgram
                         )
                     )
                 ,
-                    ( 21
+                    ( 22
                     , []
                     , CCon 4
                         [ CString "," ]
                     )
                 ,
-                    ( 22
+                    ( 23
                     , []
                     , CCon 4
                         [ CString "<eof>" ]
@@ -79,11 +79,11 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCase
                     ( CCall
                         ( CVar "showToken" )
-                        [ CCon 19
+                        [ CCon 20
                             [ CString "hello" ]
                         ]
                     )
@@ -99,7 +99,7 @@ CoreProgram
                         , CCase
                             ( CCall
                                 ( CVar "showToken" )
-                                [ CCon 21 [] ]
+                                [ CCon 22 [] ]
                             )
                             [
                                 ( 3
@@ -113,7 +113,7 @@ CoreProgram
                                 , CCase
                                     ( CCall
                                         ( CVar "showToken" )
-                                        [ CCon 20
+                                        [ CCon 21
                                             [ CString "42" ]
                                         ]
                                     )
@@ -129,7 +129,7 @@ CoreProgram
                                         , CCase
                                             ( CCall
                                                 ( CVar "showToken" )
-                                                [ CCon 22 [] ]
+                                                [ CCon 23 [] ]
                                             )
                                             [
                                                 ( 3
@@ -245,7 +245,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -38,7 +38,7 @@ const v_basic = String(v_n);
 
 const v_chained = (v_wrap)((v_wrap)(String(v_n)));
 
-const v_viaLambda = (v__lam_7)(v_n);
+const v_viaLambda = (v__lam_12)(v_n);
 
 function v_wrap(v_s){
     return v_s;
@@ -48,7 +48,7 @@ const v_joined = ((s) => { switch(s[0]) { case 3: { const v__do_e_28_3 = s[1]; r
 
 const main = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return [7, "STRING_TOO_LONG", [5, [0]]]; } case 4: { const v_s = s[1]; return [7, v_s, [5, [0]]]; } } })(v_joined);
 
-function v__lam_7(v_i){
+function v__lam_12(v_i){
     return String(v_i);
 }
 

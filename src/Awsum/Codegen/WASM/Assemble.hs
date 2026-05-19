@@ -197,9 +197,9 @@ storeTagBytes cellLocal tagValue =
     <> encodeSLEB128 (fromIntegral tagValue)
     <> [opI32Store, 0x02, 0x00]
 
--- Import count: fd_write(0), args_sizes_get(1), args_get(2)
+-- Import count: fd_write(0), args_sizes_get(1), args_get(2), fd_read(3)
 importCount :: Word32
-importCount = 3
+importCount = 4
 
 -- Runtime helper count: __alloc, __free, __memcpy,
 -- __concat, __print, __box_i32, __show_i32, __show_u32, __predInt32,
@@ -209,16 +209,17 @@ importCount = 3
 -- __splitOnFirst, __parseInt32, __parseUInt8, __parseUInt32,
 -- __lengthCodePoints, __lengthUtf16CodeUnits, __lengthUtf8Bytes,
 -- __get_arg, __entryArgEither, __utf16_of_range, __getArgs,
--- __alloc_shaped, __inc_ref, __free_recursive, __free_worklist_push
+-- __stdinReadAll, __alloc_shaped, __inc_ref, __free_recursive,
+-- __free_worklist_push
 runtimeCount :: Word32
-runtimeCount = 40
+runtimeCount = 41
 
 -- Runtime helper function indices (after imports). '$__free' slots
 -- in right after '$__alloc'. The RC helpers (@__alloc_shaped,
 -- __inc_ref, __free_recursive, __free_worklist_push@) sit at the
 -- end so the earlier indices stay stable when new helpers are
 -- appended.
-idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush :: Word32
+idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxStdinReadAll, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush :: Word32
 idxAlloc = importCount
 idxFree = importCount + 1
 idxMemcpy = importCount + 2
@@ -255,10 +256,11 @@ idxGetArg = importCount + 32
 idxEntryArgEither = importCount + 33
 idxUtf16OfRange = importCount + 34
 idxGetArgs = importCount + 35
-idxAllocShaped = importCount + 36
-idxIncRef = importCount + 37
-idxFreeRecursive = importCount + 38
-idxFreeWorklistPush = importCount + 39
+idxStdinReadAll = importCount + 36
+idxAllocShaped = importCount + 37
+idxIncRef = importCount + 38
+idxFreeRecursive = importCount + 39
+idxFreeWorklistPush = importCount + 40
 
 buildInfo :: PreludeTags -> CoreProgram -> WasmInfo
 buildInfo ptags prog@(CoreProgram decls) =
@@ -401,7 +403,8 @@ buildTypeSection info (CoreProgram decls) =
           -- WASI imports
           $ [ FuncType 4 True, -- fd_write
               FuncType 2 True, -- args_sizes_get
-              FuncType 2 True -- args_get (dedup with above)
+              FuncType 2 True, -- args_get (dedup with above)
+              FuncType 4 True -- fd_read (dedup with fd_write)
             ]
           -- Runtime helpers
           <> [ FuncType 1 True, -- __alloc(i32)->i32
@@ -457,7 +460,8 @@ buildImportSection typeMap =
         encodeVec
           [ mkImport "fd_write" (FuncType 4 True),
             mkImport "args_sizes_get" (FuncType 2 True),
-            mkImport "args_get" (FuncType 2 True)
+            mkImport "args_get" (FuncType 2 True),
+            mkImport "fd_read" (FuncType 4 True)
           ]
    in buildSection 2 content
 
@@ -503,9 +507,10 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf16CodeUnits
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf8Bytes
           lookupType (FuncType 0 True) typeMap, -- __get_arg
-          lookupType (FuncType 1 True) typeMap, -- __entryArgEither
+          lookupType (FuncType 2 True) typeMap, -- __entryArgEither(ptr, len)
           lookupType (FuncType 2 True) typeMap, -- __utf16_of_range
           lookupType (FuncType 0 True) typeMap, -- __getArgs
+          lookupType (FuncType 0 True) typeMap, -- __stdinReadAll
           lookupType (FuncType 2 True) typeMap, -- __alloc_shaped
           lookupType (FuncType 1 False) typeMap, -- __inc_ref
           lookupType (FuncType 1 False) typeMap, -- __free_recursive
@@ -662,6 +667,7 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeEntryArgEither info,
           codeUtf16OfRange,
           codeGetArgs,
+          codeStdinReadAll,
           codeAllocShaped,
           codeIncRef,
           codeFreeRecursive,
@@ -4896,17 +4902,226 @@ codeLengthUtf16CodeUnits =
 
 -- __getArgs() -> i32. Zero-arg helper for 'BuiltIn.internalGetArgs',
 -- called from 'runIO''s 'IOGetArgs' arm. Re-reads argv via WASI
--- 'args_get' through '__get_arg' and routes it through
--- '__entryArgEither'. Per the no-memoisation decision each call
--- yields a fresh 'Either' cell — argv is invariant during execution
--- so repeat calls are deterministically equal.
+-- 'args_get' through '__get_arg', measures its byte length via an
+-- inline NUL scan, and routes the @(arg, len)@ pair through the
+-- length-aware '__entryArgEither'. The NUL terminator at @arg[len]@
+-- is the readable byte the decoder relies on for its one-past-end
+-- surrogate peek.
+--
+-- Locals: 0 = a (the argv[1] pointer), 1 = l (its byte length).
 codeGetArgs :: [Word8]
 codeGetArgs =
   encodeBody
-    (encodeLocals 0)
+    (encodeLocals 2)
     $ concat
-      [ [opCall],
+      [ -- a = __get_arg()
+        [opCall],
         encodeULEB128 idxGetArg,
+        [opLocalSet],
+        encodeULEB128 0,
+        -- l = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- block $break / loop $scan: scan until NUL
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        -- if arg[l] == 0 br $break (depth 1)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1,
+        -- l += 1
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 1,
+        [opBr],
+        encodeULEB128 0,
+        [opEnd],
+        [opEnd],
+        -- call __entryArgEither(a, l)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 1,
+        [opCall],
+        encodeULEB128 idxEntryArgEither
+      ]
+
+-- __stdinReadAll() -> i32. Zero-arg helper for
+-- 'BuiltIn.internalStdinReadAllAsUtf16'. Reads fd 0 via WASI 'fd_read'
+-- in chunks into a growing '__alloc'-managed buffer (start 4 KiB,
+-- double on full), then writes a 0 sentinel past the data and routes
+-- the (buf, len) pair through the length-aware '__entryArgEither'.
+--
+-- WASM has no realloc; growing means '__alloc' a bigger cell and
+-- '__memcpy' the existing bytes over. The old cell leaks for the
+-- rest of the program — bounded waste, doubling strategy.
+--
+-- iovec scratch at address 16/20 (ptr, len), nread_out at 12. These
+-- overlap with '__get_arg's argv-size scratch but the two helpers
+-- never run concurrently (WASM is single-threaded).
+--
+-- Locals: 0=buf, 1=cap, 2=total, 3=remain, 4=newbuf, 5=newcap, 6=got.
+codeStdinReadAll :: [Word8]
+codeStdinReadAll =
+  encodeBody
+    (encodeLocals 7)
+    $ concat
+      [ -- cap = 4096
+        [opI32Const],
+        encodeSLEB128 4096,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- buf = __alloc(cap)
+        [opLocalGet],
+        encodeULEB128 1,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 0,
+        -- total = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 2,
+        -- block $break_read / loop $read_loop
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        -- remain = cap - total
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Sub],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- if remain < 4096: grow
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 4096,
+        [opI32LtU],
+        [opIf, blocktypeVoid],
+        -- newcap = cap * 2
+        [opLocalGet],
+        encodeULEB128 1,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32Mul],
+        [opLocalSet],
+        encodeULEB128 5,
+        -- newbuf = __alloc(newcap)
+        [opLocalGet],
+        encodeULEB128 5,
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 4,
+        -- __memcpy(newbuf, buf, total)
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opCall],
+        encodeULEB128 idxMemcpy,
+        -- buf = newbuf
+        [opLocalGet],
+        encodeULEB128 4,
+        [opLocalSet],
+        encodeULEB128 0,
+        -- cap = newcap
+        [opLocalGet],
+        encodeULEB128 5,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- remain = cap - total
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Sub],
+        [opLocalSet],
+        encodeULEB128 3,
+        [opEnd], -- end grow-if
+        -- store at 16: buf + total       (iovec[0].ptr)
+        [opI32Const],
+        encodeSLEB128 16,
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Add],
+        [opI32Store, 0x02, 0x00],
+        -- store at 20: remain            (iovec[0].len)
+        [opI32Const],
+        encodeSLEB128 20,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Store, 0x02, 0x00],
+        -- drop(fd_read(0, 16, 1, 12))
+        [opI32Const],
+        encodeSLEB128 0, -- fd
+        [opI32Const],
+        encodeSLEB128 16, -- iovs
+        [opI32Const],
+        encodeSLEB128 1, -- iovs_len
+        [opI32Const],
+        encodeSLEB128 12, -- nread_out
+        [opCall],
+        encodeULEB128 3, -- fd_read (import index 3)
+        [opDrop],
+        -- got = *12
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Load, 0x02, 0x0C],
+        [opLocalSet],
+        encodeULEB128 6,
+        -- if got == 0 br $break_read (depth 1)
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Eqz],
+        [opBrIf],
+        encodeULEB128 1,
+        -- total += got
+        [opLocalGet],
+        encodeULEB128 2,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 2,
+        -- br $read_loop (depth 0)
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block
+        -- buf[total] = 0  (one-past-end safe byte for decoder peek)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opI32Add],
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Store8, 0x00, 0x00],
+        -- call __entryArgEither(buf, total)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalGet],
+        encodeULEB128 2,
         [opCall],
         encodeULEB128 idxEntryArgEither
       ]
@@ -4973,8 +5188,8 @@ codeGetArg info =
         [opEnd]
       ]
 
--- __entryArgEither(arg: i32) -> i32
--- Walks UTF-8 bytes once and runs two checks:
+-- __entryArgEither(arg: i32, len: i32) -> i32
+-- Length-aware UTF-8 byte scanner running two checks:
 --   (1) UTF-16 code unit count vs cap (134217728 = 2^27), short-circuit
 --       on overflow.
 --   (2) Surrogate-encoded byte triplets ('ED A0..BF 80..BF') — standard
@@ -4982,14 +5197,20 @@ codeGetArg info =
 --       modified UTF-8 emit them. Sticky flag, no early exit (cap-check
 --       has priority).
 -- Returns:
---   * Right(arg)                  on fit + no surrogates
+--   * Right(arg-as-string)        on fit + no surrogates
 --   * Left StringTooLong          on cap overflow (regardless of surrogates)
 --   * Left UnpairedUtf16Surrogate on surrogates with cap respected
 -- Mirrors the WAT-text 'rtEntryArgEither' (identical observable behaviour).
 -- Cap value and FNV-1a row tags for "StringTooLong" /
 -- "UnpairedUtf16Surrogate" must stay in sync with
 -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
--- Locals: $i(1) $n(2) $b(3) $surr(4) $inner(5) $row(6) $cell(7)
+--
+-- Callers guarantee @arg[len]@ is a readable byte for the
+-- surrogate-detection branch's one-past-end peek (NUL terminator
+-- for argv, an explicit zero past the read region for stdin).
+--
+-- Params: arg(0) len(1).
+-- Locals: i(2) n(3) b(4) surr(5) inner(6) row(7) cell(8) wrapped(9).
 
 codeEntryArgEither :: WasmInfo -> [Word8]
 codeEntryArgEither info =
@@ -5001,39 +5222,41 @@ codeEntryArgEither info =
             [opI32Const],
             encodeSLEB128 0,
             [opLocalSet],
-            encodeULEB128 1,
+            encodeULEB128 2,
             -- n = 0
             [opI32Const],
             encodeSLEB128 0,
             [opLocalSet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             -- surr = 0
             [opI32Const],
             encodeSLEB128 0,
             [opLocalSet],
-            encodeULEB128 4,
+            encodeULEB128 5,
             -- block $break_scan
             [opBlock, blocktypeVoid],
             -- loop $scan_loop
             [opLoop, blocktypeVoid],
+            -- Length-aware termination: if (i == len) br $break_scan
+            [opLocalGet],
+            encodeULEB128 2,
+            [opLocalGet],
+            encodeULEB128 1,
+            [opI32Eq],
+            [opBrIf],
+            encodeULEB128 1,
             -- b = i32.load8_u(arg + i)
             [opLocalGet],
             encodeULEB128 0,
             [opLocalGet],
-            encodeULEB128 1,
+            encodeULEB128 2,
             [opI32Add],
             [opI32Load8U, 0x00, 0x00],
             [opLocalSet],
-            encodeULEB128 3,
-            -- if (b == 0) br $break_scan
-            [opLocalGet],
-            encodeULEB128 3,
-            [opI32Eqz],
-            [opBrIf],
-            encodeULEB128 1, -- depth 1 = $break_scan
+            encodeULEB128 4,
             -- if ((b & 0xC0) != 0x80) — not a continuation byte
             [opLocalGet],
-            encodeULEB128 3,
+            encodeULEB128 4,
             [opI32Const],
             encodeSLEB128 0xC0,
             [opI32And],
@@ -5041,23 +5264,18 @@ codeEntryArgEither info =
             encodeSLEB128 0x80,
             [opI32Ne],
             [opIf, blocktypeVoid],
-            -- Surrogate-byte detection: 'ED A0..BF' starts a 3-byte UTF-8
-            -- encoding of U+D800..U+DFFF (forbidden in standard UTF-8).
-            -- Sticky flag — keep scanning so cap-exceed wins.
-            --   if (b == 0xED) {
-            --     if ((arg[i+1] & 0xE0) == 0xA0) surr = 1;
-            --   }
+            -- if (b == 0xED) check next byte for surrogate range
             [opLocalGet],
-            encodeULEB128 3,
+            encodeULEB128 4,
             [opI32Const],
             encodeSLEB128 0xED,
             [opI32Eq],
             [opIf, blocktypeVoid],
-            --   peek arg[i+1]
+            -- peek arg[i+1]
             [opLocalGet],
             encodeULEB128 0,
             [opLocalGet],
-            encodeULEB128 1,
+            encodeULEB128 2,
             [opI32Const],
             encodeSLEB128 1,
             [opI32Add],
@@ -5070,16 +5288,16 @@ codeEntryArgEither info =
             encodeSLEB128 0xA0,
             [opI32Eq],
             [opIf, blocktypeVoid],
-            --   surr = 1
+            -- surr = 1
             [opI32Const],
             encodeSLEB128 1,
             [opLocalSet],
-            encodeULEB128 4,
+            encodeULEB128 5,
             [opEnd], -- end surr-set if
             [opEnd], -- end b == 0xED if
             -- if ((b & 0xF8) == 0xF0) n += 2 else n += 1
             [opLocalGet],
-            encodeULEB128 3,
+            encodeULEB128 4,
             [opI32Const],
             encodeSLEB128 0xF8,
             [opI32And],
@@ -5089,61 +5307,59 @@ codeEntryArgEither info =
             [opIf, blocktypeVoid],
             -- then: n += 2
             [opLocalGet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             [opI32Const],
             encodeSLEB128 2,
             [opI32Add],
             [opLocalSet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             [opElse],
             -- else: n += 1
             [opLocalGet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             [opI32Const],
             encodeSLEB128 1,
             [opI32Add],
             [opLocalSet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             [opEnd], -- end inner if (n increment)
             -- short-circuit: if (n >u 134217728) br $break_scan
             [opLocalGet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             [opI32Const],
             encodeSLEB128 134217728,
             [opI32GtU],
             [opBrIf],
-            encodeULEB128 2, -- depth 2 = $break_scan (through outer if + loop)
+            encodeULEB128 2,
             [opEnd], -- end outer if (non-continuation)
             -- i = i + 1
             [opLocalGet],
-            encodeULEB128 1,
+            encodeULEB128 2,
             [opI32Const],
             encodeSLEB128 1,
             [opI32Add],
             [opLocalSet],
-            encodeULEB128 1,
-            -- br $scan_loop
+            encodeULEB128 2,
             [opBr],
             encodeULEB128 0,
             [opEnd], -- end loop
             [opEnd], -- end block
             -- if (n >u 134217728) → Left StringTooLong (cap-check has priority)
             [opLocalGet],
-            encodeULEB128 2,
+            encodeULEB128 3,
             [opI32Const],
             encodeSLEB128 134217728,
             [opI32GtU],
             [opIf, blocktypeI32],
-            -- then: build Left(StringTooLong row-wrapped)
-            --   inner = __alloc(4); store inner StringTooLong tag
+            -- inner = __alloc(4); store inner StringTooLong tag
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
             encodeULEB128 idxAlloc,
             [opLocalSet],
-            encodeULEB128 5,
-            storeTagBytes 5 (ptStringTooLong ptags),
-            --   row = __alloc(8); store row stringTooLongTag; store offset=4 row inner
+            encodeULEB128 6,
+            storeTagBytes 6 (ptStringTooLong ptags),
+            -- row = __alloc_shaped(8, 1); fill row[0]=tag, row[4]=inner
             [opI32Const],
             encodeSLEB128 8,
             [opI32Const],
@@ -5151,18 +5367,18 @@ codeEntryArgEither info =
             [opCall],
             encodeULEB128 idxAllocShaped,
             [opLocalSet],
-            encodeULEB128 6,
+            encodeULEB128 7,
             [opLocalGet],
-            encodeULEB128 6,
+            encodeULEB128 7,
             [opI32Const],
             encodeSLEB128 (fromIntegral stringTooLongTagWord),
             [opI32Store, 0x02, 0x00],
             [opLocalGet],
-            encodeULEB128 6,
+            encodeULEB128 7,
             [opLocalGet],
-            encodeULEB128 5,
+            encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            --   cell = __alloc(8); store cell Left tag; store offset=4 cell row
+            -- cell = __alloc_shaped(8, 1); fill cell[0]=LeftTag, cell[4]=row
             [opI32Const],
             encodeSLEB128 8,
             [opI32Const],
@@ -5170,30 +5386,28 @@ codeEntryArgEither info =
             [opCall],
             encodeULEB128 idxAllocShaped,
             [opLocalSet],
-            encodeULEB128 7,
-            storeTagBytes 7 (ptLeft ptags),
+            encodeULEB128 8,
+            storeTagBytes 8 (ptLeft ptags),
+            [opLocalGet],
+            encodeULEB128 8,
             [opLocalGet],
             encodeULEB128 7,
-            [opLocalGet],
-            encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
             [opLocalGet],
-            encodeULEB128 7,
+            encodeULEB128 8,
             [opElse],
             -- else: nested if (surr) → UnpairedUtf16Surrogate else Right
             [opLocalGet],
-            encodeULEB128 4,
+            encodeULEB128 5,
             [opIf, blocktypeI32],
             -- then: build Left(UnpairedUtf16Surrogate row-wrapped)
-            --   inner = __alloc(4); store inner UnpairedUtf16Surrogate tag
             [opI32Const],
             encodeSLEB128 4,
             [opCall],
             encodeULEB128 idxAlloc,
             [opLocalSet],
-            encodeULEB128 5,
-            storeTagBytes 5 (ptUnpairedUtf16Surrogate ptags),
-            --   row = __alloc(8); store row unpairedSurrogateTag; store offset=4 row inner
+            encodeULEB128 6,
+            storeTagBytes 6 (ptUnpairedUtf16Surrogate ptags),
             [opI32Const],
             encodeSLEB128 8,
             [opI32Const],
@@ -5201,18 +5415,17 @@ codeEntryArgEither info =
             [opCall],
             encodeULEB128 idxAllocShaped,
             [opLocalSet],
-            encodeULEB128 6,
+            encodeULEB128 7,
             [opLocalGet],
-            encodeULEB128 6,
+            encodeULEB128 7,
             [opI32Const],
             encodeSLEB128 (fromIntegral unpairedSurrogateTagWord),
             [opI32Store, 0x02, 0x00],
             [opLocalGet],
-            encodeULEB128 6,
+            encodeULEB128 7,
             [opLocalGet],
-            encodeULEB128 5,
+            encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
-            --   cell = __alloc(8); store cell Left tag; store offset=4 cell row
             [opI32Const],
             encodeSLEB128 8,
             [opI32Const],
@@ -5220,53 +5433,54 @@ codeEntryArgEither info =
             [opCall],
             encodeULEB128 idxAllocShaped,
             [opLocalSet],
-            encodeULEB128 7,
-            storeTagBytes 7 (ptLeft ptags),
+            encodeULEB128 8,
+            storeTagBytes 8 (ptLeft ptags),
+            [opLocalGet],
+            encodeULEB128 8,
             [opLocalGet],
             encodeULEB128 7,
-            [opLocalGet],
-            encodeULEB128 6,
             [opI32Store, 0x02, 0x04],
             [opLocalGet],
-            encodeULEB128 7,
+            encodeULEB128 8,
             [opElse],
             -- else: build Right(wrapped) where wrapped is a length-prefixed
-            -- copy of the C-string in arg ($i bytes, $n utf16 units).
-            --   wrapped = __alloc(i + 8)
+            -- copy of arg (i bytes, n utf16 units). On the normal exit
+            -- path i == len, so we size the result by i.
+            -- wrapped = __alloc(i + 8)
             [opLocalGet],
-            encodeULEB128 1,
+            encodeULEB128 2,
             [opI32Const],
             encodeSLEB128 8,
             [opI32Add],
             [opCall],
             encodeULEB128 idxAlloc,
             [opLocalSet],
-            encodeULEB128 8,
-            --   header.byte_count = i
+            encodeULEB128 9,
+            -- header.byte_count = i
             [opLocalGet],
-            encodeULEB128 8,
-            [opLocalGet],
-            encodeULEB128 1,
-            [opI32Store, 0x02, 0x00],
-            --   header.utf16_count = n
-            [opLocalGet],
-            encodeULEB128 8,
+            encodeULEB128 9,
             [opLocalGet],
             encodeULEB128 2,
-            [opI32Store, 0x02, 0x04],
-            --   memcpy(wrapped+8, arg, i)
+            [opI32Store, 0x02, 0x00],
+            -- header.utf16_count = n
             [opLocalGet],
-            encodeULEB128 8,
+            encodeULEB128 9,
+            [opLocalGet],
+            encodeULEB128 3,
+            [opI32Store, 0x02, 0x04],
+            -- memcpy(wrapped+8, arg, i)
+            [opLocalGet],
+            encodeULEB128 9,
             [opI32Const],
             encodeSLEB128 8,
             [opI32Add],
             [opLocalGet],
             encodeULEB128 0,
             [opLocalGet],
-            encodeULEB128 1,
+            encodeULEB128 2,
             [opCall],
             encodeULEB128 idxMemcpy,
-            --   cell = __alloc(8); store cell Right tag; store offset=4 cell wrapped
+            -- cell = __alloc_shaped(8, 1); fill cell[0]=RightTag, cell[4]=wrapped
             [opI32Const],
             encodeSLEB128 8,
             [opI32Const],
@@ -5274,15 +5488,15 @@ codeEntryArgEither info =
             [opCall],
             encodeULEB128 idxAllocShaped,
             [opLocalSet],
-            encodeULEB128 7,
-            storeTagBytes 7 (ptRight ptags),
-            [opLocalGet],
-            encodeULEB128 7,
+            encodeULEB128 8,
+            storeTagBytes 8 (ptRight ptags),
             [opLocalGet],
             encodeULEB128 8,
+            [opLocalGet],
+            encodeULEB128 9,
             [opI32Store, 0x02, 0x04],
             [opLocalGet],
-            encodeULEB128 7,
+            encodeULEB128 8,
             [opEnd], -- end nested if (surr / Right)
             [opEnd] -- end outer if (cap)
           ]
@@ -5639,6 +5853,12 @@ emitExpr ctx = \case
       CBuiltIn "internalGetArgs"
         | [] <- xs ->
             [opCall] <> encodeULEB128 idxGetArgs
+      -- 'BuiltIn.internalStdinReadAllAsUtf16' — call '__stdinReadAll',
+      -- which consumes fd 0 to EOF via WASI 'fd_read' and routes the
+      -- bytes through '__entryArgEither'.
+      CBuiltIn "internalStdinReadAllAsUtf16"
+        | [] <- xs ->
+            [opCall] <> encodeULEB128 idxStdinReadAll
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

@@ -126,7 +126,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$8" [ "__input" ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -147,14 +147,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$scc$$df$andThenEither$0_$lam$7_build" [ "$args" ]
+        , CFunDef "$scc$$df$andThenEither$0_$lam$12_build" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$df$andThenEither$0_$lam$7_build" )
+                ( CVar "$cps$$scc$$df$andThenEither$0_$lam$12_build" )
                 [ CVar "$args"
                 , CCon 11 []
                 ]
             )
-        , CFunDef "$cps$$scc$$df$andThenEither$0_$lam$7_build"
+        , CFunDef "$cps$$scc$$df$andThenEither$0_$lam$12_build"
             [ "$args"
             , "$k"
             ]
@@ -176,7 +176,7 @@ CoreProgram
                                         , [ "e" ]
                                         , CDrop DropFreeUnchecked "e"
                                             ( CCall
-                                                ( CVar "$apply$$scc$$df$andThenEither$0_$lam$7_build" )
+                                                ( CVar "$apply$$scc$$df$andThenEither$0_$lam$12_build" )
                                                 [ CVar "$k"
                                                 , CCon 3
                                                     [ CVar "e" ]
@@ -241,7 +241,7 @@ CoreProgram
                                         , [ "__w0" ]
                                         , CDrop DropFreeUnchecked "__w0"
                                             ( CCall
-                                                ( CVar "$apply$$scc$$df$andThenEither$0_$lam$7_build" )
+                                                ( CVar "$apply$$scc$$df$andThenEither$0_$lam$12_build" )
                                                 [ CVar "$k"
                                                 , CCon 4
                                                     [ CVar "acc" ]
@@ -256,7 +256,7 @@ CoreProgram
                                                 ( CContinue
                                                     [ CReuse "$args" 8
                                                         [ CCall
-                                                            ( CVar "$lift$8" )
+                                                            ( CVar "$lift$13" )
                                                             [ CCall
                                                                 ( CBuiltIn "concatString" )
                                                                 [ CVar "acc"
@@ -277,7 +277,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$scc$$df$andThenEither$0_$lam$7_build"
+        , CFunDef "$apply$$scc$$df$andThenEither$0_$lam$12_build"
             [ "$k"
             , "$x"
             ]
@@ -313,7 +313,7 @@ CoreProgram
             , "acc"
             ]
             ( CCall
-                ( CVar "$scc$$df$andThenEither$0_$lam$7_build" )
+                ( CVar "$scc$$df$andThenEither$0_$lam$12_build" )
                 [ CCon 10
                     [ CVar "n"
                     , CVar "acc"

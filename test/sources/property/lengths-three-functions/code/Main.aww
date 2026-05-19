@@ -13,7 +13,7 @@
    would land on a different stdout from at least one of the others
    and from the Haskell expectation. -}
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : String -> Either StringTooLong String
 property s = do
@@ -38,6 +38,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

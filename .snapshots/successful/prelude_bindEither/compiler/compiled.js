@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -38,7 +38,7 @@ function v_opB(v_n){
     return [4, v_n];
 }
 
-const main = (v__let_8)((v__df_bindEither_0)(v_opA));
+const main = (v__let_13)((v__df_bindEither_0)(v_opA));
 
 function v__lift_0(v___input){
     {
@@ -56,7 +56,7 @@ function v__lift_0(v___input){
     }
 }
 
-function v__let_7(v_msg){
+function v__let_12(v_msg){
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -72,8 +72,8 @@ function v__let_7(v_msg){
     }
 }
 
-function v__let_8(v_chained){
-    return (v__let_7)(((s) => { switch(s[0]) { case 3: { const v___pa0 = s[1]; return ((s) => { switch(s[0]) { case 2252990199: { const v__a = s[1]; return [4, "ErrA"]; } case 2269767818: { const v__b = s[1]; return [4, "ErrB"]; } } })(v___pa0); } case 4: { const v_n = s[1]; return __concat("Ok ", String(v_n)); } } })(v_chained));
+function v__let_13(v_chained){
+    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___pa0 = s[1]; return ((s) => { switch(s[0]) { case 2252990199: { const v__a = s[1]; return [4, "ErrA"]; } case 2269767818: { const v__b = s[1]; return [4, "ErrB"]; } } })(v___pa0); } case 4: { const v_n = s[1]; return __concat("Ok ", String(v_n)); } } })(v_chained));
 }
 
 function v__df_bindEither_0(v_x){

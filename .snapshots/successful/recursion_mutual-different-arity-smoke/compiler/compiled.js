@@ -31,24 +31,24 @@ function v_runIO(v_io){
   }
 }
 
-const main = [7, String((v_parseExpr)([20])), [5, [0]]];
+const main = [7, String((v_parseExpr)([21])), [5, [0]]];
 
 function v__scc_parseBinary_parseExpr(v__args){
   while (true) {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 21: {
+        case 22: {
           const v_tok = __s[1];
           const v__acc = __s[2];
           {
             const __s = v_tok;
             switch (__s[0]) {
-              case 19: {
+              case 20: {
                 return (0|0);
               }
-              case 20: {
-                const __t0 = [22, [19]];
+              case 21: {
+                const __t0 = [23, [20]];
                 v__args = null;
                 v__args = __t0;
                 continue;
@@ -56,16 +56,16 @@ function v__scc_parseBinary_parseExpr(v__args){
             }
           }
         }
-        case 22: {
+        case 23: {
           const v_tok = __s[1];
           {
             const __s = v_tok;
             switch (__s[0]) {
-              case 19: {
+              case 20: {
                 return (0|0);
               }
-              case 20: {
-                const __t0 = [21, v_tok, (0|0)];
+              case 21: {
+                const __t0 = [22, v_tok, (0|0)];
                 v__args = null;
                 v__args = __t0;
                 continue;
@@ -79,7 +79,7 @@ function v__scc_parseBinary_parseExpr(v__args){
 }
 
 function v_parseExpr(v_tok){
-    return (v__scc_parseBinary_parseExpr)([22, v_tok]);
+    return (v__scc_parseBinary_parseExpr)([23, v_tok]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

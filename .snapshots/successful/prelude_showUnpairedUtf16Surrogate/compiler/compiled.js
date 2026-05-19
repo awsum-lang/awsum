@@ -35,7 +35,7 @@ function v_showUnpairedUtf16Surrogate(v__wild0){
     return "UnpairedUtf16Surrogate";
 }
 
-const main = [7, (v_showUnpairedUtf16Surrogate)([16]), [5, [0]]];
+const main = [7, (v_showUnpairedUtf16Surrogate)([17]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

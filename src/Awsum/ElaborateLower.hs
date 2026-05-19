@@ -538,7 +538,7 @@ elaborateLowerProgram progType progIn = do
   --    reachability analysis as ordinary `CCon` references.
   let userDecls = catMaybes mds
       allWrappers = genConWrappers conInfo
-      declsBeforeBI = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo]
+      declsBeforeBI = userDecls <> liftedHelpers <> allWrappers <> [ioGetArgsContDecl conInfo, ioStdinReadAllContDecl conInfo]
       -- Eta-expand every bare 'CBuiltIn' that appears in value position
       -- (constructor field, call argument, case scrutinee, etc.) into a
       -- reference to a synthesised wrapper. Restores the pipeline invariant
@@ -716,6 +716,32 @@ ioGetArgsContDecl conInfo =
             ]
         )
 
+-- | Synthetic top-level helper used by every @IOStdinReadAll@ rewrite.
+--   Structurally identical to @$io_getargs_cont@ — same @Either
+--   (StringTooLong | UnpairedUtf16Surrogate) String@ shape, same
+--   routing of @Left@ to @IOFail@ and @Right@ to @IOPure@. Kept as a
+--   distinct top-level so the two effects' continuations stay
+--   separately tree-shakeable: a program that uses only @IO.Stdin.readAll@
+--   pays no Core-size cost for @$io_getargs_cont@ and vice versa.
+ioStdinReadAllContDecl :: ConInfoEnv -> CDecl
+ioStdinReadAllContDecl conInfo =
+  let tagFor n = case M.lookup n conInfo of
+        Just ci -> ciTag ci
+        Nothing -> error $ "ioStdinReadAllContDecl: prelude missing '" <> n <> "'"
+      leftTag = tagFor "Left"
+      rightTag = tagFor "Right"
+      ioFailTag = tagFor "IOFail"
+      ioPureTag = tagFor "IOPure"
+   in CFunDef
+        "$io_stdinReadAll_cont"
+        ["result"]
+        ( CCase
+            (CVar "result")
+            [ (leftTag, ["e"], CCon ioFailTag [CVar "e"]),
+              (rightTag, ["s"], CCon ioPureTag [CVar "s"])
+            ]
+        )
+
 -- | Rewrite every @CCall (CBuiltIn "IO.Stdout.print") [arg]@ into the
 --   constructor expression @CCon ioStdoutPrintTag [arg, CCon ioPureTag
 --   [CCon unitTag []]]@ (where the tags are looked up from
@@ -746,6 +772,7 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
     ioPureTag = tagFor "IOPure"
     ioStdoutPrintTag = tagFor "IOStdoutPrint"
     ioGetArgsTag = tagFor "IOGetArgs"
+    ioStdinReadAllTag = tagFor "IOStdinReadAll"
     unitTag = tagFor "Unit"
 
     -- The terminator for a single `IO.Stdout.print s` call: after the
@@ -769,6 +796,13 @@ lowerIOPlatformBuiltinsDecl conInfo = \case
       -- (Either err String)'.
       CCall (CBuiltIn "IO.Args.getArgs") [] ->
         CCon ioGetArgsTag [CVar "$io_getargs_cont"]
+      -- 'IO.Stdin.readAll' is structurally identical to
+      -- 'IO.Args.getArgs' at the Core level: zero-arg platform
+      -- built-in, same 'Either err String' result, same routing of
+      -- failure-vs-success through the synthetic helper. Only the
+      -- byte source differs at runtime (fd 0 vs argv).
+      CCall (CBuiltIn "IO.Stdin.readAll") [] ->
+        CCon ioStdinReadAllTag [CVar "$io_stdinReadAll_cont"]
       CCall f args -> CCall (rewriteExpr f) (map rewriteExpr args)
       CCon t fields -> CCon t (map rewriteExpr fields)
       CCase scrut alts ->

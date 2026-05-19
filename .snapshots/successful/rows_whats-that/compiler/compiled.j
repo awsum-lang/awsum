@@ -103,10 +103,10 @@ L_arm_1454647603:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    9: L_arm_9
     10: L_arm_10
-    default: L_arm_9
-L_arm_9:
+    11: L_arm_11
+    default: L_arm_10
+L_arm_10:
   pop
   iconst_2
   anewarray java/lang/Object
@@ -120,7 +120,7 @@ L_arm_9:
   ldc "Nothing"
   aastore
   goto L_join
-L_arm_10:
+L_arm_11:
   dup
   iconst_1
   aaload
@@ -204,7 +204,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -217,15 +217,15 @@ L_join:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
-  invokestatic AwsumMain/v__lift_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   invokestatic AwsumMain/v_whatsThat(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_8(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -233,20 +233,20 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    9: L_arm_9
     10: L_arm_10
-    default: L_arm_9
-L_arm_9:
+    11: L_arm_11
+    default: L_arm_10
+L_arm_10:
   pop
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 9
+  bipush 10
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join
-L_arm_10:
+L_arm_11:
   dup
   iconst_1
   aaload
@@ -256,7 +256,7 @@ L_arm_10:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 10
+  bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -279,7 +279,7 @@ L_join:
 .end method
 
 
-.method static v__let_8(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0

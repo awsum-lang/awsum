@@ -102,27 +102,27 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 10
+    ldc.i4.s 11
     box [System.Runtime]System.Int32
     stelem.ref
     dup
     ldc.i4.1
     ldstr "world"
     stelem.ref
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_12(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__let_12(object) cil managed
   {
     ldarg.0
     dup
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_9, IL_arm_10)
-  IL_arm_9:
+    switch (IL_arm_10, IL_arm_11)
+  IL_arm_10:
     pop
     ldc.i4.3
     newarr [System.Runtime]System.Object
@@ -156,7 +156,7 @@
     stelem.ref
     stelem.ref
     br.s IL_join
-  IL_arm_10:
+  IL_arm_11:
     dup
     ldc.i4.1
     ldelem.ref

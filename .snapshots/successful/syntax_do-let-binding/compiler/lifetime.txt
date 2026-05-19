@@ -30,7 +30,7 @@ main:
   case-pattern    out                             count=1
   case-pattern    s                               count=1
 
-$let$7:
+$let$12:
   param           a                               count=1
   param           prefix                          count=1
   case-pattern    $do_e_20_3                      count=0

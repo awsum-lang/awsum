@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -42,15 +42,15 @@ function v_search(v_key){
         }
         case 4: {
           const v_found = __s[1];
-          return [4, [19, v_found]];
+          return [4, [20, v_found]];
         }
       }
     }
 }
 
-const main = (v__let_7)(((s) => { switch(s[0]) { case 3: { const v_e = s[1]; return [3, v_e]; } case 4: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 19: { const v_v = s[1]; return [4, v_v]; } } })(v___p0); } } })((v_search)("hello")));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v_e = s[1]; return [3, v_e]; } case 4: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 20: { const v_v = s[1]; return [4, v_v]; } } })(v___p0); } } })((v_search)("hello")));
 
-function v__let_7(v_res){
+function v__let_12(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

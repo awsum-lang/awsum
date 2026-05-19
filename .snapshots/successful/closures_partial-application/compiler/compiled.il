@@ -81,7 +81,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -99,8 +99,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_19)
-  IL_arm_19:
+    switch (IL_arm_20)
+  IL_arm_20:
     dup
     ldc.i4.1
     ldelem.ref
@@ -140,14 +140,14 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 21
+    ldc.i4.s 22
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v__df_apply_0(object, object, object)
@@ -193,13 +193,13 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_20, IL_arm_21)
-  IL_arm_20:
+    switch (IL_arm_21, IL_arm_22)
+  IL_arm_21:
     pop
     ldarg.1
     call object AwsumMain::v_unwrap(object)
     br.s IL_join
-  IL_arm_21:
+  IL_arm_22:
     pop
     ldarg.1
     call object AwsumMain::v_wrap(object)

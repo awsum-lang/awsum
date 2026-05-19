@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -158,7 +158,7 @@
   .method private hidebysig static object v_viaLambda() cil managed
   {
     call object AwsumMain::v_n()
-    call object AwsumMain::v__lam_7(object)
+    call object AwsumMain::v__lam_12(object)
     ret
   }
 
@@ -370,7 +370,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_7(object) cil managed
+  .method private hidebysig static object v__lam_12(object) cil managed
   {
     ldarg.0
     callvirt instance string [System.Runtime]System.Object::ToString()

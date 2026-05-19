@@ -8,7 +8,7 @@ describe:
   param           x                               count=1
   row-case        s                               count=0
 
-$let$7:
+$let$12:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0

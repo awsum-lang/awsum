@@ -215,7 +215,7 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 16, i32 1)
-  %t4 = inttoptr i64 19 to ptr
+  %t4 = inttoptr i64 20 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = getelementptr ptr, ptr %t3, i32 1
@@ -224,18 +224,18 @@ define internal ptr @v_main() {
   %t8 = getelementptr ptr, ptr %t7, i32 0
   %t9 = load ptr, ptr %t8
   %t10 = ptrtoint ptr %t9 to i64
-  switch i64 %t10, label %case.default.11 [ i64 19, label %case.arm.19.13 ]
-case.arm.19.13:
+  switch i64 %t10, label %case.default.11 [ i64 20, label %case.arm.20.13 ]
+case.arm.20.13:
   %t15 = getelementptr ptr, ptr %t7, i32 1
   %t16 = load ptr, ptr %t15
   call void @__inc_ref(ptr %t16)
-  br label %case.end.19.14
-case.end.19.14:
+  br label %case.end.20.14
+case.end.20.14:
   br label %case.join.12
 case.default.11:
   unreachable
 case.join.12:
-  %t17 = phi ptr [%t16, %case.end.19.14]
+  %t17 = phi ptr [%t16, %case.end.20.14]
   call void @__free_recursive(ptr %t7)
   %t18 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t17, ptr %t18

@@ -2,7 +2,7 @@
 -- addition. Single UInt8 input. Adding 0 is always in range, so
 -- OVERFLOW cannot fire on a well-formed input.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : UInt8 -> Either OverflowError Bool
 property a = do
@@ -26,6 +26,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

@@ -19,7 +19,7 @@
 -- construction.
 module Awsum.PropertySpec (spec) where
 
-import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAll)
+import Awsum.RunBackend (Backend (..), CompiledArtifacts, compileFromFile, runOnAllStdin)
 import Data.ByteString qualified as BS
 import Data.Set qualified as Set
 import Data.Text qualified as T
@@ -55,20 +55,13 @@ currentOS = case Info.os of
 --   backends. Removing the entry once the bug is fixed re-enables
 --   assertion automatically.
 --
---   Current debt:
---     JVM diverges from LLVM / CLR / WASM / JS on Windows for the four
---     string-touching properties below. Fixes attempted via stdout
---     code-page / charset settings did not help — root cause still
---     under investigation.
+--   Current debt: none. The 5 (Windows, JVM, *) entries that previously
+--   tracked the 'sun.jnu.encoding' mangling of supplementary-plane
+--   characters in argv were dropped once property tests moved to
+--   'IO.Stdin.readAll' — the JVM startup decoder doesn't touch stdin,
+--   so the divergence is resolved at the source rather than via skip.
 temporarilyBroken :: Set (OS, Backend, Text)
-temporarilyBroken =
-  Set.fromList
-    [ (Windows, JVM, "concat-left-identity"),
-      (Windows, JVM, "concat-right-identity"),
-      (Windows, JVM, "concat-associative"),
-      (Windows, JVM, "lengths-three-functions"),
-      (Windows, JVM, "concat-length-additive")
-    ]
+temporarilyBroken = Set.empty
 
 isSkipped :: Text -> Backend -> Bool
 isSkipped propName backend =
@@ -118,7 +111,7 @@ runProperty artifacts p =
   forAll p.propGen $ \a -> ioProperty $ do
     let input = p.propEncode a
         expected = p.propExpectedOutput a
-    results <- runOnAll artifacts input
+    results <- runOnAllStdin artifacts input
     let asserted = filter (\(b, _) -> not (isSkipped p.propName b)) results
     pure
       $ counterexample (toString (formatFailure p.propName input expected results))
