@@ -1180,7 +1180,7 @@ freeVars = \case
 --   the initial 'Locals' set so that any 'ELam' inside the body
 --   knows which names it can capture.
 lowerDeclM :: LowerEnv -> M.Map Name Type' -> Decl -> LowerM (Maybe CDecl)
-lowerDeclM env sigMap = \case
+lowerDeclM env sigMap decl0 = case etaContractTopLambdas sigMap decl0 of
   Sig {} -> pure Nothing
   CommentDecl _ -> pure Nothing
   TypeDecl {} -> pure Nothing
@@ -1189,7 +1189,7 @@ lowerDeclM env sigMap = \case
     | Just ty <- M.lookup n sigMap,
       let (argTys, _) = splitArrow ty,
       not (null argTys) -> do
-        body' <- lowerExprM env Set.empty Nothing body
+        body' <- lowerExprM env Set.empty (Just ty) body
         let etas = ["$eta" <> show (i :: Int) | i <- [0 .. length argTys - 1]]
             call = CCall body' (map CVar etas)
         pure $ Just $ CFunDef n etas call
@@ -1218,6 +1218,34 @@ splitArrowN = go []
     go acc 0 t = (reverse acc, Just t)
     go acc k (TyArrow _ a b) = go (a : acc) (k - 1) b
     go acc _ _ = (reverse acc, Nothing)
+
+-- | Surface rewrite applied at the start of 'lowerDeclM': when a
+--   top-level definition has zero LHS parameters but its body is one
+--   or more nested 'ELam' layers whose arities fit into the
+--   signature's arrow chain, move the lambda parameters onto the
+--   'FunDef' LHS. After this rewrite, @f = \\n -> n@ with signature
+--   @Int32 -> Int32@ is indistinguishable from @f n = n@ — no
+--   synthetic '$lam$N' helper is emitted, and the existing
+--   FunDef-with-args lowering path applies unchanged. Curried forms
+--   like @f = \\a -> \\b -> body@ are peeled recursively.
+etaContractTopLambdas :: M.Map Name Type' -> Decl -> Decl
+etaContractTopLambdas sigMap = \case
+  FunDef sp n [] body cmt
+    | Just ty <- M.lookup n sigMap,
+      let (extracted, inner) = peel body ty,
+      not (null extracted) ->
+        FunDef sp n extracted inner cmt
+  d -> d
+  where
+    peel (ELam _ ps lamBody) ty
+      | (argTys, _) <- splitArrowN (length ps) ty,
+        length argTys == length ps =
+          let (rest, finalBody) = peel lamBody (dropArrows (length ps) ty)
+           in (ps <> rest, finalBody)
+    peel e _ = ([], e)
+    dropArrows 0 t = t
+    dropArrows k (TyArrow _ _ b) = dropArrows (k - 1) b
+    dropArrows _ t = t
 
 -- | Add extra name→type entries to a 'LowerEnv' (e.g. function parameters).
 extendLowerEnv :: LowerEnv -> [(QName, Type')] -> LowerEnv

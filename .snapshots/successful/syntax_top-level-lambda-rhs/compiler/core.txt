@@ -1,0 +1,164 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "f" [ "n" ]
+            ( CVar "n" )
+        , CFunDef "constFst"
+            [ "a"
+            , "_b"
+            ]
+            ( CVar "a" )
+        , CFunDef "curryFst"
+            [ "a"
+            , "b"
+            ]
+            ( CVar "a" )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$12" )
+                [ CCase
+                    ( CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CBuiltIn "showInt32" )
+                            [ CCall
+                                ( CVar "f" )
+                                [ CIntLit 42 TInt32 ]
+                            ]
+                        , CString " "
+                        ]
+                    )
+                    [
+                        ( 3
+                        , [ "$do_e_20_9" ]
+                        , CCon 3
+                            [ CVar "$do_e_20_9" ]
+                        )
+                    ,
+                        ( 4
+                        , [ "s0" ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CBuiltIn "showInt32" )
+                                    [ CCall
+                                        ( CVar "constFst" )
+                                        [ CIntLit 7 TInt32
+                                        , CIntLit 99 TInt32
+                                        ]
+                                    ]
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "$do_e_21_9" ]
+                                , CCon 3
+                                    [ CVar "$do_e_21_9" ]
+                                )
+                            ,
+                                ( 4
+                                , [ "s1" ]
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CString " "
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "$do_e_22_9" ]
+                                        , CCon 3
+                                            [ CVar "$do_e_22_9" ]
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "s2" ]
+                                        , CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CCall
+                                                ( CBuiltIn "showInt32" )
+                                                [ CCall
+                                                    ( CVar "curryFst" )
+                                                    [ CIntLit 3 TInt32
+                                                    , CIntLit 9 TInt32
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$let$12" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }
