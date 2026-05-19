@@ -1548,6 +1548,20 @@ typeOfExpr conEnv tcm env = \case
   -- through 'bindEither' whose return rows accumulate only when the
   -- surrounding context constrains them.
   EDo sp _ -> Left (DoInSynthesisPosition sp)
+  -- Expression-level type ascription @(e : T)@: bidirectional anchor.
+  -- The user-written @T@ becomes the expected type for the inner
+  -- expression, then is also the synthesised result. This is what
+  -- makes @(42 : Int32)@, @pureEither (42 : Int32)@, etc. work —
+  -- the ascription pins a context that synthesis alone cannot.
+  -- 'crossExempt' resets to 'S.empty' at this synth boundary, same
+  -- convention as 'ELet' / 'ECase' here.
+  --
+  -- If the surrounding context disagrees with @T@, the 'checkExpr'
+  -- catch-all subsumes the synthesised @T@ against the ambient
+  -- expected and reports any mismatch pointing at the @(e : T)@ form.
+  EAscribe _sp e ty -> do
+    checkExpr conEnv tcm S.empty env ty e
+    Right ty
 
 -- | Shared case-analysis: validate the scrutinee, type-check every arm
 --   with the supplied body action, and verify exhaustiveness.
@@ -2042,6 +2056,7 @@ freeNames = go
       EApp _ f x -> go f <> go x
       EInfix _ _ l r -> go l <> go r
       EParens _ e -> go e
+      EAscribe _ e _ -> go e
       ELit _ _ -> S.empty
       ECon _ _ -> S.empty
       EBuiltIn _ _ -> S.empty

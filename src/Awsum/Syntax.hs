@@ -79,6 +79,7 @@ exprSpan = \case
   ELam sp _ _ -> sp
   EDo sp _ -> sp
   ELet sp _ _ _ _ -> sp
+  EAscribe sp _ _ -> sp
 
 -- | Lexical identifier (kept as 'Text' for simplicity).
 --   The parser is responsible for validating case/style rules.
@@ -333,6 +334,19 @@ data Expr
     --   wrapping the rest of the block (one 'ELet' per @let@
     --   statement); see 'Awsum.Desugar'.
     ELet SrcSpan Pattern (Maybe Type') Expr Expr
+  | -- | Expression-level type ascription: @(e : T)@. Carries the
+    --   user-written @Type'@ verbatim so the formatter can round-trip
+    --   the source unchanged. Bidirectional checker treats it as
+    --   "value of @e@ has type @T@": in check-mode the ambient
+    --   expected type is unified with @T@, in synth-mode @T@ becomes
+    --   the result and @e@ is checked against it. Lowering erases the
+    --   node (Core IR has no ascription) — it serves only as a
+    --   bidirectional anchor, with no runtime cost.
+    --
+    --   The pattern dual @(p : T)@ is 'PAscribe' on the 'Pattern' side
+    --   and carries the same "value has type @T@" meaning; in pattern
+    --   position it also binds @p@.
+    EAscribe SrcSpan Expr Type'
   deriving stock (Show, Eq)
 
 -- | A single statement inside a 'EDo' block. Each statement maps to
@@ -451,6 +465,7 @@ isBlockBody = \case
   EApp _ _ x -> isBlockBody x
   EInfix _ _ _ b -> isBlockBody b
   EParens {} -> False
+  EAscribe {} -> False
   EVar {} -> False
   ELit {} -> False
   ECon {} -> False

@@ -800,6 +800,24 @@ pParensNoLineComments = do
   start <- P.getSourcePos
   _ <- symNoLine "("
   e <- pExprNoLineComments
+  -- Optional expression-level type ascription: @(e : T)@. Symmetric
+  -- to 'pParenOrAscribePattern' on the pattern side. The ':' cannot
+  -- appear inside a bare expression, so there is no ambiguity with
+  -- @pExprNoLineComments@ above — if a ':' follows here, it is the
+  -- ascription colon, full stop.
+  --
+  -- Wrapped in 'try' because we also allow an optional newline + indent
+  -- before the @':'@ — needed for multi-line inner expressions
+  -- (@(case … of … \\n : T)@). If the newline is consumed but no @':'@
+  -- follows, we backtrack so the closing-paren-on-fresh-line path
+  -- below picks up the same newline.
+  ascription <- P.optional $ P.try $ do
+    _ <- P.optional $ try $ do
+      void C.eol
+      skipBlankLinesNoComments
+      hspaceNoComments
+    _ <- symNoLine ":"
+    pTypeNoLineComments
   -- Allow optional newline + indent before ')' so a multi-line block
   -- form inside parens can close on a fresh line. The renderer needs
   -- this whenever wrapping ECase / EDo, because a trailing '--' on
@@ -811,7 +829,10 @@ pParensNoLineComments = do
     hspaceNoComments
   _ <- symNoLine ")"
   end <- P.getSourcePos
-  pure (EParens (toSrcSpan start end) e)
+  let sp = toSrcSpan start end
+  pure $ case ascription of
+    Just ty -> EAscribe sp e ty
+    Nothing -> EParens sp e
 
 pLitNoLineComments :: Parser Expr
 pLitNoLineComments =

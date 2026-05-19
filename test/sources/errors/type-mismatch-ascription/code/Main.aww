@@ -1,0 +1,8 @@
+-- Error: ascription of integer literal to a non-numeric type.
+-- The bidirectional check pushes 'String' as the expected type
+-- of '42'; the literal cannot fit any non-Int type and the
+-- mismatch is reported pointing at the literal.
+import IO.Stdout
+
+main : IO Never Unit
+main = IO.Stdout.print (42 : String)

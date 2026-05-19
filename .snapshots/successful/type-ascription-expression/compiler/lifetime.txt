@@ -1,0 +1,25 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+identity:
+  param           x                               count=1
+
+ascribedCall:
+  case-pattern    __w0                            count=0
+  case-pattern    n                               count=1
+
+joined:
+  case-pattern    $do_e_34_3                      count=1
+  case-pattern    ab                              count=1
+  case-pattern    $do_e_35_3                      count=1
+  case-pattern    abc                             count=1
+  case-pattern    $do_e_36_3                      count=1
+  case-pattern    abcd                            count=1
+
+main:
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=1
+

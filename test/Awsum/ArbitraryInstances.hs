@@ -321,6 +321,7 @@ instance Arbitrary Expr where
             (3, EInfix noSpan OpPipe <$> go (n `div` 2) <*> go (n `div` 2)),
             (2, genLam (n `div` 2)),
             (2, genLet (n `div` 2)),
+            (2, EAscribe noSpan <$> go (n `div` 2) <*> resize (n `div` 2) arbitrary),
             -- Block forms in nested position. Lower weight + steeper
             -- size division (n `div` 3) — they expand into multi-line
             -- shapes whose parser layout is layout-sensitive; flooding
@@ -365,6 +366,7 @@ instance Arbitrary Expr where
           DoLet _ _ _ e -> [e]
           DoExpr _ e -> [e]
     ELet _sp _ _ e body -> [e, body] <> [ELet noSpan (PVar noSpan "x") Nothing e' body | e' <- shrink e] <> [ELet noSpan (PVar noSpan "x") Nothing e body' | body' <- shrink body]
+    EAscribe _sp e ty -> e : [EAscribe noSpan e' ty | e' <- shrink e] <> [EAscribe noSpan e ty' | ty' <- shrink ty]
 
 -- | Body of an 'EDo' block: zero or more leading bind/let/expr
 --   statements followed by a final 'DoExpr'. Shared between

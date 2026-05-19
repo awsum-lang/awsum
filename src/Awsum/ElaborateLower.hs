@@ -298,6 +298,7 @@ freeReferences = go
       EApp _ f x -> go f <> go x
       EInfix _ _ l r -> go l <> go r
       EParens _ e -> go e
+      EAscribe _ e _ -> go e
       ELit _ _ -> Set.empty
       ECon _ _ -> Set.empty
       EBuiltIn _ _ -> Set.empty
@@ -1256,6 +1257,14 @@ freshenWildcardArgs = go (0 :: Int)
 lowerExprM :: LowerEnv -> Locals -> Maybe Type' -> Expr -> LowerM CExpr
 lowerExprM env locals expected = \case
   EParens _sp e -> lowerExprM env locals expected e
+  -- Expression-level type ascription is erased to the inner expression,
+  -- with the ascription's @Type'@ overriding any ambient @expected@.
+  -- This is exactly what makes @(42 : Int32)@ legitimate at lowering
+  -- time: the integer literal needs a numeric type pin, and the
+  -- ascription is the one place a user can write that pin inside an
+  -- expression. Surface AST -> Core erases the boundary; no @CAscribe@
+  -- node exists.
+  EAscribe _sp e ty -> lowerExprM env locals (Just ty) e
   EVar _sp qn -> liftEither (lowerVar env qn)
   ELit _sp (LString t) -> pure (CString t)
   ELit sp (LInt n) -> case expected of
@@ -1366,6 +1375,7 @@ lowerExprM env locals expected = \case
         let isLamHead = \case
               ELam {} -> True
               EParens _ inner -> isLamHead inner
+              EAscribe _ inner _ -> isLamHead inner
               _ -> False
             mHeadTy = case f0 of
               EVar _ qn -> leTypeOf env qn
@@ -1420,6 +1430,7 @@ lowerExprM env locals expected = \case
 argSubst :: LowerEnv -> Type' -> Expr -> Subst
 argSubst env expected = \case
   EParens _ inner -> argSubst env expected inner
+  EAscribe _ inner _ -> argSubst env expected inner
   EVar _ qn -> case leTypeOf env qn of
     Just t -> fromRight mempty (unify expected t)
     Nothing -> mempty
@@ -1603,6 +1614,7 @@ lowerArgWithRowInjectionM env locals mExpected x = case mExpected of
               pure (CRow tag v)
             _ -> liftEither $ Left (TELowering "lowering: integer literal in row position has no unique int label")
           EParens _ inner -> lowerArgWithRowInjectionM env locals mExpected inner
+          EAscribe _ inner _ -> lowerArgWithRowInjectionM env locals mExpected inner
           _ -> case synthLabelType env x of
             Just lbl@(TyVar _ _)
               | lbl `elem` labels ->
@@ -1844,6 +1856,12 @@ synthLabelType env = \case
   ELit _ (LString _) -> Just (TyCon noSpan "String")
   ELit _ (LInt _) -> Nothing -- caller resolves via row's int label
   EParens _ inner -> synthLabelType env inner
+  -- Ascription pins the type at lowering time without a synthesis
+  -- attempt on the inner: the user has stated the answer. (If the
+  -- inner shape is itself non-synthesisable — e.g. a lambda — the
+  -- ascription still gives the row-injection / dispatch a concrete
+  -- label to work with, which is the whole point of writing it.)
+  EAscribe _ _ ty -> Just ty
   EInfix _ OpConcat _ _ -> case lookupBuiltIn "concatString" of
     Just t -> snd (splitArrowN 2 t)
     Nothing -> Nothing

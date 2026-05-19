@@ -215,6 +215,19 @@ renderExprPrec ctx indent e =
        in if rendersMultiLine e'
             then "(" <> inner <> "\n" <> T.replicate indent " " <> ")"
             else parens inner
+    EAscribe _sp e' ty ->
+      -- Expression-level type ascription: @(e : T)@. Renders verbatim
+      -- with the parens — the parser only accepts ascription wrapped
+      -- in parens ('pParensNoLineComments'), and ascription syntax
+      -- ALWAYS uses parens (there is no bare @e : T@ form). Multi-line
+      -- inner expressions take the same fresh-line ')' treatment as
+      -- 'EParens' to keep the ')' from being eaten by a trailing '--'
+      -- on an inner case arm.
+      let inner = renderExprPrec 0 indent e'
+          tyText = renderType ty
+       in if rendersMultiLine e'
+            then "(" <> inner <> "\n" <> T.replicate indent " " <> " : " <> tyText <> ")"
+            else "(" <> inner <> " : " <> tyText <> ")"
     ECase _sp scrut alts trailingComments ->
       -- Case is always at top precedence; parenthesize if nested.
       -- Arm column is established by the first arm itself
@@ -532,6 +545,7 @@ rendersMultiLine = \case
   e@(EInfix _ OpPipe _ _) | length (collectPipeChain e) >= 3 -> True
   EInfix _ _ a b -> rendersMultiLine a || rendersMultiLine b
   EParens _ inner -> rendersMultiLine inner
+  EAscribe _ inner _ -> rendersMultiLine inner
   EVar {} -> False
   ELit {} -> False
   ECon {} -> False
