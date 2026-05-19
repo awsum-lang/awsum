@@ -430,7 +430,6 @@ case.arm.4.56:
   %t59 = load ptr, ptr %t58
   call void @__inc_ref(ptr %t59)
   %t60 = call ptr @v_maxInt32()
-  call void @__inc_ref(ptr %t60)
   %t61 = call ptr @__negInt32(ptr %t60)
   %t62 = call ptr @v_render(ptr %t61)
   %t63 = getelementptr ptr, ptr %t62, i32 0
@@ -456,7 +455,6 @@ case.arm.4.76:
   %t79 = load ptr, ptr %t78
   call void @__inc_ref(ptr %t79)
   %t80 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t80)
   %t81 = call ptr @__negInt32(ptr %t80)
   %t82 = call ptr @v_render(ptr %t81)
   %t83 = getelementptr ptr, ptr %t82, i32 0

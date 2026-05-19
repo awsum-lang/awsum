@@ -280,14 +280,12 @@ define internal ptr @v_n() {
 
 define internal ptr @v_basic() {
   %t0 = call ptr @v_n()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @__showInt32(ptr %t0)
   ret ptr %t1
 }
 
 define internal ptr @v_chained() {
   %t0 = call ptr @v_n()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = call ptr @v_wrap(ptr %t1)
   %t3 = call ptr @v_wrap(ptr %t2)
@@ -296,7 +294,6 @@ define internal ptr @v_chained() {
 
 define internal ptr @v_viaLambda() {
   %t0 = call ptr @v_n()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__lam_7(ptr %t0)
   ret ptr %t1
 }
@@ -307,7 +304,6 @@ define internal ptr @v_wrap(ptr %v_s) {
 
 define internal ptr @v_joined() {
   %t0 = call ptr @v_basic()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @__concat(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.0, i64 12))
   %t2 = getelementptr ptr, ptr %t1, i32 0
   %t3 = load ptr, ptr %t2
@@ -333,7 +329,6 @@ case.arm.4.15:
   call void @__inc_ref(ptr %t18)
   call void @__inc_ref(ptr %t18)
   %t19 = call ptr @v_chained()
-  call void @__inc_ref(ptr %t19)
   %t20 = call ptr @__concat(ptr %t18, ptr %t19)
   %t21 = getelementptr ptr, ptr %t20, i32 0
   %t22 = load ptr, ptr %t21
@@ -383,7 +378,6 @@ case.arm.4.52:
   call void @__inc_ref(ptr %t55)
   call void @__inc_ref(ptr %t55)
   %t56 = call ptr @v_viaLambda()
-  call void @__inc_ref(ptr %t56)
   %t57 = call ptr @__concat(ptr %t55, ptr %t56)
   br label %case.end.4.53
 case.end.4.53:
@@ -473,6 +467,7 @@ case.default.4:
   unreachable
 case.join.5:
   %t38 = phi ptr [%t10, %case.end.3.7], [%t26, %case.end.4.23]
+  call void @__free_recursive(ptr %t0)
   ret ptr %t38
 }
 

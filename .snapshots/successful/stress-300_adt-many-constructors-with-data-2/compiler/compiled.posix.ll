@@ -5659,7 +5659,6 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v_res()
-  call void @__inc_ref(ptr %t3)
   %t4 = call ptr @v_showBool(ptr %t3)
   %t5 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t4, ptr %t5

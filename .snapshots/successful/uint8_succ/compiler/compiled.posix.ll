@@ -353,7 +353,6 @@ case.default.3:
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_maxUInt8()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @__succUInt8(ptr %t0)
   %t2 = call ptr @v_render(ptr %t1)
   %t3 = getelementptr ptr, ptr %t2, i32 0
@@ -405,7 +404,6 @@ case.arm.4.36:
   %t39 = load ptr, ptr %t38
   call void @__inc_ref(ptr %t39)
   %t40 = call ptr @v_minUInt8()
-  call void @__inc_ref(ptr %t40)
   %t41 = call ptr @__succUInt8(ptr %t40)
   %t42 = call ptr @v_render(ptr %t41)
   %t43 = getelementptr ptr, ptr %t42, i32 0

@@ -448,7 +448,7 @@
 
   (func $v_main (result i32)
     (local $__drop_tmp i32)
-    (call $v__let_7 (call $v_describe (block (result i32) (local.set $__inc_tmp (call $v_f)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))))
+    (call $v__let_7 (call $v_describe (call $v_f))))
 
   (func $v__let_7 (param $v_res i32) (result i32)
     (local $__con_0 i32)

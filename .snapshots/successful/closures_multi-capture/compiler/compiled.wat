@@ -405,7 +405,7 @@
 
   (func $v_both (param $v_a i32) (param $v_b i32) (result i32)
     (local $__drop_tmp i32)
-    (call $v__df_apply_0 (block (result i32) (local.set $__inc_tmp (call $v_zero)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (block (result i32) (local.set $__inc_tmp (local.get $v_a)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (block (result i32) (local.set $__inc_tmp (local.get $v_b)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
+    (call $v__df_apply_0 (call $v_zero) (block (result i32) (local.set $__inc_tmp (local.get $v_a)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (block (result i32) (local.set $__inc_tmp (local.get $v_b)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
 
   (func $v_bothBody (param $v_a i32) (param $v_b i32) (result i32)
     (local $__con_0 i32)

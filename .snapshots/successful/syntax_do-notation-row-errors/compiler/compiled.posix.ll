@@ -422,6 +422,7 @@ case.default.44:
   unreachable
 case.join.45:
   %t63 = phi ptr [%t50, %case.end.3.47], [%t62, %case.end.4.59]
+  call void @__free_recursive(ptr %t40)
   br label %case.end.4.37
 case.end.4.37:
   br label %case.join.27
@@ -429,6 +430,7 @@ case.default.26:
   unreachable
 case.join.27:
   %t64 = phi ptr [%t32, %case.end.3.29], [%t63, %case.end.4.37]
+  call void @__free_recursive(ptr %t22)
   br label %case.end.4.19
 case.end.4.19:
   br label %case.join.5
@@ -436,6 +438,7 @@ case.default.4:
   unreachable
 case.join.5:
   %t65 = phi ptr [%t10, %case.end.3.7], [%t64, %case.end.4.19]
+  call void @__free_recursive(ptr %t0)
   ret ptr %t65
 }
 
@@ -533,7 +536,6 @@ case.default.3:
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_f()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v_describe(ptr %t0)
   %t2 = call ptr @v__let_7(ptr %t1)
   ret ptr %t2

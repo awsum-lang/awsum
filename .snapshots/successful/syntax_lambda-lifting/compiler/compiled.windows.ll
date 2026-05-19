@@ -395,6 +395,7 @@ case.default.4:
   unreachable
 case.join.5:
   %t46 = phi ptr [%t10, %case.end.3.7], [%t45, %case.end.4.19]
+  call void @__free_recursive(ptr %t0)
   ret ptr %t46
 }
 
@@ -471,7 +472,6 @@ case.default.3:
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_g()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v_describe(ptr %t0)
   %t2 = getelementptr ptr, ptr %t1, i32 0
   %t3 = load ptr, ptr %t2
@@ -496,7 +496,6 @@ case.arm.4.15:
   %t18 = load ptr, ptr %t17
   call void @__inc_ref(ptr %t18)
   %t19 = call ptr @v_inc42()
-  call void @__inc_ref(ptr %t19)
   %t20 = call ptr @__showInt32(ptr %t19)
   %t21 = call ptr @__concat(ptr %t20, ptr getelementptr inbounds (i8, ptr @.str.3, i64 12))
   %t22 = getelementptr ptr, ptr %t21, i32 0

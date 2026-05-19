@@ -366,14 +366,14 @@
 
   (func $v_doubled (result i32)
     (local $__drop_tmp i32)
-    (call $v__lam_8 (block (result i32) (local.set $__inc_tmp (call $v_runMe)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
+    (call $v__lam_8 (call $v_runMe)))
 
   (func $v_main (result i32)
     (local $__con_0 i32)
     (local $__con_1 i32)
     (local $__con_2 i32)
     (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $__show_i32 (block (result i32) (local.set $__inc_tmp (call $v_doubled)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $__show_i32 (call $v_doubled))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
 
   (func $v__lam_7 (param $v_x i32) (result i32)
     (local $__drop_tmp i32)

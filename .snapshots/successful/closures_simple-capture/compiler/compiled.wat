@@ -366,7 +366,7 @@
 
   (func $v_captureFn (param $v_k i32) (result i32)
     (local $__drop_tmp i32)
-    (call $v__df_apply_0 (block (result i32) (local.set $__inc_tmp (call $v_answer)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (block (result i32) (local.set $__inc_tmp (local.get $v_k)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
+    (call $v__df_apply_0 (call $v_answer) (block (result i32) (local.set $__inc_tmp (local.get $v_k)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
 
   (func $v_main (result i32)
     (local $__con_0 i32)

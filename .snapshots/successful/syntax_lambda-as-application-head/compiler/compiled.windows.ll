@@ -226,7 +226,6 @@ define internal ptr @v_runMe() {
 
 define internal ptr @v_doubled() {
   %t0 = call ptr @v_runMe()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__lam_8(ptr %t0)
   ret ptr %t1
 }
@@ -237,7 +236,6 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v_doubled()
-  call void @__inc_ref(ptr %t3)
   %t4 = call ptr @__showInt32(ptr %t3)
   %t5 = getelementptr ptr, ptr %t0, i32 1
   store ptr %t4, ptr %t5

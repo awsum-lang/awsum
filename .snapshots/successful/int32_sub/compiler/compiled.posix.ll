@@ -450,7 +450,6 @@ case.arm.4.38:
   %t41 = load ptr, ptr %t40
   call void @__inc_ref(ptr %t41)
   %t42 = call ptr @v_maxInt32()
-  call void @__inc_ref(ptr %t42)
   %t43 = call ptr @__alloc(i64 4, i32 0)
   store i32 -1, ptr %t43
   %t44 = call ptr @__subInt32(ptr %t42, ptr %t43)
@@ -478,7 +477,6 @@ case.arm.4.59:
   %t62 = load ptr, ptr %t61
   call void @__inc_ref(ptr %t62)
   %t63 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t63)
   %t64 = call ptr @__alloc(i64 4, i32 0)
   store i32 1, ptr %t64
   %t65 = call ptr @__subInt32(ptr %t63, ptr %t64)
@@ -508,7 +506,6 @@ case.arm.4.80:
   %t84 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t84
   %t85 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t85)
   %t86 = call ptr @__subInt32(ptr %t84, ptr %t85)
   %t87 = call ptr @v_render(ptr %t86)
   %t88 = getelementptr ptr, ptr %t87, i32 0

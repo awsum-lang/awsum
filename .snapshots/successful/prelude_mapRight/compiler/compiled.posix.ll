@@ -302,7 +302,6 @@ define internal ptr @v_bad() {
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_ok()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__df_mapRight_0(ptr %t0)
   %t2 = call ptr @v__let_11(ptr %t1)
   ret ptr %t2
@@ -473,7 +472,6 @@ define internal ptr @v__lam_10(ptr %v_n) {
 define internal ptr @v__let_11(ptr %v_mappedOk) {
   call void @__inc_ref(ptr %v_mappedOk)
   %t0 = call ptr @v_bad()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__df_mapRight_1(ptr %t0)
   %t2 = call ptr @v__let_9(ptr %v_mappedOk, ptr %t1)
   call void @__free_recursive(ptr %v_mappedOk)

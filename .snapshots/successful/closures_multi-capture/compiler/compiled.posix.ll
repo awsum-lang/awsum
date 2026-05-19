@@ -280,7 +280,6 @@ define internal ptr @v_zero() {
 
 define internal ptr @v_both(ptr %v_a, ptr %v_b) {
   %t0 = call ptr @v_zero()
-  call void @__inc_ref(ptr %t0)
   call void @__inc_ref(ptr %v_a)
   call void @__inc_ref(ptr %v_b)
   %t1 = call ptr @v__df_apply_0(ptr %t0, ptr %v_a, ptr %v_b)

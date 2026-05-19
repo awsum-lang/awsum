@@ -225,7 +225,6 @@ define internal ptr @v_answer() {
 
 define internal ptr @v_captureFn(ptr %v_k) {
   %t0 = call ptr @v_answer()
-  call void @__inc_ref(ptr %t0)
   call void @__inc_ref(ptr %v_k)
   %t1 = call ptr @v__df_apply_0(ptr %t0, ptr %v_k)
   call void @__free_recursive(ptr %v_k)

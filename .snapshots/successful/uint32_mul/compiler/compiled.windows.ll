@@ -415,9 +415,7 @@ case.arm.4.38:
   %t41 = load ptr, ptr %t40
   call void @__inc_ref(ptr %t41)
   %t42 = call ptr @v_maxUInt32()
-  call void @__inc_ref(ptr %t42)
   %t43 = call ptr @v_maxUInt32()
-  call void @__inc_ref(ptr %t43)
   %t44 = call ptr @__mulUInt32(ptr %t42, ptr %t43)
   %t45 = call ptr @v_render(ptr %t44)
   %t46 = getelementptr ptr, ptr %t45, i32 0
@@ -443,9 +441,7 @@ case.arm.4.59:
   %t62 = load ptr, ptr %t61
   call void @__inc_ref(ptr %t62)
   %t63 = call ptr @v_minUInt32()
-  call void @__inc_ref(ptr %t63)
   %t64 = call ptr @v_maxUInt32()
-  call void @__inc_ref(ptr %t64)
   %t65 = call ptr @__mulUInt32(ptr %t63, ptr %t64)
   %t66 = call ptr @v_render(ptr %t65)
   %t67 = getelementptr ptr, ptr %t66, i32 0

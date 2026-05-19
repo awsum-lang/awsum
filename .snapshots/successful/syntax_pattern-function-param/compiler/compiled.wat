@@ -469,7 +469,7 @@
 
   (func $v_main (result i32)
     (local $__drop_tmp i32)
-    (call $v__let_10 (call $v_sumTriple (block (result i32) (local.set $__inc_tmp (call $v_triple)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))))
+    (call $v__let_10 (call $v_sumTriple (call $v_triple))))
 
   (func $v__let_7 (param $v_res i32) (result i32)
     (local $__con_0 i32)
@@ -499,7 +499,7 @@
 
   (func $v__let_10 (param $v_n i32) (result i32)
     (local $__drop_tmp i32)
-    (call $v__let_9 (block (result i32) (local.set $__inc_tmp (local.get $v_n)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $v__df_apply_0 (block (result i32) (local.set $__inc_tmp (call $v_pair)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))))
+    (call $v__let_9 (block (result i32) (local.set $__inc_tmp (local.get $v_n)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $v__df_apply_0 (call $v_pair))))
 
   (func $v__df_apply_0 (param $v_t i32) (result i32)
     (local $__drop_tmp i32)
