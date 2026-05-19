@@ -263,12 +263,15 @@ define internal ptr @v__df_wrap_0(ptr %v_x) {
   ret ptr %t0
 }
 
+declare i32 @_setmode(i32, i32)
 declare ptr @GetCommandLineW()
 declare ptr @CommandLineToArgvW(ptr, ptr)
 declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)
 
 define i32 @main(i32 %argc_posix, ptr %argv_posix) {
 entry:
+  call i32 @_setmode(i32 1, i32 32768)
+  call i32 @_setmode(i32 0, i32 32768)
   %cmdline = call ptr @GetCommandLineW()
   %argc_slot = alloca i32
   %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)

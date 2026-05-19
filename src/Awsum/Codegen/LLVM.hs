@@ -2332,16 +2332,30 @@ footerPosix =
 --
 --   We skip @LocalFree@ on the argv array — main returns immediately
 --   after, so the OS reclaims it.
+--
+--   Before any IO, force fd 0 and fd 1 into binary mode through
+--   @_setmode@. MSVC CRT opens stdio in text mode by default, which
+--   translates @\\n@ ↔ @\\r\\n@ on read/write and treats @^Z@ as EOF
+--   on input. The @write(1, …)@ path the @__print@ helper uses goes
+--   through MSVC's @_write@, so any program that emits a @\\n@ would
+--   silently get a @\\r\\n@ on stdout — breaking the cross-target
+--   "identical stdout" invariant. The @_O_BINARY@ flag is @0x8000@.
+--   Returns the previous mode; we discard it. Idempotent on backends
+--   whose CRT already opens stdio in binary mode (e.g. some mingw-w64
+--   link configurations).
 footerWindows :: Text
 footerWindows =
   unlines
     [ "",
+      "declare i32 @_setmode(i32, i32)",
       "declare ptr @GetCommandLineW()",
       "declare ptr @CommandLineToArgvW(ptr, ptr)",
       "declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)",
       "",
       "define i32 @main(i32 %argc_posix, ptr %argv_posix) {",
       "entry:",
+      "  call i32 @_setmode(i32 1, i32 32768)",
+      "  call i32 @_setmode(i32 0, i32 32768)",
       "  %cmdline = call ptr @GetCommandLineW()",
       "  %argc_slot = alloca i32",
       "  %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)",
