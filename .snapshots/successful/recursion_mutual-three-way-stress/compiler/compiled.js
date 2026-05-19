@@ -3,7 +3,6 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predInt32(x){ return x === -2147483648 ? [3, [13]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -38,39 +37,7 @@ function v_showUnderflowError(v__wild0){
     return "UnderflowError";
 }
 
-function v_showResult(v_r){
-    {
-      const __s = v_r;
-      switch (__s[0]) {
-        case 3: {
-          const v_e = __s[1];
-          return __concat("left: ", (v_showUnderflowError)(v_e));
-        }
-        case 4: {
-          const v_v = __s[1];
-          return __concat("right: ", String(v_v));
-        }
-      }
-    }
-}
-
-const main = (v__let_7)((v_showResult)((v_stepA)((1000000|0))));
-
-function v__let_7(v_res){
-    {
-      const __s = v_res;
-      switch (__s[0]) {
-        case 3: {
-          const v___w0 = __s[1];
-          return [7, "STRING_TOO_LONG", [5, [0]]];
-        }
-        case 4: {
-          const v_s = __s[1];
-          return [7, v_s, [5, [0]]];
-        }
-      }
-    }
-}
+const main = ((s) => { switch(s[0]) { case 3: { const v_e = s[1]; return [7, (v_showUnderflowError)(v_e), [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_stepA)((1000000|0)));
 
 function v__scc_stepA_stepB_stepC(v__args){
   while (true) {
