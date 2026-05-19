@@ -35,14 +35,14 @@ function v_show(v_x){
     {
       const __s = v_x;
       switch (__s[0]) {
-        case 21: {
+        case 22: {
           return "one";
         }
       }
     }
 }
 
-const main = [7, (v_show)([21]), [5, [0]]];
+const main = [7, (v_show)([22]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

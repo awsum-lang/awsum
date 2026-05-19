@@ -386,8 +386,9 @@ doAssemble prog@(CoreProgram decls) = do
   userMs <- traverse (mkDecl valNames funNames arities) decls
   mEntryArg <- mkEntryArgEither
   mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs else pure []
+  mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll else pure []
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg] <> mGetArgs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -3516,6 +3517,140 @@ mkEntryArgEither = do
         mMaxLocals = 256
       }
 
+-- | __stdinReadAll: zero-arg helper for
+--   'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
+--   'IOStdinReadAll' arm. Consumes 'System.in' to EOF into a
+--   'ByteArrayOutputStream', decodes the bytes via
+--   @new String(byte[], StandardCharsets.UTF_8)@, then routes the
+--   result through '__entryArgEither' for the strict-UTF-16
+--   validation 'getArgs' uses.
+--
+--   The explicit @StandardCharsets.UTF_8@ avoids depending on the
+--   JVM default charset. 'System.in' is not affected by
+--   @sun.jnu.encoding@ — that knob only mangles 'argv'. This is the
+--   reason 'IO.Stdin.readAll' on Windows×JVM round-trips
+--   supplementary-plane characters that 'IO.Args.getArgs' silently
+--   replaces with @?@.
+--
+--   Two branch targets: @L_loop_start@ (top of the read loop) and
+--   @L_done@ (post-EOF). Each gets a full_frame StackMapTable entry
+--   for the JVM verifier — @[B@ is the JVM class name for the byte[]
+--   verification type carried in slot 1 across both frames.
+--
+--   Local slots: 0 = ByteArrayOutputStream, 1 = byte[] (buf during
+--   loop, the final byte[] after toByteArray), 2 = int (got).
+mkStdinReadAll :: AsmM MInfo
+mkStdinReadAll = do
+  ni <- addUtf8 "__stdinReadAll"
+  di <- addUtf8 "()Ljava/lang/Object;"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  baosCls <- addClass "java/io/ByteArrayOutputStream"
+  baosInitRef <- addMRef "java/io/ByteArrayOutputStream" "<init>" "()V"
+  baosWriteRef <- addMRef "java/io/ByteArrayOutputStream" "write" "([BII)V"
+  baosToBytesRef <- addMRef "java/io/ByteArrayOutputStream" "toByteArray" "()[B"
+  byteArrCls <- addClass "[B"
+  sysInRef <- addFRef "java/lang/System" "in" "Ljava/io/InputStream;"
+  readRef <- addMRef "java/io/InputStream" "read" "([BII)I"
+  strCls <- addClass "java/lang/String"
+  utf8Ref <- addFRef "java/nio/charset/StandardCharsets" "UTF_8" "Ljava/nio/charset/Charset;"
+  strInitRef <- addMRef "java/lang/String" "<init>" "([BLjava/nio/charset/Charset;)V"
+  entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  let bufSize :: Word16
+      bufSize = 8192
+      preamble :: [Word8]
+      preamble =
+        [0xBB, hi8 baosCls, lo8 baosCls] -- new ByteArrayOutputStream
+          <> [0x59] -- dup
+          <> [0xB7, hi8 baosInitRef, lo8 baosInitRef] -- invokespecial <init>()V
+          <> [0x4B] -- astore_0
+          <> [0x11, hi8 bufSize, lo8 bufSize] -- sipush 8192
+          <> [0xBC, 0x08] -- newarray T_BYTE
+          <> [0x4C] -- astore_1
+      preambleLen = length preamble
+      lLoopStart = preambleLen
+      loopPreIfle :: [Word8]
+      loopPreIfle =
+        [0xB2, hi8 sysInRef, lo8 sysInRef] -- getstatic System.in
+          <> [0x2B] -- aload_1
+          <> [0x03] -- iconst_0
+          <> [0x11, hi8 bufSize, lo8 bufSize] -- sipush 8192
+          <> [0xB6, hi8 readRef, lo8 readRef] -- invokevirtual read
+          <> [0x3D] -- istore_2
+          <> [0x1C] -- iload_2
+      ifleAt = lLoopStart + length loopPreIfle
+      loopPostIfle :: [Word8]
+      loopPostIfle =
+        [0x2A] -- aload_0
+          <> [0x2B] -- aload_1
+          <> [0x03] -- iconst_0
+          <> [0x1C] -- iload_2
+          <> [0xB6, hi8 baosWriteRef, lo8 baosWriteRef] -- invokevirtual write
+      gotoAt = ifleAt + 3 + length loopPostIfle -- +3 for ifle's own bytes
+      lDone = gotoAt + 3 -- +3 for goto's own bytes
+      doneBlock :: [Word8]
+      doneBlock =
+        [0x2A] -- aload_0
+          <> [0xB6, hi8 baosToBytesRef, lo8 baosToBytesRef] -- invokevirtual toByteArray
+          <> [0x4C] -- astore_1 (reuse slot 1 for the final byte[])
+          <> [0xBB, hi8 strCls, lo8 strCls] -- new String
+          <> [0x59] -- dup
+          <> [0x2B] -- aload_1
+          <> [0xB2, hi8 utf8Ref, lo8 utf8Ref] -- getstatic UTF_8
+          <> [0xB7, hi8 strInitRef, lo8 strInitRef] -- invokespecial String/<init>
+          <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
+          <> [0xB0] -- areturn
+      mkBr :: Word8 -> Int -> [Word8]
+      mkBr op rel =
+        let w = fromIntegral rel :: Word16
+         in [op, hi8 w, lo8 w]
+      ifleBytes = mkBr 0x9E (lDone - ifleAt)
+      gotoBytes = mkBr 0xA7 (lLoopStart - gotoAt)
+      code =
+        preamble
+          <> loopPreIfle
+          <> ifleBytes
+          <> loopPostIfle
+          <> gotoBytes
+          <> doneBlock
+      baosVT, byteArrVT, intVT :: [Word8]
+      baosVT = [7, hi8 baosCls, lo8 baosCls]
+      byteArrVT = [7, hi8 byteArrCls, lo8 byteArrCls]
+      intVT = [1]
+      mkFullFrame :: Word16 -> [[Word8]] -> [Word8]
+      mkFullFrame delta locals =
+        [255, hi8 delta, lo8 delta]
+          <> [0, fromIntegral (length locals)]
+          <> mconcat locals
+          <> [0, 0] -- empty stack
+      f1Delta = fromIntegral lLoopStart :: Word16
+      f2Delta = fromIntegral (lDone - lLoopStart - 1) :: Word16
+      smtEntries :: [Word8]
+      smtEntries =
+        mkFullFrame f1Delta [baosVT, byteArrVT]
+          <> mkFullFrame f2Delta [baosVT, byteArrVT, intVT]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+          <> [0, 2] -- 2 entries
+          <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr,
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
 mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
@@ -4070,6 +4205,17 @@ emitExpr ctx = \case
       -- 'BuiltIn.internalGetArgs' — invokestatic AwsumMain/__getArgs.
       -- The helper reads the cached argv[0] (set in 'mkMain' via
       -- 'System.setProperty') and routes it through '__entryArgEither'.
+      -- 'BuiltIn.internalStdinReadAllAsUtf16' — invokestatic AwsumMain/__stdinReadAll.
+      -- Consumes 'System.in' to EOF and routes the decoded bytes through
+      -- '__entryArgEither' for strict-UTF-16 validation.
+      CBuiltIn "internalStdinReadAllAsUtf16" | [] <- xs -> do
+        ref <- addMRef "AwsumMain" "__stdinReadAll" "()Ljava/lang/Object;"
+        pure
+          CodeWithMeta
+            { cwCode = [0xB8, hi8 ref, lo8 ref],
+              cwBranchTargets = [],
+              cwIntSlots = []
+            }
       CBuiltIn "internalGetArgs" | [] <- xs -> do
         ref <- addMRef "AwsumMain" "__getArgs" "()Ljava/lang/Object;"
         pure CodeWithMeta {cwCode = [0xB8, hi8 ref, lo8 ref], cwBranchTargets = [], cwIntSlots = []}

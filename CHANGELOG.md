@@ -11,6 +11,7 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 ### Added
 
 - **Permutation-aware `CReuse` elision + linear binder elision in LLVM codegen.** Extends the existing self-move elision in `CReuse` to cover the case where an arm-binder moves to a different slot of the same cell (e.g. `Cons x xs → CContinue [xs, CReuse "lst" 24 [$k, x]]` in `$cps$clone` — `x` moves from slot 1 to slot 2). For arm-binders whose only use is a `CReuse` field of the same scrut (computed via `Awsum.Lifetime.elidableArmBinders`), codegen now skips: the inc-on-extract at case match, the dec-via-`CDrop` at arm end, the dec-old of the binder's old slot, and the inc-new of its new slot — the store at the new slot still emits (for permutation-move) or is skipped (for self-move). Modest wall improvements (~5-6%) on `CReuse`-heavy benchmarks (`gc_pressure_clone`, `list_reverse_repeat`); WASM not modified in this pass.
+- **`IO.Stdin.readAll : IO (StringTooLong | UnpairedUtf16Surrogate) String`** — CLI platform built-in that reads stdin to EOF in the IO chain. POSIX-honest semantics: each call consumes whatever bytes remain on fd 0, so a second call after EOF decodes to `Right ""`. Same error row as `IO.Args.getArgs` — decoding failures (length cap, unpaired UTF-16 surrogate) compose through `handleErrorIO`. Per-backend implementation reads raw bytes (`read(2)` on LLVM, `System.in.read` on JVM, `Console.OpenStandardInput` + `StreamReader` on CLR, WASI `fd_read` on WASM, `fs.readFileSync(0)` on JS) and decodes UTF-8 in the runtime, bypassing host argv decoders.
 
 ### Changed
 
@@ -21,6 +22,7 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 ### Fixed
 
 - **LLVM and WASM heap leak on every reference to a top-level `CValDef`.** The codegens were treating `CVar` references to top-level value definitions (e.g. `zero : Int32; zero = 0`) the same as borrowed-local CVars — emitting `__inc_ref` over the result. But each such reference lowers to `call @v_name()` which already allocates a fresh `+1` cell. The spurious inc left every referenced cell at refcount `1` forever, leaking once per reference in a hot loop. With the fix, peak RSS on `unused_case_binder_repeat` drops from 155 MiB to 2 MiB; on `mutual_three_way_repeat` from 1.5 GiB to 1.6 MiB. JVM/CLR/JS unaffected (host GC).
+- **String property tests on Windows × JVM.** The 5 string-touching properties (`concat-left-identity`, `concat-right-identity`, `concat-associative`, `lengths-three-functions`, `concat-length-additive`) previously diverged on Windows × JVM because the JVM startup decoder (`sun.jnu.encoding`) mangled supplementary-plane characters in `argv[1]` before they reached user code. Property tests now feed input via `IO.Stdin.readAll`; stdin bypasses the startup decoder, so the round-trip is byte-clean on every host. The `temporarilyBroken` registry that skipped these cells is now empty — the Known Issue from 0.0.4 is closed.
 
 ### Security
 

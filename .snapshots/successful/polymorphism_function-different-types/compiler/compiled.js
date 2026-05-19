@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -36,7 +36,7 @@ function v_unwrap(v_box){
     {
       const __s = v_box;
       switch (__s[0]) {
-        case 19: {
+        case 20: {
           const v_value = __s[1];
           return v_value;
         }
@@ -48,7 +48,7 @@ function v_showResult(v_r){
     {
       const __s = v_r;
       switch (__s[0]) {
-        case 20: {
+        case 21: {
           const v_a = __s[1];
           return v_a;
         }
@@ -56,9 +56,9 @@ function v_showResult(v_r){
     }
 }
 
-const main = (v__let_7)(((s) => { switch(s[0]) { case 3: { const v__do_e_20_9 = s[1]; return [3, v__do_e_20_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)((v_unwrap)([19, [20, "nested"]]))); } } })(__concat((v_unwrap)([19, "from box"]), " ")));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_20_9 = s[1]; return [3, v__do_e_20_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)((v_unwrap)([20, [21, "nested"]]))); } } })(__concat((v_unwrap)([20, "from box"]), " ")));
 
-function v__let_7(v_res){
+function v__let_12(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

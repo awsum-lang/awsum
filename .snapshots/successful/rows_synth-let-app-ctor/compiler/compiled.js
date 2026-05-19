@@ -43,16 +43,16 @@ function v_dispatch(v_x){
     }
 }
 
-const main = (v__let_7)([10, "world"]);
+const main = (v__let_12)([11, "world"]);
 
-function v__let_7(v_m){
+function v__let_12(v_m){
     {
       const __s = v_m;
       switch (__s[0]) {
-        case 9: {
+        case 10: {
           return [7, "n", [5, [0]]];
         }
-        case 10: {
+        case 11: {
           const v_x = __s[1];
           return [7, (v_dispatch)([1615808600, v_x]), [5, [0]]];
         }

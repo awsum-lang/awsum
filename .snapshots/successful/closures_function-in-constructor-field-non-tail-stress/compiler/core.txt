@@ -48,7 +48,7 @@ CoreProgram
                 ( CVar "$cps$countWithBox" )
                 [ CVar "b"
                 , CVar "n"
-                , CCon 21 []
+                , CCon 22 []
                 ]
             )
         , CFunDef "$cps$countWithBox"
@@ -104,7 +104,7 @@ CoreProgram
                                                 ( CContinue
                                                     [ CVar "b"
                                                     , CVar "m"
-                                                    , CCon 22
+                                                    , CCon 23
                                                         [ CVar "$k"
                                                         , CVar "b"
                                                         ]
@@ -127,17 +127,17 @@ CoreProgram
                 ( CCase
                     ( CVar "$k" )
                     [
-                        ( 21
+                        ( 22
                         , []
                         , CVar "$x"
                         )
                     ,
-                        ( 22
+                        ( 23
                         ,
-                            [ "$pk_22"
+                            [ "$pk_23"
                             , "b"
                             ]
-                        , CDrop DropFreeUnchecked "$pk_22"
+                        , CDrop DropFreeUnchecked "$pk_23"
                             ( CDrop DropFreeUnchecked "b"
                                 ( CCase
                                     ( CVar "$x" )
@@ -147,7 +147,7 @@ CoreProgram
                                         , CDrop DropFreeUnchecked "e"
                                             ( CDrop DropFreeUnchecked "$k"
                                                 ( CContinue
-                                                    [ CVar "$pk_22"
+                                                    [ CVar "$pk_23"
                                                     , CReuse "$x" 3
                                                         [ CVar "e" ]
                                                     ]
@@ -161,12 +161,12 @@ CoreProgram
                                             ( CCase
                                                 ( CVar "b" )
                                                 [
-                                                    ( 19
+                                                    ( 20
                                                     , [ "f" ]
                                                     , CDrop DropFreeUnchecked "f"
                                                         ( CDrop DropFreeUnchecked "$k"
                                                             ( CContinue
-                                                                [ CVar "$pk_22"
+                                                                [ CVar "$pk_23"
                                                                 , CReuse "$x" 4
                                                                     [ CCall
                                                                         ( CVar "$apply1" )
@@ -192,8 +192,8 @@ CoreProgram
             ( CCase
                 ( CCall
                     ( CVar "countWithBox" )
-                    [ CCon 19
-                        [ CCon 20 [] ]
+                    [ CCon 20
+                        [ CCon 21 [] ]
                     , CIntLit 1000000 TInt32
                     ]
                 )
@@ -226,7 +226,7 @@ CoreProgram
             ( CCase
                 ( CVar "$cl" )
                 [
-                    ( 20
+                    ( 21
                     , []
                     , CCall
                         ( CVar "identity" )

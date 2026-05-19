@@ -3,7 +3,7 @@
 -- parse and nothing that can fail, so the property runs over
 -- 'main raw' directly — Haskell expects the input back.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : String -> Either StringTooLong String
 property s = "" ++ s
@@ -21,6 +21,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

@@ -111,7 +111,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$let$7" )
+                            ( CVar "$let$12" )
                             [ CVar "a"
                             , CString "answer="
                             ]
@@ -129,7 +129,7 @@ CoreProgram
                         ( CCase
                             ( CVar "__rw" )
                             [
-                                ( 15
+                                ( 16
                                 , []
                                 , CCon 4
                                     [ CString "STRING_TOO_LONG" ]
@@ -195,7 +195,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$7"
+        , CFunDef "$let$12"
             [ "a"
             , "prefix"
             ]

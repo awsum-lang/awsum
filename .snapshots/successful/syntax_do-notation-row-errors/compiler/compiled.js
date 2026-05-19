@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_pureEither(v_x){
     return [4, v_x];
@@ -38,7 +38,7 @@ function v_runIO(v_io){
 
 const v_op1 = [4, (1|0)];
 
-const v_op2 = [3, [435006518, [21]]];
+const v_op2 = [3, [435006518, [22]]];
 
 const v_op3 = [4, (3|0)];
 
@@ -58,7 +58,7 @@ function v_describe(v_r){
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 19: {
+                    case 20: {
                       return [4, "ErrorA"];
                     }
                   }
@@ -69,7 +69,7 @@ function v_describe(v_r){
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 21: {
+                    case 22: {
                       return [4, "ErrorC"];
                     }
                   }
@@ -80,7 +80,7 @@ function v_describe(v_r){
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 20: {
+                    case 21: {
                       return [4, "ErrorB"];
                     }
                   }
@@ -97,9 +97,9 @@ function v_describe(v_r){
     }
 }
 
-const main = (v__let_7)((v_describe)(v_f));
+const main = (v__let_12)((v_describe)(v_f));
 
-function v__let_7(v_res){
+function v__let_12(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

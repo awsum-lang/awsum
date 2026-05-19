@@ -44,7 +44,7 @@ CoreProgram
             )
         , CFunDef "opB" [ "_n" ]
             ( CCon 3
-                [ CCon 20 [] ]
+                [ CCon 21 [] ]
             )
         , CFunDef "run" [ "x" ]
             ( CCase
@@ -67,7 +67,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$lift$7" )
+                            ( CVar "$lift$12" )
                             [ CCall
                                 ( CVar "opB" )
                                 [ CVar "a" ]
@@ -92,7 +92,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 19
+                                            ( 20
                                             , []
                                             , CCon 4
                                                 [ CString "ErrA" ]
@@ -107,7 +107,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 20
+                                            ( 21
                                             , []
                                             , CCon 4
                                                 [ CString "ErrB" ]
@@ -135,7 +135,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$8" )
+                ( CVar "$let$13" )
                 [ CCall
                     ( CVar "describe" )
                     [ CCall
@@ -144,7 +144,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$7" [ "__input" ]
+        , CFunDef "$lift$12" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -167,7 +167,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$8" [ "res" ]
+        , CFunDef "$let$13" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

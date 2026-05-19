@@ -4,15 +4,15 @@ runIO:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
-$let$7:
+$let$12:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$lam$8:
+$lam$13:
   param           n                               count=1
 
-$let$9:
+$let$14:
   param           mappedOk                        count=1
   param           mappedBad                       count=1
   case-pattern    __p0                            count=0
@@ -20,10 +20,10 @@ $let$9:
   case-pattern    __p0                            count=0
   case-pattern    _m                              count=0
 
-$lam$10:
+$lam$15:
   param           n                               count=1
 
-$let$11:
+$let$16:
   param           mappedOk                        count=1
 
 $df$mapRight$0:

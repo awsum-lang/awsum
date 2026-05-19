@@ -12,12 +12,12 @@ $lift$0:
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$let$7:
+$let$12:
   param           msg                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$let$8:
+$let$13:
   param           chained                         count=1
   case-pattern    __pa0                           count=0
   row-case        _a                              count=0

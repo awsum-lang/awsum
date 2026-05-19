@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 15 to ptr
+  %stl_tag = inttoptr i64 16 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -301,7 +301,7 @@ define internal ptr @v_opB(ptr %v_n) {
 define internal ptr @v_main() {
   %t0 = call ptr @v_opA()
   %t1 = call ptr @v__df_bindEither_0(ptr %t0)
-  %t2 = call ptr @v__let_8(ptr %t1)
+  %t2 = call ptr @v__let_13(ptr %t1)
   ret ptr %t2
 }
 
@@ -342,7 +342,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_7(ptr %v_msg) {
+define internal ptr @v__let_12(ptr %v_msg) {
   %t0 = getelementptr ptr, ptr %v_msg, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -402,7 +402,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_8(ptr %v_chained) {
+define internal ptr @v__let_13(ptr %v_chained) {
   %t0 = getelementptr ptr, ptr %v_chained, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -466,7 +466,7 @@ case.default.3:
   unreachable
 case.join.4:
   %t37 = phi ptr [%t30, %case.end.3.6], [%t36, %case.end.4.32]
-  %t38 = call ptr @v__let_7(ptr %t37)
+  %t38 = call ptr @v__let_12(ptr %t37)
   call void @__free_recursive(ptr %v_chained)
   ret ptr %t38
 }

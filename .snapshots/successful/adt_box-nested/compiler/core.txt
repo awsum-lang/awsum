@@ -42,19 +42,19 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 19
+                    ( 20
                     , [ "__p0" ]
                     , CDrop DropFreeUnchecked "__p0"
                         ( CCase
                             ( CVar "__p0" )
                             [
-                                ( 19
+                                ( 20
                                 , [ "__p0_p0" ]
                                 , CDrop DropFreeUnchecked "__p0_p0"
                                     ( CCase
                                         ( CVar "__p0_p0" )
                                         [
-                                            ( 19
+                                            ( 20
                                             , [ "value" ]
                                             , CDrop DropFreeUnchecked "value"
                                                 ( CVar "value" )
@@ -71,9 +71,9 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "unwrap" )
-                    [ CCon 19
-                        [ CCon 19
-                            [ CCon 19
+                    [ CCon 20
+                        [ CCon 20
+                            [ CCon 20
                                 [ CString "hello" ]
                             ]
                         ]

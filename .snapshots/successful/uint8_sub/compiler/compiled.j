@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -111,7 +111,7 @@ L_subu8_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -597,12 +597,12 @@ L_join:
 L_join:
   goto L_join
 L_join:
-  invokestatic AwsumMain/v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_12(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_12(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0

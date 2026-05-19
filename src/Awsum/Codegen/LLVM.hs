@@ -355,6 +355,14 @@ header builtIns =
         "declare i32 @printf(ptr, ...)",
         "declare i32 @snprintf(ptr, i64, ptr, ...)"
       ]
+    <> [ -- 'read(2)' is used by '__stdinReadAll' to consume fd 0 to EOF
+         -- regardless of NUL bytes in the input. macOS / Linux / mingw
+         -- libc all expose it as 'read'; MSVC's CRT exposes '_read'
+         -- instead — same Windows-host follow-up as 'write'. Gated so
+         -- programs without 'IO.Stdin.readAll' don't pin libc 'read'.
+         "declare i64 @read(i32, ptr, i64)"
+       | Set.member "internalStdinReadAllAsUtf16" builtIns
+       ]
     <> [ "declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)"
        | Set.member "addInt32" builtIns
        ]
@@ -668,12 +676,13 @@ runtime ptags builtIns =
         if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
         if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
         if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
-        -- '__entryArgEither' is now used only by '__getArgs'; gated
-        -- on the same built-in. Programs without 'IO.Args.getArgs'
-        -- skip both helpers entirely (the entry-stub no longer
-        -- wraps argv in 'Either' since 'main' takes no parameter).
-        if Set.member "internalGetArgs" builtIns then rtEntryArgEither else "",
-        if Set.member "internalGetArgs" builtIns then rtGetArgs else ""
+        -- '__entryArgEither' is the shared length-aware UTF-8 → UTF-16
+        -- decoder used by '__getArgs' (argv source) and '__stdinReadAll'
+        -- (stdin source). Gated on either built-in's presence so a
+        -- program that needs neither pays nothing for the helper.
+        if Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns then rtEntryArgEither else "",
+        if Set.member "internalGetArgs" builtIns then rtGetArgs else "",
+        if Set.member "internalStdinReadAllAsUtf16" builtIns then rtStdinReadAll else ""
       ]
     -- '__concat' implements 'BuiltIn.concatString' on the length-
     -- prefixed string layout. Returns 'Either StringTooLong String' as
@@ -1960,13 +1969,104 @@ runtime ptags builtIns =
       unlines
         [ "define internal ptr @__getArgs() {",
           "  %arg = load ptr, ptr @.cli_arg",
-          "  %either = call ptr @__entryArgEither(ptr %arg)",
+          -- argv[1] is a NUL-terminated C-string from libc (POSIX path)
+          -- or a NUL-terminated UTF-8 buffer produced by
+          -- 'WideCharToMultiByte(... -1 ...)' (Windows path); 'strlen'
+          -- gives the byte count, and the NUL byte at @arg[strlen]@
+          -- is the readable byte the length-aware '__entryArgEither'
+          -- relies on for its one-past-end surrogate peek.
+          "  %len = call i64 @strlen(ptr %arg)",
+          "  %either = call ptr @__entryArgEither(ptr %arg, i64 %len)",
+          "  ret ptr %either",
+          "}"
+        ]
+    -- '__stdinReadAll' is the zero-arg runtime helper for
+    -- 'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
+    -- 'IOStdinReadAll' arm. Reads fd 0 to EOF into a 'malloc'/'realloc'-
+    -- grown scratch buffer (start 4 KiB, double when full), then routes
+    -- the captured bytes through the same '__entryArgEither' decoder
+    -- 'getArgs' uses. After the decode, the scratch buffer is 'free'd
+    -- — '__entryArgEither' has already copied any 'Right' payload into
+    -- a freshly '__alloc'-ed length-prefixed cell. Per the
+    -- POSIX-honest no-memoisation decision, each call consumes whatever
+    -- bytes remain on fd 0; a second call after EOF reads zero bytes
+    -- and decodes to @Right ""@.
+    rtStdinReadAll =
+      unlines
+        [ "define internal ptr @__stdinReadAll() {",
+          "entry:",
+          "  %cap_p = alloca i64, align 8",
+          "  store i64 4096, ptr %cap_p",
+          "  %len_p = alloca i64, align 8",
+          "  store i64 0, ptr %len_p",
+          "  %buf_p = alloca ptr, align 8",
+          "  %buf0 = call ptr @malloc(i64 4096)",
+          "  store ptr %buf0, ptr %buf_p",
+          "  br label %read_head",
+          "read_head:",
+          -- Ensure at least 4 KiB of free space at the tail before issuing
+          -- the next 'read'. If short, double the buffer.
+          "  %cap = load i64, ptr %cap_p",
+          "  %len = load i64, ptr %len_p",
+          "  %remain = sub i64 %cap, %len",
+          "  %need_grow = icmp ult i64 %remain, 4096",
+          "  br i1 %need_grow, label %grow, label %do_read",
+          "grow:",
+          "  %new_cap = mul i64 %cap, 2",
+          "  %old_buf = load ptr, ptr %buf_p",
+          "  %new_buf = call ptr @realloc(ptr %old_buf, i64 %new_cap)",
+          "  store ptr %new_buf, ptr %buf_p",
+          "  store i64 %new_cap, ptr %cap_p",
+          "  br label %do_read",
+          "do_read:",
+          "  %cap2 = load i64, ptr %cap_p",
+          "  %len2 = load i64, ptr %len_p",
+          "  %buf = load ptr, ptr %buf_p",
+          "  %off_ptr = getelementptr i8, ptr %buf, i64 %len2",
+          "  %remain2 = sub i64 %cap2, %len2",
+          "  %got = call i64 @read(i32 0, ptr %off_ptr, i64 %remain2)",
+          -- EOF (got == 0) or read error (got < 0) both terminate the
+          -- loop; an error is treated as 'whatever we have so far'. Real
+          -- I/O errors on stdin are extremely rare for piped input, and
+          -- carrying a new row variant for them would mean every program
+          -- using 'IO.Stdin.readAll' would have to handle it. Conscious
+          -- trade-off — see [stdin-read-all.md] (in management/) for the
+          -- one-pager.
+          "  %eof = icmp sle i64 %got, 0",
+          "  br i1 %eof, label %read_done, label %accumulate",
+          "accumulate:",
+          "  %len3 = load i64, ptr %len_p",
+          "  %new_len = add i64 %len3, %got",
+          "  store i64 %new_len, ptr %len_p",
+          "  br label %read_head",
+          "read_done:",
+          -- Guarantee a readable byte at @buf[len]@ for '__entryArgEither's
+          -- one-past-end surrogate peek. Grow by one if the buffer is
+          -- exactly full, then store a 0 sentinel.
+          "  %final_cap = load i64, ptr %cap_p",
+          "  %final_len = load i64, ptr %len_p",
+          "  %is_full = icmp eq i64 %final_cap, %final_len",
+          "  br i1 %is_full, label %pad_grow, label %pad_write",
+          "pad_grow:",
+          "  %pad_old = load ptr, ptr %buf_p",
+          "  %pad_cap = add i64 %final_cap, 1",
+          "  %pad_new = call ptr @realloc(ptr %pad_old, i64 %pad_cap)",
+          "  store ptr %pad_new, ptr %buf_p",
+          "  br label %pad_write",
+          "pad_write:",
+          "  %buf_final = load ptr, ptr %buf_p",
+          "  %past_end = getelementptr i8, ptr %buf_final, i64 %final_len",
+          "  store i8 0, ptr %past_end",
+          "  %either = call ptr @__entryArgEither(ptr %buf_final, i64 %final_len)",
+          -- Scratch buffer is no longer needed: '__entryArgEither' has
+          -- copied any 'Right' payload into a '__alloc'-managed cell.
+          "  call void @free(ptr %buf_final)",
           "  ret ptr %either",
           "}"
         ]
     rtEntryArgEither =
       unlines
-        [ "define internal ptr @__entryArgEither(ptr %arg) {",
+        [ "define internal ptr @__entryArgEither(ptr %arg, i64 %len) {",
           "entry:",
           "  %i_p = alloca i64, align 8",
           "  store i64 0, ptr %i_p",
@@ -1976,12 +2076,16 @@ runtime ptags builtIns =
           "  store i32 0, ptr %surr_p",
           "  br label %head",
           "head:",
+          -- Length-aware termination. The surrogate-detection branch in
+          -- 'body' peeks one byte past the current position; the caller
+          -- guarantees @arg[len]@ is a readable byte (NUL terminator for
+          -- argv, a zero we write past the end of the stdin buffer).
           "  %i = load i64, ptr %i_p",
+          "  %done = icmp uge i64 %i, %len",
+          "  br i1 %done, label %scan_done, label %body",
+          "body:",
           "  %bp = getelementptr i8, ptr %arg, i64 %i",
           "  %b = load i8, ptr %bp",
-          "  %is_nul = icmp eq i8 %b, 0",
-          "  br i1 %is_nul, label %scan_done, label %body",
-          "body:",
           "  %bz = zext i8 %b to i32",
           "  %top2 = and i32 %bz, 192",
           "  %is_cont = icmp eq i32 %top2, 128",
@@ -3306,6 +3410,18 @@ emitExpr ctx = \case
             tmp <- freshTemp
             pure ("  " <> tmp <> " = call ptr @__getArgs()\n", tmp)
           _ -> error "__getArgs: arity mismatch"
+      -- Zero-arg primitive driving the prelude's 'runIO' 'IOStdinReadAll'
+      -- arm: consumes fd 0 to EOF and wraps the decoded contents in
+      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String' via
+      -- '__stdinReadAll'. Per the POSIX-honest no-memoisation decision,
+      -- a second call after EOF reads zero bytes and decodes to
+      -- @Right ""@.
+      CBuiltIn "internalStdinReadAllAsUtf16" ->
+        case xs of
+          [] -> do
+            tmp <- freshTemp
+            pure ("  " <> tmp <> " = call ptr @__stdinReadAll()\n", tmp)
+          _ -> error "__stdinReadAll: arity mismatch"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8" || name == "showUInt32" ->
             case xs of

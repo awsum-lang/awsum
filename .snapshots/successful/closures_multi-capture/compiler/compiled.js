@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -54,13 +54,13 @@ function v_bothBody(v_a, v_b){
     }
 }
 
-const main = (v__let_8)((v_both)((11|0), (22|0)));
+const main = (v__let_13)((v_both)((11|0), (22|0)));
 
-function v__lam_7(v_a, v_b, v__n){
+function v__lam_12(v_a, v_b, v__n){
     return (v_bothBody)(v_a, v_b);
 }
 
-function v__let_8(v_res){
+function v__let_13(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -77,7 +77,7 @@ function v__let_8(v_res){
 }
 
 function v__df_apply_0(v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1){
-    return (v__lam_7)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
+    return (v__lam_12)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

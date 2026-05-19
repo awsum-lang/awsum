@@ -42,13 +42,13 @@ CoreProgram
             ( CCase
                 ( CVar "x" )
                 [
-                    ( 19
+                    ( 20
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
                     )
                 ,
-                    ( 20
+                    ( 21
                     , []
                     , CString "not found"
                     )
@@ -56,13 +56,13 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$8" )
+                ( CVar "$let$13" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 19
+                            [ CCon 20
                                 [ CString "hello" ]
                             ]
                         , CString ", "
@@ -83,33 +83,33 @@ CoreProgram
                             , CCall
                                 ( CVar "unwrap" )
                                 [ CCall
-                                    ( CVar "$lift$7" )
-                                    [ CCon 20 [] ]
+                                    ( CVar "$lift$12" )
+                                    [ CCon 21 [] ]
                                 ]
                             ]
                         )
                     ]
                 ]
             )
-        , CFunDef "$lift$7" [ "__input" ]
+        , CFunDef "$lift$12" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 19
+                    ( 20
                     , [ "__f0" ]
                     , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 19
+                        ( CCon 20
                             [ CVar "__f0" ]
                         )
                     )
                 ,
-                    ( 20
+                    ( 21
                     , []
-                    , CCon 20 []
+                    , CCon 21 []
                     )
                 ]
             )
-        , CFunDef "$let$8" [ "res" ]
+        , CFunDef "$let$13" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -686,6 +686,7 @@ doAssemble (CoreProgram decls) = do
         helperNames
           <> ["__entryArgEither"]
           <> [n | (n, keep) <- [("__getArgs", Set.member "internalGetArgs" builtIns)], keep]
+          <> [n | (n, keep) <- [("__stdinReadAll", Set.member "internalStdinReadAllAsUtf16" builtIns)], keep]
           <> userNames
           <> ["Main"]
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
@@ -727,9 +728,10 @@ doAssemble (CoreProgram decls) = do
   mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   mEntryArg <- mkEntryArgEither
   mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs tokMap else pure []
+  mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll tokMap else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> mGetArgs <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -2975,6 +2977,68 @@ mkGetArgs tokMap = do
           <> cilRet
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 1}
 
+-- | __stdinReadAll: zero-arg helper for
+--   'BuiltIn.internalStdinReadAllAsUtf16'. Wraps 'Console.OpenStandardInput()'
+--   in a 'StreamReader' with an explicit UTF-8 'Encoding' and reads
+--   to EOF, then routes the resulting 'string' through '__entryArgEither'
+--   for the strict-UTF-16 validation 'getArgs' uses.
+--
+--   Stack discipline (max 3 needed for the 'StreamReader.ctor' call,
+--   which consumes new-StreamReader-uninit + Stream + Encoding):
+--     OpenStandardInput     → [Stream]
+--     get_UTF8              → [Stream, Encoding]
+--     newobj StreamReader   → [StreamReader]
+--     callvirt ReadToEnd    → [string]
+--     call __entryArgEither → [object]
+--     ret                   → returned to caller
+mkStdinReadAll :: Map Text Word32 -> AsmM MInfo
+mkStdinReadAll tokMap = do
+  ni <- w16 <$> addStr "__stdinReadAll"
+  si <- w16 <$> addBlob (sigStatic etObject 0)
+  ps <- addParams 0
+  -- Type refs: Stream, StreamReader (System.Runtime, namespace System.IO);
+  -- Encoding (System.Runtime, namespace System.Text);
+  -- Console (System.Console, namespace System).
+  trStream <- addTypeRef (resScopeAR 1) "Stream" "System.IO"
+  trStreamReader <- addTypeRef (resScopeAR 1) "StreamReader" "System.IO"
+  trEncoding <- addTypeRef (resScopeAR 1) "Encoding" "System.Text"
+  trConsole <- addTypeRef (resScopeAR 2) "Console" "System"
+  let streamClass = [0x12] <> compressU (fromIntegral (tdorTR trStream))
+      encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
+  -- Console.OpenStandardInput() : Stream — static, 0 args.
+  openStdinRef <-
+    addMemberRef
+      (mrpTR trConsole)
+      "OpenStandardInput"
+      ([0x00, 0x00] <> streamClass)
+  -- Encoding.get_UTF8() : Encoding — static, 0 args.
+  getUtf8Ref <-
+    addMemberRef
+      (mrpTR trEncoding)
+      "get_UTF8"
+      ([0x00, 0x00] <> encodingClass)
+  -- StreamReader::.ctor(Stream, Encoding) : void — HASTHIS, 2 args.
+  streamReaderCtorRef <-
+    addMemberRef
+      (mrpTR trStreamReader)
+      ".ctor"
+      ([0x20, 0x02, etVoid] <> streamClass <> encodingClass)
+  -- StreamReader::ReadToEnd() : string — HASTHIS, 0 args.
+  readToEndRef <-
+    addMemberRef
+      (mrpTR trStreamReader)
+      "ReadToEnd"
+      [0x20, 0x00, etString]
+  let entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
+      code =
+        cilCall (tokMR openStdinRef)
+          <> cilCall (tokMR getUtf8Ref)
+          <> cilNewobj (tokMR streamReaderCtorRef)
+          <> cilCallvirt (tokMR readToEndRef)
+          <> cilCall entryArgEitherTok
+          <> cilRet
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 3}
+
 mkMain :: Map Text Word32 -> AsmM MInfo
 mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
@@ -3246,6 +3310,12 @@ emitExpr ctx = \case
     CBuiltIn "internalGetArgs"
       | [] <- xs ->
           pure (cilCall (lkTok ctx "__getArgs"))
+    -- 'BuiltIn.internalStdinReadAllAsUtf16' — call AwsumMain::__stdinReadAll.
+    -- Consumes stdin via 'Console.OpenStandardInput()' + 'StreamReader'
+    -- and routes the decoded UTF-8 through '__entryArgEither'.
+    CBuiltIn "internalStdinReadAllAsUtf16"
+      | [] <- xs ->
+          pure (cilCall (lkTok ctx "__stdinReadAll"))
     CBuiltIn name
       | name == "showInt32" || name == "showUInt8",
         [x] <- xs -> do

@@ -4,7 +4,7 @@
 -- split is guaranteed to find a match. The property emits the
 -- round-tripped string; Haskell expects `s` back.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 type NoMatch = NoMatch
 
@@ -36,6 +36,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

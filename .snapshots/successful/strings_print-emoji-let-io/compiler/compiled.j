@@ -112,12 +112,12 @@ L_tco_arm_0:
   aastore
   aastore
   aastore
-  invokestatic AwsumMain/v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_12(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_12(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_3
   anewarray java/lang/Object
   dup

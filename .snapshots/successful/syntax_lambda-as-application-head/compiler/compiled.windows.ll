@@ -220,13 +220,13 @@ tco.exit.1:
 define internal ptr @v_runMe() {
   %t0 = call ptr @__alloc(i64 4, i32 0)
   store i32 5, ptr %t0
-  %t1 = call ptr @v__lam_7(ptr %t0)
+  %t1 = call ptr @v__lam_12(ptr %t0)
   ret ptr %t1
 }
 
 define internal ptr @v_doubled() {
   %t0 = call ptr @v_runMe()
-  %t1 = call ptr @v__lam_8(ptr %t0)
+  %t1 = call ptr @v__lam_13(ptr %t0)
   ret ptr %t1
 }
 
@@ -254,11 +254,11 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lam_7(ptr %v_x) {
+define internal ptr @v__lam_12(ptr %v_x) {
   ret ptr %v_x
 }
 
-define internal ptr @v__lam_8(ptr %v_n) {
+define internal ptr @v__lam_13(ptr %v_n) {
   ret ptr %v_n
 }
 

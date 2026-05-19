@@ -15,7 +15,7 @@
    Input: "a:b". The colon is excluded from both operand alphabets
    by the generator (Utf16PairNoColon). -}
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 parseInput : String -> Either ParseError (Tuple2 String String)
 parseInput raw = case splitOnFirst ":" raw of
@@ -48,6 +48,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

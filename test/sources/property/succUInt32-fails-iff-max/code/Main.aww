@@ -2,7 +2,7 @@
 -- must be exercised, so the Haskell-side generator biases towards
 -- the boundary to make it appear in 100-test runs.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : UInt32 -> Bool
 property x = case succUInt32 x of
@@ -25,6 +25,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

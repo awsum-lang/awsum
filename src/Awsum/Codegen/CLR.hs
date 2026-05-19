@@ -93,9 +93,10 @@ codegenCLR ptags prog@(CoreProgram decls) =
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
-            gate (Set.member "internalGetArgs" builtIns) (entryArgEitherMethod ptags),
+            gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) (entryArgEitherMethod ptags),
             "",
             gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
+            gate (Set.member "internalStdinReadAllAsUtf16" builtIns) stdinReadAllMethod,
             "",
             mainMethod,
             "",
@@ -1512,6 +1513,34 @@ getArgsMethod =
       "  }"
     ]
 
+-- | __stdinReadAll: zero-arg helper for
+--   'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
+--   'IOStdinReadAll' arm. Reads 'Console.OpenStandardInput()' through a
+--   'StreamReader' wired to an explicit UTF-8 'Encoding', then routes
+--   the resulting 'string' through '__entryArgEither' for the
+--   strict-UTF-16 validation 'getArgs' uses.
+--
+--   The explicit UTF-8 'Encoding' avoids depending on
+--   'Console.InputEncoding', whose default on Windows is the legacy
+--   OEM code page — the same class of host-encoding bug that broke
+--   'IO.Args.getArgs' for supplementary-plane characters. 'StreamReader'
+--   over 'OpenStandardInput' reads raw bytes from fd 0 unaffected by
+--   the console-input knob.
+stdinReadAllMethod :: Text
+stdinReadAllMethod =
+  unlines
+    [ "  .method private hidebysig static object __stdinReadAll() cil managed",
+      "  {",
+      "    .maxstack 3",
+      "    call class [System.Runtime]System.IO.Stream [System.Console]System.Console::OpenStandardInput()",
+      "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
+      "    newobj instance void [System.Runtime]System.IO.StreamReader::.ctor(class [System.Runtime]System.IO.Stream, class [System.Runtime]System.Text.Encoding)",
+      "    callvirt instance string [System.Runtime]System.IO.StreamReader::ReadToEnd()",
+      "    call object AwsumMain::__entryArgEither(object)",
+      "    ret",
+      "  }"
+    ]
+
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong | …) String'
 --   for the user's 'main'. 'System.String::get_Length' returns UTF-16
 --   code units (CLR strings are UTF-16 natively), so the cap check is a
@@ -1853,6 +1882,12 @@ emitExprText ctx varMap = \case
       -- '__entryArgEither'.
       CBuiltIn "internalGetArgs"
         | [] <- xs -> "    call object AwsumMain::__getArgs()"
+      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAll' arm:
+      -- consumes stdin via 'StreamReader/Console.OpenStandardInput()'
+      -- and wraps the decoded UTF-8 in 'Either (StringTooLong |
+      -- UnpairedUtf16Surrogate) String' via '__stdinReadAll'.
+      CBuiltIn "internalStdinReadAllAsUtf16"
+        | [] <- xs -> "    call object AwsumMain::__stdinReadAll()"
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

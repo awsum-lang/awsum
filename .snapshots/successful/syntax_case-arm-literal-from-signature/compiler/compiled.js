@@ -35,18 +35,18 @@ function v_firstZero(v_x){
     {
       const __s = v_x;
       switch (__s[0]) {
-        case 9: {
+        case 10: {
           return (0|0);
         }
-        case 10: {
+        case 11: {
           const v___p0 = __s[1];
           {
             const __s = v___p0;
             switch (__s[0]) {
-              case 9: {
+              case 10: {
                 return (0|0);
               }
-              case 10: {
+              case 11: {
                 const v_n = __s[1];
                 return v_n;
               }
@@ -57,18 +57,18 @@ function v_firstZero(v_x){
     }
 }
 
-const main = [7, String((v_firstZero)((v__lift_7)([9]))), [5, [0]]];
+const main = [7, String((v_firstZero)((v__lift_12)([10]))), [5, [0]]];
 
-function v__lift_7(v___input){
+function v__lift_12(v___input){
     {
       const __s = v___input;
       switch (__s[0]) {
-        case 9: {
-          return [9];
-        }
         case 10: {
+          return [10];
+        }
+        case 11: {
           const v___f0 = __s[1];
-          return [10, v___f0];
+          return [11, v___f0];
         }
       }
     }

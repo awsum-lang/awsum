@@ -46,7 +46,7 @@ CoreProgram
             ( CIntLit 2147483647 TInt32 )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -230,7 +230,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

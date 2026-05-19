@@ -80,10 +80,10 @@ CoreProgram
                                         ( CDrop DropFreeUnchecked "acc"
                                             ( CContinue
                                                 [ CVar "m"
-                                                , CCon 20
+                                                , CCon 21
                                                     [ CVar "acc"
                                                     , CIntLit 1 TInt32
-                                                    , CCon 19 []
+                                                    , CCon 20 []
                                                     ]
                                                 ]
                                             )
@@ -128,7 +128,7 @@ CoreProgram
                 ( CVar "$cps$sumTree" )
                 [ CVar "t"
                 , CVar "acc"
-                , CCon 21 []
+                , CCon 22 []
                 ]
             )
         , CValDef "main"
@@ -136,7 +136,7 @@ CoreProgram
                 ( CCall
                     ( CVar "buildLeft" )
                     [ CIntLit 100000 TInt32
-                    , CCon 19 []
+                    , CCon 20 []
                     ]
                 )
                 [
@@ -171,7 +171,7 @@ CoreProgram
                 ( CCase
                     ( CVar "$args" )
                     [
-                        ( 23
+                        ( 24
                         ,
                             [ "$k"
                             , "$x"
@@ -181,24 +181,24 @@ CoreProgram
                                 ( CCase
                                     ( CVar "$k" )
                                     [
-                                        ( 21
+                                        ( 22
                                         , []
                                         , CVar "$x"
                                         )
                                     ,
-                                        ( 22
+                                        ( 23
                                         ,
-                                            [ "$pk_22"
+                                            [ "$pk_23"
                                             , "r"
                                             ]
-                                        , CDrop DropFreeUnchecked "$pk_22"
+                                        , CDrop DropFreeUnchecked "$pk_23"
                                             ( CDrop DropFreeUnchecked "r"
                                                 ( CDrop DropFreeUnchecked "$args"
                                                     ( CContinue
-                                                        [ CCon 24
+                                                        [ CCon 25
                                                             [ CVar "r"
                                                             , CVar "$x"
-                                                            , CVar "$pk_22"
+                                                            , CVar "$pk_23"
                                                             ]
                                                         ]
                                                     )
@@ -210,7 +210,7 @@ CoreProgram
                             )
                         )
                     ,
-                        ( 24
+                        ( 25
                         ,
                             [ "t"
                             , "acc"
@@ -222,11 +222,11 @@ CoreProgram
                                     ( CCase
                                         ( CVar "t" )
                                         [
-                                            ( 19
+                                            ( 20
                                             , []
                                             , CDrop DropFreeUnchecked "$args"
                                                 ( CContinue
-                                                    [ CCon 23
+                                                    [ CCon 24
                                                         [ CVar "$k"
                                                         , CVar "acc"
                                                         ]
@@ -234,7 +234,7 @@ CoreProgram
                                                 )
                                             )
                                         ,
-                                            ( 20
+                                            ( 21
                                             ,
                                                 [ "l"
                                                 , "v"
@@ -244,14 +244,14 @@ CoreProgram
                                                 ( CDrop DropFreeUnchecked "v"
                                                     ( CDrop DropFreeUnchecked "r"
                                                         ( CContinue
-                                                            [ CReuse "$args" 24
+                                                            [ CReuse "$args" 25
                                                                 [ CVar "l"
                                                                 , CCall
                                                                     ( CVar "addOr0" )
                                                                     [ CVar "acc"
                                                                     , CVar "v"
                                                                     ]
-                                                                , CCon 22
+                                                                , CCon 23
                                                                     [ CVar "$k"
                                                                     , CVar "r"
                                                                     ]
@@ -276,7 +276,7 @@ CoreProgram
             ]
             ( CCall
                 ( CVar "$scc$$apply$sumTree_$cps$sumTree" )
-                [ CCon 24
+                [ CCon 25
                     [ CVar "t"
                     , CVar "acc"
                     , CVar "$k"

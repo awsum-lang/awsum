@@ -35,21 +35,21 @@ function v_show(v_p){
     {
       const __s = v_p;
       switch (__s[0]) {
-        case 19: {
+        case 20: {
           return "Phantom";
         }
       }
     }
 }
 
-const main = [7, (v_show)((v__lift_7)([19])), [5, [0]]];
+const main = [7, (v_show)((v__lift_12)([20])), [5, [0]]];
 
-function v__lift_7(v___input){
+function v__lift_12(v___input){
     {
       const __s = v___input;
       switch (__s[0]) {
-        case 19: {
-          return [19];
+        case 20: {
+          return [20];
         }
       }
     }

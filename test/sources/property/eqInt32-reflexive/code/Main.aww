@@ -2,7 +2,7 @@
 -- input. The property has no failable inner ops, so the only
 -- error path is a parse failure.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : Int32 -> Bool
 property a = eqInt32 a a
@@ -23,6 +23,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

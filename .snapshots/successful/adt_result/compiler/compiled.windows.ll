@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 15 to ptr
+  %stl_tag = inttoptr i64 16 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -265,14 +265,14 @@ define internal ptr @v_unwrap(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 19, label %case.arm.19.4 i64 20, label %case.arm.20.7 ]
-case.arm.19.4:
+  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 i64 21, label %case.arm.21.7 ]
+case.arm.20.4:
   %t5 = getelementptr ptr, ptr %v_r, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
   call void @__free_recursive(ptr %v_r)
   ret ptr %t6
-case.arm.20.7:
+case.arm.21.7:
   %t8 = getelementptr ptr, ptr %v_r, i32 1
   %t9 = load ptr, ptr %t8
   call void @__inc_ref(ptr %t9)
@@ -284,7 +284,7 @@ case.default.3:
 
 define internal ptr @v_main() {
   %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 19 to ptr
+  %t1 = inttoptr i64 20 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = getelementptr ptr, ptr %t0, i32 1
@@ -315,7 +315,7 @@ case.arm.4.19:
   call void @__inc_ref(ptr %t22)
   call void @__inc_ref(ptr %t22)
   %t23 = call ptr @__alloc(i64 16, i32 1)
-  %t24 = inttoptr i64 20 to ptr
+  %t24 = inttoptr i64 21 to ptr
   %t25 = getelementptr ptr, ptr %t23, i32 0
   store ptr %t24, ptr %t25
   %t26 = getelementptr ptr, ptr %t23, i32 1
@@ -330,11 +330,11 @@ case.default.9:
 case.join.10:
   %t29 = phi ptr [%t15, %case.end.3.12], [%t28, %case.end.4.20]
   call void @__free_recursive(ptr %t5)
-  %t30 = call ptr @v__let_7(ptr %t29)
+  %t30 = call ptr @v__let_12(ptr %t29)
   ret ptr %t30
 }
 
-define internal ptr @v__let_7(ptr %v_res) {
+define internal ptr @v__let_12(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

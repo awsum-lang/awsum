@@ -82,8 +82,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_19)
-  IL_arm_19:
+    switch (IL_arm_20)
+  IL_arm_20:
     dup
     ldc.i4.1
     ldelem.ref
@@ -111,7 +111,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     dup

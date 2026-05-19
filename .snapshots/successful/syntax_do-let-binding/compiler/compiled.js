@@ -1,9 +1,9 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [14]]]; if (s < -2147483648) return [3, [3768445577, [13]]]; return [4, s|0]; }
-function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [3, [882564211, [14]]]; if (p < -2147483648) return [3, [3768445577, [13]]]; return [4, p|0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [15]]]; if (s < -2147483648) return [3, [3768445577, [14]]]; return [4, s|0]; }
+function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [3, [882564211, [15]]]; if (p < -2147483648) return [3, [3768445577, [14]]]; return [4, p|0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -76,7 +76,7 @@ function v_run(v_start){
         }
         case 4: {
           const v_a = __s[1];
-          return (v__let_7)(v_a, "answer=");
+          return (v__let_12)(v_a, "answer=");
         }
       }
     }
@@ -91,7 +91,7 @@ function v_renderErr(v_e){
           {
             const __s = v___rw;
             switch (__s[0]) {
-              case 15: {
+              case 16: {
                 return [4, "STRING_TOO_LONG"];
               }
             }
@@ -107,7 +107,7 @@ function v_renderErr(v_e){
 
 const main = ((s) => { switch(s[0]) { case 3: { const v_e = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return [7, "STRING_TOO_LONG", [5, [0]]]; } case 4: { const v_out = s[1]; return [7, v_out, [5, [0]]]; } } })((v_renderErr)(v_e)); } case 4: { const v_s = s[1]; return [7, v_s, [5, [0]]]; } } })((v_run)((5|0)));
 
-function v__let_7(v_a, v_prefix){
+function v__let_12(v_a, v_prefix){
     {
       const __s = (v_step2)(v_a);
       switch (__s[0]) {

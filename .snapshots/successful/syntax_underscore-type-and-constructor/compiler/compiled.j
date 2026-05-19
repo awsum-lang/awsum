@@ -88,9 +88,9 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    21: L_arm_21
-    default: L_arm_21
-L_arm_21:
+    22: L_arm_22
+    default: L_arm_22
+L_arm_22:
   pop
   ldc "one"
   goto L_join
@@ -113,7 +113,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 21
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_show(Ljava/lang/Object;)Ljava/lang/Object;

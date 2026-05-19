@@ -13,6 +13,8 @@ module Awsum.RunBackend
     compileFromFile,
     runOn,
     runOnAll,
+    runOnStdin,
+    runOnAllStdin,
   )
 where
 
@@ -26,13 +28,15 @@ import Awsum.Parser (parseProgram)
 import Awsum.Prelude (withPrelude)
 import Awsum.Program (ProgramType (..))
 import Common.File
-import Control.Concurrent.Async (concurrently)
+import Control.Concurrent.Async (async, concurrently, wait)
 import Control.Exception (IOException, try)
+import Data.ByteString qualified as BS
 import Relude
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>))
+import System.IO (hClose, hSetBinaryMode)
 import System.IO.Temp (createTempDirectory, getCanonicalTemporaryDirectory, withSystemTempDirectory)
-import System.Process (readProcessWithExitCode)
+import System.Process (CreateProcess (..), StdStream (..), createProcess, proc, readProcessWithExitCode, waitForProcess)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Backend enum
@@ -239,6 +243,117 @@ runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
     Right (ExitSuccess, out, _) -> pure (Right (toText out))
     Right (ExitFailure _, _out, err) ->
       pure (Left ("node exited with non-zero status:\n" <> toText err))
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Per-backend runners — stdin input variant (property tests)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | Run a child process feeding the input as **raw UTF-8 bytes** on its
+--   stdin (rather than as a CLI arg). Used by property tests after the
+--   migration to 'IO.Stdin.readAll' — argv runs through the host's
+--   startup decoder ('sun.jnu.encoding' on Windows JVM, ANSI codepage
+--   for MSVCRT) and silently mangles supplementary-plane characters,
+--   while stdin is delivered verbatim to the program. See the matching
+--   stage-2 plan in @management/stdin-read-all.md@.
+--
+--   The handles are forced to binary mode so the Haskell default
+--   encoding (locale on POSIX, ANSI on Windows) doesn't re-encode
+--   anything between us and the child. Stdout and stderr are read
+--   concurrently with the write so a child that emits more than one
+--   pipe-buffer's worth of bytes (64 KiB on Linux, often less on
+--   other hosts) doesn't deadlock waiting for us to drain it before
+--   we finish sending input.
+runProcStdinUtf8 :: FilePath -> [String] -> Text -> IO (Either Text Text)
+runProcStdinUtf8 cmd args input = do
+  eRes <- try @IOException $ do
+    (Just hin, Just hout, Just herr, ph) <-
+      createProcess
+        (proc cmd args)
+          { std_in = CreatePipe,
+            std_out = CreatePipe,
+            std_err = CreatePipe
+          }
+    hSetBinaryMode hin True
+    hSetBinaryMode hout True
+    hSetBinaryMode herr True
+    writeAsync <- async $ do
+      BS.hPut hin (encodeUtf8 input)
+      hClose hin
+    outAsync <- async (BS.hGetContents hout)
+    errAsync <- async (BS.hGetContents herr)
+    outBs <- wait outAsync
+    errBs <- wait errAsync
+    wait writeAsync
+    ec <- waitForProcess ph
+    pure (ec, outBs, errBs)
+  case eRes of
+    Left ex -> pure (Left ("failed to start " <> toText cmd <> ": " <> show ex))
+    Right (ExitSuccess, out, _) -> pure (Right (decodeUtf8 out))
+    Right (ExitFailure _, _out, err) ->
+      pure (Left (toText cmd <> " exited with non-zero status:\n" <> decodeUtf8 err))
+
+runOnStdin :: Backend -> CompiledArtifacts -> Text -> IO (Either Text Text)
+runOnStdin LLVM ca = runProcStdinUtf8 ca.caLLVMBinPath []
+runOnStdin JVM ca = runJVMStdin ca.caJVMBytes
+runOnStdin CLR ca = runCLRStdin ca.caCLRBytes
+runOnStdin WASM ca = runWASMStdin ca.caWASMBytes
+runOnStdin JS ca = runJsStdin ca.caJS
+
+-- | Stdin-input counterpart to 'runOnAll'. Used by property tests after
+--   their 'main' was migrated from 'IO.Args.getArgs' to
+--   'IO.Stdin.readAll'.
+runOnAllStdin :: CompiledArtifacts -> Text -> IO [(Backend, Either Text Text)]
+runOnAllStdin ca input = do
+  ((llvmO, jvmO), ((clrO, wasmO), jsO)) <-
+    concurrently
+      ( concurrently
+          (runOnStdin LLVM ca input)
+          (runOnStdin JVM ca input)
+      )
+      ( concurrently
+          ( concurrently
+              (runOnStdin CLR ca input)
+              (runOnStdin WASM ca input)
+          )
+          (runOnStdin JS ca input)
+      )
+  pure
+    [ (LLVM, llvmO),
+      (JVM, jvmO),
+      (CLR, clrO),
+      (WASM, wasmO),
+      (JS, jsO)
+    ]
+
+runJVMStdin :: ByteString -> Text -> IO (Either Text Text)
+runJVMStdin classBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let classFile = dir </> "AwsumMain.class"
+  writeFileBS classFile classBytes
+  -- '-Dsun.jnu.encoding' only governs argv; stdin reads through
+  -- 'System.in' which we wire to an explicit UTF-8 'StreamReader' on
+  -- the program side. '-Dfile.encoding' still matters for stdout
+  -- formatting in case other code paths reach the default charset.
+  runProcStdinUtf8 "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] input
+
+runCLRStdin :: ByteString -> Text -> IO (Either Text Text)
+runCLRStdin dllBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let dllFile = dir </> "AwsumMain.dll"
+      rcFile = dir </> "AwsumMain.runtimeconfig.json"
+  writeFileBS dllFile dllBytes
+  writeFileText rcFile runtimeConfigJson
+  runProcStdinUtf8 "dotnet" [dllFile] input
+
+runWASMStdin :: ByteString -> Text -> IO (Either Text Text)
+runWASMStdin wasmBytes input = withSystemTempDirectory "awsum" $ \dir -> do
+  let wasmFile = dir </> "out.wasm"
+  writeFileBS wasmFile wasmBytes
+  runProcStdinUtf8 "wasmtime" [wasmFile] input
+
+runJsStdin :: Text -> Text -> IO (Either Text Text)
+runJsStdin code input = withSystemTempDirectory "awsum" $ \dir -> do
+  let tempFile = dir </> "out.js"
+  writeFileText tempFile code
+  runProcStdinUtf8 "node" [tempFile] input
 
 runtimeConfigJson :: Text
 runtimeConfigJson =

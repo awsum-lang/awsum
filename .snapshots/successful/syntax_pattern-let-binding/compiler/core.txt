@@ -50,7 +50,7 @@ CoreProgram
                     ( 3
                     , [ "__w0" ]
                     , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 11
+                        ( CCon 12
                             [ CVar "n"
                             , CVar "n"
                             ]
@@ -60,7 +60,7 @@ CoreProgram
                     ( 4
                     , [ "d" ]
                     , CDrop DropFreeUnchecked "d"
-                        ( CCon 11
+                        ( CCon 12
                             [ CVar "n"
                             , CVar "d"
                             ]
@@ -72,7 +72,7 @@ CoreProgram
             ( CCase
                 ( CVar "pair" )
                 [
-                    ( 11
+                    ( 12
                     ,
                         [ "a"
                         , "b"
@@ -161,7 +161,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
+                ( CVar "$let$12" )
                 [ CCall
                     ( CVar "show" )
                     [ CCall
@@ -170,7 +170,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$7" [ "res" ]
+        , CFunDef "$let$12" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

@@ -160,7 +160,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 15 to ptr
+  %stl_tag = inttoptr i64 16 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -266,8 +266,8 @@ define internal ptr @v_showTriple(ptr %v_t) {
   %t0 = getelementptr ptr, ptr %v_t, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 19, label %case.arm.19.4 ]
-case.arm.19.4:
+  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 ]
+case.arm.20.4:
   %t5 = getelementptr ptr, ptr %v_t, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -292,7 +292,7 @@ case.default.3:
 
 define internal ptr @v_main() {
   %t0 = call ptr @__alloc(i64 32, i32 3)
-  %t1 = inttoptr i64 19 to ptr
+  %t1 = inttoptr i64 20 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = getelementptr ptr, ptr %t0, i32 1
@@ -302,7 +302,7 @@ define internal ptr @v_main() {
   %t5 = getelementptr ptr, ptr %t0, i32 3
   store ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t5
   %t6 = call ptr @v_showTriple(ptr %t0)
-  %t7 = call ptr @v__let_7(ptr %t6)
+  %t7 = call ptr @v__let_12(ptr %t6)
   ret ptr %t7
 }
 
@@ -416,7 +416,7 @@ case.default.4:
   unreachable
 }
 
-define internal ptr @v__let_7(ptr %v_res) {
+define internal ptr @v__let_12(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

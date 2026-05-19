@@ -94,9 +94,11 @@ codegenJVM ptags prog@(CoreProgram decls) =
             "",
             T.intercalate "\n\n" (map (emitDecl ctx) decls),
             "",
-            gate (Set.member "internalGetArgs" builtIns) (entryArgEitherMethod ptags),
+            gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) (entryArgEitherMethod ptags),
             "",
             gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
+            "",
+            gate (Set.member "internalStdinReadAllAsUtf16" builtIns) stdinReadAllMethod,
             "",
             mainMethod,
             ""
@@ -1685,6 +1687,67 @@ getArgsMethod =
       ".end method"
     ]
 
+-- | __stdinReadAll: zero-arg helper for
+--   'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
+--   'IOStdinReadAll' arm. Consumes 'System.in' to EOF into a
+--   'ByteArrayOutputStream', decodes the captured bytes as standard
+--   UTF-8 via @new String(byte[], StandardCharsets.UTF_8)@, then
+--   routes the result through '__entryArgEither' for the same
+--   strict-UTF-16 validation 'getArgs' uses.
+--
+--   The explicit @StandardCharsets.UTF_8@ avoids depending on the
+--   platform default charset — that one is influenced by
+--   @-Dfile.encoding@ (which the test harness sets to @UTF-8@, but
+--   user-deployed JVMs may not). 'System.in.read(byte[], int, int)'
+--   never reads the @ANSI@-mangled args path that broke
+--   'IO.Args.getArgs' on Windows×JVM, so a property of the form
+--   "supplementary-plane character round-trips" passes here when
+--   the argv-based variant truncates to @?@.
+--
+--   Locals: slot 0 = ByteArrayOutputStream baos, slot 1 = byte[] buf
+--   (reused for the final byte[] after the loop), slot 2 = int got.
+stdinReadAllMethod :: Text
+stdinReadAllMethod =
+  unlines
+    [ ".method static __stdinReadAll()" <> objDesc,
+      "  .limit stack 4",
+      "  .limit locals 3",
+      "  new java/io/ByteArrayOutputStream",
+      "  dup",
+      "  invokespecial java/io/ByteArrayOutputStream/<init>()V",
+      "  astore_0",
+      "  sipush 8192",
+      "  newarray byte",
+      "  astore_1",
+      "L_stdin_loop:",
+      "  getstatic java/lang/System/in Ljava/io/InputStream;",
+      "  aload_1",
+      "  iconst_0",
+      "  sipush 8192",
+      "  invokevirtual java/io/InputStream/read([BII)I",
+      "  istore_2",
+      "  iload_2",
+      "  ifle L_stdin_done",
+      "  aload_0",
+      "  aload_1",
+      "  iconst_0",
+      "  iload_2",
+      "  invokevirtual java/io/ByteArrayOutputStream/write([BII)V",
+      "  goto L_stdin_loop",
+      "L_stdin_done:",
+      "  aload_0",
+      "  invokevirtual java/io/ByteArrayOutputStream/toByteArray()[B",
+      "  astore_1",
+      "  new java/lang/String",
+      "  dup",
+      "  aload_1",
+      "  getstatic java/nio/charset/StandardCharsets/UTF_8 Ljava/nio/charset/Charset;",
+      "  invokespecial java/lang/String/<init>([BLjava/nio/charset/Charset;)V",
+      "  invokestatic AwsumMain/__entryArgEither(" <> objDesc <> ")" <> objDesc,
+      "  areturn",
+      ".end method"
+    ]
+
 mainMethod :: Text
 mainMethod =
   unlines
@@ -1891,6 +1954,12 @@ emitExprText ctx paramMap = \case
       -- String' via '__entryArgEither'.
       CBuiltIn "internalGetArgs"
         | [] <- xs -> "  invokestatic AwsumMain/__getArgs()" <> objDesc
+      -- Zero-arg primitive driving 'runIO''s 'IOStdinReadAll' arm:
+      -- consumes 'System.in' to EOF and wraps the decoded contents in
+      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String' via
+      -- '__stdinReadAll'.
+      CBuiltIn "internalStdinReadAllAsUtf16"
+        | [] <- xs -> "  invokestatic AwsumMain/__stdinReadAll()" <> objDesc
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->

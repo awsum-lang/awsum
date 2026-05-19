@@ -83,18 +83,7 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_19, IL_tco_arm_20, IL_tco_arm_21)
-  IL_tco_arm_19:
-    pop
-    ldarg.0
-    castclass object[]
-    dup
-    ldc.i4.0
-    ldc.i4.s 20
-    box [System.Runtime]System.Int32
-    stelem.ref
-    starg.s 0
-    br IL_tco_loop
+    switch (IL_tco_arm_20, IL_tco_arm_21, IL_tco_arm_22)
   IL_tco_arm_20:
     pop
     ldarg.0
@@ -107,6 +96,17 @@
     starg.s 0
     br IL_tco_loop
   IL_tco_arm_21:
+    pop
+    ldarg.0
+    castclass object[]
+    dup
+    ldc.i4.0
+    ldc.i4.s 22
+    box [System.Runtime]System.Int32
+    stelem.ref
+    starg.s 0
+    br IL_tco_loop
+  IL_tco_arm_22:
     pop
     ldstr "Done!"
     ret
@@ -128,7 +128,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v_advanceStep(object)

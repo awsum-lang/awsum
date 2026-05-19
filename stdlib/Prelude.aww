@@ -256,6 +256,7 @@ type IO e a
   | IOFail e
   | IOStdoutPrint String (IO e a)
   | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+  | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 
 {- Lift a pure value into IO. The error row `e` stays free and gets
    pinned by the surrounding context. -}
@@ -285,6 +286,7 @@ bindIO io k = case io of
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (bindIO next k)
   IOGetArgs cont -> IOGetArgs (bindIOAfterArgs cont k)
+  IOStdinReadAll cont -> IOStdinReadAll (bindIOAfterStdin cont k)
 
 {- Helper for the `IOGetArgs` arm of `bindIO`: constructs the new
    getArgs continuation that, given the runtime-decoded result, runs
@@ -295,6 +297,13 @@ bindIO io k = case io of
 
 bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
 bindIOAfterArgs cont k result = bindIO (cont result) k
+
+{- Helper for the `IOStdinReadAll` arm of `bindIO`: same shape as
+   `bindIOAfterArgs`, lifted to top-level for the same typechecker
+   reason. -}
+
+bindIOAfterStdin : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
+bindIOAfterStdin cont k result = bindIO (cont result) k
 
 {- `andThenIO` is `bindIO` with the arguments flipped: the continuation
    comes first, the IO value second. The shape is
@@ -310,6 +319,7 @@ andThenIO k io = case io of
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (andThenIO k next)
   IOGetArgs cont -> IOGetArgs (\result -> andThenIO k (cont result))
+  IOStdinReadAll cont -> IOStdinReadAll (\result -> andThenIO k (cont result))
 
 {- Apply `f` to the success value of an IO action, leaving the error
    row untouched. Same shape as `mapRight` for `Either`. -}
@@ -320,6 +330,7 @@ mapIO io f = case io of
   IOFail e -> IOFail e
   IOStdoutPrint s next -> IOStdoutPrint s (mapIO next f)
   IOGetArgs cont -> IOGetArgs (\result -> mapIO (cont result) f)
+  IOStdinReadAll cont -> IOStdinReadAll (\result -> mapIO (cont result) f)
 
 {- `mapIOError` rebuilds an IO with `f` applied to the failure value
    and the success / effect tree left untouched. Same shape as
@@ -332,6 +343,7 @@ mapIOError io f = case io of
   IOFail e -> IOFail (f e)
   IOStdoutPrint s next -> IOStdoutPrint s (mapIOError next f)
   IOGetArgs cont -> IOGetArgs (\result -> mapIOError (cont result) f)
+  IOStdinReadAll cont -> IOStdinReadAll (\result -> mapIOError (cont result) f)
 
 {- `handleErrorIO` runs an IO computation and routes its `IOFail` through a
    recovery continuation. The handler may fully recover (returning
@@ -350,6 +362,7 @@ handleErrorIO h io = case io of
   IOFail e -> h e
   IOStdoutPrint s next -> IOStdoutPrint s (handleErrorIO h next)
   IOGetArgs cont -> IOGetArgs (\result -> handleErrorIO h (cont result))
+  IOStdinReadAll cont -> IOStdinReadAll (\result -> handleErrorIO h (cont result))
 
 {- `runIO` walks the IO tree returned from `main` and performs the
    corresponding effects in order. `main` returns `IO Never Unit`, so
@@ -371,6 +384,7 @@ runIO io = case io of
   IOStdoutPrint s next -> case BuiltIn.internalStdoutPrint s of
     Unit -> runIO next
   IOGetArgs cont -> runIO (cont BuiltIn.internalGetArgs)
+  IOStdinReadAll cont -> runIO (cont BuiltIn.internalStdinReadAllAsUtf16)
 
 -- ---------------------- Maybe
 

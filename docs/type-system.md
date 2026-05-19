@@ -589,6 +589,7 @@ type IO e a
   | IOFail e
   | IOStdoutPrint String (IO e a)
   | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+  | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 ```
 
 An `IO` value is **data**, not an effect. Constructing `IO.Stdout.print "x"` builds an `IOStdoutPrint` cell; the print does not happen at construction. The runtime walks the IO tree returned from `main` and performs the corresponding effects in order. Code that builds an `IO` value but never lets it reach the runtime walker produces no output:
@@ -627,6 +628,30 @@ main =
 ```
 
 Both decoding failures (length cap and unpaired UTF-16 surrogate) live in the IO error row, so they compose with `handleErrorIO` like any other IO failure. There is no entry-point parameter to pattern-match against.
+
+### Reading stdin
+
+`IO.Stdin.readAll : IO (StringTooLong | UnpairedUtf16Surrogate) String` is a CLI platform built-in (registered when `--program-type cli` and `import IO.Stdin` are both present). Same shape as `IO.Args.getArgs`, different byte source — instead of `argv`, it consumes the program's stdin to EOF and decodes the bytes as UTF-8:
+
+```awsum
+import IO.Stdout
+import IO.Stdin
+
+handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
+handleInputErr e = case e of
+  (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+  (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+
+main : IO Never Unit
+main =
+  IO.Stdin.readAll
+    |> andThenIO IO.Stdout.print
+    |> handleErrorIO handleInputErr
+```
+
+Semantics are POSIX-honest: each call consumes whatever bytes remain on fd 0. A second `IO.Stdin.readAll` in the same program (after the first call already reached EOF) returns `Right ""`. Programs that need streaming reads will get a separate primitive when one is added; for now `readAll` is the only stdin primitive and it is "read everything in one go".
+
+Stdin bypasses every host's argv decoder — `sun.jnu.encoding` on the JVM, the OEM code page on Windows console, `CommandLineToArgvW` re-decoding on LLVM-MSVC. A program that needs to round-trip supplementary-plane characters or any input the host's argv-encoding mangles should read from stdin rather than argv.
 
 ### `bindIO` / `andThenIO` / `pureIO` / `failIO` / `mapIO` / `mapIOError` / `handleErrorIO`
 

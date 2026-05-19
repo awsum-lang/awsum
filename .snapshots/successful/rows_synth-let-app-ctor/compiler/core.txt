@@ -51,16 +51,16 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$7" )
-                [ CCon 10
+                ( CVar "$let$12" )
+                [ CCon 11
                     [ CString "world" ]
                 ]
             )
-        , CFunDef "$let$7" [ "m" ]
+        , CFunDef "$let$12" [ "m" ]
             ( CCase
                 ( CVar "m" )
                 [
-                    ( 9
+                    ( 10
                     , []
                     , CCon 7
                         [ CString "n"
@@ -69,7 +69,7 @@ CoreProgram
                         ]
                     )
                 ,
-                    ( 10
+                    ( 11
                     , [ "x" ]
                     , CDrop DropFreeUnchecked "x"
                         ( CCon 7

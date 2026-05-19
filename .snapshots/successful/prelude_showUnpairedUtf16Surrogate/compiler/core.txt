@@ -44,7 +44,7 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "showUnpairedUtf16Surrogate" )
-                    [ CCon 16 [] ]
+                    [ CCon 17 [] ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

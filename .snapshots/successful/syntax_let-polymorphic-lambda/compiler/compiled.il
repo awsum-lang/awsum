@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -136,8 +136,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_19)
-  IL_arm_19:
+    switch (IL_arm_20)
+  IL_arm_20:
     pop
     ldstr "A"
     br.s IL_join
@@ -151,7 +151,7 @@
     ldarg.2
     ldarg.0
     ldarg.1
-    call object AwsumMain::v__df__let_8_0(object, object, object)
+    call object AwsumMain::v__df__let_13_0(object, object, object)
     ret
   }
 
@@ -165,23 +165,23 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v_threeTypes(object, object, object)
-    call object AwsumMain::v__let_9(object)
+    call object AwsumMain::v__let_14(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_7(object) cil managed
+  .method private hidebysig static object v__lam_12(object) cil managed
   {
     ldarg.0
     ret
   }
 
 
-  .method private hidebysig static object v__let_9(object) cil managed
+  .method private hidebysig static object v__let_14(object) cil managed
   {
     ldarg.0
     dup
@@ -270,10 +270,10 @@
   }
 
 
-  .method private hidebysig static object v__df__let_8_0(object, object, object) cil managed
+  .method private hidebysig static object v__df__let_13_0(object, object, object) cil managed
   {
     ldarg.1
-    call object AwsumMain::v__lam_7(object)
+    call object AwsumMain::v__lam_12(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     ldstr "/"
     call object AwsumMain::__concat(object, object)
@@ -308,7 +308,7 @@
     pop
     ldloc.0
     ldarg.2
-    call object AwsumMain::v__lam_7(object)
+    call object AwsumMain::v__lam_12(object)
     call object AwsumMain::__concat(object, object)
     dup
     ldc.i4.0
@@ -373,7 +373,7 @@
     pop
     ldloc.2
     ldarg.0
-    call object AwsumMain::v__lam_7(object)
+    call object AwsumMain::v__lam_12(object)
     call object AwsumMain::v_showTri(object)
     call object AwsumMain::__concat(object, object)
     br.s IL_join

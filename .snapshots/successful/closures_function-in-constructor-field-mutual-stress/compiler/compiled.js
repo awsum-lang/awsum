@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __predInt32(x){ return x === -2147483648 ? [3, [13]] : [4, ((x - 1)|0)]; }
+function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 
 function v_runIO(v_io){
@@ -33,23 +33,23 @@ function v_runIO(v_io){
   }
 }
 
-const v_bBox = [19, [20]];
+const v_bBox = [20, [21]];
 
 const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_a)((1000000|0)));
 
-function v__scc__apply1__lam_7_a_b(v__args){
+function v__scc__apply1__lam_12_a_b(v__args){
   while (true) {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 21: {
+        case 22: {
           const v__cl = __s[1];
           const v__arg0 = __s[2];
           {
             const __s = v__cl;
             switch (__s[0]) {
-              case 20: {
-                const __t0 = [22, v__arg0];
+              case 21: {
+                const __t0 = [23, v__arg0];
                 v__args = null;
                 v__args = __t0;
                 continue;
@@ -57,13 +57,13 @@ function v__scc__apply1__lam_7_a_b(v__args){
             }
           }
         }
-        case 22: {
+        case 23: {
           const v_n = __s[1];
-          const __t0 = (v__args[0] = 24, v__args[1] = v_n, v__args);
+          const __t0 = (v__args[0] = 25, v__args[1] = v_n, v__args);
           v__args = __t0;
           continue;
         }
-        case 23: {
+        case 24: {
           const v_n = __s[1];
           {
             const __s = __eqInt32(v_n, (0|0));
@@ -84,9 +84,9 @@ function v__scc__apply1__lam_7_a_b(v__args){
                       {
                         const __s = v_bBox;
                         switch (__s[0]) {
-                          case 19: {
+                          case 20: {
                             const v_f = __s[1];
-                            const __t0 = [21, v_f, v_m];
+                            const __t0 = [22, v_f, v_m];
                             v__args = null;
                             v__args = __t0;
                             continue;
@@ -100,7 +100,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
             }
           }
         }
-        case 24: {
+        case 25: {
           const v_n = __s[1];
           {
             const __s = __eqInt32(v_n, (0|0));
@@ -118,7 +118,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
                     }
                     case 4: {
                       const v_m = __s[1];
-                      const __t0 = (v__args[0] = 23, v__args[1] = v_m, v__args);
+                      const __t0 = (v__args[0] = 24, v__args[1] = v_m, v__args);
                       v__args = __t0;
                       continue;
                     }
@@ -134,7 +134,7 @@ function v__scc__apply1__lam_7_a_b(v__args){
 }
 
 function v_a(v_n){
-    return (v__scc__apply1__lam_7_a_b)([23, v_n]);
+    return (v__scc__apply1__lam_12_a_b)([24, v_n]);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

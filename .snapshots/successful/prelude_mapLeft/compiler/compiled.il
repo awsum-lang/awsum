@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -144,7 +144,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
@@ -174,12 +174,12 @@
   {
     call object AwsumMain::v_bad()
     call object AwsumMain::v__df_mapLeft_0(object)
-    call object AwsumMain::v__let_11(object)
+    call object AwsumMain::v__let_16(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__let_12(object) cil managed
   {
     ldarg.0
     dup
@@ -268,20 +268,20 @@
   }
 
 
-  .method private hidebysig static object v__lam_8(object) cil managed
+  .method private hidebysig static object v__lam_13(object) cil managed
   {
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     ret
   }
 
 
-  .method private hidebysig static object v__let_9(object, object) cil managed
+  .method private hidebysig static object v__let_14(object, object) cil managed
   {
     ldarg.0
     dup
@@ -300,8 +300,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_20)
-  IL_arm_20:
+    switch (IL_arm_21)
+  IL_arm_21:
     pop
     ldarg.1
     dup
@@ -320,8 +320,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_20)
-  IL_arm_20:
+    switch (IL_arm_21)
+  IL_arm_21:
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -371,30 +371,30 @@
     stelem.ref
     br.s IL_join
   IL_join:
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_12(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_10(object) cil managed
+  .method private hidebysig static object v__lam_15(object) cil managed
   {
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     ret
   }
 
 
-  .method private hidebysig static object v__let_11(object) cil managed
+  .method private hidebysig static object v__let_16(object) cil managed
   {
     ldarg.0
     call object AwsumMain::v_good()
     call object AwsumMain::v__df_mapLeft_1(object)
-    call object AwsumMain::v__let_9(object, object)
+    call object AwsumMain::v__let_14(object, object)
     ret
   }
 
@@ -423,7 +423,7 @@
     dup
     ldc.i4.1
     ldloc.0
-    call object AwsumMain::v__lam_10(object)
+    call object AwsumMain::v__lam_15(object)
     stelem.ref
     br.s IL_join
   IL_arm_4:
@@ -473,7 +473,7 @@
     dup
     ldc.i4.1
     ldloc.0
-    call object AwsumMain::v__lam_8(object)
+    call object AwsumMain::v__lam_13(object)
     stelem.ref
     br.s IL_join
   IL_arm_4:

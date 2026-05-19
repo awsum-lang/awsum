@@ -4,9 +4,9 @@ runIO:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
-$lam$7:
+$lam$12:
   param           x                               count=1
 
-$lam$8:
+$lam$13:
   param           n                               count=1
 

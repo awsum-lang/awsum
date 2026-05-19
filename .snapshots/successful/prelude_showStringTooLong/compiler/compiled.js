@@ -35,7 +35,7 @@ function v_showStringTooLong(v__wild0){
     return "StringTooLong";
 }
 
-const main = [7, (v_showStringTooLong)([15]), [5, [0]]];
+const main = [7, (v_showStringTooLong)([16]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

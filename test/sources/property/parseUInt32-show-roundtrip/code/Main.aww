@@ -1,7 +1,7 @@
 -- Property: `parseUInt32 (showUInt32 x) == Right x` for any UInt32 0..255.
 -- Mirror of `parseInt32-show-roundtrip` for the unsigned 8-bit type.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : UInt32 -> String
 property v = showUInt32 v
@@ -21,6 +21,6 @@ runMain rawArg =
         Right s -> IO.Stdout.print s
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

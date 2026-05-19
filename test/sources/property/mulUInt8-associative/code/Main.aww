@@ -5,7 +5,7 @@
 -- (see `NoOverflowMulUInt8Triple` in PropertySpec.hs), so the
 -- OVERFLOW branch is never expected to fire.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 parseInput : String -> Either ParseError (Tuple3 UInt8 UInt8 UInt8)
 parseInput raw = case splitOnFirst ":" raw of
@@ -43,6 +43,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

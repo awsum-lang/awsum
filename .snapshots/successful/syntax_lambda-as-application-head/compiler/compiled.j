@@ -83,14 +83,14 @@ L_tco_arm_0:
 .method static v_runMe()Ljava/lang/Object;
   iconst_5
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  invokestatic AwsumMain/v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
 .method static v_doubled()Ljava/lang/Object;
   invokestatic AwsumMain/v_runMe()Ljava/lang/Object;
-  invokestatic AwsumMain/v__lam_8(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_13(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
@@ -133,13 +133,13 @@ L_tco_arm_0:
 .end method
 
 
-.method static v__lam_7(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
 
 
-.method static v__lam_8(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_13(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method

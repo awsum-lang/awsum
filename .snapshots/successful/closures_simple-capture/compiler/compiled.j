@@ -135,7 +135,7 @@ L_tco_arm_0:
 .end method
 
 
-.method static v__lam_7(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   areturn
 .end method
@@ -144,7 +144,7 @@ L_tco_arm_0:
 .method static v__df_apply_0(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aload_1
   aload_0
-  invokestatic AwsumMain/v__lam_7(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

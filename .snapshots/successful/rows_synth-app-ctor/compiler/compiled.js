@@ -43,7 +43,7 @@ function v_dispatch(v_x){
     }
 }
 
-const main = ((s) => { switch(s[0]) { case 9: { return [7, "n", [5, [0]]]; } case 10: { const v_x = s[1]; return [7, (v_dispatch)([1615808600, v_x]), [5, [0]]]; } } })([10, "hello"]);
+const main = ((s) => { switch(s[0]) { case 10: { return [7, "n", [5, [0]]]; } case 11: { const v_x = s[1]; return [7, (v_dispatch)([1615808600, v_x]), [5, [0]]]; } } })([11, "hello"]);
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

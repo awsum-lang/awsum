@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -97,7 +97,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 13
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.1
@@ -388,7 +388,7 @@
   }
 
 
-  .method private hidebysig static object v__lift_8(object) cil managed
+  .method private hidebysig static object v__lift_13(object) cil managed
   {
     ldarg.0
     dup
@@ -437,7 +437,7 @@
   }
 
 
-  .method private hidebysig static object v__scc__df_andThenEither_0__lam_7_build(object) cil managed
+  .method private hidebysig static object v__scc__df_andThenEither_0__lam_12_build(object) cil managed
   {
     ldarg.0
     ldc.i4.1
@@ -447,12 +447,12 @@
     ldc.i4.s 11
     box [System.Runtime]System.Int32
     stelem.ref
-    call object AwsumMain::v__cps__scc__df_andThenEither_0__lam_7_build(object, object)
+    call object AwsumMain::v__cps__scc__df_andThenEither_0__lam_12_build(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__scc__df_andThenEither_0__lam_7_build(object, object) cil managed
+  .method private hidebysig static object v__cps__scc__df_andThenEither_0__lam_12_build(object, object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -495,7 +495,7 @@
     ldc.i4.1
     ldloc.2
     stelem.ref
-    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_7_build(object, object)
+    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_12_build(object, object)
 
 
 
@@ -608,7 +608,7 @@
     ldc.i4.1
     ldloc.1
     stelem.ref
-    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_7_build(object, object)
+    call object AwsumMain::v__apply__scc__df_andThenEither_0__lam_12_build(object, object)
 
 
 
@@ -631,7 +631,7 @@
     ldloc.1
     ldloc.1
     call object AwsumMain::__concat(object, object)
-    call object AwsumMain::v__lift_8(object)
+    call object AwsumMain::v__lift_13(object)
     stelem.ref
     dup
     ldc.i4.2
@@ -649,7 +649,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__scc__df_andThenEither_0__lam_7_build(object, object) cil managed
+  .method private hidebysig static object v__apply__scc__df_andThenEither_0__lam_12_build(object, object) cil managed
   {
   IL_tco_loop:
     ldarg.0
@@ -699,7 +699,7 @@
     ldc.i4.2
     ldarg.1
     stelem.ref
-    call object AwsumMain::v__scc__df_andThenEither_0__lam_7_build(object)
+    call object AwsumMain::v__scc__df_andThenEither_0__lam_12_build(object)
     ret
   }
 

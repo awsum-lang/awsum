@@ -39,12 +39,12 @@ function v_captureFn(v_k){
 
 const main = [7, String((v_captureFn)((7|0))), [5, [0]]];
 
-function v__lam_7(v_k, v__n){
+function v__lam_12(v_k, v__n){
     return v_k;
 }
 
 function v__df_apply_0(v_x, v__df_apply_0_cap0_0){
-    return (v__lam_7)(v__df_apply_0_cap0_0, v_x);
+    return (v__lam_12)(v__df_apply_0_cap0_0, v_x);
 }
 
 if (typeof require !== 'undefined' && require.main === module) {

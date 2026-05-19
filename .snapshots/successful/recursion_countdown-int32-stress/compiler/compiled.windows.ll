@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 15 to ptr
+  %stl_tag = inttoptr i64 16 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -231,7 +231,7 @@ define internal ptr @__predInt32(ptr %p) {
   br i1 %is_min, label %overflow, label %ok
 overflow:
   %oe = call ptr @__alloc(i64 8, i32 0)
-  %oe_tag = inttoptr i64 13 to ptr
+  %oe_tag = inttoptr i64 14 to ptr
   store ptr %oe_tag, ptr %oe
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -554,11 +554,11 @@ define internal ptr @v_main() {
   store i32 100000, ptr %t0
   %t1 = call ptr @v_countDown(ptr %t0)
   %t2 = call ptr @v_showResult(ptr %t1)
-  %t3 = call ptr @v__let_7(ptr %t2)
+  %t3 = call ptr @v__let_12(ptr %t2)
   ret ptr %t3
 }
 
-define internal ptr @v__let_7(ptr %v_res) {
+define internal ptr @v__let_12(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -168,7 +168,7 @@
   {
     call object AwsumMain::v_opA()
     call object AwsumMain::v__df_bindEither_0(object)
-    call object AwsumMain::v__let_8(object)
+    call object AwsumMain::v__let_13(object)
     ret
   }
 
@@ -222,7 +222,7 @@
   }
 
 
-  .method private hidebysig static object v__let_7(object) cil managed
+  .method private hidebysig static object v__let_12(object) cil managed
   {
     ldarg.0
     dup
@@ -311,7 +311,7 @@
   }
 
 
-  .method private hidebysig static object v__let_8(object) cil managed
+  .method private hidebysig static object v__let_13(object) cil managed
   {
     ldarg.0
     dup
@@ -381,7 +381,7 @@
     call object AwsumMain::__concat(object, object)
     br.s IL_join
   IL_join:
-    call object AwsumMain::v__let_7(object)
+    call object AwsumMain::v__let_12(object)
     ret
   }
 

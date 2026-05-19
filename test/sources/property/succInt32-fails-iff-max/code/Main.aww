@@ -3,7 +3,7 @@
 -- biases towards `maxInt32` via QuickCheck `frequency` (~10% chance)
 -- so the boundary case shows up regularly in 100-test runs.
 import IO.Stdout
-import IO.Args
+import IO.Stdin
 
 property : Int32 -> Bool
 property x = case succInt32 x of
@@ -26,6 +26,6 @@ runMain rawArg =
         Right False -> IO.Stdout.print "FAIL"
 
 main : IO Never Unit
-main = IO.Args.getArgs
+main = IO.Stdin.readAll
   |> andThenIO (\s -> runMain (Right s))
   |> handleErrorIO (\e -> runMain (Left e))

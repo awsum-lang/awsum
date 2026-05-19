@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [15]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
 function v_runIO(v_io){
   while (true) {
@@ -36,27 +36,27 @@ function v_showToken(v_token){
     {
       const __s = v_token;
       switch (__s[0]) {
-        case 19: {
+        case 20: {
           const v_w = __s[1];
           return __concat("word:", v_w);
         }
-        case 20: {
+        case 21: {
           const v_n = __s[1];
           return __concat("num:", v_n);
         }
-        case 21: {
+        case 22: {
           return [4, ","];
         }
-        case 22: {
+        case 23: {
           return [4, "<eof>"];
         }
       }
     }
 }
 
-const main = (v__let_7)(((s) => { switch(s[0]) { case 3: { const v__do_e_20_9 = s[1]; return [3, v__do_e_20_9]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_21_9 = s[1]; return [3, v__do_e_21_9]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_22_9 = s[1]; return [3, v__do_e_22_9]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_23_9 = s[1]; return [3, v__do_e_23_9]; } case 4: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_24_9 = s[1]; return [3, v__do_e_24_9]; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_25_9 = s[1]; return [3, v__do_e_25_9]; } case 4: { const v_abc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_26_9 = s[1]; return [3, v__do_e_26_9]; } case 4: { const v_abcs = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_27_9 = s[1]; return [3, v__do_e_27_9]; } case 4: { const v_abcsc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_28_9 = s[1]; return [3, v__do_e_28_9]; } case 4: { const v_abcscd = s[1]; return __concat(v_abcscd, v_d); } } })(__concat(v_abcsc, " ")); } } })(__concat(v_abcs, v_c)); } } })(__concat(v_abc, " ")); } } })(__concat(v_ab, v_b)); } } })(__concat(v_a, " ")); } } })((v_showToken)([22])); } } })((v_showToken)([20, "42"])); } } })((v_showToken)([21])); } } })((v_showToken)([19, "hello"])));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_20_9 = s[1]; return [3, v__do_e_20_9]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_21_9 = s[1]; return [3, v__do_e_21_9]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_22_9 = s[1]; return [3, v__do_e_22_9]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_23_9 = s[1]; return [3, v__do_e_23_9]; } case 4: { const v_d = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_24_9 = s[1]; return [3, v__do_e_24_9]; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_25_9 = s[1]; return [3, v__do_e_25_9]; } case 4: { const v_abc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_26_9 = s[1]; return [3, v__do_e_26_9]; } case 4: { const v_abcs = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_27_9 = s[1]; return [3, v__do_e_27_9]; } case 4: { const v_abcsc = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_28_9 = s[1]; return [3, v__do_e_28_9]; } case 4: { const v_abcscd = s[1]; return __concat(v_abcscd, v_d); } } })(__concat(v_abcsc, " ")); } } })(__concat(v_abcs, v_c)); } } })(__concat(v_abc, " ")); } } })(__concat(v_ab, v_b)); } } })(__concat(v_a, " ")); } } })((v_showToken)([23])); } } })((v_showToken)([21, "42"])); } } })((v_showToken)([22])); } } })((v_showToken)([20, "hello"])));
 
-function v__let_7(v_res){
+function v__let_12(v_res){
     {
       const __s = v_res;
       switch (__s[0]) {

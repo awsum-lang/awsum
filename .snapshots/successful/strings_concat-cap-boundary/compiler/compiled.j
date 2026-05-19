@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -93,7 +93,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 13
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -407,7 +407,7 @@ L_join:
 .end method
 
 
-.method static v__lift_8(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   dup
   iconst_0
@@ -459,7 +459,7 @@ L_join:
 .end method
 
 
-.method static v__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;)Ljava/lang/Object;
   aload_0
   iconst_1
   anewarray java/lang/Object
@@ -468,12 +468,12 @@ L_join:
   bipush 11
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__cps__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__cps__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__cps__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__cps__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -524,7 +524,7 @@ L_tco_arm_3:
   iconst_1
   aload 4
   aastore
-  invokestatic AwsumMain/v__apply__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   aconst_null
@@ -649,7 +649,7 @@ L_tco_arm_3:
   iconst_1
   aload_3
   aastore
-  invokestatic AwsumMain/v__apply__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__apply__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
   astore 4
   aconst_null
@@ -675,7 +675,7 @@ L_tco_arm_4:
   aload_3
   aload_3
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_8(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_13(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   dup
   iconst_2
@@ -696,7 +696,7 @@ L_tco_arm_4:
 .end method
 
 
-.method static v__apply__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__apply__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 L_tco_loop:
   aload_0
   dup
@@ -749,7 +749,7 @@ L_tco_arm_12:
   iconst_2
   aload_1
   aastore
-  invokestatic AwsumMain/v__scc__df_andThenEither_0__lam_7_build(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__scc__df_andThenEither_0__lam_12_build(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

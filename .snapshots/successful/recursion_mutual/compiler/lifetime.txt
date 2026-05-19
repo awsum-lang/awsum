@@ -4,7 +4,7 @@ runIO:
   case-pattern    s                               count=0
   case-pattern    next                            count=0
 
-$let$7:
+$let$12:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
@@ -21,13 +21,13 @@ $cps$$scc$handleA_handleB:
 $apply$$scc$handleA_handleB:
   param           $k                              count=1
   param           $x                              count=7
-  case-pattern    $pk_26                          count=0
+  case-pattern    $pk_27                          count=0
   case-pattern    $do_e_13_5                      count=0
   case-pattern    rest                            count=0
-  case-pattern    $pk_27                          count=0
+  case-pattern    $pk_28                          count=0
   case-pattern    $do_e_22_5                      count=0
   case-pattern    rest                            count=0
-  case-pattern    $pk_28                          count=0
+  case-pattern    $pk_29                          count=0
   case-pattern    $do_e_26_5                      count=0
   case-pattern    rest                            count=0
 
