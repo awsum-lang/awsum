@@ -1,0 +1,57 @@
+{- Cell-reuse benchmark — same shape as 'list_reverse_repeat' but
+   with a polymorphic 'List a' type instead of monomorphic
+   'IntList'. Tests that 'Awsum.Reuse' detects the canonical Lean-4
+   pattern on a polymorphic ADT instantiation ('List Int32') just
+   as it does on a monomorphic one — cell shape after lowering is
+   identical (one tag + two ptr slots), so the CReuse rewrite must
+   fire the same way and produce the same peak RSS / wall.
+
+   Hot loop (identical body to 'list_reverse_repeat'):
+
+     revInto acc lst = case lst of
+       Nil -> acc
+       Cons h t -> revInto (Cons h acc) t
+
+   Sizing: 'repeat 100000 1' builds a 100 000-element 'List Int32'
+   of 1s; 'revN 1000' reverses it 1 000 times. Cumulative cell
+   traffic = 1e5 × 1e3 = 1e8 reuse rewrites. 'sumList' walks the
+   final reversed list to force the result through addInt32 (so
+   the optimiser cannot elide the recursion). -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type List a = Nil | Cons a (List a)
+
+repeat : Int32 -> Int32 -> List Int32
+repeat n value = case eqInt32 n zero of
+  True -> Nil
+  False -> case predInt32 n of
+    Left _e -> Nil
+    Right m -> Cons value (repeat m value)
+
+revInto : List Int32 -> List Int32 -> List Int32
+revInto acc lst = case lst of
+  Nil -> acc
+  Cons h t -> revInto (Cons h acc) t
+
+revN : Int32 -> List Int32 -> List Int32
+revN times lst = case eqInt32 times zero of
+  True -> lst
+  False -> case predInt32 times of
+    Left _e -> lst
+    Right m -> revN m (revInto Nil lst)
+
+sumList : List Int32 -> Int32 -> Int32
+sumList lst acc = case lst of
+  Nil -> acc
+  Cons x xs -> case addInt32 acc x of
+    Left _e -> acc
+    Right next -> sumList xs next
+
+main : IO Never Unit
+main =
+  let original : List Int32 = repeat 100_000 1
+      reversed : List Int32 = revN 1_000 original
+   in IO.Stdout.print (showInt32 (sumList reversed zero))

@@ -5,19 +5,25 @@
    sum-typed CCon tagged 0/1/2. Each cross-call becomes a tail self-
    call on the merged function with a different tag; TCO folds the
    whole thing into a CLoop that dispatches tag → predInt32 →
-   continue. No K-cells (every recursive call is tail), no Cps
-   transformation, no Phase D in-place reuse opportunities (the
-   only heap allocation is the 'Either Right' cell from predInt32
-   each iter).
+   continue. No K-cells (every recursive call is tail), no in-place
+   cell reuse opportunities (the only heap allocation is the
+   'Either Right' cell from predInt32 each iter).
 
    Per inner iter: tag-dispatch in CCase + builtin predInt32 (which
-   allocates one Either Right cell + decrements its predecessor) +
-   one CContinue to itself with the next tag. Steady-state working
-   set: one Either cell, kept hot in cache.
+   allocates one Either Right cell wrapping a boxed Int32) + one
+   CContinue to itself with the next tag.
+
+   Steady-state peak RSS at 100 × 1_000_000 = 10⁸ iters:
+
+     * LLVM       ~2 MiB
+     * JVM        ~500 MiB (baseline JVM heap)
+     * CLR        ~45 MiB
+     * WASM       ~14 MiB
+     * JS         ~50 MiB
 
    Sizing: 100 outer × 1_000_000 inner = 10⁸ tail-cross-hops + 10⁸
-   Either Right allocations + frees. Measures TCO loop throughput
-   and per-iter Either RC overhead on each backend. -}
+   Either Right allocations. Measures TCO loop throughput and per-
+   iter Either RC overhead on each backend. -}
 import IO.Stdout
 
 zero : Int32

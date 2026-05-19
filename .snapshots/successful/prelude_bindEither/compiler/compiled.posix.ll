@@ -300,7 +300,6 @@ define internal ptr @v_opB(ptr %v_n) {
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_opA()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__df_bindEither_0(ptr %t0)
   %t2 = call ptr @v__let_8(ptr %t1)
   ret ptr %t2

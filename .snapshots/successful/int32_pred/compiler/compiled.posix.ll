@@ -372,7 +372,6 @@ case.arm.4.16:
   %t19 = load ptr, ptr %t18
   call void @__inc_ref(ptr %t19)
   %t20 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t20)
   %t21 = call ptr @__predInt32(ptr %t20)
   %t22 = call ptr @v_render(ptr %t21)
   %t23 = getelementptr ptr, ptr %t22, i32 0

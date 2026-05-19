@@ -1,5 +1,5 @@
-{- GC pressure demo: build a list, then deep-clone it many times,
-   walking and discarding each clone.
+{- Reclaim pressure demo: build a list, then deep-clone it many
+   times, walking and discarding each clone.
 
    The structure is opt-resistant in the strict sense:
      * 'sumList cloned' depends on every cell of the final clone, so
@@ -8,24 +8,24 @@
        Cons for each, so the optimiser cannot fold it to a no-op
        (the result is structurally distinct, even if value-equal).
      * Every intermediate clone becomes unreferenced once the next
-       'clone' returns, so a tracing GC reclaims it; without one the
-       cells stay in the heap forever.
+       'clone' returns, so any working reclaim mechanism must drop
+       it; without one the cells stay in the heap forever.
 
    With 'cloneN 3000 (repeat 100000 1)':
      * Cumulative allocation: 3000 × 100 000 cells × ~24 bytes each
-       ≈ 7 GiB on LLVM, ~5 GiB on WASM.
-     * Steady-state live set with a tracing GC: at most ~2 lists,
-       i.e. ~5 MiB.
+       ≈ 7 GiB.
+     * Steady-state live set: at most ~2 lists, ~5 MiB.
 
-   On JVM/CLR/JS: prints 100000 in seconds, peak heap ~few MiB.
-   On WASM: cumulative crosses the wasm32 4 GiB linear-memory cap;
-     '__alloc' detects 'memory.grow == -1' and traps via
-     'unreachable', exiting with 'wasm trap: unreachable executed'.
-   On LLVM: 'malloc' has no 'free', so peak RSS grows to ~7 GiB and
-     stays there until exit. On a 48 GiB host the program completes
-     (the OS lets virtual memory cover it); on a smaller machine, or
-     with 'cloneN 50000' instead of 3000, the OS OOM-kills the
-     process. -}
+   Steady-state peak RSS observed:
+     * JVM / CLR / JS reclaim via host GC.
+     * LLVM reclaims via compiler-emitted refcount over libc
+       malloc/free (one of `__free_recursive`'s cascading paths
+       returns each Cons cell to the freelist after its clone goes
+       out of scope).
+     * WASM reclaims via compiler-emitted refcount over the per-
+       size-bin freelist in linear memory; cumulative allocation
+       never crosses the wasm32 4 GiB cap because the same bin
+       blocks are reused. -}
 import IO.Stdout
 
 zero : Int32
@@ -61,6 +61,6 @@ sumList lst acc = case lst of
 
 main : IO Never Unit
 main =
-  let original : IntList = repeat 100000 1
-      cloned : IntList = cloneN 3000 original
+  let original : IntList = repeat 100_000 1
+      cloned : IntList = cloneN 3_000 original
    in IO.Stdout.print (showInt32 (sumList cloned zero))

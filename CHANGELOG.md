@@ -10,6 +10,8 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ### Added
 
+- **Permutation-aware `CReuse` elision + linear binder elision in LLVM codegen.** Extends the existing self-move elision in `CReuse` to cover the case where an arm-binder moves to a different slot of the same cell (e.g. `Cons x xs → CContinue [xs, CReuse "lst" 24 [$k, x]]` in `$cps$clone` — `x` moves from slot 1 to slot 2). For arm-binders whose only use is a `CReuse` field of the same scrut (computed via `Awsum.Lifetime.elidableArmBinders`), codegen now skips: the inc-on-extract at case match, the dec-via-`CDrop` at arm end, the dec-old of the binder's old slot, and the inc-new of its new slot — the store at the new slot still emits (for permutation-move) or is skipped (for self-move). Modest wall improvements (~5-6%) on `CReuse`-heavy benchmarks (`gc_pressure_clone`, `list_reverse_repeat`); WASM not modified in this pass.
+
 ### Changed
 
 ### Deprecated
@@ -17,6 +19,8 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 ### Removed
 
 ### Fixed
+
+- **LLVM and WASM heap leak on every reference to a top-level `CValDef`.** The codegens were treating `CVar` references to top-level value definitions (e.g. `zero : Int32; zero = 0`) the same as borrowed-local CVars — emitting `__inc_ref` over the result. But each such reference lowers to `call @v_name()` which already allocates a fresh `+1` cell. The spurious inc left every referenced cell at refcount `1` forever, leaking once per reference in a hot loop. With the fix, peak RSS on `unused_case_binder_repeat` drops from 155 MiB to 2 MiB; on `mutual_three_way_repeat` from 1.5 GiB to 1.6 MiB. JVM/CLR/JS unaffected (host GC).
 
 ### Security
 

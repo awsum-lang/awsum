@@ -323,6 +323,7 @@ case.default.26:
   unreachable
 case.join.27:
   %t45 = phi ptr [%t32, %case.end.3.29], [%t44, %case.end.4.41]
+  call void @__free_recursive(ptr %t22)
   br label %case.end.4.19
 case.end.4.19:
   br label %case.join.5
@@ -330,6 +331,7 @@ case.default.4:
   unreachable
 case.join.5:
   %t46 = phi ptr [%t10, %case.end.3.7], [%t45, %case.end.4.19]
+  call void @__free_recursive(ptr %t0)
   %t47 = call ptr @v__let_7(ptr %t46)
   ret ptr %t47
 }

@@ -566,7 +566,6 @@ case.join.13:
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_summary()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__let_10(ptr %t0)
   ret ptr %t1
 }

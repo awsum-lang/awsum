@@ -25,9 +25,7 @@ import IO.Stdout
 zero : Int32
 zero = 0
 
-type Tree
-  = Leaf
-  | Node Tree Int32 Tree
+type Tree = Leaf | Node Tree Int32 Tree
 
 buildLeft : Int32 -> Tree -> Either UnderflowError Tree
 buildLeft n acc = case eqInt32 n zero of
@@ -56,4 +54,4 @@ repeatSum n t acc = case eqInt32 n zero of
 main : IO Never Unit
 main = case buildLeft 10_000 Leaf of
   Left _e -> IO.Stdout.print "UNDERFLOW"
-  Right t -> IO.Stdout.print (showInt32 (repeatSum 1000 t zero))
+  Right t -> IO.Stdout.print (showInt32 (repeatSum 1_000 t zero))

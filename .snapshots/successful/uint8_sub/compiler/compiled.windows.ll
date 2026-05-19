@@ -388,9 +388,7 @@ case.arm.4.17:
   %t20 = load ptr, ptr %t19
   call void @__inc_ref(ptr %t20)
   %t21 = call ptr @v_maxUInt8()
-  call void @__inc_ref(ptr %t21)
   %t22 = call ptr @v_minUInt8()
-  call void @__inc_ref(ptr %t22)
   %t23 = call ptr @__subUInt8(ptr %t21, ptr %t22)
   %t24 = call ptr @v_render(ptr %t23)
   %t25 = getelementptr ptr, ptr %t24, i32 0
@@ -416,7 +414,6 @@ case.arm.4.38:
   %t41 = load ptr, ptr %t40
   call void @__inc_ref(ptr %t41)
   %t42 = call ptr @v_minUInt8()
-  call void @__inc_ref(ptr %t42)
   %t43 = call ptr @__alloc(i64 1, i32 0)
   store i8 1, ptr %t43
   %t44 = call ptr @__subUInt8(ptr %t42, ptr %t43)
@@ -444,9 +441,7 @@ case.arm.4.59:
   %t62 = load ptr, ptr %t61
   call void @__inc_ref(ptr %t62)
   %t63 = call ptr @v_minUInt8()
-  call void @__inc_ref(ptr %t63)
   %t64 = call ptr @v_maxUInt8()
-  call void @__inc_ref(ptr %t64)
   %t65 = call ptr @__subUInt8(ptr %t63, ptr %t64)
   %t66 = call ptr @v_render(ptr %t65)
   %t67 = getelementptr ptr, ptr %t66, i32 0

@@ -7,17 +7,14 @@
   (import "wasi_snapshot_preview1" "args_get" (func $args_get (param i32 i32) (result i32)))
 
   (memory (export "memory") 1)
-  (global $heap (mut i32) (i32.const 206))
+  (global $heap (mut i32) (i32.const 118))
   (global $__wl_buf (mut i32) (i32.const 0))
   (global $__wl_top (mut i32) (i32.const 0))
   (global $__wl_cap (mut i32) (i32.const 0))
   (data (i32.const 64) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\0e\00\00\00\0e\00\00\00UnderflowError")
-  (data (i32.const 118) "\00\00\00\00\00\00\00\00\00\00\00\00\06\00\00\00\06\00\00\00left: ")
-  (data (i32.const 144) "\00\00\00\00\00\00\00\00\00\00\00\00\07\00\00\00\07\00\00\00right: ")
-  (data (i32.const 171) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
-  (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v_showResult $v__let_7 $v__scc_stepA_stepB_stepC $v_stepA)
+  (table 4 funcref)
+  (elem (i32.const 0) $v_runIO $v_showUnderflowError $v__scc_stepA_stepB_stepC $v_stepA)
 
 ;; ──────────────────────────────────────────────────────────────
 ;; Per-size-bin freelist allocator with 12-byte header.
@@ -224,43 +221,6 @@
         (br $loop))))
 
 
-  (func $__concat (param $a i32) (param $b i32) (result i32)
-    (local $ba i32) (local $bb i32) (local $ua i32) (local $ub i32)
-    (local $usum i32) (local $bsum i32)
-    (local $stl i32) (local $cell i32) (local $buf i32)
-    (local.set $ba (i32.load (local.get $a)))
-    (local.set $ua (i32.load offset=4 (local.get $a)))
-    (local.set $bb (i32.load (local.get $b)))
-    (local.set $ub (i32.load offset=4 (local.get $b)))
-    (local.set $usum (i32.add (local.get $ua) (local.get $ub)))
-    (if (i32.gt_u (local.get $usum) (i32.const 134217728))
-      (then
-        (local.set $stl (call $__alloc (i32.const 4)))
-        (i32.store (local.get $stl) (i32.const 15))
-        (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-        (i32.store (local.get $cell) (i32.const 3))
-        (i32.store offset=4 (local.get $cell) (local.get $stl)))
-      (else
-        (local.set $bsum (i32.add (local.get $ba) (local.get $bb)))
-        (local.set $buf (call $__alloc (i32.add (local.get $bsum) (i32.const 8))))
-        (i32.store (local.get $buf) (local.get $bsum))
-        (i32.store offset=4 (local.get $buf) (local.get $usum))
-        (call $__memcpy
-          (i32.add (local.get $buf) (i32.const 8))
-          (i32.add (local.get $a) (i32.const 8))
-          (local.get $ba))
-        (call $__memcpy
-          (i32.add (local.get $buf) (i32.add (i32.const 8) (local.get $ba)))
-          (i32.add (local.get $b) (i32.const 8))
-          (local.get $bb))
-        (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-        (i32.store (local.get $cell) (i32.const 4))
-        (i32.store offset=4 (local.get $cell) (local.get $buf))))
-    (call $__free_recursive (local.get $a))
-    (call $__free_recursive (local.get $b))
-    (local.get $cell))
-
-
   (func $__print (param $s i32) (result i32)
     (local $len i32)
     (local $unit i32)
@@ -438,26 +398,15 @@
     (local $__drop_tmp i32)
     (i32.const 96))
 
-  (func $v_showResult (param $v_r i32) (result i32)
+  (func $v_main (result i32)
+    (local $__con_0 i32)
+    (local $__con_1 i32)
+    (local $__con_2 i32)
     (local $v_e i32)
     (local $v_v i32)
     (local $__scrut i32)
     (local $__drop_tmp i32)
-    (block (result i32) (local.set $__scrut (local.get $v_r)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_e)) (block (result i32) (local.set $__drop_tmp (call $__concat (i32.const 130) (call $v_showUnderflowError (block (result i32) (local.set $__inc_tmp (local.get $v_e)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))) (call $__free_recursive (local.get $v_e)) (local.get $__drop_tmp))) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_v)) (block (result i32) (local.set $__drop_tmp (call $__concat (i32.const 156) (call $__show_i32 (block (result i32) (local.set $__inc_tmp (local.get $v_v)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))) (call $__free_recursive (local.get $v_v)) (local.get $__drop_tmp))))))
-
-  (func $v_main (result i32)
-    (local $__drop_tmp i32)
-    (call $v__let_7 (call $v_showResult (call $v_stepA (call $__box_i32 (i32.const 1000000))))))
-
-  (func $v__let_7 (param $v_res i32) (result i32)
-    (local $__con_0 i32)
-    (local $__con_1 i32)
-    (local $__con_2 i32)
-    (local $v___w0 i32)
-    (local $v_s i32)
-    (local $__scrut i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (local.set $__scrut (local.get $v_res)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v___w0 (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v___w0)) (block (result i32) (local.set $__drop_tmp (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (i32.const 183)) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))) (call $__free_recursive (local.get $v___w0)) (local.get $__drop_tmp))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s)) (block (result i32) (local.set $__drop_tmp (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (local.get $v_s)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))) (call $__free_recursive (local.get $v_s)) (local.get $__drop_tmp))))))
+    (block (result i32) (local.set $__scrut (call $v_stepA (call $__box_i32 (i32.const 1000000)))) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 3)) (then (local.set $v_e (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_e)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $v_showUnderflowError (block (result i32) (local.set $__inc_tmp (local.get $v_e)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))) (else (local.set $v_v (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_v)) (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $__show_i32 (block (result i32) (local.set $__inc_tmp (local.get $v_v)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0))))))
 
   (func $v__scc_stepA_stepB_stepC (param $v__args i32) (result i32)
     (local $__con_0 i32)

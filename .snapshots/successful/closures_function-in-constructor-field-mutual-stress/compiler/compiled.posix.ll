@@ -384,7 +384,6 @@ tco.case.default.17:
 tco.case.arm.22.23:
   %t24 = getelementptr ptr, ptr %t4, i32 1
   %t25 = load ptr, ptr %t24
-  call void @__inc_ref(ptr %t25)
   %t26 = getelementptr i8, ptr %t4, i64 -8
   %t27 = load i32, ptr %t26
   %t28 = icmp eq i32 %t27, 1
@@ -406,7 +405,6 @@ reuse.copy.30:
   br label %reuse.join.31
 reuse.join.31:
   %t38 = phi ptr [ %t4, %reuse.in_place.29 ], [ %t34, %reuse.copy.30 ]
-  call void @__free_recursive(ptr %t25)
   store ptr %t38, ptr %t3
   br label %tco.loop.0
 tco.case.arm.23.39:
@@ -483,6 +481,7 @@ tco.case.arm.19.75:
   call void @__inc_ref(ptr %t69)
   %t82 = getelementptr ptr, ptr %t78, i32 2
   store ptr %t69, ptr %t82
+  call void @__free_recursive(ptr %t70)
   call void @__free_recursive(ptr %t55)
   call void @__free_recursive(ptr %t43)
   call void @__free_recursive(ptr %t4)

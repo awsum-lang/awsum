@@ -335,7 +335,7 @@
 
   (func $v_main (result i32)
     (local $__drop_tmp i32)
-    (call $v__let_8 (call $v__df_mapIOError_0 (block (result i32) (local.set $__inc_tmp (call $v_action)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))))
+    (call $v__let_8 (call $v__df_mapIOError_0 (call $v_action))))
 
   (func $v__lam_7 (param $v__a i32) (result i32)
     (local $__con_0 i32)

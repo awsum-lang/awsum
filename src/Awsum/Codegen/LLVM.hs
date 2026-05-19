@@ -38,6 +38,7 @@ where
 
 import Awsum.Core
 import Awsum.HM (rowTag)
+import Awsum.Lifetime (elidableArmBinders)
 import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.ByteString qualified as BS
 import Data.Char qualified as Char
@@ -138,7 +139,7 @@ codegenLLVM :: LLVMHost -> PreludeTags -> CoreProgram -> Text
 codegenLLVM host ptags prog@(CoreProgram decls) =
   let pool = collectStrings prog
       valDefNames = Set.fromList [n | CValDef n _ <- decls]
-      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing, armPatternByScrut = Map.empty}
+      ctx = EmitCtx {params = Set.empty, valDefs = valDefNames, stringPool = pool, locals = Map.empty, loopCtx = Nothing, armPatternByScrut = Map.empty, elidedBinders = Set.empty}
       userCode = evalState (T.intercalate "\n\n" <$> traverse (emitDecl ctx) decls) 0
       builtIns = usedBuiltIns prog
    in T.intercalate
@@ -171,7 +172,20 @@ data EmitCtx = EmitCtx
     -- @armPatternByScrut[n]@ to detect self-move slots (@fs[i] ==
     -- CVar vs[i]@) and skip their dec-old + inc-new + store entirely
     -- — the slot's pointer is already what we wanted.
-    armPatternByScrut :: Map Text [Text]
+    armPatternByScrut :: Map Text [Text],
+    -- | Permutation-aware elision: arm-binder names whose only use
+    -- in the arm body is as a 'CVar' field of a 'CReuse' on the
+    -- same scrut (self-move or permutation-move, either way the
+    -- cell still owns the value through the rewrite). For such
+    -- binders, codegen skips: (a) the inc-on-extract at case match;
+    -- (b) the dec-via-CDrop at arm end; (c) inside the matching
+    -- 'CReuse', the dec-old of the binder's old slot and the
+    -- inc-new of its new slot. The store at the new slot is still
+    -- emitted for permutation moves; self-move skips the store too
+    -- via 'isSelfMoveAt'. Empty for any binder that flows anywhere
+    -- other than that one 'CReuse' field (CContinue arg, CCall arg,
+    -- multiple uses, etc.) — those keep the full inc/dec dance.
+    elidedBinders :: Set Text
   }
 
 -- | Scaffolding the 'CFunDef' prologue sets up so 'emitTail' can emit
@@ -2408,7 +2422,7 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
       CDrop _ n body -> go ctx (n : pending) freshScruts body
       other -> do
         (instrs, result) <- emitExpr ctx other
-        let resultName = sourceCVar other
+        let resultName = borrowedSource ctx other
             inResult m = Just m == resultName
             pendingToDec = filter (not . inResult) pending
             paramsToDec =
@@ -2452,14 +2466,21 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
       defLabel <- freshLabel "case.default"
       -- Thread fresh scrut SSA through each arm so its terminator
       -- dec's it.
-      let freshScruts' = case sourceCVar scrut of
+      let freshScruts' = case borrowedSource ctx scrut of
             Just _ -> freshScruts
             Nothing -> resS : freshScruts
       arms <- forM alts $ \(tag, vars, body) -> do
         lbl <- freshLabel ("case.arm." <> show tag)
+        let armElided = case scrut of
+              CVar n -> elidableArmBinders n vars body
+              _ -> Set.empty
         varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
           slotT <- freshTemp
           valT <- freshTemp
+          let incPart =
+                if v `Set.member` armElided
+                  then ""
+                  else "  call void @__inc_ref(ptr " <> valT <> ")\n"
           pure
             ( "  "
                 <> slotT
@@ -2473,9 +2494,7 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
                 <> " = load ptr, ptr "
                 <> slotT
                 <> "\n"
-                <> "  call void @__inc_ref(ptr "
-                <> valT
-                <> ")\n",
+                <> incPart,
               (v, valT)
             )
         let varCode = T.concat (map fst varInstrs)
@@ -2483,9 +2502,10 @@ emitNonLoopBody ctx0 params = go ctx0 [] []
             -- Linear-scrutinee elision: see 'emitExpr' 'CCase'.
             ctx' =
               let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+                  withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
                in case scrut of
-                    CVar n -> withLocals {armPatternByScrut = Map.insert n vars (armPatternByScrut withLocals)}
-                    _ -> withLocals
+                    CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
+                    _ -> withElided
         armBody <- go ctx' pending freshScruts' body
         pure (tag, lbl, varCode <> armBody)
       let switchCases =
@@ -2530,7 +2550,7 @@ emitTail ctx expr = case ctx.loopCtx of
             -- carry their @+1@ from @__alloc@.
             incs =
               T.concat
-                [ emitIncIfCVar e r
+                [ emitIncIfCVar ctx' e r
                 | (e, r) <- zip newArgs argNames
                 ]
             scrutDecs = T.concat ["  call void @__free_recursive(ptr " <> s <> ")\n" | s <- freshScruts]
@@ -2573,16 +2593,26 @@ emitTail ctx expr = case ctx.loopCtx of
         defLabel <- freshLabel "tco.case.default"
         -- If the scrut is fresh, thread its SSA through to each
         -- arm so the arm's terminator dec's it.
-        let freshScruts' = case sourceCVar scrut of
+        let freshScruts' = case borrowedSource ctx' scrut of
               Just _ -> freshScruts
               Nothing -> resS : freshScruts
         armBlocks <- forM alts $ \(tag, vars, body) -> do
           lbl <- freshLabel ("tco.case.arm." <> show tag)
+          let armElided = case scrut of
+                CVar n -> elidableArmBinders n vars body
+                _ -> Set.empty
           -- Inc each extracted ptr-binder (see the non-tail
-          -- 'CCase' in 'emitExpr' for the rationale).
+          -- 'CCase' in 'emitExpr' for the rationale). Skip the inc
+          -- for binders in @armElided@ (move-armVars whose only
+          -- use is a 'CReuse' field on the same scrut — their
+          -- paired CDrop is also skipped via 'emitFree').
           varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
             slotT <- freshTemp
             valT <- freshTemp
+            let incPart =
+                  if v `Set.member` armElided
+                    then ""
+                    else "  call void @__inc_ref(ptr " <> valT <> ")\n"
             pure
               ( "  "
                   <> slotT
@@ -2596,9 +2626,7 @@ emitTail ctx expr = case ctx.loopCtx of
                   <> " = load ptr, ptr "
                   <> slotT
                   <> "\n"
-                  <> "  call void @__inc_ref(ptr "
-                  <> valT
-                  <> ")\n",
+                  <> incPart,
                 (v, valT)
               )
           let varCode = T.concat (map fst varInstrs)
@@ -2607,9 +2635,10 @@ emitTail ctx expr = case ctx.loopCtx of
               -- in 'emitExpr' 'CCase' for the rationale.
               ctx'' =
                 let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx' varBindings
+                    withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
                  in case scrut of
-                      CVar n -> withLocals {armPatternByScrut = Map.insert n vars (armPatternByScrut withLocals)}
-                      _ -> withLocals
+                      CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
+                      _ -> withElided
           bodyInstrs <- go ctx'' lctx pending freshScruts' body
           pure (tag, lbl, varCode <> bodyInstrs)
         let switchCases = T.concat [" i64 " <> show tag <> ", label %" <> lbl | (tag, lbl, _) <- armBlocks]
@@ -2642,7 +2671,7 @@ emitTail ctx expr = case ctx.loopCtx of
         --   * Function params are dec'd here too — 'addContinueDrops'
         --     only emits param drops at 'CContinue' paths, so the
         --     value-tail path needs an explicit pass.
-        let resultName = sourceCVar other
+        let resultName = borrowedSource ctx' other
             inResult n = Just n == resultName
             pendingToDec = filter (not . inResult) pending
             paramNames = [p | (p, _) <- lctx.lcParamSlots]
@@ -2678,27 +2707,59 @@ lookupBinderSSA ctx n
 -- | Lower a 'CDrop' to a cascading-free dec. Reads the
 -- cell's refcount, on hitting 0 walks @shape@ and dec's each ptr
 -- field, then releases the block. Literals (flag == 0) short-circuit.
+--
+-- Returns @""@ for binders in @ctx.elidedBinders@ — those have had
+-- their inc-on-extract skipped at the case match, so the paired
+-- dec here must also vanish for refcount balance. See
+-- 'Awsum.Lifetime.elidableArmBinders' for the precondition.
 emitFree :: EmitCtx -> Name -> Text
-emitFree ctx n = "  call void @__free_recursive(ptr " <> lookupBinderSSA ctx n <> ")\n"
+emitFree ctx n
+  | n `Set.member` ctx.elidedBinders = ""
+  | otherwise = "  call void @__free_recursive(ptr " <> lookupBinderSSA ctx n <> ")\n"
 
 -- | If an expression's value flows through to a long-lived store
 -- position (a cell slot, a 'CContinue' phi, a 'CCall' arg, a
--- 'CRow' wrap, a 'CReuse' field) and its source is a @CVar@
--- (possibly under @CDrop@ wrappers), return that binder's name.
--- The caller emits a @__inc_ref@ on the loaded SSA so the store
--- position takes its own reference; otherwise the source is a
--- fresh allocation (CCon/CCall/CIntLit/CString) whose @+1@ from
--- @__alloc@ is already accounted for by the receiving position.
-sourceCVar :: CExpr -> Maybe Name
-sourceCVar = \case
+-- 'CRow' wrap, a 'CReuse' field) and its source is a /borrowed/
+-- @CVar@ (a local binder or function parameter, possibly under
+-- @CDrop@ wrappers), return that binder's name. The caller emits
+-- a @__inc_ref@ on the loaded SSA so the store position takes its
+-- own reference and the borrowing owner keeps its.
+--
+-- Returns 'Nothing' for fresh-allocation sources (@CCon@, @CCall@,
+-- @CIntLit@, @CString@) whose @+1@ from @__alloc@ is already the
+-- new ref the receiving position needs, and for @CVar@s referring
+-- to top-level @CValDef@s — those lower to @call ptr \@v_n()@,
+-- which produces a fresh @+1@ allocation per reference (the body
+-- runs and @__alloc@s its result every call). Treating those as
+-- borrowed would emit a spurious @__inc_ref@ over the fresh @+1@;
+-- with no second owner the cell never reaches @refcount == 0@ and
+-- leaks on every reference in a hot loop.
+borrowedSource :: EmitCtx -> CExpr -> Maybe Name
+borrowedSource ctx = \case
+  CVar n
+    | n `Set.member` ctx.valDefs -> Nothing
+    | n `Set.member` ctx.elidedBinders -> Nothing
+    | otherwise -> Just n
+  CDrop _ _ body -> borrowedSource ctx body
+  _ -> Nothing
+
+-- | Return the binder name at the tail of @expr@ when @expr@ is a
+-- 'CVar' (possibly under 'CDrop' wrappers), regardless of whether
+-- that binder is borrowed-vs-fresh or elided. Used by the CReuse
+-- copy path, which needs to inc every CVar field unconditionally
+-- (the fresh cell takes its own ref no matter what the in-place
+-- elision rules say). Differs from 'borrowedSource' in that it
+-- does not exclude valDefs or elided binders.
+sourceCVarStripDrops :: CExpr -> Maybe Name
+sourceCVarStripDrops = \case
   CVar n -> Just n
-  CDrop _ _ body -> sourceCVar body
+  CDrop _ _ body -> sourceCVarStripDrops body
   _ -> Nothing
 
 -- | Emit a @__inc_ref@ call for the loaded SSA iff the source
--- expression was a @CVar@ at its tail position. See 'sourceCVar'.
-emitIncIfCVar :: CExpr -> Text -> Text
-emitIncIfCVar expr ssa = case sourceCVar expr of
+-- expression is a borrowed @CVar@. See 'borrowedSource'.
+emitIncIfCVar :: EmitCtx -> CExpr -> Text -> Text
+emitIncIfCVar ctx expr ssa = case borrowedSource ctx expr of
   Just _ -> "  call void @__inc_ref(ptr " <> ssa <> ")\n"
   Nothing -> ""
 
@@ -2709,7 +2770,7 @@ emitIncIfCVar expr ssa = case sourceCVar expr of
 emitArgWithInc :: EmitCtx -> CExpr -> CodegenM (Text, Text)
 emitArgWithInc ctx expr = do
   (instrs, ssa) <- emitExpr ctx expr
-  pure (instrs <> emitIncIfCVar expr ssa, ssa)
+  pure (instrs <> emitIncIfCVar ctx expr ssa, ssa)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expressions
@@ -2812,7 +2873,7 @@ emitExpr ctx = \case
       slotTmp <- freshTemp
       pure
         ( instrF
-            <> emitIncIfCVar fExpr resF
+            <> emitIncIfCVar ctx fExpr resF
             <> "  "
             <> slotTmp
             <> " = getelementptr ptr, ptr "
@@ -2841,7 +2902,7 @@ emitExpr ctx = \case
   -- carve-out and prevents a cascade-free of the just-returned cell.
   CDrop _ n body -> do
     (bodyInstrs, bodyResult) <- emitExpr ctx body
-    let incInstr = case sourceCVar body of
+    let incInstr = case borrowedSource ctx body of
           Just m | m == n -> "  call void @__inc_ref(ptr " <> bodyResult <> ")\n"
           _ -> ""
     pure (bodyInstrs <> incInstr <> emitFree ctx n, bodyResult)
@@ -2865,12 +2926,24 @@ emitExpr ctx = \case
     -- ~3 cycles on the linear path (load refcount + compare +
     -- predicted branch).
     --
-    -- Linear-scrutinee elision (self-move): if a field is exactly
-    -- @CVar v@ where @v@ is the arm-pattern binder at the
-    -- corresponding slot index, the slot's stored pointer is
-    -- already what we'd write — dec-old + inc-new + store cancel
-    -- out and we can skip all three. The arm-pattern lookup goes
-    -- through 'ctx.armPatternByScrut[n]'.
+    -- Linear-scrutinee elision (self-move + permutation): if a
+    -- field is @CVar v@ where @v@ is one of the arm-pattern binders
+    -- of the scrut, the cell still owns @v@ through the rewrite —
+    -- just at a different slot. Two cases:
+    --
+    --   * Self-move: @v@ is the binder at the same slot. Skip the
+    --     whole dec-old/inc-new/store triple — the slot already
+    --     holds @v@.
+    --   * Permutation: @v@ is a binder of some other slot. Skip
+    --     dec-old at @v@'s old slot (the dec would consume the
+    --     extract-inc that was also elided for @v@); skip inc-new
+    --     at the new slot (via 'borrowedSource' returning Nothing
+    --     for elided binders); emit the store at the new slot.
+    --
+    -- The matching binder-level elision (skip extract-inc on @v@,
+    -- skip CDrop @v@) is driven by 'ctx.elidedBinders', populated
+    -- at arm entry via 'Awsum.Lifetime.elidableArmBinders'. The
+    -- arm-pattern lookup here goes through 'ctx.armPatternByScrut[n]'.
     let nPtr = lookupBinderSSA ctx n
         nFields = length fields
         armVars = Map.findWithDefault [] n ctx.armPatternByScrut
@@ -2881,6 +2954,16 @@ emitExpr ctx = \case
           case (nthMaybe (slotIdx - 1) fields, nthMaybe (slotIdx - 1) armVars) of
             (Just (CVar v), Just w) -> v == w
             _ -> False
+        -- Skip dec-old at slot @slotIdx@ iff its old occupant
+        -- (@armVars[slotIdx-1]@) is one of the elided binders —
+        -- those have had their extract-inc skipped, so the dec-old
+        -- here would over-dec the cell.
+        skipDecOldAt :: Int -> Bool
+        skipDecOldAt slotIdx =
+          isSelfMoveAt slotIdx
+            || case nthMaybe (slotIdx - 1) armVars of
+              Just w -> w `Set.member` ctx.elidedBinders
+              Nothing -> False
     -- Pre-evaluate fields once — both branches need the same
     -- field SSAs to either store-in-place or store-into-fresh.
     fieldResults <- forM fields (emitExpr ctx)
@@ -2926,7 +3009,7 @@ emitExpr ctx = \case
     -- Self-move slots: skip dec-old entirely (the slot value is
     -- preserved across the CReuse).
     inPlaceOldDecs <- forM [1 .. nFields] $ \idx ->
-      if isSelfMoveAt idx
+      if skipDecOldAt idx
         then pure ""
         else do
           oldSlotPtr <- freshTemp
@@ -2956,7 +3039,7 @@ emitExpr ctx = \case
         else do
           slotTmp <- freshTemp
           pure
-            ( emitIncIfCVar fExpr resF
+            ( emitIncIfCVar ctx fExpr resF
                 <> "  "
                 <> slotTmp
                 <> " = getelementptr ptr, ptr "
@@ -3026,10 +3109,23 @@ emitExpr ctx = \case
             <> ", ptr "
             <> copyTagSlot
             <> "\n"
+    -- In the copy path, the fresh cell takes its own ownership of
+    -- each ptr field AND the old cell @n@ stays alive at @rc - 1@
+    -- still holding its references, so every borrowed CVar source
+    -- needs an inc here. The 'elidedBinders' carve-out applies only
+    -- to the in-place path (cell stays, slot just shifts); in the
+    -- copy path we bypass 'emitIncIfCVar' (which would skip incs on
+    -- elided binders) and emit the inc unconditionally for any CVar
+    -- that isn't a top-level 'CValDef' fresh source.
+    let copyIncPart fExpr resF =
+          case sourceCVarStripDrops fExpr of
+            Just src | src `Set.notMember` ctx.valDefs ->
+              "  call void @__inc_ref(ptr " <> resF <> ")\n"
+            _ -> ""
     copyFieldStores <- forM zippedFields $ \(fExpr, resF, idx) -> do
       slotTmp <- freshTemp
       pure
-        ( emitIncIfCVar fExpr resF
+        ( copyIncPart fExpr resF
             <> "  "
             <> slotTmp
             <> " = getelementptr ptr, ptr "
@@ -3108,6 +3204,9 @@ emitExpr ctx = \case
     altLabelsAndBodies <- forM alts $ \(tag, vars, body) -> do
       lbl <- freshLabel ("case.arm." <> show tag)
       endLbl <- freshLabel ("case.end." <> show tag)
+      let armElided = case scrut of
+            CVar n -> elidableArmBinders n vars body
+            _ -> Set.empty
       -- Extract bound variables from container fields. Each
       -- ptr-binder is inc'd on extract so the local binding takes
       -- its own reference (the scrut cell's slot still holds a ref
@@ -3116,6 +3215,10 @@ emitExpr ctx = \case
       varInstrs <- forM (zip vars [1 :: Int ..]) $ \(v, idx) -> do
         slotT <- freshTemp
         valT <- freshTemp
+        let incPart =
+              if v `Set.member` armElided
+                then ""
+                else "  call void @__inc_ref(ptr " <> valT <> ")\n"
         pure
           ( "  "
               <> slotT
@@ -3129,9 +3232,7 @@ emitExpr ctx = \case
               <> " = load ptr, ptr "
               <> slotT
               <> "\n"
-              <> "  call void @__inc_ref(ptr "
-              <> valT
-              <> ")\n",
+              <> incPart,
             (v, valT)
           )
       let varInstrCode = T.concat (map fst varInstrs)
@@ -3142,9 +3243,10 @@ emitExpr ctx = \case
       -- slots.
       let ctx' =
             let withLocals = foldl' (\c (v, tmp) -> c {locals = Map.insert v tmp (locals c)}) ctx varBindings
+                withElided = withLocals {elidedBinders = elidedBinders withLocals `Set.union` armElided}
              in case scrut of
-                  CVar n -> withLocals {armPatternByScrut = Map.insert n vars (armPatternByScrut withLocals)}
-                  _ -> withLocals
+                  CVar n -> withElided {armPatternByScrut = Map.insert n vars (armPatternByScrut withElided)}
+                  _ -> withElided
       (instrB, resB) <- emitExpr ctx' body
       pure (tag, lbl, endLbl, varInstrCode <> instrB, resB)
     -- switch instruction
@@ -3169,7 +3271,7 @@ emitExpr ctx = \case
         -- extract retain their own refs to the cell's slot
         -- values, so the cascade-free of those slots only drops
         -- back the slot-via-cell ref and the binders survive.
-        scrutDec = case sourceCVar scrut of
+        scrutDec = case borrowedSource ctx scrut of
           Just _ -> ""
           Nothing -> "  call void @__free_recursive(ptr " <> resS <> ")\n"
     pure

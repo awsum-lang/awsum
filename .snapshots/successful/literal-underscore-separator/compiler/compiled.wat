@@ -447,7 +447,7 @@
 
   (func $v_sum (result i32)
     (local $__drop_tmp i32)
-    (call $__addInt32 (block (result i32) (local.set $__inc_tmp (call $v_big)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (block (result i32) (local.set $__inc_tmp (call $v_negativeBig)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp))))
+    (call $__addInt32 (call $v_big) (call $v_negativeBig)))
 
   (func $v_line (result i32)
     (local $__con_0 i32)

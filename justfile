@@ -106,6 +106,33 @@ stat-linearity:
 benchmark TEST timeout="60":
   stack run awsum-bench -- {{TEST}} --timeout {{timeout}}
 
+# Run every benchmark under test/sources/benchmark/ in sequence, one by one.
+# Same per-backend timeout semantics as `just benchmark` (override with `just benchmark-all 90`).
+# Doesn't bail on a failing benchmark — prints a summary at the end with exit codes.
+benchmark-all timeout="60":
+  #!/bin/sh
+  set -u
+  failures=""
+  for dir in test/sources/benchmark/*/; do
+    name=$(basename "$dir")
+    echo ""
+    echo "════════════════════════════════════════════════════════════════════════════"
+    echo "  benchmark: $name"
+    echo "════════════════════════════════════════════════════════════════════════════"
+    if ! stack run awsum-bench -- "$name" --timeout {{timeout}}; then
+      failures="$failures $name"
+    fi
+  done
+  echo ""
+  echo "════════════════════════════════════════════════════════════════════════════"
+  if [ -z "$failures" ]; then
+    echo "  ✅ All benchmarks completed."
+  else
+    echo "  ❌ Failed:$failures"
+    exit 1
+  fi
+  echo "════════════════════════════════════════════════════════════════════════════"
+
 show-binary-sizes:
   #!/bin/sh
   set -eu

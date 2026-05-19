@@ -286,7 +286,6 @@ define internal ptr @v_maxInt32() {
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = call ptr @__concat(ptr %t1, ptr getelementptr inbounds (i8, ptr @.str.0, i64 12))
   %t3 = getelementptr ptr, ptr %t2, i32 0
@@ -517,7 +516,6 @@ case.arm.4.168:
   call void @__inc_ref(ptr %t171)
   call void @__inc_ref(ptr %t171)
   %t172 = call ptr @v_maxInt32()
-  call void @__inc_ref(ptr %t172)
   %t173 = call ptr @__showInt32(ptr %t172)
   %t174 = call ptr @__concat(ptr %t171, ptr %t173)
   br label %case.end.4.169

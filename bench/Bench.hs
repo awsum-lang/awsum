@@ -11,8 +11,7 @@
 --
 --   macOS-only at the moment (BSD @\/usr\/bin\/time@ output format,
 --   @gtimeout@ from Homebrew @coreutils@). Linux would need a small
---   branch to call @\/usr\/bin\/time -v@ and parse a different shape;
---   not in scope here — see [management/tasks/2026-05-10__21-07.md].
+--   branch to call @\/usr\/bin\/time -v@ and parse a different shape.
 module Main (main) where
 
 import Awsum.Codegen.CLR.Assemble (assembleCLR)

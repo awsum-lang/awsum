@@ -329,9 +329,7 @@ define internal ptr @v_negativeBig() {
 
 define internal ptr @v_sum() {
   %t0 = call ptr @v_big()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v_negativeBig()
-  call void @__inc_ref(ptr %t1)
   %t2 = call ptr @__addInt32(ptr %t0, ptr %t1)
   ret ptr %t2
 }
@@ -370,6 +368,7 @@ case.default.4:
   unreachable
 case.join.5:
   %t20 = phi ptr [%t10, %case.end.3.7], [%t19, %case.end.4.15]
+  call void @__free_recursive(ptr %t0)
   ret ptr %t20
 }
 
@@ -434,6 +433,7 @@ case.default.4:
   unreachable
 case.join.5:
   %t38 = phi ptr [%t10, %case.end.3.7], [%t26, %case.end.4.23]
+  call void @__free_recursive(ptr %t0)
   ret ptr %t38
 }
 

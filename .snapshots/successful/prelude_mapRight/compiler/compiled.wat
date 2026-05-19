@@ -414,7 +414,7 @@
 
   (func $v_main (result i32)
     (local $__drop_tmp i32)
-    (call $v__let_11 (call $v__df_mapRight_0 (block (result i32) (local.set $__inc_tmp (call $v_ok)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))))
+    (call $v__let_11 (call $v__df_mapRight_0 (call $v_ok))))
 
   (func $v__let_7 (param $v_msg i32) (result i32)
     (local $__con_0 i32)
@@ -445,7 +445,7 @@
 
   (func $v__let_11 (param $v_mappedOk i32) (result i32)
     (local $__drop_tmp i32)
-    (call $v__let_9 (block (result i32) (local.set $__inc_tmp (local.get $v_mappedOk)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $v__df_mapRight_1 (block (result i32) (local.set $__inc_tmp (call $v_bad)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))))
+    (call $v__let_9 (block (result i32) (local.set $__inc_tmp (local.get $v_mappedOk)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)) (call $v__df_mapRight_1 (call $v_bad))))
 
   (func $v__df_mapRight_0 (param $v_x i32) (result i32)
     (local $__con_0 i32)

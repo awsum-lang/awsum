@@ -500,7 +500,6 @@ case.arm.4.80:
   %t83 = load ptr, ptr %t82
   call void @__inc_ref(ptr %t83)
   %t84 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t84)
   %t85 = call ptr @__alloc(i64 4, i32 0)
   store i32 -1, ptr %t85
   %t86 = call ptr @__mulInt32(ptr %t84, ptr %t85)
@@ -528,7 +527,6 @@ case.arm.4.101:
   %t104 = load ptr, ptr %t103
   call void @__inc_ref(ptr %t104)
   %t105 = call ptr @v_minInt32()
-  call void @__inc_ref(ptr %t105)
   %t106 = call ptr @__alloc(i64 4, i32 0)
   store i32 1, ptr %t106
   %t107 = call ptr @__mulInt32(ptr %t105, ptr %t106)

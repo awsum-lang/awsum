@@ -480,7 +480,6 @@ define internal ptr @v_pair() {
 
 define internal ptr @v_main() {
   %t0 = call ptr @v_triple()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v_sumTriple(ptr %t0)
   %t2 = call ptr @v__let_10(ptr %t1)
   ret ptr %t2
@@ -626,7 +625,6 @@ case.join.6:
 define internal ptr @v__let_10(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @v_pair()
-  call void @__inc_ref(ptr %t0)
   %t1 = call ptr @v__df_apply_0(ptr %t0)
   %t2 = call ptr @v__let_9(ptr %v_n, ptr %t1)
   call void @__free_recursive(ptr %v_n)

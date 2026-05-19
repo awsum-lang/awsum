@@ -1,0 +1,42 @@
+{- Polymorphic variant of 'unused_case_binder_repeat'. Same shape —
+   walks a list counting elements, case-binder '_h' bound but never
+   referenced — but the list type is polymorphic ('List a') instead
+   of monomorphic ('IntList'). All instantiations at 'a = Int32'.
+   Cell shape after lowering should be identical; any divergence in
+   peak RSS / wall isolates compiler overhead from polymorphic
+   instantiation on the unused-binder Lifetime.insertDrops path.
+
+   Sizing identical to 'unused_case_binder_repeat': 1000 outer ×
+   10_000 inner = 10⁷ Cons walks. -}
+import IO.Stdout
+
+zero : Int32
+zero = 0
+
+type List a = Nil | Cons a (List a)
+
+build : Int32 -> List Int32 -> List Int32
+build n acc = case eqInt32 n zero of
+  True -> acc
+  False -> case predInt32 n of
+    Left _e -> acc
+    Right m -> build m (Cons n acc)
+
+length : List Int32 -> Int32 -> Int32
+length xs acc = case xs of
+  Nil -> acc
+  Cons _h t -> case succInt32 acc of
+    Left _e -> acc
+    Right a -> length t a
+
+runN : Int32 -> Int32 -> Int32 -> Int32
+runN iters listLen accSum = case eqInt32 iters zero of
+  True -> accSum
+  False -> case predInt32 iters of
+    Left _e -> accSum
+    Right i -> case addInt32 accSum (length (build listLen Nil) zero) of
+      Left _e -> accSum
+      Right s -> runN i listLen s
+
+main : IO Never Unit
+main = IO.Stdout.print (showInt32 (runN 1_000 10_000 zero))
