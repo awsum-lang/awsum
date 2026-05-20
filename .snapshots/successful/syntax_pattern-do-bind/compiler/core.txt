@@ -93,10 +93,10 @@ CoreProgram
                     )
                     [
                         ( 3
-                        , [ "$do_e_12_9" ]
-                        , CDrop DropFreeUnchecked "$do_e_12_9"
+                        , [ "$do_e_0" ]
+                        , CDrop DropFreeUnchecked "$do_e_0"
                             ( CCon 3
-                                [ CVar "$do_e_12_9" ]
+                                [ CVar "$do_e_0" ]
                             )
                         )
                     ,

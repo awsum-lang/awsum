@@ -6,15 +6,15 @@ runIO:
 
 pad:
   param           s                               count=1
-  case-pattern    $do_e_8_3                       count=0
+  case-pattern    $do_e_1                         count=0
   case-pattern    p                               count=0
-  case-pattern    $do_e_9_3                       count=0
+  case-pattern    $do_e_0                         count=0
   case-pattern    q                               count=0
 
 main:
-  case-pattern    $do_e_15_9                      count=1
+  case-pattern    $do_e_3                         count=1
   case-pattern    padded                          count=1
-  case-pattern    $do_e_16_9                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    s0                              count=1
 
 $let$12:

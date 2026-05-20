@@ -17,6 +17,7 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ### Changed
 
+- **Comments and layout no longer affect `awsum build` output or `awsum check` diagnostic text.** Synthetic binder names (`$do_e_N`, `$arg_N`, `$let_w_N`) are minted from a monotonic counter, and type-error messages show `expected x` rather than `expected x$3_12`.
 - **Module comment header for `.aww` files.** A single optional `{- … -}` block at the top of a file is now treated as the module comment. Line comments (`-- …`) at the top of a file and multiple block comments in a row are rejected with a parse error: the language never silently attaches text above the first import or declaration. Concrete shapes:
   - **Before** — `{- header -}` glued directly to `import IO.Stdout` on the next line, or `-- header …` (often multi-line) before `import` / a top-level decl.
   - **After** — a single `{- header -}` block, then `import …` or the first declaration. The canonical form has one blank line between the header and the next line; the parser accepts both with and without the blank line, and `awsum format` normalises to the form with one. Other shapes (`-- header`, two `{- a -} {- b -}` in a row) are syntax errors.

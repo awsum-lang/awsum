@@ -39,7 +39,7 @@ const v_opA = [4, (1|0)];
 
 const v_opB = [4, (2|0)];
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_19_9 = s[1]; return [3, [2252990199, v__do_e_19_9]]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_20_9 = s[1]; return [3, [2269767818, v__do_e_20_9]]; } case 4: { const v_b = s[1]; return (v_pureEither)(v_b); } } })(v_opB); } } })(v_opA));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, [2252990199, v__do_e_1]]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, [2269767818, v__do_e_0]]; } case 4: { const v_b = s[1]; return (v_pureEither)(v_b); } } })(v_opB); } } })(v_opA));
 
 function v__let_12(v_res){
     {

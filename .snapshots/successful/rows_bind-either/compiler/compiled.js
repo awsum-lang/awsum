@@ -45,8 +45,8 @@ function v_run(v_x){
       const __s = (v_opA)(v_x);
       switch (__s[0]) {
         case 3: {
-          const v__do_e_20_3 = __s[1];
-          return [3, [2252990199, v__do_e_20_3]];
+          const v__do_e_0 = __s[1];
+          return [3, [2252990199, v__do_e_0]];
         }
         case 4: {
           const v_a = __s[1];

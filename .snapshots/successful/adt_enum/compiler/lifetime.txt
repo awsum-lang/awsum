@@ -8,11 +8,11 @@ show:
   param           c                               count=1
 
 main:
-  case-pattern    $do_e_19_9                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    s0                              count=1
-  case-pattern    $do_e_20_9                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    s1                              count=1
-  case-pattern    $do_e_21_9                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    s2                              count=1
 
 $let$12:

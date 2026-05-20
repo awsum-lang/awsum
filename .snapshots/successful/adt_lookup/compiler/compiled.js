@@ -47,7 +47,7 @@ function v_unwrap(v_x){
     }
 }
 
-const main = (v__let_13)(((s) => { switch(s[0]) { case 3: { const v__do_e_15_9 = s[1]; return [3, v__do_e_15_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)((v__lift_12)([21]))); } } })(__concat((v_unwrap)([20, "hello"]), ", ")));
+const main = (v__let_13)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)((v__lift_12)([21]))); } } })(__concat((v_unwrap)([20, "hello"]), ", ")));
 
 function v__lift_12(v___input){
     {

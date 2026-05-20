@@ -13,11 +13,11 @@ render:
   case-pattern    v                               count=0
 
 main:
-  case-pattern    $do_e_13_9                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    a                               count=1
-  case-pattern    $do_e_14_9                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    b                               count=1
-  case-pattern    $do_e_15_9                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    s0                              count=1
 
 $let$12:

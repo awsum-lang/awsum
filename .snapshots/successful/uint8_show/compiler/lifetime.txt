@@ -5,15 +5,15 @@ runIO:
   case-pattern    next                            count=0
 
 main:
-  case-pattern    $do_e_8_9                       count=1
+  case-pattern    $do_e_4                         count=1
   case-pattern    s0                              count=1
-  case-pattern    $do_e_9_9                       count=1
+  case-pattern    $do_e_3                         count=1
   case-pattern    s1                              count=1
-  case-pattern    $do_e_10_9                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    s2                              count=1
-  case-pattern    $do_e_11_9                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    s3                              count=1
-  case-pattern    $do_e_12_9                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    s4                              count=1
 
 $let$12:

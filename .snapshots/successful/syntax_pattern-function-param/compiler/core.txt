@@ -38,9 +38,9 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "sumTriple" [ "$arg_6_11" ]
+        , CFunDef "sumTriple" [ "$arg_0" ]
             ( CCase
-                ( CVar "$arg_6_11" )
+                ( CVar "$arg_0" )
                 [
                     ( 13
                     ,
@@ -97,9 +97,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "sumPair" [ "$arg_16_9" ]
+        , CFunDef "sumPair" [ "$arg_1" ]
             ( CCase
-                ( CVar "$arg_16_9" )
+                ( CVar "$arg_1" )
                 [
                     ( 12
                     ,
@@ -181,9 +181,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$13" [ "$arg_29_19" ]
+        , CFunDef "$lam$13" [ "$arg_2" ]
             ( CCase
-                ( CVar "$arg_29_19" )
+                ( CVar "$arg_2" )
                 [
                     ( 12
                     ,
@@ -221,10 +221,10 @@ CoreProgram
                     )
                     [
                         ( 3
-                        , [ "$do_e_31_9" ]
-                        , CDrop DropFreeUnchecked "$do_e_31_9"
+                        , [ "$do_e_3" ]
+                        , CDrop DropFreeUnchecked "$do_e_3"
                             ( CCon 3
-                                [ CVar "$do_e_31_9" ]
+                                [ CVar "$do_e_3" ]
                             )
                         )
                     ,

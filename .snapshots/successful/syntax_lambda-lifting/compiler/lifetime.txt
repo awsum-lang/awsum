@@ -11,9 +11,9 @@ op2WithA:
   param           n                               count=1
 
 g:
-  case-pattern    $do_e_24_3                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    a                               count=1
-  case-pattern    $do_e_25_3                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    b                               count=1
 
 describe:
@@ -24,9 +24,9 @@ describe:
   case-pattern    n                               count=0
 
 main:
-  case-pattern    $do_e_38_9                      count=1
+  case-pattern    $do_e_3                         count=1
   case-pattern    d                               count=1
-  case-pattern    $do_e_39_9                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    s0                              count=1
 
 $lam$12:

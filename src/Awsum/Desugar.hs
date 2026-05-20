@@ -14,18 +14,20 @@
 --
 -- @
 -- case e1 of
---   Left $do_e_… -> Left $do_e_…
+--   Left $do_e_N -> Left $do_e_N
 --   Right a -> case e2 a of
---     Left $do_e_… -> Left $do_e_…
+--     Left $do_e_M -> Left $do_e_M
 --     Right b -> pureEither (Tuple2 a b)
 -- @
 --
 -- Inlining the bind pattern here means @do@ continuations
 -- never appear as surface lambdas, so multi-bind blocks where later
 -- steps reference earlier-bound variables compile end-to-end without
--- the runtime needing first-class closures. Each synthetic @$do_e_…@
--- name is suffixed with the bind's source position so nested do-blocks
--- don't trip the same-module no-shadowing rule.
+-- the runtime needing first-class closures. Each synthetic @$do_e_N@
+-- name uses a monotonic counter so nested do-blocks don't trip the
+-- same-module no-shadowing rule and so layout / comment changes do
+-- not perturb the generated names (the counter walks the AST in
+-- document order; positions in the source are not part of the name).
 --
 -- The trailing expression is the user's verbatim — typically a
 -- 'pureEither' call, which is an ordinary prelude function. There is
@@ -39,6 +41,23 @@
 --
 -- Purely syntactic and hard-coded to 'Either' — no type-class dispatch
 -- yet.
+--
+-- ==== Fresh-name counter
+--
+-- The whole pass runs in @StateT Int (Either DesugarError)@. The
+-- 'Int' is a monotonic counter shared between '$do_e_' and '$arg_'
+-- synthesis sites; it starts at @0@ and grows in document order.
+-- Two consequences worth naming:
+--
+--   * Names are deterministic with respect to the AST alone — layout,
+--     comments, and blank lines (none of which reach the AST) cannot
+--     change them. This is the invariant tracked in
+--     @management/comments-do-not-affect-compiler-output.md@ in the
+--     private workspace.
+--   * Counter is /global per program/, not per function. The
+--     supercompiler/inliner work assumed by future passes benefits
+--     from globally unique binder names (rename-free substitution on
+--     inline) — see the topic doc for the trade-off.
 module Awsum.Desugar (desugarProgram, DesugarError (..)) where
 
 import Awsum.Syntax
@@ -59,28 +78,52 @@ data DesugarError
     DesugarPatternLetAscription SrcSpan
   deriving stock (Show, Eq)
 
+-- | Desugaring monad: a monotonic 'Int' counter for synthetic-name
+--   minting, layered on top of the existing 'Either DesugarError'
+--   result channel.
+type DesugarM = StateT Int (Either DesugarError)
+
+-- | Allocate the next index from the shared counter.
+freshIx :: DesugarM Int
+freshIx = do
+  i <- get
+  put (i + 1)
+  pure i
+
+-- | Mint a fresh @$do_e_N@ name for a do-bind's synthetic Left binder.
+freshDoErrName :: DesugarM Name
+freshDoErrName = ("$do_e_" <>) . show <$> freshIx
+
+-- | Mint a fresh @$arg_N@ name for a 'ParamPat' lift.
+freshArgName :: DesugarM Name
+freshArgName = ("$arg_" <>) . show <$> freshIx
+
 -- | Run the desugarer over a 'Program'. Pure tree rewrite — no extra
 --   declarations are introduced, only the body of each 'FunDef' is
---   rewritten in place.
+--   rewritten in place. The synthetic-name counter starts at @0@ and
+--   is consumed top-to-bottom in document order; the counter is
+--   discarded after the run.
 desugarProgram :: Program -> Either DesugarError Program
-desugarProgram p = do
-  decls' <- traverse desugarDecl (decls p)
-  pure p {decls = decls'}
+desugarProgram p = evalStateT (go p) 0
+  where
+    go prog = do
+      decls' <- traverse desugarDecl (decls prog)
+      pure prog {decls = decls'}
 
-desugarDecl :: Decl -> Either DesugarError Decl
+desugarDecl :: Decl -> DesugarM Decl
 desugarDecl = \case
   FunDef sp n params body c -> do
     body' <- desugarExpr body
-    let (params', wrappedBody) = liftParamPatterns params body'
+    (params', wrappedBody) <- liftParamPatterns params body'
     pure (FunDef sp n params' wrappedBody c)
   d -> pure d
 
-desugarExpr :: Expr -> Either DesugarError Expr
+desugarExpr :: Expr -> DesugarM Expr
 desugarExpr = \case
   EDo sp stmts -> desugarDo sp stmts
   ELam sp params body -> do
     body' <- desugarExpr body
-    let (params', wrappedBody) = liftParamPatterns params body'
+    (params', wrappedBody) <- liftParamPatterns params body'
     pure (ELam sp params' wrappedBody)
   EApp sp f x -> EApp sp <$> desugarExpr f <*> desugarExpr x
   EInfix sp op l r -> EInfix sp op <$> desugarExpr l <*> desugarExpr r
@@ -104,7 +147,7 @@ desugarExpr = \case
 --
 --   @
 --   case <expr> of
---     Left $do_e_<line>_<col> -> Left $do_e_<line>_<col>
+--     Left $do_e_N -> Left $do_e_N
 --     Right <param>           -> <rest>
 --   @
 --
@@ -123,19 +166,19 @@ desugarExpr = \case
 --   steps reference earlier-bound variables — the common shape —
 --   work end-to-end.
 --
---   Each generated @$do_e_<line>_<col>@ name is unique by source
---   position so nested do-blocks don't trip the same-module no-
---   shadowing rule.
-desugarDo :: SrcSpan -> [DoStmt] -> Either DesugarError Expr
+--   Each generated @$do_e_N@ name uses the shared monotonic counter
+--   so nested do-blocks don't trip the same-module no-shadowing
+--   rule.
+desugarDo :: SrcSpan -> [DoStmt] -> DesugarM Expr
 desugarDo sp = go
   where
-    go [] = Right (EVar sp (QName [] "$emptyDoBlock"))
+    go [] = pure (EVar sp (QName [] "$emptyDoBlock"))
     go [DoExpr _ e] = desugarExpr e
     go (DoBind bsp pat e : rest) = do
       e' <- desugarExpr e
       body <- go rest
-      let errName = "$do_e_" <> spanTag bsp
-          leftPat = PCon bsp "Left" [PVar bsp errName]
+      errName <- freshDoErrName
+      let leftPat = PCon bsp "Left" [PVar bsp errName]
           leftBody = EApp bsp (ECon bsp "Left") (EVar bsp (QName [] errName))
           -- The user's bind LHS pattern goes inside 'Right'. If
           -- it's a simple 'PVar'/'PWild' the resulting case is
@@ -149,7 +192,7 @@ desugarDo sp = go
           -- by hand. No special "refutable in do-bind" error.
           rightPat = PCon bsp "Right" [pat]
           arms = mkCaseAlt [] leftPat leftBody Nothing :| [mkCaseAlt [] rightPat body Nothing]
-      Right (ECase bsp e' arms [])
+      pure (ECase bsp e' arms [])
     go (DoLet lsp pat mAnnot e : rest) = do
       e' <- desugarExpr e
       body <- go rest
@@ -160,14 +203,7 @@ desugarDo sp = go
     -- Bare expression in a non-final position is rejected; the
     -- typechecker also flags this, but we catch it here too so the
     -- desugar output stays well-formed.
-    go (DoExpr esp _ : _ : _) = Left (DesugarBindNameStillUsed esp "<non-final-expr>")
-
-    -- Source-position-derived suffix used to make the synthetic Left
-    -- error binder unique across nested do-binds. Same-module no-
-    -- shadowing would otherwise reject two binds with the same
-    -- generated name in scope at once.
-    spanTag s =
-      show (spanStartLine s) <> "_" <> show (spanStartCol s)
+    go (DoExpr esp _ : _ : _) = lift (Left (DesugarBindNameStillUsed esp "<non-final-expr>"))
 
 -- | Rewrite any 'ParamPat' parameter into a fresh 'Param' plus a
 --   single-arm 'ECase' wrapping the body that destructures the
@@ -178,30 +214,38 @@ desugarDo sp = go
 --
 --   Each 'ParamPat' contributes one nesting level to the body:
 --   given @f (Tuple3 a b c) (Just x) = body@, lifting produces
---   @f $arg_<sp1> $arg_<sp2> = case $arg_<sp1> of Tuple3 a b c ->
---   case $arg_<sp2> of Just x -> body@. Exhaustiveness is then
+--   @f $arg_N $arg_M = case $arg_N of Tuple3 a b c ->
+--   case $arg_M of Just x -> body@. Exhaustiveness is then
 --   validated by the standard 'caseArmsNominal' machinery —
 --   single-constructor types pass trivially; refutable patterns
 --   (e.g. @Just x@ on a 'Maybe') raise 'NonExhaustiveCase'.
 --
---   The synthetic name uses the original 'ParamPat' span so two
---   destructuring parameters in the same function don't collide.
-liftParamPatterns :: [Param] -> Expr -> ([Param], Expr)
-liftParamPatterns params body =
-  let (params', wrappers) = foldr step ([], id) params
-   in (params', wrappers body)
+--   Synthetic names are drawn from the shared monotonic counter, so
+--   two destructuring parameters in the same function don't collide
+--   and the names don't depend on source position. The walk is
+--   left-to-right in document order, so the /leftmost/ 'ParamPat'
+--   gets the lowest counter value and ends up as the /outermost/
+--   case wrapper — matching the user's reading order.
+liftParamPatterns :: [Param] -> Expr -> DesugarM ([Param], Expr)
+liftParamPatterns params body = do
+  pieces <- traverse mkParam params
+  let (params', wrappers) = unzip pieces
+      -- Compose so the leftmost ParamPat's wrapper ends up
+      -- outermost.
+      wrap = foldr (.) id wrappers
+  pure (params', wrap body)
   where
-    step :: Param -> ([Param], Expr -> Expr) -> ([Param], Expr -> Expr)
-    step (Param sp n) (ps, wrap) = (Param sp n : ps, wrap)
-    step (ParamPat sp pat) (ps, wrap) =
-      let n = "$arg_" <> show (spanStartLine sp) <> "_" <> show (spanStartCol sp)
-          newWrap inner =
+    mkParam :: Param -> DesugarM (Param, Expr -> Expr)
+    mkParam (Param sp n) = pure (Param sp n, id)
+    mkParam (ParamPat sp pat) = do
+      n <- freshArgName
+      let newWrap inner =
             ECase
               sp
               (EVar sp (QName [] n))
-              (mkCaseAlt [] pat (wrap inner) Nothing :| [])
+              (mkCaseAlt [] pat inner Nothing :| [])
               []
-       in (Param sp n : ps, newWrap)
+      pure (Param sp n, newWrap)
 
 -- | Apply the let-binding rewrite rule:
 --
@@ -222,11 +266,11 @@ liftParamPatterns params body =
 --
 --   Shared by both standalone 'let-in' and 'do { let … }', so the
 --   rewrite happens exactly once regardless of source shape.
-rewriteLet :: SrcSpan -> Pattern -> Maybe Type' -> Expr -> Expr -> Either DesugarError Expr
+rewriteLet :: SrcSpan -> Pattern -> Maybe Type' -> Expr -> Expr -> DesugarM Expr
 rewriteLet sp pat mAnnot e' body' = case pat of
-  PVar _ _ -> Right (ELet sp pat mAnnot e' body')
-  PWild _ -> Right (ELet sp pat mAnnot e' body')
+  PVar _ _ -> pure (ELet sp pat mAnnot e' body')
+  PWild _ -> pure (ELet sp pat mAnnot e' body')
   _ -> case mAnnot of
-    Just _ -> Left (DesugarPatternLetAscription sp)
+    Just _ -> lift (Left (DesugarPatternLetAscription sp))
     Nothing ->
-      Right (ECase sp e' (mkCaseAlt [] pat body' Nothing :| []) [])
+      pure (ECase sp e' (mkCaseAlt [] pat body' Nothing :| []) [])

@@ -36,7 +36,7 @@ function v_runIO(v_io){
   }
 }
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_8_9 = s[1]; return [3, v__do_e_8_9]; } case 4: { const v_ax = s[1]; return (v_identity)((v_appendY)(v_ax)); } } })((v_appendX)((v_const)("a", "b"))));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_ax = s[1]; return (v_identity)((v_appendY)(v_ax)); } } })((v_appendX)((v_const)("a", "b"))));
 
 function v_identity(v_x){
     return v_x;

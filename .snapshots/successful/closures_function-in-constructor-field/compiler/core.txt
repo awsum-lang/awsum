@@ -55,10 +55,10 @@ CoreProgram
                 )
                 [
                     ( 3
-                    , [ "$do_e_17_3" ]
-                    , CDrop DropFreeUnchecked "$do_e_17_3"
+                    , [ "$do_e_0" ]
+                    , CDrop DropFreeUnchecked "$do_e_0"
                         ( CCon 3
-                            [ CVar "$do_e_17_3" ]
+                            [ CVar "$do_e_0" ]
                         )
                     )
                 ,
@@ -104,9 +104,9 @@ CoreProgram
                 )
                 [
                     ( 3
-                    , [ "$do_e_26_3" ]
+                    , [ "$do_e_3" ]
                     , CCon 3
-                        [ CVar "$do_e_26_3" ]
+                        [ CVar "$do_e_3" ]
                     )
                 ,
                     ( 4
@@ -121,9 +121,9 @@ CoreProgram
                         )
                         [
                             ( 3
-                            , [ "$do_e_27_3" ]
+                            , [ "$do_e_2" ]
                             , CCon 3
-                                [ CVar "$do_e_27_3" ]
+                                [ CVar "$do_e_2" ]
                             )
                         ,
                             ( 4
@@ -139,10 +139,10 @@ CoreProgram
                                 )
                                 [
                                     ( 3
-                                    , [ "$do_e_28_3" ]
+                                    , [ "$do_e_1" ]
                                     , CCon 3
                                         [ CRow 589989748
-                                            ( CVar "$do_e_28_3" )
+                                            ( CVar "$do_e_1" )
                                         ]
                                     )
                                 ,
