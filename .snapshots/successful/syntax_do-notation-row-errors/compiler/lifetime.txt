@@ -8,11 +8,11 @@ runIO:
   case-pattern    next                            count=0
 
 f:
-  case-pattern    $do_e_23_3                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    a                               count=0
-  case-pattern    $do_e_24_3                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    b                               count=0
-  case-pattern    $do_e_25_3                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    c                               count=1
 
 describe:

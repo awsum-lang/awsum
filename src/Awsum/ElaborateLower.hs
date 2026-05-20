@@ -217,6 +217,17 @@ freshLetName = do
   put s {lsFresh = lsFresh s + 1}
   pure ("$let$" <> show (lsFresh s))
 
+-- | Mint a fresh binder name '$let_w_N' for a wildcard-LHS @let _ = e
+--   in body@ that 'lowerLet' needs to give a name. Same shared counter
+--   as the other mint helpers — the binder appears in Core IR and so
+--   the codegen artefact, which is why it cannot encode a 'SrcSpan'
+--   (see the topic doc in the private workspace).
+freshLetWildName :: LowerM Name
+freshLetWildName = do
+  s <- get
+  put s {lsFresh = lsFresh s + 1}
+  pure ("$let_w_" <> show (lsFresh s))
+
 -- | Append a lifted helper definition to the program.
 emitHelper :: CDecl -> LowerM ()
 emitHelper d = modify (\s -> s {lsHelpers = d : lsHelpers s})
@@ -1352,13 +1363,13 @@ lowerExprM env locals expected = \case
   -- After 'Awsum.Desugar', any non-'PVar' / non-'PWild' let-binding
   -- has been rewritten to 'ECase'. The lowering only sees simple
   -- name (or wildcard) bindings here; 'PWild' uses the same
-  -- '$let_w_<sp>' synthetic-name path that 'lowerLet' applies for
+  -- '$let_w_N' synthetic-name path that 'lowerLet' applies for
   -- 'PVar' under the hood.
   ELet sp pat mAnnot e body -> case pat of
     PVar _ n -> lowerLet env locals expected sp n mAnnot e body
-    PWild psp ->
-      let n = "$let_w_" <> show (spanStartLine psp) <> "_" <> show (spanStartCol psp)
-       in lowerLet env locals expected sp n mAnnot e body
+    PWild _psp -> do
+      n <- freshLetWildName
+      lowerLet env locals expected sp n mAnnot e body
     _ -> liftEither $ Left (TELowering "non-PVar let-binding should have been desugared by Awsum.Desugar")
   EDo _sp _ -> liftEither $ Left (TELowering "do-block not desugared before lowering — internal pipeline error")
   ECase _sp scrut alts _ -> do

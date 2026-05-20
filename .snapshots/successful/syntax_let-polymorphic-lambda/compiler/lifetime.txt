@@ -24,10 +24,10 @@ $df$$let$13$0:
   param           b                               count=1
   param           n                               count=1
   param           s                               count=1
-  case-pattern    $do_e_21_9                      count=0
+  case-pattern    $do_e_2                         count=0
   case-pattern    s0                              count=0
-  case-pattern    $do_e_22_9                      count=0
+  case-pattern    $do_e_1                         count=0
   case-pattern    s1                              count=0
-  case-pattern    $do_e_23_9                      count=0
+  case-pattern    $do_e_0                         count=0
   case-pattern    s2                              count=0
 

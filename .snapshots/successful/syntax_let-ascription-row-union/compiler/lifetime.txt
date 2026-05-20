@@ -8,9 +8,9 @@ runIO:
   case-pattern    next                            count=0
 
 main:
-  case-pattern    $do_e_19_9                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    a                               count=0
-  case-pattern    $do_e_20_9                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    b                               count=1
 
 $let$12:

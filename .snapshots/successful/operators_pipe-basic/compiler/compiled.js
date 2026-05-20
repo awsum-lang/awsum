@@ -44,7 +44,7 @@ function v_wrap(v_s){
     return v_s;
 }
 
-const v_joined = ((s) => { switch(s[0]) { case 3: { const v__do_e_29_3 = s[1]; return [3, v__do_e_29_3]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_30_3 = s[1]; return [3, v__do_e_30_3]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_31_3 = s[1]; return [3, v__do_e_31_3]; } case 4: { const v_c = s[1]; return __concat(v_c, v_viaLambda); } } })(__concat(v_b, "|")); } } })(__concat(v_a, v_chained)); } } })(__concat(v_basic, "|"));
+const v_joined = ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_c = s[1]; return __concat(v_c, v_viaLambda); } } })(__concat(v_b, "|")); } } })(__concat(v_a, v_chained)); } } })(__concat(v_basic, "|"));
 
 const main = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return [7, "STRING_TOO_LONG", [5, [0]]]; } case 4: { const v_s = s[1]; return [7, v_s, [5, [0]]]; } } })(v_joined);
 

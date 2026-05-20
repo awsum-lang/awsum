@@ -126,9 +126,9 @@ CoreProgram
                     )
                     [
                         ( 3
-                        , [ "$do_e_8_9" ]
+                        , [ "$do_e_3" ]
                         , CCon 3
-                            [ CVar "$do_e_8_9" ]
+                            [ CVar "$do_e_3" ]
                         )
                     ,
                         ( 4
@@ -149,9 +149,9 @@ CoreProgram
                             )
                             [
                                 ( 3
-                                , [ "$do_e_9_9" ]
+                                , [ "$do_e_2" ]
                                 , CCon 3
-                                    [ CVar "$do_e_9_9" ]
+                                    [ CVar "$do_e_2" ]
                                 )
                             ,
                                 ( 4
@@ -172,9 +172,9 @@ CoreProgram
                                     )
                                     [
                                         ( 3
-                                        , [ "$do_e_10_9" ]
+                                        , [ "$do_e_1" ]
                                         , CCon 3
-                                            [ CVar "$do_e_10_9" ]
+                                            [ CVar "$do_e_1" ]
                                         )
                                     ,
                                         ( 4
@@ -195,9 +195,9 @@ CoreProgram
                                             )
                                             [
                                                 ( 3
-                                                , [ "$do_e_11_9" ]
+                                                , [ "$do_e_0" ]
                                                 , CCon 3
-                                                    [ CVar "$do_e_11_9" ]
+                                                    [ CVar "$do_e_0" ]
                                                 )
                                             ,
                                                 ( 4

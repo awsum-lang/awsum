@@ -70,7 +70,7 @@ function v_showResult(v_r){
     }
 }
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_32_9 = s[1]; return [3, v__do_e_32_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([24, [23, [21]]])); } } })(__concat((v_showBoxedColor)([23, [20]]), " ")));
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_showResult)([24, [23, [21]]])); } } })(__concat((v_showBoxedColor)([23, [20]]), " ")));
 
 function v__let_12(v_res){
     {

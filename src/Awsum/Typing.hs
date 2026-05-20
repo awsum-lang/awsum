@@ -50,7 +50,7 @@ module Awsum.Typing
 where
 
 import Awsum.BuiltIn (lookupBuiltIn)
-import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, rowSubsume, unify)
+import Awsum.HM (Subst, applySubst, collectTypeVars, flattenRow, freshenType, rowSubsume, stripSyntheticTyvarSuffix, unify)
 import Awsum.Program (ProgramType, platformTable)
 import Awsum.Syntax
 import Control.Monad (foldM, foldM_)
@@ -502,7 +502,7 @@ prettyPrintTypeError = \case
   where
     showType :: Type' -> Text
     showType = \case
-      TyVar _ n -> n
+      TyVar _ n -> stripSyntheticTyvarSuffix n
       TyCon _ n -> n
       TyEmpty _ n -> n
       TyApp _ f x -> showType f <> " " <> showTypeAtom x

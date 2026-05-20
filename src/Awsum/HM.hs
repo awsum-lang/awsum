@@ -27,6 +27,7 @@ module Awsum.HM
     generalize,
     instantiate,
     freshenType,
+    stripSyntheticTyvarSuffix,
 
     -- * Type-checker monad
     TC,
@@ -518,6 +519,23 @@ freshenType suffix ty = applySubst subst ty
       foldMap
         (\v -> singletonSubst v (TyVar noSpan (v <> suffix)))
         (collectTypeVars ty)
+
+-- | Strip the typechecker-internal disambiguation suffix from a tyvar
+--   name for user-facing presentation.
+--
+--   Synthetic suffixes — added by 'freshenType' at 'ECon' / case-scrut
+--   sites and by the @ELam@ parameter-instantiation step in
+--   'Awsum.Typing' / 'Awsum.ElaborateLower.synthLabelType' — all start
+--   with @$@. User-written identifiers cannot contain @$@ (lexer
+--   reserves it for compiler-synthesised names), so dropping
+--   everything from the first @$@ is unambiguous.
+--
+--   Used by diagnostic rendering so messages read @expected x, got
+--   Int32@ rather than @expected x$3_12, got Int32@; also keeps the
+--   diagnostic text invariant under comment / layout edits in the
+--   source.
+stripSyntheticTyvarSuffix :: Name -> Name
+stripSyntheticTyvarSuffix = T.takeWhile (/= '$')
 
 -- | Type-checker monad: 'StateT' over an 'Either'-based error channel.
 --   Polymorphic in the error type so call sites can specialise to

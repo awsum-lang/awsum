@@ -92,9 +92,9 @@ CoreProgram
                     )
                     [
                         ( 3
-                        , [ "$do_e_27_9" ]
+                        , [ "$do_e_4" ]
                         , CCon 3
-                            [ CVar "$do_e_27_9" ]
+                            [ CVar "$do_e_4" ]
                         )
                     ,
                         ( 4
@@ -112,9 +112,9 @@ CoreProgram
                             )
                             [
                                 ( 3
-                                , [ "$do_e_28_9" ]
+                                , [ "$do_e_3" ]
                                 , CCon 3
-                                    [ CVar "$do_e_28_9" ]
+                                    [ CVar "$do_e_3" ]
                                 )
                             ,
                                 ( 4
@@ -128,9 +128,9 @@ CoreProgram
                                     )
                                     [
                                         ( 3
-                                        , [ "$do_e_29_9" ]
+                                        , [ "$do_e_2" ]
                                         , CCon 3
-                                            [ CVar "$do_e_29_9" ]
+                                            [ CVar "$do_e_2" ]
                                         )
                                     ,
                                         ( 4
@@ -148,9 +148,9 @@ CoreProgram
                                             )
                                             [
                                                 ( 3
-                                                , [ "$do_e_30_9" ]
+                                                , [ "$do_e_1" ]
                                                 , CCon 3
-                                                    [ CVar "$do_e_30_9" ]
+                                                    [ CVar "$do_e_1" ]
                                                 )
                                             ,
                                                 ( 4
@@ -164,9 +164,9 @@ CoreProgram
                                                     )
                                                     [
                                                         ( 3
-                                                        , [ "$do_e_31_9" ]
+                                                        , [ "$do_e_0" ]
                                                         , CCon 3
-                                                            [ CVar "$do_e_31_9" ]
+                                                            [ CVar "$do_e_0" ]
                                                         )
                                                     ,
                                                         ( 4

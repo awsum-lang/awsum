@@ -1,1 +1,1 @@
-[{"severity":"error","startLine":12,"startCol":13,"endLine":12,"endCol":14,"message":"Type mismatch: expected a$12_8, got <integer literal>","fixes":[]}]
+[{"severity":"error","startLine":12,"startCol":13,"endLine":12,"endCol":14,"message":"Type mismatch: expected a, got <integer literal>","fixes":[]}]

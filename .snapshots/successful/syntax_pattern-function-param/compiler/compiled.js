@@ -33,9 +33,9 @@ function v_runIO(v_io){
   }
 }
 
-function v_sumTriple(v__arg_6_11){
+function v_sumTriple(v__arg_0){
     {
-      const __s = v__arg_6_11;
+      const __s = v__arg_0;
       switch (__s[0]) {
         case 13: {
           const v_a = __s[1];
@@ -71,9 +71,9 @@ function v_sumTriple(v__arg_6_11){
     }
 }
 
-function v_sumPair(v__arg_16_9){
+function v_sumPair(v__arg_1){
     {
-      const __s = v__arg_16_9;
+      const __s = v__arg_1;
       switch (__s[0]) {
         case 12: {
           const v_a = __s[1];
@@ -118,9 +118,9 @@ function v__let_12(v_res){
     }
 }
 
-function v__lam_13(v__arg_29_19){
+function v__lam_13(v__arg_2){
     {
-      const __s = v__arg_29_19;
+      const __s = v__arg_2;
       switch (__s[0]) {
         case 12: {
           const v_a = __s[1];
@@ -132,7 +132,7 @@ function v__lam_13(v__arg_29_19){
 }
 
 function v__let_14(v_n, v_m){
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_31_9 = s[1]; return [3, v__do_e_31_9]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
+    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
 }
 
 function v__let_15(v_n){

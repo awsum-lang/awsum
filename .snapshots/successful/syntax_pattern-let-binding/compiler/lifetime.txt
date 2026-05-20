@@ -13,11 +13,11 @@ show:
   param           pair                            count=1
   case-pattern    a                               count=0
   case-pattern    b                               count=0
-  case-pattern    $do_e_14_9                      count=0
+  case-pattern    $do_e_2                         count=0
   case-pattern    s0                              count=0
-  case-pattern    $do_e_15_9                      count=0
+  case-pattern    $do_e_1                         count=0
   case-pattern    s1                              count=0
-  case-pattern    $do_e_16_9                      count=0
+  case-pattern    $do_e_0                         count=0
   case-pattern    s2                              count=0
 
 $let$12:

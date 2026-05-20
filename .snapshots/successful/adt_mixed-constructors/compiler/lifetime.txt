@@ -10,23 +10,23 @@ showToken:
   case-pattern    n                               count=0
 
 main:
-  case-pattern    $do_e_21_9                      count=1
+  case-pattern    $do_e_8                         count=1
   case-pattern    a                               count=1
-  case-pattern    $do_e_22_9                      count=1
+  case-pattern    $do_e_7                         count=1
   case-pattern    b                               count=1
-  case-pattern    $do_e_23_9                      count=1
+  case-pattern    $do_e_6                         count=1
   case-pattern    c                               count=1
-  case-pattern    $do_e_24_9                      count=1
+  case-pattern    $do_e_5                         count=1
   case-pattern    d                               count=1
-  case-pattern    $do_e_25_9                      count=1
+  case-pattern    $do_e_4                         count=1
   case-pattern    ab                              count=1
-  case-pattern    $do_e_26_9                      count=1
+  case-pattern    $do_e_3                         count=1
   case-pattern    abc                             count=1
-  case-pattern    $do_e_27_9                      count=1
+  case-pattern    $do_e_2                         count=1
   case-pattern    abcs                            count=1
-  case-pattern    $do_e_28_9                      count=1
+  case-pattern    $do_e_1                         count=1
   case-pattern    abcsc                           count=1
-  case-pattern    $do_e_29_9                      count=1
+  case-pattern    $do_e_0                         count=1
   case-pattern    abcscd                          count=1
 
 $let$12:
