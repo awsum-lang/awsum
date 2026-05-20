@@ -1,0 +1,5 @@
+{- Error: IOPure constructor matched in user code. Prelude-private. -}
+
+main : IO Never Unit
+main = case main of
+  IOPure _u -> main

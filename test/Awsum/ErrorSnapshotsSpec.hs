@@ -5,6 +5,7 @@ import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, withPrelude)
 import Awsum.Program (ProgramType (..))
+import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Typing (requireMain)
 import Common.File
 import Matchers
@@ -37,14 +38,16 @@ testError testName = do
         src <- readFileTextUtf8 $ sourcesDir </> testName </> "code" </> "Main.aww"
         pure $ diagnosticsToJson $ case parseProgramDiagnostic src of
           Left parseErrs -> map parseErrorToDiagnostic parseErrs
-          Right userProg ->
-            let prog = withPrelude userProg
-             in case elaborateLowerProgram ProgramCli prog of
-                  Left typeErr -> [typeErrorToDiagnostic typeErr]
-                  Right (warns, _ptags, _core) ->
-                    case requireMain prog of
-                      Left typeErr -> [typeErrorToDiagnostic typeErr]
-                      Right () -> map warningToDiagnostic (stripPreludeWarnings warns)
+          Right userProg -> case restrictPreludeRefs userProg of
+            vs@(_ : _) -> map preludeRefViolationToDiagnostic vs
+            [] ->
+              let prog = withPrelude userProg
+               in case elaborateLowerProgram ProgramCli prog of
+                    Left typeErr -> [typeErrorToDiagnostic typeErr]
+                    Right (warns, _ptags, _core) ->
+                      case requireMain prog of
+                        Left typeErr -> [typeErrorToDiagnostic typeErr]
+                        Right () -> map warningToDiagnostic (stripPreludeWarnings warns)
   beforeAll prepare $ describe testName $ parallel $ do
     it "diagnostics should match snapshot" $ \json -> do
       json `shouldMatchTextSnapshot` ("errors/" <> toText testName <> "/diagnostics.json")

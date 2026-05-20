@@ -1,0 +1,10 @@
+{- Error: IOFail is a prelude-private constructor — user code cannot
+   reference it directly. Use failIO instead. -}
+
+type Boom = Boom
+
+failingMain : IO Boom Unit
+failingMain = IOFail Boom
+
+main : IO Never Unit
+main = IO.Stdout.print "x"

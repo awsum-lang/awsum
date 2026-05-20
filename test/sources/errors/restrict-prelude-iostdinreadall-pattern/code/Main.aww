@@ -1,0 +1,5 @@
+{- Error: IOStdinReadAll constructor matched in user code. Prelude-private. -}
+
+main : IO Never Unit
+main = case main of
+  IOStdinReadAll _k -> main

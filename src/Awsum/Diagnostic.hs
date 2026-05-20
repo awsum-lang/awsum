@@ -16,9 +16,11 @@ module Awsum.Diagnostic
     parseErrorToDiagnostic,
     typeErrorToDiagnostic,
     warningToDiagnostic,
+    preludeRefViolationToDiagnostic,
   )
 where
 
+import Awsum.RestrictPreludeRefs (PreludeRefViolation (..))
 import Awsum.Syntax (SrcSpan (..))
 import Awsum.Typing (TypeError (..), Warning (..), prettyPrintTypeError, typeErrorSpan)
 import Data.Text qualified as T
@@ -151,6 +153,26 @@ typeErrorToDiagnostic = \case
   err ->
     let sp = fromMaybe (SrcSpan 1 1 1 1) (typeErrorSpan err)
      in Diagnostic SevError sp (prettyPrintTypeError err) []
+
+-- | Lift a prelude-private name reference into an error 'Diagnostic'.
+--   The message is intentionally uniform across the six reserved names
+--   (constructors of @IO@ + @runIO@): new platform effects will add new
+--   IO constructors over time, and a single template keeps producing a
+--   correct diagnostic for each of them without code changes. When
+--   modules land the wording migrates to @\"'X' is not exported from
+--   Prelude\"@; the present text is chosen so that future replacement
+--   is a localised find-and-replace.
+preludeRefViolationToDiagnostic :: PreludeRefViolation -> Diagnostic
+preludeRefViolationToDiagnostic (PreludeRefViolation sp n) =
+  Diagnostic
+    { diagSeverity = SevError,
+      diagSpan = sp,
+      diagMessage =
+        "Name '"
+          <> n
+          <> "' is reserved by the standard library and cannot be referenced from user code",
+      diagFixes = []
+    }
 
 -- | Lift a warning into a 'Diagnostic' with severity @warning@ and a
 --   gentle rename quick-fix.

@@ -1,0 +1,5 @@
+{- Error: IOPure is a prelude-private constructor — user code cannot
+   reference it directly. Use pureIO instead. -}
+
+main : IO Never Unit
+main = IOPure unit
