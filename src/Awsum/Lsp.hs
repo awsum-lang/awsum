@@ -20,6 +20,7 @@ import Awsum.Format (formatSource)
 import Awsum.Parser (parseProgramDiagnostic)
 import Awsum.Prelude (stripPreludeWarnings, withPrelude)
 import Awsum.Program (ProgramType (..))
+import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Symbols qualified as ASym
 import Awsum.Syntax qualified as ASyn
 import Common.File (readFileTextUtf8)
@@ -185,11 +186,13 @@ compileToDiagnostics :: Text -> [AD.Diagnostic]
 compileToDiagnostics src =
   case parseProgramDiagnostic src of
     Left parseErrs -> map AD.parseErrorToDiagnostic parseErrs
-    Right userProg ->
-      case elaborateLowerProgram ProgramCli (withPrelude userProg) of
-        Left typeErr -> [AD.typeErrorToDiagnostic typeErr]
-        Right (warns, _ptags, _core) ->
-          map AD.warningToDiagnostic (stripPreludeWarnings warns)
+    Right userProg -> case restrictPreludeRefs userProg of
+      vs@(_ : _) -> map AD.preludeRefViolationToDiagnostic vs
+      [] ->
+        case elaborateLowerProgram ProgramCli (withPrelude userProg) of
+          Left typeErr -> [AD.typeErrorToDiagnostic typeErr]
+          Right (warns, _ptags, _core) ->
+            map AD.warningToDiagnostic (stripPreludeWarnings warns)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Diagnostics + fix index update

@@ -72,6 +72,7 @@ library
       Awsum.Program
       Awsum.Program.Cli
       Awsum.Render
+      Awsum.RestrictPreludeRefs
       Awsum.Reuse
       Awsum.Scc
       Awsum.StackSafety

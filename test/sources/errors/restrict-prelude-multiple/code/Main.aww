@@ -1,0 +1,15 @@
+{- Error: several prelude-private references in one file. The walker
+   collects them all in source order rather than stopping at the first. -}
+
+type Boom = Boom
+
+failingMain : IO Boom Unit
+failingMain = IOFail Boom
+
+inspect : IO Never Unit -> Unit
+inspect io = case io of
+  IOPure _u -> unit
+  IOStdoutPrint _s _k -> unit
+
+main : IO Never Unit
+main = runIO (IO.Stdout.print "x")

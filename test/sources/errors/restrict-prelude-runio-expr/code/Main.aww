@@ -1,0 +1,5 @@
+{- Error: runIO is the runtime walker the per-backend entry-point glue
+   already calls — user code cannot invoke it directly. -}
+
+main : IO Never Unit
+main = runIO (IO.Stdout.print "x")
