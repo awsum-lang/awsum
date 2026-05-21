@@ -1,149 +1,118 @@
-{- Awsum standard prelude.
+{- Awsum standard prelude. Types and functions visible to every module
+   without import. Architectural design: docs/prelude.md.
 
-   Prelude-visible types and functions that become available to every
-   module without an explicit import. See docs/prelude.md for the
-   architectural design.
-
-   The file is shipped inside the compiler binary (embedded at build time)
-   and must parse and typecheck as a regular module. It intentionally has
-   no `main`: the presence of `main` is an entry-point concern, not a
-   module-level one. -}
+   The file is embedded in the compiler binary at build time. It has no
+   `main` by design — the entry-point is a module concern, not a
+   prelude one. -}
 
 -- ---------------------- String
 
+{- Concatenate two strings. Fails with `StringTooLong` if the result
+   would exceed `maxStringLengthUtf16CodeUnits`. -}
 (++) : String -> String -> Either StringTooLong String
 (++) a b = BuiltIn.concatString a b
 
-{- Split a string at the first occurrence of `separator`. Returns
+{- Split at the first occurrence of `separator`. Returns
    `Just (Tuple2 prefix suffix)` such that
    `prefix ++ separator ++ suffix == str`, or `Nothing` if `separator`
-   does not appear in `str`.
+   does not appear in `str`. Matching is byte-level — for ASCII that
+   is irrelevant, but a single-byte separator can land inside a
+   multi-byte UTF-8 codepoint.
 
-   Examples:
-   - `splitOnFirst "," "a,b,c"`         → `Just (Tuple2 "a" "b,c")`
-   - `splitOnFirst "::" "user::42::admin"` → `Just (Tuple2 "user" "42::admin")`
-   - `splitOnFirst "x" "abc"`           → `Nothing`
-   - `splitOnFirst "" "abc"`            → `Just (Tuple2 "" "abc")`     (empty separator matches at position 0)
-   - `splitOnFirst ":" ":foo"`          → `Just (Tuple2 "" "foo")`     (separator at start)
-   - `splitOnFirst ":" "foo:"`          → `Just (Tuple2 "foo" "")`     (separator at end)
-   - `splitOnFirst "abc" "abc"`         → `Just (Tuple2 "" "")`        (separator equals string)
-   - `splitOnFirst "abcde" "ab"`        → `Nothing`                    (separator longer than string)
-
-   Strings are byte sequences and matching is byte-level, not codepoint-level.
-   For ASCII the distinction is irrelevant; for multi-byte UTF-8, a single-byte
-   separator can land inside a codepoint. UTF-8-aware splitting is a separate
-   API and not provided here. -}
-
+   Corner cases:
+   - `splitOnFirst "" "abc"`     → `Just (Tuple2 "" "abc")` (empty separator matches at position 0)
+   - `splitOnFirst ":" ":foo"`   → `Just (Tuple2 "" "foo")` (separator at start)
+   - `splitOnFirst ":" "foo:"`   → `Just (Tuple2 "foo" "")` (separator at end)
+   - `splitOnFirst "abc" "abc"`  → `Just (Tuple2 "" "")`
+   - `splitOnFirst "abcde" "ab"` → `Nothing` (separator longer than string) -}
 splitOnFirst : String -> String -> Maybe (Tuple2 String String)
 splitOnFirst = BuiltIn.splitOnFirst
 
 {- The string-length API is three explicit functions, not one `length`.
-   Each name spells out the unit it counts so the call site does not
-   have to remember which one is the default. There is no `length`
-   alias, by design — the choice of unit is meaningful, and a call site
-   that picks the wrong one (UTF-16 code units when it meant code
-   points, say) will silently produce wrong answers for any string
-   containing a surrogate pair. -}
+   Each name spells out the unit it counts; picking the wrong one
+   silently produces wrong answers for any string with a surrogate
+   pair. -}
 
-{- Number of Unicode code points (USVs) in the string. A supplementary-
-   plane character (e.g. an emoji like `🔥`, U+1F525) counts as 1, even
-   though it is two UTF-16 code units and four UTF-8 bytes wide. Useful
-   when reasoning about "characters" the way the user perceives them
-   for monospace text — though grapheme clusters (combining marks,
-   regional indicators, ZWJ sequences) are still wider concepts than
-   one code point. -}
-
+{- Number of Unicode code points. A supplementary-plane character (e.g.
+   `🔥`, U+1F525) counts as 1, not 2 UTF-16 code units, not 4 UTF-8
+   bytes. Grapheme clusters (combining marks, ZWJ sequences) are wider
+   still and not counted by any function in this family. -}
 lengthCodePoints : String -> UInt32
 lengthCodePoints = BuiltIn.lengthCodePoints
 
-{- Number of UTF-16 code units in the string. A BMP character counts as
-   1; a supplementary character counts as 2 (high surrogate + low
-   surrogate). Equal to `String.length` on JVM/CLR/JS backends, where
-   strings are stored as UTF-16 natively. Useful when interfacing with
-   APIs whose offsets are UTF-16-indexed. -}
-
+{- Number of UTF-16 code units. BMP characters count as 1; supplementary
+   characters as 2 (surrogate pair). Equal to `String.length` on
+   JVM/CLR/JS where strings are stored as UTF-16. -}
 lengthUtf16CodeUnits : String -> UInt32
 lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
 
-{- Number of bytes the string occupies when encoded as standard UTF-8
-   (RFC 3629). One byte per ASCII character, two for U+0080..U+07FF,
-   three for U+0800..U+FFFF, four for U+10000..U+10FFFF. Useful when
-   sizing a buffer for an API that takes UTF-8. -}
-
+{- Number of bytes when encoded as UTF-8 (RFC 3629). ASCII = 1,
+   U+0080..U+07FF = 2, U+0800..U+FFFF = 3, U+10000..U+10FFFF = 4. -}
 lengthUtf8Bytes : String -> UInt32
 lengthUtf8Bytes = BuiltIn.lengthUtf8Bytes
 
-{- Maximum length of an Awsum `String` in UTF-16 code units, identical
-   on every backend (LLVM, JVM, CLR, WASM, JS). Operations that would
-   produce a longer string return `Left StringTooLong`.
-
-   Value: `2^27 = 134217728` UTF-16 code units. In UTF-8 bytes the
-   worst case (BMP CJK content, 3 bytes per UTF-16 code unit) is
-   `3 × 2^27 = 402653184` ≈ 384 MiB; ASCII is `1 × 2^27` ≈ 128 MiB.
-
-   The cap is fixed by the WASM-32 backend, not by the smallest UTF-16
-   runtime — see docs/targets.md for the cross-runtime budget that
-   determines this value. -}
-
+{- Maximum string length in UTF-16 code units, identical on every
+   backend. Operations producing a longer string return
+   `Left StringTooLong`. Value `2^27 = 134_217_728`. Pinned by the
+   WASM-32 budget (see docs/targets.md), not the smallest UTF-16
+   runtime. -}
 maxStringLengthUtf16CodeUnits : UInt32
 maxStringLengthUtf16CodeUnits = 134_217_728
 
 -- ---------------------- Unit
 
-{- Single-constructor type carrying no information. Useful as a
-   placeholder return value for functions called purely for their
-   effect, and as a sentinel in generic containers. -}
-
+{- The unit type — exactly one value, also written `Unit`. Used wherever
+   a function or effect has no meaningful result to return: most
+   visibly in `IO Never Unit` for an action whose whole purpose is its
+   side effect. -}
 type Unit = Unit
 
+{- Render the `Unit` value as the literal string `"Unit"`. -}
 showUnit : Unit -> String
 showUnit _ = "Unit"
 
 -- ---------------------- Never
 
-{- The canonical empty type — no constructors, no values, declared
-   with the `empty type` keyword to mark it as the row identity. Two
-   `empty type` declarations are interchangeable in row positions,
-   and any `empty type` value (none exist at runtime) flows into any
-   expected position via row-subsumption. Most visible occurrence:
-   the error row of `IO Never a` declares an IO action that cannot
-   fail; an `IO Never Unit` value can be composed with IO actions
-   carrying any error row without an explicit wrapper.
+{- The empty type — no constructors, no values. Declared with
+   `empty type` to mark it as the row identity: a value of any
+   `empty type` (none exist at runtime) flows into any expected row
+   position via row-subsumption. Most visible in `IO Never a`, meaning
+   an IO action that cannot fail.
 
-   Plain `type X` (without the `empty` keyword) declares a normal
-   nominal type that may happen to be uninhabited (zero constructors)
-   but stays a /distinct row label/ — useful for phantom markers
-   that must not collapse with `Never` in row positions.
-
-   When a primitive whose error row is currently `Never` later gains
-   a real error (e.g. `BrokenPipe` for `IO.Stdout.print`), every
-   existing site stops compiling until the new error is handled —
-   which is the intended behaviour. -}
-
+   Plain `type X` (no `empty`) declares a /distinct/ row label that
+   may happen to be uninhabited — use that for phantom markers that
+   must not collapse with `Never`. -}
 empty type Never
 
 -- ---------------------- Bool
 
-{- Two-valued sum used by equality and other boolean-returning primitives.
-   Foundation for a future `if`/`then`/`else` sugar and logical operators. -}
-
+{- Truth value: `True` or `False`. Awsum has no implicit boolean coercion
+   — `if`-like conditionals are written as `case` on a `Bool`. -}
 type Bool = True | False
 
+{- Logical negation: turns `True` into `False` and `False` into `True`. -}
 not : Bool -> Bool
 not b = case b of
   True -> False
   False -> True
 
+{- Logical conjunction: returns the second argument when the first is
+   `True`, otherwise `False`. Both arguments are always evaluated —
+   there is no short-circuit, because Awsum has no side effects whose
+   suppression would be observable. -}
 and : Bool -> Bool -> Bool
 and a b = case a of
   True -> b
   False -> False
 
+{- Logical disjunction: returns `True` when the first argument is `True`,
+   otherwise the second argument. Both arguments are always evaluated. -}
 or : Bool -> Bool -> Bool
 or a b = case a of
   True -> True
   False -> b
 
+{- Render a boolean as the literal string `"True"` or `"False"`. -}
 showBool : Bool -> String
 showBool b = case b of
   True -> "True"
@@ -151,71 +120,47 @@ showBool b = case b of
 
 -- ---------------------- Either
 
-{- Two-constructor sum: a `Left` carrying an error / failure value, or a
-   `Right` carrying a success value. This is how honest-arithmetic and
-   other effectful-but-total primitives report whether they succeeded,
-   without runtime exceptions or sentinel values. -}
-
+{- A `Left` carrying an error / failure, or a `Right` carrying a
+   success. Honest-arithmetic and other total-but-effectful primitives
+   report failure this way; no exceptions, no sentinels. -}
 type Either a b = Left a | Right b
 
-{- `bindEither` chains two Either-returning operations and unions their
-   error rows: the first step's error type `e1` and the second step's
-   `e2` combine into the structural sum `(e1 | e2)` in the result. The
-   set-semantic union collapses duplicates (`(ErrA | ErrA) ~ ErrA`) and
-   ignores order, which is what makes `do`-style chaining add new
-   labels per `<-` without the user writing intermediate combined-error
-   types. The desugaring of the `do` form goes through this function. -}
-
+{- Chain two Either-returning operations. Error rows union: `e1` of the
+   first and `e2` of the continuation become `(e1 | e2)` in the result.
+   The `do` block desugars through this function. -}
 bindEither : Either e1 a -> (a -> Either e2 b) -> Either (e1 | e2) b
 bindEither x k = case x of
   Left e -> Left e
   Right a -> k a
 
-{- `pureEither` lifts a value into `Either` on the `Right` side. The
-   error row stays a free row variable `e`; at use site it gets pinned
-   by the surrounding context. Used by hand at the tail of a `do`
-   block — there is no `pure` soft keyword in this iteration. -}
-
+{- Lift a value into `Either` on the `Right` side. -}
 pureEither : a -> Either e a
 pureEither x = Right x
 
-{- `andThenEither` is `bindEither` with the arguments flipped: the
-   continuation comes first, the `Either` value second. The shape is
-   `value |> andThenEither k`, so a chain of fallible steps reads
-   left-to-right in execution order without nested lambdas. The error
-   rows union the same way as in `bindEither`. The body is a direct
-   `case` rather than a wrapper around `bindEither` so no extra
-   tail-call survives at Core level. -}
-
+{- Chain two Either-returning operations in continuation-first order:
+   takes the continuation, then the value to feed it. Error rows union
+   in the result `(e1 | e2)`. Pairs with `|>` for left-to-right reads
+   (`x |> andThenEither k`). -}
 andThenEither : (a -> Either e2 b) -> Either e1 a -> Either (e1 | e2) b
 andThenEither k x = case x of
   Left e -> Left e
   Right a -> k a
 
-{- `const` returns its first argument and ignores the second. Used by
-   the `do`-notation desugarer to express continuations whose bound
-   variable is unused: a chain like `do { a <- e1; e2 }` desugars to
-   `bindEither e1 (const e2)` when `a` does not appear in `e2`,
-   avoiding the need to introduce a lambda the compiler cannot yet
-   lift. -}
-
+{- Returns its first argument, ignores the second. Used by the
+   `do`-notation desugarer to express continuations whose bound
+   variable is unused. -}
 const : a -> b -> a
 const x _y = x
 
-{- `mapRight` rebuilds an `Either` with `f` applied to the success value
-   and the error left untouched. Same shape as `Functor.fmap` but
-   specialised to `Either`'s success side; we don't have type classes,
-   so this stays a plain function. -}
-
+{- Apply `f` to the success value; leave the error untouched. -}
 mapRight : Either e a -> (a -> b) -> Either e b
 mapRight x f = case x of
   Left e -> Left e
   Right a -> Right (f a)
 
-{- `mapLeft` rebuilds an `Either` with `f` applied to the error value
-   and the success left untouched. Used to widen / narrow / rename a
-   nominal error type without touching the success side. -}
-
+{- Apply `f` to the error value; leave the success untouched. Used to
+   widen / narrow / rename a nominal error type without touching the
+   success side. -}
 mapLeft : Either e1 a -> (e1 -> e2) -> Either e2 a
 mapLeft x f = case x of
   Left e -> Left (f e)
@@ -223,34 +168,24 @@ mapLeft x f = case x of
 
 -- ---------------------- IO
 
-{- The IO type represents a description of an effect that the runtime
-   may execute. An `IO e a` value is **data** — constructing it does
-   not perform any effect; the effect happens only when the runtime
-   walks the IO tree returned from `main`. This is what makes
-   `let unit = IO.Stdout.print "ignored" in IO.Stdout.print "real"`
-   print only `real`: the first `IO` value is built and discarded.
+{- A description of an effect that the runtime may execute. An
+   `IO e a` value is **data** — constructing it does not perform any
+   effect; the effect happens only when the runtime walks the IO tree
+   returned from `main`. So
+   `let _ = IO.Stdout.print "ignored" in IO.Stdout.print "real"`
+   prints only `real`.
 
-   The error row `e` works like the error row of `Either`: primitives
-   that may fail report the failure type explicitly. Currently every
-   built-in IO primitive uses `Never`, meaning it cannot fail; this
-   tightens as real error sources (broken pipe, disk full, ...) are
-   added.
+   The error row `e` works like `Either`'s: primitives that can fail
+   declare it explicitly. `main` requires `IO Never Unit`; any
+   `IO e _` with non-empty `e` must be reduced to `IO Never _` first
+   (typically via `handleErrorIO`).
 
-   `IO Never Unit` is the type required by `main`. Any `IO e _` with
-   non-empty `e` must be reduced to `IO Never _` before main returns
-   it — handle errors via `bindIO … (\result -> case result of Left e
-   -> … | Right v -> …)`.
-
-   Pattern-matching on the constructors directly is permitted today
-   but **not part of the stable API**: new effects will add new
-   constructors over time, breaking existing case-matches (no
-   catch-all by language design). For ordinary composition, use
-   `bindIO` / `mapIO` / `pureIO` and the platform built-ins
-   (`IO.Stdout.print`, ...). Direct matching is for first-party
-   tooling (e.g. `awsum test`'s mock interpreter) that updates in
-   lockstep with the compiler. When modules land, the constructors
-   move to a privileged module and become inaccessible to user code. -}
-
+   Direct pattern-matching on the constructors works today but is **not
+   part of the stable API**: new effects add new constructors, breaking
+   existing case-matches (no catch-all by language design). Use
+   `bindIO` / `mapIO` / `pureIO` and the platform built-ins for
+   composition; direct matching is for first-party tooling that updates
+   in lockstep with the compiler. -}
 type IO e a
   = IOPure a
   | IOFail e
@@ -258,28 +193,20 @@ type IO e a
   | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
   | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 
-{- Lift a pure value into IO. The error row `e` stays free and gets
-   pinned by the surrounding context. -}
-
+{- Lift a pure value into IO. -}
 pureIO : a -> IO e a
 pureIO x = IOPure x
 
-{- Lift a failure value into IO. The success type `a` stays free and
-   gets pinned by the surrounding context. Mirror of `pureIO` on the
-   error side. Useful for re-throwing inside a `handleErrorIO` handler that
-   only closes part of an error row, and for constructing failing IO
-   actions in tests without reaching for the `IOFail` constructor
-   directly. -}
-
+{- Lift a failure value into IO. Useful for re-throwing inside a
+   `handleErrorIO` handler that only closes part of an error row. -}
 failIO : e -> IO e a
 failIO e = IOFail e
 
 {- Sequence two IO actions: run the first, feed its success value into
-   a continuation that produces the second. The error rows union,
-   same shape as `bindEither`. Failure of the first action propagates
-   without invoking `k`; this is what makes `IOFail` a terminal
-   constructor at the chain level. -}
-
+   a continuation producing the second. The error row of the result is
+   the union `(e1 | e2)` of the two inputs' rows. If the first action
+   fails, the continuation is not called and its failure is propagated
+   unchanged. -}
 bindIO : IO e1 a -> (a -> IO e2 b) -> IO (e1 | e2) b
 bindIO io k = case io of
   IOPure a -> k a
@@ -288,31 +215,20 @@ bindIO io k = case io of
   IOGetArgs cont -> IOGetArgs (bindIOAfterArgs cont k)
   IOStdinReadAll cont -> IOStdinReadAll (bindIOAfterStdin cont k)
 
-{- Helper for the `IOGetArgs` arm of `bindIO`: constructs the new
-   getArgs continuation that, given the runtime-decoded result, runs
-   the original cont and then chains via `bindIO` with the outer
-   continuation `k`. Lifted to top-level so the typechecker pins
-   cont's type explicitly via the signature, sidestepping
-   bidirectional propagation through an in-place lambda. -}
-
+{- Internal helper for `bindIO`'s `IOGetArgs` arm; top-level so the
+   typechecker pins `cont`'s type via the signature. -}
 bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
 bindIOAfterArgs cont k result = bindIO (cont result) k
 
-{- Helper for the `IOStdinReadAll` arm of `bindIO`: same shape as
-   `bindIOAfterArgs`, lifted to top-level for the same typechecker
-   reason. -}
-
+{- Internal helper for `bindIO`'s `IOStdinReadAll` arm; top-level so the
+   typechecker pins `cont`'s type via the signature. -}
 bindIOAfterStdin : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
 bindIOAfterStdin cont k result = bindIO (cont result) k
 
-{- `andThenIO` is `bindIO` with the arguments flipped: the continuation
-   comes first, the IO value second. The shape is
-   `io |> andThenIO k`, so a chain of IO actions reads left-to-right
-   in execution order without nested lambdas. The error rows union the
-   same way as in `bindIO`. The body is a direct `case` rather than a
-   wrapper around `bindIO` so no extra tail-call survives at Core
-   level. -}
-
+{- Sequence two IO actions in continuation-first order: takes the
+   continuation, then the IO value to feed it. The error row of the
+   result is the union `(e1 | e2)`. Pairs with `|>` for left-to-right
+   chains (`io |> andThenIO k`). -}
 andThenIO : (a -> IO e2 b) -> IO e1 a -> IO (e1 | e2) b
 andThenIO k io = case io of
   IOPure a -> k a
@@ -321,9 +237,9 @@ andThenIO k io = case io of
   IOGetArgs cont -> IOGetArgs (\result -> andThenIO k (cont result))
   IOStdinReadAll cont -> IOStdinReadAll (\result -> andThenIO k (cont result))
 
-{- Apply `f` to the success value of an IO action, leaving the error
-   row untouched. Same shape as `mapRight` for `Either`. -}
-
+{- Apply `f` to the success value of an IO action; leave the error row
+   and the surrounding effect tree alone. The action structure is
+   preserved end to end — only the final pure result is transformed. -}
 mapIO : IO e a -> (a -> b) -> IO e b
 mapIO io f = case io of
   IOPure a -> IOPure (f a)
@@ -332,11 +248,8 @@ mapIO io f = case io of
   IOGetArgs cont -> IOGetArgs (\result -> mapIO (cont result) f)
   IOStdinReadAll cont -> IOStdinReadAll (\result -> mapIO (cont result) f)
 
-{- `mapIOError` rebuilds an IO with `f` applied to the failure value
-   and the success / effect tree left untouched. Same shape as
-   `mapLeft` for `Either`, used to widen / narrow / rename the error
-   row of an IO computation without inspecting its success side. -}
-
+{- Apply `f` to the failure value of an IO action; leave the success
+   and effect tree alone. Used to widen / narrow / rename the error row. -}
 mapIOError : IO e1 a -> (e1 -> e2) -> IO e2 a
 mapIOError io f = case io of
   IOPure a -> IOPure a
@@ -345,17 +258,10 @@ mapIOError io f = case io of
   IOGetArgs cont -> IOGetArgs (\result -> mapIOError (cont result) f)
   IOStdinReadAll cont -> IOStdinReadAll (\result -> mapIOError (cont result) f)
 
-{- `handleErrorIO` runs an IO computation and routes its `IOFail` through a
-   recovery continuation. The handler may fully recover (returning
-   `IO Never a` via `e2 = Never`), partially handle (returning an IO
-   whose row carries only the labels the handler chose to re-throw),
-   or rename the failure type (any other `e2`). Function-first ordering
-   pairs with `|>` at the tail of an IO chain: `io |> handleErrorIO h`.
-   No value-first sibling today — the dominant use is at the tail of
-   a pipeline. The body is a direct `case` rather than a wrapper,
-   mirroring the `andThenIO` convention of keeping zero overhead at
-   Core level. -}
-
+{- Route `IOFail` through a recovery handler. The handler may fully
+   recover (return `IO Never a`), partially handle (return an IO with
+   only re-thrown labels in its error row), or rename the failure type.
+   Pairs with `|>` at the tail of a chain: `io |> handleErrorIO h`. -}
 handleErrorIO : (e1 -> IO e2 a) -> IO e1 a -> IO e2 a
 handleErrorIO h io = case io of
   IOPure a -> IOPure a
@@ -364,20 +270,10 @@ handleErrorIO h io = case io of
   IOGetArgs cont -> IOGetArgs (\result -> handleErrorIO h (cont result))
   IOStdinReadAll cont -> IOStdinReadAll (\result -> handleErrorIO h (cont result))
 
-{- `runIO` walks the IO tree returned from `main` and performs the
-   corresponding effects in order. `main` returns `IO Never Unit`, so
-   the `IOFail` arm is unreachable (its field type is uninhabited)
-   and exhaustiveness skips it.
-
-   Intended caller is the per-target entry-point glue (`v_runIO` is
-   wired into the runtime startup that the codegens emit). User code
-   never calls this directly; once modules land, `runIO` will move
-   into a privileged module inaccessible from user code, alongside
-   `IO`'s constructors. The `case … of Unit -> runIO next` form
-   threads the recursive call as a tail call so the existing TCO
-   pass folds the whole walker into a bounded-stack loop on every
-   backend. -}
-
+{- Walk the IO tree returned from `main` and perform the effects in
+   order. Called by per-target entry-point glue; user code never calls
+   this directly. The `IOFail` arm is unreachable because `main` is
+   `IO Never Unit` and `Never` is uninhabited. -}
 runIO : IO Never Unit -> Unit
 runIO io = case io of
   IOPure u -> u
@@ -389,101 +285,89 @@ runIO io = case io of
 -- ---------------------- Maybe
 
 {- Optional value: `Just x` carries a payload, `Nothing` doesn't. For
-   computations that can legitimately produce "no result" without that
-   being an error (e.g. a lookup). When a reason *why* there's no value
+   computations that legitimately produce "no result" without that
+   being an error (e.g. a lookup). When the /reason/ for no value
    matters, reach for `Either` instead. -}
-
 type Maybe a = Nothing | Just a
 
 -- ---------------------- Tuple2
 
-{- A pair of values. Single constructor `Tuple2 a b` carrying two
-   positional fields — used wherever a function honestly produces two
-   results and there's no obvious naming for them at the type level
-   (e.g. `splitOnFirst` returning prefix and suffix). When the two
-   fields *do* have meaningful names, prefer a domain-specific
-   single-constructor sum (e.g. `type RangeI32 = RangeI32 Int32 Int32`)
-   over `Tuple2`. The numeric suffix leaves the door open for future
-   `Tuple3` / `Tuple4` without anyone wondering whether `Pair` and
-   `Triple` belong to the same family. -}
-
+{- A pair. Use for functions that produce two results without obvious
+   names for them (e.g. `splitOnFirst` returning prefix and suffix).
+   When the fields have meaningful names, prefer a domain-specific
+   single-constructor sum (`type RangeI32 = RangeI32 Int32 Int32`). -}
 type Tuple2 a b = Tuple2 a b
 
 -- ---------------------- Tuple3
 
-{- A triple of values. Same conventions as `Tuple2` — prefer a domain-
-   specific single-constructor sum when the fields have meaningful
-   names, reach for `Tuple3` only when they honestly don't. The
-   property-test infrastructure relies on it to thread three
-   positional arguments from a single `argv[1]` (`"a:b:c"` → two
-   `splitOnFirst ":"` → `Tuple3 a b c`) into a property body. -}
-
+{- A triple. Use for functions producing three results that genuinely
+   don't have meaningful names. For named fields, prefer a domain-
+   specific single-constructor sum like
+   `type ColumnSummary = ColumnSummary Int32 Int32 Int32`. -}
 type Tuple3 a b c = Tuple3 a b c
 
 -- ---------------------- UnderflowError
 
-{- Reported by integer primitives when a result would leave the declared
-   type's range (e.g. `predInt32 minInt32`). Single-constructor sum so
-   there is nothing to pattern-match on beyond the fact that it happened. -}
-
+{- Reported when an integer result would leave the declared type's
+   range on the low end (e.g. `predInt32 minInt32`). -}
 type UnderflowError = UnderflowError
 
+{- Render the `UnderflowError` value as the literal string
+   `"UnderflowError"`. The type is nullary, so there is only ever one
+   value to render. -}
 showUnderflowError : UnderflowError -> String
 showUnderflowError _ = "UnderflowError"
 
 -- ---------------------- OverflowError
 
-{- Reported by integer primitives when a result would exceed the declared
-   type's range (e.g. `succInt32 maxInt32`). Symmetric twin of
-   `UnderflowError` — single-constructor sum with nothing to pattern-match
-   on beyond the fact that it happened. -}
-
+{- Reported when an integer result would exceed the declared type's
+   range (e.g. `succInt32 maxInt32`). -}
 type OverflowError = OverflowError
 
+{- Render the `OverflowError` value as the literal string
+   `"OverflowError"`. The type is nullary, so there is only ever one
+   value to render. -}
 showOverflowError : OverflowError -> String
 showOverflowError _ = "OverflowError"
 
 -- ---------------------- StringTooLong
 
-{- Reported by string operations (`(++)`, future input parsing) when the
-   resulting string would exceed the language-fixed maximum length.
-   Single-constructor sum — there is nothing to pattern-match on beyond
-   the fact that it happened. The maximum length value and unit are
-   pinned by the runtime contract and are equivalent across all backends. -}
-
+{- Reported by string operations (`(++)`, future input parsing) when
+   the resulting string would exceed
+   `maxStringLengthUtf16CodeUnits`. -}
 type StringTooLong = StringTooLong
 
+{- Render the `StringTooLong` value as the literal string
+   `"StringTooLong"`. The type is nullary, so there is only ever one
+   value to render. -}
 showStringTooLong : StringTooLong -> String
 showStringTooLong _ = "StringTooLong"
 
 -- ---------------------- UnpairedUtf16Surrogate
 
-{- Reported by string-construction primitives that take input from outside
-   the runtime (CLI arguments, interactive input, FFI) when a UTF-16
-   half-surrogate appears without its mate. Awsum strings are strict
-   UTF-16; one-half surrogates are not representable in the language,
-   so the boundary that decodes external bytes into an Awsum `String`
-   reports them through this label. Internal-only strings stay valid
-   by construction (every operation that synthesises a `String` is
-   closed under UTF-16 validity), so this never appears as the result
-   of a pure computation — only at the I/O boundary. -}
-
+{- Reported by string-construction primitives reading external bytes
+   (CLI arguments, stdin, future FFI) when a UTF-16 half-surrogate
+   appears without its mate. Awsum strings are strict UTF-16; lone
+   surrogates are not representable. Never appears as the result of a
+   pure computation — only at the I/O boundary. -}
 type UnpairedUtf16Surrogate = UnpairedUtf16Surrogate
 
+{- Render the `UnpairedUtf16Surrogate` value as the literal string
+   `"UnpairedUtf16Surrogate"`. The type is nullary, so there is only
+   ever one value to render. -}
 showUnpairedUtf16Surrogate : UnpairedUtf16Surrogate -> String
 showUnpairedUtf16Surrogate _ = "UnpairedUtf16Surrogate"
 
 -- ---------------------- ParseError
 
 {- Reported by parsing primitives (e.g. `parseInt32`) when the input
-   string does not match the expected grammar or yields a value outside
-   the target type's range. Single-constructor sum — there is nothing
-   to pattern-match on beyond the fact that parsing failed. The grammar
-   itself, and the precise list of inputs that fail, is documented on
-   each parser's own docstring. -}
-
+   does not match the expected grammar or yields a value outside the
+   target type's range. The grammar and rejected inputs are documented
+   on each parser. -}
 type ParseError = ParseError
 
+{- Render the `ParseError` value as the literal string `"ParseError"`.
+   The type is nullary, so there is only ever one value to render. -}
 showParseError : ParseError -> String
 showParseError _ = "ParseError"
 
@@ -491,191 +375,212 @@ showParseError _ = "ParseError"
 
 {- Will be reported by IO primitives that write to a pipe (e.g.
    `IO.Stdout.print`) when the consumer side closes before the write
-   completes — the canonical SIGPIPE / EPIPE scenario when output is
-   piped into a consumer that exits early (`awsum-program | head`,
-   etc.). Single-constructor sum — there is nothing to pattern-match
-   on beyond the fact that the write failed.
+   completes — SIGPIPE / EPIPE when output is piped into a consumer
+   that exits early (`awsum-program | head`).
 
-   Declared now as a placeholder: built-in print primitives still
-   carry `IO Never Unit` and never produce this value at runtime, but
-   the type is in place so the eventual signature flip
-   (`String -> IO BrokenPipe Unit`) does not require a rename. The
-   `Never` row identity rule (a value of type `Never` flows into any
-   row position) keeps current `IO.Stdout.print` calls compatible
-   with future signatures composed via `bindIO` / `handleErrorIO` chains. -}
-
+   Declared now as a placeholder: built-in print primitives still carry
+   `IO Never Unit` and never produce this value at runtime. The type is
+   in place so the eventual signature flip
+   (`String -> IO BrokenPipe Unit`) won't require a rename. -}
 type BrokenPipe = BrokenPipe
 
+{- Render the `BrokenPipe` value as the literal string `"BrokenPipe"`.
+   The type is nullary, so there is only ever one value to render. -}
 showBrokenPipe : BrokenPipe -> String
 showBrokenPipe _ = "BrokenPipe"
 
 -- ---------------------- UInt8
 
-{- Lower and upper bounds of `UInt8` (0..255). Useful for boundary
-   checks without spelling out the literal at every call site. -}
-
+{- Smallest representable `UInt8` value, `0`. -}
 minUInt8 : UInt8
 minUInt8 = 0
 
+{- Largest representable `UInt8` value, `255`. -}
 maxUInt8 : UInt8
 maxUInt8 = 255
 
+{- Equality on `UInt8`: returns `True` iff both arguments hold the same
+   8-bit unsigned value. -}
 eqUInt8 : UInt8 -> UInt8 -> Bool
 eqUInt8 = BuiltIn.eqUInt8
 
+{- Render a `UInt8` as its decimal string (`"0"` .. `"255"`), with no
+   leading zeroes and no sign. -}
 showUInt8 : UInt8 -> String
 showUInt8 = BuiltIn.showUInt8
 
+{- Predecessor (`n - 1`). Returns `UnderflowError` when `n = 0`
+   because the mathematical result is outside the `UInt8` range. -}
 predUInt8 : UInt8 -> Either UnderflowError UInt8
 predUInt8 = BuiltIn.predUInt8
 
+{- Successor (`n + 1`). Returns `OverflowError` when `n = 255` because
+   the mathematical result is outside the `UInt8` range. -}
 succUInt8 : UInt8 -> Either OverflowError UInt8
 succUInt8 = BuiltIn.succUInt8
 
+{- Addition. Returns `OverflowError` when the mathematical sum exceeds
+   `255`. No wrap-around, no saturation — the honest answer is either
+   returned or rejected. -}
 addUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
 addUInt8 = BuiltIn.addUInt8
 
+{- Subtraction. Returns `UnderflowError` when the second operand
+   exceeds the first (a negative result has no `UInt8` representation). -}
 subUInt8 : UInt8 -> UInt8 -> Either UnderflowError UInt8
 subUInt8 = BuiltIn.subUInt8
 
+{- Multiplication. Returns `OverflowError` when the mathematical product
+   exceeds `255`. No wrap-around, no saturation. -}
 mulUInt8 : UInt8 -> UInt8 -> Either OverflowError UInt8
 mulUInt8 = BuiltIn.mulUInt8
 
-{- Parse a `UInt8` from a decimal string. The grammar mirrors Awsum's
-   integer literal: one or more decimal digits, nothing else — no sign
-   (UInt8 cannot represent a negative number), no leading or trailing
-   whitespace, no trailing characters of any kind, no leading `+`.
-   Range is 0..255 inclusive.
+{- Parse a `UInt8` from a decimal string. Grammar: one or more decimal
+   digits, nothing else — no sign, no whitespace, no leading `+`, no
+   trailing characters. Range 0..255 inclusive.
 
-   Examples:
    - `parseUInt8 "0"`   → `Right 0`
    - `parseUInt8 "255"` → `Right 255`
-   - `parseUInt8 "256"` → `Left ParseError`   (above max)
-   - `parseUInt8 "-1"`  → `Left ParseError`   (negative)
-   - `parseUInt8 ""`    → `Left ParseError`   (empty)
-   - `parseUInt8 "abc"` → `Left ParseError`   (not digits)
-   - `parseUInt8 " 5"`  → `Left ParseError`   (whitespace)
-   - `parseUInt8 "12a"` → `Left ParseError`   (trailing garbage)
+   - `parseUInt8 "256"` → `Left ParseError` (above max)
+   - `parseUInt8 "-1"`  → `Left ParseError` (negative)
+   - `parseUInt8 ""`    → `Left ParseError` (empty)
+   - `parseUInt8 "12a"` → `Left ParseError` (trailing garbage)
 
-   Strings are byte sequences and digits are recognised as the seven-bit
-   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
-   rejected. -}
-
+   Digits are ASCII '0'..'9' (0x30..0x39); other Unicode digit forms
+   are rejected. -}
 parseUInt8 : String -> Either ParseError UInt8
 parseUInt8 = BuiltIn.parseUInt8
 
 -- ---------------------- UInt32
 
-{- Lower and upper bounds of `UInt32` (0..4294967295). Useful for
-   boundary checks without spelling out the literal at every call site. -}
-
+{- Smallest representable `UInt32` value, `0`. -}
 minUInt32 : UInt32
 minUInt32 = 0
 
+{- Largest representable `UInt32` value, `4_294_967_295` (`2^32 - 1`). -}
 maxUInt32 : UInt32
 maxUInt32 = 4_294_967_295
 
+{- Equality on `UInt32`: returns `True` iff both arguments hold the
+   same 32-bit unsigned value. -}
 eqUInt32 : UInt32 -> UInt32 -> Bool
 eqUInt32 = BuiltIn.eqUInt32
 
+{- Render a `UInt32` as its decimal string (`"0"` .. `"4294967295"`),
+   with no leading zeroes and no sign. -}
 showUInt32 : UInt32 -> String
 showUInt32 = BuiltIn.showUInt32
 
+{- Predecessor (`n - 1`). Returns `UnderflowError` when `n = 0`
+   because the mathematical result is outside the `UInt32` range. -}
 predUInt32 : UInt32 -> Either UnderflowError UInt32
 predUInt32 = BuiltIn.predUInt32
 
+{- Successor (`n + 1`). Returns `OverflowError` when `n = 4_294_967_295`
+   because the mathematical result is outside the `UInt32` range. -}
 succUInt32 : UInt32 -> Either OverflowError UInt32
 succUInt32 = BuiltIn.succUInt32
 
+{- Addition. Returns `OverflowError` when the mathematical sum exceeds
+   `4_294_967_295`. No wrap-around, no saturation — the honest answer
+   is either returned or rejected. -}
 addUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
 addUInt32 = BuiltIn.addUInt32
 
+{- Subtraction. Returns `UnderflowError` when the second operand
+   exceeds the first (a negative result has no `UInt32` representation). -}
 subUInt32 : UInt32 -> UInt32 -> Either UnderflowError UInt32
 subUInt32 = BuiltIn.subUInt32
 
+{- Multiplication. Returns `OverflowError` when the mathematical product
+   exceeds `4_294_967_295`. No wrap-around, no saturation. -}
 mulUInt32 : UInt32 -> UInt32 -> Either OverflowError UInt32
 mulUInt32 = BuiltIn.mulUInt32
 
-{- Parse a `UInt32` from a decimal string. Same grammar as `parseUInt8`:
-   one or more decimal digits, no sign (UInt32 cannot represent a
-   negative number), no whitespace, no trailing characters. Range is
-   0..4294967295 inclusive.
+{- Parse a `UInt32` from a decimal string. Grammar: one or more decimal
+   digits, nothing else — no sign, no whitespace, no leading `+`, no
+   trailing characters. Range `0` .. `4_294_967_295` inclusive.
 
-   Examples:
    - `parseUInt32 "0"`           → `Right 0`
    - `parseUInt32 "4294967295"`  → `Right 4294967295`
-   - `parseUInt32 "4294967296"`  → `Left ParseError`   (above max)
-   - `parseUInt32 "-1"`          → `Left ParseError`   (negative)
-   - `parseUInt32 ""`            → `Left ParseError`   (empty)
-   - `parseUInt32 "abc"`         → `Left ParseError`   (not digits)
-   - `parseUInt32 " 5"`          → `Left ParseError`   (whitespace)
-   - `parseUInt32 "12a"`         → `Left ParseError`   (trailing garbage)
+   - `parseUInt32 "4294967296"`  → `Left ParseError` (above max)
+   - `parseUInt32 "-1"`          → `Left ParseError` (negative)
+   - `parseUInt32 ""`            → `Left ParseError`
+   - `parseUInt32 "12a"`         → `Left ParseError` (trailing garbage)
 
-   Strings are byte sequences and digits are recognised as the seven-bit
-   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
-   rejected. -}
-
+   Digits are ASCII `'0'`..`'9'` (0x30..0x39); other Unicode digit
+   forms are rejected. -}
 parseUInt32 : String -> Either ParseError UInt32
 parseUInt32 = BuiltIn.parseUInt32
 
 -- ---------------------- Int32
 
-{- Lower and upper bounds of `Int32` (-2147483648..2147483647). Useful
-   for boundary checks without spelling out the literal at every call site. -}
-
+{- Smallest representable `Int32` value, `-2_147_483_648` (`-2^31`).
+   Negating this value overflows — see `negInt32`. -}
 minInt32 : Int32
 minInt32 = -2_147_483_648
 
+{- Largest representable `Int32` value, `2_147_483_647` (`2^31 - 1`). -}
 maxInt32 : Int32
 maxInt32 = 2_147_483_647
 
+{- Equality on `Int32`: returns `True` iff both arguments hold the same
+   32-bit signed value. -}
 eqInt32 : Int32 -> Int32 -> Bool
 eqInt32 = BuiltIn.eqInt32
 
+{- Render an `Int32` as its decimal string. Negative values get a
+   leading `-`; non-negative values have no sign. No leading zeroes. -}
 showInt32 : Int32 -> String
 showInt32 = BuiltIn.showInt32
 
+{- Predecessor (`n - 1`). Returns `UnderflowError` when `n = minInt32`
+   because the mathematical result is below the `Int32` range. -}
 predInt32 : Int32 -> Either UnderflowError Int32
 predInt32 = BuiltIn.predInt32
 
+{- Successor (`n + 1`). Returns `OverflowError` when `n = maxInt32`
+   because the mathematical result is above the `Int32` range. -}
 succInt32 : Int32 -> Either OverflowError Int32
 succInt32 = BuiltIn.succInt32
 
+{- Addition. Returns `UnderflowError` when the mathematical sum is
+   below `minInt32`, `OverflowError` when above `maxInt32`. No
+   wrap-around, no saturation. -}
 addInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
 addInt32 = BuiltIn.addInt32
 
+{- Subtraction. Returns `UnderflowError` when the mathematical result
+   is below `minInt32`, `OverflowError` when above `maxInt32`. -}
 subInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
 subInt32 = BuiltIn.subInt32
 
+{- Multiplication. Returns `UnderflowError` when the mathematical
+   product is below `minInt32`, `OverflowError` when above `maxInt32`. -}
 mulInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
 mulInt32 = BuiltIn.mulInt32
 
+{- Arithmetic negation (`0 - n`). Returns `OverflowError` only for
+   `n = minInt32`, where the mathematical result `2_147_483_648` is
+   above `maxInt32`. Every other input succeeds; `negInt32 0` is `0`. -}
 negInt32 : Int32 -> Either OverflowError Int32
 negInt32 = BuiltIn.negInt32
 
-{- Parse an `Int32` from a decimal string. The grammar mirrors Awsum's
-   integer literal: an optional leading `-`, then one or more decimal
-   digits, nothing else — no `+`, no leading or trailing whitespace, no
-   trailing characters of any kind. Range is `minInt32..maxInt32`
+{- Parse an `Int32` from a decimal string. Grammar: optional leading
+   `-`, then one or more decimal digits, nothing else — no `+`, no
+   whitespace, no trailing characters. Range `minInt32..maxInt32`
    inclusive.
 
-   Examples:
-   - `parseInt32 "42"`           → `Right 42`
-   - `parseInt32 "-42"`          → `Right -42`
-   - `parseInt32 "0"`            → `Right 0`
-   - `parseInt32 "2147483647"`   → `Right 2147483647`     (maxInt32)
-   - `parseInt32 "-2147483648"`  → `Right -2147483648`    (minInt32)
-   - `parseInt32 "2147483648"`   → `Left ParseError`      (above max)
-   - `parseInt32 "-2147483649"`  → `Left ParseError`      (below min)
-   - `parseInt32 ""`             → `Left ParseError`      (empty)
-   - `parseInt32 "-"`            → `Left ParseError`      (sign without digits)
-   - `parseInt32 "+42"`          → `Left ParseError`      (`+` is not accepted, mirroring the literal grammar)
-   - `parseInt32 " 42"`          → `Left ParseError`      (leading whitespace)
-   - `parseInt32 "12abc"`        → `Left ParseError`      (trailing garbage)
+   - `parseInt32 "42"`          → `Right 42`
+   - `parseInt32 "-42"`         → `Right -42`
+   - `parseInt32 "2147483648"`  → `Left ParseError` (above maxInt32)
+   - `parseInt32 "-2147483649"` → `Left ParseError` (below minInt32)
+   - `parseInt32 "+42"`         → `Left ParseError` (`+` is not accepted, mirroring the literal grammar)
+   - `parseInt32 ""`            → `Left ParseError`
+   - `parseInt32 "-"`           → `Left ParseError` (sign without digits)
+   - `parseInt32 "12abc"`       → `Left ParseError` (trailing garbage)
 
-   Strings are byte sequences and digits are recognised as the seven-bit
-   ASCII codepoints '0'..'9' (0x30..0x39); other Unicode digit forms are
-   rejected. -}
-
+   Digits are ASCII '0'..'9' (0x30..0x39); other Unicode digit forms
+   are rejected. -}
 parseInt32 : String -> Either ParseError Int32
 parseInt32 = BuiltIn.parseInt32

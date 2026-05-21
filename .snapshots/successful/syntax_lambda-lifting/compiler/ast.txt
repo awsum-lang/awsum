@@ -75,7 +75,7 @@ Program
                     ) "b"
                 )
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 7
@@ -129,7 +129,7 @@ Program
                     )
                     ( QName [] "x" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 9
@@ -146,7 +146,7 @@ Program
                     , spanEndCol = 14
                     }
                 ) "Int32"
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 10
@@ -229,7 +229,7 @@ Program
                     )
                     ( LInt 42 )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , TypeDecl
             ( SrcSpan
                 { spanStartLine = 12
@@ -246,7 +246,7 @@ Program
                     , spanEndCol = 17
                     }
                 ) "ErrA" []
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , TypeDecl
             ( SrcSpan
                 { spanStartLine = 14
@@ -263,7 +263,7 @@ Program
                     , spanEndCol = 17
                     }
                 ) "ErrB" []
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 16
@@ -316,7 +316,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 17
@@ -352,7 +352,7 @@ Program
                     )
                     ( LInt 1 )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 19
@@ -423,7 +423,7 @@ Program
                         ) "Int32"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 20
@@ -468,7 +468,7 @@ Program
                     )
                     ( QName [] "n" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 22
@@ -539,7 +539,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 23
@@ -667,7 +667,7 @@ Program
                         )
                     )
                 ]
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 28
@@ -792,7 +792,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 29
@@ -1013,7 +1013,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 35
@@ -1066,7 +1066,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 36
@@ -1431,6 +1431,6 @@ Program
                         ]
                     ) []
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

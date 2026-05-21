@@ -76,7 +76,7 @@ Program
                     ) "Unit"
                 )
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 7
@@ -98,7 +98,7 @@ Program
                     , "Stdout"
                     ] "print"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 9
@@ -187,7 +187,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 10
@@ -237,7 +237,7 @@ Program
                     )
                     ( LString "INPUT_ERROR" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 12
@@ -290,7 +290,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 13
@@ -388,6 +388,6 @@ Program
                         ( QName [] "handleInputErr" )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

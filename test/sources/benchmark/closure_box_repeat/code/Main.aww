@@ -20,6 +20,7 @@
    $apply1 dispatches + ~10⁷ Either Right allocations. Tests RC + K-
    chain + LowerClosures dispatch composing under load. Output 'ok' if
    no underflow. -}
+
 import IO.Stdout
 
 zero : Int32

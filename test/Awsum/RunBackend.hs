@@ -253,8 +253,7 @@ runJs code input = withSystemTempDirectory "awsum" $ \dir -> do
 --   migration to 'IO.Stdin.readAll' — argv runs through the host's
 --   startup decoder ('sun.jnu.encoding' on Windows JVM, ANSI codepage
 --   for MSVCRT) and silently mangles supplementary-plane characters,
---   while stdin is delivered verbatim to the program. See the matching
---   stage-2 plan in @management/stdin-read-all.md@.
+--   while stdin is delivered verbatim to the program.
 --
 --   The handles are forced to binary mode so the Haskell default
 --   encoding (locale on POSIX, ANSI on Windows) doesn't re-encode

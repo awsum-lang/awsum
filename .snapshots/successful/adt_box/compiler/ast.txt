@@ -38,7 +38,7 @@ Program
                     }
                 ) "a"
             ]
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 7
@@ -91,7 +91,7 @@ Program
                         }
                     ) "String"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 8
@@ -157,7 +157,7 @@ Program
                         ( QName [] "value" )
                     ) Nothing :| []
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 11
@@ -210,7 +210,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 12
@@ -306,6 +306,6 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

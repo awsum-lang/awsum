@@ -438,8 +438,9 @@ instance Arbitrary NoOverflowMulUInt32 where
     pure (NoOverflowMulUInt32 (a, b))
 
 -- | (a, b, c) such that @a*b@, @b*c@ and @a*b*c@ all fit in UInt32.
---   Same shape as 'NoOverflowMulUInt8Triple' on the full u32 range —
---   bound every intermediate product, not just the left-grouping ones.
+--   All three intermediate products are bounded, not only the
+--   left-grouping ones — see 'NoOverflowMulUInt8Triple' below for the
+--   rationale (groupings differ under overflow-checked arithmetic).
 newtype NoOverflowMulUInt32Triple = NoOverflowMulUInt32Triple (Word32, Word32, Word32) deriving stock (Show)
 
 instance Arbitrary NoOverflowMulUInt32Triple where

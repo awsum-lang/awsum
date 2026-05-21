@@ -418,10 +418,10 @@ collectLStrings prog =
   where
     declStrings :: Decl -> [Text]
     declStrings = \case
-      FunDef _ _ _ e _ -> exprStrings e
+      FunDef _ _ _ e _ _ -> exprStrings e
       Sig {} -> []
       TypeDecl {} -> []
-      CommentDecl _ -> []
+      CommentDecl _ _ -> []
 
     exprStrings :: Expr -> [Text]
     exprStrings = \case

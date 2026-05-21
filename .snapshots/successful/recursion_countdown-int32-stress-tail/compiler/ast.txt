@@ -75,7 +75,7 @@ Program
                     ) "Int32"
                 )
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 7
@@ -334,7 +334,7 @@ Program
                         )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 13
@@ -441,7 +441,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 14
@@ -613,7 +613,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 18
@@ -666,7 +666,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 19
@@ -921,6 +921,6 @@ Program
                         ]
                     ) []
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

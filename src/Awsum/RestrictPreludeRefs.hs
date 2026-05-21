@@ -47,11 +47,11 @@ restrictPreludeRefs userProg
   where
     violationsInDecl :: Decl -> [PreludeRefViolation]
     violationsInDecl = \case
-      FunDef _ _ params body _ ->
+      FunDef _ _ params body _ _ ->
         concatMap violationsInParam params <> violationsInExpr body
       Sig {} -> []
       TypeDecl {} -> []
-      CommentDecl _ -> []
+      CommentDecl _ _ -> []
 
     violationsInParam :: Param -> [PreludeRefViolation]
     violationsInParam = \case
@@ -111,6 +111,6 @@ privateNames = S.insert "runIO" ioConstructors
     ioConstructors =
       S.fromList
         [ cn
-        | TypeDecl _ "IO" _ cons _ _ <- toList preludeProgram.decls,
+        | TypeDecl _ "IO" _ cons _ _ _ <- toList preludeProgram.decls,
           ConDef _ cn _ <- cons
         ]

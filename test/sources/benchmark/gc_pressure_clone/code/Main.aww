@@ -26,6 +26,7 @@
        size-bin freelist in linear memory; cumulative allocation
        never crosses the wasm32 4 GiB cap because the same bin
        blocks are reused. -}
+
 import IO.Stdout
 
 zero : Int32

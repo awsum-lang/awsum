@@ -21,7 +21,7 @@ Program
                 , spanEndCol = 21
                 }
             ) "ErrorA" []
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 8
@@ -38,7 +38,7 @@ Program
                     , spanEndCol = 21
                     }
                 ) "ErrorB" []
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , TypeDecl
             ( SrcSpan
                 { spanStartLine = 10
@@ -55,7 +55,7 @@ Program
                     , spanEndCol = 21
                     }
                 ) "ErrorC" []
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 12
@@ -108,7 +108,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 13
@@ -144,7 +144,7 @@ Program
                     )
                     ( LInt 1 )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 15
@@ -215,7 +215,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 16
@@ -250,7 +250,7 @@ Program
                         }
                     ) "ErrorC"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 18
@@ -303,7 +303,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 19
@@ -339,7 +339,7 @@ Program
                     )
                     ( LInt 3 )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 21
@@ -428,7 +428,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 22
@@ -564,7 +564,7 @@ Program
                         )
                     )
                 ]
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 28
@@ -707,7 +707,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 29
@@ -966,7 +966,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 36
@@ -1019,7 +1019,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 37
@@ -1246,6 +1246,6 @@ Program
                         ]
                     ) []
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

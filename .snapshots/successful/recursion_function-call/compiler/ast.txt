@@ -36,7 +36,7 @@ Program
                 , spanEndCol = 10
                 }
             ) "Step3" []
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 10
@@ -71,7 +71,7 @@ Program
                         }
                     ) "String"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 11
@@ -205,7 +205,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 16
@@ -258,7 +258,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 17
@@ -326,6 +326,6 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

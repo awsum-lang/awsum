@@ -59,7 +59,7 @@ Program
                     }
                 ) "Unit"
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 9
@@ -147,6 +147,6 @@ Program
                         ] "print"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

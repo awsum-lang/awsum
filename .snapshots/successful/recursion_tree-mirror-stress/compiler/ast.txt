@@ -58,8 +58,15 @@ Program
                     }
                 ) "Tree"
             ]
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ CommentDecl
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 61
+                }
+            )
             ( BlockComment " Build a right-spine tree of depth n tail-recursively. Values descend
                from n at the outermost Node down to 1 at the deepest. " )
         , Sig
@@ -150,7 +157,7 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 16
@@ -500,7 +507,7 @@ Program
                         )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 22
@@ -535,7 +542,7 @@ Program
                         }
                     ) "Tree"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 23
@@ -749,8 +756,15 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 27
+                , spanStartCol = 1
+                , spanEndLine = 30
+                , spanEndCol = 33
+                }
+            )
             ( BlockComment " Tail-recursive walk of a left-spine, keeping the deepest non-Leaf
                value seen. After 'mirror' of a right-spine, the result is a left-
                spine with the same values, so the deepest left-spine value equals
@@ -807,7 +821,7 @@ Program
                         ) "Int32"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 33
@@ -956,7 +970,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 37
@@ -1009,7 +1023,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 38
@@ -1282,6 +1296,6 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

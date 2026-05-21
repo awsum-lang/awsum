@@ -9,6 +9,7 @@
 
    Sizing identical to 'closure_box_repeat': 100 outer × 100_000
    inner = 10⁷ K-cell + $apply1 dispatch iters. -}
+
 import IO.Stdout
 
 zero : Int32

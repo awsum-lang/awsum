@@ -29,7 +29,7 @@ Program
                 , spanEndCol = 27
                 }
             ) "IStep" []
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ Sig
             ( SrcSpan
                 { spanStartLine = 8
@@ -64,7 +64,7 @@ Program
                         }
                     ) "Int32"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 9
@@ -180,7 +180,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 13
@@ -233,7 +233,7 @@ Program
                         ) "Int32"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 14
@@ -337,7 +337,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 18
@@ -390,7 +390,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 19
@@ -486,6 +486,6 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

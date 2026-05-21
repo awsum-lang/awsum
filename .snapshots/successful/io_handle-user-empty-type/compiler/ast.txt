@@ -21,7 +21,7 @@ Program
             , spanEndLine = 15
             , spanEndCol = 23
             }
-        ) "SecondNever" [] [] Nothing Empty :|
+        ) "SecondNever" [] [] Nothing Empty Nothing :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 17
@@ -38,7 +38,7 @@ Program
                     , spanEndCol = 13
                     }
                 ) "E1" []
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 19
@@ -91,7 +91,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 20
@@ -127,7 +127,7 @@ Program
                         }
                     ) "E1"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 22
@@ -198,7 +198,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 23
@@ -278,7 +278,7 @@ Program
                         )
                     ) Nothing :| []
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 26
@@ -331,7 +331,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 27
@@ -387,6 +387,6 @@ Program
                         ( QName [] "handleE1" )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

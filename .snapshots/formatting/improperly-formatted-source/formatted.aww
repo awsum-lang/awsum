@@ -3,23 +3,17 @@
 import IO.Stdout -- import trailing comment
 
 {- block
-comment -}
-
--- top comment 1
-
--- top comment 2
-
+comment
+top comment 1
+top comment 2 -}
 type Color
   = Red
   | Green
   | Blue
 
--- before show sig
-
+{- before show sig -}
 show : Color -> String
-
 {- between show sig and def -}
-
 show c = case c of
   -- deep leading
   -- shallow leading
@@ -40,10 +34,7 @@ show c = case c of
 
 --   Blue -> "Blue"
 
--- before main sig
-
+{- before main sig -}
 main : String -> IO Never Unit
-
--- between main sig and def
-
+{- between main sig and def -}
 main _ = IO.Stdout.print "ok"

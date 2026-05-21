@@ -38,7 +38,7 @@ Program
                     }
                 ) "a"
             ]
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 7
@@ -98,7 +98,7 @@ Program
                         }
                     ) "e"
                 ]
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 9
@@ -205,7 +205,7 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 10
@@ -241,7 +241,7 @@ Program
                     )
                     ( LString "hello" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 12
@@ -294,7 +294,7 @@ Program
                         }
                     ) "String"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 13
@@ -412,7 +412,7 @@ Program
                         )
                     )
                 ]
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 17
@@ -465,7 +465,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 18
@@ -506,6 +506,6 @@ Program
                     )
                     ( LString "ok" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

@@ -48,7 +48,7 @@ preludeProgram = case parseProgram preludeSource of
 --   program-type-independent; the parameter is taken for uniform
 --   plumbing with 'typecheckProgram'.
 verifyPrelude :: ProgramType -> Either TypeError [Warning]
-verifyPrelude progType = typecheckProgram progType S.empty preludeProgram
+verifyPrelude progType = snd <$> typecheckProgram progType S.empty preludeProgram
 
 -- | Prepend the bundled prelude's imports and declarations to a user
 --   program — the \"implicit @import Prelude@\". Downstream passes see
@@ -79,8 +79,17 @@ preludeDefNames =
     [ n
     | decl <- toList preludeProgram.decls,
       n <- case decl of
-        FunDef _ name _ _ _ -> [name]
-        Sig _ name _ _ -> [name]
+        FunDef _ name _ _ _ _ -> [name]
+        Sig _ name _ _ _ -> [name]
+        -- TypeDecl names are included so the LSP hover trace can
+        -- filter out prelude-side decl head-name records — those have
+        -- spans from @stdlib/Prelude.aww@ that collide with user
+        -- source spans by line/col, polluting the trace map. Including
+        -- uppercase type names in this Set is harmless for every
+        -- other consumer ('stripPreludeWarnings' only fires on
+        -- 'UnusedTopLevel', and 'checkNoShadow' only matches lowercase
+        -- value-position names against the env).
+        TypeDecl _ name _ _ _ _ _ -> [name]
         _ -> []
     ]
 

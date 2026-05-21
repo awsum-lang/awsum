@@ -32,7 +32,7 @@ Program
                 , spanEndCol = 15
                 }
             ) "String"
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 18
@@ -50,8 +50,15 @@ Program
                     }
                 )
                 ( LString "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界" )
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 20
+                , spanStartCol = 1
+                , spanEndLine = 23
+                , spanEndCol = 41
+                }
+            )
             ( BlockComment " Doubles `acc` `n` times via `acc ++ acc`. Threading through
                `andThenEither` propagates a `Left StringTooLong` from any
                intermediate `(++)` overflow. With `n = 20` and a 128-code-unit
@@ -144,7 +151,7 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 26
@@ -407,8 +414,15 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 30
+                , spanStartCol = 1
+                , spanEndLine = 36
+                , spanEndCol = 20
+                }
+            )
             ( BlockComment " The program-level outcome:
                - `OK` if `build 20 block` returns `Right s` with
                  `lengthUtf16CodeUnits s == maxStringLengthUtf16CodeUnits` AND
@@ -432,7 +446,7 @@ Program
                     , spanEndCol = 17
                     }
                 ) "String"
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 39
@@ -762,7 +776,7 @@ Program
                         )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 47
@@ -815,7 +829,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 48
@@ -856,6 +870,6 @@ Program
                     )
                     ( QName [] "runTest" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

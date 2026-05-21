@@ -22,7 +22,7 @@ Program
                 , spanEndCol = 17
                 }
             ) "ErrA" []
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 9
@@ -39,7 +39,7 @@ Program
                     , spanEndCol = 17
                     }
                 ) "ErrB" []
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 11
@@ -92,7 +92,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 12
@@ -128,7 +128,7 @@ Program
                         }
                     ) "ErrA"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 14
@@ -199,7 +199,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 15
@@ -249,7 +249,7 @@ Program
                     )
                     ( LString "ErrB" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 17
@@ -302,7 +302,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 18
@@ -497,6 +497,6 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

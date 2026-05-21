@@ -12,6 +12,10 @@ module Awsum.Syntax
     Program (..),
     ImportDecl (..),
     Decl (..),
+    declSpan,
+    declDocComment,
+    setDeclDocComment,
+    declHeadName,
     EmptyKind (..),
     ConDef (..),
     Type' (..),
@@ -173,13 +177,27 @@ data EmptyKind = NotEmpty | Empty
   deriving stock (Show, Eq, Ord)
 
 -- | Top-level declaration.
+--
+--   Each non-comment declaration carries two optional 'Text' fields:
+--
+--     * /trailing/ comment — the same-line @-- …@ that follows the
+--       declaration (preserved for formatter round-trip).
+--
+--     * /doc/ comment — markdown-ish text from a leading comment block
+--       (@--@ line cluster or @{- … -}@ block) that immediately
+--       precedes this declaration with no blank line between. Set by
+--       the parser's 'attachDocs' post-pass that walks 'CommentDecl's
+--       adjacent to the next declaration. Surfaced to editors via
+--       'textDocument/hover'. /Conventionally/ doc lives on 'Sig' (the
+--       comment textually precedes the signature line); the LSP layer
+--       falls back to 'FunDef' if only the body has one.
 data Decl
   = -- | Type signature: @main : τ -- comment@
-    Sig SrcSpan Name Type' (Maybe Text)
+    Sig SrcSpan Name Type' (Maybe Text) (Maybe Text)
   | -- | Function/value definition: @f x y = e  -- comment@.
     --   The argument list may be empty in the /surface/.
     --   Lowering will treat zero-arg defs as /constants/.
-    FunDef SrcSpan Name [Param] Expr (Maybe Text)
+    FunDef SrcSpan Name [Param] Expr (Maybe Text) (Maybe Text)
   | -- | Sum type declaration. Two surface forms:
     --
     --   @type Bool = True | False@ — ordinary type, possibly with
@@ -193,9 +211,49 @@ data Decl
     --   Type parameters carry their own span (as 'Param') so the
     --   unused-type-parameter warning can target precisely the
     --   identifier.
-    TypeDecl SrcSpan Name [Param] [ConDef] (Maybe Text) EmptyKind
-  | CommentDecl Comment
+    TypeDecl SrcSpan Name [Param] [ConDef] (Maybe Text) EmptyKind (Maybe Text)
+  | -- | Free-floating top-level comment (separated by a blank line
+    --   from any adjacent declaration). The span covers the comment
+    --   delimiters and content; 'attachDocs' uses it to decide
+    --   whether the comment is adjacent to the next declaration.
+    CommentDecl SrcSpan Comment
   deriving stock (Show, Eq)
+
+-- | Extract the source span of a declaration. Convenience for passes
+--   that need positions but don't care about constructor shape.
+declSpan :: Decl -> SrcSpan
+declSpan = \case
+  Sig sp _ _ _ _ -> sp
+  FunDef sp _ _ _ _ _ -> sp
+  TypeDecl sp _ _ _ _ _ _ -> sp
+  CommentDecl sp _ -> sp
+
+-- | The leading doc comment of a declaration, if any. 'Nothing' for
+--   'CommentDecl' (a free-floating comment is not itself documented).
+declDocComment :: Decl -> Maybe Text
+declDocComment = \case
+  Sig _ _ _ _ d -> d
+  FunDef _ _ _ _ _ d -> d
+  TypeDecl _ _ _ _ _ _ d -> d
+  CommentDecl _ _ -> Nothing
+
+-- | Replace the leading doc comment on a declaration. No-op on 'CommentDecl'.
+setDeclDocComment :: Maybe Text -> Decl -> Decl
+setDeclDocComment doc = \case
+  Sig sp n t tc _ -> Sig sp n t tc doc
+  FunDef sp n ps e tc _ -> FunDef sp n ps e tc doc
+  TypeDecl sp n ps cs tc ek _ -> TypeDecl sp n ps cs tc ek doc
+  d@CommentDecl {} -> d
+
+-- | Top-level name of a declaration, if it has one. 'Nothing' for
+--   'CommentDecl'. Named 'declHeadName' rather than @declName@ to avoid
+--   colliding with the parser's @declName@ combinator.
+declHeadName :: Decl -> Maybe Name
+declHeadName = \case
+  Sig _ n _ _ _ -> Just n
+  FunDef _ n _ _ _ _ -> Just n
+  TypeDecl _ n _ _ _ _ _ -> Just n
+  CommentDecl _ _ -> Nothing
 
 -- | Constructor definition inside a 'TypeDecl'.
 --   The 'SrcSpan' covers just the constructor's name in the source so

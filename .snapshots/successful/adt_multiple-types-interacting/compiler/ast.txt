@@ -36,7 +36,7 @@ Program
                 , spanEndCol = 9
                 }
             ) "Blue" []
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ TypeDecl
             ( SrcSpan
                 { spanStartLine = 10
@@ -71,7 +71,7 @@ Program
                         }
                     ) "a"
                 ]
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , TypeDecl
             ( SrcSpan
                 { spanStartLine = 12
@@ -131,7 +131,7 @@ Program
                         }
                     ) "e"
                 ]
-            ] Nothing NotEmpty
+            ] Nothing NotEmpty Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 14
@@ -166,7 +166,7 @@ Program
                         }
                     ) "String"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 15
@@ -264,7 +264,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 20
@@ -317,7 +317,7 @@ Program
                         }
                     ) "String"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 21
@@ -402,7 +402,7 @@ Program
                         )
                     ) Nothing :| []
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 24
@@ -491,7 +491,7 @@ Program
                         }
                     ) "String"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 25
@@ -606,7 +606,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 29
@@ -659,7 +659,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 30
@@ -1076,6 +1076,6 @@ Program
                         ]
                     ) []
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

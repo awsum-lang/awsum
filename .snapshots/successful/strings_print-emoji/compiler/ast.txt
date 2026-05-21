@@ -65,7 +65,7 @@ Program
                     }
                 ) "Unit"
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 15
@@ -106,6 +106,6 @@ Program
                     )
                     ( LString "🔥" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

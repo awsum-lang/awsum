@@ -20,7 +20,7 @@ Program
                 , spanEndCol = 14
                 }
             ) "Int32"
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 6
@@ -84,7 +84,7 @@ Program
                     )
                     ( LInt 5 )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 8
@@ -101,7 +101,7 @@ Program
                     , spanEndCol = 16
                     }
                 ) "Int32"
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 9
@@ -165,7 +165,7 @@ Program
                     )
                     ( QName [] "runMe" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 11
@@ -218,7 +218,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 12
@@ -287,6 +287,6 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

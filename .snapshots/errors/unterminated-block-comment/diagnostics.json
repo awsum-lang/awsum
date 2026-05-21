@@ -1,0 +1,1 @@
+[{"severity":"error","startLine":8,"startCol":1,"endLine":8,"endCol":1,"message":"unterminated block comment: reached end of file while still inside a '{- ... -}' block","fixes":[]}]

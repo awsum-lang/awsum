@@ -8,6 +8,7 @@
 
    Sizing identical to 'tree_sum_repeat': left-spine of depth 10_000,
    summed 1_000 times. -}
+
 import IO.Stdout
 
 zero : Int32

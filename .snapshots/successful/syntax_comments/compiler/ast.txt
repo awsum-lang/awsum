@@ -9,10 +9,31 @@ Program
             ( Just " Args import trailing" )
         ]
     , decls = CommentDecl
+        ( SrcSpan
+            { spanStartLine = 6
+            , spanStartCol = 1
+            , spanEndLine = 6
+            , spanEndCol = 55
+            }
+        )
         ( BlockComment " Block comment between import and the first decl. " ) :|
         [ CommentDecl
+            ( SrcSpan
+                { spanStartLine = 8
+                , spanStartCol = 1
+                , spanEndLine = 8
+                , spanEndCol = 18
+                }
+            )
             ( LineComment " Line comment 1" )
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 10
+                , spanStartCol = 1
+                , spanEndLine = 10
+                , spanEndCol = 18
+                }
+            )
             ( LineComment " Line comment 2" )
         , TypeDecl
             ( SrcSpan
@@ -47,8 +68,15 @@ Program
                     }
                 ) "Blue" []
             ]
-            ( Just " TypeDecl with constructors trailing" ) NotEmpty
+            ( Just " TypeDecl with constructors trailing" ) NotEmpty Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 17
+                , spanStartCol = 1
+                , spanEndLine = 17
+                , spanEndCol = 40
+                }
+            )
             ( LineComment " Line comment between top-level decls" )
         , TypeDecl
             ( SrcSpan
@@ -58,8 +86,15 @@ Program
                 , spanEndCol = 46
                 }
             ) "Phantom" [] []
-            ( Just " TypeDecl uninhabited trailing" ) NotEmpty
+            ( Just " TypeDecl uninhabited trailing" ) NotEmpty Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 21
+                , spanStartCol = 1
+                , spanEndLine = 21
+                , spanEndCol = 44
+                }
+            )
             ( BlockComment " Block comment introducing a function. " )
         , Sig
             ( SrcSpan
@@ -96,8 +131,15 @@ Program
                     ) "String"
                 )
             )
-            ( Just " Sig trailing on a non-main decl" )
+            ( Just " Sig trailing on a non-main decl" ) Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 25
+                , spanStartCol = 1
+                , spanEndLine = 25
+                , spanEndCol = 36
+                }
+            )
             ( LineComment " Line comment between sig and def" )
         , FunDef
             ( SrcSpan
@@ -199,13 +241,34 @@ Program
                         ( Just " CaseAlt trailing Blue" )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 32
+                , spanStartCol = 1
+                , spanEndLine = 32
+                , spanEndCol = 46
+                }
+            )
             ( LineComment " Block + line comments stacked between defs" )
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 34
+                , spanStartCol = 1
+                , spanEndLine = 35
+                , spanEndCol = 21
+                }
+            )
             ( BlockComment " Multi-line
                block comment. " )
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 37
+                , spanStartCol = 1
+                , spanEndLine = 37
+                , spanEndCol = 32
+                }
+            )
             ( LineComment " Line comment after the block" )
         , Sig
             ( SrcSpan
@@ -277,7 +340,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 40
@@ -352,7 +415,7 @@ Program
                     ( QName [] "withOpen" )
                 )
             )
-            ( Just " FunDef multi-line let body, trailing on '=' line" )
+            ( Just " FunDef multi-line let body, trailing on '=' line" ) Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 44
@@ -441,7 +504,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 45
@@ -491,7 +554,7 @@ Program
                     )
                     ( LString "INPUT_ERROR" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 47
@@ -562,7 +625,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 48
@@ -612,8 +675,15 @@ Program
                     )
                     ( QName [] "s" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 50
+                , spanStartCol = 1
+                , spanEndLine = 50
+                , spanEndCol = 28
+                }
+            )
             ( LineComment " Line comment before main" )
         , Sig
             ( SrcSpan
@@ -668,8 +738,15 @@ Program
                     ) "Unit"
                 )
             )
-            ( Just " Sig trailing" )
+            ( Just " Sig trailing" ) Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 54
+                , spanStartCol = 1
+                , spanEndLine = 54
+                , spanEndCol = 36
+                }
+            )
             ( LineComment " Line comment between sig and def" )
         , FunDef
             ( SrcSpan
@@ -768,8 +845,15 @@ Program
                         ( QName [] "handleInputError" )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 60
+                , spanStartCol = 1
+                , spanEndLine = 60
+                , spanEndCol = 32
+                }
+            )
             ( LineComment " Trailing line comment at EOF" )
         ]
     }

@@ -79,6 +79,7 @@ library
       Awsum.Symbols
       Awsum.Syntax
       Awsum.Tco
+      Awsum.TypeTrace
       Awsum.Typing
       Common.File
   other-modules:
@@ -191,6 +192,7 @@ test-suite awsum-test
       Awsum.ErrorSnapshotsSpec
       Awsum.FormattingSnapshotsSpec
       Awsum.HMSpec
+      Awsum.HoverSpec
       Awsum.ProgramSnapshotsSpec
       Awsum.PropertySpec
       Awsum.RunBackend
@@ -221,6 +223,7 @@ test-suite awsum-test
     , filepath
     , hspec
     , hspec-golden
+    , lsp-types
     , pretty-simple
     , process
     , relude

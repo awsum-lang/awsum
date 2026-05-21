@@ -59,7 +59,7 @@ data Symbol = Symbol
 symbolsOfProgram :: Program -> [Symbol]
 symbolsOfProgram Program {decls} =
   let ds = toList decls
-      funDefByName = M.fromList [(n, (sp, args)) | FunDef sp n args _ _ <- ds]
+      funDefByName = M.fromList [(n, (sp, args)) | FunDef sp n args _ _ _ <- ds]
    in snd $ foldl' (emit funDefByName) (S.empty, []) ds
   where
     emit ::
@@ -68,19 +68,19 @@ symbolsOfProgram Program {decls} =
       Decl ->
       (S.Set Name, [Symbol])
     emit funDefByName (processed, acc) = \case
-      Sig sp n _ _ ->
+      Sig sp n _ _ _ ->
         let sym = case M.lookup n funDefByName of
               Just (fnSp, args) -> mkBindingSymbol args n (combineSpans sp fnSp) (nameSpanAt sp n)
               Nothing -> mkBindingSymbol [] n sp (nameSpanAt sp n) -- orphan sig
          in (S.insert n processed, acc <> [sym])
-      FunDef sp n args _body _
+      FunDef sp n args _body _ _
         | S.member n processed -> (processed, acc) -- already emitted with its sig
         | otherwise ->
             let sym = mkBindingSymbol args n sp (nameSpanAt sp n)
              in (S.insert n processed, acc <> [sym])
-      TypeDecl sp n _tvars _cons _ _ ->
+      TypeDecl sp n _tvars _cons _ _ _ ->
         (processed, acc <> [Symbol SkType n sp (typeNameSpanAt sp n) []])
-      CommentDecl _ -> (processed, acc)
+      CommentDecl _ _ -> (processed, acc)
 
     mkBindingSymbol :: [Param] -> Name -> SrcSpan -> SrcSpan -> Symbol
     mkBindingSymbol args n range selRange =

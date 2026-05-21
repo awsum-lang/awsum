@@ -11,18 +11,33 @@
 --   * code actions for compiler-supplied @fixes@ payload;
 --   * formatting via @Awsum.Format@;
 --   * document symbols via @Awsum.Symbols@;
---   * workspace symbols by scanning @.aww@ files under @rootUri@.
-module Awsum.Lsp (runLspServer) where
+--   * workspace symbols by scanning @.aww@ files under @rootUri@;
+--   * hover with the doc comment attached to the declaration under the
+--     cursor (markdown).
+module Awsum.Lsp
+  ( runLspServer,
+    -- Internals exported for testing — the snapshot tests need to
+    -- drive 'hoverForPosition' end-to-end (parse → typecheck →
+    -- position lookup) on small fixtures without spinning up a real
+    -- LSP client.
+    compileToTrace,
+    hoverForPosition,
+  )
+where
 
 import Awsum.Diagnostic qualified as AD
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Format (formatSource)
+import Awsum.HM (stripSyntheticTyvarSuffix)
 import Awsum.Parser (parseProgramDiagnostic)
-import Awsum.Prelude (stripPreludeWarnings, withPrelude)
+import Awsum.Prelude (preludeDefNames, preludeProgram, stripPreludeWarnings, withPrelude)
 import Awsum.Program (ProgramType (..))
+import Awsum.Render (renderType)
 import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Symbols qualified as ASym
 import Awsum.Syntax qualified as ASyn
+import Awsum.TypeTrace (TypeRecord (..), TypeTrace, emptyTrace, lookupAtPosition, lookupAtSpan)
+import Awsum.Typing (emptyTypeNamesInProgram, markEmptyTypesInDecl, typecheckProgram)
 import Common.File (readFileTextUtf8)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (catch)
@@ -134,6 +149,350 @@ spanToRange (ASyn.SrcSpan sl sc el ec) =
     toUInt :: Int -> UInt
     toUInt = fromIntegral . max 0
 
+-- | Build a hover response for the cursor position.
+--
+--   Two payloads, both displayed in a single markdown popup:
+--
+--     1. /Type/ — looked up in the typechecker's 'TypeTrace' by the
+--        narrowest 'SrcSpan' that contains the cursor. Reference sites
+--        ('EVar', 'ECon', 'EBuiltIn') and binder introductions
+--        (parameters, do-bind, let-bind, case-arm pattern variables,
+--        top-level head names) carry types here. Rendered as a fenced
+--        @```awsum``` code block at the top of the popup. Polymorphic
+--        references surface both the /declared/ scheme and the
+--        call-site-instantiated form, separated by an
+--        \"Instantiated here:\" line; monomorphic refs and locals
+--        collapse to one block. 'TyCon' references inside type
+--        signatures and 'PCon' references inside patterns do /not/
+--        carry types yet — they show doc only;
+--
+--     2. /Doc comment/ — the markdown-ish text attached to the
+--        declaration this name resolves to, recovered by the AST walks
+--        below ('headNameHover', 'referenceHover'). Searched across
+--        user decls + the bundled prelude so a hover on @parseUInt32@
+--        in user code surfaces the prelude's doc just as naturally as
+--        a hover on a user-defined name.
+--
+--   Trigger forms:
+--
+--   /Form 1 — cursor on a user decl's head name./ E.g. @square@ in
+--   @square : Int32 -> …@ or in @square n = …@. Returns the type from
+--   the trace plus the doc attached to that decl (or — fallback — a
+--   sibling decl with the same head name; handles the canonical
+--   @Sig + FunDef@ pair where only the @Sig@ has a doc).
+--
+--   /Form 2 — cursor on a reference inside a user function body./
+--   E.g. @mulInt32@ in @square n = mulInt32 n n@. Walks the expression
+--   tree to find the innermost reference under the cursor and looks up
+--   its name in the combined user+prelude decl list. The hover @range@
+--   underlines just the reference, not the whole declaration.
+--
+--   References inside type signatures (@ParseError@ in
+--   @parseUInt32 : String -> Either ParseError UInt32@), constructor
+--   patterns (@Just@ in @case x of Just y -> …@), pattern-position
+--   ascriptions (@Int32@ in @(n : Int32) ->@), and constructor field
+--   types (the @Int32@ inside @type Box = Box Int32@) resolve through
+--   the same name-lookup for doc. Type variables (lowercase, like
+--   @a@ in @a -> a@) are bindings, not references — they intentionally
+--   don't trigger.
+--
+--   /Form 3 — cursor on a local binder./ Function parameter, do-bind
+--   variable, let-bind variable, case-arm pattern variable. No doc
+--   here (binders don't have one), but the trace carries the binder's
+--   monomorphic type, so the popup still has content to show.
+hoverForPosition :: TypeTrace -> ASyn.Program -> Position -> Maybe Hover
+hoverForPosition traceMap prog (Position l c) =
+  let line = fromIntegral l + 1
+      col = fromIntegral c + 1
+      userDecls = toList (ASyn.decls prog)
+      -- User decls are listed first so that, when both the user
+      -- program and the prelude define a name (e.g. the user
+      -- redefines @const@), the user's doc is found first and wins.
+      allDecls = userDecls <> toList (ASyn.decls preludeProgram)
+   in headNameHover line col userDecls allDecls
+        <|> referenceHover line col userDecls allDecls
+        <|> binderHover line col
+  where
+    -- Cursor sits on a top-level decl's head name. Surfaces the
+    -- decl's type (from trace) and its doc (with sibling fallback).
+    headNameHover :: Int -> Int -> [ASyn.Decl] -> [ASyn.Decl] -> Maybe Hover
+    headNameHover line col uds allDs =
+      listToMaybe
+        $ mapMaybe
+          ( \d -> do
+              headSp <- declHeadNameSpan d
+              guard (positionInSpan line col headSp)
+              buildHover headSp (docForDecl d allDs)
+          )
+          uds
+
+    -- Cursor sits inside a user function body, on a reference. We can
+    -- emit hover when either the trace has a type at the reference
+    -- span, or the AST search finds a documented declaration with
+    -- that name (or both — preferred).
+    referenceHover :: Int -> Int -> [ASyn.Decl] -> [ASyn.Decl] -> Maybe Hover
+    referenceHover line col uds allDs =
+      listToMaybe
+        $ mapMaybe
+          ( \d -> do
+              (name, refSp) <- refUnderCursor line col d
+              buildHover refSp (docByName name allDs)
+          )
+          uds
+
+    -- Cursor on a local binder (parameter, do-bind, let-bind, pattern
+    -- variable). Locals don't have docs, but the trace carries their
+    -- type — that alone is enough payload to show a hover.
+    binderHover :: Int -> Int -> Maybe Hover
+    binderHover line col = case lookupAtPosition line col traceMap of
+      Just (sp, _) -> buildHover sp Nothing
+      Nothing -> Nothing
+
+    -- Compose the markdown payload from (optional) type and
+    -- (optional) doc. Returns 'Nothing' iff both are absent — no
+    -- empty hover popups.
+    buildHover :: ASyn.SrcSpan -> Maybe Text -> Maybe Hover
+    buildHover sp mDoc =
+      let mTypeMd = renderRecordAt sp
+          parts = catMaybes [mTypeMd, mDoc]
+       in case parts of
+            [] -> Nothing
+            _ ->
+              Just
+                Hover
+                  { _contents = InL (MarkupContent MarkupKind_Markdown (T.intercalate "\n\n" parts)),
+                    _range = Just (spanToRange sp)
+                  }
+
+    -- Trace lookup keyed by the AST span. 'recordRef' inside
+    -- 'Awsum.Typing.typeOfExpr' / 'checkExpr' emits the same /narrow/
+    -- name span the AST walks return here, so equality matching
+    -- suffices for 'EVar' / 'ECon' / 'EBuiltIn' / head names. Local
+    -- binders fall through to position search ('lookupAtPosition'
+    -- in 'binderHover').
+    renderRecordAt :: ASyn.SrcSpan -> Maybe Text
+    renderRecordAt sp = renderRecord <$> lookupAtSpan sp traceMap
+
+    -- 'TRReference' carries both declared and instantiated slots —
+    -- on monomorphic refs they coincide and we render one block; on
+    -- polymorphic refs the call-site-substituted instantiated form
+    -- differs from the declared scheme, and both blocks are
+    -- rendered side by side with an "Instantiated here:" separator.
+    --
+    -- Comparison normalises freshener-suffixed tyvars
+    -- ('stripSyntheticTyvarSuffix') so a `Just a -> Maybe a` that
+    -- went through `freshenType "$N_M"` to `Just a$3_5 -> Maybe a$3_5`
+    -- with no further substitution still compares equal to its
+    -- declared form and renders one block, not two.
+    renderRecord :: TypeRecord -> Text
+    renderRecord = \case
+      TRReference declared instantiated
+        | typesEquivalent declared instantiated -> codeBlock declared
+        | otherwise ->
+            codeBlock declared
+              <> "\n\nInstantiated here:\n"
+              <> codeBlock instantiated
+      TRBinder ty -> codeBlock ty
+
+    codeBlock :: ASyn.Type' -> Text
+    codeBlock ty = "```awsum\n" <> renderType (stripFreshenedSuffixes ty) <> "\n```"
+
+    -- True iff two types are equal modulo synthetic freshener
+    -- suffixes ('$3_5', '$check', etc.). Used to decide whether the
+    -- instantiated slot adds information beyond the declared scheme.
+    typesEquivalent :: ASyn.Type' -> ASyn.Type' -> Bool
+    typesEquivalent a b = stripFreshenedSuffixes a == stripFreshenedSuffixes b
+
+    -- Walk a type, stripping freshener suffixes from every 'TyVar'
+    -- name. 'stripSyntheticTyvarSuffix' is the per-name helper from
+    -- 'Awsum.HM'; we apply it everywhere a tyvar appears.
+    stripFreshenedSuffixes :: ASyn.Type' -> ASyn.Type'
+    stripFreshenedSuffixes = \case
+      ASyn.TyVar sp n -> ASyn.TyVar sp (stripSyntheticTyvarSuffix n)
+      ASyn.TyCon sp n -> ASyn.TyCon sp n
+      ASyn.TyEmpty sp n -> ASyn.TyEmpty sp n
+      ASyn.TyApp sp f x -> ASyn.TyApp sp (stripFreshenedSuffixes f) (stripFreshenedSuffixes x)
+      ASyn.TyArrow sp a b -> ASyn.TyArrow sp (stripFreshenedSuffixes a) (stripFreshenedSuffixes b)
+      ASyn.TyOr sp a b -> ASyn.TyOr sp (stripFreshenedSuffixes a) (stripFreshenedSuffixes b)
+
+    positionInSpan :: Int -> Int -> ASyn.SrcSpan -> Bool
+    positionInSpan line col (ASyn.SrcSpan sl sc el ec) =
+      (line > sl || (line == sl && col >= sc))
+        && (line < el || (line == el && col <= ec))
+
+    -- Doc resolution from a /decl/ object (head-name path): own doc,
+    -- or a sibling decl with the same name and a doc.
+    docForDecl :: ASyn.Decl -> [ASyn.Decl] -> Maybe Text
+    docForDecl d allDs =
+      ASyn.declDocComment d <|> do
+        n <- ASyn.declHeadName d
+        docByName n allDs
+
+    -- Doc resolution from a /name/ (reference path): first decl in
+    -- the search list whose head name matches and that has a doc; if
+    -- none, fall back to a 'TypeDecl' whose /constructor list/ contains
+    -- the name (so hovering on @Just@ surfaces @Maybe@'s doc — the
+    -- only place that constructor is documented today).
+    docByName :: Text -> [ASyn.Decl] -> Maybe Text
+    docByName name decls =
+      listToMaybe
+        [ doc
+        | d <- decls,
+          ASyn.declHeadName d == Just name,
+          Just doc <- [ASyn.declDocComment d]
+        ]
+        <|> listToMaybe
+          [ doc
+          | ASyn.TypeDecl _ _ _ cons _ _ (Just doc) <- decls,
+            ASyn.ConDef _ cname _ <- cons,
+            cname == name
+          ]
+
+    -- Find the innermost name reference under the cursor inside this
+    -- decl, if any. Sig walks the type, FunDef walks parameter
+    -- patterns + body (which itself recurses into ELet/EAscribe/EDo
+    -- patterns and types as it goes), TypeDecl walks each
+    -- constructor's field types.
+    refUnderCursor :: Int -> Int -> ASyn.Decl -> Maybe (Text, ASyn.SrcSpan)
+    refUnderCursor line col = \case
+      ASyn.Sig _ _ ty _ _ -> refInType line col ty
+      ASyn.FunDef _ _ ps body _ _ ->
+        firstJust (refInParam line col) ps
+          <|> refInExpr line col body
+      ASyn.TypeDecl _ _ _ cons _ _ _ ->
+        firstJust (refInConDef line col) cons
+      ASyn.CommentDecl _ _ -> Nothing
+
+    refInParam :: Int -> Int -> ASyn.Param -> Maybe (Text, ASyn.SrcSpan)
+    refInParam line col = \case
+      ASyn.Param _ _ -> Nothing -- plain binder, not a reference
+      ASyn.ParamPat _ pat -> refInPattern line col pat
+
+    refInConDef :: Int -> Int -> ASyn.ConDef -> Maybe (Text, ASyn.SrcSpan)
+    refInConDef line col (ASyn.ConDef _ _ flds) =
+      firstJust (refInType line col) flds
+
+    -- Walk an expression looking for the innermost name reference
+    -- (EVar, ECon, EBuiltIn, plus references buried in pattern or
+    -- type sub-nodes — case-alt patterns, let-ascriptions, do-binds,
+    -- expression-level ascriptions). Pruning: subtrees whose own span
+    -- doesn't contain the cursor are skipped, so the walk is O(depth)
+    -- on a well-formed AST.
+    refInExpr :: Int -> Int -> ASyn.Expr -> Maybe (Text, ASyn.SrcSpan)
+    refInExpr line col e
+      | not (positionInSpan line col (ASyn.exprSpan e)) = Nothing
+      | otherwise = case e of
+          ASyn.EVar sp (ASyn.QName _qual n) -> Just (n, sp)
+          ASyn.ECon sp n -> Just (n, sp)
+          ASyn.EBuiltIn sp n -> Just (n, sp)
+          ASyn.ELit {} -> Nothing
+          ASyn.EApp _ f x ->
+            refInExpr line col f <|> refInExpr line col x
+          ASyn.EInfix _ _ a b ->
+            refInExpr line col a <|> refInExpr line col b
+          ASyn.EParens _ inner -> refInExpr line col inner
+          ASyn.ECase _ scrut alts _ ->
+            refInExpr line col scrut
+              <|> firstJust (refInCaseAlt line col) (toList alts)
+          ASyn.ELam _ ps body ->
+            firstJust (refInParam line col) ps
+              <|> refInExpr line col body
+          ASyn.EDo _ stmts -> firstJust (refInDoStmt line col) stmts
+          ASyn.ELet _ pat mty rhs body ->
+            refInPattern line col pat
+              <|> (mty >>= refInType line col)
+              <|> refInExpr line col rhs
+              <|> refInExpr line col body
+          ASyn.EAscribe _ inner ty ->
+            refInExpr line col inner <|> refInType line col ty
+
+    refInCaseAlt :: Int -> Int -> ASyn.CaseAlt -> Maybe (Text, ASyn.SrcSpan)
+    refInCaseAlt line col alt =
+      refInPattern line col (ASyn.caseAltPattern alt)
+        <|> refInExpr line col (ASyn.caseAltBody alt)
+
+    refInDoStmt :: Int -> Int -> ASyn.DoStmt -> Maybe (Text, ASyn.SrcSpan)
+    refInDoStmt line col = \case
+      ASyn.DoBind _ pat e ->
+        refInPattern line col pat <|> refInExpr line col e
+      ASyn.DoLet _ pat mty e ->
+        refInPattern line col pat
+          <|> (mty >>= refInType line col)
+          <|> refInExpr line col e
+      ASyn.DoExpr _ e -> refInExpr line col e
+
+    -- Walk a pattern looking for constructor references (PCon names)
+    -- and type references inside pattern-position ascriptions
+    -- (@(n : Int32) -> …@). PVar / PWild bind locally — they're not
+    -- references to anything resolvable.
+    --
+    -- PCon's own SrcSpan covers /just the constructor name/ in source
+    -- (its inner patterns live in their own spans), so positional
+    -- pruning on the outer pattern would skip a cursor that sits on
+    -- a nested @PCon@. Recurse into inner sub-patterns first; only
+    -- match the outer name when nothing inner does.
+    refInPattern :: Int -> Int -> ASyn.Pattern -> Maybe (Text, ASyn.SrcSpan)
+    refInPattern line col = \case
+      ASyn.PCon sp n inner ->
+        firstJust (refInPattern line col) inner
+          <|> (if positionInSpan line col sp then Just (n, sp) else Nothing)
+      ASyn.PVar _ _ -> Nothing
+      ASyn.PWild _ -> Nothing
+      ASyn.PAscribe _ inner ty ->
+        refInPattern line col inner <|> refInType line col ty
+
+    -- Walk a type looking for the innermost TyCon / TyEmpty under the
+    -- cursor. TyVar is a bound lowercase name (e.g. @a@ in @a -> a@) —
+    -- not resolvable to a declaration, so it's intentionally skipped.
+    refInType :: Int -> Int -> ASyn.Type' -> Maybe (Text, ASyn.SrcSpan)
+    refInType line col ty
+      | not (positionInSpan line col (ASyn.typeSpan ty)) = Nothing
+      | otherwise = case ty of
+          ASyn.TyVar _ _ -> Nothing
+          ASyn.TyCon sp n -> Just (n, sp)
+          ASyn.TyEmpty sp n -> Just (n, sp)
+          ASyn.TyApp _ f x -> refInType line col f <|> refInType line col x
+          ASyn.TyArrow _ a b -> refInType line col a <|> refInType line col b
+          ASyn.TyOr _ a b -> refInType line col a <|> refInType line col b
+
+    firstJust :: (a -> Maybe b) -> [a] -> Maybe b
+    firstJust f = listToMaybe . mapMaybe f
+
+-- | Span of the head /name/ of a top-level declaration — the substring
+--   the user clicks on to trigger hover. Approximations:
+--
+--     * 'Sig' / 'FunDef' — the name sits at the start of the decl span;
+--       end column is start + 'T.length' of the name. For operator
+--       decls spelled in source as @(++)@ the internal name is @"++"@
+--       (length 2) so the returned span underestimates by the two
+--       parens; a cursor inside @(++)@ at col 2..3 still triggers
+--       (col 1 — the @(@ — and col 4 — the @)@ — do not).
+--
+--     * 'TypeDecl' (NotEmpty) — the @"type "@ prefix is 5 chars, so
+--       the name starts at @startCol + 5@. Formatter normalises
+--       whitespace, so this is reliable for any formatted source.
+--
+--     * 'TypeDecl' (Empty) — @"empty type "@ prefix is 11 chars.
+--
+--     * 'CommentDecl' — no head name; returns 'Nothing'.
+declHeadNameSpan :: ASyn.Decl -> Maybe ASyn.SrcSpan
+declHeadNameSpan = \case
+  ASyn.Sig sp n _ _ _ -> Just (nameSpanAt sp n)
+  ASyn.FunDef sp n _ _ _ _ -> Just (nameSpanAt sp n)
+  ASyn.TypeDecl sp n _ _ _ ek _ ->
+    let off = case ek of
+          ASyn.NotEmpty -> T.length "type "
+          ASyn.Empty -> T.length "empty type "
+     in Just (nameSpanShifted sp off n)
+  ASyn.CommentDecl _ _ -> Nothing
+  where
+    nameSpanAt :: ASyn.SrcSpan -> ASyn.Name -> ASyn.SrcSpan
+    nameSpanAt (ASyn.SrcSpan sl sc _ _) n =
+      ASyn.SrcSpan sl sc sl (sc + T.length n)
+    nameSpanShifted :: ASyn.SrcSpan -> Int -> ASyn.Name -> ASyn.SrcSpan
+    nameSpanShifted (ASyn.SrcSpan sl sc _ _) off n =
+      ASyn.SrcSpan sl (sc + off) sl (sc + off + T.length n)
+
 severityToLsp :: AD.Severity -> DiagnosticSeverity
 severityToLsp = \case
   AD.SevError -> DiagnosticSeverity_Error
@@ -178,6 +537,32 @@ awsumSymbolToLsp (ASym.Symbol k n r sr cs) =
 -- ════════════════════════════════════════════════════════════════════════════
 -- Compile pipeline
 -- ════════════════════════════════════════════════════════════════════════════
+
+-- | Source text → typechecker 'TypeTrace'. Returns an empty trace on
+--   any failure (parse error, prelude-reference violation, type error)
+--   so hover gracefully degrades to doc-only — the existing AST-based
+--   doc walks already work on the unmodified user program.
+--
+--   The pipeline here mirrors 'compileToDiagnostics' minus the Core
+--   lowering steps: parsing and typechecking is all we need for the
+--   trace, and skipping lowering keeps hover responsive to partially-
+--   typed programs (e.g. user is still typing).
+compileToTrace :: Text -> TypeTrace
+compileToTrace src =
+  case parseProgramDiagnostic src of
+    Left _ -> emptyTrace
+    Right userProg -> case restrictPreludeRefs userProg of
+      _ : _ -> emptyTrace
+      [] ->
+        let combined = withPrelude userProg
+            emptyNames = emptyTypeNamesInProgram combined
+            prog =
+              combined
+                { ASyn.decls = fmap (markEmptyTypesInDecl emptyNames) (ASyn.decls combined)
+                }
+         in case typecheckProgram ProgramCli preludeDefNames prog of
+              Left _ -> emptyTrace
+              Right (traceMap, _) -> traceMap
 
 -- | Source text → Awsum diagnostics. Mirrors the @awsum check@ pipeline in
 --   "Main.runCheck" — parse, elaborate (which runs typecheck + every
@@ -481,6 +866,38 @@ serverHandlers st =
             -- We always pick the DocumentSymbol[] branch.
             result :: [SymbolInformation] |? ([DocumentSymbol] |? Null)
             result = InR (InL syms)
+        responder (Right result),
+      -- Hover: surface (a) the typechecker's type for whatever name /
+      -- binder the cursor is on, and (b) the doc comment attached to
+      -- the declaration it resolves to. Both pieces are shipped as a
+      -- single markdown popup with a fenced @```awsum``` code block
+      -- on top; every targeted editor (@awsum-vscode@, @awsum-intellij@,
+      -- @awsum-zed@, @awsum-nvim@, @awsum-emacs@) renders both by default.
+      --
+      -- Function decls produce two AST nodes (Sig + FunDef); the parser's
+      -- 'attachDocs' attaches the doc to whichever the comment textually
+      -- precedes — almost always the Sig. Hover on either node resolves
+      -- by name across the program, so a cursor on the function body's
+      -- name still shows the signature's doc.
+      requestHandler SMethod_TextDocumentHover $ \req responder -> do
+        let uri = toNormalizedUri (req ^. L.params . L.textDocument . L.uri)
+            pos = req ^. L.params . L.position
+        mtxt <- readDocText uri
+        let result :: Hover |? Null
+            result = case mtxt of
+              Nothing -> InR Null
+              Just src -> case parseProgramDiagnostic src of
+                Left _ -> InR Null
+                Right prog ->
+                  -- The trace is computed afresh per hover request.
+                  -- This duplicates work with the debounced
+                  -- 'publishCheckResult' path but keeps the hover
+                  -- handler synchronous; for typical hover frequency
+                  -- (a few per second at most) the cost is invisible.
+                  let traceMap = compileToTrace src
+                   in case hoverForPosition traceMap prog pos of
+                        Nothing -> InR Null
+                        Just h -> InL h
         responder (Right result),
       -- Cross-file symbol search (Cmd+T / Ctrl+T). Scans every @.aww@ file
       -- under the workspace roots received at @initialize@. No incremental
