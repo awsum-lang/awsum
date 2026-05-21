@@ -132,7 +132,7 @@ Program
                     )
                 )
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 28
@@ -524,7 +524,7 @@ Program
                         )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 36
@@ -577,7 +577,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 37
@@ -858,6 +858,6 @@ Program
                         )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

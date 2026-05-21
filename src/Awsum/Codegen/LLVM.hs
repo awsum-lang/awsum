@@ -2030,8 +2030,7 @@ runtime ptags builtIns =
           -- I/O errors on stdin are extremely rare for piped input, and
           -- carrying a new row variant for them would mean every program
           -- using 'IO.Stdin.readAll' would have to handle it. Conscious
-          -- trade-off — see [stdin-read-all.md] (in management/) for the
-          -- one-pager.
+          -- trade-off.
           "  %eof = icmp sle i64 %got, 0",
           "  br i1 %eof, label %read_done, label %accumulate",
           "accumulate:",

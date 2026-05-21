@@ -8,6 +8,7 @@
 
    Sizing identical to 'unused_case_binder_repeat': 1000 outer ×
    10_000 inner = 10⁷ Cons walks. -}
+
 import IO.Stdout
 
 zero : Int32

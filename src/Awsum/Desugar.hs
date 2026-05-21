@@ -51,13 +51,14 @@
 --
 --   * Names are deterministic with respect to the AST alone — layout,
 --     comments, and blank lines (none of which reach the AST) cannot
---     change them. This is the invariant tracked in
---     @management/comments-do-not-affect-compiler-output.md@ in the
---     private workspace.
+--     change them. So @awsum format@ never changes any generated
+--     synthetic name, and any future test that snapshots Core IR or
+--     codegen output is stable under cosmetic edits.
 --   * Counter is /global per program/, not per function. The
 --     supercompiler/inliner work assumed by future passes benefits
---     from globally unique binder names (rename-free substitution on
---     inline) — see the topic doc for the trade-off.
+--     from globally unique binder names: substitution on inline
+--     becomes rename-free, because no two binders in the whole
+--     program ever share a synthetic name.
 module Awsum.Desugar (desugarProgram, DesugarError (..)) where
 
 import Awsum.Syntax
@@ -112,10 +113,10 @@ desugarProgram p = evalStateT (go p) 0
 
 desugarDecl :: Decl -> DesugarM Decl
 desugarDecl = \case
-  FunDef sp n params body c -> do
+  FunDef sp n params body c doc -> do
     body' <- desugarExpr body
     (params', wrappedBody) <- liftParamPatterns params body'
-    pure (FunDef sp n params' wrappedBody c)
+    pure (FunDef sp n params' wrappedBody c doc)
   d -> pure d
 
 desugarExpr :: Expr -> DesugarM Expr

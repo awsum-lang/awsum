@@ -58,8 +58,15 @@ Program
                     }
                 ) "Tree"
             ]
-        ] Nothing NotEmpty :|
+        ] Nothing NotEmpty Nothing :|
         [ CommentDecl
+            ( SrcSpan
+                { spanStartLine = 12
+                , spanStartCol = 1
+                , spanEndLine = 13
+                , spanEndCol = 41
+                }
+            )
             ( BlockComment " Build a left-spine tree of depth n tail-recursively. Every value is 1
                so the total sum equals the depth. " )
         , Sig
@@ -150,7 +157,7 @@ Program
                         )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 16
@@ -500,8 +507,15 @@ Program
                         )
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 22
+                , spanStartCol = 1
+                , spanEndLine = 23
+                , spanEndCol = 63
+                }
+            )
             ( BlockComment " Total Int32 sum of all values in the tree never exceeds the input
                depth here, so 'addInt32' cannot overflow on this input. " )
         , Sig
@@ -556,7 +570,7 @@ Program
                         ) "Int32"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 26
@@ -698,8 +712,15 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 30
+                , spanStartCol = 1
+                , spanEndLine = 32
+                , spanEndCol = 41
+                }
+            )
             ( BlockComment " Double-recursive sum: both the inner 'sumTree l ...' (non-tail,
                passes its result as the outer call's second argument) and the outer
                'sumTree r ...' run on every Node. " )
@@ -755,7 +776,7 @@ Program
                         ) "Int32"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 35
@@ -998,7 +1019,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 39
@@ -1051,7 +1072,7 @@ Program
                         }
                     ) "Unit"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 40
@@ -1296,6 +1317,6 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

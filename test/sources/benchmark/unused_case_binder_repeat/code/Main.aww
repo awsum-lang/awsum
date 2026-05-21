@@ -19,6 +19,7 @@
 
    Output: cumulative element count, printed once via 'showInt32'.
    1000 outer * 10000 per pass = 10^7. -}
+
 import IO.Stdout
 
 zero : Int32

@@ -1,0 +1,7 @@
+import IO.Stdout
+
+{- this block comment is never closed; the parser must point at the
+   opening '{-' and complain at EOF
+
+main : IO Never Unit
+main = IO.Stdout.print "ok"

@@ -139,7 +139,7 @@ buildConInfo ds =
         zip
           [0 ..]
           [ (tName, ps, c)
-          | TypeDecl _sp tName ps cs _ _ <- ds,
+          | TypeDecl _sp tName ps cs _ _ _ <- ds,
             c <- cs
           ]
     ]
@@ -512,18 +512,22 @@ elaborateLowerProgram progType progIn = do
               fmap (markEmptyTypesInDecl emptyNames) (decls progDesugared)
           }
   -- 1) Elaboration step: just typecheck; no evidence/dictionaries yet.
-  warnings <- typecheckProgram progType preludeDefNames prog
+  --    The trace returned by 'typecheckProgram' is discarded here — it
+  --    is only consumed by 'Awsum.Lsp.hoverForPosition', which calls
+  --    'typecheckProgram' directly rather than going through
+  --    'elaborateLowerProgram'.
+  warnings <- snd <$> typecheckProgram progType preludeDefNames prog
   -- 2) Lowering: drop signatures, convert defs/exprs. Fail gracefully on unknown primitives.
   let ds = toList (decls prog)
       conInfo = buildConInfo ds
-      sigMap = M.fromList [(n, t) | Sig _sp n t _ <- ds]
+      sigMap = M.fromList [(n, t) | Sig _sp n t _ _ <- ds]
       -- Narrow each TypeDecl span to just the type's name (the
       -- formatter guarantees the leading 'type ' prefix is exactly
       -- five chars), so the row tag collision diagnostic underlines
       -- 'AFB4F' rather than the whole 'type AFB4F = MkAFB4F' line.
       -- Same heuristic 'Awsum.Typing.typeNameSubSpan' uses for
       -- 'DuplicateTypeDef' / 'UnnamedType' diagnostics.
-      typeDeclSpans = M.fromList [(n, narrowToName sp n) | TypeDecl sp n _ _ _ _ <- ds]
+      typeDeclSpans = M.fromList [(n, narrowToName sp n) | TypeDecl sp n _ _ _ _ _ <- ds]
       narrowToName sp n =
         let nameStartCol = spanStartCol sp + T.length "type "
          in SrcSpan
@@ -1193,10 +1197,10 @@ freeVars = \case
 lowerDeclM :: LowerEnv -> M.Map Name Type' -> Decl -> LowerM (Maybe CDecl)
 lowerDeclM env sigMap decl0 = case etaContractTopLambdas sigMap decl0 of
   Sig {} -> pure Nothing
-  CommentDecl _ -> pure Nothing
+  CommentDecl _ _ -> pure Nothing
   TypeDecl {} -> pure Nothing
-  FunDef _sp _n [] body _ | isBareBuiltIn body -> pure Nothing
-  FunDef _sp n [] body _
+  FunDef _sp _n [] body _ _ | isBareBuiltIn body -> pure Nothing
+  FunDef _sp n [] body _ _
     | Just ty <- M.lookup n sigMap,
       let (argTys, _) = splitArrow ty,
       not (null argTys) -> do
@@ -1204,7 +1208,7 @@ lowerDeclM env sigMap decl0 = case etaContractTopLambdas sigMap decl0 of
         let etas = ["$eta" <> show (i :: Int) | i <- [0 .. length argTys - 1]]
             call = CCall body' (map CVar etas)
         pure $ Just $ CFunDef n etas call
-  FunDef _sp n args body _ -> do
+  FunDef _sp n args body _ _ -> do
     let (argTys, resultTy) = case M.lookup n sigMap of
           Just t -> splitArrowN (length args) t
           Nothing -> ([], Nothing)
@@ -1241,11 +1245,11 @@ splitArrowN = go []
 --   like @f = \\a -> \\b -> body@ are peeled recursively.
 etaContractTopLambdas :: M.Map Name Type' -> Decl -> Decl
 etaContractTopLambdas sigMap = \case
-  FunDef sp n [] body cmt
+  FunDef sp n [] body cmt doc
     | Just ty <- M.lookup n sigMap,
       let (extracted, inner) = peel body ty,
       not (null extracted) ->
-        FunDef sp n extracted inner cmt
+        FunDef sp n extracted inner cmt doc
   d -> d
   where
     peel (ELam _ ps lamBody) ty

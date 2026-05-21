@@ -47,10 +47,12 @@ normalizeImport (ImportDecl lc m mc) = ImportDecl lc m (normalizeTrailing mc)
 --   Signatures are kept verbatim; function/value bodies are normalized.
 normalizeDecl :: Decl -> Decl
 normalizeDecl = \case
-  Sig sp n t mc -> Sig sp n t (normalizeTrailing mc)
-  FunDef sp n as e mc -> FunDef sp n (map normalizeParam as) (normalizeExpr e) (normalizeTrailing mc)
-  TypeDecl sp n tvs cs mc ek -> TypeDecl sp n (map normalizeParam tvs) cs (normalizeTrailing mc) ek
-  CommentDecl c -> CommentDecl c
+  Sig sp n t mc doc -> Sig sp n t (normalizeTrailing mc) (normalizeTrailing doc)
+  FunDef sp n as e mc doc ->
+    FunDef sp n (map normalizeParam as) (normalizeExpr e) (normalizeTrailing mc) (normalizeTrailing doc)
+  TypeDecl sp n tvs cs mc ek doc ->
+    TypeDecl sp n (map normalizeParam tvs) cs (normalizeTrailing mc) ek (normalizeTrailing doc)
+  CommentDecl sp c -> CommentDecl sp c
 
 -- | Collapse @ParamPat (PVar n)@ to @Param n@ — the parser
 --   canonicalises @(x)@ back to a bare binder, so the two AST shapes

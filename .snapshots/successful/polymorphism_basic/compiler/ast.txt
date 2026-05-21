@@ -56,7 +56,7 @@ Program
                     }
                 ) "Unit"
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 6
@@ -431,7 +431,7 @@ Program
                         ]
                     ) []
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 15
@@ -466,7 +466,7 @@ Program
                         }
                     ) "a"
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 16
@@ -493,7 +493,7 @@ Program
                     }
                 )
                 ( QName [] "x" )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 18
@@ -564,7 +564,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 19
@@ -610,7 +610,7 @@ Program
                     )
                     ( LString "x" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 21
@@ -681,7 +681,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 22
@@ -727,6 +727,6 @@ Program
                     )
                     ( LString "y" )
                 )
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

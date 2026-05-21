@@ -23,6 +23,7 @@
    reclaim: 1000 × 30_000 ≈ 30M cells stay live, ~1 GiB.
 
    Output: '1', cumulative allocation 30M cells. -}
+
 import IO.Stdout
 
 zero : Int32

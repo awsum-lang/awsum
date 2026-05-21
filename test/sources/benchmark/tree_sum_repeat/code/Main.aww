@@ -20,6 +20,7 @@
    Output: '10000' (sum of 10_000 ones). The tree itself is built once
    and shared across all 1000 reps, so steady-state live set is one
    tree (~10_000 Node cells) + the current K chain (≤ 10_000 cells). -}
+
 import IO.Stdout
 
 zero : Int32

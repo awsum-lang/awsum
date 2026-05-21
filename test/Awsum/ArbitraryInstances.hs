@@ -192,6 +192,49 @@ genLeadingComments =
       (1, vectorOf 2 genCommentNode)
     ]
 
+-- | Doc-comment text that survives the @render → parse@ round-trip
+--   through the attached @{- text -}@ form. Three constraints fall
+--   out from how 'Awsum.Parser.attachDocs' processes the captured
+--   text, all met by construction here:
+--
+--   1. /Not all-whitespace./ 'attachDocs' applies @T.strip@; an
+--      all-whitespace text would normalise to @""@ which
+--      'normalizeTrailing' then rewrites to 'Nothing', breaking
+--      equality with the generated @Just t@.
+--
+--   2. /Already 'T.strip'-ed./ Leading/trailing whitespace is dropped
+--      by the parser's strip, so it must be absent on the generated
+--      side too.
+--
+--   3. /No @{-@ or @-}@ substrings./ The balanced parser would
+--      consume them as nested-block delimiters; an unbalanced one
+--      closes the outer block prematurely. 'genStr' excludes @{@ and
+--      @}@ entirely, so the substring constraint is automatic — we
+--      only need to enforce 1 and 2.
+--
+--   Mostly single-line content; a small fraction joins two lines with
+--   a newline so the multi-line markdown shape (also produced by
+--   stacked @--@ source) is also exercised.
+genDocCommentText :: Gen Text
+genDocCommentText = do
+  parts <-
+    frequency
+      [ (3, vectorOf 1 genStr),
+        (1, vectorOf 2 genStr)
+      ]
+  let t = T.strip (T.intercalate "\n" parts)
+  if T.null t then genDocCommentText else pure t
+
+-- | Optional doc-comment. Leans heavily towards 'Nothing' so generated
+--   programs stay small; when a doc is produced, its text comes from
+--   'genDocCommentText' so the @render → parse@ round-trip is exact.
+genDocComment :: Gen (Maybe Text)
+genDocComment =
+  frequency
+    [ (5, pure Nothing),
+      (1, Just <$> genDocCommentText)
+    ]
+
 genInt :: Gen Integer
 genInt =
   frequency
@@ -383,7 +426,7 @@ genDoBlockExpr n = do
 instance Arbitrary Decl where
   arbitrary =
     frequency
-      [ (4, Sig noSpan <$> genLIdent <*> arbitrary <*> genComment),
+      [ (4, Sig noSpan <$> genLIdent <*> arbitrary <*> genComment <*> genDocComment),
         (4, genFunDef),
         (1, genTypeDecl),
         -- Top-level comment as a standalone declaration. When sandwiched
@@ -391,7 +434,7 @@ instance Arbitrary Decl where
         -- 'groupDeclBlocks' pairing — both ends still round-trip, just
         -- as two separate blocks with the comment between, which is
         -- exactly what the parser produces.
-        (1, CommentDecl <$> genCommentNode)
+        (1, CommentDecl noSpan <$> genCommentNode)
       ]
     where
       -- Mostly plain-name parameters; an occasional destructuring
@@ -420,7 +463,8 @@ instance Arbitrary Decl where
         k <- chooseInt (0, min 3 (max 0 n))
         ps <- vectorOf k genParam
         body <- genFunBody (max 0 (n - k))
-        FunDef noSpan name ps body <$> genComment
+        tc <- genComment
+        FunDef noSpan name ps body tc <$> genDocComment
       -- Function bodies may additionally be 'ECase' or 'EDo' at the
       -- top level — these are layout-sensitive and only round-trip
       -- when the keyword sits at the head of the right-hand side,
@@ -447,19 +491,20 @@ instance Arbitrary Decl where
         -- constructors. A dedicated generator for the 'empty type X'
         -- form lives in the round-trip tests where the prelude shape
         -- matters.
-        pure (TypeDecl noSpan name tvars cons comment NotEmpty)
+        TypeDecl noSpan name tvars cons comment NotEmpty <$> genDocComment
   shrink = \case
-    Sig _sp n t mc ->
-      [Sig noSpan n' t mc | n' <- shrinkIdent n] <> [Sig noSpan n t' mc | t' <- shrink t]
-    FunDef _sp n as e mc ->
-      [FunDef noSpan n' as e mc | n' <- shrinkIdent n]
-        <> [FunDef noSpan n (take i as) e mc | i <- [0 .. length as - 1]]
-        <> [FunDef noSpan n as e' mc | e' <- shrink e]
-    TypeDecl _sp n tvs cs mc ek ->
-      [TypeDecl noSpan n' tvs cs mc ek | n' <- shrinkIdent n]
-        <> [TypeDecl noSpan n (take i tvs) cs mc ek | i <- [0 .. length tvs - 1]]
-        <> [TypeDecl noSpan n tvs cs' mc ek | cs' <- shrinkList shrink cs]
-    CommentDecl _ -> []
+    Sig _sp n t mc doc ->
+      [Sig noSpan n' t mc doc | n' <- shrinkIdent n]
+        <> [Sig noSpan n t' mc doc | t' <- shrink t]
+    FunDef _sp n as e mc doc ->
+      [FunDef noSpan n' as e mc doc | n' <- shrinkIdent n]
+        <> [FunDef noSpan n (take i as) e mc doc | i <- [0 .. length as - 1]]
+        <> [FunDef noSpan n as e' mc doc | e' <- shrink e]
+    TypeDecl _sp n tvs cs mc ek doc ->
+      [TypeDecl noSpan n' tvs cs mc ek doc | n' <- shrinkIdent n]
+        <> [TypeDecl noSpan n (take i tvs) cs mc ek doc | i <- [0 .. length tvs - 1]]
+        <> [TypeDecl noSpan n tvs cs' mc ek doc | cs' <- shrinkList shrink cs]
+    CommentDecl _ _ -> []
 
 instance Arbitrary Program where
   arbitrary = do
@@ -511,5 +556,5 @@ instance Arbitrary Program where
 --   parse and so the original 'Decl' shape cannot round-trip through
 --   render/parse. Only relevant when 'imports = []'.
 validFirstDecl :: [ImportDecl] -> Decl -> Bool
-validFirstDecl [] (CommentDecl _) = False
+validFirstDecl [] (CommentDecl _ _) = False
 validFirstDecl _ _ = True

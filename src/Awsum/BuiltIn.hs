@@ -131,8 +131,8 @@ builtIns =
       -- otherwise. Symmetric to 'mulUInt8'.
       ("mulUInt32", TyArrow noSpan uint32Ty (TyArrow noSpan uint32Ty (eitherTy overflowErrorTy uint32Ty))),
       -- parseUInt32 : String -> Either ParseError UInt32
-      -- Same grammar as 'parseUInt8' — no sign, decimal digits only —
-      -- range 0..4294967295.
+      -- No sign, decimal digits only, no whitespace, no trailing
+      -- characters. Range 0..4294967295.
       ("parseUInt32", TyArrow noSpan stringTy (eitherTy parseErrorTy uint32Ty)),
       -- lengthCodePoints : String -> UInt32
       -- Counts Unicode code points (USVs) in the string. A surrogate

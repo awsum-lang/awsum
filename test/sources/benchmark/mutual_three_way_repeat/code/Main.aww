@@ -24,6 +24,7 @@
    Sizing: 100 outer × 1_000_000 inner = 10⁸ tail-cross-hops + 10⁸
    Either Right allocations. Measures TCO loop throughput and per-
    iter Either RC overhead on each backend. -}
+
 import IO.Stdout
 
 zero : Int32

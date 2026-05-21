@@ -58,7 +58,7 @@ Program
                     }
                 ) "Unit"
             )
-        ) Nothing :|
+        ) Nothing Nothing :|
         [ FunDef
             ( SrcSpan
                 { spanStartLine = 7
@@ -156,7 +156,7 @@ Program
                         ( QName [] "printDecodeError" )
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 11
@@ -227,7 +227,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 12
@@ -388,7 +388,7 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 16
@@ -477,7 +477,7 @@ Program
                         ) "Unit"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 17
@@ -637,8 +637,15 @@ Program
                         ) Nothing
                     ]
                 ) []
-            ) Nothing
+            ) Nothing Nothing
         , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 21
+                , spanStartCol = 1
+                , spanEndLine = 21
+                , spanEndCol = 20
+                }
+            )
             ( BlockComment " Block comment " )
         , Sig
             ( SrcSpan
@@ -656,7 +663,7 @@ Program
                     , spanEndCol = 18
                     }
                 ) "String"
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 24
@@ -675,7 +682,7 @@ Program
                 )
                 ( LString "Hello" )
             )
-            ( Just " Line comment" )
+            ( Just " Line comment" ) Nothing
         , Sig
             ( SrcSpan
                 { spanStartLine = 26
@@ -746,7 +753,7 @@ Program
                         ) "String"
                     )
                 )
-            ) Nothing
+            ) Nothing Nothing
         , FunDef
             ( SrcSpan
                 { spanStartLine = 27
@@ -902,6 +909,6 @@ Program
                         )
                     )
                 ]
-            ) Nothing
+            ) Nothing Nothing
         ]
     }

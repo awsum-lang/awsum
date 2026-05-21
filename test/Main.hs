@@ -5,6 +5,7 @@ import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.ErrorSnapshotsSpec qualified
 import Awsum.FormattingSnapshotsSpec qualified
 import Awsum.HMSpec qualified
+import Awsum.HoverSpec qualified
 import Awsum.Normalize (normalizeProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (preludeDefNames, preludeProgram, stripPreludeWarnings, verifyPrelude, withPrelude)
@@ -36,6 +37,7 @@ main = do
     preludeSpec
     elaborateSpec
     Awsum.HMSpec.spec
+    Awsum.HoverSpec.spec
     Awsum.ProgramSnapshotsSpec.spec
     Awsum.FormattingSnapshotsSpec.spec
     Awsum.ErrorSnapshotsSpec.spec
@@ -64,7 +66,7 @@ preludeSpec = describe "Awsum.Prelude" $ do
         -- 'stripPreludeWarnings' drops the expected \"showInt32 is unused\"
         -- warning that arises because this user program never calls into
         -- the prelude — same filter as the CLI / snapshot specs apply.
-        fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames combined) `shouldBe` Right []
+        fmap (stripPreludeWarnings . snd) (typecheckProgram ProgramCli preludeDefNames combined) `shouldBe` Right []
         requireMain combined `shouldBe` Right ()
 
   it "withPrelude prepends prelude decls ahead of user decls" $ do
@@ -100,7 +102,7 @@ parserSpec = do
               { moduleComment = Nothing,
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -110,6 +112,7 @@ parserSpec = do
                                (EVar noSpan (QName ["IO", "Stdout"] "print"))
                                (EVar noSpan (QName [] "input"))
                            )
+                           Nothing
                            Nothing
                        ]
               }
@@ -128,7 +131,7 @@ parserSpec = do
               { moduleComment = Nothing,
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -146,6 +149,7 @@ parserSpec = do
                                    )
                                )
                            )
+                           Nothing
                            Nothing
                        ]
               }
@@ -167,7 +171,7 @@ parserSpec = do
               (TyArrow noSpan (TyCon noSpan "String") (TyCon noSpan "String"))
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right (Program _ _ (Sig _ _ ty _ :| _)) -> ty `shouldBe` expectedSig
+        Right (Program _ _ (Sig _ _ ty _ _ :| _)) -> ty `shouldBe` expectedSig
         Right _ -> expectationFailure "expected first decl to be a Sig"
 
     it "parses: type-ascription pattern '(n : Int32)' inside a case arm" $ do
@@ -193,7 +197,7 @@ parserSpec = do
           let arm =
                 listToMaybe
                   [ a
-                  | FunDef _ "f" _ body _ <- toList (decls p),
+                  | FunDef _ "f" _ body _ _ <- toList (decls p),
                     ECase _ _ alts _ <- [body],
                     a <- toList alts
                   ]
@@ -231,7 +235,7 @@ parserSpec = do
           let parsedPat =
                 listToMaybe
                   [ caseAltPattern alt
-                  | FunDef _ "f" _ body _ <- toList (decls p),
+                  | FunDef _ "f" _ body _ _ <- toList (decls p),
                     ECase _ _ alts _ <- [body],
                     alt <- toList alts
                   ]
@@ -253,7 +257,7 @@ parserSpec = do
               (TyCon noSpan "String")
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right (Program _ _ (Sig _ _ ty _ :| _)) -> ty `shouldBe` expectedSig
+        Right (Program _ _ (Sig _ _ ty _ _ :| _)) -> ty `shouldBe` expectedSig
         Right _ -> expectationFailure "expected first decl to be a Sig"
 
   describe "Render.renderProgram" $ do
@@ -270,7 +274,7 @@ parserSpec = do
               { moduleComment = Nothing,
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -280,6 +284,7 @@ parserSpec = do
                                (EVar noSpan (QName ["IO", "Stdout"] "print"))
                                (EVar noSpan (QName [] "input"))
                            )
+                           Nothing
                            Nothing
                        ]
               }
@@ -298,7 +303,7 @@ parserSpec = do
               { moduleComment = Nothing,
                 imports = [ImportDecl [] ("IO" :| ["Stdout"]) Nothing],
                 decls =
-                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing
+                  Sig noSpan "main" (TyArrow noSpan (TyCon noSpan "String") (TyApp noSpan (TyApp noSpan (TyCon noSpan "IO") (TyCon noSpan "Never")) (TyCon noSpan "Unit"))) Nothing Nothing
                     :| [ FunDef
                            noSpan
                            "main"
@@ -316,6 +321,7 @@ parserSpec = do
                                    )
                                )
                            )
+                           Nothing
                            Nothing
                        ]
               }
@@ -359,7 +365,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
+        Right p -> fmap (stripPreludeWarnings . snd) (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
 
     it "typechecks: print (input ++ input) via Right" $ do
       let src =
@@ -378,7 +384,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
+        Right p -> fmap (stripPreludeWarnings . snd) (typecheckProgram ProgramCli preludeDefNames (withPrelude p)) `shouldBe` Right []
 
     it "typechecks a function with a structural-sum signature and PAscribe arms" $ do
       -- A closed structural sum '(Int32 | String)' is legal in a
@@ -396,7 +402,7 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p ->
-          fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
+          fmap (stripPreludeWarnings . snd) (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
             `shouldBe` Right []
 
     it "rejects a structural-sum case missing a label" $ do
@@ -433,7 +439,7 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p ->
-          fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
+          fmap (stripPreludeWarnings . snd) (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
             `shouldBe` Right []
 
     it "implicitly injects an integer literal into a structural-sum with a unique int label" $ do
@@ -453,7 +459,7 @@ typecheckerSpec = do
       case parseProgram src of
         Left e -> expectationFailure (toString e)
         Right p ->
-          fmap stripPreludeWarnings (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
+          fmap (stripPreludeWarnings . snd) (typecheckProgram ProgramCli preludeDefNames (withPrelude p))
             `shouldBe` Right []
 
     it "rejects a wildcard arm on a structural-sum scrutinee" $ do
@@ -479,7 +485,7 @@ typecheckerSpec = do
               ]
       case parseProgram src of
         Left e -> expectationFailure (toString e)
-        Right p -> typecheckProgram ProgramCli mempty p `shouldBe` Right []
+        Right p -> fmap snd (typecheckProgram ProgramCli mempty p) `shouldBe` Right []
 
   describe "Typing.requireMain" $ do
     it "rejects a module without 'main'" $ do

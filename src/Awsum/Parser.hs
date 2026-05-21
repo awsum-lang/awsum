@@ -326,7 +326,7 @@ pProgram = do
   let declsNE = case ds of
         d : rest -> d :| rest
         [] -> error "impossible: P.some returned []"
-  pure Program {moduleComment = modCom, imports = imps, decls = declsNE}
+  pure Program {moduleComment = modCom, imports = imps, decls = attachDocs declsNE}
 
 -- | Optional single block-comment header at the very top of a file.
 --   Form: exactly one @{- … -}@ block. Whether it is followed by a
@@ -355,12 +355,28 @@ pOptionalModuleComment = do
   skipBlankLinesNoComments
   P.notFollowedBy (P.chunk "--")
     P.<?> "no line comments allowed at the top of the file (use a {- module comment -} block instead)"
-  P.optional $ do
+  P.optional $ try $ do
     txt <- pBlockCommentText
     hspaceNoComments
     void C.eol <|> P.eof
+    -- Distinguishes a /module/ comment from a /doc/ comment on the
+    -- first declaration. A module comment is followed by a blank
+    -- line (the canonical formatter shape), end-of-file, or an
+    -- @import@. A leading block comment immediately followed by a
+    -- top-level declaration is the doc of that declaration —
+    -- 'attachDocs' lifts it into the decl's 'docComment' field; the
+    -- 'try' above rolls back so the block isn't consumed here.
+    moduleCommentTrailing
     skipBlankLinesNoComments
     pure txt
+  where
+    moduleCommentTrailing :: Parser ()
+    moduleCommentTrailing =
+      P.choice
+        [ void (P.lookAhead (try (hspaceNoComments *> C.eol))),
+          P.eof,
+          void (P.lookAhead (try (hspaceNoComments *> P.chunk "import")))
+        ]
 
 -- | First-import variant: no leading comments allowed. Such comments
 --   would either be module-comment material (which 'pOptionalModuleComment'
@@ -412,26 +428,75 @@ pTopDeclOrComment =
     <|> try pSigWithEnd
     <|> pFunDefWithEnd
 
--- | Top-level comments (non-nested capture for '{- -}', nesting still works in
---   the skipper; line comments capture until end-of-line).
+-- | Top-level comments. Both forms — @-- …@ line and @{- … -}@ block —
+--   are captured into 'CommentDecl' with the span of the comment
+--   delimiters and content. The span is consumed by 'attachDocs' to
+--   decide whether the comment is adjacent (no blank line) to the next
+--   declaration and should be lifted into its 'docComment' field.
+--
+--   Block-comment text is captured by the balanced 'pBlockCommentText',
+--   so nested @{- … -}@ inside the comment body is preserved verbatim.
+--
+--   The captured 'end' position is taken /before/ the optional trailing
+--   newline on a line comment. Otherwise consuming the @\n@ would push
+--   the end position to the start of the next line, making
+--   \"comment-then-decl on adjacent lines\" indistinguishable from
+--   \"comment-then-blank-line-then-decl\" (the rule that decides whether
+--   the comment becomes a docstring).
 pTopComment :: Parser Decl
 pTopComment = do
   hspaceNoComments
-  CommentDecl
-    <$> ( (LineComment <$> pLineCommentText <* P.optional C.eol)
-            <|> (BlockComment <$> pBlockCommentText)
-        )
+  start <- P.getSourcePos
+  (c, end) <-
+    ( do
+        t <- pLineCommentText
+        e <- P.getSourcePos
+        _ <- P.optional C.eol
+        pure (LineComment t, e)
+    )
+      <|> ( do
+              t <- pBlockCommentText
+              e <- P.getSourcePos
+              pure (BlockComment t, e)
+          )
+  pure (CommentDecl (toSrcSpan start end) c)
 
 pLineCommentText :: Parser Text
 pLineCommentText = do
   _ <- P.chunk "--"
   P.takeWhileP (Just "not newline") (/= '\n')
 
+-- | Block comment text with **balanced** nesting: @{- outer {- inner -} more -}@
+--   is captured as one comment (text @"outer {- inner -} more"@), not two
+--   declarations. The previous @manyTill anySingle "-}"@ form was a latent bug
+--   that closed the comment at the first @-}@ and left the rest of the content
+--   to confuse downstream parsing.
+--
+--   Implementation: maintain a depth counter, descending into nested @{-@ and
+--   ascending out of matching @-}@. On EOF with the counter still positive the
+--   parser fails with an explicit \"unterminated block comment\" message. The
+--   error position is at EOF rather than at the opening @{-@ — pointing at the
+--   opening @{-@ would be friendlier, but @P.setOffset@ inside @fail@ produced
+--   unrelated locations in Megaparsec's error bundle, so the simpler form is
+--   used; the message is the actionable part.
 pBlockCommentText :: Parser Text
 pBlockCommentText = do
   _ <- P.chunk "{-"
-  txt <- P.manyTill P.anySingle (P.chunk "-}")
-  pure (toText txt)
+  toText <$> go (1 :: Int) []
+  where
+    go 0 acc = pure (reverse acc)
+    go depth acc = do
+      atEof <- P.atEnd
+      when atEof
+        $ fail "unterminated block comment: reached end of file while still inside a '{- ... -}' block"
+      P.choice
+        [ P.chunk "{-" *> go (depth + 1) ('-' : '{' : acc),
+          P.chunk "-}"
+            *> if depth == 1
+              then go 0 acc
+              else go (depth - 1) ('}' : '-' : acc),
+          P.anySingle >>= \c -> go depth (c : acc)
+        ]
 
 -- Declarations ───────────────────────────────────────────────────────────────
 
@@ -445,7 +510,7 @@ pSigWithEnd = do
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
   endLineOrEOF
-  pure (Sig (toSrcSpan start end) name ty tcom)
+  pure (Sig (toSrcSpan start end) name ty tcom Nothing)
 
 -- | Sum type declaration. Two surface forms:
 --
@@ -507,7 +572,7 @@ pTypeDeclWithEnd = do
   tcom <- pTrailingLineCommentMaybe
   end <- P.getSourcePos
   endLineOrEOF
-  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom emptyKind)
+  pure (TypeDecl (toSrcSpan start end) name tvars cons tcom emptyKind Nothing)
 
 -- | Constructor definition: @Found a@ or @NotFound@. The constructor's
 --   name span (captured before trailing whitespace) is preserved so
@@ -556,17 +621,17 @@ pFunDefWithEnd = do
       end <- P.getSourcePos
       -- Multi-line case expression already consumed trailing newlines.
       -- We may be at the start of the next content line or EOF.
-      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody)
+      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody Nothing)
     ELet {} -> do
       -- Same as 'ECase': a 'let' block may span multiple lines, so
       -- 'endLineOrEOF' below would mis-fire. The let parser has
       -- already consumed through the trailing body expression.
       end <- P.getSourcePos
-      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody)
+      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody Nothing)
     EDo {} -> do
       -- Same multi-line layout as ECase/ELet.
       end <- P.getSourcePos
-      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody)
+      pure (FunDef (toSrcSpan start end) name args e tcomBeforeBody Nothing)
     _ -> do
       tcomAfterBody <- pTrailingLineCommentMaybe
       end <- P.getSourcePos
@@ -574,7 +639,7 @@ pFunDefWithEnd = do
       -- Single-line bodies: prefer the after-body comment when both
       -- positions are filled. The renderer only ever fills one; the
       -- '<|>' fallback is for unusual hand-written input.
-      pure (FunDef (toSrcSpan start end) name args e (tcomAfterBody <|> tcomBeforeBody))
+      pure (FunDef (toSrcSpan start end) name args e (tcomAfterBody <|> tcomBeforeBody) Nothing)
 
 -- | Consume spaces (not comments), then an optional trailing line comment.
 pTrailingLineCommentMaybe :: Parser (Maybe Text)
@@ -1235,3 +1300,76 @@ pPVar = do
   scNoLineComments
   let sp = toSrcSpan start end
   pure $ if name == "_" then PWild sp else PVar sp name
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- Post-parse: attach adjacent leading comments to the following declaration
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- | Lift 'CommentDecl's that are textually adjacent (no blank line) to the
+--   next declaration into that declaration's 'docComment' field. Comments
+--   separated from the next decl by a blank line, or trailing the file with
+--   no following decl, remain as standalone 'CommentDecl's.
+--
+--   Mixed forms stack arbitrarily — a chain of @--@ lines, a chain of
+--   @{- … -}@ blocks, or any mix, all attach as one doc as long as no blank
+--   line breaks the chain. Inside a chain the texts are joined by a single
+--   newline.
+--
+--   Per-form normalisation before joining:
+--
+--     * one leading space stripped from each @--@ line (so the typical
+--       @-- prose@ habit produces clean markdown, not @ prose@);
+--
+--     * @T.strip@ on each @{- … -}@ block (drops the conventional
+--       @\' content \'@ padding without disturbing internal indent — markdown
+--       code blocks survive).
+--
+--   The final joined string is also @T.strip@-ed (in case the chain starts
+--   or ends with whitespace-only lines).
+attachDocs :: NonEmpty Decl -> NonEmpty Decl
+attachDocs declsNE = case go [] (toList declsNE) of
+  [] -> declsNE -- defensive; the algorithm preserves input length
+  x : xs -> x :| xs
+  where
+    go :: [Decl] -> [Decl] -> [Decl]
+    go pending [] = reverse pending
+    go pending (d : rest) = case d of
+      CommentDecl {} -> go (d : pending) rest
+      _ ->
+        let (detached, attached) = splitAdjacent (declSpan d) (reverse pending)
+            doc = case attached of
+              [] -> Nothing
+              cs -> Just (joinedDocText cs)
+            d' = setDeclDocComment doc d
+         in detached ++ [d'] ++ go [] rest
+
+    -- 'comments' is in source order (oldest first, closest-to-decl last).
+    -- Walk back from the decl: the longest suffix where each comment is
+    -- adjacent to the next (or to the decl at the tail) becomes the doc.
+    splitAdjacent :: SrcSpan -> [Decl] -> ([Decl], [Decl])
+    splitAdjacent declSp comments = walkBack declSp [] (reverse comments)
+      where
+        walkBack _ attached [] = ([], attached)
+        walkBack anchor attached (c : older) =
+          if isAdjacent (declSpan c) anchor
+            then walkBack (declSpan c) (c : attached) older
+            else (reverse (c : older), attached)
+
+    -- Comment ends on line L; next thing starts on line M.
+    -- Adjacent iff M - L <= 1 (same line, or next line — at most one EOL
+    -- between them, i.e. no blank line).
+    isAdjacent :: SrcSpan -> SrcSpan -> Bool
+    isAdjacent before after = spanStartLine after - spanEndLine before <= 1
+
+    joinedDocText :: [Decl] -> Text
+    joinedDocText cs = T.strip (T.intercalate "\n" (map oneDocText cs))
+
+    oneDocText :: Decl -> Text
+    oneDocText (CommentDecl _ (LineComment t)) =
+      -- '-- foo' captures ' foo'; '--foo' captures 'foo'. Drop one
+      -- leading space so the canonical '-- prose' style becomes 'prose'.
+      case T.uncons t of
+        Just (' ', rest) -> rest
+        _ -> t
+    oneDocText (CommentDecl _ (BlockComment t)) = T.strip t
+    oneDocText _ = "" -- unreachable: 'pending' only collects CommentDecls

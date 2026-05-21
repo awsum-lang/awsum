@@ -173,6 +173,7 @@ tests:
       - filepath # for codegen tests
       - hspec # for unit tests
       - hspec-golden # for snapshot tests
+      - lsp-types # for HoverSpec — it exercises Awsum.Lsp.hoverForPosition end-to-end and needs the LSP Position / Hover / MarkupContent record types
       - pretty-simple # for pretty-printing snapshots
       - process # for codegen tests
       - QuickCheck # for property-based tests

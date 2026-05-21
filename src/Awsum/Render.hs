@@ -46,9 +46,9 @@ renderProgram Program {moduleComment, imports, decls} =
 --   separated by a blank line by 'renderProgram'.
 groupDeclBlocks :: [Decl] -> [Text]
 groupDeclBlocks = \case
-  (Sig sp1 n ty sigComment : FunDef sp2 n' args e defComment : rest)
+  (sig@(Sig _ n _ _ _) : def@(FunDef _ n' _ _ _ _) : rest)
     | n == n' ->
-        (renderDecl (Sig sp1 n ty sigComment) <> "\n" <> renderDecl (FunDef sp2 n' args e defComment)) : groupDeclBlocks rest
+        (renderDecl sig <> "\n" <> renderDecl def) : groupDeclBlocks rest
   (d : rest) ->
     renderDecl d : groupDeclBlocks rest
   [] -> []
@@ -62,12 +62,20 @@ renderImport (ImportDecl comments mods tcom) =
         [] -> importLine
         _ -> T.intercalate "\n" commentLines <> "\n" <> importLine
 
--- | Render a top-level declaration.
+-- | Render a top-level declaration. A leading doc comment (if any)
+--   prints first in canonical @{- … -}@ block form, on its own line(s),
+--   followed by the declaration body. Authoring style is /input only/:
+--   regardless of whether the source had @-- doc@ lines or a @{- doc -}@
+--   block, the formatted output is always block form.
 renderDecl :: Decl -> Text
 renderDecl = \case
-  Sig _sp name ty mc ->
-    renderDeclName name <> " : " <> renderType ty <> renderTrailingComment mc
-  FunDef _sp name args e mc ->
+  Sig _sp name ty mc doc ->
+    renderDocComment doc
+      <> renderDeclName name
+      <> " : "
+      <> renderType ty
+      <> renderTrailingComment mc
+  FunDef _sp name args e mc doc ->
     let header = case args of
           [] -> renderDeclName name
           _ -> renderDeclName name <> " " <> T.intercalate " " (map renderParam args)
@@ -90,8 +98,8 @@ renderDecl = \case
                   Just _ -> " =" <> renderTrailingComment mc <> "\n  " <> renderExpr e
                   Nothing -> " = " <> renderExpr e
             | otherwise -> " = " <> renderExpr e <> renderTrailingComment mc
-     in header <> bodyAndComment
-  TypeDecl _sp name tvars cons mc emptyKind ->
+     in renderDocComment doc <> header <> bodyAndComment
+  TypeDecl _sp name tvars cons mc emptyKind doc ->
     -- 'EmptyKind' = 'Empty' renders the @empty type X@ form, where the
     -- parser has already enforced that 'tvars' and 'cons' are both
     -- empty. Plain 'NotEmpty' renders as @type X …@ with whatever
@@ -119,8 +127,8 @@ renderDecl = \case
             "\n  = "
               <> renderConDef c1
               <> mconcat (map (\c -> "\n  | " <> renderConDef c) rest)
-     in head' <> body <> renderTrailingComment mc
-  CommentDecl c ->
+     in renderDocComment doc <> head' <> body <> renderTrailingComment mc
+  CommentDecl _sp c ->
     renderComment c
   where
     renderConDef (ConDef _ n []) = n
@@ -151,6 +159,15 @@ renderComment = \case
   BlockComment t ->
     let trimmed = T.strip t
      in if T.null trimmed then "{- -}" else "{- " <> trimmed <> " -}"
+
+-- | Render an attached doc comment as a single @{- text -}@ block
+--   followed by a newline (so the next declaration starts on its own
+--   line). 'Nothing' renders empty, letting 'renderDecl' call this
+--   unconditionally. Author line breaks are preserved verbatim — the
+--   formatter does not reflow markdown.
+renderDocComment :: Maybe Text -> Text
+renderDocComment Nothing = ""
+renderDocComment (Just t) = "{- " <> t <> " -}\n"
 
 -- ── Types ───────────────────────────────────────────────────────────────────
 
@@ -295,7 +312,7 @@ renderExprPrec ctx indent e =
       -- the let-block body itself ends on its own line, so a flat
       -- @parens s@ would leave ')' fused to the body's last token
       -- and a re-parse would re-render it on a fresh line — breaking
-      -- format-idempotency. Same shape as 'EParens' below.
+      -- format-idempotency.
       let (binds, finalBody) = collectLetChain e
           bodyCtx = if 0 < ctx then 1 else 0
           s = case binds of

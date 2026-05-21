@@ -22,6 +22,7 @@ User-facing description of Awsum's type system — concepts and examples of prog
 | Open-row `(A \| r) ~ (A \| B \| r')` | partial — singleton tyvar / row only                          |
 | Row-typed `let`-generalisation       | not yet — every top-level def needs a signature               |
 | Type classes / dispatch              | not yet — `do` is hard-coded to `Either`                      |
+| Comments and docstrings              | done — `--` line or `{- -}` block; adjacent to a decl = doc, blank line breaks the link |
 
 ---
 
@@ -716,6 +717,54 @@ main =
 ### Pattern-matching on `IO` constructors
 
 Pattern-matching on `IOPure` / `IOFail` / `IOStdoutPrint` is technically allowed but **not part of the stable API**: new effects will add new constructors, breaking existing `case`-matches (no catch-all by language design). For ordinary composition, use `bindIO` / `mapIO` / `pureIO` / `mapIOError`. Direct matching is for first-party tooling (e.g. a future test framework's mock interpreter) that updates in lockstep with the compiler. When modules land, `IO`'s constructors will move into a privileged module inaccessible to user code.
+
+---
+
+## Comments and docstrings
+
+Two comment forms: `--` to end-of-line, `{- ... -}` for a block. Block comments nest balanced — `{- outer {- inner -} more -}` is one comment, not three pieces.
+
+### Adjacent comments are docstrings
+
+A comment with **no blank line between it and the next top-level declaration** becomes that declaration's docstring:
+
+```awsum
+{- Square of an integer. -}
+square : Int32 -> Either OverflowError Int32
+square n = mulInt32 n n
+```
+
+Either form works; consecutive comments stack into one doc as long as no blank line breaks the chain:
+
+```awsum
+-- This stacks with the block below.
+{- Both attach as one doc. -}
+greet : String -> IO Never Unit
+greet name = IO.Stdout.print name
+```
+
+A blank line is the escape hatch — the comment becomes a free-floating note that doesn't appear in `awsum docs` / LSP hover:
+
+```awsum
+{- Free-floating note — the blank line below detaches it from sumList. -}
+
+sumList : List Int32 -> Either OverflowError Int32
+sumList xs = ...
+```
+
+`awsum format` normalises every attached doc to a single `{- ... -}` block, regardless of how it was authored. Authorial line breaks inside the block are preserved — markdown lists and code blocks survive.
+
+### Doc content is markdown
+
+The compiler doesn't parse the content. It is shipped verbatim to LSP `textDocument/hover` as `MarkupContent { kind = "markdown", value = doc }`; every supported editor (`awsum-vscode`, `awsum-zed`, `awsum-intellij`, `awsum-nvim`, `awsum-emacs`) renders markdown by default. Multi-paragraph text, lists, inline code, links — all work as expected.
+
+There is no Haddock-style prefix (`-- |`, `{-| -}`). A regular comment in the right position is the docstring.
+
+### Two edge cases
+
+1. **Module comment vs first-decl doc.** A `{- ... -}` at the very top of the file followed by a blank line, EOF, or an `import` is the module comment — stored separately, not surfaced in hover. The same block immediately followed by a top-level declaration is the doc of that declaration. The whitespace makes the choice visible.
+
+2. **Unbalanced `-}` in doc content.** The doc text is parsed verbatim through `{- ... -}`, so a literal `-}` inside the content closes the block early. Either balance it with a matching `{-`, or use a line comment (`--`) for prose that needs to mention `-}` literally.
 
 ---
 
