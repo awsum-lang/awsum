@@ -376,6 +376,8 @@ runtimeHelpers ptags emptyOff builtIns hasIntLit =
             if Set.member "succUInt8" builtIns then rtSuccU8 ptags else "",
             if Set.member "succUInt32" builtIns then rtSuccU32 ptags else "",
             if any (`Set.member` builtIns) ["eqInt32", "eqUInt8", "eqUInt32"] then rtEqI32 ptags else "",
+            if Set.member "eqString" builtIns then rtEqString ptags else "",
+            if Set.member "eqString" builtIns then rtMemcmp else "",
             if Set.member "addInt32" builtIns then rtAddI32 ptags else "",
             if Set.member "subInt32" builtIns then rtSubI32 ptags else "",
             if Set.member "mulInt32" builtIns then rtMulI32 ptags else "",
@@ -657,6 +659,59 @@ rtMemcpy =
       "                    (i32.load8_u (i32.add (local.get $src) (local.get $i))))",
       "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
       "        (br $loop))))"
+    ]
+
+-- | Byte-by-byte equality on two ranges. Returns 1 if all 'len' bytes
+--   match, 0 on the first mismatch. Used by '__eqString' after the
+--   byte-count short-circuit. Different shape from libc 'memcmp', which
+--   returns a tri-state ordering; for string equality only the boolean
+--   answer is needed and an early-out loop is cheaper.
+rtMemcmp :: Text
+rtMemcmp =
+  unlines
+    [ "  (func $__memcmp (param $a i32) (param $b i32) (param $len i32) (result i32)",
+      "    (local $i i32)",
+      "    (local.set $i (i32.const 0))",
+      "    (block $break",
+      "      (loop $loop",
+      "        (br_if $break (i32.ge_u (local.get $i) (local.get $len)))",
+      "        (if (i32.ne (i32.load8_u (i32.add (local.get $a) (local.get $i)))",
+      "                    (i32.load8_u (i32.add (local.get $b) (local.get $i))))",
+      "          (then (return (i32.const 0))))",
+      "        (local.set $i (i32.add (local.get $i) (i32.const 1)))",
+      "        (br $loop)))",
+      "    (i32.const 1))"
+    ]
+
+-- | eqString : String -> String -> Bool. Strings are length-prefixed
+--   (byte_count at offset 0, utf16_count at offset 4, payload at offset
+--   8). Strict-UTF-16 invariant gives equal UTF-16 ⇔ equal UTF-8 bytes,
+--   so byte_count check + '__memcmp' on the payload is sufficient — no
+--   UTF-16 reconstruction needed. Returns a one-slot Bool container
+--   ([tag]). True=0, False=1 matches declaration order in
+--   `type Bool = True | False`.
+rtEqString :: PreludeTags -> Text
+rtEqString ptags =
+  unlines
+    [ "  (func $__eqString (param $a i32) (param $b i32) (result i32)",
+      "    (local $ba i32) (local $bb i32) (local $cell i32) (local $eq i32)",
+      "    (local.set $ba (i32.load (local.get $a)))",
+      "    (local.set $bb (i32.load (local.get $b)))",
+      "    (local.set $cell (call $__alloc (i32.const 4)))",
+      "    (if (i32.eq (local.get $ba) (local.get $bb))",
+      "      (then",
+      "        (local.set $eq (call $__memcmp",
+      "          (i32.add (local.get $a) (i32.const 8))",
+      "          (i32.add (local.get $b) (i32.const 8))",
+      "          (local.get $ba)))",
+      "        (if (local.get $eq)",
+      "          (then (i32.store (local.get $cell) (i32.const " <> tShow (ptTrue ptags) <> ")))",
+      "          (else (i32.store (local.get $cell) (i32.const " <> tShow (ptFalse ptags) <> ")))))",
+      "      (else",
+      "        (i32.store (local.get $cell) (i32.const " <> tShow (ptFalse ptags) <> "))))",
+      "    (call $__free_recursive (local.get $a))",
+      "    (call $__free_recursive (local.get $b))",
+      "    (local.get $cell))"
     ]
 
 -- | Counts UTF-16 code units in a UTF-8 byte range. Used by
@@ -2341,6 +2396,9 @@ emitExpr ctx = \case
         | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
           [a, b] <- xs ->
             "(call $__eq_i32 " <> incIfCVarWrap ctx a (emitExpr ctx a) <> " " <> incIfCVarWrap ctx b (emitExpr ctx b) <> ")"
+      CBuiltIn "eqString"
+        | [a, b] <- xs ->
+            "(call $__eqString " <> incIfCVarWrap ctx a (emitExpr ctx a) <> " " <> incIfCVarWrap ctx b (emitExpr ctx b) <> ")"
       CBuiltIn name
         | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
           [a, b] <- xs ->

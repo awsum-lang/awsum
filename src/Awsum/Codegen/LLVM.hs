@@ -363,6 +363,11 @@ header builtIns =
        "declare i64 @read(i32, ptr, i64)"
        | Set.member "internalStdinReadAllAsUtf16" builtIns
        ]
+    <> [ -- 'memcmp' is used only by '__eqString'. Gated so programs that
+       -- don't reference 'eqString' don't pin libc 'memcmp'.
+       "declare i32 @memcmp(ptr, ptr, i64)"
+       | Set.member "eqString" builtIns
+       ]
     <> [ "declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)"
        | Set.member "addInt32" builtIns
        ]
@@ -655,6 +660,7 @@ runtime ptags builtIns =
         if Set.member "succUInt8" builtIns then rtSuccUInt8 else "",
         if Set.member "eqInt32" builtIns then rtEqInt32 else "",
         if Set.member "eqUInt8" builtIns then rtEqUInt8 else "",
+        if Set.member "eqString" builtIns then rtEqString else "",
         if Set.member "addInt32" builtIns then rtAddInt32 else "",
         if Set.member "subInt32" builtIns then rtSubInt32 else "",
         if Set.member "mulInt32" builtIns then rtMulInt32 else "",
@@ -986,6 +992,43 @@ runtime ptags builtIns =
           "  call void @__free_recursive(ptr %a)",
           "  call void @__free_recursive(ptr %b)",
           "  ret ptr %box",
+          "}"
+        ]
+    -- eqString : String -> String -> Bool.
+    -- Strings carry an 8-byte header (i32 byte_count, i32 utf16_count)
+    -- followed by the UTF-8 payload. Strict-UTF-16 invariant: equal
+    -- UTF-16 code-unit sequences ⇔ equal UTF-8 byte sequences, so
+    -- byte_count + memcmp suffices. byte_count check short-circuits
+    -- on length mismatch without touching the payload.
+    rtEqString =
+      unlines
+        [ "define internal ptr @__eqString(ptr %a, ptr %b) {",
+          "  %ba = load i32, ptr %a",
+          "  %bb = load i32, ptr %b",
+          "  %len_eq = icmp eq i32 %ba, %bb",
+          "  br i1 %len_eq, label %cmp, label %ne",
+          "cmp:",
+          "  %a_payload = getelementptr i8, ptr %a, i64 8",
+          "  %b_payload = getelementptr i8, ptr %b, i64 8",
+          "  %ba64 = zext i32 %ba to i64",
+          "  %r = call i32 @memcmp(ptr %a_payload, ptr %b_payload, i64 %ba64)",
+          "  %bytes_eq = icmp eq i32 %r, 0",
+          "  br i1 %bytes_eq, label %eq, label %ne",
+          "eq:",
+          "  %tag_t = inttoptr i64 " <> trueLit <> " to ptr",
+          "  %box_t = call ptr @__alloc(i64 8, i32 0)",
+          "  store ptr %tag_t, ptr %box_t",
+          "  br label %done",
+          "ne:",
+          "  %tag_f = inttoptr i64 " <> falseLit <> " to ptr",
+          "  %box_f = call ptr @__alloc(i64 8, i32 0)",
+          "  store ptr %tag_f, ptr %box_f",
+          "  br label %done",
+          "done:",
+          "  %result = phi ptr [%box_t, %eq], [%box_f, %ne]",
+          "  call void @__free_recursive(ptr %a)",
+          "  call void @__free_recursive(ptr %b)",
+          "  ret ptr %result",
           "}"
         ]
     -- addInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
@@ -3513,7 +3556,7 @@ emitExpr ctx = \case
               )
           _ -> error "BuiltIn.succUInt32: arity mismatch"
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" ->
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString" ->
             case xs of
               [a, b] -> do
                 (instrA, resA) <- emitArgWithInc ctx a
@@ -3523,6 +3566,7 @@ emitExpr ctx = \case
                     fn = case name of
                       "eqUInt8" -> "@__eqUInt8"
                       "eqUInt32" -> "@__eqUInt32"
+                      "eqString" -> "@__eqString"
                       _ -> "@__eqInt32"
                 pure
                   ( instrA <> instrB <> "  " <> tmp <> " = call ptr " <> fn <> "(ptr " <> resA <> ", ptr " <> resB <> ")\n",

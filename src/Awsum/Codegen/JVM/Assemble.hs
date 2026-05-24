@@ -365,6 +365,7 @@ doAssemble prog@(CoreProgram decls) = do
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" else pure []
+  m5str <- if Set.member "eqString" builtIns then (: []) <$> mkEqString else pure []
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6sub <- if Set.member "subInt32" builtIns then (: []) <$> mkSubInt32 else pure []
   m6mul <- if Set.member "mulInt32" builtIns then (: []) <$> mkMulInt32 else pure []
@@ -388,7 +389,7 @@ doAssemble prog@(CoreProgram decls) = do
   mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs else pure []
   mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll else pure []
   mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m5str <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -991,6 +992,74 @@ mkEq methodName = do
       -- ([Object, Object]), stack empty — a same_frame covers it when
       -- notEqAt <= 63 (which it is: preamble=14, equalBlock=12, so
       -- notEqAt = 14 + 3 + 12 = 29).
+      frameType = fromIntegral notEqAt :: Word8
+      smtEntries = [frameType]
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [ fromIntegral (totalLen `div` 16777216),
+                   fromIntegral ((totalLen `div` 65536) `mod` 256),
+                   fromIntegral ((totalLen `div` 256) `mod` 256),
+                   fromIntegral (totalLen `mod` 256)
+                 ]
+                   <> [0, 1] -- number_of_entries = 1
+                   <> smtEntries
+  pure
+    MInfo
+      { mFlags = 0x0008,
+        mName = ni,
+        mDesc = di,
+        mCode = code,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr,
+        mMaxStack = 256,
+        mMaxLocals = 256
+      }
+
+-- | eqString : String -> String -> Bool. Inputs are java.lang.String;
+--   delegates to String.equals (Object) which compares UTF-16 code-unit
+--   sequences — exactly the language-level semantics. The boolean it
+--   leaves on the stack drives a single 'ifeq' into the True/False
+--   one-slot Object[] block, mirroring 'mkEq''s frame shape.
+--
+--   Frame: preamble pushes (after the equals) one int on stack; ifeq
+--   pops it. Both branches build a one-slot Object[] and 'areturn'.
+--   notEqAt's locals match entry ([Object, Object]) and stack is
+--   empty — same_frame applies (delta < 64).
+mkEqString :: AsmM MInfo
+mkEqString = do
+  ni <- addUtf8 "__eqString"
+  di <- addUtf8 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+  strCls <- addClass "java/lang/String"
+  equalsRef <- addMRef "java/lang/String" "equals" "(Ljava/lang/Object;)Z"
+  valueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  objCls <- addClass "java/lang/Object"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
+  let cast =
+        [0xC0, hi8 strCls, lo8 strCls] -- checkcast String
+      preamble =
+        [0x2A] -- aload_0
+          <> cast
+          <> [0x2B] -- aload_1
+          <> cast
+          <> [0xB6, hi8 equalsRef, lo8 equalsRef] -- invokevirtual equals
+      boolBox tag =
+        [0x04] -- iconst_1 (array length)
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59] -- dup
+          <> [0x03] -- iconst_0 (index)
+          <> boxedTagBytes tag valueOfRef
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+      equalBlock = boolBox (ptTrue ptags)
+      notEqualBlock = boolBox (ptFalse ptags)
+      ifAt = length preamble
+      notEqAt = ifAt + 3 + length equalBlock
+      ifRel = notEqAt - ifAt
+      ifBytes = [0x99, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)] -- ifeq
+      code = preamble <> ifBytes <> equalBlock <> notEqualBlock
       frameType = fromIntegral notEqAt :: Word8
       smtEntries = [frameType]
       smtEntriesLen = length smtEntries
@@ -4259,14 +4328,15 @@ emitExpr ctx = \case
         ref <- addMRef "AwsumMain" "__succUInt32" "(Ljava/lang/Object;)Ljava/lang/Object;"
         pure $ cwmWrap (bcInvokeStatic ref) [xMeta]
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString",
           [a, b] <- xs -> do
             aMeta <- emitExpr ctx a
             bMeta <- emitExpr ctx b
             let fn = case name of
                   "eqInt32" -> "__eqInt32"
                   "eqUInt8" -> "__eqUInt8"
-                  _ -> "__eqUInt32"
+                  "eqUInt32" -> "__eqUInt32"
+                  _ -> "__eqString"
             ref <- addMRef "AwsumMain" fn "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
             pure $ cwmWrap (bcInvokeStatic ref) [aMeta, bMeta]
       CBuiltIn name

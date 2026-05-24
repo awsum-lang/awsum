@@ -44,6 +44,13 @@ builtIns =
       ("eqInt32", TyArrow noSpan int32Ty (TyArrow noSpan int32Ty boolTy)),
       -- eqUInt8 : UInt8 -> UInt8 -> Bool
       ("eqUInt8", TyArrow noSpan uint8Ty (TyArrow noSpan uint8Ty boolTy)),
+      -- eqString : String -> String -> Bool
+      -- Equality on UTF-16 code-unit sequences. JVM/CLR/JS delegate to
+      -- the host's native String equality (UTF-16 by spec on all
+      -- three); LLVM/WASM short-circuit on byte_count and then memcmp
+      -- the UTF-8 payload (equivalent because strict UTF-16 gives a
+      -- bijection between valid UTF-16 and valid UTF-8).
+      ("eqString", TyArrow noSpan stringTy (TyArrow noSpan stringTy boolTy)),
       -- addInt32 : Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32
       -- `Left UnderflowError` if the true sum is below 'minInt32',
       -- `Left OverflowError` if above 'maxInt32', `Right (a + b)`

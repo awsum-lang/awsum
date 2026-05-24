@@ -1,0 +1,25 @@
+{- `eqString`: UTF-16 code-unit equality. Each pair exercises one
+   path: same content (memcmp hit, native equals, ===), different
+   lengths (byte_count short-circuit on LLVM/WASM), same length with
+   different content (memcmp miss), and a supplementary-plane
+   character (surrogate pair on JVM/CLR/JS, 4-byte UTF-8 on LLVM/WASM)
+   to confirm cross-backend agreement. -}
+
+import IO.Stdout
+
+render : Bool -> String
+render b = case b of
+  True -> "T"
+  False -> "F"
+
+main : IO Never Unit
+main =
+  let res : Either StringTooLong String = (do
+        s0 <- render (eqString "" "") ++ render (eqString "abc" "abc")
+        s1 <- s0 ++ render (eqString "a" "ab")
+        s2 <- s1 ++ render (eqString "abc" "abd")
+        s2 ++ render (eqString "🔥" "🔥")
+      )
+   in case res of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

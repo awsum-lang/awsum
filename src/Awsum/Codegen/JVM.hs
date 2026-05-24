@@ -56,6 +56,8 @@ codegenJVM ptags prog@(CoreProgram decls) =
             "",
             gate (Set.member "eqUInt32" builtIns) (eqMethod ptags "__eqUInt32" "L_eq_u32"),
             "",
+            gate (Set.member "eqString" builtIns) (eqStringMethod ptags),
+            "",
             gate (Set.member "addInt32" builtIns) (addInt32Method ptags),
             "",
             gate (Set.member "subInt32" builtIns) (subInt32Method ptags),
@@ -459,6 +461,34 @@ succUInt8Method ptags =
          "  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;",
          "  aastore",
          "  areturn",
+         ".end method",
+         ""
+       ]
+
+-- eqString: String -> String -> Bool. Strings flow as java.lang.String,
+--   so String.equals delivers the language-level semantics directly:
+--   UTF-16 code-unit comparison — same as '===' in JS,
+--   'String.Equals' on the CLR, and byte-equality on LLVM/WASM under
+--   the strict-UTF-16 invariant.
+eqStringMethod :: PreludeTags -> Text
+eqStringMethod ptags =
+  T.intercalate "\n"
+    $ [ ".method static __eqString(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+        "  .limit stack 5",
+        "  .limit locals 2",
+        "  aload_0",
+        "  checkcast java/lang/String",
+        "  aload_1",
+        "  checkcast java/lang/String",
+        "  invokevirtual java/lang/String/equals(Ljava/lang/Object;)Z",
+        "  ifeq L_eq_str_ne"
+      ]
+    <> makeNullaryCellLines (ptTrue ptags)
+    <> [ "  areturn",
+         "L_eq_str_ne:"
+       ]
+    <> makeNullaryCellLines (ptFalse ptags)
+    <> [ "  areturn",
          ".end method",
          ""
        ]
@@ -2019,12 +2049,13 @@ emitExprText ctx paramMap = \case
                 "  invokestatic AwsumMain/__succUInt32(Ljava/lang/Object;)Ljava/lang/Object;"
               ]
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString",
           [a, b] <- xs ->
             let fn = case name of
                   "eqInt32" -> "__eqInt32"
                   "eqUInt8" -> "__eqUInt8"
-                  _ -> "__eqUInt32"
+                  "eqUInt32" -> "__eqUInt32"
+                  _ -> "__eqString"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx paramMap a,

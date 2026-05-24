@@ -1,0 +1,31 @@
+{- Property: `eqString s s == True` for every UTF-16 string. The two
+   arguments are independently constructed values of the same content
+   (each `IO.Stdin.readAll` call would return a fresh cell; here we
+   pass the same name twice, which after defunctionalisation flows
+   into '__eqString' as two heap pointers — equal-content but not
+   guaranteed pointer-equal across backends). Single-string input, no
+   separator. -}
+
+import IO.Stdout
+import IO.Stdin
+
+property : String -> Bool
+property s = eqString s s
+
+runMain : Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO Never Unit
+runMain rawArg =
+  let res : Either (StringTooLong | UnpairedUtf16Surrogate) Bool = (do
+        s <- rawArg
+        pureEither (property s)
+      )
+   in case res of
+        Left e -> case e of
+          StringTooLong -> IO.Stdout.print "STRING_TOO_LONG"
+          UnpairedUtf16Surrogate -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
+        Right True -> IO.Stdout.print "OK"
+        Right False -> IO.Stdout.print "FAIL"
+
+main : IO Never Unit
+main = IO.Stdin.readAll
+  |> andThenIO (\s -> runMain (Right s))
+  |> handleErrorIO (\e -> runMain (Left e))

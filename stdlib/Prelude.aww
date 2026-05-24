@@ -51,6 +51,12 @@ lengthUtf16CodeUnits = BuiltIn.lengthUtf16CodeUnits
 lengthUtf8Bytes : String -> UInt32
 lengthUtf8Bytes = BuiltIn.lengthUtf8Bytes
 
+{- Equality on `String`: `True` iff both strings have the same sequence
+   of UTF-16 code units. Matches `String.equals` on the JVM,
+   `String.Equals` on the CLR, and `===` in JS. -}
+eqString : String -> String -> Bool
+eqString = BuiltIn.eqString
+
 {- Maximum string length in UTF-16 code units, identical on every
    backend. Operations producing a longer string return
    `Left StringTooLong`. Value `2^27 = 134_217_728`. Pinned by the

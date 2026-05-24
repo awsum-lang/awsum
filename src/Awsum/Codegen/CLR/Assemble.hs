@@ -655,6 +655,7 @@ doAssemble (CoreProgram decls) = do
                    ("__eqInt32", Set.member "eqInt32" builtIns),
                    ("__eqUInt8", Set.member "eqUInt8" builtIns),
                    ("__eqUInt32", Set.member "eqUInt32" builtIns),
+                   ("__eqString", Set.member "eqString" builtIns),
                    ("__addInt32", Set.member "addInt32" builtIns),
                    ("__subInt32", Set.member "subInt32" builtIns),
                    ("__mulInt32", Set.member "mulInt32" builtIns),
@@ -708,6 +709,7 @@ doAssemble (CoreProgram decls) = do
   m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
   m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
   m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" else pure []
+  m5str <- if Set.member "eqString" builtIns then (: []) <$> mkEqString else pure []
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6sub <- if Set.member "subInt32" builtIns then (: []) <$> mkSubInt32 else pure []
   m6mul <- if Set.member "mulInt32" builtIns then (: []) <$> mkMulInt32 else pure []
@@ -731,7 +733,7 @@ doAssemble (CoreProgram decls) = do
   mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll tokMap else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> userMs <> [mEntry])
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m5str <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -1144,6 +1146,51 @@ mkEq methodName = do
           <> cilLdarg 1
           <> cilUnboxAny (tokTR trInt32)
           <> cilBneUnS branchOffset
+          <> equalBlock
+          <> notEqualBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+
+-- | eqString : String -> String -> Bool.
+--   Binary equivalent of 'Awsum.Codegen.CLR.eqStringMethod'. Inputs are
+--   reference types (System.String boxed inside object refs), so cast
+--   with 'castclass' and call the static 'String::op_Equality(string,
+--   string) bool' — UTF-16 code-unit equality. The boolean drives
+--   'brfalse' to skip the True block; mirrors 'mkEq''s frame-free
+--   shape (no locals, no try/catch).
+mkEqString :: AsmM MInfo
+mkEqString = do
+  ni <- w16 <$> addStr "__eqString"
+  si <- w16 <$> addBlob (sigStatic etObject 2)
+  ps <- addParams 2
+  trStr <- addTypeRef (resScopeAR 1) "String" "System"
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+  -- Signature: DEFAULT (0x00), 2 params, returns BOOLEAN (0x02), both
+  -- params STRING (0x0E). System.String::op_Equality(string, string).
+  opEqRef <- addMemberRef (mrpTR trStr) "op_Equality" [0x00, 0x02, 0x02, etString, etString]
+  ptags <- askPreludeTags
+  let castStr = cilCastclass (tokTR trStr)
+      boxInt32 = cilBox (tokTR trInt32)
+      newarrObj = cilNewarr (tokTR trObj)
+      boolBox tagVal =
+        cilLdcI4 1
+          <> newarrObj
+          <> cilDup
+          <> cilLdcI4 0
+          <> cilLdcI4 tagVal
+          <> boxInt32
+          <> cilStelemRef
+          <> cilRet
+      equalBlock = boolBox (ptTrue ptags)
+      notEqualBlock = boolBox (ptFalse ptags)
+      branchOffset = fromIntegral (length equalBlock) :: Int32
+      code =
+        cilLdarg 0
+          <> castStr
+          <> cilLdarg 1
+          <> castStr
+          <> cilCall (tokMR opEqRef)
+          <> cilBrfalse branchOffset
           <> equalBlock
           <> notEqualBlock
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
@@ -3348,14 +3395,15 @@ emitExpr ctx = \case
       cx <- emitExpr ctx x
       pure (cx <> cilCall (lkTok ctx "__succUInt32"))
     CBuiltIn name
-      | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
+      | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString",
         [a, b] <- xs -> do
           ca <- emitExpr ctx a
           cb <- emitExpr ctx b
           let fn = case name of
                 "eqInt32" -> "__eqInt32"
                 "eqUInt8" -> "__eqUInt8"
-                _ -> "__eqUInt32"
+                "eqUInt32" -> "__eqUInt32"
+                _ -> "__eqString"
           pure (ca <> cb <> cilCall (lkTok ctx fn))
     CBuiltIn name
       | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",

@@ -1,0 +1,183 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "render" [ "b" ]
+            ( CCase
+                ( CVar "b" )
+                [
+                    ( 1
+                    , []
+                    , CString "T"
+                    )
+                ,
+                    ( 2
+                    , []
+                    , CString "F"
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$12" )
+                [ CCase
+                    ( CCall
+                        ( CBuiltIn "concatString" )
+                        [ CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqString" )
+                                [ CString ""
+                                , CString ""
+                                ]
+                            ]
+                        , CCall
+                            ( CVar "render" )
+                            [ CCall
+                                ( CBuiltIn "eqString" )
+                                [ CString "abc"
+                                , CString "abc"
+                                ]
+                            ]
+                        ]
+                    )
+                    [
+                        ( 3
+                        , [ "$do_e_2" ]
+                        , CCon 3
+                            [ CVar "$do_e_2" ]
+                        )
+                    ,
+                        ( 4
+                        , [ "s0" ]
+                        , CCase
+                            ( CCall
+                                ( CBuiltIn "concatString" )
+                                [ CVar "s0"
+                                , CCall
+                                    ( CVar "render" )
+                                    [ CCall
+                                        ( CBuiltIn "eqString" )
+                                        [ CString "a"
+                                        , CString "ab"
+                                        ]
+                                    ]
+                                ]
+                            )
+                            [
+                                ( 3
+                                , [ "$do_e_1" ]
+                                , CCon 3
+                                    [ CVar "$do_e_1" ]
+                                )
+                            ,
+                                ( 4
+                                , [ "s1" ]
+                                , CCase
+                                    ( CCall
+                                        ( CBuiltIn "concatString" )
+                                        [ CVar "s1"
+                                        , CCall
+                                            ( CVar "render" )
+                                            [ CCall
+                                                ( CBuiltIn "eqString" )
+                                                [ CString "abc"
+                                                , CString "abd"
+                                                ]
+                                            ]
+                                        ]
+                                    )
+                                    [
+                                        ( 3
+                                        , [ "$do_e_0" ]
+                                        , CCon 3
+                                            [ CVar "$do_e_0" ]
+                                        )
+                                    ,
+                                        ( 4
+                                        , [ "s2" ]
+                                        , CCall
+                                            ( CBuiltIn "concatString" )
+                                            [ CVar "s2"
+                                            , CCall
+                                                ( CVar "render" )
+                                                [ CCall
+                                                    ( CBuiltIn "eqString" )
+                                                    [ CString "🔥"
+                                                    , CString "🔥"
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$let$12" [ "res" ]
+            ( CCase
+                ( CVar "res" )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        ]
+    }
