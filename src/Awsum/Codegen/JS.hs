@@ -136,6 +136,13 @@ header ptags builtIns =
             if Set.member "eqUInt8" builtIns
               then "function __eqUInt8(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
               else "",
+            -- eqString: returns Bool. JS strings are UTF-16 internally and
+            -- '===' on strings is defined by spec as length-then-code-unit
+            -- comparison — exactly the language-level semantics of
+            -- 'BuiltIn.eqString'.
+            if Set.member "eqString" builtIns
+              then "function __eqString(a, b){ return a === b ? [" <> ptT <> "] : [" <> ptF <> "]; }"
+              else "",
             -- addInt32: Either (UnderflowError | OverflowError) Int32. JS
             -- numbers exactly represent the 33-bit sum of two i32s, so the
             -- range checks are direct without intermediate '|0' wrapping.
@@ -601,13 +608,14 @@ emitExpr = \case
           [x] -> "__succUInt32(" <> emitExpr x <> ")"
           _ -> error "BuiltIn.succUInt32: arity mismatch"
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" ->
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString" ->
             case xs of
               [a, b] ->
                 let fn = case name of
                       "eqInt32" -> "__eqInt32"
                       "eqUInt8" -> "__eqUInt8"
-                      _ -> "__eqUInt32"
+                      "eqUInt32" -> "__eqUInt32"
+                      _ -> "__eqString"
                  in fn <> "(" <> emitExpr a <> ", " <> emitExpr b <> ")"
               _ -> error ("BuiltIn." <> name <> ": arity mismatch")
       CBuiltIn name

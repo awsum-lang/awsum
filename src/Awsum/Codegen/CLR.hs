@@ -58,6 +58,8 @@ codegenCLR ptags prog@(CoreProgram decls) =
             "",
             gate (Set.member "eqUInt32" builtIns) (eqMethod ptags "__eqUInt32" "IL_eq_u32"),
             "",
+            gate (Set.member "eqString" builtIns) (eqStringMethod ptags),
+            "",
             gate (Set.member "addInt32" builtIns) (addInt32Method ptags),
             "",
             gate (Set.member "subInt32" builtIns) (subInt32Method ptags),
@@ -469,6 +471,35 @@ eqMethod ptags name lbl =
     <> makeNullaryCellLines (ptTrue ptags)
     <> [ "    ret",
          "  " <> lbl <> "_ne:"
+       ]
+    <> makeNullaryCellLines (ptFalse ptags)
+    <> [ "    ret",
+         "  }",
+         ""
+       ]
+
+-- eqString: String -> String -> Bool. Strings flow as System.String
+--   (boxed inside an object reference), so the static
+--   'String.op_Equality(string, string) bool' delivers UTF-16 code-unit
+--   equality directly — matching JVM's 'String.equals' and JS's '==='.
+--   Inputs need 'castclass' rather than 'unbox.any' because reference
+--   types aren't boxed value types.
+eqStringMethod :: PreludeTags -> Text
+eqStringMethod ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __eqString(object, object) cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    ldarg.0",
+        "    castclass [System.Runtime]System.String",
+        "    ldarg.1",
+        "    castclass [System.Runtime]System.String",
+        "    call bool [System.Runtime]System.String::op_Equality(string, string)",
+        "    brfalse.s IL_eq_str_ne"
+      ]
+    <> makeNullaryCellLines (ptTrue ptags)
+    <> [ "    ret",
+         "  IL_eq_str_ne:"
        ]
     <> makeNullaryCellLines (ptFalse ptags)
     <> [ "    ret",
@@ -1946,12 +1977,13 @@ emitExprText ctx varMap = \case
                 "    call object AwsumMain::__succUInt32(object)"
               ]
       CBuiltIn name
-        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
+        | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString",
           [a, b] <- xs ->
             let fn = case name of
                   "eqInt32" -> "__eqInt32"
                   "eqUInt8" -> "__eqUInt8"
-                  _ -> "__eqUInt32"
+                  "eqUInt32" -> "__eqUInt32"
+                  _ -> "__eqString"
              in T.intercalate
                   "\n"
                   [ emitExprText ctx varMap a,

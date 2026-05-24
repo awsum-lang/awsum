@@ -589,6 +589,25 @@ instance Arbitrary Utf16PairNoColon where
     where
       genUtf16NoColon = toText <$> listOf (genValidUtf16Char `QC.suchThat` (/= ':'))
 
+-- | Same shape as 'Utf16PairNoColon' but with the second component
+--   sometimes (~20%) reusing the first verbatim. Used by the
+--   'eqString'-symmetric property where uniform sampling would never
+--   hit the @a == b@ branch, leaving the @True@ arm of the @case@
+--   uncovered. Parallel to 'Int32MaybeEqualPair' / 'Word8MaybeEqualPair'.
+newtype Utf16MaybeEqualPairNoColon = Utf16MaybeEqualPairNoColon (Text, Text) deriving stock (Show)
+
+instance Arbitrary Utf16MaybeEqualPairNoColon where
+  arbitrary = do
+    a <- genUtf16NoColon
+    b <-
+      frequency
+        [ (1, pure a),
+          (4, genUtf16NoColon)
+        ]
+    pure (Utf16MaybeEqualPairNoColon (a, b))
+    where
+      genUtf16NoColon = toText <$> listOf (genValidUtf16Char `QC.suchThat` (/= ':'))
+
 -- | (sep, a, b): sep ∈ [A-Z]+, a, b ∈ [a-z]*.
 --   Disjoint alphabets ⇒ neither a nor b can contain sep as a substring.
 newtype SplitRoundtripCase = SplitRoundtripCase (Text, Text, Text) deriving stock (Show)
@@ -683,6 +702,8 @@ properties =
     SomeProperty eqInt32SymmetricProp,
     SomeProperty eqUInt8SymmetricProp,
     SomeProperty eqUInt32SymmetricProp,
+    SomeProperty eqStringReflexiveProp,
+    SomeProperty eqStringSymmetricProp,
     -- ── Parser / show round-trip ──
     SomeProperty parseInt32ShowRoundtripProp,
     SomeProperty parseUInt8ShowRoundtripProp,
@@ -866,6 +887,26 @@ eqUInt8SymmetricProp =
       propSourceDir = "eqUInt8-symmetric",
       propGen = arbitrary,
       propEncode = \(Word8MaybeEqualPair (a, b)) -> show a <> ":" <> show b,
+      propExpectedOutput = const "OK"
+    }
+
+eqStringReflexiveProp :: Property Utf16Str
+eqStringReflexiveProp =
+  Property
+    { propName = "eqString-reflexive",
+      propSourceDir = "eqString-reflexive",
+      propGen = arbitrary,
+      propEncode = \(Utf16Str s) -> s,
+      propExpectedOutput = const "OK"
+    }
+
+eqStringSymmetricProp :: Property Utf16MaybeEqualPairNoColon
+eqStringSymmetricProp =
+  Property
+    { propName = "eqString-symmetric",
+      propSourceDir = "eqString-symmetric",
+      propGen = arbitrary,
+      propEncode = \(Utf16MaybeEqualPairNoColon (a, b)) -> a <> ":" <> b,
       propExpectedOutput = const "OK"
     }
 

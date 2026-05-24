@@ -210,16 +210,16 @@ importCount = 4
 -- __lengthCodePoints, __lengthUtf16CodeUnits, __lengthUtf8Bytes,
 -- __get_arg, __entryArgEither, __utf16_of_range, __getArgs,
 -- __stdinReadAll, __alloc_shaped, __inc_ref, __free_recursive,
--- __free_worklist_push
+-- __free_worklist_push, __memcmp, __eqString
 runtimeCount :: Word32
-runtimeCount = 41
+runtimeCount = 43
 
 -- Runtime helper function indices (after imports). '$__free' slots
 -- in right after '$__alloc'. The RC helpers (@__alloc_shaped,
 -- __inc_ref, __free_recursive, __free_worklist_push@) sit at the
 -- end so the earlier indices stay stable when new helpers are
 -- appended.
-idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxStdinReadAll, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush :: Word32
+idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxStdinReadAll, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush, idxMemcmp, idxEqString :: Word32
 idxAlloc = importCount
 idxFree = importCount + 1
 idxMemcpy = importCount + 2
@@ -261,6 +261,8 @@ idxAllocShaped = importCount + 37
 idxIncRef = importCount + 38
 idxFreeRecursive = importCount + 39
 idxFreeWorklistPush = importCount + 40
+idxMemcmp = importCount + 41
+idxEqString = importCount + 42
 
 buildInfo :: PreludeTags -> CoreProgram -> WasmInfo
 buildInfo ptags prog@(CoreProgram decls) =
@@ -418,7 +420,8 @@ buildTypeSection info (CoreProgram decls) =
                FuncType 2 True, -- __alloc_shaped(size, shape)->i32 (dedup with __concat)
                FuncType 1 False, -- __inc_ref(p)->void (dedup with __free)
                FuncType 1 False, -- __free_recursive(p)->void (dedup with __free)
-               FuncType 1 False -- __free_worklist_push(p)->void (dedup with __free)
+               FuncType 1 False, -- __free_worklist_push(p)->void (dedup with __free)
+               FuncType 3 True -- __memcmp(a,b,len)->i32 (new shape)
              ]
           -- User functions
           <> [funcTypeOfDecl d | d <- decls]
@@ -514,7 +517,9 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 2 True) typeMap, -- __alloc_shaped
           lookupType (FuncType 1 False) typeMap, -- __inc_ref
           lookupType (FuncType 1 False) typeMap, -- __free_recursive
-          lookupType (FuncType 1 False) typeMap -- __free_worklist_push
+          lookupType (FuncType 1 False) typeMap, -- __free_worklist_push
+          lookupType (FuncType 3 True) typeMap, -- __memcmp
+          lookupType (FuncType 2 True) typeMap -- __eqString
         ]
           -- User declarations
           <> [lookupType (funcTypeOfDecl d) typeMap | d <- decls]
@@ -671,7 +676,9 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeAllocShaped,
           codeIncRef,
           codeFreeRecursive,
-          codeFreeWorklistPush
+          codeFreeWorklistPush,
+          codeMemcmp,
+          codeEqString info
         ]
           -- User declarations
           <> map (codeUserDecl info typeMap) decls
@@ -1443,6 +1450,147 @@ codeMemcpy =
         [opEnd],
         [opEnd]
       ]
+
+-- __memcmp(a: i32, b: i32, len: i32) -> i32
+-- Returns 1 iff all 'len' bytes at addresses 'a' and 'b' agree, 0 on
+-- first mismatch. Driver for '__eqString' after the byte-count
+-- short-circuit. Different shape from libc 'memcmp' (which returns a
+-- tri-state ordering): equality alone is enough for string equality
+-- and 'opReturn' on first mismatch lets the loop exit early.
+-- Locals: $i(3).
+codeMemcmp :: [Word8]
+codeMemcmp =
+  encodeBody
+    (encodeLocals 1)
+    $ concat
+      [ -- i = 0
+        [opI32Const],
+        encodeSLEB128 0,
+        [opLocalSet],
+        encodeULEB128 3,
+        -- block $break
+        [opBlock, blocktypeVoid],
+        -- loop $loop
+        [opLoop, blocktypeVoid],
+        -- br_if $break (i >= len)
+        [opLocalGet],
+        encodeULEB128 3, -- i
+        [opLocalGet],
+        encodeULEB128 2, -- len
+        [opI32GeU],
+        [opBrIf],
+        encodeULEB128 1,
+        -- if (a[i] != b[i]) return 0
+        [opLocalGet],
+        encodeULEB128 0, -- a
+        [opLocalGet],
+        encodeULEB128 3, -- i
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opLocalGet],
+        encodeULEB128 1, -- b
+        [opLocalGet],
+        encodeULEB128 3, -- i
+        [opI32Add],
+        [opI32Load8U, 0x00, 0x00],
+        [opI32Ne],
+        [opIf, blocktypeVoid],
+        [opI32Const],
+        encodeSLEB128 0,
+        [opReturn],
+        [opEnd],
+        -- i = i + 1
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Add],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- br $loop
+        [opBr],
+        encodeULEB128 0,
+        [opEnd], -- end loop
+        [opEnd], -- end block
+        -- All bytes matched: return 1.
+        [opI32Const],
+        encodeSLEB128 1
+      ]
+
+-- __eqString(a: i32, b: i32) -> i32
+-- eqString : String -> String -> Bool. Strings are length-prefixed
+-- (byte_count @ offset 0, utf16_count @ offset 4, payload @ offset 8).
+-- Strict-UTF-16 ⇒ equal UTF-16 ⇔ equal UTF-8 bytes, so byte_count
+-- check + '__memcmp' on the payload is sufficient. Returns a one-slot
+-- Bool container ([tag]); True=0, False=1 per declaration order.
+-- Locals: $ba(2) $bb(3) $cell(4) $eq(5).
+codeEqString :: WasmInfo -> [Word8]
+codeEqString info =
+  let ptags = wiTags info
+   in encodeBody
+        (encodeLocals 4)
+        $ concat
+          [ -- ba = i32.load(a)
+            [opLocalGet],
+            encodeULEB128 0,
+            [opI32Load, 0x02, 0x00],
+            [opLocalSet],
+            encodeULEB128 2,
+            -- bb = i32.load(b)
+            [opLocalGet],
+            encodeULEB128 1,
+            [opI32Load, 0x02, 0x00],
+            [opLocalSet],
+            encodeULEB128 3,
+            -- cell = __alloc(4)
+            [opI32Const],
+            encodeSLEB128 4,
+            [opCall],
+            encodeULEB128 idxAlloc,
+            [opLocalSet],
+            encodeULEB128 4,
+            -- if (ba == bb)
+            [opLocalGet],
+            encodeULEB128 2,
+            [opLocalGet],
+            encodeULEB128 3,
+            [opI32Eq],
+            [opIf, blocktypeVoid],
+            -- eq = __memcmp(a + 8, b + 8, ba)
+            [opLocalGet],
+            encodeULEB128 0,
+            [opI32Const],
+            encodeSLEB128 8,
+            [opI32Add],
+            [opLocalGet],
+            encodeULEB128 1,
+            [opI32Const],
+            encodeSLEB128 8,
+            [opI32Add],
+            [opLocalGet],
+            encodeULEB128 2,
+            [opCall],
+            encodeULEB128 idxMemcmp,
+            [opLocalSet],
+            encodeULEB128 5,
+            -- if eq then store True else store False
+            [opLocalGet],
+            encodeULEB128 5,
+            [opIf, blocktypeVoid],
+            storeTagBytes 4 (ptTrue ptags),
+            [opElse],
+            storeTagBytes 4 (ptFalse ptags),
+            [opEnd],
+            [opElse],
+            -- lengths differ → False
+            storeTagBytes 4 (ptFalse ptags),
+            [opEnd],
+            -- Callee owns args; dec both before returning the cell.
+            decArgBin 0,
+            decArgBin 1,
+            [opLocalGet],
+            encodeULEB128 4
+          ]
 
 -- __utf16_of_range(p: i32, len: i32) -> i32
 -- Counts UTF-16 code units in a UTF-8 byte range. Used by
@@ -5907,6 +6055,12 @@ emitExpr ctx = \case
               <> emitArgWithIncBin ctx b
               <> [opCall]
               <> encodeULEB128 idxEqI32
+      CBuiltIn "eqString"
+        | [a, b] <- xs ->
+            emitArgWithIncBin ctx a
+              <> emitArgWithIncBin ctx b
+              <> [opCall]
+              <> encodeULEB128 idxEqString
       CBuiltIn name
         | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
           [a, b] <- xs ->
