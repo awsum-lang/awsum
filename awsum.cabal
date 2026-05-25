@@ -7,12 +7,13 @@ cabal-version: 1.12
 name:           awsum
 version:        0.0.4
 description:    Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
-license:        MIT
+license:        Apache-2.0
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
+    NOTICE
     stdlib/Prelude.aww
 
 flag textmate-tests
