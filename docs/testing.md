@@ -34,6 +34,8 @@ just release        # Tag and push the version currently in package.yaml (after 
 
 ## Workflow when finishing a feature
 
+Any new functionality lands together with the tests that exercise it — snapshot tests for new language features or compiler passes, property tests for behaviour that has a generator-friendly input space.
+
 1. Run `just fix` — everything must pass (format, lint, build, snapshot tests, property tests).
 2. Run `stack install` so the global `awsum` binary picks up the change (the VSCode extension shells out to it).
 3. Add an entry under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md), grouped by Keep-a-Changelog section (`Added` / `Changed` / `Fixed` / `Removed`). One bullet per user-visible change. **If the changelog isn't updated, the feature isn't finished.** Infrastructure-only changes (CI, dev tooling, internal refactors) still get an entry so the next release notes are complete.
