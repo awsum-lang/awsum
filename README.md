@@ -1,5 +1,7 @@
 # Awsum
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12979/badge)](https://www.bestpractices.dev/projects/12979)
+
 Awsum — correctness-first, cross-target functional language
 
 - [https://awsum-lang.org] - Home Page
