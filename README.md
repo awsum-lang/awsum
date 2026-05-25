@@ -110,3 +110,11 @@ awsum ast                              test/sources/successful/smoke_hello/code/
 awsum core  --program-type cli         test/sources/successful/smoke_hello/code/Main.aww
 awsum --version
 ```
+
+## AI use
+
+The Awsum compiler, its design documents, and test suite are developed with substantial usage of generative AI. Every generated change is reviewed, edited, and accepted by a human before it lands in the repository, and no output is shipped unedited.
+
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).

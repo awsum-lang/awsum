@@ -1,6 +1,6 @@
 name: awsum
 version: 0.0.4
-license: MIT
+license: Apache-2.0
 
 language: GHC2024
 
@@ -31,6 +31,7 @@ default-extensions:
 extra-source-files:
   - README.md
   - CHANGELOG.md
+  - NOTICE
   - stdlib/Prelude.aww
 
 description: Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
