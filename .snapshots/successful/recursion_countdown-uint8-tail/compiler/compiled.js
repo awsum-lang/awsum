@@ -5,7 +5,46 @@ function __predUInt8(x){ return x === 0 ? [3, [14]] : [4, ((x - 1) & 0xFF)]; }
 function __eqUInt8(a, b){ return a === b ? [1] : [2]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_showUnderflowError = (v__wild0) => {
+    return "UnderflowError";
+};
+
+const v_showResult = (v_r) => {
+    {
+      const __s = v_r;
+      switch (__s[0]) {
+        case 3: {
+          const v_e = __s[1];
+          {
+            const __s = v_e;
+            switch (__s[0]) {
+              case 589989748: {
+                const v___rw = __s[1];
+                {
+                  const __s = v___rw;
+                  switch (__s[0]) {
+                    case 16: {
+                      return [4, "STRING_TOO_LONG"];
+                    }
+                  }
+                }
+              }
+              case 3768445577: {
+                const v_u = __s[1];
+                return __concat("left: ", (v_showUnderflowError)(v_u));
+              }
+            }
+          }
+        }
+        case 4: {
+          const v_s = __s[1];
+          return __concat("right: ", v_s);
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -32,13 +71,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_showUnderflowError(v__wild0){
-    return "UnderflowError";
-}
-
-function v_countDown(v_n, v_acc){
+const v_countDown = (v_n, v_acc) => {
   while (true) {
     {
       const __s = __eqUInt8(v_n, (0 & 0xFF));
@@ -94,46 +129,9 @@ function v_countDown(v_n, v_acc){
       }
     }
   }
-}
+};
 
-function v_showResult(v_r){
-    {
-      const __s = v_r;
-      switch (__s[0]) {
-        case 3: {
-          const v_e = __s[1];
-          {
-            const __s = v_e;
-            switch (__s[0]) {
-              case 589989748: {
-                const v___rw = __s[1];
-                {
-                  const __s = v___rw;
-                  switch (__s[0]) {
-                    case 16: {
-                      return [4, "STRING_TOO_LONG"];
-                    }
-                  }
-                }
-              }
-              case 3768445577: {
-                const v_u = __s[1];
-                return __concat("left: ", (v_showUnderflowError)(v_u));
-              }
-            }
-          }
-        }
-        case 4: {
-          const v_s = __s[1];
-          return __concat("right: ", v_s);
-        }
-      }
-    }
-}
-
-const main = (v__let_12)((v_showResult)((v_countDown)((255 & 0xFF), "")));
-
-function v__let_12(v_res){
+const v__let_12 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -147,7 +145,9 @@ function v__let_12(v_res){
         }
       }
     }
-}
+};
+
+const main = (v__let_12)((v_showResult)((v_countDown)((255 & 0xFF), "")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

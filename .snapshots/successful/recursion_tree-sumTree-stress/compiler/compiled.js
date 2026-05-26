@@ -5,7 +5,7 @@ function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [15]]]; if (s < -2147483648) return [3, [3768445577, [14]]]; return [4, s|0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -32,9 +32,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_buildLeft(v_n, v_acc){
+const v_buildLeft = (v_n, v_acc) => {
   while (true) {
     {
       const __s = __eqInt32(v_n, (0|0));
@@ -66,9 +66,9 @@ function v_buildLeft(v_n, v_acc){
       }
     }
   }
-}
+};
 
-function v_addOr0(v_a, v_b){
+const v_addOr0 = (v_a, v_b) => {
     {
       const __s = __addInt32(v_a, v_b);
       switch (__s[0]) {
@@ -82,15 +82,9 @@ function v_addOr0(v_a, v_b){
         }
       }
     }
-}
+};
 
-function v_sumTree(v_t, v_acc){
-    return (v__cps_sumTree)(v_t, v_acc, [22]);
-}
-
-const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "UNDERFLOW", [5, [0]]]; } case 4: { const v_t = s[1]; return [7, String((v_sumTree)(v_t, (0|0))), [5, [0]]]; } } })((v_buildLeft)((100000|0), [20]));
-
-function v__scc__apply_sumTree__cps_sumTree(v__args){
+const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
   while (true) {
     {
       const __s = v__args;
@@ -142,11 +136,17 @@ function v__scc__apply_sumTree__cps_sumTree(v__args){
       }
     }
   }
-}
+};
 
-function v__cps_sumTree(v_t, v_acc, v__k){
+const v__cps_sumTree = (v_t, v_acc, v__k) => {
     return (v__scc__apply_sumTree__cps_sumTree)([25, v_t, v_acc, v__k]);
-}
+};
+
+const v_sumTree = (v_t, v_acc) => {
+    return (v__cps_sumTree)(v_t, v_acc, [22]);
+};
+
+const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "UNDERFLOW", [5, [0]]]; } case 4: { const v_t = s[1]; return [7, String((v_sumTree)(v_t, (0|0))), [5, [0]]]; } } })((v_buildLeft)((100000|0), [20]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

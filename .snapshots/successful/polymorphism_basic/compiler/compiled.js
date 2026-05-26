@@ -3,11 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_const(v_x, v__y){
-    return v_x;
-}
-
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -34,23 +30,25 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_ax = s[1]; return (v_identity)((v_appendY)(v_ax)); } } })((v_appendX)((v_const)("a", "b"))));
-
-function v_identity(v_x){
+const v_identity = (v_x) => {
     return v_x;
-}
+};
 
-function v_appendX(v_s){
-    return __concat(v_s, "x");
-}
+const v_const = (v_x, v__y) => {
+    return v_x;
+};
 
-function v_appendY(v_s){
+const v_appendY = (v_s) => {
     return __concat(v_s, "y");
-}
+};
 
-function v__let_12(v_res){
+const v_appendX = (v_s) => {
+    return __concat(v_s, "x");
+};
+
+const v__let_12 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -64,7 +62,9 @@ function v__let_12(v_res){
         }
       }
     }
-}
+};
+
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_ax = s[1]; return (v_identity)((v_appendY)(v_ax)); } } })((v_appendX)((v_const)("a", "b"))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

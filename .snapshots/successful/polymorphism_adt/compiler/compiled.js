@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,11 +29,11 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_identity(v_x){
+const v_identity = (v_x) => {
     return v_x;
-}
+};
 
 const main = [7, ((s) => { switch(s[0]) { case 20: { const v_v = s[1]; return v_v; } } })((v_identity)([20, "one"])), [5, [0]]];
 

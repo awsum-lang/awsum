@@ -3,7 +3,11 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_wrap = (v_s) => {
+    return v_s;
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,27 +34,23 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
 const v_n = (42|0);
 
-const v_basic = String(v_n);
-
 const v_chained = (v_wrap)((v_wrap)(String(v_n)));
 
-const v_viaLambda = (v__lam_12)(v_n);
+const v_basic = String(v_n);
 
-function v_wrap(v_s){
-    return v_s;
-}
+const v__lam_12 = (v_i) => {
+    return String(v_i);
+};
+
+const v_viaLambda = (v__lam_12)(v_n);
 
 const v_joined = ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_c = s[1]; return __concat(v_c, v_viaLambda); } } })(__concat(v_b, "|")); } } })(__concat(v_a, v_chained)); } } })(__concat(v_basic, "|"));
 
 const main = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return [7, "STRING_TOO_LONG", [5, [0]]]; } case 4: { const v_s = s[1]; return [7, v_s, [5, [0]]]; } } })(v_joined);
-
-function v__lam_12(v_i){
-    return String(v_i);
-}
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

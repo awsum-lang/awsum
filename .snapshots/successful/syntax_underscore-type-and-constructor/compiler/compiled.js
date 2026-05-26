@@ -2,7 +2,18 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_show = (v_x) => {
+    {
+      const __s = v_x;
+      switch (__s[0]) {
+        case 22: {
+          return "one";
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,18 +40,7 @@ function v_runIO(v_io){
       }
     }
   }
-}
-
-function v_show(v_x){
-    {
-      const __s = v_x;
-      switch (__s[0]) {
-        case 22: {
-          return "one";
-        }
-      }
-    }
-}
+};
 
 const main = [7, (v_show)([22]), [5, [0]]];
 

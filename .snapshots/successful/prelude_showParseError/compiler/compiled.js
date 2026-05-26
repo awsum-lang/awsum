@@ -2,7 +2,11 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_showParseError = (v__wild0) => {
+    return "ParseError";
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,11 +33,7 @@ function v_runIO(v_io){
       }
     }
   }
-}
-
-function v_showParseError(v__wild0){
-    return "ParseError";
-}
+};
 
 const main = [7, (v_showParseError)([18]), [5, [0]]];
 

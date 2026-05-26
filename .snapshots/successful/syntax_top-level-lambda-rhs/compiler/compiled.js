@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,23 +30,21 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_f(v_n){
+const v_f = (v_n) => {
     return v_n;
-}
+};
 
-function v_constFst(v_a, v__b){
+const v_curryFst = (v_a, v_b) => {
     return v_a;
-}
+};
 
-function v_curryFst(v_a, v_b){
+const v_constFst = (v_a, v__b) => {
     return v_a;
-}
+};
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, String((v_curryFst)((3|0), (9|0)))); } } })(__concat(v_s1, " ")); } } })(__concat(v_s0, String((v_constFst)((7|0), (99|0))))); } } })(__concat(String((v_f)((42|0))), " ")));
-
-function v__let_12(v_res){
+const v__let_12 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -60,7 +58,9 @@ function v__let_12(v_res){
         }
       }
     }
-}
+};
+
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, String((v_curryFst)((3|0), (9|0)))); } } })(__concat(v_s1, " ")); } } })(__concat(v_s0, String((v_constFst)((7|0), (99|0))))); } } })(__concat(String((v_f)((42|0))), " ")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

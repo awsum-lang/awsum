@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,33 +30,17 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_opA(v_n){
-    return [4, v_n];
-}
-
-function v_opB(v__n){
+const v_opB = (v__n) => {
     return [3, [21]];
-}
+};
 
-function v_run(v_x){
-    {
-      const __s = (v_opA)(v_x);
-      switch (__s[0]) {
-        case 3: {
-          const v__do_e_0 = __s[1];
-          return [3, [2252990199, v__do_e_0]];
-        }
-        case 4: {
-          const v_a = __s[1];
-          return (v__lift_12)((v_opB)(v_a));
-        }
-      }
-    }
-}
+const v_opA = (v_n) => {
+    return [4, v_n];
+};
 
-function v_describe(v_r){
+const v_describe = (v_r) => {
     {
       const __s = v_r;
       switch (__s[0]) {
@@ -96,11 +80,9 @@ function v_describe(v_r){
         }
       }
     }
-}
+};
 
-const main = (v__let_13)((v_describe)((v_run)((5|0))));
-
-function v__lift_12(v___input){
+const v__lift_12 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -114,9 +96,25 @@ function v__lift_12(v___input){
         }
       }
     }
-}
+};
 
-function v__let_13(v_res){
+const v_run = (v_x) => {
+    {
+      const __s = (v_opA)(v_x);
+      switch (__s[0]) {
+        case 3: {
+          const v__do_e_0 = __s[1];
+          return [3, [2252990199, v__do_e_0]];
+        }
+        case 4: {
+          const v_a = __s[1];
+          return (v__lift_12)((v_opB)(v_a));
+        }
+      }
+    }
+};
+
+const v__let_13 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -130,7 +128,9 @@ function v__let_13(v_res){
         }
       }
     }
-}
+};
+
+const main = (v__let_13)((v_describe)((v_run)((5|0))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

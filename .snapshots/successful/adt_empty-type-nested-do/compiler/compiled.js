@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,7 +29,7 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
 const main = [7, "ok", [5, [0]]];
 

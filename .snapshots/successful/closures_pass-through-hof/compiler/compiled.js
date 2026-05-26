@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,21 +29,21 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_incr(v_n){
+const v_incr = (v_n) => {
     return v_n;
-}
+};
+
+const v__df_apply_1 = (v_x) => {
+    return (v_incr)(v_x);
+};
+
+const v__df_applyTwice_0 = (v_x) => {
+    return (v__df_apply_1)((v__df_apply_1)(v_x));
+};
 
 const main = [7, String((v__df_applyTwice_0)((7|0))), [5, [0]]];
-
-function v__df_apply_1(v_x){
-    return (v_incr)(v_x);
-}
-
-function v__df_applyTwice_0(v_x){
-    return (v__df_apply_1)((v__df_apply_1)(v_x));
-}
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

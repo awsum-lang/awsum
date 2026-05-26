@@ -6,62 +6,15 @@ function __entryArgEither(arg){ if (arg.length > 134217728) return [3, [58998974
 function __getArgs(){ return __entryArgEither(process.argv[2] ?? ""); }
 function __stdinReadAll(){ return __entryArgEither(require('fs').readFileSync(0).toString('utf-8')); }
 
-function v_pureEither(v_x){
+const v_pureEither = (v_x) => {
     return [4, v_x];
-}
+};
 
-function v_runIO(v_io){
-  while (true) {
-    {
-      const __s = v_io;
-      switch (__s[0]) {
-        case 5: {
-          const v_u = __s[1];
-          return v_u;
-        }
-        case 7: {
-          const v_s = __s[1];
-          const v_next = __s[2];
-          {
-            const __s = __print(v_s);
-            switch (__s[0]) {
-              case 0: {
-                const __t0 = v_next;
-                v_io = null;
-                v_io = __t0;
-                continue;
-              }
-            }
-          }
-        }
-        case 8: {
-          const v_cont = __s[1];
-          const __t0 = (v__apply1)(v_cont, __getArgs());
-          v_io = null;
-          v_io = __t0;
-          continue;
-        }
-        case 9: {
-          const v_cont = __s[1];
-          const __t0 = (v__apply1)(v_cont, __stdinReadAll());
-          v_io = null;
-          v_io = __t0;
-          continue;
-        }
-      }
-    }
-  }
-}
-
-function v_opTuple(v__wild0){
+const v_opTuple = (v__wild0) => {
     return [4, [13, (1|0), (2|0), (3|0)]];
-}
+};
 
-function v_processInput(v_raw){
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 13: { const v_a = s[1]; const v_b = s[2]; const v_c = s[3]; return (v_pureEither)(((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return v_c; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return v_c; } case 4: { const v_abc = s[1]; return v_abc; } } })(__addInt32(v_ab, v_c)); } } })(__addInt32(v_a, v_b))); } } })(v___p0); } } })((v_opTuple)(v_raw)));
-}
-
-function v_handleInputErr(v_e){
+const v_handleInputErr = (v_e) => {
     {
       const __s = v_e;
       switch (__s[0]) {
@@ -75,15 +28,68 @@ function v_handleInputErr(v_e){
         }
       }
     }
-}
+};
 
-const main = (v__df_handleErrorIO_0)((v__df_andThenIO_3)([8, [18]]));
+const v__let_12 = (v_res) => {
+    {
+      const __s = v_res;
+      switch (__s[0]) {
+        case 3: {
+          const v___w0 = __s[1];
+          return [7, "PARSE_ERROR", [5, [0]]];
+        }
+        case 4: {
+          const v_n = __s[1];
+          return [7, String(v_n), [5, [0]]];
+        }
+      }
+    }
+};
 
-function v__lift_1(v___input){
-    return (v__cps__lift_1)(v___input, [28]);
-}
+const v_processInput = (v_raw) => {
+    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 13: { const v_a = s[1]; const v_b = s[2]; const v_c = s[3]; return (v_pureEither)(((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return v_c; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return v_c; } case 4: { const v_abc = s[1]; return v_abc; } } })(__addInt32(v_ab, v_c)); } } })(__addInt32(v_a, v_b))); } } })(v___p0); } } })((v_opTuple)(v_raw)));
+};
 
-function v__cps__lift_1(v___input, v__k){
+const v__io_getargs_cont = (v_result) => {
+    {
+      const __s = v_result;
+      switch (__s[0]) {
+        case 3: {
+          const v_e = __s[1];
+          return [6, v_e];
+        }
+        case 4: {
+          const v_s = __s[1];
+          return [5, v_s];
+        }
+      }
+    }
+};
+
+const v__apply__lift_1 = (v__k, v__x) => {
+  while (true) {
+    {
+      const __s = v__k;
+      switch (__s[0]) {
+        case 28: {
+          return v__x;
+        }
+        case 29: {
+          const v__pk_29 = __s[1];
+          const v___f0 = __s[2];
+          const __t0 = v__pk_29;
+          const __t1 = (v__k[0] = 7, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+          v__x = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+      }
+    }
+  }
+};
+
+const v__cps__lift_1 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
@@ -117,21 +123,25 @@ function v__cps__lift_1(v___input, v__k){
       }
     }
   }
-}
+};
 
-function v__apply__lift_1(v__k, v__x){
+const v__lift_1 = (v___input) => {
+    return (v__cps__lift_1)(v___input, [28]);
+};
+
+const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 28: {
+        case 30: {
           return v__x;
         }
-        case 29: {
-          const v__pk_29 = __s[1];
-          const v___f0 = __s[2];
-          const __t0 = v__pk_29;
-          const __t1 = (v__k[0] = 7, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+        case 31: {
+          const v__pk_31 = __s[1];
+          const v_s = __s[2];
+          const __t0 = v__pk_31;
+          const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
           v__x = null;
           v__k = __t0;
           v__x = __t1;
@@ -140,45 +150,9 @@ function v__apply__lift_1(v__k, v__x){
       }
     }
   }
-}
+};
 
-function v__let_12(v_res){
-    {
-      const __s = v_res;
-      switch (__s[0]) {
-        case 3: {
-          const v___w0 = __s[1];
-          return [7, "PARSE_ERROR", [5, [0]]];
-        }
-        case 4: {
-          const v_n = __s[1];
-          return [7, String(v_n), [5, [0]]];
-        }
-      }
-    }
-}
-
-function v__io_getargs_cont(v_result){
-    {
-      const __s = v_result;
-      switch (__s[0]) {
-        case 3: {
-          const v_e = __s[1];
-          return [6, v_e];
-        }
-        case 4: {
-          const v_s = __s[1];
-          return [5, v_s];
-        }
-      }
-    }
-}
-
-function v__df_handleErrorIO_0(v_io){
-    return (v__cps__df_handleErrorIO_0)(v_io, [30]);
-}
-
-function v__cps__df_handleErrorIO_0(v_io, v__k){
+const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
   while (true) {
     {
       const __s = v_io;
@@ -212,20 +186,24 @@ function v__cps__df_handleErrorIO_0(v_io, v__k){
       }
     }
   }
-}
+};
 
-function v__apply__df_handleErrorIO_0(v__k, v__x){
+const v__df_handleErrorIO_0 = (v_io) => {
+    return (v__cps__df_handleErrorIO_0)(v_io, [30]);
+};
+
+const v__apply__df_andThenIO_3 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 30: {
+        case 32: {
           return v__x;
         }
-        case 31: {
-          const v__pk_31 = __s[1];
+        case 33: {
+          const v__pk_33 = __s[1];
           const v_s = __s[2];
-          const __t0 = v__pk_31;
+          const __t0 = v__pk_33;
           const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
           v__x = null;
           v__k = __t0;
@@ -235,13 +213,9 @@ function v__apply__df_handleErrorIO_0(v__k, v__x){
       }
     }
   }
-}
+};
 
-function v__df_andThenIO_3(v_io){
-    return (v__cps__df_andThenIO_3)(v_io, [32]);
-}
-
-function v__cps__df_andThenIO_3(v_io, v__k){
+const v__cps__df_andThenIO_3 = (v_io, v__k) => {
   while (true) {
     {
       const __s = v_io;
@@ -275,22 +249,76 @@ function v__cps__df_andThenIO_3(v_io, v__k){
       }
     }
   }
-}
+};
 
-function v__apply__df_andThenIO_3(v__k, v__x){
+const v__df_andThenIO_3 = (v_io) => {
+    return (v__cps__df_andThenIO_3)(v_io, [32]);
+};
+
+const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 32: {
+        case 34: {
           return v__x;
         }
-        case 33: {
-          const v__pk_33 = __s[1];
-          const v_s = __s[2];
-          const __t0 = v__pk_33;
-          const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
+        case 35: {
+          const v__pk_35 = __s[1];
+          const __t0 = v__pk_35;
+          const __t1 = (v__df_handleErrorIO_0)(v__x);
           v__x = null;
+          v__k = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+        case 36: {
+          const v__pk_36 = __s[1];
+          const __t0 = v__pk_36;
+          const __t1 = (v__df_handleErrorIO_0)(v__x);
+          v__x = null;
+          v__k = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+        case 37: {
+          const v__pk_37 = __s[1];
+          const __t0 = v__pk_37;
+          const __t1 = (v__df_andThenIO_3)(v__x);
+          v__x = null;
+          v__k = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+        case 38: {
+          const v__pk_38 = __s[1];
+          const __t0 = v__pk_38;
+          const __t1 = (v__df_andThenIO_3)(v__x);
+          v__x = null;
+          v__k = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+        case 39: {
+          const v__pk_39 = __s[1];
+          const __t0 = v__pk_39;
+          const __t1 = (v__lift_1)(v__x);
+          v__x = null;
+          v__k = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+        case 40: {
+          const v__pk_40 = __s[1];
+          const __t0 = v__pk_40;
+          const __t1 = (v__lift_1)(v__x);
+          v__x = null;
+          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -298,13 +326,9 @@ function v__apply__df_andThenIO_3(v__k, v__x){
       }
     }
   }
-}
+};
 
-function v__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3(v__args){
-    return (v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3)(v__args, [34]);
-}
-
-function v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3(v__args, v__k){
+const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 = (v__args, v__k) => {
   while (true) {
     {
       const __s = v__args;
@@ -438,84 +462,60 @@ function v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5
       }
     }
   }
-}
+};
 
-function v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3(v__k, v__x){
+const v__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3 = (v__args) => {
+    return (v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3)(v__args, [34]);
+};
+
+const v__apply1 = (v__cl, v__arg0) => {
+    return (v__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3)([21, v__cl, v__arg0]);
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
-      const __s = v__k;
+      const __s = v_io;
       switch (__s[0]) {
-        case 34: {
-          return v__x;
+        case 5: {
+          const v_u = __s[1];
+          return v_u;
         }
-        case 35: {
-          const v__pk_35 = __s[1];
-          const __t0 = v__pk_35;
-          const __t1 = (v__df_handleErrorIO_0)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
+        case 7: {
+          const v_s = __s[1];
+          const v_next = __s[2];
+          {
+            const __s = __print(v_s);
+            switch (__s[0]) {
+              case 0: {
+                const __t0 = v_next;
+                v_io = null;
+                v_io = __t0;
+                continue;
+              }
+            }
+          }
+        }
+        case 8: {
+          const v_cont = __s[1];
+          const __t0 = (v__apply1)(v_cont, __getArgs());
+          v_io = null;
+          v_io = __t0;
           continue;
         }
-        case 36: {
-          const v__pk_36 = __s[1];
-          const __t0 = v__pk_36;
-          const __t1 = (v__df_handleErrorIO_0)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-        case 37: {
-          const v__pk_37 = __s[1];
-          const __t0 = v__pk_37;
-          const __t1 = (v__df_andThenIO_3)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-        case 38: {
-          const v__pk_38 = __s[1];
-          const __t0 = v__pk_38;
-          const __t1 = (v__df_andThenIO_3)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-        case 39: {
-          const v__pk_39 = __s[1];
-          const __t0 = v__pk_39;
-          const __t1 = (v__lift_1)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-        case 40: {
-          const v__pk_40 = __s[1];
-          const __t0 = v__pk_40;
-          const __t1 = (v__lift_1)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
+        case 9: {
+          const v_cont = __s[1];
+          const __t0 = (v__apply1)(v_cont, __stdinReadAll());
+          v_io = null;
+          v_io = __t0;
           continue;
         }
       }
     }
   }
-}
+};
 
-function v__apply1(v__cl, v__arg0){
-    return (v__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5__lift_2__lift_3)([21, v__cl, v__arg0]);
-}
+const main = (v__df_handleErrorIO_0)((v__df_andThenIO_3)([8, [18]]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

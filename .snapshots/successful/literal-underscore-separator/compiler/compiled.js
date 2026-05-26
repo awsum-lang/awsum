@@ -4,7 +4,7 @@ function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [15]]]; if (s < -2147483648) return [3, [3768445577, [14]]]; return [4, s|0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -31,11 +31,11 @@ function v_runIO(v_io){
       }
     }
   }
-}
-
-const v_big = (1234567|0);
+};
 
 const v_negativeBig = (-1000000|0);
+
+const v_big = (1234567|0);
 
 const v_sum = __addInt32(v_big, v_negativeBig);
 

@@ -7,30 +7,46 @@
 --
 -- Semantics & assumptions:
 --   • Strings: we rely on JS '+' to concatenate (both operands are statically 'String').
---   • Zero-arg surface defs are lowered to Core 'CValDef' and become JS 'const' values.
---     Functions remain 'function' declarations (hoisted), so call order is safe.
+--   • Every top-level surface def is lowered to either Core 'CFunDef' or
+--     'CValDef' and emitted as a JS @const@ binding — 'CFunDef' as an
+--     arrow closure @const name = (args) => { … };@, 'CValDef' as a
+--     plain value @const name = <expr>;@.
 --   • Wrapping is selected by 'ProgramType':
 --
 --       - 'ProgramCli' → IIFE (@(function () { ... })()@). Inside a
---         function scope, top-level @function@ declarations don't
---         become @window.x@ and top-level @const@/@let@ are lexical,
---         so nothing leaks to the global object — whether loaded as a
+--         function scope, top-level @const@/@let@ are lexical, so
+--         nothing leaks to the global object — whether loaded as a
 --         classic @<script>@ or via Node's CommonJS wrapper. The Node
 --         runner in the footer still sees @require@/@module@ via
 --         closure.
 --
---     No module-table indirection: function hoisting inside the IIFE
---     makes declaration order irrelevant.
---
 --     Other program types (browser module, CommonJS, ESM) will pick
 --     different wrappers without changing the name-emission rules below.
+--
+-- Declaration order: top-level decls are emitted in the reverse
+-- topological order of the call graph ('Awsum.CallGraph.stronglyConnected'
+-- already returns SCCs sinks-first). Each SCC's members are emitted as
+-- one block; for mutually-recursive 'CFunDef's, order within the block
+-- is arbitrary because arrow-closure bodies defer name lookup to call
+-- time — by the time any caller of the SCC runs, every member's @const@
+-- has been initialized. Mutually-recursive 'CValDef's have no fixed
+-- point in strict eval and are rejected by 'Awsum.StackSafety', so any
+-- CyclicSCC encountered here contains only 'CFunDef's.
+--
+-- The result: no reliance on JS function-declaration hoisting; the
+-- compiler explicitly enforces an evaluation-safe order. This matters
+-- both for correctness inside the IIFE and for future program types
+-- (ESM module top level, where 'function' decls behave differently).
 module Awsum.Codegen.JS (codegenJS) where
 
+import Awsum.CallGraph (declName, stronglyConnected)
 import Awsum.Core
 import Awsum.HM (rowTag)
 import Awsum.Program (ProgramType (..))
 import Awsum.Syntax (Name, Type' (..), noSpan)
 import Data.Char qualified as Char
+import Data.Graph qualified as G
+import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Relude
@@ -46,16 +62,38 @@ codegenJS = \case
 --   @window@ only at /script/ top level, not inside an IIFE) nor
 --   @const@/@let@ (lexically script-scoped).
 emitCliScript :: PreludeTags -> CoreProgram -> Text
-emitCliScript ptags prog@(CoreProgram decls) =
+emitCliScript ptags prog =
   T.intercalate
     "\n"
     [ "\"use strict\";",
       "(function () {",
       header ptags (usedBuiltIns prog),
-      T.intercalate "\n\n" (map emitDecl decls),
+      T.intercalate "\n\n" (map emitDecl (orderTopLevels prog)),
       cliFooter,
       "})();"
     ]
+
+-- | Reorder top-level declarations so each name's @const@ binding is
+-- initialized before any line that needs its value. Uses the call
+-- graph's strongly-connected components (sinks first) — each SCC's
+-- members emit as one block in arbitrary internal order. Mutual
+-- recursion among 'CFunDef's tolerates any order because arrow-closure
+-- bodies defer name lookup to call time; mutually-recursive 'CValDef's
+-- would be ill-formed in strict eval and are rejected upstream by
+-- 'Awsum.StackSafety', so any 'CyclicSCC' encountered here contains
+-- only 'CFunDef's.
+orderTopLevels :: CoreProgram -> [CDecl]
+orderTopLevels prog@(CoreProgram decls) =
+  let declMap = Map.fromList [(declName d, d) | d <- decls]
+      pickDecl n =
+        Map.findWithDefault
+          (error "JS codegen: SCC name not found in CoreProgram")
+          n
+          declMap
+      flatten = \case
+        G.AcyclicSCC v -> [pickDecl v]
+        G.CyclicSCC vs -> map pickDecl vs
+   in concatMap flatten (stronglyConnected prog)
 
 -- | Minimal runtime, tree-shaken: only helpers whose primitive / built-in
 --   is actually referenced from Core are emitted.
@@ -355,39 +393,45 @@ cliFooter =
     ]
 
 -- | Top-level declarations:
---   • 'CFunDef' with 'CLoop' body (output of the TCO pass) → 'while (true)'
---     loop whose body is emitted in statement form so 'CContinue' can
---     rebind the function's parameters and 'continue' the loop instead of
---     recursing. Rewriting a self-tail-call as a jump keeps the JS engine's
---     call stack bounded, which matters on Node/V8 because ES2015 PTC was
---     never shipped.
---   • 'CFunDef' without 'CLoop' → also statement form. A 'CCase' in tail
---     position becomes a 'switch' whose arms 'return' directly, instead of
---     an IIFE. That keeps deeply nested pattern matches (N nested 'case'
---     expressions in tail position) inside a single stack frame; the IIFE
---     form would burn one frame per level and overflow on platforms with
---     small default stacks (e.g. Windows Node ≈512 KB).
+--   • 'CFunDef' with 'CLoop' body (output of the TCO pass) → arrow
+--     closure containing a 'while (true)' loop whose body is emitted in
+--     statement form so 'CContinue' can rebind the function's parameters
+--     and 'continue' the loop instead of recursing. Rewriting a
+--     self-tail-call as a jump keeps the JS engine's call stack bounded,
+--     which matters on Node/V8 because ES2015 PTC was never shipped.
+--   • 'CFunDef' without 'CLoop' → arrow closure, statement form body.
+--     A 'CCase' in tail position becomes a 'switch' whose arms 'return'
+--     directly, instead of an IIFE. That keeps deeply nested pattern
+--     matches (N nested 'case' expressions in tail position) inside a
+--     single stack frame; the IIFE form would burn one frame per level
+--     and overflow on platforms with small default stacks (e.g. Windows
+--     Node ≈512 KB).
 --   • 'CValDef' → 'const name = <expr>;'.
+--
+-- Arrow closures (rather than @function@ declarations) so the codegen
+-- doesn't rely on function-declaration hoisting — 'orderTopLevels'
+-- arranges decls in evaluation-safe order, and each binding is an
+-- ordinary @const@ that's initialized exactly at its line.
 emitDecl :: CDecl -> Text
 emitDecl = \case
   CFunDef nm args (CLoop body) ->
-    "function "
+    "const "
       <> mangle nm
-      <> "("
+      <> " = ("
       <> T.intercalate ", " (map mangle args)
-      <> "){\n"
+      <> ") => {\n"
       <> "  while (true) {\n"
       <> emitStmt args body
       <> "  }\n"
-      <> "}"
+      <> "};"
   CFunDef nm args body ->
-    "function "
+    "const "
       <> mangle nm
-      <> "("
+      <> " = ("
       <> T.intercalate ", " (map mangle args)
-      <> "){\n"
+      <> ") => {\n"
       <> emitStmt args body
-      <> "}"
+      <> "};"
   CValDef nm rhs ->
     "const " <> mangle nm <> " = " <> emitExpr rhs <> ";"
 

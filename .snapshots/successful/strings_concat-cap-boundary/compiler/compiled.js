@@ -6,9 +6,7 @@ function __predUInt32(x){ return x === 0 ? [3, [14]] : [4, ((x - 1) >>> 0)]; }
 function __eqUInt32(a, b){ return a === b ? [1] : [2]; }
 function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }
 
-const v_maxStringLengthUtf16CodeUnits = (134217728 >>> 0);
-
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -35,15 +33,13 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
+
+const v_maxStringLengthUtf16CodeUnits = (134217728 >>> 0);
 
 const v_block = "你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界你好世界";
 
-const v_runTest = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "FAIL: build returned Left at the cap"; } case 4: { const v_capStr = s[1]; return ((s) => { switch(s[0]) { case 1: { return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "OK"; } case 4: { const v___w0 = s[1]; return "FAIL: cap + 1 returned Right"; } } })(__concat(v_capStr, "!")); } case 2: { return "FAIL: built string length is not at cap"; } } })(__eqUInt32(__lengthUtf16CodeUnits(v_capStr), v_maxStringLengthUtf16CodeUnits)); } } })((v_build)((20 >>> 0), v_block));
-
-const main = [7, v_runTest, [5, [0]]];
-
-function v__lift_0(v___input){
+const v__lift_13 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -57,9 +53,9 @@ function v__lift_0(v___input){
         }
       }
     }
-}
+};
 
-function v__lift_13(v___input){
+const v__lift_0 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -73,13 +69,32 @@ function v__lift_13(v___input){
         }
       }
     }
-}
+};
 
-function v__scc__df_andThenEither_0__lam_12_build(v__args){
-    return (v__cps__scc__df_andThenEither_0__lam_12_build)(v__args, [11]);
-}
+const v__apply__scc__df_andThenEither_0__lam_12_build = (v__k, v__x) => {
+  while (true) {
+    {
+      const __s = v__k;
+      switch (__s[0]) {
+        case 11: {
+          return v__x;
+        }
+        case 12: {
+          const v__pk_12 = __s[1];
+          const __t0 = v__pk_12;
+          const __t1 = (v__lift_0)(v__x);
+          v__x = null;
+          v__k = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+      }
+    }
+  }
+};
 
-function v__cps__scc__df_andThenEither_0__lam_12_build(v__args, v__k){
+const v__cps__scc__df_andThenEither_0__lam_12_build = (v__args, v__k) => {
   while (true) {
     {
       const __s = v__args;
@@ -141,34 +156,19 @@ function v__cps__scc__df_andThenEither_0__lam_12_build(v__args, v__k){
       }
     }
   }
-}
+};
 
-function v__apply__scc__df_andThenEither_0__lam_12_build(v__k, v__x){
-  while (true) {
-    {
-      const __s = v__k;
-      switch (__s[0]) {
-        case 11: {
-          return v__x;
-        }
-        case 12: {
-          const v__pk_12 = __s[1];
-          const __t0 = v__pk_12;
-          const __t1 = (v__lift_0)(v__x);
-          v__x = null;
-          v__k = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-      }
-    }
-  }
-}
+const v__scc__df_andThenEither_0__lam_12_build = (v__args) => {
+    return (v__cps__scc__df_andThenEither_0__lam_12_build)(v__args, [11]);
+};
 
-function v_build(v_n, v_acc){
+const v_build = (v_n, v_acc) => {
     return (v__scc__df_andThenEither_0__lam_12_build)([10, v_n, v_acc]);
-}
+};
+
+const v_runTest = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "FAIL: build returned Left at the cap"; } case 4: { const v_capStr = s[1]; return ((s) => { switch(s[0]) { case 1: { return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "OK"; } case 4: { const v___w0 = s[1]; return "FAIL: cap + 1 returned Right"; } } })(__concat(v_capStr, "!")); } case 2: { return "FAIL: built string length is not at cap"; } } })(__eqUInt32(__lengthUtf16CodeUnits(v_capStr), v_maxStringLengthUtf16CodeUnits)); } } })((v_build)((20 >>> 0), v_block));
+
+const main = [7, v_runTest, [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

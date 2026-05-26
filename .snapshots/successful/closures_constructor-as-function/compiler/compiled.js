@@ -2,7 +2,19 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_unwrap = (v_b) => {
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 20: {
+          const v_value = __s[1];
+          return v_value;
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,29 +41,17 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_unwrap(v_b){
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 20: {
-          const v_value = __s[1];
-          return v_value;
-        }
-      }
-    }
-}
+const v__con_Box = (v__x0) => {
+    return [20, v__x0];
+};
+
+const v__df_wrap_0 = (v_x) => {
+    return (v__con_Box)(v_x);
+};
 
 const main = [7, (v_unwrap)((v__df_wrap_0)("wrapped")), [5, [0]]];
-
-function v__con_Box(v__x0){
-    return [20, v__x0];
-}
-
-function v__df_wrap_0(v_x){
-    return (v__con_Box)(v_x);
-}
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

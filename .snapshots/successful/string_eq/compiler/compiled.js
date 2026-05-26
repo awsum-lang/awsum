@@ -4,7 +4,7 @@ function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __eqString(a, b){ return a === b ? [1] : [2]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -31,9 +31,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_render(v_b){
+const v_render = (v_b) => {
     {
       const __s = v_b;
       switch (__s[0]) {
@@ -45,11 +45,9 @@ function v_render(v_b){
         }
       }
     }
-}
+};
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, (v_render)(__eqString("🔥", "🔥"))); } } })(__concat(v_s1, (v_render)(__eqString("abc", "abd")))); } } })(__concat(v_s0, (v_render)(__eqString("a", "ab")))); } } })(__concat((v_render)(__eqString("", "")), (v_render)(__eqString("abc", "abc")))));
-
-function v__let_12(v_res){
+const v__let_12 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -63,7 +61,9 @@ function v__let_12(v_res){
         }
       }
     }
-}
+};
+
+const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, (v_render)(__eqString("🔥", "🔥"))); } } })(__concat(v_s1, (v_render)(__eqString("abc", "abd")))); } } })(__concat(v_s0, (v_render)(__eqString("a", "ab")))); } } })(__concat((v_render)(__eqString("", "")), (v_render)(__eqString("abc", "abc")))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

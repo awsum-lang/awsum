@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,11 +30,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-const main = (v__let_12)((v_handleA)([20]));
-
-function v__let_12(v_res){
+const v__let_12 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -48,93 +46,9 @@ function v__let_12(v_res){
         }
       }
     }
-}
+};
 
-function v__scc_handleA_handleB(v__args){
-    return (v__cps__scc_handleA_handleB)(v__args, [26]);
-}
-
-function v__cps__scc_handleA_handleB(v__args, v__k){
-  while (true) {
-    {
-      const __s = v__args;
-      switch (__s[0]) {
-        case 24: {
-          const v_step = __s[1];
-          {
-            const __s = v_step;
-            switch (__s[0]) {
-              case 20: {
-                const __t0 = (v__args[0] = 25, v__args[1] = [21], v__args);
-                const __t1 = [27, v__k];
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 21: {
-                const __t0 = (v__args[0] = 25, v__args[1] = v_step, v__args);
-                const __t1 = v__k;
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 22: {
-                const __t0 = (v__args[0] = 25, v__args[1] = v_step, v__args);
-                const __t1 = v__k;
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 23: {
-                return (v__apply__scc_handleA_handleB)(v__k, [4, ""]);
-              }
-            }
-          }
-        }
-        case 25: {
-          const v_step = __s[1];
-          {
-            const __s = v_step;
-            switch (__s[0]) {
-              case 20: {
-                const __t0 = (v__args[0] = 24, v__args[1] = v_step, v__args);
-                const __t1 = v__k;
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 21: {
-                const __t0 = (v__args[0] = 24, v__args[1] = [22], v__args);
-                const __t1 = [28, v__k];
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 22: {
-                const __t0 = (v__args[0] = 24, v__args[1] = [23], v__args);
-                const __t1 = [29, v__k];
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 23: {
-                return (v__apply__scc_handleA_handleB)(v__k, [4, ""]);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-function v__apply__scc_handleA_handleB(v__k, v__x){
+const v__apply__scc_handleA_handleB = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -226,11 +140,97 @@ function v__apply__scc_handleA_handleB(v__k, v__x){
       }
     }
   }
-}
+};
 
-function v_handleA(v_step){
+const v__cps__scc_handleA_handleB = (v__args, v__k) => {
+  while (true) {
+    {
+      const __s = v__args;
+      switch (__s[0]) {
+        case 24: {
+          const v_step = __s[1];
+          {
+            const __s = v_step;
+            switch (__s[0]) {
+              case 20: {
+                const __t0 = (v__args[0] = 25, v__args[1] = [21], v__args);
+                const __t1 = [27, v__k];
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 21: {
+                const __t0 = (v__args[0] = 25, v__args[1] = v_step, v__args);
+                const __t1 = v__k;
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 22: {
+                const __t0 = (v__args[0] = 25, v__args[1] = v_step, v__args);
+                const __t1 = v__k;
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 23: {
+                return (v__apply__scc_handleA_handleB)(v__k, [4, ""]);
+              }
+            }
+          }
+        }
+        case 25: {
+          const v_step = __s[1];
+          {
+            const __s = v_step;
+            switch (__s[0]) {
+              case 20: {
+                const __t0 = (v__args[0] = 24, v__args[1] = v_step, v__args);
+                const __t1 = v__k;
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 21: {
+                const __t0 = (v__args[0] = 24, v__args[1] = [22], v__args);
+                const __t1 = [28, v__k];
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 22: {
+                const __t0 = (v__args[0] = 24, v__args[1] = [23], v__args);
+                const __t1 = [29, v__k];
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 23: {
+                return (v__apply__scc_handleA_handleB)(v__k, [4, ""]);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+const v__scc_handleA_handleB = (v__args) => {
+    return (v__cps__scc_handleA_handleB)(v__args, [26]);
+};
+
+const v_handleA = (v_step) => {
     return (v__scc_handleA_handleB)([24, v_step]);
-}
+};
+
+const main = (v__let_12)((v_handleA)([20]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

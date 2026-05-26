@@ -2,7 +2,35 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_unwrap = (v_b) => {
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 20: {
+          const v_b2 = __s[1];
+          {
+            const __s = v_b2;
+            switch (__s[0]) {
+              case 20: {
+                const v_b3 = __s[1];
+                {
+                  const __s = v_b3;
+                  switch (__s[0]) {
+                    case 20: {
+                      const v_value = __s[1];
+                      return v_value;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,35 +57,7 @@ function v_runIO(v_io){
       }
     }
   }
-}
-
-function v_unwrap(v_b){
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 20: {
-          const v_b2 = __s[1];
-          {
-            const __s = v_b2;
-            switch (__s[0]) {
-              case 20: {
-                const v_b3 = __s[1];
-                {
-                  const __s = v_b3;
-                  switch (__s[0]) {
-                    case 20: {
-                      const v_value = __s[1];
-                      return v_value;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-}
+};
 
 const main = [7, (v_unwrap)([20, [20, [20, "hello"]]]), [5, [0]]];
 

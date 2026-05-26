@@ -3,7 +3,11 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_shout = (v_s) => {
+    return __concat(v_s, "!");
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,65 +34,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_shout(v_s){
-    return __concat(v_s, "!");
-}
-
-const main = (v__let_13)((v_show)((v__df_map_0)([20, "a", [20, "b", [20, "c", (v__lift_12)([21])]]])));
-
-function v__lift_12(v___input){
-    return (v__cps__lift_12)(v___input, [24]);
-}
-
-function v__cps__lift_12(v___input, v__k){
-  while (true) {
-    {
-      const __s = v___input;
-      switch (__s[0]) {
-        case 20: {
-          const v___f0 = __s[1];
-          const v___f1 = __s[2];
-          const __t0 = v___f1;
-          const __t1 = (v___input[0] = 25, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-          v__k = null;
-          v___input = __t0;
-          v__k = __t1;
-          continue;
-        }
-        case 21: {
-          return (v__apply__lift_12)(v__k, [21]);
-        }
-      }
-    }
-  }
-}
-
-function v__apply__lift_12(v__k, v__x){
-  while (true) {
-    {
-      const __s = v__k;
-      switch (__s[0]) {
-        case 24: {
-          return v__x;
-        }
-        case 25: {
-          const v__pk_25 = __s[1];
-          const v___f0 = __s[2];
-          const __t0 = v__pk_25;
-          const __t1 = (v__k[0] = 20, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-          v__x = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-      }
-    }
-  }
-}
-
-function v__let_13(v_res){
+const v__let_13 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -102,117 +50,9 @@ function v__let_13(v_res){
         }
       }
     }
-}
+};
 
-function v__df_map_0(v_list){
-    return (v__cps__df_map_0)(v_list, [26]);
-}
-
-function v__cps__df_map_0(v_list, v__k){
-  while (true) {
-    {
-      const __s = v_list;
-      switch (__s[0]) {
-        case 20: {
-          const v_head = __s[1];
-          const v_tail = __s[2];
-          const __t0 = v_tail;
-          const __t1 = (v_list[0] = 27, v_list[1] = v__k, v_list[2] = v_head, v_list);
-          v__k = null;
-          v_list = __t0;
-          v__k = __t1;
-          continue;
-        }
-        case 21: {
-          return (v__apply__df_map_0)(v__k, [21]);
-        }
-      }
-    }
-  }
-}
-
-function v__apply__df_map_0(v__k, v__x){
-  while (true) {
-    {
-      const __s = v__k;
-      switch (__s[0]) {
-        case 26: {
-          return v__x;
-        }
-        case 27: {
-          const v__pk_27 = __s[1];
-          const v_head = __s[2];
-          const __t0 = v__pk_27;
-          const __t1 = (v__k[0] = 20, v__k[1] = (v_shout)(v_head), v__k[2] = v__x, v__k);
-          v__x = null;
-          v__k = __t0;
-          v__x = __t1;
-          continue;
-        }
-      }
-    }
-  }
-}
-
-function v__scc_show_showCons(v__args){
-    return (v__cps__scc_show_showCons)(v__args, [28]);
-}
-
-function v__cps__scc_show_showCons(v__args, v__k){
-  while (true) {
-    {
-      const __s = v__args;
-      switch (__s[0]) {
-        case 22: {
-          const v_xs = __s[1];
-          {
-            const __s = v_xs;
-            switch (__s[0]) {
-              case 20: {
-                const v_h = __s[1];
-                const v_t = __s[2];
-                const __t0 = [23, v_h, v_t];
-                const __t1 = v__k;
-                v__k = null;
-                v__args = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-              case 21: {
-                return (v__apply__scc_show_showCons)(v__k, [4, ""]);
-              }
-            }
-          }
-        }
-        case 23: {
-          const v_h = __s[1];
-          const v_t = __s[2];
-          {
-            const __s = v_h;
-            switch (__s[0]) {
-              case 3: {
-                const v__do_e_2 = __s[1];
-                return (v__apply__scc_show_showCons)(v__k, [3, v__do_e_2]);
-              }
-              case 4: {
-                const v_hStr = __s[1];
-                const __t0 = [22, v_t];
-                const __t1 = (v__args[0] = 29, v__args[1] = v__k, v__args[2] = v_hStr, v__args);
-                v__k = null;
-                v__args = __t0;
-                v__k = __t1;
-                continue;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-function v__apply__scc_show_showCons(v__k, v__x){
+const v__apply__scc_show_showCons = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -268,11 +108,171 @@ function v__apply__scc_show_showCons(v__k, v__x){
       }
     }
   }
-}
+};
 
-function v_show(v_xs){
+const v__cps__scc_show_showCons = (v__args, v__k) => {
+  while (true) {
+    {
+      const __s = v__args;
+      switch (__s[0]) {
+        case 22: {
+          const v_xs = __s[1];
+          {
+            const __s = v_xs;
+            switch (__s[0]) {
+              case 20: {
+                const v_h = __s[1];
+                const v_t = __s[2];
+                const __t0 = [23, v_h, v_t];
+                const __t1 = v__k;
+                v__k = null;
+                v__args = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+              case 21: {
+                return (v__apply__scc_show_showCons)(v__k, [4, ""]);
+              }
+            }
+          }
+        }
+        case 23: {
+          const v_h = __s[1];
+          const v_t = __s[2];
+          {
+            const __s = v_h;
+            switch (__s[0]) {
+              case 3: {
+                const v__do_e_2 = __s[1];
+                return (v__apply__scc_show_showCons)(v__k, [3, v__do_e_2]);
+              }
+              case 4: {
+                const v_hStr = __s[1];
+                const __t0 = [22, v_t];
+                const __t1 = (v__args[0] = 29, v__args[1] = v__k, v__args[2] = v_hStr, v__args);
+                v__k = null;
+                v__args = __t0;
+                v__k = __t1;
+                continue;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+const v__scc_show_showCons = (v__args) => {
+    return (v__cps__scc_show_showCons)(v__args, [28]);
+};
+
+const v_show = (v_xs) => {
     return (v__scc_show_showCons)([22, v_xs]);
-}
+};
+
+const v__apply__lift_12 = (v__k, v__x) => {
+  while (true) {
+    {
+      const __s = v__k;
+      switch (__s[0]) {
+        case 24: {
+          return v__x;
+        }
+        case 25: {
+          const v__pk_25 = __s[1];
+          const v___f0 = __s[2];
+          const __t0 = v__pk_25;
+          const __t1 = (v__k[0] = 20, v__k[1] = v___f0, v__k[2] = v__x, v__k);
+          v__x = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+      }
+    }
+  }
+};
+
+const v__cps__lift_12 = (v___input, v__k) => {
+  while (true) {
+    {
+      const __s = v___input;
+      switch (__s[0]) {
+        case 20: {
+          const v___f0 = __s[1];
+          const v___f1 = __s[2];
+          const __t0 = v___f1;
+          const __t1 = (v___input[0] = 25, v___input[1] = v__k, v___input[2] = v___f0, v___input);
+          v__k = null;
+          v___input = __t0;
+          v__k = __t1;
+          continue;
+        }
+        case 21: {
+          return (v__apply__lift_12)(v__k, [21]);
+        }
+      }
+    }
+  }
+};
+
+const v__lift_12 = (v___input) => {
+    return (v__cps__lift_12)(v___input, [24]);
+};
+
+const v__apply__df_map_0 = (v__k, v__x) => {
+  while (true) {
+    {
+      const __s = v__k;
+      switch (__s[0]) {
+        case 26: {
+          return v__x;
+        }
+        case 27: {
+          const v__pk_27 = __s[1];
+          const v_head = __s[2];
+          const __t0 = v__pk_27;
+          const __t1 = (v__k[0] = 20, v__k[1] = (v_shout)(v_head), v__k[2] = v__x, v__k);
+          v__x = null;
+          v__k = __t0;
+          v__x = __t1;
+          continue;
+        }
+      }
+    }
+  }
+};
+
+const v__cps__df_map_0 = (v_list, v__k) => {
+  while (true) {
+    {
+      const __s = v_list;
+      switch (__s[0]) {
+        case 20: {
+          const v_head = __s[1];
+          const v_tail = __s[2];
+          const __t0 = v_tail;
+          const __t1 = (v_list[0] = 27, v_list[1] = v__k, v_list[2] = v_head, v_list);
+          v__k = null;
+          v_list = __t0;
+          v__k = __t1;
+          continue;
+        }
+        case 21: {
+          return (v__apply__df_map_0)(v__k, [21]);
+        }
+      }
+    }
+  }
+};
+
+const v__df_map_0 = (v_list) => {
+    return (v__cps__df_map_0)(v_list, [26]);
+};
+
+const main = (v__let_13)((v_show)((v__df_map_0)([20, "a", [20, "b", [20, "c", (v__lift_12)([21])]]])));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);
