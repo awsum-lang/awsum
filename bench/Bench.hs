@@ -234,7 +234,7 @@ parsePeakRss txt = listToMaybe $ do
 -- ────────────────────────────────────────────────────────────────────────────
 
 header :: Text
-header = toText (printf "%-7s  %-12s  %9s  %14s  %s" ("backend" :: String) ("status" :: String) ("wall(s)" :: String) ("peakRss(MiB)" :: String) ("stdout" :: String) :: String)
+header = toText (printf "%-7s  %-12s  %9s  %14s  %s" ("target" :: String) ("status" :: String) ("time(s)" :: String) ("peakMem(MiB)" :: String) ("stdout" :: String) :: String)
 
 separator :: Text
 separator = T.replicate 90 "─"
