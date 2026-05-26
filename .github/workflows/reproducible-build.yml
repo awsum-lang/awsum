@@ -1,0 +1,131 @@
+name: Reproducible build
+
+# Two independent ubuntu-24.04 jobs build the same commit SHA in parallel,
+# compare sha256 of the binary and the packaged .tar.gz. A third job fails the
+# workflow on any mismatch. No cache — caching can shortcut builds and hide the
+# very non-determinism this workflow exists to catch.
+#
+# Scope: linux-x86_64-gnu only. macOS / Linux aarch64 / Windows reproducibility
+# is M5 territory (different per-target non-determinism sources — Mach-O LC_UUID
+# + ad-hoc codesign on macOS, PE TimeDateStamp + DebugDirectory GUID on Windows
+# — each needs separate flags and a per-platform fix sequence).
+#
+# Triggers:
+#   - workflow_dispatch:     run manually against any branch / PR before merge
+#                            when a change might affect determinism (build
+#                            config, dep bumps, GHC flags).
+#   - push: tags: ['v*']:    auto-gate every release tag. If reproducibility
+#                            fails here, the parallel release.yml's CI dependency
+#                            does not block on this workflow (they're separate),
+#                            but the failure is visible on the tag and should
+#                            cause the maintainer to delete the tag and refix.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build (${{ matrix.instance }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        instance: [a, b]
+
+    env:
+      # Pin STACK_ROOT to a workspace-relative path so both parallel jobs use
+      # the same layout (they don't share state — no cache action — but the
+      # path being identical removes one source of accidental divergence).
+      STACK_ROOT: ${{ github.workspace }}/.stack-root
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: "3.9.1"
+          stack-no-global: true
+
+      - name: Compute SOURCE_DATE_EPOCH from commit
+        id: sde
+        run: |
+          set -euo pipefail
+          epoch="$(git log -1 --pretty=%ct HEAD)"
+          echo "epoch=$epoch" >> "$GITHUB_OUTPUT"
+          echo "SOURCE_DATE_EPOCH=$epoch (commit $(git rev-parse --short HEAD))"
+
+      - name: Build awsum
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.sde.outputs.epoch }}
+        run: stack build --pedantic --copy-bins --local-bin-path target
+
+      # Package into a tar.gz with stripped timestamps / ownership so the
+      # archive is reproducible too — not just the binary inside it. Users
+      # download the .tar.gz, so that's the artefact the claim is about.
+      - name: Package
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.sde.outputs.epoch }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar \
+            --sort=name \
+            --mtime="@${SOURCE_DATE_EPOCH}" \
+            --owner=0 --group=0 --numeric-owner \
+            -C target -czf dist/awsum-linux-x86_64-gnu.tar.gz awsum
+
+      - name: Hash artefacts
+        run: |
+          set -euo pipefail
+          mkdir -p hashes
+          sha256sum target/awsum > hashes/binary.sha256
+          sha256sum dist/awsum-linux-x86_64-gnu.tar.gz > hashes/archive.sha256
+          echo "binary:"  && cat hashes/binary.sha256
+          echo "archive:" && cat hashes/archive.sha256
+
+      - name: Upload hashes
+        uses: actions/upload-artifact@v7
+        with:
+          name: hashes-${{ matrix.instance }}
+          path: hashes/
+          if-no-files-found: error
+
+  compare:
+    name: Compare hashes
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: hashes-a
+          path: a/
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: hashes-b
+          path: b/
+
+      - name: Diff
+        run: |
+          set -euo pipefail
+          ok=1
+          for kind in binary archive; do
+            sha_a="$(cut -d' ' -f1 < "a/${kind}.sha256")"
+            sha_b="$(cut -d' ' -f1 < "b/${kind}.sha256")"
+            echo "$kind:"
+            echo "  build-a: $sha_a"
+            echo "  build-b: $sha_b"
+            if [ "$sha_a" != "$sha_b" ]; then
+              echo "::error::$kind hashes differ — build is not reproducible"
+              ok=0
+            fi
+          done
+          [ "$ok" = 1 ] && echo "Both binary and archive are byte-identical across two independent runners."
+          exit $((1 - ok))
