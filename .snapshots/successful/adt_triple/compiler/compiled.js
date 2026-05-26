@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,25 +30,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_showTriple(v_t){
-    {
-      const __s = v_t;
-      switch (__s[0]) {
-        case 20: {
-          const v_a = __s[1];
-          const v_b = __s[2];
-          const v_c = __s[3];
-          return (v_h0)(v_a, v_b, v_c);
-        }
-      }
-    }
-}
-
-const main = (v__let_12)((v_showTriple)([20, "one", "two", "three"]));
-
-function v_h0(v_a, v_b, v_c){
+const v_h0 = (v_a, v_b, v_c) => {
     {
       const __s = __concat(v_a, " ");
       switch (__s[0]) {
@@ -86,9 +70,23 @@ function v_h0(v_a, v_b, v_c){
         }
       }
     }
-}
+};
 
-function v__let_12(v_res){
+const v_showTriple = (v_t) => {
+    {
+      const __s = v_t;
+      switch (__s[0]) {
+        case 20: {
+          const v_a = __s[1];
+          const v_b = __s[2];
+          const v_c = __s[3];
+          return (v_h0)(v_a, v_b, v_c);
+        }
+      }
+    }
+};
+
+const v__let_12 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -102,7 +100,9 @@ function v__let_12(v_res){
         }
       }
     }
-}
+};
+
+const main = (v__let_12)((v_showTriple)([20, "one", "two", "three"]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

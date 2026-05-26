@@ -1,6 +1,31 @@
 _default:
   @ just --list --unsorted
 
+# One-time post-clone setup: installs the prepare-commit-msg hook from
+# scripts/git-hooks/ so every commit in this clone auto-adds the DCO
+# Signed-off-by trailer. See CONTRIBUTING.md ("Developer Certificate of Origin").
+setup-dev:
+  #!/bin/sh
+  set -eu
+  git config core.hooksPath scripts/git-hooks
+  chmod +x scripts/git-hooks/prepare-commit-msg
+  echo "✅ DCO prepare-commit-msg hook installed for this clone"
+
+# Verify the version literal in VERSION matches package.yaml's `version:` field.
+# VERSION is the compile-time source of truth (src/Awsum/Version.hs reads it
+# via TH); package.yaml's `version:` is what hpack and Cabal see. They must
+# agree, and this check is the gate.
+check-version-sync:
+  #!/bin/sh
+  set -eu
+  pkg_ver=$(awk '/^version:/ {print $2; exit}' package.yaml | tr -d "'\"")
+  file_ver=$(tr -d '[:space:]' < VERSION)
+  if [ "$pkg_ver" != "$file_ver" ]; then
+    echo "VERSION mismatch: package.yaml='$pkg_ver', VERSION file='$file_ver'"
+    exit 1
+  fi
+  echo "✅ Version $pkg_ver consistent across package.yaml and VERSION"
+
 lint-check:
   hlint .
 
@@ -211,6 +236,8 @@ fix:
   set -eu
   echo "Detecting cyrillic..."
   bash scripts/detect-cyrillic.sh
+  echo "Checking version sync..."
+  just check-version-sync
   echo "Format..."
   just format-fix
   echo "Lint..."

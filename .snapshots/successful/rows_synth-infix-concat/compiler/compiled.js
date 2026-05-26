@@ -5,7 +5,7 @@ function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -32,9 +32,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_double(v_n, v_s){
+const v_double = (v_n, v_s) => {
   while (true) {
     {
       const __s = __eqInt32(v_n, (0|0));
@@ -78,7 +78,7 @@ function v_double(v_n, v_s){
       }
     }
   }
-}
+};
 
 const main = ((s) => { switch(s[0]) { case 3: { const v_e = s[1]; return ((s) => { switch(s[0]) { case 589989748: { const v__t = s[1]; return [7, "string-too-long", [5, [0]]]; } case 3768445577: { const v__u = s[1]; return [7, "underflow", [5, [0]]]; } } })(v_e); } case 4: { const v__s = s[1]; return [7, "done", [5, [0]]]; } } })((v_double)((24|0), "0123456789abcdef"));
 

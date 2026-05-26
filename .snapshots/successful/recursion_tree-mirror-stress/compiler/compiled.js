@@ -4,7 +4,32 @@ function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 
-function v_runIO(v_io){
+const v_spineLast = (v_t, v_lastV) => {
+  while (true) {
+    {
+      const __s = v_t;
+      switch (__s[0]) {
+        case 20: {
+          return v_lastV;
+        }
+        case 21: {
+          const v_l = __s[1];
+          const v_v = __s[2];
+          const v__r = __s[3];
+          const __t0 = v_l;
+          const __t1 = v_v;
+          v_lastV = null;
+          v_t = null;
+          v_t = __t0;
+          v_lastV = __t1;
+          continue;
+        }
+      }
+    }
+  }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -31,9 +56,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_buildRight(v_n, v_acc){
+const v_buildRight = (v_n, v_acc) => {
   while (true) {
     {
       const __s = __eqInt32(v_n, (0|0));
@@ -65,40 +90,9 @@ function v_buildRight(v_n, v_acc){
       }
     }
   }
-}
+};
 
-function v_mirror(v_t){
-    return (v__cps_mirror)(v_t, [22]);
-}
-
-function v_spineLast(v_t, v_lastV){
-  while (true) {
-    {
-      const __s = v_t;
-      switch (__s[0]) {
-        case 20: {
-          return v_lastV;
-        }
-        case 21: {
-          const v_l = __s[1];
-          const v_v = __s[2];
-          const v__r = __s[3];
-          const __t0 = v_l;
-          const __t1 = v_v;
-          v_lastV = null;
-          v_t = null;
-          v_t = __t0;
-          v_lastV = __t1;
-          continue;
-        }
-      }
-    }
-  }
-}
-
-const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "UNDERFLOW", [5, [0]]]; } case 4: { const v_t = s[1]; return [7, String((v_spineLast)((v_mirror)(v_t), (0|0))), [5, [0]]]; } } })((v_buildRight)((100000|0), [20]));
-
-function v__scc__apply_mirror__cps_mirror(v__args){
+const v__scc__apply_mirror__cps_mirror = (v__args) => {
   while (true) {
     {
       const __s = v__args;
@@ -156,11 +150,17 @@ function v__scc__apply_mirror__cps_mirror(v__args){
       }
     }
   }
-}
+};
 
-function v__cps_mirror(v_t, v__k){
+const v__cps_mirror = (v_t, v__k) => {
     return (v__scc__apply_mirror__cps_mirror)([26, v_t, v__k]);
-}
+};
+
+const v_mirror = (v_t) => {
+    return (v__cps_mirror)(v_t, [22]);
+};
+
+const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "UNDERFLOW", [5, [0]]]; } case 4: { const v_t = s[1]; return [7, String((v_spineLast)((v_mirror)(v_t), (0|0))), [5, [0]]]; } } })((v_buildRight)((100000|0), [20]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

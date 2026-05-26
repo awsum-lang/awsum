@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,13 +29,13 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
+
+const v__let_12 = (v_unit) => {
+    return [7, "🔥", [5, [0]]];
+};
 
 const main = (v__let_12)([7, "💩", [5, [0]]]);
-
-function v__let_12(v_unit){
-    return [7, "🔥", [5, [0]]];
-}
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

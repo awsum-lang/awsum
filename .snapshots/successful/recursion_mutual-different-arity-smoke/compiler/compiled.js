@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,11 +29,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-const main = [7, String((v_parseExpr)([21])), [5, [0]]];
-
-function v__scc_parseBinary_parseExpr(v__args){
+const v__scc_parseBinary_parseExpr = (v__args) => {
   while (true) {
     {
       const __s = v__args;
@@ -76,11 +74,13 @@ function v__scc_parseBinary_parseExpr(v__args){
       }
     }
   }
-}
+};
 
-function v_parseExpr(v_tok){
+const v_parseExpr = (v_tok) => {
     return (v__scc_parseBinary_parseExpr)([23, v_tok]);
-}
+};
+
+const main = [7, String((v_parseExpr)([21])), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

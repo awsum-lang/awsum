@@ -32,6 +32,7 @@ extra-source-files:
   - README.md
   - CHANGELOG.md
   - NOTICE
+  - VERSION
   - stdlib/Prelude.aww
 
 description: Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
@@ -87,24 +88,32 @@ library:
     - lsp # for `awsum lsp` subcommand
     - lsp-types # transitive of lsp, used for protocol records / SMethod singletons
     - megaparsec # for parser
+    - template-haskell # for compile-time read of VERSION in Awsum.Version
     - text # for Data.Text.Encoding (JVM assembler)
 
 executables:
   awsum:
     main: Main.hs
     source-dirs: awsum
+    # Explicitly empty `other-modules` suppresses hpack's two default
+    # behaviours: (a) auto-discovering modules in source-dirs, and (b)
+    # auto-adding Paths_<pkg> as autogen. Without this suppression, Cabal
+    # auto-generates Paths_awsum.hs with absolute build-dir paths baked in as
+    # cstrings, breaking byte-reproducibility. The version literal lives in
+    # the top-level VERSION file and is read at compile time via Template
+    # Haskell in src/Awsum/Version.hs; Main.hs imports it from there.
+    other-modules: []
     ghc-options:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
     # Per-OS linker flags required for byte-reproducible final binaries.
-    # See .github/workflows/reproducible-build.yml and
-    # ../management/reproducible-builds.md for the per-platform fix list.
+    # On macOS we intentionally do NOT pass -no_uuid — that strips LC_UUID
+    # entirely, which makes dyld on macOS 14+ refuse to load the binary.
+    # ld64's default -random_uuid is misnamed: it hashes input .o files, so
+    # with -fhide-source-paths producing deterministic .o files, the UUID is
+    # already byte-stable across builds.
     when:
-      - condition: os(darwin)
-        # Strip Mach-O LC_UUID (random per build by default in ld64).
-        ghc-options:
-          - -optl=-Wl,-no_uuid
       - condition: os(windows)
         # Strip PE COFF TimeDateStamp (wall-clock by default in MinGW ld).
         ghc-options:

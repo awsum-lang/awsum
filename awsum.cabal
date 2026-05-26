@@ -14,6 +14,7 @@ extra-source-files:
     README.md
     CHANGELOG.md
     NOTICE
+    VERSION
     stdlib/Prelude.aww
 
 flag textmate-tests
@@ -82,6 +83,7 @@ library
       Awsum.Tco
       Awsum.TypeTrace
       Awsum.Typing
+      Awsum.Version
       Common.File
   other-modules:
       Paths_awsum
@@ -94,7 +96,7 @@ library
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -108,13 +110,12 @@ library
     , lsp-types
     , megaparsec
     , relude
+    , template-haskell
     , text
   default-language: GHC2024
 
 executable awsum
   main-is: Main.hs
-  other-modules:
-      Paths_awsum
   hs-source-dirs:
       awsum
   default-extensions:
@@ -124,7 +125,7 @@ executable awsum
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       awsum
     , base >=4.7 && <5
@@ -135,6 +136,8 @@ executable awsum
     , relude
     , temporary
   default-language: GHC2024
+  if os(windows)
+    ghc-options: -optl=-Wl,--no-insert-timestamp
 
 executable awsum-bench
   main-is: Bench.hs
@@ -149,7 +152,7 @@ executable awsum-bench
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       awsum
     , base >=4.7 && <5
@@ -175,7 +178,7 @@ executable awsum-stats
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       awsum
     , base >=4.7 && <5
@@ -213,7 +216,7 @@ test-suite awsum-test
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , aeson
@@ -247,7 +250,7 @@ test-suite textmate-tests
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N -main-is TextMateMain
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N -main-is TextMateMain
   build-depends:
       QuickCheck
     , aeson
@@ -279,7 +282,7 @@ test-suite tree-sitter-tests
       DuplicateRecordFields
       OverloadedRecordDot
       OverloadedStrings
-  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N -main-is TreeSitterMain
+  ghc-options: -j16 +RTS -A32m -RTS -O2 -haddock -fhide-source-paths -Weverything -Wno-all-missed-specialisations -Wno-missed-specialisations -Wno-missing-local-signatures -Wno-unsafe -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-missing-import-lists -threaded -rtsopts -with-rtsopts=-N -main-is TreeSitterMain
   build-depends:
       QuickCheck
     , awsum

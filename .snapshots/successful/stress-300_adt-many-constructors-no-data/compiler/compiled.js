@@ -2,64 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_and(v_a, v_b){
-    {
-      const __s = v_a;
-      switch (__s[0]) {
-        case 1: {
-          return v_b;
-        }
-        case 2: {
-          return [2];
-        }
-      }
-    }
-}
-
-function v_showBool(v_b){
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 1: {
-          return "True";
-        }
-        case 2: {
-          return "False";
-        }
-      }
-    }
-}
-
-function v_runIO(v_io){
-  while (true) {
-    {
-      const __s = v_io;
-      switch (__s[0]) {
-        case 5: {
-          const v_u = __s[1];
-          return v_u;
-        }
-        case 7: {
-          const v_s = __s[1];
-          const v_next = __s[2];
-          {
-            const __s = __print(v_s);
-            switch (__s[0]) {
-              case 0: {
-                const __t0 = v_next;
-                v_io = null;
-                v_io = __t0;
-                continue;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-function v_un(v_x){
+const v_un = (v_x) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -965,7 +908,64 @@ function v_un(v_x){
         }
       }
     }
-}
+};
+
+const v_showBool = (v_b) => {
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 1: {
+          return "True";
+        }
+        case 2: {
+          return "False";
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
+  while (true) {
+    {
+      const __s = v_io;
+      switch (__s[0]) {
+        case 5: {
+          const v_u = __s[1];
+          return v_u;
+        }
+        case 7: {
+          const v_s = __s[1];
+          const v_next = __s[2];
+          {
+            const __s = __print(v_s);
+            switch (__s[0]) {
+              case 0: {
+                const __t0 = v_next;
+                v_io = null;
+                v_io = __t0;
+                continue;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+const v_and = (v_a, v_b) => {
+    {
+      const __s = v_a;
+      switch (__s[0]) {
+        case 1: {
+          return v_b;
+        }
+        case 2: {
+          return [2];
+        }
+      }
+    }
+};
 
 const v_res = (v_and)((v_un)([20]), (v_and)((v_un)([21]), (v_and)((v_un)([22]), (v_and)((v_un)([23]), (v_and)((v_un)([24]), (v_and)((v_un)([25]), (v_and)((v_un)([26]), (v_and)((v_un)([27]), (v_and)((v_un)([28]), (v_and)((v_un)([29]), (v_and)((v_un)([30]), (v_and)((v_un)([31]), (v_and)((v_un)([32]), (v_and)((v_un)([33]), (v_and)((v_un)([34]), (v_and)((v_un)([35]), (v_and)((v_un)([36]), (v_and)((v_un)([37]), (v_and)((v_un)([38]), (v_and)((v_un)([39]), (v_and)((v_un)([40]), (v_and)((v_un)([41]), (v_and)((v_un)([42]), (v_and)((v_un)([43]), (v_and)((v_un)([44]), (v_and)((v_un)([45]), (v_and)((v_un)([46]), (v_and)((v_un)([47]), (v_and)((v_un)([48]), (v_and)((v_un)([49]), (v_and)((v_un)([50]), (v_and)((v_un)([51]), (v_and)((v_un)([52]), (v_and)((v_un)([53]), (v_and)((v_un)([54]), (v_and)((v_un)([55]), (v_and)((v_un)([56]), (v_and)((v_un)([57]), (v_and)((v_un)([58]), (v_and)((v_un)([59]), (v_and)((v_un)([60]), (v_and)((v_un)([61]), (v_and)((v_un)([62]), (v_and)((v_un)([63]), (v_and)((v_un)([64]), (v_and)((v_un)([65]), (v_and)((v_un)([66]), (v_and)((v_un)([67]), (v_and)((v_un)([68]), (v_and)((v_un)([69]), (v_and)((v_un)([70]), (v_and)((v_un)([71]), (v_and)((v_un)([72]), (v_and)((v_un)([73]), (v_and)((v_un)([74]), (v_and)((v_un)([75]), (v_and)((v_un)([76]), (v_and)((v_un)([77]), (v_and)((v_un)([78]), (v_and)((v_un)([79]), (v_and)((v_un)([80]), (v_and)((v_un)([81]), (v_and)((v_un)([82]), (v_and)((v_un)([83]), (v_and)((v_un)([84]), (v_and)((v_un)([85]), (v_and)((v_un)([86]), (v_and)((v_un)([87]), (v_and)((v_un)([88]), (v_and)((v_un)([89]), (v_and)((v_un)([90]), (v_and)((v_un)([91]), (v_and)((v_un)([92]), (v_and)((v_un)([93]), (v_and)((v_un)([94]), (v_and)((v_un)([95]), (v_and)((v_un)([96]), (v_and)((v_un)([97]), (v_and)((v_un)([98]), (v_and)((v_un)([99]), (v_and)((v_un)([100]), (v_and)((v_un)([101]), (v_and)((v_un)([102]), (v_and)((v_un)([103]), (v_and)((v_un)([104]), (v_and)((v_un)([105]), (v_and)((v_un)([106]), (v_and)((v_un)([107]), (v_and)((v_un)([108]), (v_and)((v_un)([109]), (v_and)((v_un)([110]), (v_and)((v_un)([111]), (v_and)((v_un)([112]), (v_and)((v_un)([113]), (v_and)((v_un)([114]), (v_and)((v_un)([115]), (v_and)((v_un)([116]), (v_and)((v_un)([117]), (v_and)((v_un)([118]), (v_and)((v_un)([119]), (v_and)((v_un)([120]), (v_and)((v_un)([121]), (v_and)((v_un)([122]), (v_and)((v_un)([123]), (v_and)((v_un)([124]), (v_and)((v_un)([125]), (v_and)((v_un)([126]), (v_and)((v_un)([127]), (v_and)((v_un)([128]), (v_and)((v_un)([129]), (v_and)((v_un)([130]), (v_and)((v_un)([131]), (v_and)((v_un)([132]), (v_and)((v_un)([133]), (v_and)((v_un)([134]), (v_and)((v_un)([135]), (v_and)((v_un)([136]), (v_and)((v_un)([137]), (v_and)((v_un)([138]), (v_and)((v_un)([139]), (v_and)((v_un)([140]), (v_and)((v_un)([141]), (v_and)((v_un)([142]), (v_and)((v_un)([143]), (v_and)((v_un)([144]), (v_and)((v_un)([145]), (v_and)((v_un)([146]), (v_and)((v_un)([147]), (v_and)((v_un)([148]), (v_and)((v_un)([149]), (v_and)((v_un)([150]), (v_and)((v_un)([151]), (v_and)((v_un)([152]), (v_and)((v_un)([153]), (v_and)((v_un)([154]), (v_and)((v_un)([155]), (v_and)((v_un)([156]), (v_and)((v_un)([157]), (v_and)((v_un)([158]), (v_and)((v_un)([159]), (v_and)((v_un)([160]), (v_and)((v_un)([161]), (v_and)((v_un)([162]), (v_and)((v_un)([163]), (v_and)((v_un)([164]), (v_and)((v_un)([165]), (v_and)((v_un)([166]), (v_and)((v_un)([167]), (v_and)((v_un)([168]), (v_and)((v_un)([169]), (v_and)((v_un)([170]), (v_and)((v_un)([171]), (v_and)((v_un)([172]), (v_and)((v_un)([173]), (v_and)((v_un)([174]), (v_and)((v_un)([175]), (v_and)((v_un)([176]), (v_and)((v_un)([177]), (v_and)((v_un)([178]), (v_and)((v_un)([179]), (v_and)((v_un)([180]), (v_and)((v_un)([181]), (v_and)((v_un)([182]), (v_and)((v_un)([183]), (v_and)((v_un)([184]), (v_and)((v_un)([185]), (v_and)((v_un)([186]), (v_and)((v_un)([187]), (v_and)((v_un)([188]), (v_and)((v_un)([189]), (v_and)((v_un)([190]), (v_and)((v_un)([191]), (v_and)((v_un)([192]), (v_and)((v_un)([193]), (v_and)((v_un)([194]), (v_and)((v_un)([195]), (v_and)((v_un)([196]), (v_and)((v_un)([197]), (v_and)((v_un)([198]), (v_and)((v_un)([199]), (v_and)((v_un)([200]), (v_and)((v_un)([201]), (v_and)((v_un)([202]), (v_and)((v_un)([203]), (v_and)((v_un)([204]), (v_and)((v_un)([205]), (v_and)((v_un)([206]), (v_and)((v_un)([207]), (v_and)((v_un)([208]), (v_and)((v_un)([209]), (v_and)((v_un)([210]), (v_and)((v_un)([211]), (v_and)((v_un)([212]), (v_and)((v_un)([213]), (v_and)((v_un)([214]), (v_and)((v_un)([215]), (v_and)((v_un)([216]), (v_and)((v_un)([217]), (v_and)((v_un)([218]), (v_and)((v_un)([219]), (v_and)((v_un)([220]), (v_and)((v_un)([221]), (v_and)((v_un)([222]), (v_and)((v_un)([223]), (v_and)((v_un)([224]), (v_and)((v_un)([225]), (v_and)((v_un)([226]), (v_and)((v_un)([227]), (v_and)((v_un)([228]), (v_and)((v_un)([229]), (v_and)((v_un)([230]), (v_and)((v_un)([231]), (v_and)((v_un)([232]), (v_and)((v_un)([233]), (v_and)((v_un)([234]), (v_and)((v_un)([235]), (v_and)((v_un)([236]), (v_and)((v_un)([237]), (v_and)((v_un)([238]), (v_and)((v_un)([239]), (v_and)((v_un)([240]), (v_and)((v_un)([241]), (v_and)((v_un)([242]), (v_and)((v_un)([243]), (v_and)((v_un)([244]), (v_and)((v_un)([245]), (v_and)((v_un)([246]), (v_and)((v_un)([247]), (v_and)((v_un)([248]), (v_and)((v_un)([249]), (v_and)((v_un)([250]), (v_and)((v_un)([251]), (v_and)((v_un)([252]), (v_and)((v_un)([253]), (v_and)((v_un)([254]), (v_and)((v_un)([255]), (v_and)((v_un)([256]), (v_and)((v_un)([257]), (v_and)((v_un)([258]), (v_and)((v_un)([259]), (v_and)((v_un)([260]), (v_and)((v_un)([261]), (v_and)((v_un)([262]), (v_and)((v_un)([263]), (v_and)((v_un)([264]), (v_and)((v_un)([265]), (v_and)((v_un)([266]), (v_and)((v_un)([267]), (v_and)((v_un)([268]), (v_and)((v_un)([269]), (v_and)((v_un)([270]), (v_and)((v_un)([271]), (v_and)((v_un)([272]), (v_and)((v_un)([273]), (v_and)((v_un)([274]), (v_and)((v_un)([275]), (v_and)((v_un)([276]), (v_and)((v_un)([277]), (v_and)((v_un)([278]), (v_and)((v_un)([279]), (v_and)((v_un)([280]), (v_and)((v_un)([281]), (v_and)((v_un)([282]), (v_and)((v_un)([283]), (v_and)((v_un)([284]), (v_and)((v_un)([285]), (v_and)((v_un)([286]), (v_and)((v_un)([287]), (v_and)((v_un)([288]), (v_and)((v_un)([289]), (v_and)((v_un)([290]), (v_and)((v_un)([291]), (v_and)((v_un)([292]), (v_and)((v_un)([293]), (v_and)((v_un)([294]), (v_and)((v_un)([295]), (v_and)((v_un)([296]), (v_and)((v_un)([297]), (v_and)((v_un)([298]), (v_and)((v_un)([299]), (v_and)((v_un)([300]), (v_and)((v_un)([301]), (v_and)((v_un)([302]), (v_and)((v_un)([303]), (v_and)((v_un)([304]), (v_and)((v_un)([305]), (v_and)((v_un)([306]), (v_and)((v_un)([307]), (v_and)((v_un)([308]), (v_and)((v_un)([309]), (v_and)((v_un)([310]), (v_and)((v_un)([311]), (v_and)((v_un)([312]), (v_and)((v_un)([313]), (v_and)((v_un)([314]), (v_and)((v_un)([315]), (v_and)((v_un)([316]), (v_and)((v_un)([317]), (v_and)((v_un)([318]), (v_un)([319]))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
 

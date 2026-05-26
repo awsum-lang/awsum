@@ -4,7 +4,7 @@ function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]; }
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -31,13 +31,11 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
 const v_bBox = [20, [21]];
 
-const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_a)((1000000|0)));
-
-function v__scc__apply1__lam_12_a_b(v__args){
+const v__scc__apply1__lam_12_a_b = (v__args) => {
   while (true) {
     {
       const __s = v__args;
@@ -131,11 +129,13 @@ function v__scc__apply1__lam_12_a_b(v__args){
       }
     }
   }
-}
+};
 
-function v_a(v_n){
+const v_a = (v_n) => {
     return (v__scc__apply1__lam_12_a_b)([24, v_n]);
-}
+};
+
+const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_a)((1000000|0)));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

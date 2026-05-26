@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,9 +29,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_advanceStep(v_x){
+const v_advanceStep = (v_x) => {
   while (true) {
     {
       const __s = v_x;
@@ -52,7 +52,7 @@ function v_advanceStep(v_x){
       }
     }
   }
-}
+};
 
 const main = [7, (v_advanceStep)([20]), [5, [0]]];
 

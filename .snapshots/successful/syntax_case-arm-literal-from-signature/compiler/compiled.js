@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,9 +29,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_firstZero(v_x){
+const v_firstZero = (v_x) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -55,11 +55,9 @@ function v_firstZero(v_x){
         }
       }
     }
-}
+};
 
-const main = [7, String((v_firstZero)((v__lift_12)([10]))), [5, [0]]];
-
-function v__lift_12(v___input){
+const v__lift_12 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -72,7 +70,9 @@ function v__lift_12(v___input){
         }
       }
     }
-}
+};
+
+const main = [7, String((v_firstZero)((v__lift_12)([10]))), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

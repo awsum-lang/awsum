@@ -2,7 +2,7 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,9 +29,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_dispatch(v_x){
+const v_dispatch = (v_x) => {
     {
       const __s = v_x;
       switch (__s[0]) {
@@ -41,7 +41,7 @@ function v_dispatch(v_x){
         }
       }
     }
-}
+};
 
 const main = ((s) => { switch(s[0]) { case 10: { return [7, "n", [5, [0]]]; } case 11: { const v_x = s[1]; return [7, (v_dispatch)([1615808600, v_x]), [5, [0]]]; } } })([11, "hello"]);
 

@@ -2,7 +2,23 @@
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 
-function v_runIO(v_io){
+const v_wrap = (v_s) => {
+    return [20, v_s];
+};
+
+const v_unwrap = (v_b) => {
+    {
+      const __s = v_b;
+      switch (__s[0]) {
+        case 20: {
+          const v_value = __s[1];
+          return v_value;
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -29,35 +45,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_wrap(v_s){
-    return [20, v_s];
-}
-
-function v_unwrap(v_b){
-    {
-      const __s = v_b;
-      switch (__s[0]) {
-        case 20: {
-          const v_value = __s[1];
-          return v_value;
-        }
-      }
-    }
-}
-
-function v_compose(v_f, v_g, v_x){
-    return (v__apply1)(v_f, (v__apply1)(v_g, v_x));
-}
-
-const main = [7, (v__df_apply_0)("chain", [21], [22]), [5, [0]]];
-
-function v__df_apply_0(v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1){
-    return (v_compose)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
-}
-
-function v__apply1(v__cl, v__arg0){
+const v__apply1 = (v__cl, v__arg0) => {
     {
       const __s = v__cl;
       switch (__s[0]) {
@@ -69,7 +59,17 @@ function v__apply1(v__cl, v__arg0){
         }
       }
     }
-}
+};
+
+const v_compose = (v_f, v_g, v_x) => {
+    return (v__apply1)(v_f, (v__apply1)(v_g, v_x));
+};
+
+const v__df_apply_0 = (v_x, v__df_apply_0_cap0_0, v__df_apply_0_cap0_1) => {
+    return (v_compose)(v__df_apply_0_cap0_0, v__df_apply_0_cap0_1, v_x);
+};
+
+const main = [7, (v__df_apply_0)("chain", [21], [22]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

@@ -3,7 +3,18 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_showTri = (v_t) => {
+    {
+      const __s = v_t;
+      switch (__s[0]) {
+        case 20: {
+          return "A";
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -30,30 +41,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_showTri(v_t){
-    {
-      const __s = v_t;
-      switch (__s[0]) {
-        case 20: {
-          return "A";
-        }
-      }
-    }
-}
-
-function v_threeTypes(v_n, v_s, v_b){
-    return (v__df__let_13_0)(v_b, v_n, v_s);
-}
-
-const main = (v__let_14)((v_threeTypes)((42|0), "hello", [20]));
-
-function v__lam_12(v_x){
-    return v_x;
-}
-
-function v__let_14(v_res){
+const v__let_14 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -67,9 +57,13 @@ function v__let_14(v_res){
         }
       }
     }
-}
+};
 
-function v__df__let_13_0(v_b, v_n, v_s){
+const v__lam_12 = (v_x) => {
+    return v_x;
+};
+
+const v__df__let_13_0 = (v_b, v_n, v_s) => {
     {
       const __s = __concat(String((v__lam_12)(v_n)), "/");
       switch (__s[0]) {
@@ -107,7 +101,13 @@ function v__df__let_13_0(v_b, v_n, v_s){
         }
       }
     }
-}
+};
+
+const v_threeTypes = (v_n, v_s, v_b) => {
+    return (v__df__let_13_0)(v_b, v_n, v_s);
+};
+
+const main = (v__let_14)((v_threeTypes)((42|0), "hello", [20]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

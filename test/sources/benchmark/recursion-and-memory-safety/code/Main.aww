@@ -1,0 +1,71 @@
+{- This demo program builds an immutable tree of depth 100_000,
+   mirrors it 500 times (causing heavy allocation pressure),
+   and displays the deepest value on the left path.
+
+   Every recursion shape is stack-safe on every target, including JVM and JS
+   where native cross-method TCO doesn't exist.
+
+   JVM, CLR, and JS targets use their GCs.
+   LLVM and WASM targets use static lifetimes — no GC, no explicit lifetime annotations. -}
+
+import IO.Stdout
+
+type Tree a = Leaf | Node (Tree a) a (Tree a)
+
+main : IO Never Unit
+main = case runDemo of
+  Left e -> showUnderflowError e |> IO.Stdout.print
+  Right n -> showInt32 n |> IO.Stdout.print
+
+runDemo : Either UnderflowError Int32
+runDemo = do
+  tree <- buildTree 100_000
+  mirrored <- mirrorN 500 tree
+  Right (deepestLeftA 0 mirrored)
+
+buildTree : Int32 -> Either UnderflowError (Tree Int32)
+buildTree depth = do
+  l <- buildLeft depth Leaf
+  r <- buildRight depth Leaf
+  Right (Node l 0 r)
+
+buildLeft : Int32 -> Tree Int32 -> Either UnderflowError (Tree Int32)
+buildLeft depth acc = case eqInt32 depth 0 of
+  True -> Right acc
+  False -> do
+    d <- predInt32 depth
+    buildLeft d (Node acc depth Leaf) -- tail recursion
+
+buildRight : Int32 -> Tree Int32 -> Either UnderflowError (Tree Int32)
+buildRight depth acc = case eqInt32 depth 0 of
+  True -> Right acc
+  False -> do
+    d <- predInt32 depth
+    buildRight d (Node Leaf depth acc) -- tail recursion
+
+mirror : Tree a -> Tree a
+mirror t = case t of
+  Leaf -> Leaf
+  Node l v r -> Node (mirror r) v (mirror l) -- multi-child non-tail recursion
+
+mirrorN : Int32 -> Tree a -> Either UnderflowError (Tree a)
+mirrorN times t = case eqInt32 times 0 of
+  True -> Right t
+  False -> do
+    m <- predInt32 times
+    mirrorN m (mirror t) -- heavy allocation pressure
+
+deepestLeftA : a -> Tree a -> a
+deepestLeftA lastV t = case t of
+  Leaf -> lastV
+  Node l v _r -> deepestLeftB v l -- 3-node mutual tail recursion
+
+deepestLeftB : a -> Tree a -> a
+deepestLeftB lastV t = case t of
+  Leaf -> lastV
+  Node l v _r -> deepestLeftC v l -- 3-node mutual tail recursion
+
+deepestLeftC : a -> Tree a -> a
+deepestLeftC lastV t = case t of
+  Leaf -> lastV
+  Node l v _r -> deepestLeftA v l -- 3-node mutual tail recursion

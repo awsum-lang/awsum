@@ -4,7 +4,7 @@ function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -31,15 +31,15 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_identity(v_x){
+const v_identity = (v_x) => {
     return v_x;
-}
-
-const v_direct = String((42|0));
+};
 
 const v_throughHof = String((v_identity)((10|0)));
+
+const v_direct = String((42|0));
 
 const v_ascribedCall = ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return "FAIL"; } case 4: { const v_n = s[1]; return String(v_n); } } })(__predInt32((5|0)));
 

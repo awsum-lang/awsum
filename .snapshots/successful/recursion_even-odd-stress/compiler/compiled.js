@@ -5,7 +5,11 @@ function __predInt32(x){ return x === -2147483648 ? [3, [14]] : [4, ((x - 1)|0)]
 function __eqInt32(a, b){ return a === b ? [1] : [2]; }
 function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
 
-function v_showBool(v_b){
+const v_showUnderflowError = (v__wild0) => {
+    return "UnderflowError";
+};
+
+const v_showBool = (v_b) => {
     {
       const __s = v_b;
       switch (__s[0]) {
@@ -17,9 +21,25 @@ function v_showBool(v_b){
         }
       }
     }
-}
+};
 
-function v_runIO(v_io){
+const v_showResult = (v_r) => {
+    {
+      const __s = v_r;
+      switch (__s[0]) {
+        case 3: {
+          const v_e = __s[1];
+          return __concat("left: ", (v_showUnderflowError)(v_e));
+        }
+        case 4: {
+          const v_b = __s[1];
+          return __concat("right: ", (v_showBool)(v_b));
+        }
+      }
+    }
+};
+
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -46,47 +66,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_showUnderflowError(v__wild0){
-    return "UnderflowError";
-}
-
-function v_showResult(v_r){
-    {
-      const __s = v_r;
-      switch (__s[0]) {
-        case 3: {
-          const v_e = __s[1];
-          return __concat("left: ", (v_showUnderflowError)(v_e));
-        }
-        case 4: {
-          const v_b = __s[1];
-          return __concat("right: ", (v_showBool)(v_b));
-        }
-      }
-    }
-}
-
-const main = (v__let_12)((v_showResult)((v_evenInt)((1000000|0))));
-
-function v__let_12(v_res){
-    {
-      const __s = v_res;
-      switch (__s[0]) {
-        case 3: {
-          const v___w0 = __s[1];
-          return [7, "STRING_TOO_LONG", [5, [0]]];
-        }
-        case 4: {
-          const v_s = __s[1];
-          return [7, v_s, [5, [0]]];
-        }
-      }
-    }
-}
-
-function v__scc_evenInt_oddInt(v__args){
+const v__scc_evenInt_oddInt = (v__args) => {
   while (true) {
     {
       const __s = v__args;
@@ -150,11 +132,29 @@ function v__scc_evenInt_oddInt(v__args){
       }
     }
   }
-}
+};
 
-function v_evenInt(v_n){
+const v_evenInt = (v_n) => {
     return (v__scc_evenInt_oddInt)([8, v_n]);
-}
+};
+
+const v__let_12 = (v_res) => {
+    {
+      const __s = v_res;
+      switch (__s[0]) {
+        case 3: {
+          const v___w0 = __s[1];
+          return [7, "STRING_TOO_LONG", [5, [0]]];
+        }
+        case 4: {
+          const v_s = __s[1];
+          return [7, v_s, [5, [0]]];
+        }
+      }
+    }
+};
+
+const main = (v__let_12)((v_showResult)((v_evenInt)((1000000|0))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

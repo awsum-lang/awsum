@@ -7,7 +7,7 @@ function __lengthCodePoints(s){ let n = 0; for (const _ of s) n++; return (n >>>
 function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }
 function __lengthUtf8Bytes(s){ return (new TextEncoder().encode(s).length >>> 0); }
 
-function v_runIO(v_io){
+const v_runIO = (v_io) => {
   while (true) {
     {
       const __s = v_io;
@@ -34,9 +34,9 @@ function v_runIO(v_io){
       }
     }
   }
-}
+};
 
-function v_check(v_expected, v_actual, v_label){
+const v_check = (v_expected, v_actual, v_label) => {
     {
       const __s = __eqUInt32(v_expected, v_actual);
       switch (__s[0]) {
@@ -96,7 +96,7 @@ function v_check(v_expected, v_actual, v_label){
         }
       }
     }
-}
+};
 
 const v_run = ((s) => { switch(s[0]) { case 3: { const v__do_e_9 = s[1]; return [3, v__do_e_9]; } case 4: { const v_a = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_8 = s[1]; return [3, v__do_e_8]; } case 4: { const v_b = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_7 = s[1]; return [3, v__do_e_7]; } case 4: { const v_c = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_6 = s[1]; return [3, v__do_e_6]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_5 = s[1]; return [3, v__do_e_5]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_4 = s[1]; return [3, v__do_e_4]; } case 4: { const v_s2 = s[1]; return __concat(v_s2, v_c); } } })(__concat(v_s1, ", ")); } } })(__concat(v_s0, v_b)); } } })(__concat(v_a, ", ")); } } })((v_check)((4 >>> 0), __lengthUtf8Bytes("🔥"), "lengthUtf8Bytes")); } } })((v_check)((2 >>> 0), __lengthUtf16CodeUnits("🔥"), "lengthUtf16CodeUnits")); } } })((v_check)((1 >>> 0), __lengthCodePoints("🔥"), "lengthCodePoints"));
 
