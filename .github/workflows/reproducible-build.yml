@@ -22,9 +22,7 @@ name: Reproducible build
 #                        sources of the four — expect several iteration rounds.
 #
 # Non-required targets use `continue-on-error: true` so their failures don't
-# fail the workflow overall; linux-x86_64-gnu is the only hard gate today. See
-# ../../../management/reproducible-builds.md (private) for the full per-platform
-# fix list and rationale.
+# fail the workflow overall; linux-x86_64-gnu is the only hard gate today.
 #
 # Triggers:
 #   - workflow_dispatch:     run manually against any branch / PR before merge.
@@ -111,11 +109,18 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.sde.outputs.epoch }}
         run: stack build --pedantic --copy-bins --local-bin-path target
 
+      # ld64 picks a non-deterministic LC_UUID even with -fhide-source-paths
+      # in effect; zero it in place so the binary content is stable. Done
+      # before codesign so the signature's hash chain covers the zeroed UUID.
+      - name: Zero LC_UUID (macOS)
+        if: runner.os == 'macOS'
+        run: python3 scripts/zero-macho-uuid.py target/awsum
+
       # Re-sign with --timestamp=none and ad-hoc identity so the codesignature
       # blob is deterministic. The linker already injected an ad-hoc signature
       # at build time (required for Mach-O execution on Apple Silicon); --force
       # overwrites it with one whose hash chain depends only on the binary
-      # content (which itself is deterministic once -Wl,-no_uuid is in effect).
+      # content (now deterministic after the UUID zero pass).
       - name: Codesign (macOS)
         if: runner.os == 'macOS'
         run: codesign --sign - --options runtime --timestamp=none --force target/awsum
