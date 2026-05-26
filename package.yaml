@@ -32,6 +32,7 @@ extra-source-files:
   - README.md
   - CHANGELOG.md
   - NOTICE
+  - VERSION
   - stdlib/Prelude.aww
 
 description: Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
@@ -87,6 +88,7 @@ library:
     - lsp # for `awsum lsp` subcommand
     - lsp-types # transitive of lsp, used for protocol records / SMethod singletons
     - megaparsec # for parser
+    - template-haskell # for compile-time read of VERSION in Awsum.Version
     - text # for Data.Text.Encoding (JVM assembler)
 
 executables:

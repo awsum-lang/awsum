@@ -30,7 +30,7 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Data.Version (showVersion)
 import Options.Applicative qualified as OA
-import Paths_awsum qualified as Meta
+import Awsum.Version qualified as Meta
 import Relude
 import System.Exit (ExitCode (..))
 import System.FilePath (dropExtension, (</>))
