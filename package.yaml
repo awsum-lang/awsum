@@ -53,6 +53,10 @@ ghc-options:
   - -O2
     # Enables local documentation
   - -haddock
+    # Strip absolute build paths from compiled output so two builds in different
+    # working directories produce byte-identical binaries. Required for the
+    # per-release reproducibility check in .github/workflows/reproducible-build.yml.
+  - -fhide-source-paths
     # Enable all possible warnings as errors (Werror is provided manually in dockerfile for production builds and CI)
   - -Weverything
     # Complains about imported functions
@@ -93,6 +97,18 @@ executables:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
+    # Per-OS linker flags required for byte-reproducible final binaries.
+    # See .github/workflows/reproducible-build.yml and
+    # ../management/reproducible-builds.md for the per-platform fix list.
+    when:
+      - condition: os(darwin)
+        # Strip Mach-O LC_UUID (random per build by default in ld64).
+        ghc-options:
+          - -optl=-Wl,-no_uuid
+      - condition: os(windows)
+        # Strip PE COFF TimeDateStamp (wall-clock by default in MinGW ld).
+        ghc-options:
+          - -optl=-Wl,--no-insert-timestamp
     dependencies:
       - awsum
       - filepath # for CLI

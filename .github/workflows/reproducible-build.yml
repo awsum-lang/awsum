@@ -1,0 +1,222 @@
+name: Reproducible build
+
+# For each of the four release targets, two independent jobs build the same
+# commit SHA in parallel and a third compares sha256 of the binary and packaged
+# archive. No cache — caching can shortcut builds and hide the very
+# non-determinism this workflow exists to catch.
+#
+# Per-target status:
+#   - linux-x86_64-gnu:  hard-gate. Should pass with -fhide-source-paths +
+#                        deterministic tar.
+#   - linux-aarch64-gnu: advisory. Same setup as x86_64; expected to pass once
+#                        ubuntu-24.04-arm runner behaves like its x86_64 sibling.
+#   - macos-aarch64:     advisory. Needs -Wl,-no_uuid (in package.yaml) and an
+#                        ad-hoc codesign with --timestamp=none after the build.
+#                        Likely still fails initially — Mach-O has more
+#                        non-determinism sources than this first pass covers
+#                        (LC_BUILD_VERSION minor-version drift, etc.). Debug
+#                        iteratively with `diffoscope`.
+#   - windows-x86_64:    advisory. Needs -Wl,--no-insert-timestamp (in
+#                        package.yaml), strip to drop any DebugDirectory, and a
+#                        deterministic zip. PE has the most non-determinism
+#                        sources of the four — expect several iteration rounds.
+#
+# Non-required targets use `continue-on-error: true` so their failures don't
+# fail the workflow overall; linux-x86_64-gnu is the only hard gate today. See
+# ../../../management/reproducible-builds.md (private) for the full per-platform
+# fix list and rationale.
+#
+# Triggers:
+#   - workflow_dispatch:     run manually against any branch / PR before merge.
+#   - push: tags: ['v*']:    auto-gate every release tag.
+
+on:
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - "v*"
+
+jobs:
+  build:
+    name: Build (${{ matrix.target.name }} / ${{ matrix.instance }})
+    runs-on: ${{ matrix.target.os }}
+    timeout-minutes: 60
+    continue-on-error: ${{ !matrix.target.required }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - {
+              os: ubuntu-24.04,
+              name: linux-x86_64-gnu,
+              archive: tar,
+              required: true,
+            }
+          - {
+              os: ubuntu-24.04-arm,
+              name: linux-aarch64-gnu,
+              archive: tar,
+              required: false,
+            }
+          - { os: macos-15, name: macos-aarch64, archive: tar, required: false }
+          - {
+              os: windows-2025,
+              name: windows-x86_64,
+              archive: zip,
+              required: false,
+            }
+        instance: [a, b]
+
+    env:
+      STACK_ROOT: ${{ github.workspace }}/.stack-root
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: "3.9.1"
+          stack-no-global: true
+
+      # Pin MACOSX_DEPLOYMENT_TARGET so LC_BUILD_VERSION is stable across builds
+      # on a given Xcode minor. Without this, the linker picks the SDK default,
+      # which can drift between GHA runner image updates.
+      - name: Pin macOS deployment target
+        if: runner.os == 'macOS'
+        run: echo "MACOSX_DEPLOYMENT_TARGET=14.0" >> "$GITHUB_ENV"
+
+      # GHA macOS runners ship BSD tar by default; gnu-tar gives us GNU tar
+      # flag compatibility (--sort, --owner=0/--group=0, --numeric-owner).
+      - name: Install gnu-tar
+        if: runner.os == 'macOS'
+        run: brew install gnu-tar > /dev/null
+
+      - name: Compute SOURCE_DATE_EPOCH from commit
+        id: sde
+        run: |
+          set -euo pipefail
+          epoch="$(git log -1 --pretty=%ct HEAD)"
+          echo "epoch=$epoch" >> "$GITHUB_OUTPUT"
+          echo "SOURCE_DATE_EPOCH=$epoch (commit $(git rev-parse --short HEAD))"
+
+      - name: Build awsum
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.sde.outputs.epoch }}
+        run: stack build --pedantic --copy-bins --local-bin-path target
+
+      # Re-sign with --timestamp=none and ad-hoc identity so the codesignature
+      # blob is deterministic. The linker already injected an ad-hoc signature
+      # at build time (required for Mach-O execution on Apple Silicon); --force
+      # overwrites it with one whose hash chain depends only on the binary
+      # content (which itself is deterministic once -Wl,-no_uuid is in effect).
+      - name: Codesign (macOS)
+        if: runner.os == 'macOS'
+        run: codesign --sign - --options runtime --timestamp=none --force target/awsum
+
+      # Drop any debug-info section that might carry a per-build GUID
+      # (DebugDirectory entry in PE). GHC's release build typically doesn't
+      # emit -g, but strip is a defensive no-op if there's nothing to remove.
+      - name: Strip debug info (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          set -euo pipefail
+          strip target/awsum.exe || true
+
+      - name: Package (tar.gz)
+        if: matrix.target.archive == 'tar'
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.sde.outputs.epoch }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          TAR=tar
+          if [ "$RUNNER_OS" = "macOS" ]; then TAR=gtar; fi
+          $TAR \
+            --sort=name \
+            --mtime="@${SOURCE_DATE_EPOCH}" \
+            --owner=0 --group=0 --numeric-owner \
+            -C target -czf "dist/awsum-${{ matrix.target.name }}.tar.gz" awsum
+
+      # zip preserves per-file mtime by default — touch the file to the commit
+      # epoch first so the embedded mtime is deterministic. -X drops extra attrs
+      # (uid/gid, NTFS-specific fields) that vary per build.
+      - name: Package (zip)
+        if: matrix.target.archive == 'zip'
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.sde.outputs.epoch }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          touch -d "@${SOURCE_DATE_EPOCH}" target/awsum.exe
+          ( cd target && zip -X -q "$GITHUB_WORKSPACE/dist/awsum-${{ matrix.target.name }}.zip" awsum.exe )
+
+      - name: Hash artefacts
+        run: |
+          set -euo pipefail
+          mkdir -p hashes
+          BIN=target/awsum
+          if [ "$RUNNER_OS" = "Windows" ]; then BIN=target/awsum.exe; fi
+          sha256sum "$BIN" > hashes/binary.sha256
+          sha256sum dist/awsum-${{ matrix.target.name }}.* > hashes/archive.sha256
+          echo "binary:"  && cat hashes/binary.sha256
+          echo "archive:" && cat hashes/archive.sha256
+
+      - name: Upload hashes
+        uses: actions/upload-artifact@v7
+        with:
+          name: hashes-${{ matrix.target.name }}-${{ matrix.instance }}
+          path: hashes/
+          if-no-files-found: error
+
+  compare:
+    name: Compare (${{ matrix.target.name }})
+    needs: build
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    continue-on-error: ${{ !matrix.target.required }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { name: linux-x86_64-gnu, required: true }
+          - { name: linux-aarch64-gnu, required: false }
+          - { name: macos-aarch64, required: false }
+          - { name: windows-x86_64, required: false }
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: hashes-${{ matrix.target.name }}-a
+          path: a/
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: hashes-${{ matrix.target.name }}-b
+          path: b/
+
+      - name: Diff
+        run: |
+          set -euo pipefail
+          ok=1
+          for kind in binary archive; do
+            sha_a="$(cut -d' ' -f1 < "a/${kind}.sha256")"
+            sha_b="$(cut -d' ' -f1 < "b/${kind}.sha256")"
+            echo "$kind:"
+            echo "  build-a: $sha_a"
+            echo "  build-b: $sha_b"
+            if [ "$sha_a" != "$sha_b" ]; then
+              echo "::error::${{ matrix.target.name }} ${kind} hashes differ — build is not reproducible"
+              ok=0
+            fi
+          done
+          [ "$ok" = 1 ] && echo "${{ matrix.target.name }}: byte-identical across two independent runners."
+          exit $((1 - ok))
