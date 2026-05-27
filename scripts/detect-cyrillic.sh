@@ -55,7 +55,9 @@ function list_files_to_check {
     # Note: script itself contains regex with cyrillic characters
     grep -v 'detect-cyrillic.sh$' |
     # Test fixtures and their golden-output snapshots may legitimately contain cyrillic
-    grep -vE '^(test/sources|\.snapshots)/'
+    grep -vE '^(test/sources|\.snapshots)/' |
+    # Videos
+    grep -v '.mp4$'
 }
 
 function run_check {
