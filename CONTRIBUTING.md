@@ -4,7 +4,22 @@ Thanks for your interest in contributing.
 
 ## Development setup
 
-See [README.md](README.md) for installation and [CLAUDE.md](CLAUDE.md) for the project layout. Quick reference:
+Build the compiler from source:
+
+```sh
+# Install Stack (Haskell build tool)
+ghcup install stack
+
+# Build and install the compiler
+stack build
+stack install
+
+# Make sure ~/.local/bin is on PATH
+```
+
+Target runtimes (LLVM / JVM / CLR / WASM / JS) are needed to run the test suite end-to-end. Install only the ones you plan to exercise — per-OS instructions at [awsum-lang.org/install](https://awsum-lang.org/install).
+
+Project layout: see [CLAUDE.md](CLAUDE.md). Common commands:
 
 ```bash
 just build      # Build with pedantic warnings
