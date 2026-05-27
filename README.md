@@ -33,43 +33,9 @@ https://github.com/user-attachments/assets/718fc854-8a22-4a8a-8fd9-bfdabad2d065
 
 ## Installation
 
-### Compiler
+Prebuilt binaries, target runtimes, and editor extensions: [awsum-lang.org/install](https://awsum-lang.org/install).
 
-```sh
-# Install Stack (Haskell build tool)
-ghcup install stack
-
-# Build and install the compiler
-stack build
-stack install
-
-# Make sure ~/.local/bin is in PATH
-```
-
-### Target runtimes
-
-Install only the runtimes for the targets you need:
-
-```sh
-# LLVM — native binary compiler (opaque pointer support requires 15+)
-brew install llvm@15
-
-# JVM — Java runtime (Java 11+)
-# https://get-coursier.io/
-
-# CLR — .NET runtime (.NET 9+)
-# https://dotnet.microsoft.com/download
-brew install dotnet
-
-# WASM — WebAssembly runtime with WASI support
-brew install wasmtime
-
-# WABT — WebAssembly Binary Toolkit (optional, for validating generated .wasm)
-brew install wabt
-
-# JS — Node.js interpreter
-# https://www.nvmnode.com/
-```
+Build from source: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Usage
 
