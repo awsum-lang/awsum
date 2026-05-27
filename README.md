@@ -8,7 +8,7 @@ Correctness-first, cross-target functional language.
 
 **Cross-target:** The same source compiles to Native (LLVM), JVM, CLR, WASM, or JS, and produces the same result on every one — independent of each target's quirks and built-in types. The compiler accepts only the effects supported by the chosen target and program type.
 
-<video src="https://github.com/awsum-lang/awsum/raw/refs/heads/main/docs/awsum-preview.mp4" controls></video>
+https://github.com/user-attachments/assets/718fc854-8a22-4a8a-8fd9-bfdabad2d065
 
 - [Home Page](https://awsum-lang.org)
 - [Language docs](https://awsum-lang.org/docs)
