@@ -1,6 +1,10 @@
 CoreProgram
     { cdecls =
-        [ CFunDef "nothingAsLeft"
+        [ CFunDef "pureEither" [ "x" ]
+            ( CCon 4
+                [ CVar "x" ]
+            )
+        , CFunDef "nothingAsLeft"
             [ "e"
             , "m"
             ]
@@ -60,6 +64,29 @@ CoreProgram
                     ]
                 )
             )
+        , CFunDef "headList" [ "xs" ]
+            ( CCase
+                ( CVar "xs" )
+                [
+                    ( 12
+                    , []
+                    , CCon 10 []
+                    )
+                ,
+                    ( 13
+                    ,
+                        [ "h"
+                        , "_t"
+                        ]
+                    , CDrop DropFreeUnchecked "h"
+                        ( CDrop DropFreeUnchecked "_t"
+                            ( CCon 11
+                                [ CVar "h" ]
+                            )
+                        )
+                    )
+                ]
+            )
         , CFunDef "show" [ "r" ]
             ( CCase
                 ( CVar "r" )
@@ -93,12 +120,12 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$18" )
                 [ CCall
                     ( CVar "nothingAsLeft" )
                     [ CCon 22 []
                     , CCall
-                        ( CVar "$lift$14" )
+                        ( CVar "$lift$17" )
                         [ CCon 10 [] ]
                     ]
                 ]
@@ -130,80 +157,86 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$13"
-            [ "fromNothing"
-            , "fromJust"
-            ]
+        , CFunDef "$lift$13" [ "__input" ]
             ( CCall
-                ( CVar "$let$12" )
-                [ CCase
-                    ( CCall
-                        ( CVar "show" )
-                        [ CVar "fromNothing" ]
-                    )
+                ( CVar "$cps$$lift$13" )
+                [ CVar "__input"
+                , CCon 23 []
+                ]
+            )
+        , CFunDef "$cps$$lift$13"
+            [ "__input"
+            , "$k"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "__input" )
                     [
-                        ( 3
-                        , [ "$do_e_2" ]
-                        , CDrop DropFreeUnchecked "$do_e_2"
-                            ( CCon 3
-                                [ CVar "$do_e_2" ]
-                            )
+                        ( 12
+                        , []
+                        , CCall
+                            ( CVar "$apply$$lift$13" )
+                            [ CVar "$k"
+                            , CCon 12 []
+                            ]
                         )
                     ,
-                        ( 4
-                        , [ "a" ]
-                        , CDrop DropFreeUnchecked "a"
-                            ( CCase
-                                ( CCall
-                                    ( CVar "show" )
-                                    [ CVar "fromJust" ]
-                                )
-                                [
-                                    ( 3
-                                    , [ "$do_e_1" ]
-                                    , CDrop DropFreeUnchecked "$do_e_1"
-                                        ( CCon 3
-                                            [ CVar "$do_e_1" ]
-                                        )
-                                    )
-                                ,
-                                    ( 4
-                                    , [ "b" ]
-                                    , CDrop DropFreeUnchecked "b"
-                                        ( CCase
-                                            ( CCall
-                                                ( CBuiltIn "concatString" )
-                                                [ CVar "a"
-                                                , CString "|"
-                                                ]
-                                            )
-                                            [
-                                                ( 3
-                                                , [ "$do_e_0" ]
-                                                , CDrop DropFreeUnchecked "$do_e_0"
-                                                    ( CCon 3
-                                                        [ CVar "$do_e_0" ]
-                                                    )
-                                                )
-                                            ,
-                                                ( 4
-                                                , [ "sep" ]
-                                                , CDrop DropFreeUnchecked "sep"
-                                                    ( CCall
-                                                        ( CBuiltIn "concatString" )
-                                                        [ CVar "sep"
-                                                        , CVar "b"
-                                                        ]
-                                                    )
-                                                )
+                        ( 13
+                        ,
+                            [ "__f0"
+                            , "__f1"
+                            ]
+                        , CDrop DropFreeUnchecked "__f0"
+                            ( CDrop DropFreeUnchecked "__f1"
+                                ( CDrop DropFreeUnchecked "$k"
+                                    ( CContinue
+                                        [ CVar "__f1"
+                                        , CReuse "__input" 24
+                                            [ CVar "$k"
+                                            , CVar "__f0"
                                             ]
-                                        )
+                                        ]
                                     )
-                                ]
+                                )
                             )
                         )
                     ]
-                ]
+                )
+            )
+        , CFunDef "$apply$$lift$13"
+            [ "$k"
+            , "$x"
+            ]
+            ( CLoop
+                ( CCase
+                    ( CVar "$k" )
+                    [
+                        ( 23
+                        , []
+                        , CVar "$x"
+                        )
+                    ,
+                        ( 24
+                        ,
+                            [ "$pk_24"
+                            , "__f0"
+                            ]
+                        , CDrop DropFreeUnchecked "$pk_24"
+                            ( CDrop DropFreeUnchecked "__f0"
+                                ( CDrop DropFreeUnchecked "$x"
+                                    ( CContinue
+                                        [ CVar "$pk_24"
+                                        , CReuse "$k" 13
+                                            [ CVar "__f0"
+                                            , CVar "$x"
+                                            ]
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    ]
+                )
             )
         , CFunDef "$lift$14" [ "__input" ]
             ( CCase
@@ -223,9 +256,216 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$15" [ "fromNothing" ]
+        , CFunDef "$let$15"
+            [ "fromJust"
+            , "fromNothing"
+            , "chained"
+            ]
             ( CCall
-                ( CVar "$let$13" )
+                ( CVar "$let$12" )
+                [ CCase
+                    ( CCall
+                        ( CVar "show" )
+                        [ CVar "fromNothing" ]
+                    )
+                    [
+                        ( 3
+                        , [ "$do_e_6" ]
+                        , CDrop DropFreeUnchecked "$do_e_6"
+                            ( CCon 3
+                                [ CVar "$do_e_6" ]
+                            )
+                        )
+                    ,
+                        ( 4
+                        , [ "a" ]
+                        , CDrop DropFreeUnchecked "a"
+                            ( CCase
+                                ( CCall
+                                    ( CVar "show" )
+                                    [ CVar "fromJust" ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$do_e_5" ]
+                                    , CDrop DropFreeUnchecked "$do_e_5"
+                                        ( CCon 3
+                                            [ CVar "$do_e_5" ]
+                                        )
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "b" ]
+                                    , CDrop DropFreeUnchecked "b"
+                                        ( CCase
+                                            ( CCall
+                                                ( CVar "show" )
+                                                [ CVar "chained" ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$do_e_4" ]
+                                                , CDrop DropFreeUnchecked "$do_e_4"
+                                                    ( CCon 3
+                                                        [ CVar "$do_e_4" ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "c" ]
+                                                , CDrop DropFreeUnchecked "c"
+                                                    ( CCase
+                                                        ( CCall
+                                                            ( CBuiltIn "concatString" )
+                                                            [ CVar "a"
+                                                            , CString "|"
+                                                            ]
+                                                        )
+                                                        [
+                                                            ( 3
+                                                            , [ "$do_e_3" ]
+                                                            , CDrop DropFreeUnchecked "$do_e_3"
+                                                                ( CCon 3
+                                                                    [ CVar "$do_e_3" ]
+                                                                )
+                                                            )
+                                                        ,
+                                                            ( 4
+                                                            , [ "sep" ]
+                                                            , CDrop DropFreeUnchecked "sep"
+                                                                ( CCase
+                                                                    ( CCall
+                                                                        ( CBuiltIn "concatString" )
+                                                                        [ CVar "sep"
+                                                                        , CVar "b"
+                                                                        ]
+                                                                    )
+                                                                    [
+                                                                        ( 3
+                                                                        , [ "$do_e_2" ]
+                                                                        , CDrop DropFreeUnchecked "$do_e_2"
+                                                                            ( CCon 3
+                                                                                [ CVar "$do_e_2" ]
+                                                                            )
+                                                                        )
+                                                                    ,
+                                                                        ( 4
+                                                                        , [ "s1" ]
+                                                                        , CDrop DropFreeUnchecked "s1"
+                                                                            ( CCase
+                                                                                ( CCall
+                                                                                    ( CBuiltIn "concatString" )
+                                                                                    [ CVar "s1"
+                                                                                    , CString "|"
+                                                                                    ]
+                                                                                )
+                                                                                [
+                                                                                    ( 3
+                                                                                    , [ "$do_e_1" ]
+                                                                                    , CDrop DropFreeUnchecked "$do_e_1"
+                                                                                        ( CCon 3
+                                                                                            [ CVar "$do_e_1" ]
+                                                                                        )
+                                                                                    )
+                                                                                ,
+                                                                                    ( 4
+                                                                                    , [ "s2" ]
+                                                                                    , CDrop DropFreeUnchecked "s2"
+                                                                                        ( CCall
+                                                                                            ( CBuiltIn "concatString" )
+                                                                                            [ CVar "s2"
+                                                                                            , CVar "c"
+                                                                                            ]
+                                                                                        )
+                                                                                    )
+                                                                                ]
+                                                                            )
+                                                                        )
+                                                                    ]
+                                                                )
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$let$16"
+            [ "fromNothing"
+            , "fromJust"
+            ]
+            ( CCall
+                ( CVar "$let$15" )
+                [ CVar "fromJust"
+                , CVar "fromNothing"
+                , CCase
+                    ( CCall
+                        ( CVar "nothingAsLeft" )
+                        [ CCon 22 []
+                        , CCall
+                            ( CVar "$lift$14" )
+                            [ CCall
+                                ( CVar "headList" )
+                                [ CCon 13
+                                    [ CString "first"
+                                    , CCon 13
+                                        [ CString "second"
+                                        , CCall
+                                            ( CVar "$lift$13" )
+                                            [ CCon 12 [] ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    )
+                    [
+                        ( 3
+                        , [ "$do_e_0" ]
+                        , CDrop DropFreeUnchecked "$do_e_0"
+                            ( CCon 3
+                                [ CVar "$do_e_0" ]
+                            )
+                        )
+                    ,
+                        ( 4
+                        , [ "h" ]
+                        , CDrop DropFreeUnchecked "h"
+                            ( CCall
+                                ( CVar "pureEither" )
+                                [ CVar "h" ]
+                            )
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$lift$17" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 10
+                    , []
+                    , CCon 10 []
+                    )
+                ,
+                    ( 11
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 11
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$18" [ "fromNothing" ]
+            ( CCall
+                ( CVar "$let$16" )
                 [ CVar "fromNothing"
                 , CCall
                     ( CVar "nothingAsLeft" )

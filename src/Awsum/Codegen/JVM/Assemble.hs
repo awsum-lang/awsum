@@ -3856,7 +3856,16 @@ data ECtx = ECtx
     cValDefs :: Set Text,
     cFunDefs :: Set Text,
     cArities :: Map Text Int,
-    cNextLocal :: Int
+    cNextLocal :: Int,
+    -- | Slots reserved by an enclosing 'emitArgsViaLocals' that have
+    -- not yet been written by the @astore@ at the end of their arg.
+    -- These slots are below 'cNextLocal' (so the case codegen sees
+    -- them inside the 'btLocals' range of its branch-target frames)
+    -- but the verifier knows them as @top@ at the case bci — so the
+    -- StackMapTable must declare @top@ here too. Without this we'd
+    -- declare them as 'Object' (positional default) and fail
+    -- verification.
+    cUninitSlots :: Set Int
   }
 
 -- | Number of *additional* local slots a body needs beyond its
@@ -3883,13 +3892,44 @@ exprMaxLocals = \case
         armMax = foldl' max 0 [exprMaxLocals b | (_, _, b) <- alts]
      in thisLevel + armMax
   CRow _ v -> exprMaxLocals v
-  CCall f xs -> foldl' max 0 (exprMaxLocals f : map exprMaxLocals xs)
+  CCall f xs ->
+    -- A 'CCase' nested in an argument position would push StackMapTable
+    -- frames whose declared (empty) stack disagrees with the verifier-
+    -- derived stack (which still holds prior args). 'emitExpr' / 'CCall'
+    -- routes each argument through a fresh local when this happens —
+    -- 'length xs' slots — plus one more for the function value on the
+    -- indirect-call path. Conservative: charge @length xs + 1@ whenever
+    -- either side has a case, since 'exprMaxLocals' has no context to
+    -- distinguish the direct and indirect paths.
+    let save =
+          if exprContainsCase f || any exprContainsCase xs
+            then length xs + 1
+            else 0
+     in save + foldl' max 0 (exprMaxLocals f : map exprMaxLocals xs)
   CCon _ fields -> foldl' max 0 (map exprMaxLocals fields)
   CLoop b -> exprMaxLocals b
   CContinue xs -> foldl' max 0 (map exprMaxLocals xs)
   CDrop _ _ b -> exprMaxLocals b
   CReuse _ _ fs -> foldl' max 0 (map exprMaxLocals fs)
   _ -> 0
+
+-- | Does the expression contain a 'CCase' (or 'CRowCase') anywhere?
+-- 'CCall' (and any other multi-sub-expr emitter that leaves prior
+-- values on the operand stack) needs to know this so it can route
+-- each argument through a fresh local instead of leaving prior args
+-- exposed when a nested case's StackMapTable kicks in.
+exprContainsCase :: CExpr -> Bool
+exprContainsCase = \case
+  CCase {} -> True
+  CRowCase {} -> True
+  CRow _ v -> exprContainsCase v
+  CCall f xs -> exprContainsCase f || any exprContainsCase xs
+  CCon _ fs -> any exprContainsCase fs
+  CDrop _ _ b -> exprContainsCase b
+  CReuse _ _ fs -> any exprContainsCase fs
+  CLoop b -> exprContainsCase b
+  CContinue xs -> any exprContainsCase xs
+  _ -> False
 
 -- | Maximum operand-stack depth a body ever reaches. Mirrors the
 -- emission shape: 'CCon' uses a dup/stelem chain so each nesting
@@ -3958,7 +3998,15 @@ data BranchTarget = BranchTarget
     btLocals :: Int, -- number of local variables at this point
     btArrSlot :: Int, -- slot number for the array local (if applicable)
     btTagSlot :: Int, -- slot number for the tag local (if applicable)
-    btIsJoinPoint :: Bool -- True for join points (gotos), False for if_icmpne targets
+    btIsJoinPoint :: Bool, -- True for join points (gotos), False for if_icmpne targets
+
+    -- | Slots described by 'btLocals' that the verifier sees as
+    -- @top@ at this bci. Populated from 'ECtx.cUninitSlots' when the
+    -- branch target is created; an enclosing 'emitArgsViaLocals' reserves
+    -- save slots below 'cNextLocal' that aren't written until after the
+    -- case completes, so the StackMapTable must declare them as @top@
+    -- rather than the positional 'Object' default.
+    btUninitSlots :: Set Int
   }
   deriving stock (Show, Eq)
 
@@ -3984,18 +4032,92 @@ data CodeWithMeta = CodeWithMeta
 cwm :: [Word8] -> [BranchTarget] -> CodeWithMeta
 cwm code bts = CodeWithMeta code bts []
 
+-- | Shift every branch target's @btOffset@ by @n@ bytes. Used at every
+-- concatenation point that places a sub-expression somewhere other than
+-- offset 0 of the enclosing code, so the offsets the verifier sees in
+-- the StackMapTable match the actual branch destinations.
+shiftBranchTargets :: Int -> [BranchTarget] -> [BranchTarget]
+shiftBranchTargets 0 = id
+shiftBranchTargets n = map (\bt -> bt {btOffset = bt.btOffset + n})
+
+-- | Concatenate sub-expression metas, shifting each meta's branch
+-- targets by the cumulative byte length of preceding metas so they end
+-- up relative to the start of the returned byte sequence. Pairs with
+-- 'shiftBranchTargets' for the case where the concatenated block itself
+-- starts at a non-zero offset within its parent.
+concatMetas :: [CodeWithMeta] -> ([Word8], [BranchTarget], [Int])
+concatMetas = go 0
+  where
+    go _ [] = ([], [], [])
+    go off (m : rest) =
+      let (restCode, restTargets, restInts) = go (off + length m.cwCode) rest
+       in ( m.cwCode <> restCode,
+            shiftBranchTargets off m.cwBranchTargets ++ restTargets,
+            m.cwIntSlots ++ restInts
+          )
+
 -- | Glue together one or more sub-expression metas plus a suffix
 -- bytecode (typically @invokestatic@ / @invokevirtual@ for a builtin
--- call). Concatenates code, propagates branch targets and int slots
--- from every sub-expression. Lets call sites stop hand-wiring three
--- fields per emitter.
+-- call). Each sub-meta's branch targets are shifted by the cumulative
+-- length of preceding sub-metas — required for nested 'CCase' / 'CRow'
+-- whose internal targets are meta-relative; an unshifted concat
+-- silently misplaces every StackMapTable frame whenever a multi-arg
+-- builtin is called with anything but the first arg being a leaf.
 cwmWrap :: [Word8] -> [CodeWithMeta] -> CodeWithMeta
 cwmWrap suffix metas =
-  CodeWithMeta
-    { cwCode = concatMap cwCode metas <> suffix,
-      cwBranchTargets = concatMap cwBranchTargets metas,
-      cwIntSlots = concatMap cwIntSlots metas
-    }
+  let (code, targets, ints) = concatMetas metas
+   in CodeWithMeta
+        { cwCode = code <> suffix,
+          cwBranchTargets = targets,
+          cwIntSlots = ints
+        }
+
+-- | Evaluate each expression in @args@ with the operand stack empty at
+-- its start, by routing the result of every prior arg through a fresh
+-- local. After every arg is in a local, the saved values are loaded
+-- back in order, leaving them on the stack ready for an
+-- @invokestatic@ / @invokevirtual@. Required when any arg contains a
+-- 'CCase' — without it, the case's StackMapTable frames disagree with
+-- the verifier-derived stack (which still holds the prior args).
+--
+-- The first save slot is @ctx.cNextLocal@; each arg is emitted with
+-- @cNextLocal@ advanced past all save slots, so nested case-locals
+-- never collide. 'exprMaxLocals' adds the same reservation so the
+-- @max_locals@ field of the Code attribute stays in sync.
+emitArgsViaLocals :: ECtx -> [CExpr] -> AsmM CodeWithMeta
+emitArgsViaLocals ctx args = do
+  let firstSlot = ctx.cNextLocal
+      nArgs = length args
+      saveSlots = take nArgs [firstSlot ..]
+  -- Emit each arg with the still-uninitialized save slots in
+  -- 'cUninitSlots'. Slot i is uninit until just after arg i's @astore@,
+  -- so arg i sees {save_i, save_(i+1), ..., save_(N-1)} as uninit.
+  argMetas <- forM (zip args [0 ..]) $ \(arg, i) -> do
+    let uninitForArg = Set.fromList (drop i saveSlots) `Set.union` ctx.cUninitSlots
+        ctx' =
+          ctx
+            { cNextLocal = firstSlot + nArgs,
+              cUninitSlots = uninitForArg
+            }
+    emitExpr ctx' arg
+  let combine :: Int -> [(CodeWithMeta, Int)] -> ([Word8], [BranchTarget], [Int])
+      combine _ [] = ([], [], [])
+      combine off ((m, slot) : rest) =
+        let astore = bcAstore slot
+            blockLen = length m.cwCode + length astore
+            (restCode, restTargets, restInts) = combine (off + blockLen) rest
+         in ( m.cwCode <> astore <> restCode,
+              shiftBranchTargets off m.cwBranchTargets ++ restTargets,
+              m.cwIntSlots ++ restInts
+            )
+      (savedCode, savedTargets, savedInts) = combine 0 (zip argMetas saveSlots)
+      loadsCode = concatMap bcAload saveSlots
+  pure
+    CodeWithMeta
+      { cwCode = savedCode <> loadsCode,
+        cwBranchTargets = savedTargets,
+        cwIntSlots = savedInts
+      }
 
 mkDecl :: Set Text -> Set Text -> Map Text Int -> CDecl -> AsmM MInfo
 mkDecl valDefs funDefs arities = \case
@@ -4014,7 +4136,8 @@ mkDecl valDefs funDefs arities = \case
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
-              cNextLocal = length args
+              cNextLocal = length args,
+              cUninitSlots = Set.empty
             }
         maxLocals = fromIntegral (length args + exprMaxLocals body) :: Word16
         maxStack = fromIntegral (max 1 (exprMaxStack body)) :: Word16
@@ -4033,7 +4156,8 @@ mkDecl valDefs funDefs arities = \case
               btLocals = length args,
               btArrSlot = -1,
               btTagSlot = -1,
-              btIsJoinPoint = False
+              btIsJoinPoint = False,
+              btUninitSlots = Set.empty
             }
     (smtCount, smtBytes) <- caseSMT ctx (tcoLoopTarget : codeMeta.cwBranchTargets) codeMeta.cwIntSlots
     pure MInfo {mFlags = 0x0008, mName = ni, mDesc = di, mCode = codeMeta.cwCode, mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
@@ -4046,7 +4170,8 @@ mkDecl valDefs funDefs arities = \case
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
-              cNextLocal = length args
+              cNextLocal = length args,
+              cUninitSlots = Set.empty
             }
         maxLocals = fromIntegral (length args + exprMaxLocals body) :: Word16
         maxStack = fromIntegral (max 1 (exprMaxStack body)) :: Word16
@@ -4063,7 +4188,8 @@ mkDecl valDefs funDefs arities = \case
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
-              cNextLocal = 0
+              cNextLocal = 0,
+              cUninitSlots = Set.empty
             }
         maxLocals = fromIntegral (exprMaxLocals rhs) :: Word16
         maxStack = fromIntegral (max 1 (exprMaxStack rhs)) :: Word16
@@ -4129,16 +4255,19 @@ emitExpr ctx = \case
             <> [0x53] -- aastore
     fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
       fldMeta <- emitExpr ctx fld
+      let prefix = [0x59] <> bcIconst i -- dup + iconst i
+          fldShift = length prefix
       pure
         CodeWithMeta
-          { cwCode = [0x59] <> bcIconst i <> fldMeta.cwCode <> [0x53],
-            cwBranchTargets = fldMeta.cwBranchTargets,
+          { cwCode = prefix <> fldMeta.cwCode <> [0x53], -- ... + aastore
+            cwBranchTargets = shiftBranchTargets fldShift fldMeta.cwBranchTargets,
             cwIntSlots = fldMeta.cwIntSlots
           }
-    let allTargets = concatMap cwBranchTargets fieldMetas
-        allCode = allocCode <> storeTag <> concatMap cwCode fieldMetas
-        allIntSlots = concatMap cwIntSlots fieldMetas
-    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+    let (fieldsCode, fieldsTargets, fieldsInts) = concatMetas fieldMetas
+        baseOff = length allocCode + length storeTag
+        allCode = allocCode <> storeTag <> fieldsCode
+        allTargets = shiftBranchTargets baseOff fieldsTargets
+    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = fieldsInts}
   CCase scrut alts -> do
     intCls <- addClass "java/lang/Integer"
     intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
@@ -4243,7 +4372,7 @@ emitExpr ctx = \case
               gotoOffset = restLen + gotoLen
               cmpCode = loadTag <> tagPush <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
               gotoCode = [0xA7, fromIntegral (gotoOffset `div` 256), fromIntegral (gotoOffset `mod` 256)]
-              myTarget = BranchTarget nextBranchOffset bindSlotStart arrSlot tagSlot False -- if_icmpne target
+              myTarget = BranchTarget nextBranchOffset bindSlotStart arrSlot tagSlot False ctx.cUninitSlots -- if_icmpne target
               -- Adjust nested branch target offsets: body starts after cmpCode + bindCode
               armBodyStartOffset = offset + loadLen + iconLen + 3 + bindLen
               adjustedArmTargets = map (\bt -> bt {btOffset = bt.btOffset + armBodyStartOffset}) armMeta.cwBranchTargets
@@ -4256,7 +4385,7 @@ emitExpr ctx = \case
         hasMultipleArms = length sorted > 1
         joinPointOffset = preambleLen + length chainCode
         maxLocals = bindSlotStart + maxBindingsCount
-        joinPointTarget = ([BranchTarget joinPointOffset maxLocals arrSlot tagSlot True | hasMultipleArms]) -- join point
+        joinPointTarget = ([BranchTarget joinPointOffset maxLocals arrSlot tagSlot True ctx.cUninitSlots | hasMultipleArms]) -- join point
         allTargets = scrutMeta.cwBranchTargets ++ branchTargets ++ joinPointTarget
         finalCode = scrutMeta.cwCode <> extractAndStore <> chainCode
         -- 'tagSlot' itself is stored as an int by 'extractAndStore'; it's
@@ -4393,22 +4522,64 @@ emitExpr ctx = \case
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n | n `Set.member` ctx.cFunDefs -> do
-        -- Direct call to known function
-        argMetas <- traverse (emitExpr ctx) xs
+        -- Direct call to known function. When any arg contains a 'CCase',
+        -- evaluate args through fresh locals so the case sees an empty
+        -- operand stack (see 'emitArgsViaLocals' for the why).
         ref <- addMRef "AwsumMain" (mangle n) (objMethodDesc (length xs))
-        pure $ cwmWrap (bcInvokeStatic ref) argMetas
+        let invoke = bcInvokeStatic ref
+        if any exprContainsCase xs
+          then do
+            argsMeta <- emitArgsViaLocals ctx xs
+            pure
+              CodeWithMeta
+                { cwCode = argsMeta.cwCode <> invoke,
+                  cwBranchTargets = argsMeta.cwBranchTargets,
+                  cwIntSlots = argsMeta.cwIntSlots
+                }
+          else do
+            argMetas <- traverse (emitExpr ctx) xs
+            pure $ cwmWrap invoke argMetas
       _ -> do
         -- Indirect call via MethodHandle
         -- Stack layout: MethodHandle arg1 arg2 ...
-        fMeta <- emitExpr ctx f
         mhCls <- addClass "java/lang/invoke/MethodHandle"
-        argMetas <- traverse (emitExpr ctx) xs
         let invokeDesc = objMethodDesc (length xs)
         ref <- addMRef "java/lang/invoke/MethodHandle" "invoke" invokeDesc
-        let allCode = fMeta.cwCode <> bcCheckCast mhCls <> concatMap cwCode argMetas <> bcInvokeVirtual ref
-            allTargets = fMeta.cwBranchTargets ++ concatMap cwBranchTargets argMetas
-            allIntSlots = fMeta.cwIntSlots ++ concatMap cwIntSlots argMetas
-        pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+        let mhCast = bcCheckCast mhCls
+            invoke = bcInvokeVirtual ref
+        if exprContainsCase f || any exprContainsCase xs
+          then do
+            -- Route the function value and every arg through fresh
+            -- locals so the case sees stack=0; load and call at the end.
+            fSlot <- pure ctx.cNextLocal
+            let ctxAfterF = ctx {cNextLocal = fSlot + 1}
+            fMeta <- emitExpr ctxAfterF f
+            argsMeta <- emitArgsViaLocals ctxAfterF xs
+            let fStore = bcAstore fSlot
+                fLoad = bcAload fSlot
+                fBlockLen = length fMeta.cwCode + length fStore
+                argsShift = fBlockLen
+                allCode =
+                  fMeta.cwCode
+                    <> fStore
+                    <> argsMeta.cwCode
+                    <> fLoad
+                    <> mhCast
+                    <> invoke
+                allTargets =
+                  fMeta.cwBranchTargets
+                    ++ shiftBranchTargets argsShift argsMeta.cwBranchTargets
+                allIntSlots = fMeta.cwIntSlots ++ argsMeta.cwIntSlots
+            pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+          else do
+            fMeta <- emitExpr ctx f
+            argMetas <- traverse (emitExpr ctx) xs
+            let (argsCode, argsTargets, argsInts) = concatMetas argMetas
+                argsBaseOff = length fMeta.cwCode + length mhCast
+                allCode = fMeta.cwCode <> mhCast <> argsCode <> invoke
+                allTargets = fMeta.cwBranchTargets ++ shiftBranchTargets argsBaseOff argsTargets
+                allIntSlots = fMeta.cwIntSlots ++ argsInts
+            pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
   -- Row injection / dispatch share the runtime layout with one-field
   -- 'CCon' / 'CCase', so delegate.
   CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
@@ -4451,16 +4622,19 @@ emitExpr ctx = \case
             <> [0x53] -- aastore
     fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
       fldMeta <- emitExpr ctx fld
+      let prefix = [0x59] <> bcIconst i -- dup + iconst i
+          fldShift = length prefix
       pure
         CodeWithMeta
-          { cwCode = [0x59] <> bcIconst i <> fldMeta.cwCode <> [0x53],
-            cwBranchTargets = fldMeta.cwBranchTargets,
+          { cwCode = prefix <> fldMeta.cwCode <> [0x53], -- ... + aastore
+            cwBranchTargets = shiftBranchTargets fldShift fldMeta.cwBranchTargets,
             cwIntSlots = fldMeta.cwIntSlots
           }
-    let allTargets = concatMap cwBranchTargets fieldMetas
-        allCode = loadCell <> storeTag <> concatMap cwCode fieldMetas
-        allIntSlots = concatMap cwIntSlots fieldMetas
-    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+    let (fieldsCode, fieldsTargets, fieldsInts) = concatMetas fieldMetas
+        baseOff = length loadCell + length storeTag
+        allCode = loadCell <> storeTag <> fieldsCode
+        allTargets = shiftBranchTargets baseOff fieldsTargets
+    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = fieldsInts}
 
 -- | Emit @body@ in tail position under the implicit @L_tco_loop:@ label
 -- at method offset 0. 'CContinue' evaluates new parameter values onto
@@ -4521,12 +4695,13 @@ emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
     emitContinue :: ECtx -> Int -> [Text] -> [CExpr] -> AsmM CodeWithMeta
     emitContinue ctx offset pending newArgs = do
       argMetas <- traverse (emitExpr ctx) newArgs
-      let argBytes = concatMap cwCode argMetas
-          -- Nested branch targets inside arg evaluations would need offset
-          -- adjustment, but in practice argument expressions rarely contain
-          -- CCase; the existing CCon/CCall paths also pass them through
-          -- without adjustment, so we match that convention.
-          argTargets = concatMap cwBranchTargets argMetas
+      let (argBytes, argTargetsRel, argIntSlots) = concatMetas argMetas
+          -- Tail-position emitters carry absolute method offsets, but
+          -- 'emitExpr' returns meta-relative ones; shift by 'offset'
+          -- (the absolute bci where 'argBytes' begins) so any nested
+          -- 'CCase' inside a 'CContinue' arg gets its StackMapTable
+          -- frame at the right absolute position.
+          argTargets = shiftBranchTargets offset argTargetsRel
           freeBytes :: [Word8]
           freeBytes = pendingDropBytes ctx pending
           paramSlots :: [Int]
@@ -4544,7 +4719,6 @@ emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
           delta :: Int
           delta = negate gotoStart
           gotoBytes = bcGoto delta
-          argIntSlots = concatMap cwIntSlots argMetas
       pure
         CodeWithMeta
           { cwCode = argBytes <> freeBytes <> astoreBytes <> gotoBytes,
@@ -4675,7 +4849,8 @@ emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
                       btLocals = bindSlotStart,
                       btArrSlot = arrSlot,
                       btTagSlot = tagSlot,
-                      btIsJoinPoint = False
+                      btIsJoinPoint = False,
+                      btUninitSlots = ctx.cUninitSlots
                     }
             (restBytes, restTargets, restIntSlots) <- goArms nextArmOffset rest
             pure
@@ -4775,14 +4950,16 @@ caseSMT _ctx targets intSlots
         buildLocalsTypes allArrTagPairs bt =
           let n = bt.btLocals
               -- Resolve each slot's verifier type. Order of checks
-              -- matters: arr/tag/intSlot are determined by the case
-              -- shape and override any positional default. The
-              -- positional default is /Object/ (used for params and
-              -- ordinary pattern bindings). For 'CValDef' the
-              -- scrutinee array can land on slot 0 — same lookup
-              -- still picks @Object[]@ because @arr == 0@ matches
-              -- the @allArrTagPairs@ entry.
+              -- matters: 'btUninitSlots' wins first (an enclosing
+              -- 'emitArgsViaLocals' reserved this slot but its @astore@
+              -- hasn't executed yet, so the verifier sees @top@); then
+              -- arr/tag/intSlot determined by the case shape; the
+              -- positional default 'Object' covers params and ordinary
+              -- pattern bindings. For 'CValDef' the scrutinee array can
+              -- land on slot 0 — same lookup still picks @Object[]@
+              -- because @arr == 0@ matches the @allArrTagPairs@ entry.
               slotType i
+                | i `Set.member` bt.btUninitSlots = [0x00] -- ITEM_Top
                 | any (\(arr, _) -> arr == i) allArrTagPairs =
                     [0x07, hi8 arrClsIdx, lo8 arrClsIdx]
                 | any (\(_, tag) -> tag == i) allArrTagPairs = [0x01]
