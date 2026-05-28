@@ -22,6 +22,7 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 
 ### Changed
 
+- **`awsum run` now inherits stdin from the parent process.** Previously `--stdin` was a switch that read `awsum`'s own stdin and forwarded it as `argv[1]` — a workaround from before `IO.Stdin.readAll` existed, and mutually exclusive with `--input TEXT`. Now `--input TEXT` covers argv and the child inherits `fd 0` directly: `echo "data" | awsum run … FILE` and `awsum run … FILE < file` reach `IO.Stdin.readAll` verbatim (no buffering, no `T.stripEnd`, byte-exact across all five backends). The two channels are independent and can be used together: `echo "data" | awsum run --input "arg" … FILE` delivers `"arg"` as `argv[1]` and `"data\n"` on stdin simultaneously.
 - **Comments and layout no longer affect `awsum build` output or `awsum check` diagnostic text.** Synthetic binder names (`$do_e_N`, `$arg_N`, `$let_w_N`) are minted from a monotonic counter, and type-error messages show `expected x` rather than `expected x$3_12`.
 - **Module comment header for `.aww` files.** A single optional `{- … -}` block at the top of a file is now treated as the module comment. Line comments (`-- …`) at the top of a file and multiple block comments in a row are rejected with a parse error: the language never silently attaches text above the first import or declaration. Concrete shapes:
   - **Before** — `{- header -}` glued directly to `import IO.Stdout` on the next line, or `-- header …` (often multi-line) before `import` / a top-level decl.
@@ -32,6 +33,8 @@ Until `1.0.0`, this project does not follow SemVer. Every release increments onl
 ### Deprecated
 
 ### Removed
+
+- **`awsum run --stdin`** — superseded by stdin inheritance (see Changed above). Migration: `echo … | awsum run … --stdin FILE` becomes `echo … | awsum run … FILE` (drop the flag); `awsum run … --stdin FILE < input.txt` becomes `awsum run … FILE < input.txt`.
 
 ### Fixed
 

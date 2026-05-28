@@ -24,19 +24,20 @@ import Awsum.RestrictPreludeRefs (restrictPreludeRefs)
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
 import Awsum.Syntax
 import Awsum.Typing (TypeError, Warning, prettyPrintTypeError, requireMain)
+import Awsum.Version qualified as Meta
 import Common.File
+import Control.Concurrent.Async (concurrently)
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Data.Version (showVersion)
 import Options.Applicative qualified as OA
-import Awsum.Version qualified as Meta
 import Relude
 import System.Exit (ExitCode (..))
 import System.FilePath (dropExtension, (</>))
-import System.IO (hIsTerminalDevice)
+import System.IO (hIsTerminalDevice, hSetBinaryMode)
 import System.IO.Temp (withSystemTempDirectory)
-import System.Process (readProcessWithExitCode)
+import System.Process (CreateProcess (..), StdStream (..), createProcess, proc, readProcessWithExitCode, waitForProcess)
 import Text.Pretty.Simple (pPrint)
 
 -- | Rendered version string, e.g. "9.9.9".
@@ -54,8 +55,8 @@ data Command
     CmdCheck FilePath ProgramType Bool Bool
   | -- | file, programType, target, out
     CmdBuild FilePath ProgramType Target (Maybe FilePath)
-  | -- | file, programType, target, inArg, useStdin
-    CmdRun FilePath ProgramType Target (Maybe Text) Bool
+  | -- | file, programType, target, inArg
+    CmdRun FilePath ProgramType Target (Maybe Text)
   | CmdAST FilePath
   | -- | file, programType
     CmdCore FilePath ProgramType
@@ -133,7 +134,10 @@ optOutputPath =
           <> OA.help "Output file (default: stdout)"
       )
 
--- | Optional: input text for 'run' (passed to 'main' when not using stdin).
+-- | Optional: input string passed to 'main' as @argv[1]@. Stdin is a
+--   separate, independent channel: 'awsum run' inherits its own stdin to
+--   the child process, so @echo \"data\" | awsum run …@ reaches the
+--   child's @IO.Stdin.readAll@ verbatim. The two flags can coexist.
 optInputText :: OA.Parser (Maybe Text)
 optInputText =
   optional
@@ -141,13 +145,9 @@ optInputText =
         <$> OA.strOption
           ( OA.long "input"
               <> OA.metavar "TEXT"
-              <> OA.help "Input string passed to main"
+              <> OA.help "Input string passed to main as argv[1]"
           )
     )
-
--- | Flag: read input for 'run' from STDIN instead of --input.
-optUseStdin :: OA.Parser Bool
-optUseStdin = OA.switch (OA.long "stdin" <> OA.help "Read input for main from stdin")
 
 -- | Flag: rewrite the file in place when formatting.
 optInPlace :: OA.Parser Bool
@@ -204,7 +204,7 @@ pCommand =
     <|> OA.hsubparser
       ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optProgramType <*> optJson <*> optStrict)
           <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optProgramType <*> optTarget <*> optOutputPath)
-          <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optProgramType <*> optTarget <*> optInputText <*> optUseStdin)
+          <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optProgramType <*> optTarget <*> optInputText)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
           <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath <*> optProgramType)
           <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optProgramType <*> optTarget)
@@ -264,13 +264,9 @@ runCommand = \case
         case mOut of
           Nothing -> putTextLn code
           Just out -> writeFileText out code
-  CmdRun filePath progType target mInput useStdin -> do
-    input <-
-      if useStdin
-        then T.stripEnd <$> TIO.getContents
-        else pure (fromMaybe "" mInput)
+  CmdRun filePath progType target mInput -> do
     (ptags, core) <- compileToCoreOrDie progType filePath
-    runOnTarget progType target ptags core input
+    runOnTarget progType target ptags core (fromMaybe "" mInput)
   CmdAST filePath -> do
     prog <- parseFileOrDie filePath
     pPrint prog
@@ -351,11 +347,7 @@ runOnTarget progType target ptags core input = case target of
             <> toText stderrClang
             <> "\nstdout:\n"
             <> toText stdoutClang
-        ExitSuccess -> do
-          (exit, stdoutS, stderrS) <- readProcessWithExitCode binPath [toString input] ""
-          case exit of
-            ExitSuccess -> putTextLn (toText stdoutS)
-            ExitFailure _ -> die $ toString ("runtime error:\n" <> toText stderrS)
+        ExitSuccess -> runChild "runtime error" binPath [toString input]
   TargetJVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let classPath = dir </> "AwsumMain.class"
@@ -366,28 +358,19 @@ runOnTarget progType target ptags core input = case target of
       -- from the system ANSI code page and supplementary code points
       -- collapse to '?' before our 'main' runs). Stdout side is handled
       -- inside the emitted 'main' itself via a 'System.setOut' prologue.
-      (exit, stdoutS, stderrS) <- readProcessWithExitCode "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input] ""
-      case exit of
-        ExitSuccess -> putTextLn (toText stdoutS)
-        ExitFailure _ -> die $ toString ("java error:\n" <> toText stderrS)
+      runChild "java error" "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input]
   TargetCLR ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let dllPath = dir </> "AwsumMain.dll"
           rcPath = dir </> "AwsumMain.runtimeconfig.json"
       writeFileBS dllPath (assembleCLR ptags core)
       writeFileText rcPath runtimeConfigJson
-      (exit, stdoutS, stderrS) <- readProcessWithExitCode "dotnet" [dllPath, toString input] ""
-      case exit of
-        ExitSuccess -> putTextLn (toText stdoutS)
-        ExitFailure _ -> die $ toString ("dotnet error:\n" <> toText stderrS)
+      runChild "dotnet error" "dotnet" [dllPath, toString input]
   TargetWASM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let wasmPath = dir </> "out.wasm"
       writeFileBS wasmPath (assembleWASM ptags core)
-      (exit, stdoutS, stderrS) <- readProcessWithExitCode "wasmtime" [wasmPath, toString input] ""
-      case exit of
-        ExitSuccess -> putTextLn (toText stdoutS)
-        ExitFailure _ -> die $ toString ("wasmtime error:\n" <> toText stderrS)
+      runChild "wasmtime error" "wasmtime" [wasmPath, toString input]
   TargetJS ->
     runText "node" ".js" (codegenJS progType ptags core) input
 
@@ -397,10 +380,33 @@ runText cmd ext code input =
   withSystemTempDirectory "awsum" $ \dir -> do
     let outPath = dir </> "out" <> ext
     writeFileText outPath code
-    (exit, stdoutS, stderrS) <- readProcessWithExitCode cmd [outPath, toString input] ""
-    case exit of
-      ExitSuccess -> putTextLn (toText stdoutS)
-      ExitFailure _ -> die $ toString (toText cmd <> " error:\n" <> toText stderrS)
+    runChild (toText cmd <> " error") cmd [outPath, toString input]
+
+-- | Run a compiled program. The child inherits the calling process's
+--   stdin so 'IO.Stdin.readAll' receives whatever the user piped into
+--   'awsum run' (single source of truth — no flag, no buffering). The
+--   child's stdout is captured and printed verbatim, preserving the
+--   contract that 'awsum run' writes the program's stdout to its own
+--   stdout. The child's stderr is captured so a non-zero exit can be
+--   reported with the runtime's diagnostic text. stdout and stderr are
+--   drained concurrently to avoid pipe-buffer deadlocks on programs
+--   that emit more than one buffer's worth before exiting.
+runChild :: Text -> FilePath -> [String] -> IO ()
+runChild errLabel cmd args = do
+  (_, Just hout, Just herr, ph) <-
+    createProcess
+      (proc cmd args)
+        { std_in = Inherit,
+          std_out = CreatePipe,
+          std_err = CreatePipe
+        }
+  hSetBinaryMode hout True
+  hSetBinaryMode herr True
+  (outBs, errBs) <- concurrently (BS.hGetContents hout) (BS.hGetContents herr)
+  exit <- waitForProcess ph
+  case exit of
+    ExitSuccess -> putTextLn (decodeUtf8 outBs)
+    ExitFailure _ -> die $ toString (errLabel <> ":\n" <> decodeUtf8 errBs)
 
 -- | .NET runtime configuration template for CLR target.
 runtimeConfigJson :: Text

@@ -46,7 +46,7 @@ Commands that go through the typechecker require `--program-type cli` (currently
 
 ```bash
 awsum build --program-type cli -t llvm|jvm|clr|wasm|js [-o OUT] FILE     # Compile to file/stdout (binary for jvm/clr/wasm)
-awsum run   --program-type cli -t llvm|jvm|clr|wasm|js [--input X] FILE  # Compile and execute
+awsum run   --program-type cli -t llvm|jvm|clr|wasm|js [--input X] FILE  # Compile and execute (stdin inherits — pipe or < file to feed IO.Stdin.readAll)
 awsum check --program-type cli [--json] [--strict] FILE                  # Typecheck only
 awsum core  --program-type cli FILE                                      # Print Core IR
 awsum asm   --program-type cli -t jvm|clr|wasm FILE                      # Print target assembly text
@@ -62,7 +62,8 @@ awsum symbols [--json] FILE                                              # Top-l
 ```bash
 just build                                                                              # ensure the local binary is current
 
-stack exec awsum -- run   --program-type cli -t jvm --input "world" path/to/Main.aww    # run on one backend, see real stdout (no snapshot comparison)
+stack exec awsum -- run   --program-type cli -t jvm --input "world" path/to/Main.aww    # argv path: run on one backend, see real stdout (no snapshot comparison)
+printf '1:1' | stack exec awsum -- run --program-type cli -t jvm    path/to/Main.aww    # stdin path: byte-exact input via pipe reaches IO.Stdin.readAll
 stack exec awsum -- check --program-type cli --json                 path/to/Main.aww    # diagnostics in the JSON shape awsum-vscode consumes
 stack exec awsum -- core  --program-type cli                        path/to/Main.aww    # Core IR after typecheck + every Core-to-Core pass
 stack exec awsum -- asm   --program-type cli -t jvm                 path/to/Main.aww    # text-form generated assembly (Jasmin-like for jvm, CIL for clr, WAT for wasm)

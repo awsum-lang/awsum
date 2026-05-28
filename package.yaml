@@ -119,6 +119,7 @@ executables:
         ghc-options:
           - -optl=-Wl,--no-insert-timestamp
     dependencies:
+      - async # for concurrent stdout/stderr draining when running compiled programs
       - awsum
       - filepath # for CLI
       - optparse-applicative # for working with command line arguments
