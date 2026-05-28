@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -265,8 +265,8 @@ define internal ptr @v_unwrap(ptr %v_box) {
   %t0 = getelementptr ptr, ptr %v_box, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 ]
-case.arm.20.4:
+  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
+case.arm.22.4:
   %t5 = getelementptr ptr, ptr %v_box, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -280,8 +280,8 @@ define internal ptr @v_showResult(ptr %v_r) {
   %t0 = getelementptr ptr, ptr %v_r, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 21, label %case.arm.21.4 ]
-case.arm.21.4:
+  switch i64 %t2, label %case.default.3 [ i64 23, label %case.arm.23.4 ]
+case.arm.23.4:
   %t5 = getelementptr ptr, ptr %v_r, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -293,7 +293,7 @@ case.default.3:
 
 define internal ptr @v_main() {
   %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 20 to ptr
+  %t1 = inttoptr i64 22 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = getelementptr ptr, ptr %t0, i32 1
@@ -324,11 +324,11 @@ case.arm.4.19:
   call void @__inc_ref(ptr %t22)
   call void @__inc_ref(ptr %t22)
   %t23 = call ptr @__alloc(i64 16, i32 1)
-  %t24 = inttoptr i64 20 to ptr
+  %t24 = inttoptr i64 22 to ptr
   %t25 = getelementptr ptr, ptr %t23, i32 0
   store ptr %t24, ptr %t25
   %t26 = call ptr @__alloc(i64 16, i32 1)
-  %t27 = inttoptr i64 21 to ptr
+  %t27 = inttoptr i64 23 to ptr
   %t28 = getelementptr ptr, ptr %t26, i32 0
   store ptr %t27, ptr %t28
   %t29 = getelementptr ptr, ptr %t26, i32 1

@@ -82,8 +82,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_20)
-  IL_arm_20:
+    switch (IL_arm_22)
+  IL_arm_22:
     pop
     ldstr "Phantom"
     br.s IL_join
@@ -107,7 +107,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 22
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v__lift_12(object)
@@ -144,14 +144,14 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_20)
-  IL_arm_20:
+    switch (IL_arm_22)
+  IL_arm_22:
     pop
     ldc.i4.1
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 22
     box [System.Runtime]System.Int32
     stelem.ref
     br.s IL_join

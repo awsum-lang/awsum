@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -292,7 +292,7 @@ define internal ptr @v_opB(ptr %v__n) {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 21 to ptr
+  %t4 = inttoptr i64 23 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = getelementptr ptr, ptr %t0, i32 1
@@ -364,8 +364,8 @@ case.arm.2252990199.11:
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 20, label %case.arm.20.18 ]
-case.arm.20.18:
+  switch i64 %t16, label %case.default.17 [ i64 22, label %case.arm.22.18 ]
+case.arm.22.18:
   %t19 = call ptr @__alloc(i64 16, i32 1)
   %t20 = inttoptr i64 4 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
@@ -385,8 +385,8 @@ case.arm.2269767818.23:
   %t26 = getelementptr ptr, ptr %t25, i32 0
   %t27 = load ptr, ptr %t26
   %t28 = ptrtoint ptr %t27 to i64
-  switch i64 %t28, label %case.default.29 [ i64 21, label %case.arm.21.30 ]
-case.arm.21.30:
+  switch i64 %t28, label %case.default.29 [ i64 23, label %case.arm.23.30 ]
+case.arm.23.30:
   %t31 = call ptr @__alloc(i64 16, i32 1)
   %t32 = inttoptr i64 4 to ptr
   %t33 = getelementptr ptr, ptr %t31, i32 0

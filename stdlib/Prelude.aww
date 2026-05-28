@@ -296,6 +296,19 @@ runIO io = case io of
    matters, reach for `Either` instead. -}
 type Maybe a = Nothing | Just a
 
+-- ---------------------- List
+
+{- Singly-linked list: either empty (`Nil`) or a head `a` followed by a
+   `List a` tail. The minimum needed to represent a sequence of values
+   without committing to a literal syntax or a particular set of
+   helpers — operate on it with ordinary recursion (the compiler lowers
+   self- and mutually-recursive walks to stack-safe loops on every
+   backend).
+
+   No `[1, 2, 3]` syntax and no `(::)` infix constructor exist today:
+   build values with explicit `Cons h t` and `Nil`. -}
+type List a = Nil | Cons a (List a)
+
 -- ---------------------- Tuple2
 
 {- A pair. Use for functions that produce two results without obvious

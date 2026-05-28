@@ -42,13 +42,13 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 20
+                    ( 22
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
                     )
                 ,
-                    ( 21
+                    ( 23
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
@@ -63,7 +63,7 @@ CoreProgram
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 20
+                            [ CCon 22
                                 [ CString "1" ]
                             ]
                         , CString ","
@@ -83,7 +83,7 @@ CoreProgram
                             [ CVar "s0"
                             , CCall
                                 ( CVar "unwrap" )
-                                [ CCon 21
+                                [ CCon 23
                                     [ CString "2" ]
                                 ]
                             ]

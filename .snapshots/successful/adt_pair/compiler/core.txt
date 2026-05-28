@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "pair" )
                 [
-                    ( 20
+                    ( 22
                     ,
                         [ "first"
                         , "second"
@@ -140,7 +140,7 @@ CoreProgram
                 ( CVar "$let$12" )
                 [ CCall
                     ( CVar "showPair" )
-                    [ CCon 20
+                    [ CCon 22
                         [ CString "hello"
                         , CString "world"
                         ]

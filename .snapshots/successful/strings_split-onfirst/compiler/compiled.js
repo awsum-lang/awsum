@@ -1,8 +1,8 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
-function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [10]; return [11, [12, str.substring(0, i), str.substring(i + sep.length)]]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __splitOnFirst(sep, str){ const i = str.indexOf(sep); if (i < 0) return [10]; return [11, [14, str.substring(0, i), str.substring(i + sep.length)]]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -85,7 +85,7 @@ const v_render = (v_r) => {
           {
             const __s = v_t;
             switch (__s[0]) {
-              case 12: {
+              case 14: {
                 const v_a = __s[1];
                 const v_b = __s[2];
                 return (v_renderTuple)(v_a, v_b);

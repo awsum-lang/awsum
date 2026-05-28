@@ -38,7 +38,7 @@
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -230,7 +230,7 @@ L_tco_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 21
+  bipush 23
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -239,7 +239,7 @@ L_tco_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -269,7 +269,7 @@ L_tco_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v__cps_mirror(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -286,14 +286,14 @@ L_tco_loop:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_tco_arm_20
-    21: L_tco_arm_21
-    default: L_tco_arm_20
-L_tco_arm_20:
+    22: L_tco_arm_22
+    23: L_tco_arm_23
+    default: L_tco_arm_22
+L_tco_arm_22:
   pop
   aload_1
   areturn
-L_tco_arm_21:
+L_tco_arm_23:
   dup
   iconst_1
   aaload
@@ -332,7 +332,7 @@ L_tco_arm_21:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_buildRight(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -441,10 +441,10 @@ L_tco_loop:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    25: L_tco_arm_25
-    26: L_tco_arm_26
-    default: L_tco_arm_25
-L_tco_arm_25:
+    27: L_tco_arm_27
+    28: L_tco_arm_28
+    default: L_tco_arm_27
+L_tco_arm_27:
   dup
   iconst_1
   aaload
@@ -461,11 +461,11 @@ L_tco_arm_25:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    22: L_tco_arm_22
-    23: L_tco_arm_23
     24: L_tco_arm_24
-    default: L_tco_arm_22
-L_tco_arm_22:
+    25: L_tco_arm_25
+    26: L_tco_arm_26
+    default: L_tco_arm_24
+L_tco_arm_24:
   pop
   aload_2
   aconst_null
@@ -473,7 +473,7 @@ L_tco_arm_22:
   aconst_null
   astore_1
   areturn
-L_tco_arm_23:
+L_tco_arm_25:
   dup
   iconst_1
   aaload
@@ -489,6 +489,19 @@ L_tco_arm_23:
   pop
   aload_0
   checkcast [Ljava/lang/Object;
+  dup
+  iconst_0
+  bipush 28
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload 4
+  aastore
+  dup
+  iconst_2
+  iconst_4
+  anewarray java/lang/Object
   dup
   iconst_0
   bipush 26
@@ -496,19 +509,6 @@ L_tco_arm_23:
   aastore
   dup
   iconst_1
-  aload 4
-  aastore
-  dup
-  iconst_2
-  iconst_4
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 24
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
   aload_3
   aastore
   dup
@@ -518,65 +518,6 @@ L_tco_arm_23:
   dup
   iconst_3
   aload 5
-  aastore
-  aastore
-  aconst_null
-  astore 5
-  aconst_null
-  astore 4
-  aconst_null
-  astore_3
-  aconst_null
-  astore_2
-  aconst_null
-  astore_1
-  astore_0
-  goto L_tco_loop
-L_tco_arm_24:
-  dup
-  iconst_1
-  aaload
-  astore_3
-  dup
-  iconst_2
-  aaload
-  astore 4
-  dup
-  iconst_3
-  aaload
-  astore 5
-  pop
-  aload_0
-  checkcast [Ljava/lang/Object;
-  dup
-  iconst_0
-  bipush 25
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload_3
-  aastore
-  dup
-  iconst_2
-  iconst_4
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 21
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  dup
-  iconst_1
-  aload 4
-  aastore
-  dup
-  iconst_2
-  aload 5
-  aastore
-  dup
-  iconst_3
-  aload_2
   aastore
   aastore
   aconst_null
@@ -595,6 +536,65 @@ L_tco_arm_26:
   dup
   iconst_1
   aaload
+  astore_3
+  dup
+  iconst_2
+  aaload
+  astore 4
+  dup
+  iconst_3
+  aaload
+  astore 5
+  pop
+  aload_0
+  checkcast [Ljava/lang/Object;
+  dup
+  iconst_0
+  bipush 27
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload_3
+  aastore
+  dup
+  iconst_2
+  iconst_4
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  bipush 23
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  dup
+  iconst_1
+  aload 4
+  aastore
+  dup
+  iconst_2
+  aload 5
+  aastore
+  dup
+  iconst_3
+  aload_2
+  aastore
+  aastore
+  aconst_null
+  astore 5
+  aconst_null
+  astore 4
+  aconst_null
+  astore_3
+  aconst_null
+  astore_2
+  aconst_null
+  astore_1
+  astore_0
+  goto L_tco_loop
+L_tco_arm_28:
+  dup
+  iconst_1
+  aaload
   astore_1
   dup
   iconst_2
@@ -608,16 +608,16 @@ L_tco_arm_26:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_tco_arm_20
-    21: L_tco_arm_21
-    default: L_tco_arm_20
-L_tco_arm_20:
+    22: L_tco_arm_22
+    23: L_tco_arm_23
+    default: L_tco_arm_22
+L_tco_arm_22:
   pop
   aload_0
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 25
+  bipush 27
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -630,7 +630,7 @@ L_tco_arm_20:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -640,7 +640,7 @@ L_tco_arm_20:
   astore_1
   astore_0
   goto L_tco_loop
-L_tco_arm_21:
+L_tco_arm_23:
   dup
   iconst_1
   aaload
@@ -658,7 +658,7 @@ L_tco_arm_21:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 26
+  bipush 28
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -671,7 +671,7 @@ L_tco_arm_21:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -707,7 +707,7 @@ L_tco_arm_21:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 26
+  bipush 28
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup

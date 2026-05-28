@@ -1,16 +1,16 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [15]]]; if (s < -2147483648) return [3, [3768445577, [14]]]; return [4, s|0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [17]]]; if (s < -2147483648) return [3, [3768445577, [16]]]; return [4, s|0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 
-const v_triple = [13, (10|0), (20|0), (30|0)];
+const v_triple = [15, (10|0), (20|0), (30|0)];
 
 const v_sumTriple = (v__arg_0) => {
     {
       const __s = v__arg_0;
       switch (__s[0]) {
-        case 13: {
+        case 15: {
           const v_a = __s[1];
           const v_b = __s[2];
           const v_c = __s[3];
@@ -48,7 +48,7 @@ const v_sumPair = (v__arg_1) => {
     {
       const __s = v__arg_1;
       switch (__s[0]) {
-        case 12: {
+        case 14: {
           const v_a = __s[1];
           const v_b = __s[2];
           {
@@ -98,7 +98,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v_pair = [12, (100|0), (200|0)];
+const v_pair = [14, (100|0), (200|0)];
 
 const v__let_12 = (v_res) => {
     {
@@ -124,10 +124,10 @@ const v__lam_13 = (v__arg_2) => {
     {
       const __s = v__arg_2;
       switch (__s[0]) {
-        case 12: {
+        case 14: {
           const v_a = __s[1];
           const v_b = __s[2];
-          return (v_sumPair)([12, v_a, v_b]);
+          return (v_sumPair)([14, v_a, v_b]);
         }
       }
     }

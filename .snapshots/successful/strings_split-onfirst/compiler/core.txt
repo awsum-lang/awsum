@@ -54,7 +54,7 @@ CoreProgram
                         ( CCase
                             ( CVar "t" )
                             [
-                                ( 12
+                                ( 14
                                 ,
                                     [ "a"
                                     , "b"

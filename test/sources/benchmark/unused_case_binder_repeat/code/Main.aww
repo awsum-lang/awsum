@@ -1,5 +1,5 @@
 {- Walks a list counting elements, repeated. The case-binder '_h'
-   is bound from each 'Cons' cell's slot 1 but never referenced —
+   is bound from each 'ICons' cell's slot 1 but never referenced —
    stresses 'Awsum.Lifetime.insertDrops' on the unused-binder path
    (its placement of 'CDrop' must keep the boxed Int32 reachable
    for the cascade-free of 'xs' and dec the binder itself after).
@@ -7,8 +7,8 @@
    Hot loop:
 
      case xs of
-       Nil -> acc
-       Cons _h t -> length t (succInt32 acc)
+       INil -> acc
+       ICons _h t -> length t (succInt32 acc)
 
    Steady-state peak RSS at iters * listLen = 10^7:
      * LLVM       ~2 MiB
@@ -25,11 +25,11 @@ import IO.Stdout
 zero : Int32
 zero = 0
 
-type IntList = Nil | Cons Int32 IntList
+type IntList = INil | ICons Int32 IntList
 
 -- Tail-recursive build: each iter consumes 'n' and 'acc' (both
 
--- transferred into 'Cons n acc'), and the new 'm' becomes the
+-- transferred into 'ICons n acc'), and the new 'm' becomes the
 
 -- next 'n'. No build-side leak.
 
@@ -38,11 +38,11 @@ build n acc = case eqInt32 n zero of
   True -> acc
   False -> case predInt32 n of
     Left _e -> acc
-    Right m -> build m (Cons n acc)
+    Right m -> build m (ICons n acc)
 
 -- Walks the list counting elements; '_h' is bound from each
 
--- 'Cons' cell's slot 1 but never referenced. Tail-recursive so
+-- 'ICons' cell's slot 1 but never referenced. Tail-recursive so
 
 -- 'xs' and 'acc' are loop accumulators dropped by Phase B; '_h'
 
@@ -50,14 +50,14 @@ build n acc = case eqInt32 n zero of
 
 length : IntList -> Int32 -> Int32
 length xs acc = case xs of
-  Nil -> acc
-  Cons _h t -> case succInt32 acc of
+  INil -> acc
+  ICons _h t -> case succInt32 acc of
     Left _e -> acc
     Right a -> length t a
 
 -- Outer loop: build a fresh list, walk it counting elements,
 
--- accumulate the count. 'iters * listLen' Cons cells walked,
+-- accumulate the count. 'iters * listLen' ICons cells walked,
 
 -- equal number of boxed Int32 cells leaked on LLVM/WASM.
 
@@ -66,7 +66,7 @@ runN iters listLen accSum = case eqInt32 iters zero of
   True -> accSum
   False -> case predInt32 iters of
     Left _e -> accSum
-    Right i -> case addInt32 accSum (length (build listLen Nil) zero) of
+    Right i -> case addInt32 accSum (length (build listLen INil) zero) of
       Left _e -> accSum
       Right s -> runN i listLen s
 

@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __entryArgEither(arg){ if (arg.length > 134217728) return [3, [589989748, [16]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [3, [502975519, [17]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [3, [502975519, [17]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [3, [502975519, [17]]]; } return [4, arg]; }
+function __entryArgEither(arg){ if (arg.length > 134217728) return [3, [589989748, [18]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [3, [502975519, [19]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [3, [502975519, [19]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [3, [502975519, [19]]]; } return [4, arg]; }
 function __getArgs(){ return __entryArgEither(process.argv[2] ?? ""); }
 function __stdinReadAll(){ return __entryArgEither(require('fs').readFileSync(0).toString('utf-8')); }
 
@@ -9,7 +9,7 @@ const v_handleE1 = (v_e) => {
     {
       const __s = v_e;
       switch (__s[0]) {
-        case 20: {
+        case 22: {
           return [7, "got E1", [5, [0]]];
         }
       }
@@ -20,31 +20,31 @@ const v_failIO = (v_e) => {
     return [6, v_e];
 };
 
-const v_failingComputation = (v_failIO)([20]);
+const v_failingComputation = (v_failIO)([22]);
 
 const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
   while (true) {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 23: {
+        case 25: {
           const v__cl = __s[1];
           const v__arg0 = __s[2];
           {
             const __s = v__cl;
             switch (__s[0]) {
-              case 21: {
-                const v__cap21_0 = __s[1];
-                const __t0 = (v__args[0] = 24, v__args[1] = v__cap21_0, v__args[2] = v__arg0, v__args);
+              case 23: {
+                const v__cap23_0 = __s[1];
+                const __t0 = (v__args[0] = 26, v__args[1] = v__cap23_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
                 v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
               }
-              case 22: {
-                const v__cap22_0 = __s[1];
-                const __t0 = (v__args[0] = 25, v__args[1] = v__cap22_0, v__args[2] = v__arg0, v__args);
+              case 24: {
+                const v__cap24_0 = __s[1];
+                const __t0 = (v__args[0] = 27, v__args[1] = v__cap24_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
                 v__k = null;
                 v__args = __t0;
@@ -54,21 +54,21 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
             }
           }
         }
-        case 24: {
+        case 26: {
           const v_cont = __s[1];
           const v_result = __s[2];
-          const __t0 = (v__args[0] = 23, v__args[1] = v_cont, v__args[2] = v_result, v__args);
-          const __t1 = [29, v__k];
+          const __t0 = (v__args[0] = 25, v__args[1] = v_cont, v__args[2] = v_result, v__args);
+          const __t1 = [31, v__k];
           v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
         }
-        case 25: {
+        case 27: {
           const v_cont = __s[1];
           const v_result = __s[2];
-          const __t0 = (v__args[0] = 23, v__args[1] = v_cont, v__args[2] = v_result, v__args);
-          const __t1 = [30, v__k];
+          const __t0 = (v__args[0] = 25, v__args[1] = v_cont, v__args[2] = v_result, v__args);
+          const __t1 = [32, v__k];
           v__k = null;
           v__args = __t0;
           v__k = __t1;
@@ -80,11 +80,11 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
 };
 
 const v__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args) => {
-    return (v__cps__scc__apply1__df__lam_10_1__df__lam_11_2)(v__args, [28]);
+    return (v__cps__scc__apply1__df__lam_10_1__df__lam_11_2)(v__args, [30]);
 };
 
 const v__apply1 = (v__cl, v__arg0) => {
-    return (v__scc__apply1__df__lam_10_1__df__lam_11_2)([23, v__cl, v__arg0]);
+    return (v__scc__apply1__df__lam_10_1__df__lam_11_2)([25, v__cl, v__arg0]);
 };
 
 const v_runIO = (v_io) => {
@@ -135,13 +135,13 @@ const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
     {
       const __s = v__k;
       switch (__s[0]) {
-        case 26: {
+        case 28: {
           return v__x;
         }
-        case 27: {
-          const v__pk_27 = __s[1];
+        case 29: {
+          const v__pk_29 = __s[1];
           const v_s = __s[2];
-          const __t0 = v__pk_27;
+          const __t0 = v__pk_29;
           const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
           v__x = null;
           v__k = __t0;
@@ -170,7 +170,7 @@ const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
           const v_s = __s[1];
           const v_next = __s[2];
           const __t0 = v_next;
-          const __t1 = (v_io[0] = 27, v_io[1] = v__k, v_io[2] = v_s, v_io);
+          const __t1 = (v_io[0] = 29, v_io[1] = v__k, v_io[2] = v_s, v_io);
           v__k = null;
           v_io = __t0;
           v__k = __t1;
@@ -178,11 +178,11 @@ const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
         }
         case 8: {
           const v_cont = __s[1];
-          return (v__apply__df_handleErrorIO_0)(v__k, [8, [21, v_cont]]);
+          return (v__apply__df_handleErrorIO_0)(v__k, [8, [23, v_cont]]);
         }
         case 9: {
           const v_cont = __s[1];
-          return (v__apply__df_handleErrorIO_0)(v__k, [9, [22, v_cont]]);
+          return (v__apply__df_handleErrorIO_0)(v__k, [9, [24, v_cont]]);
         }
       }
     }
@@ -190,7 +190,7 @@ const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
 };
 
 const v__df_handleErrorIO_0 = (v_io) => {
-    return (v__cps__df_handleErrorIO_0)(v_io, [26]);
+    return (v__cps__df_handleErrorIO_0)(v_io, [28]);
 };
 
 const main = (v__df_handleErrorIO_0)(v_failingComputation);

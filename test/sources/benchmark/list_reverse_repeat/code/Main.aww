@@ -3,12 +3,12 @@
    The hot loop is the Lean-4 canonical cell-reuse pattern:
 
      revInto acc lst = case lst of
-       Nil -> acc
-       Cons h t -> revInto (Cons h acc) t
+       INil -> acc
+       ICons h t -> revInto (ICons h acc) t
 
-   At every recursive step the matched-out 'Cons h t' cell is
+   At every recursive step the matched-out 'ICons h t' cell is
    linear (its only use is the case scrutinee), and the arm body
-   constructs a 'Cons h acc' cell of the same arity in tail
+   constructs a 'ICons h acc' cell of the same arity in tail
    position. 'Awsum.Reuse' detects this shape and rewrites the
    inner 'CCon 20 [h, acc]' to 'CReuse "lst" 20 [h, acc]' — in-
    place stores on the existing cell rather than '__alloc' /
@@ -31,31 +31,31 @@ import IO.Stdout
 zero : Int32
 zero = 0
 
-type IntList = Nil | Cons Int32 IntList
+type IntList = INil | ICons Int32 IntList
 
 repeat : Int32 -> Int32 -> IntList
 repeat n value = case eqInt32 n zero of
-  True -> Nil
+  True -> INil
   False -> case predInt32 n of
-    Left _e -> Nil
-    Right m -> Cons value (repeat m value)
+    Left _e -> INil
+    Right m -> ICons value (repeat m value)
 
 revInto : IntList -> IntList -> IntList
 revInto acc lst = case lst of
-  Nil -> acc
-  Cons h t -> revInto (Cons h acc) t
+  INil -> acc
+  ICons h t -> revInto (ICons h acc) t
 
 revN : Int32 -> IntList -> IntList
 revN times lst = case eqInt32 times zero of
   True -> lst
   False -> case predInt32 times of
     Left _e -> lst
-    Right m -> revN m (revInto Nil lst)
+    Right m -> revN m (revInto INil lst)
 
 sumList : IntList -> Int32 -> Int32
 sumList lst acc = case lst of
-  Nil -> acc
-  Cons x xs -> case addInt32 acc x of
+  INil -> acc
+  ICons x xs -> case addInt32 acc x of
     Left _e -> acc
     Right next -> sumList xs next
 

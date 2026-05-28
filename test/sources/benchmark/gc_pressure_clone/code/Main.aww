@@ -5,7 +5,7 @@
      * 'sumList cloned' depends on every cell of the final clone, so
        'cloneN' cannot be elided — its result is what main prints.
      * 'clone' walks every cell of its input and allocates a fresh
-       Cons for each, so the optimiser cannot fold it to a no-op
+       ICons for each, so the optimiser cannot fold it to a no-op
        (the result is structurally distinct, even if value-equal).
      * Every intermediate clone becomes unreferenced once the next
        'clone' returns, so any working reclaim mechanism must drop
@@ -20,7 +20,7 @@
      * JVM / CLR / JS reclaim via host GC.
      * LLVM reclaims via compiler-emitted refcount over libc
        malloc/free (one of `__free_recursive`'s cascading paths
-       returns each Cons cell to the freelist after its clone goes
+       returns each ICons cell to the freelist after its clone goes
        out of scope).
      * WASM reclaims via compiler-emitted refcount over the per-
        size-bin freelist in linear memory; cumulative allocation
@@ -32,19 +32,19 @@ import IO.Stdout
 zero : Int32
 zero = 0
 
-type IntList = Nil | Cons Int32 IntList
+type IntList = INil | ICons Int32 IntList
 
 repeat : Int32 -> Int32 -> IntList
 repeat n value = case eqInt32 n zero of
-  True -> Nil
+  True -> INil
   False -> case predInt32 n of
-    Left _e -> Nil
-    Right m -> Cons value (repeat m value)
+    Left _e -> INil
+    Right m -> ICons value (repeat m value)
 
 clone : IntList -> IntList
 clone lst = case lst of
-  Nil -> Nil
-  Cons x xs -> Cons x (clone xs)
+  INil -> INil
+  ICons x xs -> ICons x (clone xs)
 
 cloneN : Int32 -> IntList -> IntList
 cloneN times lst = case eqInt32 times zero of
@@ -55,8 +55,8 @@ cloneN times lst = case eqInt32 times zero of
 
 sumList : IntList -> Int32 -> Int32
 sumList lst acc = case lst of
-  Nil -> acc
-  Cons x xs -> case addInt32 acc x of
+  INil -> acc
+  ICons x xs -> case addInt32 acc x of
     Left _e -> acc
     Right next -> sumList xs next
 

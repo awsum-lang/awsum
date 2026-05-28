@@ -1,8 +1,8 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
-function __predUInt32(x){ return x === 0 ? [3, [14]] : [4, ((x - 1) >>> 0)]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __predUInt32(x){ return x === 0 ? [3, [16]] : [4, ((x - 1) >>> 0)]; }
 function __eqUInt32(a, b){ return a === b ? [1] : [2]; }
 function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }
 

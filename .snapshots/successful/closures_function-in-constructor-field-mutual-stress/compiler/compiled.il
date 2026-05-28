@@ -43,7 +43,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.1
@@ -156,7 +156,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 20
+    ldc.i4.s 22
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -165,7 +165,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 21
+    ldc.i4.s 23
     box [System.Runtime]System.Int32
     stelem.ref
     stelem.ref
@@ -273,8 +273,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_22, IL_tco_arm_23, IL_tco_arm_24, IL_tco_arm_25)
-  IL_tco_arm_22:
+    switch (IL_tco_arm_24, IL_tco_arm_25, IL_tco_arm_26, IL_tco_arm_27)
+  IL_tco_arm_24:
     dup
     ldc.i4.1
     ldelem.ref
@@ -289,14 +289,14 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_21)
-  IL_tco_arm_21:
+    switch (IL_tco_arm_23)
+  IL_tco_arm_23:
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 23
+    ldc.i4.s 25
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -309,7 +309,7 @@
 
     starg.s 0
     br IL_tco_loop
-  IL_tco_arm_23:
+  IL_tco_arm_25:
     dup
     ldc.i4.1
     ldelem.ref
@@ -319,7 +319,7 @@
     castclass object[]
     dup
     ldc.i4.0
-    ldc.i4.s 25
+    ldc.i4.s 27
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -328,7 +328,7 @@
     stelem.ref
     starg.s 0
     br IL_tco_loop
-  IL_tco_arm_24:
+  IL_tco_arm_26:
     dup
     ldc.i4.1
     ldelem.ref
@@ -398,8 +398,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_20)
-  IL_tco_arm_20:
+    switch (IL_tco_arm_22)
+  IL_tco_arm_22:
     dup
     ldc.i4.1
     ldelem.ref
@@ -409,7 +409,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -427,7 +427,7 @@
 
     starg.s 0
     br IL_tco_loop
-  IL_tco_arm_25:
+  IL_tco_arm_27:
     dup
     ldc.i4.1
     ldelem.ref
@@ -496,7 +496,7 @@
     castclass object[]
     dup
     ldc.i4.0
-    ldc.i4.s 24
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -516,7 +516,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 24
+    ldc.i4.s 26
     box [System.Runtime]System.Int32
     stelem.ref
     dup

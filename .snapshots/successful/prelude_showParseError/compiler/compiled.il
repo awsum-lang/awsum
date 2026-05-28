@@ -97,7 +97,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v_showParseError(object)

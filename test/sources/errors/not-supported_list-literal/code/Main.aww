@@ -1,9 +1,8 @@
-{- Not yet supported: list literal syntax `[1, 2, 3]`. There is no
-   built-in `List` type in the prelude and the `[ … ]` form is not in
-   the expression grammar — square brackets are not lexed as anything
+{- Not yet supported: list literal syntax `[1, 2, 3]`. Square brackets
+   are not in the expression grammar — they are not lexed as anything
    meaningful, so the parser rejects the unexpected `[` immediately.
-   Workaround: define a user-level `type List a = Nil | Cons a (List a)`
-   and build values with explicit `Cons`/`Nil`. -}
+   Workaround: build the `List a` defined in the prelude with explicit
+   `Cons h t` and `Nil`. -}
 
 import IO.Stdout
 

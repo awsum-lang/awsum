@@ -42,12 +42,12 @@ CoreProgram
             ( CCase
                 ( CVar "c" )
                 [
-                    ( 20
+                    ( 22
                     , []
                     , CString "red"
                     )
                 ,
-                    ( 21
+                    ( 23
                     , []
                     , CString "green"
                     )
@@ -57,7 +57,7 @@ CoreProgram
             ( CCase
                 ( CVar "bc" )
                 [
-                    ( 23
+                    ( 25
                     , [ "c" ]
                     , CDrop DropFreeUnchecked "c"
                         ( CCall
@@ -71,7 +71,7 @@ CoreProgram
             ( CCase
                 ( CVar "r" )
                 [
-                    ( 24
+                    ( 26
                     , [ "box" ]
                     , CDrop DropFreeUnchecked "box"
                         ( CCall
@@ -89,8 +89,8 @@ CoreProgram
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "showBoxedColor" )
-                            [ CCon 23
-                                [ CCon 20 [] ]
+                            [ CCon 25
+                                [ CCon 22 [] ]
                             ]
                         , CString " "
                         ]
@@ -109,9 +109,9 @@ CoreProgram
                             [ CVar "s0"
                             , CCall
                                 ( CVar "showResult" )
-                                [ CCon 24
-                                    [ CCon 23
-                                        [ CCon 21 [] ]
+                                [ CCon 26
+                                    [ CCon 25
+                                        [ CCon 23 [] ]
                                     ]
                                 ]
                             ]

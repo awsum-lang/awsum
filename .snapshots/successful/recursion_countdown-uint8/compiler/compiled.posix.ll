@@ -160,7 +160,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -233,7 +233,7 @@ define internal ptr @__predUInt8(ptr %p) {
   br i1 %is_zero, label %overflow, label %ok
 overflow:
   %oe = call ptr @__alloc(i64 8, i32 0)
-  %oe_tag = inttoptr i64 14 to ptr
+  %oe_tag = inttoptr i64 16 to ptr
   store ptr %oe_tag, ptr %oe
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -327,7 +327,7 @@ define internal ptr @v_showUnderflowError(ptr %v__wild0) {
 define internal ptr @v_countDown(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @__alloc(i64 8, i32 0)
-  %t1 = inttoptr i64 17 to ptr
+  %t1 = inttoptr i64 19 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v__cps_countDown(ptr %v_n, ptr %t0)
@@ -408,7 +408,7 @@ tco.case.arm.4.38:
   %t40 = load ptr, ptr %t39
   call void @__inc_ref(ptr %t40)
   %t41 = call ptr @__alloc(i64 24, i32 2)
-  %t42 = inttoptr i64 18 to ptr
+  %t42 = inttoptr i64 20 to ptr
   %t43 = getelementptr ptr, ptr %t41, i32 0
   store ptr %t42, ptr %t43
   call void @__inc_ref(ptr %t6)
@@ -449,12 +449,12 @@ tco.loop.0:
   %t7 = getelementptr ptr, ptr %t5, i32 0
   %t8 = load ptr, ptr %t7
   %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %tco.case.default.10 [ i64 17, label %tco.case.arm.17.11 i64 18, label %tco.case.arm.18.12 ]
-tco.case.arm.17.11:
+  switch i64 %t9, label %tco.case.default.10 [ i64 19, label %tco.case.arm.19.11 i64 20, label %tco.case.arm.20.12 ]
+tco.case.arm.19.11:
   call void @__free_recursive(ptr %t5)
   store ptr %t6, ptr %t2
   br label %tco.exit.1
-tco.case.arm.18.12:
+tco.case.arm.20.12:
   %t13 = getelementptr ptr, ptr %t5, i32 1
   %t14 = load ptr, ptr %t13
   call void @__inc_ref(ptr %t14)
@@ -602,8 +602,8 @@ case.arm.589989748.11:
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 16, label %case.arm.16.18 ]
-case.arm.16.18:
+  switch i64 %t16, label %case.default.17 [ i64 18, label %case.arm.18.18 ]
+case.arm.18.18:
   %t19 = call ptr @__alloc(i64 16, i32 1)
   %t20 = inttoptr i64 4 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0

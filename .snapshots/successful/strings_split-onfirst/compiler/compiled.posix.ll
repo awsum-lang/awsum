@@ -173,7 +173,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -293,7 +293,7 @@ match:
   %suffix_payload = getelementptr i8, ptr %suffix, i64 8
   call ptr @memcpy(ptr %suffix_payload, ptr %suffix_start, i64 %suffix_blen)
   %tuple = call ptr @__alloc(i64 24, i32 2)
-  %tuple_tag = inttoptr i64 12 to ptr
+  %tuple_tag = inttoptr i64 14 to ptr
   store ptr %tuple_tag, ptr %tuple
   %tuple_a = getelementptr ptr, ptr %tuple, i32 1
   store ptr %prefix, ptr %tuple_a
@@ -429,8 +429,8 @@ case.arm.11.9:
   %t12 = getelementptr ptr, ptr %t11, i32 0
   %t13 = load ptr, ptr %t12
   %t14 = ptrtoint ptr %t13 to i64
-  switch i64 %t14, label %case.default.15 [ i64 12, label %case.arm.12.16 ]
-case.arm.12.16:
+  switch i64 %t14, label %case.default.15 [ i64 14, label %case.arm.14.16 ]
+case.arm.14.16:
   %t17 = getelementptr ptr, ptr %t11, i32 1
   %t18 = load ptr, ptr %t17
   call void @__inc_ref(ptr %t18)

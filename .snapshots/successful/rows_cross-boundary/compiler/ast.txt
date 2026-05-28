@@ -28,7 +28,7 @@ Program
                 { spanStartLine = 9
                 , spanStartCol = 1
                 , spanEndLine = 9
-                , spanEndCol = 34
+                , spanEndCol = 36
                 }
             ) "Lst"
             [ Param
@@ -45,48 +45,48 @@ Program
                     { spanStartLine = 9
                     , spanStartCol = 14
                     , spanEndLine = 9
-                    , spanEndCol = 17
+                    , spanEndCol = 18
                     }
-                ) "Nil" []
+                ) "LNil" []
             , ConDef
                 ( SrcSpan
                     { spanStartLine = 9
-                    , spanStartCol = 20
+                    , spanStartCol = 21
                     , spanEndLine = 9
-                    , spanEndCol = 24
+                    , spanEndCol = 26
                     }
-                ) "Cons"
+                ) "LCons"
                 [ TyVar
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 25
+                        , spanStartCol = 27
                         , spanEndLine = 9
-                        , spanEndCol = 26
+                        , spanEndCol = 28
                         }
                     ) "a"
                 , TyApp
                     ( SrcSpan
                         { spanStartLine = 9
-                        , spanStartCol = 27
+                        , spanStartCol = 29
                         , spanEndLine = 9
-                        , spanEndCol = 34
+                        , spanEndCol = 36
                         }
                     )
                     ( TyCon
                         ( SrcSpan
                             { spanStartLine = 9
-                            , spanStartCol = 28
+                            , spanStartCol = 30
                             , spanEndLine = 9
-                            , spanEndCol = 31
+                            , spanEndCol = 33
                             }
                         ) "Lst"
                     )
                     ( TyVar
                         ( SrcSpan
                             { spanStartLine = 9
-                            , spanStartCol = 32
+                            , spanStartCol = 34
                             , spanEndLine = 9
-                            , spanEndCol = 33
+                            , spanEndCol = 35
                             }
                         ) "a"
                     )
@@ -202,7 +202,7 @@ Program
                 { spanStartLine = 15
                 , spanStartCol = 1
                 , spanEndLine = 15
-                , spanEndCol = 42
+                , spanEndCol = 45
                 }
             ) "defaultBools" []
             ( EApp
@@ -210,7 +210,7 @@ Program
                     { spanStartLine = 15
                     , spanStartCol = 16
                     , spanEndLine = 15
-                    , spanEndCol = 42
+                    , spanEndCol = 45
                     }
                 )
                 ( EApp
@@ -218,7 +218,7 @@ Program
                         { spanStartLine = 15
                         , spanStartCol = 16
                         , spanEndLine = 15
-                        , spanEndCol = 26
+                        , spanEndCol = 27
                         }
                     )
                     ( ECon
@@ -226,16 +226,16 @@ Program
                             { spanStartLine = 15
                             , spanStartCol = 16
                             , spanEndLine = 15
-                            , spanEndCol = 21
+                            , spanEndCol = 22
                             }
-                        ) "Cons"
+                        ) "LCons"
                     )
                     ( ECon
                         ( SrcSpan
                             { spanStartLine = 15
-                            , spanStartCol = 21
+                            , spanStartCol = 22
                             , spanEndLine = 15
-                            , spanEndCol = 26
+                            , spanEndCol = 27
                             }
                         ) "True"
                     )
@@ -243,42 +243,42 @@ Program
                 ( EParens
                     ( SrcSpan
                         { spanStartLine = 15
-                        , spanStartCol = 26
+                        , spanStartCol = 27
                         , spanEndLine = 15
-                        , spanEndCol = 42
+                        , spanEndCol = 45
                         }
                     )
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 15
-                            , spanStartCol = 27
+                            , spanStartCol = 28
                             , spanEndLine = 15
-                            , spanEndCol = 41
+                            , spanEndCol = 44
                             }
                         )
                         ( EApp
                             ( SrcSpan
                                 { spanStartLine = 15
-                                , spanStartCol = 27
+                                , spanStartCol = 28
                                 , spanEndLine = 15
-                                , spanEndCol = 38
+                                , spanEndCol = 40
                                 }
                             )
                             ( ECon
                                 ( SrcSpan
                                     { spanStartLine = 15
-                                    , spanStartCol = 27
+                                    , spanStartCol = 28
                                     , spanEndLine = 15
-                                    , spanEndCol = 32
+                                    , spanEndCol = 34
                                     }
-                                ) "Cons"
+                                ) "LCons"
                             )
                             ( ECon
                                 ( SrcSpan
                                     { spanStartLine = 15
-                                    , spanStartCol = 32
+                                    , spanStartCol = 34
                                     , spanEndLine = 15
-                                    , spanEndCol = 38
+                                    , spanEndCol = 40
                                     }
                                 ) "False"
                             )
@@ -286,11 +286,11 @@ Program
                         ( ECon
                             ( SrcSpan
                                 { spanStartLine = 15
-                                , spanStartCol = 38
+                                , spanStartCol = 40
                                 , spanEndLine = 15
-                                , spanEndCol = 41
+                                , spanEndCol = 44
                                 }
-                            ) "Nil"
+                            ) "LNil"
                         )
                     )
                 )
@@ -1063,33 +1063,33 @@ Program
                             { spanStartLine = 34
                             , spanStartCol = 3
                             , spanEndLine = 34
-                            , spanEndCol = 6
+                            , spanEndCol = 7
                             }
-                        ) "Nil" []
+                        ) "LNil" []
                     )
                     ( EApp
                         ( SrcSpan
                             { spanStartLine = 34
-                            , spanStartCol = 10
+                            , spanStartCol = 11
                             , spanEndLine = 34
-                            , spanEndCol = 18
+                            , spanEndCol = 19
                             }
                         )
                         ( ECon
                             ( SrcSpan
                                 { spanStartLine = 34
-                                , spanStartCol = 10
+                                , spanStartCol = 11
                                 , spanEndLine = 34
-                                , spanEndCol = 16
+                                , spanEndCol = 17
                                 }
                             ) "Right"
                         )
                         ( ELit
                             ( SrcSpan
                                 { spanStartLine = 34
-                                , spanStartCol = 16
+                                , spanStartCol = 17
                                 , spanEndLine = 34
-                                , spanEndCol = 18
+                                , spanEndCol = 19
                                 }
                             )
                             ( LString "" )
@@ -1101,23 +1101,23 @@ Program
                                 { spanStartLine = 35
                                 , spanStartCol = 3
                                 , spanEndLine = 35
-                                , spanEndCol = 7
+                                , spanEndCol = 8
                                 }
-                            ) "Cons"
+                            ) "LCons"
                             [ PVar
                                 ( SrcSpan
                                     { spanStartLine = 35
-                                    , spanStartCol = 8
+                                    , spanStartCol = 9
                                     , spanEndLine = 35
-                                    , spanEndCol = 9
+                                    , spanEndCol = 10
                                     }
                                 ) "h"
                             , PVar
                                 ( SrcSpan
                                     { spanStartLine = 35
-                                    , spanStartCol = 10
+                                    , spanStartCol = 11
                                     , spanEndLine = 35
-                                    , spanEndCol = 11
+                                    , spanEndCol = 12
                                     }
                                 ) "t"
                             ]
@@ -1125,7 +1125,7 @@ Program
                         ( EDo
                             ( SrcSpan
                                 { spanStartLine = 35
-                                , spanStartCol = 15
+                                , spanStartCol = 16
                                 , spanEndLine = 37
                                 , spanEndCol = 28
                                 }

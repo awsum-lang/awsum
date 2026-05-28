@@ -36,17 +36,17 @@ const v__scc_parseBinary_parseExpr = (v__args) => {
     {
       const __s = v__args;
       switch (__s[0]) {
-        case 22: {
+        case 24: {
           const v_tok = __s[1];
           const v__acc = __s[2];
           {
             const __s = v_tok;
             switch (__s[0]) {
-              case 20: {
+              case 22: {
                 return (0|0);
               }
-              case 21: {
-                const __t0 = [23, [20]];
+              case 23: {
+                const __t0 = [25, [22]];
                 v__args = null;
                 v__args = __t0;
                 continue;
@@ -54,16 +54,16 @@ const v__scc_parseBinary_parseExpr = (v__args) => {
             }
           }
         }
-        case 23: {
+        case 25: {
           const v_tok = __s[1];
           {
             const __s = v_tok;
             switch (__s[0]) {
-              case 20: {
+              case 22: {
                 return (0|0);
               }
-              case 21: {
-                const __t0 = [22, v_tok, (0|0)];
+              case 23: {
+                const __t0 = [24, v_tok, (0|0)];
                 v__args = null;
                 v__args = __t0;
                 continue;
@@ -77,10 +77,10 @@ const v__scc_parseBinary_parseExpr = (v__args) => {
 };
 
 const v_parseExpr = (v_tok) => {
-    return (v__scc_parseBinary_parseExpr)([23, v_tok]);
+    return (v__scc_parseBinary_parseExpr)([25, v_tok]);
 };
 
-const main = [7, String((v_parseExpr)([21])), [5, [0]]];
+const main = [7, String((v_parseExpr)([23])), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

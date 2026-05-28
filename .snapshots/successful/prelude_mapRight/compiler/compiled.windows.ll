@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -292,7 +292,7 @@ define internal ptr @v_bad() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 20 to ptr
+  %t4 = inttoptr i64 22 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = getelementptr ptr, ptr %t0, i32 1
@@ -383,21 +383,21 @@ case.arm.3.5:
   %t9 = getelementptr ptr, ptr %t8, i32 0
   %t10 = load ptr, ptr %t9
   %t11 = ptrtoint ptr %t10 to i64
-  switch i64 %t11, label %case.default.12 [ i64 20, label %case.arm.20.14 ]
-case.arm.20.14:
+  switch i64 %t11, label %case.default.12 [ i64 22, label %case.arm.22.14 ]
+case.arm.22.14:
   %t16 = call ptr @__alloc(i64 16, i32 1)
   %t17 = inttoptr i64 4 to ptr
   %t18 = getelementptr ptr, ptr %t16, i32 0
   store ptr %t17, ptr %t18
   %t19 = getelementptr ptr, ptr %t16, i32 1
   store ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t19
-  br label %case.end.20.15
-case.end.20.15:
+  br label %case.end.22.15
+case.end.22.15:
   br label %case.join.13
 case.default.12:
   unreachable
 case.join.13:
-  %t20 = phi ptr [%t16, %case.end.20.15]
+  %t20 = phi ptr [%t16, %case.end.22.15]
   call void @__free_recursive(ptr %t8)
   br label %case.end.3.6
 case.end.3.6:
@@ -417,18 +417,18 @@ case.arm.3.30:
   %t34 = getelementptr ptr, ptr %t33, i32 0
   %t35 = load ptr, ptr %t34
   %t36 = ptrtoint ptr %t35 to i64
-  switch i64 %t36, label %case.default.37 [ i64 20, label %case.arm.20.39 ]
-case.arm.20.39:
+  switch i64 %t36, label %case.default.37 [ i64 22, label %case.arm.22.39 ]
+case.arm.22.39:
   call void @__inc_ref(ptr %t24)
   %t41 = call ptr @__showInt32(ptr %t24)
   %t42 = call ptr @__concat(ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t41)
-  br label %case.end.20.40
-case.end.20.40:
+  br label %case.end.22.40
+case.end.22.40:
   br label %case.join.38
 case.default.37:
   unreachable
 case.join.38:
-  %t43 = phi ptr [%t42, %case.end.20.40]
+  %t43 = phi ptr [%t42, %case.end.22.40]
   call void @__free_recursive(ptr %t33)
   br label %case.end.3.31
 case.end.3.31:

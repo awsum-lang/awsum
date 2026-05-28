@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "$arg_0" )
                 [
-                    ( 13
+                    ( 15
                     ,
                         [ "a"
                         , "b"
@@ -101,7 +101,7 @@ CoreProgram
             ( CCase
                 ( CVar "$arg_1" )
                 [
-                    ( 12
+                    ( 14
                     ,
                         [ "a"
                         , "b"
@@ -134,14 +134,14 @@ CoreProgram
                 ]
             )
         , CValDef "triple"
-            ( CCon 13
+            ( CCon 15
                 [ CIntLit 10 TInt32
                 , CIntLit 20 TInt32
                 , CIntLit 30 TInt32
                 ]
             )
         , CValDef "pair"
-            ( CCon 12
+            ( CCon 14
                 [ CIntLit 100 TInt32
                 , CIntLit 200 TInt32
                 ]
@@ -185,7 +185,7 @@ CoreProgram
             ( CCase
                 ( CVar "$arg_2" )
                 [
-                    ( 12
+                    ( 14
                     ,
                         [ "a"
                         , "b"
@@ -194,7 +194,7 @@ CoreProgram
                         ( CDrop DropFreeUnchecked "b"
                             ( CCall
                                 ( CVar "sumPair" )
-                                [ CCon 12
+                                [ CCon 14
                                     [ CVar "a"
                                     , CVar "b"
                                     ]

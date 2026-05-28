@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 18
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -121,7 +121,7 @@ L_subi32_over:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 17
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -143,7 +143,7 @@ L_subi32_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2

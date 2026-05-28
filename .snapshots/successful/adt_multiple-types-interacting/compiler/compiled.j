@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 18
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -144,14 +144,14 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_arm_20
-    21: L_arm_21
-    default: L_arm_20
-L_arm_20:
+    22: L_arm_22
+    23: L_arm_23
+    default: L_arm_22
+L_arm_22:
   pop
   ldc "red"
   goto L_join
-L_arm_21:
+L_arm_23:
   pop
   ldc "green"
   goto L_join
@@ -168,9 +168,9 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    23: L_arm_23
-    default: L_arm_23
-L_arm_23:
+    25: L_arm_25
+    default: L_arm_25
+L_arm_25:
   dup
   iconst_1
   aaload
@@ -192,9 +192,9 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    24: L_arm_24
-    default: L_arm_24
-L_arm_24:
+    26: L_arm_26
+    default: L_arm_26
+L_arm_26:
   dup
   iconst_1
   aaload
@@ -213,7 +213,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -222,7 +222,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -267,7 +267,7 @@ L_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -276,7 +276,7 @@ L_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -285,7 +285,7 @@ L_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 21
+  bipush 23
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore

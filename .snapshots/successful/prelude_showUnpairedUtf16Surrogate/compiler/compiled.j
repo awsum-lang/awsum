@@ -100,7 +100,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 17
+  bipush 19
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_showUnpairedUtf16Surrogate(Ljava/lang/Object;)Ljava/lang/Object;

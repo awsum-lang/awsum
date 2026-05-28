@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -34,7 +34,7 @@ const v_runIO = (v_io) => {
 
 const v_good = [4, (42|0)];
 
-const v_bad = [3, [20]];
+const v_bad = [3, [22]];
 
 const v__let_12 = (v_msg) => {
     {
@@ -53,15 +53,15 @@ const v__let_12 = (v_msg) => {
 };
 
 const v__let_14 = (v_renamedBad, v_renamedGood) => {
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 21: { return ((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 21: { return [4, "bad-Left bad-Left"]; } } })(v___p0); } case 4: { const v_n = s[1]; return __concat("bad-Left good-Right ", String(v_n)); } } })(v_renamedGood); } } })(v___p0); } case 4: { const v___w0 = s[1]; return [4, "WAT"]; } } })(v_renamedBad));
+    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 23: { return ((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 23: { return [4, "bad-Left bad-Left"]; } } })(v___p0); } case 4: { const v_n = s[1]; return __concat("bad-Left good-Right ", String(v_n)); } } })(v_renamedGood); } } })(v___p0); } case 4: { const v___w0 = s[1]; return [4, "WAT"]; } } })(v_renamedBad));
 };
 
 const v__lam_15 = (v__a) => {
-    return [21];
+    return [23];
 };
 
 const v__lam_13 = (v__a) => {
-    return [21];
+    return [23];
 };
 
 const v__df_mapLeft_1 = (v_x) => {

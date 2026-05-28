@@ -159,7 +159,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -278,8 +278,8 @@ define internal ptr @v_showTri(ptr %v_t) {
   %t0 = getelementptr ptr, ptr %v_t, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 ]
-case.arm.20.4:
+  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
+case.arm.22.4:
   call void @__free_recursive(ptr %v_t)
   ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
 case.default.3:
@@ -301,7 +301,7 @@ define internal ptr @v_main() {
   %t0 = call ptr @__alloc(i64 4, i32 0)
   store i32 42, ptr %t0
   %t1 = call ptr @__alloc(i64 8, i32 0)
-  %t2 = inttoptr i64 20 to ptr
+  %t2 = inttoptr i64 22 to ptr
   %t3 = getelementptr ptr, ptr %t1, i32 0
   store ptr %t2, ptr %t3
   %t4 = call ptr @v_threeTypes(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t1)

@@ -209,24 +209,24 @@ define internal ptr @v_unwrap(ptr %v_b) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 ]
-case.arm.20.4:
+  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
+case.arm.22.4:
   %t5 = getelementptr ptr, ptr %v_b, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
   %t7 = getelementptr ptr, ptr %t6, i32 0
   %t8 = load ptr, ptr %t7
   %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %case.default.10 [ i64 20, label %case.arm.20.11 ]
-case.arm.20.11:
+  switch i64 %t9, label %case.default.10 [ i64 22, label %case.arm.22.11 ]
+case.arm.22.11:
   %t12 = getelementptr ptr, ptr %t6, i32 1
   %t13 = load ptr, ptr %t12
   call void @__inc_ref(ptr %t13)
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 20, label %case.arm.20.18 ]
-case.arm.20.18:
+  switch i64 %t16, label %case.default.17 [ i64 22, label %case.arm.22.18 ]
+case.arm.22.18:
   %t19 = getelementptr ptr, ptr %t13, i32 1
   %t20 = load ptr, ptr %t19
   call void @__inc_ref(ptr %t20)
@@ -248,15 +248,15 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 16, i32 1)
-  %t4 = inttoptr i64 20 to ptr
+  %t4 = inttoptr i64 22 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @__alloc(i64 16, i32 1)
-  %t7 = inttoptr i64 20 to ptr
+  %t7 = inttoptr i64 22 to ptr
   %t8 = getelementptr ptr, ptr %t6, i32 0
   store ptr %t7, ptr %t8
   %t9 = call ptr @__alloc(i64 16, i32 1)
-  %t10 = inttoptr i64 20 to ptr
+  %t10 = inttoptr i64 22 to ptr
   %t11 = getelementptr ptr, ptr %t9, i32 0
   store ptr %t10, ptr %t11
   %t12 = getelementptr ptr, ptr %t9, i32 1

@@ -261,7 +261,7 @@
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
         (local.set $inner (call $__alloc (i32.const 4)))
-        (i32.store (local.get $inner) (i32.const 16))
+        (i32.store (local.get $inner) (i32.const 18))
         (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $row) (i32.const 589989748))
         (i32.store offset=4 (local.get $row) (local.get $inner))
@@ -273,7 +273,7 @@
         (if (result i32) (local.get $surr)
           (then
             (local.set $inner (call $__alloc (i32.const 4)))
-            (i32.store (local.get $inner) (i32.const 17))
+            (i32.store (local.get $inner) (i32.const 19))
             (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
             (i32.store (local.get $row) (i32.const 502975519))
             (i32.store offset=4 (local.get $row) (local.get $inner))
@@ -369,7 +369,7 @@
   (func $v__con_Box (param $v__x0 i32) (result i32)
     (local $__con_0 i32)
     (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 20)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0)))
+    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 22)) (i32.store offset=4 (local.get $__con_0) (local.get $v__x0)) (call $__inc_ref (i32.load offset=4 (local.get $__con_0))) (local.get $__con_0)))
 
   (func $v__df_wrap_0 (param $v_x i32) (result i32)
     (local $__drop_tmp i32)

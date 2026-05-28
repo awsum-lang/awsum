@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -127,7 +127,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -148,7 +148,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -209,7 +209,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -230,7 +230,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -469,8 +469,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_16)
-  IL_arm_16:
+    switch (IL_arm_18)
+  IL_arm_18:
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object

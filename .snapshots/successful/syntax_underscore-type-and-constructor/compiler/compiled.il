@@ -82,8 +82,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_22)
-  IL_arm_22:
+    switch (IL_arm_24)
+  IL_arm_24:
     pop
     ldstr "one"
     br.s IL_join
@@ -107,7 +107,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 22
+    ldc.i4.s 24
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v_show(object)

@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 function __eqUInt32(a, b){ return a === b ? [1] : [2]; }
 function __lengthCodePoints(s){ let n = 0; for (const _ of s) n++; return (n >>> 0); }
 function __lengthUtf16CodeUnits(s){ return (s.length >>> 0); }

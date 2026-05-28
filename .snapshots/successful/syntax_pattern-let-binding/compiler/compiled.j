@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 18
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -114,7 +114,7 @@ L_muli32_split:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 17
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -135,7 +135,7 @@ L_muli32_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -249,7 +249,7 @@ L_arm_3:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 12
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -271,7 +271,7 @@ L_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 12
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -296,9 +296,9 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    12: L_arm_12
-    default: L_arm_12
-L_arm_12:
+    14: L_arm_14
+    default: L_arm_14
+L_arm_14:
   dup
   iconst_1
   aaload

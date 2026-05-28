@@ -1,8 +1,8 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
-function __mulUInt32(a, b){ const p = BigInt(a) * BigInt(b); return p > 4294967295n ? [3, [15]] : [4, (Number(p) >>> 0)]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __mulUInt32(a, b){ const p = BigInt(a) * BigInt(b); return p > 4294967295n ? [3, [17]] : [4, (Number(p) >>> 0)]; }
 
 const v_showOverflowError = (v__wild0) => {
     return "OverflowError";

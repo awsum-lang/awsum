@@ -39,14 +39,14 @@ CoreProgram
                 )
             )
         , CFunDef "wrap" [ "s" ]
-            ( CCon 20
+            ( CCon 22
                 [ CVar "s" ]
             )
         , CFunDef "unwrap" [ "b" ]
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 20
+                    ( 22
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
@@ -73,8 +73,8 @@ CoreProgram
                 [ CCall
                     ( CVar "$df$apply$0" )
                     [ CString "chain"
-                    , CCon 21 []
-                    , CCon 22 []
+                    , CCon 23 []
+                    , CCon 24 []
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
@@ -99,14 +99,14 @@ CoreProgram
             ( CCase
                 ( CVar "$cl" )
                 [
-                    ( 21
+                    ( 23
                     , []
                     , CCall
                         ( CVar "unwrap" )
                         [ CVar "$arg0" ]
                     )
                 ,
-                    ( 22
+                    ( 24
                     , []
                     , CCall
                         ( CVar "wrap" )

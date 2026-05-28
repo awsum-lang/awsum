@@ -158,7 +158,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -234,7 +234,7 @@ define internal ptr @__addInt32(ptr %pa, ptr %pb) {
 err:
   %is_pos = icmp sge i32 %a, 0
   %row_tag_idx = select i1 %is_pos, i64 882564211, i64 3768445577
-  %inner_tag_idx = select i1 %is_pos, i64 15, i64 14
+  %inner_tag_idx = select i1 %is_pos, i64 17, i64 16
   %inner = call ptr @__alloc(i64 8, i32 0)
   %inner_tag = inttoptr i64 %inner_tag_idx to ptr
   store ptr %inner_tag, ptr %inner
@@ -365,8 +365,8 @@ define internal ptr @v_callBox(ptr %v_b, ptr %v_x) {
   %t0 = getelementptr ptr, ptr %v_b, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 ]
-case.arm.20.4:
+  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
+case.arm.22.4:
   %t5 = getelementptr ptr, ptr %v_b, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -383,11 +383,11 @@ case.default.3:
 
 define internal ptr @v_formatOutputs() {
   %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 20 to ptr
+  %t1 = inttoptr i64 22 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 21 to ptr
+  %t4 = inttoptr i64 23 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = getelementptr ptr, ptr %t0, i32 1
@@ -418,11 +418,11 @@ case.arm.4.22:
   %t25 = load ptr, ptr %t24
   call void @__inc_ref(ptr %t25)
   %t26 = call ptr @__alloc(i64 16, i32 1)
-  %t27 = inttoptr i64 20 to ptr
+  %t27 = inttoptr i64 22 to ptr
   %t28 = getelementptr ptr, ptr %t26, i32 0
   store ptr %t27, ptr %t28
   %t29 = call ptr @__alloc(i64 8, i32 0)
-  %t30 = inttoptr i64 22 to ptr
+  %t30 = inttoptr i64 24 to ptr
   %t31 = getelementptr ptr, ptr %t29, i32 0
   store ptr %t30, ptr %t31
   %t32 = getelementptr ptr, ptr %t26, i32 1
@@ -583,14 +583,14 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
   %t0 = getelementptr ptr, ptr %v__cl, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 21, label %case.arm.21.4 i64 22, label %case.arm.22.6 ]
-case.arm.21.4:
+  switch i64 %t2, label %case.default.3 [ i64 23, label %case.arm.23.4 i64 24, label %case.arm.24.6 ]
+case.arm.23.4:
   call void @__inc_ref(ptr %v__arg0)
   %t5 = call ptr @v_double(ptr %v__arg0)
   call void @__free_recursive(ptr %v__cl)
   call void @__free_recursive(ptr %v__arg0)
   ret ptr %t5
-case.arm.22.6:
+case.arm.24.6:
   call void @__inc_ref(ptr %v__arg0)
   %t7 = call ptr @v_triple(ptr %v__arg0)
   call void @__free_recursive(ptr %v__cl)

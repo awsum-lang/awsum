@@ -356,8 +356,8 @@ case.arm.2252990199.11:
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 20, label %case.arm.20.18 ]
-case.arm.20.18:
+  switch i64 %t16, label %case.default.17 [ i64 22, label %case.arm.22.18 ]
+case.arm.22.18:
   %t19 = call ptr @__alloc(i64 24, i32 2)
   %t20 = inttoptr i64 7 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
@@ -389,8 +389,8 @@ case.arm.2269767818.31:
   %t34 = getelementptr ptr, ptr %t33, i32 0
   %t35 = load ptr, ptr %t34
   %t36 = ptrtoint ptr %t35 to i64
-  switch i64 %t36, label %case.default.37 [ i64 21, label %case.arm.21.38 ]
-case.arm.21.38:
+  switch i64 %t36, label %case.default.37 [ i64 23, label %case.arm.23.38 ]
+case.arm.23.38:
   %t39 = call ptr @__alloc(i64 24, i32 2)
   %t40 = inttoptr i64 7 to ptr
   %t41 = getelementptr ptr, ptr %t39, i32 0

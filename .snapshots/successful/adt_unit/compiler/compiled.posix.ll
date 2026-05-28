@@ -209,8 +209,8 @@ define internal ptr @v_show(ptr %v_u) {
   %t0 = getelementptr ptr, ptr %v_u, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 20, label %case.arm.20.4 ]
-case.arm.20.4:
+  switch i64 %t2, label %case.default.3 [ i64 22, label %case.arm.22.4 ]
+case.arm.22.4:
   call void @__free_recursive(ptr %v_u)
   ret ptr getelementptr inbounds (i8, ptr @.str.0, i64 12)
 case.default.3:
@@ -223,7 +223,7 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 20 to ptr
+  %t4 = inttoptr i64 22 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @v_show(ptr %t3)

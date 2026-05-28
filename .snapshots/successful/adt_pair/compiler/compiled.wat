@@ -239,7 +239,7 @@
     (if (i32.gt_u (local.get $usum) (i32.const 134217728))
       (then
         (local.set $stl (call $__alloc (i32.const 4)))
-        (i32.store (local.get $stl) (i32.const 16))
+        (i32.store (local.get $stl) (i32.const 18))
         (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $cell) (i32.const 3))
         (i32.store offset=4 (local.get $cell) (local.get $stl)))
@@ -303,7 +303,7 @@
     (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
       (then
         (local.set $inner (call $__alloc (i32.const 4)))
-        (i32.store (local.get $inner) (i32.const 16))
+        (i32.store (local.get $inner) (i32.const 18))
         (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
         (i32.store (local.get $row) (i32.const 589989748))
         (i32.store offset=4 (local.get $row) (local.get $inner))
@@ -315,7 +315,7 @@
         (if (result i32) (local.get $surr)
           (then
             (local.set $inner (call $__alloc (i32.const 4)))
-            (i32.store (local.get $inner) (i32.const 17))
+            (i32.store (local.get $inner) (i32.const 19))
             (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
             (i32.store (local.get $row) (i32.const 502975519))
             (i32.store offset=4 (local.get $row) (local.get $inner))
@@ -417,7 +417,7 @@
   (func $v_main (result i32)
     (local $__con_0 i32)
     (local $__drop_tmp i32)
-    (call $v__let_12 (call $v_showPair (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 20)) (i32.store offset=4 (local.get $__con_0) (i32.const 160)) (i32.store offset=8 (local.get $__con_0) (i32.const 185)) (local.get $__con_0)))))
+    (call $v__let_12 (call $v_showPair (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 22)) (i32.store offset=4 (local.get $__con_0) (i32.const 160)) (i32.store offset=8 (local.get $__con_0) (i32.const 185)) (local.get $__con_0)))))
 
   (func $v__let_12 (param $v_res i32) (result i32)
     (local $__con_0 i32)

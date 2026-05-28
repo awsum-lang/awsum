@@ -97,7 +97,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 19
+    ldc.i4.s 21
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v_showBrokenPipe(object)

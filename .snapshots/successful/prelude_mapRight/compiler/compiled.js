@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -34,7 +34,7 @@ const v_runIO = (v_io) => {
 
 const v_ok = [4, (10|0)];
 
-const v_bad = [3, [20]];
+const v_bad = [3, [22]];
 
 const v__let_12 = (v_msg) => {
     {
@@ -53,7 +53,7 @@ const v__let_12 = (v_msg) => {
 };
 
 const v__let_14 = (v_mappedOk, v_mappedBad) => {
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 20: { return [4, "ok-Err"]; } } })(v___p0); } case 4: { const v_n = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 20: { return __concat("ok-Right ", String(v_n)); } } })(v___p0); } case 4: { const v__m = s[1]; return [4, "bad-Right"]; } } })(v_mappedBad); } } })(v_mappedOk));
+    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 22: { return [4, "ok-Err"]; } } })(v___p0); } case 4: { const v_n = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 22: { return __concat("ok-Right ", String(v_n)); } } })(v___p0); } case 4: { const v__m = s[1]; return [4, "bad-Right"]; } } })(v_mappedBad); } } })(v_mappedOk));
 };
 
 const v__lam_15 = (v_n) => {

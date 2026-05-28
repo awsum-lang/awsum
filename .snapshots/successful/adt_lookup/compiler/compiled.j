@@ -48,7 +48,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 18
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -144,10 +144,10 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_arm_20
-    21: L_arm_21
-    default: L_arm_20
-L_arm_20:
+    22: L_arm_22
+    23: L_arm_23
+    default: L_arm_22
+L_arm_22:
   dup
   iconst_1
   aaload
@@ -155,7 +155,7 @@ L_arm_20:
   pop
   aload_1
   goto L_join
-L_arm_21:
+L_arm_23:
   pop
   ldc "not found"
   goto L_join
@@ -169,7 +169,7 @@ L_join:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -217,7 +217,7 @@ L_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 21
+  bipush 23
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
@@ -238,10 +238,10 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_arm_20
-    21: L_arm_21
-    default: L_arm_20
-L_arm_20:
+    22: L_arm_22
+    23: L_arm_23
+    default: L_arm_22
+L_arm_22:
   dup
   iconst_1
   aaload
@@ -251,7 +251,7 @@ L_arm_20:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -259,13 +259,13 @@ L_arm_20:
   aload_1
   aastore
   goto L_join
-L_arm_21:
+L_arm_23:
   pop
   iconst_1
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 21
+  bipush 23
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join
