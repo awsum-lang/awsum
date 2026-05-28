@@ -28,7 +28,9 @@ import Relude
 assembleJVM :: PreludeTags -> CoreProgram -> BS.ByteString
 assembleJVM ptags prog =
   let (methods, finalSt) = runState (doAssemble prog) (emptyPool ptags)
-   in toStrict (B.toLazyByteString (buildClassFile finalSt methods))
+      argvFieldNameIdx = fromMaybe (error "assembleJVM: missing __argv name") (Map.lookup (KUtf8 "__argv") finalSt.cache)
+      argvFieldDescIdx = fromMaybe (error "assembleJVM: missing __argv descriptor") (Map.lookup (KUtf8 "[Ljava/lang/String;") finalSt.cache)
+   in toStrict (B.toLazyByteString (buildClassFile finalSt argvFieldNameIdx argvFieldDescIdx methods))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Constant pool types
@@ -345,6 +347,12 @@ doAssemble prog@(CoreProgram decls) = do
   void $ addClass "AwsumMain"
   void $ addClass "java/lang/Object"
   void $ addUtf8 "Code"
+  -- Static field '__argv : [Ljava/lang/String;' — set by 'mkMain' to
+  -- the 'args' array, read by 'mkGetArgs' to build a prelude 'List
+  -- String'. Always declared so the class layout stays stable across
+  -- programs that touch / don't touch 'IO.Args.getArgs'.
+  void $ addUtf8 "__argv"
+  void $ addUtf8 "[Ljava/lang/String;"
 
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
@@ -3304,31 +3312,195 @@ mkParseUInt8 = do
       }
 
 -- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'.
---   Reads the cached argv[0] from the "awsum.argv0" system property
---   ('mkMain' stashed it via 'setProperty' on entry) and routes it
---   through '__entryArgEither' for strict-UTF-16 validation. Per the
---   no-memoisation decision each call yields a fresh Either cell;
---   argv is invariant during execution so repeat calls are
---   deterministically equal.
+--   Reads the 'args' array stashed in the '__argv' static field by
+--   'mkMain' and builds a prelude 'List String' on demand. Each
+--   element is routed through '__entryArgEither' for strict-UTF-16
+--   validation; the error semantics is all-or-nothing — the first
+--   failing element short-circuits the entire call with its 'Left'.
+--   Walked right-to-left so the cons chain is built bottom-up
+--   without recursion. Per the no-memoisation decision each call
+--   returns a fresh chain; argv is invariant during execution so
+--   repeat calls are deterministically equal.
+--
+--   Local slots: 0 = argv (String[]), 1 = i (int loop counter),
+--   2 = list (Object[] accumulator), 3 = validated element (Object[]).
 mkGetArgs :: AsmM MInfo
 mkGetArgs = do
   ni <- addUtf8 "__getArgs"
   di <- addUtf8 "()Ljava/lang/Object;"
-  argvKeyIdx <- addStr "awsum.argv0"
-  getPropertyRef <- addMRef "java/lang/System" "getProperty" "(Ljava/lang/String;)Ljava/lang/String;"
+  argvFieldRef <- addFRef "AwsumMain" "__argv" "[Ljava/lang/String;"
   entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  objCls <- addClass "java/lang/Object"
+  intCls <- addClass "java/lang/Integer"
+  intValueRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  arrCls <- addClass "[Ljava/lang/Object;"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
+  ldcNilTag <- bcLoadInt32 (fromIntegral (ptNil ptags))
+  ldcConsTag <- bcLoadInt32 (fromIntegral (ptCons ptags))
+  ldcRightTag <- bcLoadInt32 (fromIntegral (ptRight ptags))
+  -- Helper: build Object[1] = {Integer(nilTag)} for the empty list.
+  let buildNilCell :: [Word8]
+      buildNilCell =
+        [0x04] -- iconst_1
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59, 0x03] -- dup, iconst_0
+          <> ldcNilTag
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef] -- invokestatic Integer.valueOf
+          <> [0x53] -- aastore
+          -- Body layout (all offsets relative to method start):
+          --   0..(prologueLen-1): stash argv into slot 0, build initial Nil
+          --     into slot 2, set i := argv.length into slot 1.
+  let body =
+        -- argv := __argv (slot 0)
+        [0xB2, hi8 argvFieldRef, lo8 argvFieldRef] -- getstatic __argv
+          <> bcAstore 0
+          -- list := Nil cell (slot 2)
+          <> buildNilCell
+          <> bcAstore 2
+          -- i := argv.length (slot 1)
+          <> bcAload 0
+          <> [0xBE] -- arraylength
+          <> bcIstore 1
+  let loopHeadOff = length body -- bci where L_args_loop frame applies
+  -- Loop head: if i <= 0 goto done.
+      loopHead =
+        bcIload 1
+          <> [0x9E, 0, 0] -- ifle <delta> (placeholder, patched below)
+          -- Decrement i, validate argv[i], check tag. __entryArgEither's
+          -- declared return type is Object but the runtime always returns
+          -- the Object[] of an Either CCon shape (tag + 1 field); we
+          -- checkcast to Object[] and store it back to slot 3 so the
+          -- StackMapTable frame at the branch targets can declare slot 3
+          -- as Object[] (free at runtime — same reference, type narrowing).
+      decAndValidate =
+        bcIload 1
+          <> [0x04] -- iconst_1
+          <> [0x64] -- isub
+          <> bcIstore 1
+          <> bcAload 0
+          <> bcIload 1
+          <> [0x32] -- aaload
+          <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
+          <> [0xC0, hi8 arrCls, lo8 arrCls] -- checkcast Object[]
+          <> bcAstore 3 -- slot 3 = Object[] from here on
+          <> bcAload 3
+          <> [0x03] -- iconst_0
+          <> [0x32] -- aaload
+          <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValueRef, lo8 intValueRef] -- invokevirtual intValue
+          <> ldcRightTag
+          <> [0xA0, 0, 0] -- if_icmpne <delta> (placeholder, patched below)
+          -- list := Cons (validated[1]) list (slot 2)
+      buildCons =
+        [0x06] -- iconst_3
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59, 0x03] -- dup, iconst_0
+          <> ldcConsTag
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef] -- invokestatic Integer.valueOf
+          <> [0x53] -- aastore
+          <> [0x59, 0x04] -- dup, iconst_1
+          <> bcAload 3 -- already Object[] (slot 3 was retyped in decAndValidate)
+          <> [0x04] -- iconst_1 (field 1 of validated = the decoded String)
+          <> [0x32] -- aaload
+          <> [0x53] -- aastore
+          <> [0x59, 0x05] -- dup, iconst_2
+          <> bcAload 2
+          <> [0x53] -- aastore
+          <> bcAstore 2
+          <> [0xA7, 0, 0] -- goto <delta-back> (placeholder, patched below)
+      leftReturn =
+        bcAload 3
+          <> [0xB0] -- areturn
+      doneBody =
+        -- Wrap list (slot 2) in Right cell.
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59, 0x03] -- dup, iconst_0
+          <> ldcRightTag
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59, 0x04] -- dup, iconst_1
+          <> bcAload 2
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+          -- Compute branch offsets.
+      ifleAt = loopHeadOff + length (bcIload 1) -- bci of ifle opcode
+      decAndValidateOff = loopHeadOff + length loopHead
+      icmpneAt = decAndValidateOff + length decAndValidate - 3 -- bci of if_icmpne opcode
+      buildConsOff = decAndValidateOff + length decAndValidate
+      leftReturnOff = buildConsOff + length buildCons
+      doneOff = leftReturnOff + length leftReturn
+      ifleDelta = doneOff - ifleAt
+      icmpneDelta = leftReturnOff - icmpneAt
+      gotoBackAt = buildConsOff + length buildCons - 3
+      gotoBackDelta = loopHeadOff - gotoBackAt
+      -- Patch the placeholders.
+      patchedLoopHead =
+        bcIload 1
+          <> [0x9E, fromIntegral (ifleDelta `div` 256 `mod` 256), fromIntegral (ifleDelta `mod` 256)]
+      patchedDecAndValidate =
+        take (length decAndValidate - 3) decAndValidate
+          <> [0xA0, fromIntegral (icmpneDelta `div` 256 `mod` 256), fromIntegral (icmpneDelta `mod` 256)]
+      patchedBuildCons =
+        take (length buildCons - 3) buildCons
+          <> [0xA7, fromIntegral (gotoBackDelta `div` 256 `mod` 256), fromIntegral (gotoBackDelta `mod` 256)]
+      finalCode = body <> patchedLoopHead <> patchedDecAndValidate <> patchedBuildCons <> leftReturn <> doneBody
+      -- StackMapTable frames at three branch targets:
+      --   loopHeadOff: locals = [argv:[Object;, i:int, list:[Object;], stack = {}
+      --   leftReturnOff: locals = [argv, i, list, validated:[Object;], stack = {}
+      --   doneOff: locals = [argv, i, list], stack = {} (validated is killed)
+      -- Encode all three as full_frame for simplicity (frame_type = 255).
+      strArrCls = arrCls
+      objArrEntry :: [Word8]
+      objArrEntry = [0x07, hi8 strArrCls, lo8 strArrCls]
+      intEntry :: [Word8]
+      intEntry = [0x01]
+      loopHeadFrame =
+        [255]
+          <> [fromIntegral (loopHeadOff `div` 256), fromIntegral (loopHeadOff `mod` 256)]
+          <> [0, 3]
+          <> objArrEntry -- locals[0] = String[]/Object[] — we treat as [Ljava/lang/String;
+          <> intEntry -- locals[1] = int (i)
+          <> objArrEntry -- locals[2] = Object[] (list cell)
+          <> [0, 0] -- stack = {}
+          -- Frame at leftReturnOff: 4 locals (argv, i, list, validated).
+      leftReturnDelta = leftReturnOff - loopHeadOff - 1
+      leftReturnFrame =
+        [255]
+          <> [fromIntegral (leftReturnDelta `div` 256), fromIntegral (leftReturnDelta `mod` 256)]
+          <> [0, 4]
+          <> objArrEntry
+          <> intEntry
+          <> objArrEntry
+          <> objArrEntry -- locals[3] = Object[] (validated)
+          <> [0, 0]
+      doneDelta = doneOff - leftReturnOff - 1
+      doneFrame =
+        [255]
+          <> [fromIntegral (doneDelta `div` 256), fromIntegral (doneDelta `mod` 256)]
+          <> [0, 3]
+          <> objArrEntry
+          <> intEntry
+          <> objArrEntry
+          <> [0, 0]
+      smtEntries = loopHeadFrame <> leftReturnFrame <> doneFrame
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [fromIntegral (totalLen `div` 16777216), fromIntegral ((totalLen `div` 65536) `mod` 256), fromIntegral ((totalLen `div` 256) `mod` 256), fromIntegral (totalLen `mod` 256)]
+                   <> [0, 3]
+                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
-        mCode =
-          bcLdc argvKeyIdx
-            <> [0xB8, hi8 getPropertyRef, lo8 getPropertyRef] -- invokestatic getProperty
-            <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
-            <> [0xB0], -- areturn
-        mCodeAttrCount = 0,
-        mCodeAttrs = [],
+        mCode = finalCode,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr,
         mMaxStack = 256,
         mMaxLocals = 256
       }
@@ -3724,22 +3896,17 @@ mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
   di <- addUtf8 "([Ljava/lang/String;)V"
-  emptyIdx <- addStr ""
   vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 0)
   -- `runIO` is the prelude's IO-tree walker; we hand `v_main`'s return
   -- value to it so any effects are performed. It returns Unit which we
   -- discard.
   vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
-  -- 'System.setProperty' caches argv[0] so 'BuiltIn.internalGetArgs'
-  -- can re-read it via 'System.getProperty' from inside 'runIO''s
-  -- 'IOGetArgs' arm. See 'mkGetArgs' for the read side. Argv is
-  -- invariant for the JVM process lifetime; one cache at entry is
-  -- enough.
-  setPropertyRef <- addMRef "java/lang/System" "setProperty" "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-  argvKeyIdx <- addStr "awsum.argv0"
-  strClsForArgv <- addClass "java/lang/String"
-  smtNameIdx <- addUtf8 "StackMapTable"
-  objClsIdx <- addClass "java/lang/Object"
+  -- 'putstatic __argv' stashes the entire 'args' array so
+  -- 'BuiltIn.internalGetArgs' can walk it later from 'runIO''s
+  -- 'IOGetArgs' arm and build a prelude 'List String'. See
+  -- 'mkGetArgs' for the read side. Argv is invariant for the JVM
+  -- process lifetime; one stash at entry is enough.
+  argvFieldRef <- addFRef "AwsumMain" "__argv" "[Ljava/lang/String;"
   -- Refs for the System.out → UTF-8 swap. See the IL-text 'mainMethod'
   -- for the rationale (JVM bakes the host's default charset into the
   -- startup PrintStream wrapping FileDescriptor.out, mangling
@@ -3756,16 +3923,7 @@ mkMain = do
   utf8StrIdx <- addStr "UTF-8"
   psInitRef <- addMRef "java/io/PrintStream" "<init>" "(Ljava/io/OutputStream;ZLjava/lang/String;)V"
   setOutRef <- addMRef "java/lang/System" "setOut" "(Ljava/io/PrintStream;)V"
-  let ldcEmpty = bcLdc emptyIdx
-      ldcLen = length ldcEmpty
-      ldcUtf8 = bcLdc utf8StrIdx
-      -- Stdout-UTF-8 prologue: build a PrintStream wrapping a
-      -- FileOutputStream over FileDescriptor.out with autoFlush=true and
-      -- "UTF-8" encoding, then assign it via System.setOut. The block
-      -- is balanced (peak depth 5, ends at 0), and uses no locals
-      -- beyond the method parameter, so the original argv-handling
-      -- code below verifies identically — it just sits 'prologueLen'
-      -- bytes further into the method.
+  let ldcUtf8 = bcLdc utf8StrIdx
       prologue =
         [0xBB, hi8 psClassIdx, lo8 psClassIdx] -- new PrintStream
           <> [0x59] -- dup
@@ -3777,33 +3935,6 @@ mkMain = do
           <> ldcUtf8 -- ldc "UTF-8" (2 bytes if cpool idx < 256, else 3 via ldc_w)
           <> [0xB7, hi8 psInitRef, lo8 psInitRef] -- invokespecial PrintStream.<init>
           <> [0xB8, hi8 setOutRef, lo8 setOutRef] -- invokestatic System.setOut
-      prologueLen = length prologue
-      -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
-      -- v_main. Layout matches CCon emit on JVM: Object[1+nFields] with
-      -- boxed Integer tag at index 0, fields at indices 1..
-      --
-      -- Layout (all offsets relative to method start; the prologue
-      -- contributes 'prologueLen' bytes before any of this):
-      ifAt = prologueLen + 3
-      gotoAt = prologueLen + 6 + ldcLen
-      hasArg = gotoAt + 3
-      callMain = hasArg + 3
-      ifRel = hasArg - ifAt :: Int
-      gotoRel = callMain - gotoAt :: Int
-      -- StackMapTable: two frames at branch targets (has_arg, call_main).
-      -- Note: same_frame's frame_type field is 1 byte and ranges over
-      -- [0, 63] for offset_delta. With ldcLen ≤ 3 and the prologue,
-      -- hasArg stays ≤ 36 — still inside same_frame's encoding range.
-      smtEntries =
-        [fromIntegral hasArg]
-          <> [66, 7, hi8 objClsIdx, lo8 objClsIdx]
-      smtEntriesLen = length smtEntries
-      smtAttr =
-        [hi8 smtNameIdx, lo8 smtNameIdx]
-          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
-              in [fromIntegral (totalLen `div` 16777216), fromIntegral ((totalLen `div` 65536) `mod` 256), fromIntegral ((totalLen `div` 256) `mod` 256), fromIntegral (totalLen `mod` 256)]
-                   <> [0, 2]
-                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0009,
@@ -3811,27 +3942,13 @@ mkMain = do
         mDesc = di,
         mCode =
           prologue
+            -- Stash 'args' reference into '__argv' so '__getArgs' can
+            -- walk every element when invoked from 'runIO''s 'IOGetArgs'
+            -- arm. No branches needed: an empty 'args' array yields a
+            -- 'List String' of Nil; user code handles that case via
+            -- 'headList' / pattern matching.
             <> bcAload 0
-            <> [0xBE] -- arraylength
-            <> [0x04] -- iconst_1
-            <> [0xA2, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)] -- if_icmpge
-            <> ldcEmpty
-            <> [0xA7, fromIntegral (gotoRel `div` 256), fromIntegral (gotoRel `mod` 256)] -- goto
-            <> bcAload 0 -- has_arg
-            <> [0x03] -- iconst_0
-            <> [0x32] -- aaload
-            -- call_main: input on top of stack. 'main' itself takes
-            -- no arguments; user code reads argv via 'IO.Args.getArgs'
-            -- inside the IO chain. We just cache the input via
-            -- System.setProperty so 'BuiltIn.internalGetArgs' can
-            -- read it later from 'runIO''s 'IOGetArgs' arm. The
-            -- 'aaload' returned Object — checkcast to String for the
-            -- 'setProperty(String, String)' signature.
-            <> [0xC0, hi8 strClsForArgv, lo8 strClsForArgv] -- checkcast String
-            <> bcLdc argvKeyIdx -- ldc "awsum.argv0"
-            <> [0x5F] -- swap
-            <> [0xB8, hi8 setPropertyRef, lo8 setPropertyRef] -- invokestatic setProperty
-            <> [0x57] -- pop the previous-value return
+            <> [0xB3, hi8 argvFieldRef, lo8 argvFieldRef] -- putstatic __argv
             -- v_main is a zero-arg value (CValDef): build the IO tree.
             <> bcInvokeStatic vMainRef
             -- v_main returned an IO tree on the stack; hand it to runIO
@@ -3840,8 +3957,9 @@ mkMain = do
             <> bcInvokeStatic vRunIORef
             <> [0x57] -- pop
             <> [0xB1], -- return
-        mCodeAttrCount = 1,
-        mCodeAttrs = smtAttr,
+            -- No branches in this method, so no StackMapTable needed.
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
         mMaxStack = 256,
         mMaxLocals = 256
       }
@@ -5000,12 +5118,19 @@ objMethodDesc n =
 -- Class file serialization
 -- ════════════════════════════════════════════════════════════════════════════
 
-buildClassFile :: Pool -> [MInfo] -> B.Builder
-buildClassFile st methods =
+buildClassFile :: Pool -> Word16 -> Word16 -> [MInfo] -> B.Builder
+buildClassFile st argvFieldNameIdx argvFieldDescIdx methods =
   let cpList = reverse st.entries
       thisCls = lkup (KClass "AwsumMain")
       superCls = lkup (KClass "java/lang/Object")
       codeUtf8 = lkup (KUtf8 "Code")
+      -- One static field: 'private static __argv [Ljava/lang/String;'.
+      -- ACC_PRIVATE | ACC_STATIC = 0x000A. Zero attributes.
+      argvField =
+        B.word16BE 0x000A
+          <> B.word16BE argvFieldNameIdx
+          <> B.word16BE argvFieldDescIdx
+          <> B.word16BE 0
    in mconcat
         [ B.word32BE 0xCAFEBABE,
           B.word16BE 0, -- minor version
@@ -5016,7 +5141,8 @@ buildClassFile st methods =
           B.word16BE thisCls,
           B.word16BE superCls,
           B.word16BE 0, -- interfaces
-          B.word16BE 0, -- fields
+          B.word16BE 1, -- fields
+          argvField,
           B.word16BE (fromIntegral (length methods)),
           foldMap (encodeMethod codeUtf8) methods,
           B.word16BE 0 -- class attributes

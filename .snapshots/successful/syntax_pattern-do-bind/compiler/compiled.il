@@ -203,6 +203,51 @@
   }
 
 
+  .method private hidebysig static object v_headList(object) cil managed
+  {
+    ldarg.0
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_12, IL_arm_13)
+  IL_arm_12:
+    pop
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 10
+    box [System.Runtime]System.Int32
+    stelem.ref
+    br.s IL_join
+  IL_arm_13:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    dup
+    ldc.i4.2
+    ldelem.ref
+    stloc.1
+    pop
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.s 11
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.0
+    stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
   .method private hidebysig static object v_opTuple(object) cil managed
   {
     ldc.i4.2
@@ -436,6 +481,63 @@
     stelem.ref
     stelem.ref
     stelem.ref
+    br.s IL_join
+  IL_join:
+    ret
+  }
+
+
+  .method private hidebysig static object v_processArgs(object) cil managed
+  {
+    ldarg.0
+    call object AwsumMain::v_headList(object)
+    dup
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    switch (IL_arm_10, IL_arm_11)
+  IL_arm_10:
+    pop
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.7
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldstr "NO_ARG"
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.5
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.0
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stelem.ref
+    stelem.ref
+    br.s IL_join
+  IL_arm_11:
+    dup
+    ldc.i4.1
+    ldelem.ref
+    stloc.0
+    pop
+    ldloc.0
+    call object AwsumMain::v_processInput(object)
     br.s IL_join
   IL_join:
     ret
@@ -1047,7 +1149,7 @@
     pop
     ldarg.1
     ldloc.0
-    call object AwsumMain::v_processInput(object)
+    call object AwsumMain::v_processArgs(object)
     call object AwsumMain::v__lift_1(object)
     call object AwsumMain::v__apply__df_andThenIO_3(object, object)
     ret
@@ -1982,13 +2084,78 @@
 
   .method private hidebysig static object __getArgs() cil managed
   {
-    .maxstack 1
-    ldstr "awsum.argv0"
-    call string [System.Runtime]System.Environment::GetEnvironmentVariable(string)
+    .maxstack 5
+    .locals init (string[] argv, int32 i, object[] list, object[] validated)
+    call string[] [System.Runtime]System.Environment::GetCommandLineArgs()
+    stloc.0
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 12
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stloc.2
+    ldloc.0
+    ldlen
+    conv.i4
+    stloc.1
+  IL_args_loop:
+    ldloc.1
+    ldc.i4.1
+    ble IL_args_done
+    ldloc.1
+    ldc.i4.1
+    sub
+    stloc.1
+    ldloc.0
+    ldloc.1
+    ldelem.ref
     call object AwsumMain::__entryArgEither(object)
+    castclass object[]
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    ldc.i4 4
+    bne.un IL_args_left
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 13
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.3
+    ldc.i4.1
+    ldelem.ref
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    stloc.2
+    br IL_args_loop
+  IL_args_left:
+    ldloc.3
+    ret
+  IL_args_done:
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.2
+    stelem.ref
     ret
   }
-
   .method private hidebysig static object __stdinReadAll() cil managed
   {
     .maxstack 3
@@ -2003,26 +2170,8 @@
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
-    .locals init (object input)
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
     call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
-    ldarg.0
-    ldlen
-    conv.i4
-    ldc.i4.1
-    bge.s has_arg
-    ldstr ""
-    br.s call_main
-  has_arg:
-    ldarg.0
-    ldc.i4.0
-    ldelem.ref
-  call_main:
-    stloc.0
-    ldstr "awsum.argv0"
-    ldloc.0
-    castclass string
-    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)
     call object AwsumMain::v_main()
     call object AwsumMain::v_runIO(object)
     pop

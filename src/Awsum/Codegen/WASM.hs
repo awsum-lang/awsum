@@ -37,7 +37,7 @@ import Relude
 -- | Produce a complete WAT module from a Core program.
 codegenWASM :: PreludeTags -> CoreProgram -> Text
 codegenWASM ptags prog@(CoreProgram decls) =
-  let (pool, emptyOff, heapStart) = buildStringPool prog
+  let (pool, _emptyOff, heapStart) = buildStringPool prog
       valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
@@ -66,7 +66,7 @@ codegenWASM ptags prog@(CoreProgram decls) =
           table (length funDefs),
           elemSection funDefs,
           typeDecls indirectArities,
-          runtimeHelpers ptags emptyOff (usedBuiltIns prog) (usesIntLit prog),
+          runtimeHelpers ptags (usedBuiltIns prog) (usesIntLit prog),
           T.intercalate "\n\n" (map (emitDecl ctx) decls),
           "",
           startFunc,
@@ -107,7 +107,8 @@ scratchSize = 64
 --   reader (concat / print / lengthCodePoints / parsers) keeps
 --   working without offset shifts.
 --
---   Always includes "" for __get_arg fallback.
+--   Always seeds "" so the empty string has a stable pool slot
+--   regardless of which literals a program uses.
 --   Returns (pool, empty_string_user_pointer, heap_start).
 buildStringPool :: CoreProgram -> (Map Text Int, Int, Int)
 buildStringPool (CoreProgram decls) =
@@ -347,12 +348,11 @@ typeDecls arities
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- | Emit only the runtime helpers referenced in Core. @__alloc@ /
---   @__memcpy@ / @__get_arg@ are always needed (the last feeds argv
---   into main; the rest are small infrastructure), the higher-level
---   helpers (@__concat@, @__print@, @__box_i32@, @__show_i32@,
---   @__predInt32@) are gated on usage.
-runtimeHelpers :: PreludeTags -> Int -> Set Name -> Bool -> Text
-runtimeHelpers ptags emptyOff builtIns hasIntLit =
+--   @__memcpy@ are always needed (small infrastructure), the
+--   higher-level helpers (@__concat@, @__print@, @__box_i32@,
+--   @__show_i32@, @__predInt32@) are gated on usage.
+runtimeHelpers :: PreludeTags -> Set Name -> Bool -> Text
+runtimeHelpers ptags builtIns hasIntLit =
   let lns =
         filter
           (not . T.null)
@@ -399,17 +399,15 @@ runtimeHelpers ptags emptyOff builtIns hasIntLit =
             if Set.member "lengthUtf8Bytes" builtIns then rtLengthBytesAsUtf8 else "",
             if Set.member "lengthCodePoints" builtIns then rtLengthCodePoints else "",
             if Set.member "lengthUtf16CodeUnits" builtIns then rtLengthUtf16CodeUnits else "",
-            -- '__entryArgEither' / '__get_arg' / '__getArgs' /
-            -- '__stdinReadAll' are always emitted in the WASM text
-            -- codegen because the binary assembler emits all runtime
-            -- helpers unconditionally (fixed-arity function indices).
-            -- Gating the text would diverge text/binary snapshots
-            -- without changing the binary footprint. A future WASM-
-            -- binary optimisation can drop them per-program; until
-            -- then, text mirrors binary.
+            -- '__entryArgEither' / '__getArgs' / '__stdinReadAll' are
+            -- always emitted in the WASM text codegen because the binary
+            -- assembler emits all runtime helpers unconditionally
+            -- (fixed-arity function indices). Gating the text would
+            -- diverge text/binary snapshots without changing the binary
+            -- footprint. A future WASM-binary optimisation can drop them
+            -- per-program; until then, text mirrors binary.
             rtEntryArgEither ptags,
-            rtGetArg emptyOff,
-            rtGetArgs,
+            rtGetArgs ptags,
             rtStdinReadAll
           ]
    in T.intercalate "\n\n" lns
@@ -1787,29 +1785,69 @@ rtEqI32 ptags =
 
 -- | '__getArgs' is the zero-arg runtime helper for
 --   'BuiltIn.internalGetArgs', called from 'runIO''s 'IOGetArgs' arm.
---   Re-reads argv via WASI 'args_get' through '$__get_arg' and routes
---   it through '$__entryArgEither' for strict-UTF-16 validation. Per
---   the no-memoisation decision each call yields a fresh 'Either'
---   cell — argv is invariant during execution so repeat calls are
---   deterministically equal.
-rtGetArgs :: Text
-rtGetArgs =
+--   Reads the full argv via WASI 'args_sizes_get' / 'args_get' and
+--   walks it from index @argc-1@ down to @1@ — index 0 is the program
+--   name and is skipped — validating each element via
+--   '$__entryArgEither' and consing it onto a prelude 'List String'.
+--   All-or-nothing error semantics: the first element that fails to
+--   decode short-circuits the whole call with its 'Left'. On success
+--   the accumulated list is wrapped in 'Right'. Walked right-to-left so
+--   the cons chain is built bottom-up, preserving argv order at the
+--   head. An argv of just @[exe]@ (no user args) yields 'Right Nil'.
+--   Per the no-memoisation principle each call rebuilds the chain; argv
+--   is invariant during execution so repeat calls are deterministically
+--   equal. Scratch addresses 12 / 16 hold the args_sizes_get out-params
+--   (argc and the argv buffer size).
+rtGetArgs :: PreludeTags -> Text
+rtGetArgs ptags =
   unlines
     [ "  (func $__getArgs (result i32)",
-      "    (local $a i32) (local $l i32)",
-      -- '$__get_arg' returns a NUL-terminated pointer into a WASI-managed
-      -- buffer. Compute the byte length up-front so the length-aware
-      -- '$__entryArgEither' can scan without re-checking NUL on every
-      -- byte. The NUL terminator at @arg[strlen]@ is the readable byte
-      -- the decoder relies on for its one-past-end surrogate peek.
-      "    (local.set $a (call $__get_arg))",
-      "    (local.set $l (i32.const 0))",
-      "    (block $break",
-      "      (loop $scan",
-      "        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $a) (local.get $l)))))",
-      "        (local.set $l (i32.add (local.get $l) (i32.const 1)))",
-      "        (br $scan)))",
-      "    (call $__entryArgEither (local.get $a) (local.get $l)))"
+      "    (local $argc i32) (local $ptrs i32) (local $buf i32) (local $i i32)",
+      "    (local $p i32) (local $l i32) (local $cell i32) (local $head i32) (local $acc i32) (local $consC i32)",
+      -- acc := Nil
+      "    (local.set $acc (call $__alloc_shaped (i32.const 4) (i32.const 0)))",
+      "    (i32.store (local.get $acc) (i32.const " <> tShow (ptNil ptags) <> "))",
+      -- argc := args_sizes_get out-param at addr 12
+      "    (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))",
+      "    (local.set $argc (i32.load (i32.const 12)))",
+      "    (if (i32.ge_u (local.get $argc) (i32.const 2))",
+      "      (then",
+      "        (local.set $buf (call $__alloc (i32.load (i32.const 16))))",
+      "        (local.set $ptrs (call $__alloc (i32.mul (local.get $argc) (i32.const 4))))",
+      "        (drop (call $args_get (local.get $ptrs) (local.get $buf)))",
+      "        (local.set $i (local.get $argc))",
+      "        (block $break",
+      "          (loop $loop",
+      "            (br_if $break (i32.le_u (local.get $i) (i32.const 1)))",
+      "            (local.set $i (i32.sub (local.get $i) (i32.const 1)))",
+      -- p := ptrs[i] (4-byte pointer slots)
+      "            (local.set $p (i32.load (i32.add (local.get $ptrs) (i32.mul (local.get $i) (i32.const 4)))))",
+      -- l := strlen(p)
+      "            (local.set $l (i32.const 0))",
+      "            (block $scanbrk",
+      "              (loop $scan",
+      "                (br_if $scanbrk (i32.eqz (i32.load8_u (i32.add (local.get $p) (local.get $l)))))",
+      "                (local.set $l (i32.add (local.get $l) (i32.const 1)))",
+      "                (br $scan)))",
+      "            (local.set $cell (call $__entryArgEither (local.get $p) (local.get $l)))",
+      -- Left short-circuits the whole call.
+      "            (if (i32.eq (i32.load (local.get $cell)) (i32.const " <> tShow (ptLeft ptags) <> "))",
+      "              (then (return (local.get $cell))))",
+      -- head := field1; free the Either box (non-recursive — the String
+      -- is now owned by the Cons, refcount transferred); cons onto acc.
+      "            (local.set $head (i32.load offset=4 (local.get $cell)))",
+      "            (call $__free (local.get $cell))",
+      "            (local.set $consC (call $__alloc_shaped (i32.const 12) (i32.const 2)))",
+      "            (i32.store (local.get $consC) (i32.const " <> tShow (ptCons ptags) <> "))",
+      "            (i32.store offset=4 (local.get $consC) (local.get $head))",
+      "            (i32.store offset=8 (local.get $consC) (local.get $acc))",
+      "            (local.set $acc (local.get $consC))",
+      "            (br $loop)))))",
+      -- Wrap the accumulated list in Right.
+      "    (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))",
+      "    (i32.store (local.get $cell) (i32.const " <> tShow (ptRight ptags) <> "))",
+      "    (i32.store offset=4 (local.get $cell) (local.get $acc))",
+      "    (local.get $cell))"
     ]
 
 -- | '$__stdinReadAll' is the zero-arg runtime helper for
@@ -1827,7 +1865,7 @@ rtGetArgs =
 --   zero bytes and decodes to @Right ""@.
 --
 --   Scratch addresses are reused (12 = nread_out, 16/20 = iovec ptr/len
---   pair). These overlap with '$__get_arg's argv-size scratch (12 and
+--   pair). These overlap with '$__getArgs's args-size scratch (12 and
 --   16) but the two helpers never run concurrently — WASM is
 --   single-threaded.
 rtStdinReadAll :: Text
@@ -1866,21 +1904,6 @@ rtStdinReadAll =
       -- the doubling rule, so storing one byte is always safe.
       "    (i32.store8 (i32.add (local.get $buf) (local.get $total)) (i32.const 0))",
       "    (call $__entryArgEither (local.get $buf) (local.get $total)))"
-    ]
-
-rtGetArg :: Int -> Text
-rtGetArg emptyOff =
-  unlines
-    [ "  (func $__get_arg (result i32)",
-      "    (local $argv_buf i32) (local $ptrs i32)",
-      "    (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))",
-      "    (if (result i32) (i32.lt_u (i32.load (i32.const 12)) (i32.const 2))",
-      "      (then (i32.const " <> show emptyOff <> "))",
-      "      (else",
-      "        (local.set $argv_buf (call $__alloc (i32.load (i32.const 16))))",
-      "        (local.set $ptrs (call $__alloc (i32.mul (i32.load (i32.const 12)) (i32.const 4))))",
-      "        (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))",
-      "        (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))"
     ]
 
 -- | '__entryArgEither' wraps argv[1] in 'Either (StringTooLong |

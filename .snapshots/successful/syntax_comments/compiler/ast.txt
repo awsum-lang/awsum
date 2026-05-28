@@ -676,53 +676,290 @@ Program
                     ( QName [] "s" )
                 )
             ) Nothing Nothing
-        , CommentDecl
+        , Sig
             ( SrcSpan
                 { spanStartLine = 50
                 , spanStartCol = 1
                 , spanEndLine = 50
+                , spanEndCol = 45
+                }
+            ) "printFirstArg"
+            ( TyArrow
+                ( SrcSpan
+                    { spanStartLine = 50
+                    , spanStartCol = 17
+                    , spanEndLine = 50
+                    , spanEndCol = 45
+                    }
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 50
+                        , spanStartCol = 17
+                        , spanEndLine = 50
+                        , spanEndCol = 28
+                        }
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 50
+                            , spanStartCol = 17
+                            , spanEndLine = 50
+                            , spanEndCol = 21
+                            }
+                        ) "List"
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 50
+                            , spanStartCol = 22
+                            , spanEndLine = 50
+                            , spanEndCol = 28
+                            }
+                        ) "String"
+                    )
+                )
+                ( TyApp
+                    ( SrcSpan
+                        { spanStartLine = 50
+                        , spanStartCol = 32
+                        , spanEndLine = 50
+                        , spanEndCol = 45
+                        }
+                    )
+                    ( TyApp
+                        ( SrcSpan
+                            { spanStartLine = 50
+                            , spanStartCol = 32
+                            , spanEndLine = 50
+                            , spanEndCol = 40
+                            }
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 50
+                                , spanStartCol = 32
+                                , spanEndLine = 50
+                                , spanEndCol = 34
+                                }
+                            ) "IO"
+                        )
+                        ( TyCon
+                            ( SrcSpan
+                                { spanStartLine = 50
+                                , spanStartCol = 35
+                                , spanEndLine = 50
+                                , spanEndCol = 40
+                                }
+                            ) "Never"
+                        )
+                    )
+                    ( TyCon
+                        ( SrcSpan
+                            { spanStartLine = 50
+                            , spanStartCol = 41
+                            , spanEndLine = 50
+                            , spanEndCol = 45
+                            }
+                        ) "Unit"
+                    )
+                )
+            ) Nothing Nothing
+        , FunDef
+            ( SrcSpan
+                { spanStartLine = 51
+                , spanStartCol = 1
+                , spanEndLine = 53
+                , spanEndCol = 33
+                }
+            ) "printFirstArg"
+            [ Param
+                ( SrcSpan
+                    { spanStartLine = 51
+                    , spanStartCol = 15
+                    , spanEndLine = 51
+                    , spanEndCol = 19
+                    }
+                ) "args"
+            ]
+            ( ECase
+                ( SrcSpan
+                    { spanStartLine = 51
+                    , spanStartCol = 22
+                    , spanEndLine = 53
+                    , spanEndCol = 33
+                    }
+                )
+                ( EApp
+                    ( SrcSpan
+                        { spanStartLine = 51
+                        , spanStartCol = 27
+                        , spanEndLine = 51
+                        , spanEndCol = 41
+                        }
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 51
+                            , spanStartCol = 27
+                            , spanEndLine = 51
+                            , spanEndCol = 36
+                            }
+                        )
+                        ( QName [] "headList" )
+                    )
+                    ( EVar
+                        ( SrcSpan
+                            { spanStartLine = 51
+                            , spanStartCol = 36
+                            , spanEndLine = 51
+                            , spanEndCol = 41
+                            }
+                        )
+                        ( QName [] "args" )
+                    )
+                )
+                ( CaseAltLeaf []
+                    ( PCon
+                        ( SrcSpan
+                            { spanStartLine = 52
+                            , spanStartCol = 3
+                            , spanEndLine = 52
+                            , spanEndCol = 10
+                            }
+                        ) "Nothing" []
+                    )
+                    ( EApp
+                        ( SrcSpan
+                            { spanStartLine = 52
+                            , spanStartCol = 14
+                            , spanEndLine = 52
+                            , spanEndCol = 38
+                            }
+                        )
+                        ( EVar
+                            ( SrcSpan
+                                { spanStartLine = 52
+                                , spanStartCol = 14
+                                , spanEndLine = 52
+                                , spanEndCol = 30
+                                }
+                            )
+                            ( QName
+                                [ "IO"
+                                , "Stdout"
+                                ] "print"
+                            )
+                        )
+                        ( ELit
+                            ( SrcSpan
+                                { spanStartLine = 52
+                                , spanStartCol = 30
+                                , spanEndLine = 52
+                                , spanEndCol = 38
+                                }
+                            )
+                            ( LString "NO_ARG" )
+                        )
+                    ) Nothing :|
+                    [ CaseAltLeaf []
+                        ( PCon
+                            ( SrcSpan
+                                { spanStartLine = 53
+                                , spanStartCol = 3
+                                , spanEndLine = 53
+                                , spanEndCol = 7
+                                }
+                            ) "Just"
+                            [ PVar
+                                ( SrcSpan
+                                    { spanStartLine = 53
+                                    , spanStartCol = 8
+                                    , spanEndLine = 53
+                                    , spanEndCol = 13
+                                    }
+                                ) "first"
+                            ]
+                        )
+                        ( EApp
+                            ( SrcSpan
+                                { spanStartLine = 53
+                                , spanStartCol = 17
+                                , spanEndLine = 53
+                                , spanEndCol = 33
+                                }
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 53
+                                    , spanStartCol = 17
+                                    , spanEndLine = 53
+                                    , spanEndCol = 28
+                                    }
+                                )
+                                ( QName [] "printInput" )
+                            )
+                            ( EVar
+                                ( SrcSpan
+                                    { spanStartLine = 53
+                                    , spanStartCol = 28
+                                    , spanEndLine = 53
+                                    , spanEndCol = 33
+                                    }
+                                )
+                                ( QName [] "first" )
+                            )
+                        ) Nothing
+                    ]
+                ) []
+            ) Nothing Nothing
+        , CommentDecl
+            ( SrcSpan
+                { spanStartLine = 55
+                , spanStartCol = 1
+                , spanEndLine = 55
                 , spanEndCol = 28
                 }
             )
             ( LineComment " Line comment before main" )
         , Sig
             ( SrcSpan
-                { spanStartLine = 52
+                { spanStartLine = 57
                 , spanStartCol = 1
-                , spanEndLine = 52
+                , spanEndLine = 57
                 , spanEndCol = 37
                 }
             ) "main"
             ( TyApp
                 ( SrcSpan
-                    { spanStartLine = 52
+                    { spanStartLine = 57
                     , spanStartCol = 8
-                    , spanEndLine = 52
+                    , spanEndLine = 57
                     , spanEndCol = 21
                     }
                 )
                 ( TyApp
                     ( SrcSpan
-                        { spanStartLine = 52
+                        { spanStartLine = 57
                         , spanStartCol = 8
-                        , spanEndLine = 52
+                        , spanEndLine = 57
                         , spanEndCol = 16
                         }
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 52
+                            { spanStartLine = 57
                             , spanStartCol = 8
-                            , spanEndLine = 52
+                            , spanEndLine = 57
                             , spanEndCol = 10
                             }
                         ) "IO"
                     )
                     ( TyCon
                         ( SrcSpan
-                            { spanStartLine = 52
+                            { spanStartLine = 57
                             , spanStartCol = 11
-                            , spanEndLine = 52
+                            , spanEndLine = 57
                             , spanEndCol = 16
                             }
                         ) "Never"
@@ -730,9 +967,9 @@ Program
                 )
                 ( TyCon
                     ( SrcSpan
-                        { spanStartLine = 52
+                        { spanStartLine = 57
                         , spanStartCol = 17
-                        , spanEndLine = 52
+                        , spanEndLine = 57
                         , spanEndCol = 21
                         }
                     ) "Unit"
@@ -741,42 +978,42 @@ Program
             ( Just " Sig trailing" ) Nothing
         , CommentDecl
             ( SrcSpan
-                { spanStartLine = 54
+                { spanStartLine = 59
                 , spanStartCol = 1
-                , spanEndLine = 54
+                , spanEndLine = 59
                 , spanEndCol = 36
                 }
             )
             ( LineComment " Line comment between sig and def" )
         , FunDef
             ( SrcSpan
-                { spanStartLine = 56
+                { spanStartLine = 61
                 , spanStartCol = 1
-                , spanEndLine = 58
+                , spanEndLine = 63
                 , spanEndCol = 36
                 }
             ) "main" []
             ( EInfix
                 ( SrcSpan
-                    { spanStartLine = 56
+                    { spanStartLine = 61
                     , spanStartCol = 8
-                    , spanEndLine = 58
+                    , spanEndLine = 63
                     , spanEndCol = 36
                     }
                 ) OpPipe
                 ( EInfix
                     ( SrcSpan
-                        { spanStartLine = 56
+                        { spanStartLine = 61
                         , spanStartCol = 8
-                        , spanEndLine = 57
-                        , spanEndCol = 26
+                        , spanEndLine = 62
+                        , spanEndCol = 29
                         }
                     ) OpPipe
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 56
+                            { spanStartLine = 61
                             , spanStartCol = 8
-                            , spanEndLine = 56
+                            , spanEndLine = 61
                             , spanEndCol = 23
                             }
                         )
@@ -788,17 +1025,17 @@ Program
                     )
                     ( EApp
                         ( SrcSpan
-                            { spanStartLine = 57
+                            { spanStartLine = 62
                             , spanStartCol = 6
-                            , spanEndLine = 57
-                            , spanEndCol = 26
+                            , spanEndLine = 62
+                            , spanEndCol = 29
                             }
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 57
+                                { spanStartLine = 62
                                 , spanStartCol = 6
-                                , spanEndLine = 57
+                                , spanEndLine = 62
                                 , spanEndCol = 16
                                 }
                             )
@@ -806,29 +1043,29 @@ Program
                         )
                         ( EVar
                             ( SrcSpan
-                                { spanStartLine = 57
+                                { spanStartLine = 62
                                 , spanStartCol = 16
-                                , spanEndLine = 57
-                                , spanEndCol = 26
+                                , spanEndLine = 62
+                                , spanEndCol = 29
                                 }
                             )
-                            ( QName [] "printInput" )
+                            ( QName [] "printFirstArg" )
                         )
                     )
                 )
                 ( EApp
                     ( SrcSpan
-                        { spanStartLine = 58
+                        { spanStartLine = 63
                         , spanStartCol = 6
-                        , spanEndLine = 58
+                        , spanEndLine = 63
                         , spanEndCol = 36
                         }
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 58
+                            { spanStartLine = 63
                             , spanStartCol = 6
-                            , spanEndLine = 58
+                            , spanEndLine = 63
                             , spanEndCol = 20
                             }
                         )
@@ -836,9 +1073,9 @@ Program
                     )
                     ( EVar
                         ( SrcSpan
-                            { spanStartLine = 58
+                            { spanStartLine = 63
                             , spanStartCol = 20
-                            , spanEndLine = 58
+                            , spanEndLine = 63
                             , spanEndCol = 36
                             }
                         )
@@ -848,9 +1085,9 @@ Program
             ) Nothing Nothing
         , CommentDecl
             ( SrcSpan
-                { spanStartLine = 60
+                { spanStartLine = 65
                 , spanStartCol = 1
-                , spanEndLine = 60
+                , spanEndLine = 65
                 , spanEndCol = 32
                 }
             )

@@ -12,7 +12,8 @@ declare i64 @read(i32, ptr, i64)
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
+@.cli_argc = internal global i64 0
+@.cli_argv = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -271,10 +272,55 @@ unpaired:
 
 
 define internal ptr @__getArgs() {
-  %arg = load ptr, ptr @.cli_arg
+  %argc = load i64, ptr @.cli_argc
+  %argv = load ptr, ptr @.cli_argv
+  %i.slot = alloca i64
+  %acc.slot = alloca ptr
+  %nilC = call ptr @__alloc(i64 8, i32 0)
+  %nilC_tag = inttoptr i64 12 to ptr
+  store ptr %nilC_tag, ptr %nilC
+  store ptr %nilC, ptr %acc.slot
+  store i64 %argc, ptr %i.slot
+  br label %getargs_loop
+getargs_loop:
+  %i = load i64, ptr %i.slot
+  %at_end = icmp sle i64 %i, 1
+  br i1 %at_end, label %getargs_done, label %getargs_body
+getargs_body:
+  %i.next = sub i64 %i, 1
+  store i64 %i.next, ptr %i.slot
+  %arg_slot = getelementptr ptr, ptr %argv, i64 %i.next
+  %arg = load ptr, ptr %arg_slot
   %len = call i64 @strlen(ptr %arg)
   %either = call ptr @__entryArgEither(ptr %arg, i64 %len)
+  %either_tag_ptr = load ptr, ptr %either
+  %either_tag = ptrtoint ptr %either_tag_ptr to i64
+  %is_left = icmp eq i64 %either_tag, 3
+  br i1 %is_left, label %getargs_left, label %getargs_cons
+getargs_cons:
+  %head_slot = getelementptr ptr, ptr %either, i32 1
+  %head = load ptr, ptr %head_slot
+  call void @__free(ptr %either)
+  %acc = load ptr, ptr %acc.slot
+  %consC = call ptr @__alloc(i64 24, i32 2)
+  %consC_tag = inttoptr i64 13 to ptr
+  store ptr %consC_tag, ptr %consC
+  %consC_head_slot = getelementptr ptr, ptr %consC, i32 1
+  store ptr %head, ptr %consC_head_slot
+  %consC_tail_slot = getelementptr ptr, ptr %consC, i32 2
+  store ptr %acc, ptr %consC_tail_slot
+  store ptr %consC, ptr %acc.slot
+  br label %getargs_loop
+getargs_left:
   ret ptr %either
+getargs_done:
+  %acc.final = load ptr, ptr %acc.slot
+  %rightC = call ptr @__alloc(i64 16, i32 1)
+  %rightC_tag = inttoptr i64 4 to ptr
+  store ptr %rightC_tag, ptr %rightC
+  %rightC_field = getelementptr ptr, ptr %rightC, i32 1
+  store ptr %acc.final, ptr %rightC_field
+  ret ptr %rightC
 }
 
 
@@ -2115,17 +2161,9 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
+  %argc64 = sext i32 %argc to i64
+  store i64 %argc64, ptr @.cli_argc
+  store ptr %argv, ptr @.cli_argv
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

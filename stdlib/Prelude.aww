@@ -205,7 +205,7 @@ type IO e a
   = IOPure a
   | IOFail e
   | IOStdoutPrint String (IO e a)
-  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e a)
   | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 
 {- Lift a pure value into IO. -}
@@ -232,7 +232,7 @@ bindIO io k = case io of
 
 {- Internal helper for `bindIO`'s `IOGetArgs` arm; top-level so the
    typechecker pins `cont`'s type via the signature. -}
-bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
+bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO (e1 | e2) b
 bindIOAfterArgs cont k result = bindIO (cont result) k
 
 {- Internal helper for `bindIO`'s `IOStdinReadAll` arm; top-level so the

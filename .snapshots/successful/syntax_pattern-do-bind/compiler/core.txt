@@ -74,6 +74,29 @@ CoreProgram
                     ]
                 )
             )
+        , CFunDef "headList" [ "xs" ]
+            ( CCase
+                ( CVar "xs" )
+                [
+                    ( 12
+                    , []
+                    , CCon 10 []
+                    )
+                ,
+                    ( 13
+                    ,
+                        [ "h"
+                        , "_t"
+                        ]
+                    , CDrop DropFreeUnchecked "h"
+                        ( CDrop DropFreeUnchecked "_t"
+                            ( CCon 11
+                                [ CVar "h" ]
+                            )
+                        )
+                    )
+                ]
+            )
         , CFunDef "opTuple" [ "$wild0" ]
             ( CCon 4
                 [ CCon 15
@@ -191,6 +214,32 @@ CoreProgram
                             , CCon 5
                                 [ CCon 0 [] ]
                             ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "processArgs" [ "args" ]
+            ( CCase
+                ( CCall
+                    ( CVar "headList" )
+                    [ CVar "args" ]
+                )
+                [
+                    ( 10
+                    , []
+                    , CCon 7
+                        [ CString "NO_ARG"
+                        , CCon 5
+                            [ CCon 0 [] ]
+                        ]
+                    )
+                ,
+                    ( 11
+                    , [ "first" ]
+                    , CDrop DropFreeUnchecked "first"
+                        ( CCall
+                            ( CVar "processInput" )
+                            [ CVar "first" ]
                         )
                     )
                 ]
@@ -528,7 +577,7 @@ CoreProgram
                                 , CCall
                                     ( CVar "$lift$1" )
                                     [ CCall
-                                        ( CVar "processInput" )
+                                        ( CVar "processArgs" )
                                         [ CVar "a" ]
                                     ]
                                 ]

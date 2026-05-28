@@ -128,6 +128,8 @@ header ptags builtIns =
       ptN = show (ptNothing ptags)
       ptJ = show (ptJust ptags)
       ptT2 = show (ptTuple2 ptags)
+      ptNil_ = show (ptNil ptags)
+      ptCons_ = show (ptCons ptags)
       ptUE = show (ptUnderflowError ptags)
       ptOE = show (ptOverflowError ptags)
       ptPE = show (ptParseError ptags)
@@ -322,8 +324,10 @@ header ptags builtIns =
             if Set.member "lengthUtf8Bytes" builtIns
               then "function __lengthUtf8Bytes(s){ return (new TextEncoder().encode(s).length >>> 0); }"
               else "",
-            -- __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
-            -- UnpairedUtf16Surrogate) String' for the user's 'main'. Two
+            -- __entryArgEither: wraps a single input string in 'Either
+            -- (StringTooLong | UnpairedUtf16Surrogate) String' for the
+            -- user's 'main'. Called per-element by '__getArgs' (over each
+            -- 'process.argv' element) and once by '__stdinReadAll'. Two
             -- checks in one helper:
             --   1. Length cap: JS String.length is UTF-16 code units
             --      exactly; cap test is a single i32 compare.
@@ -347,14 +351,19 @@ header ptags builtIns =
               then "function __entryArgEither(arg){ if (arg.length > 134217728) return [" <> ptL <> ", [" <> show stringTooLongRowTag <> ", [" <> ptSTL <> "]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [" <> ptL <> ", [" <> show unpairedSurrogateRowTag <> ", [" <> ptUS <> "]]]; } return [" <> ptR <> ", arg]; }"
               else "",
             -- __getArgs: zero-arg helper called by 'runIO''s 'IOGetArgs'
-            -- arm via 'BuiltIn.internalGetArgs'. Reads 'process.argv[2]'
-            -- (same slot as the entry-point glue) and routes through
-            -- '__entryArgEither' for the strict-UTF-16 validation. Per
-            -- the no-memoisation decision each call re-reads argv;
-            -- argv is invariant during execution, so repeat calls
-            -- return the same value deterministically.
+            -- arm via 'BuiltIn.internalGetArgs'. Reads
+            -- 'process.argv.slice(2)' (every arg after 'node <script>')
+            -- and builds an Awsum 'List String' using the prelude's
+            -- 'Cons'/'Nil' tags. Each element is routed through
+            -- '__entryArgEither' for strict-UTF-16 validation; the
+            -- error semantics is all-or-nothing — the first failing
+            -- element short-circuits the entire call with its 'Left'.
+            -- Walked right-to-left so the cons chain is built bottom-up
+            -- without recursion. Per the no-memoisation decision each
+            -- call re-reads argv; argv is invariant during execution
+            -- so repeat calls return the same value deterministically.
             if Set.member "internalGetArgs" builtIns
-              then "function __getArgs(){ return __entryArgEither(process.argv[2] ?? \"\"); }"
+              then "function __getArgs(){ const args = process.argv.slice(2); let list = [" <> ptNil_ <> "]; for (let i = args.length - 1; i >= 0; i--) { const v = __entryArgEither(args[i]); if (v[0] !== " <> ptR <> ") return v; list = [" <> ptCons_ <> ", v[1], list]; } return [" <> ptR <> ", list]; }"
               else "",
             -- __stdinReadAll: zero-arg helper for
             -- 'BuiltIn.internalStdinReadAllAsUtf16', called from
@@ -387,7 +396,7 @@ cliFooter =
       -- walks the tree for effects. User code reads argv through
       -- 'IO.Args.getArgs' inside the chain; that lowers to an
       -- 'IOGetArgs' constructor whose runIO arm calls '__getArgs'
-      -- (which reads 'process.argv[2]' lazily on each call).
+      -- (which reads 'process.argv.slice(2)' lazily on each call).
       "  if (typeof main !== 'undefined') v_runIO(main);",
       "}"
     ]

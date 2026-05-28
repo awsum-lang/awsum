@@ -97,7 +97,7 @@ codegenCLR ptags prog@(CoreProgram decls) =
             "",
             gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) (entryArgEitherMethod ptags),
             "",
-            gate (Set.member "internalGetArgs" builtIns) getArgsMethod,
+            gate (Set.member "internalGetArgs" builtIns) (getArgsMethod ptags),
             gate (Set.member "internalStdinReadAllAsUtf16" builtIns) stdinReadAllMethod,
             "",
             mainMethod,
@@ -1525,24 +1525,96 @@ lengthUtf8BytesMethod =
     ]
 
 -- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'. Reads
---   the cached argv[0] from the "awsum.argv0" environment variable
---   ('Main' stashed it via 'SetEnvironmentVariable' on entry) and
---   routes it through '__entryArgEither' for strict-UTF-16
---   validation. Per the no-memoisation decision each call yields a
---   fresh Either cell; argv is invariant during execution so repeat
---   calls are deterministically equal.
-getArgsMethod :: Text
-getArgsMethod =
-  unlines
-    [ "  .method private hidebysig static object __getArgs() cil managed",
-      "  {",
-      "    .maxstack 1",
-      "    ldstr \"awsum.argv0\"",
-      "    call string [System.Runtime]System.Environment::GetEnvironmentVariable(string)",
-      "    call object AwsumMain::__entryArgEither(object)",
-      "    ret",
-      "  }"
-    ]
+--   the 'args' array stashed in '__argv' by 'Main' and builds a
+--   prelude 'List String' on demand. Each element routes through
+--   '__entryArgEither' for strict-UTF-16 validation; the error
+--   semantics is all-or-nothing — the first failing element
+--   short-circuits with its 'Left'. Walked right-to-left so the
+--   cons chain is built bottom-up without recursion.
+--
+--   Locals: 0 = argv (string[]), 1 = i (int32), 2 = list (object[]),
+--   3 = validated (object[]).
+getArgsMethod :: PreludeTags -> Text
+getArgsMethod ptags =
+  T.intercalate "\n"
+    $ [ "  .method private hidebysig static object __getArgs() cil managed",
+        "  {",
+        "    .maxstack 5",
+        "    .locals init (string[] argv, int32 i, object[] list, object[] validated)",
+        -- Environment.GetCommandLineArgs() returns [exe path, arg1, arg2, ...].
+        -- We use the full array directly; the loop walks from
+        -- argv.length-1 down to 1, skipping element 0 (the path).
+        "    call string[] [System.Runtime]System.Environment::GetCommandLineArgs()",
+        "    stloc.0",
+        -- list := Nil (object[1] { boxed Nil tag })
+        "    ldc.i4.1",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0",
+        "    ldc.i4 " <> show (ptNil ptags),
+        "    box [System.Runtime]System.Int32",
+        "    stelem.ref",
+        "    stloc.2",
+        -- i := argv.length
+        "    ldloc.0",
+        "    ldlen",
+        "    conv.i4",
+        "    stloc.1",
+        "  IL_args_loop:",
+        -- Stop when i has descended to 1 (we skip element 0, the
+        -- executable path). For an argv of just [exe] (no user args)
+        -- this short-circuits immediately with list = Nil.
+        "    ldloc.1",
+        "    ldc.i4.1",
+        "    ble IL_args_done",
+        -- i := i - 1
+        "    ldloc.1",
+        "    ldc.i4.1",
+        "    sub",
+        "    stloc.1",
+        -- validated := (object[])__entryArgEither(argv[i])
+        "    ldloc.0",
+        "    ldloc.1",
+        "    ldelem.ref",
+        "    call object AwsumMain::__entryArgEither(object)",
+        "    castclass object[]",
+        "    stloc.3",
+        -- if validated[0] != ptRight, return validated (Left propagates)
+        "    ldloc.3",
+        "    ldc.i4.0",
+        "    ldelem.ref",
+        "    unbox.any [System.Runtime]System.Int32",
+        "    ldc.i4 " <> show (ptRight ptags),
+        "    bne.un IL_args_left",
+        -- list := Cons (validated[1]) list (object[3] { Cons tag, head, tail })
+        "    ldc.i4.3",
+        "    newarr [System.Runtime]System.Object",
+        "    dup",
+        "    ldc.i4.0",
+        "    ldc.i4 " <> show (ptCons ptags),
+        "    box [System.Runtime]System.Int32",
+        "    stelem.ref",
+        "    dup",
+        "    ldc.i4.1",
+        "    ldloc.3",
+        "    ldc.i4.1",
+        "    ldelem.ref",
+        "    stelem.ref",
+        "    dup",
+        "    ldc.i4.2",
+        "    ldloc.2",
+        "    stelem.ref",
+        "    stloc.2",
+        "    br IL_args_loop",
+        "  IL_args_left:",
+        "    ldloc.3",
+        "    ret",
+        "  IL_args_done:"
+      ]
+    <> makeUnaryCellFromLocalLines (ptRight ptags) "    ldloc.2"
+    <> [ "    ret",
+         "  }"
+       ]
 
 -- | __stdinReadAll: zero-arg helper for
 --   'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
@@ -1711,7 +1783,6 @@ mainMethod =
     [ "  .method private hidebysig static void Main(string[]) cil managed",
       "  {",
       "    .entrypoint",
-      "    .locals init (object input)",
       -- Force stdout to UTF-8 before any user code runs. On Windows with a
       -- piped or redirected stdout, the default 'Console.OutputEncoding'
       -- falls back to the system ANSI code page, which encodes each UTF-16
@@ -1720,30 +1791,10 @@ mainMethod =
       -- Setting UTF-8 keeps the byte stream identical to the other backends.
       "    call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()",
       "    call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)",
-      "    ldarg.0",
-      "    ldlen",
-      "    conv.i4",
-      "    ldc.i4.1",
-      "    bge.s has_arg",
-      "    ldstr \"\"",
-      "    br.s call_main",
-      "  has_arg:",
-      "    ldarg.0",
-      "    ldc.i4.0",
-      "    ldelem.ref",
-      "  call_main:",
-      -- Cache argv[0] for 'BuiltIn.internalGetArgs' (called from
-      -- 'runIO''s 'IOGetArgs' arm) via a process-wide environment
-      -- variable. 'main' itself takes no arguments (signature
-      -- 'IO Never Unit'); user code reads argv through
-      -- 'IO.Args.getArgs' inside the IO chain. CIL has no direct
-      -- 'swap' opcode so we route through 'input' local: stloc; ldstr;
-      -- ldloc; castclass; call SetEnv (returns void).
-      "    stloc.0",
-      "    ldstr \"awsum.argv0\"",
-      "    ldloc.0",
-      "    castclass string",
-      "    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)",
+      -- '__getArgs' reads 'Environment.GetCommandLineArgs()' on demand,
+      -- so 'Main' doesn't have to stash anything. 'main' itself takes
+      -- no Awsum-level arguments (signature 'IO Never Unit'); user
+      -- code reads argv through 'IO.Args.getArgs' inside the IO chain.
       -- v_main is a zero-arg value (CValDef): build the IO tree.
       "    call object AwsumMain::" <> mangle "main" <> "()",
       -- Hand the IO tree to `runIO`, which walks it and performs the

@@ -169,21 +169,22 @@ builtIns =
       -- modules land, this and the IO type's constructors move into a
       -- privileged module inaccessible to user code.
       ("internalStdoutPrint", TyArrow noSpan stringTy unitTy),
-      -- internalGetArgs : Either (StringTooLong | UnpairedUtf16Surrogate) String
+      -- internalGetArgs : Either (StringTooLong | UnpairedUtf16Surrogate) (List String)
       -- Privileged zero-arg low-level primitive: reads the platform's
-      -- raw argv at runtime and decodes it into Awsum's strict UTF-16
-      -- 'String'; returns 'Left StringTooLong' if the decoded length
-      -- would exceed 'maxStringLengthUtf16CodeUnits', 'Left
-      -- UnpairedUtf16Surrogate' if the input contains an unpaired
-      -- surrogate, 'Right s' on success. Used exclusively by the
-      -- prelude's 'runIO' to perform the effect of an 'IOGetArgs' arm
-      -- during IO-tree walking. The user-facing wrapper is
-      -- 'IO.Args.getArgs' (a CLI platform built-in that elaborates to
-      -- an 'IOGetArgs' constructor whose continuation routes 'Left' to
-      -- 'IOFail' and 'Right' to 'IOPure'). Per the no-memoisation
-      -- decision, each call re-reads argv; deterministic because argv
-      -- does not change during program execution.
-      ("internalGetArgs", eitherTy inputDecodeRowTy stringTy),
+      -- raw argv at runtime and decodes each element into Awsum's strict
+      -- UTF-16 'String', returning the result as a prelude 'List String'.
+      -- All-or-nothing error semantics: 'Left StringTooLong' if any
+      -- element's decoded length would exceed
+      -- 'maxStringLengthUtf16CodeUnits', 'Left UnpairedUtf16Surrogate'
+      -- if any element contains an unpaired surrogate, 'Right xs' on
+      -- success. Used exclusively by the prelude's 'runIO' to perform
+      -- the effect of an 'IOGetArgs' arm during IO-tree walking. The
+      -- user-facing wrapper is 'IO.Args.getArgs' (a CLI platform built-in
+      -- that elaborates to an 'IOGetArgs' constructor whose continuation
+      -- routes 'Left' to 'IOFail' and 'Right' to 'IOPure'). Per the
+      -- no-memoisation decision, each call re-reads argv; deterministic
+      -- because argv does not change during program execution.
+      ("internalGetArgs", eitherTy inputDecodeRowTy listStringTy),
       -- internalStdinReadAllAsUtf16 : Either (StringTooLong | UnpairedUtf16Surrogate) String
       -- Privileged zero-arg low-level primitive: reads the platform's
       -- raw stdin to EOF and decodes it into Awsum's strict UTF-16
@@ -220,6 +221,7 @@ builtIns =
     -- ('internalGetArgs', 'internalStdinReadAllAsUtf16', and any future
     -- input-parsing primitive of the same shape).
     inputDecodeRowTy = TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy
+    listStringTy = TyApp noSpan (TyCon noSpan "List") stringTy
     eitherTy a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Either") a)
     maybeTy = TyApp noSpan (TyCon noSpan "Maybe")
     tuple2Ty a = TyApp noSpan (TyApp noSpan (TyCon noSpan "Tuple2") a)

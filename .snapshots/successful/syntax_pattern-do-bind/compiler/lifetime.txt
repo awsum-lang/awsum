@@ -9,6 +9,11 @@ runIO:
   case-pattern    cont                            count=0
   case-pattern    cont                            count=0
 
+headList:
+  param           xs                              count=1
+  case-pattern    h                               count=0
+  case-pattern    _t                              count=0
+
 opTuple:
   param           $wild0                          count=0
 
@@ -28,6 +33,10 @@ handleInputErr:
   param           e                               count=1
   row-case        _u                              count=0
   row-case        _l                              count=0
+
+processArgs:
+  param           args                            count=1
+  case-pattern    first                           count=0
 
 $lift$1:
   param           __input                         count=1

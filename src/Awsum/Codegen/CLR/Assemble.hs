@@ -432,8 +432,7 @@ cilLdcI4_0 = [0x16]
 cilLdcI4_1 = [0x17]
 cilLdelemRef = [0x9A]
 
-cilBgeS, cilBrS, cilBneUnS, cilBltS, cilBleS :: Word8 -> [Word8]
-cilBgeS off = [0x2F, off]
+cilBrS, cilBneUnS, cilBltS, cilBleS :: Word8 -> [Word8]
 cilBrS off = [0x2B, off]
 cilBneUnS off = [0x33, off] -- bne.un.s: 1-byte signed offset
 cilBltS off = [0x32, off] -- blt.s: 1-byte signed offset
@@ -729,7 +728,12 @@ doAssemble (CoreProgram decls) = do
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
   mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
   mEntryArg <- mkEntryArgEither
-  mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs tokMap else pure []
+  mGetArgs <-
+    if Set.member "internalGetArgs" builtIns
+      then do
+        ptags <- askPreludeTags
+        (: []) <$> mkGetArgs ptags tokMap
+      else pure []
   mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll tokMap else pure []
   userMs <- traverse (mkDecl ctx) decls
   mEntry <- mkMain tokMap
@@ -3001,28 +3005,146 @@ mkEntryArgEither = do
   pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
 
 -- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'. Reads
---   the cached argv[0] from the "awsum.argv0" environment variable
---   (set by 'mkMain' via SetEnvironmentVariable on entry) and routes
---   it through '__entryArgEither' for strict-UTF-16 validation.
-mkGetArgs :: Map Text Word32 -> AsmM MInfo
-mkGetArgs tokMap = do
+--   'System.Environment.GetCommandLineArgs()' (which returns
+--   @[exe path, arg1, arg2, ...]@) and walks from the end down to (but
+--   excluding) index 0, validating each element via '__entryArgEither'
+--   and consing it onto a prelude 'List String'. All-or-nothing
+--   error semantics — the first failing element short-circuits with
+--   its 'Left'.
+--
+--   Locals: 0 = string[] argv, 1 = int32 i, 2 = object[] list,
+--   3 = object[] validated.
+mkGetArgs :: PreludeTags -> Map Text Word32 -> AsmM MInfo
+mkGetArgs ptags tokMap = do
   ni <- w16 <$> addStr "__getArgs"
   si <- w16 <$> addBlob (sigStatic etObject 0)
   ps <- addParams 0
   trEnvironment <- addTypeRef (resScopeAR 1) "Environment" "System"
-  getEnvVarRef <-
+  trObject <- addTypeRef (resScopeAR 1) "Object" "System"
+  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
+  -- Environment.GetCommandLineArgs() : string[] — static, 0 args.
+  -- Sig blob: 0x00 (default cc) | 0x00 (paramCount=0) | 0x1D (SZArray) | 0x0E (String).
+  getCmdArgsRef <-
     addMemberRef
       (mrpTR trEnvironment)
-      "GetEnvironmentVariable"
-      [0x00, 0x01, etString, etString]
-  argvKeyTok <- addUS "awsum.argv0"
+      "GetCommandLineArgs"
+      [0x00, 0x00, etSZArray, etString]
   let entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
-      code =
-        cilLdstr argvKeyTok
-          <> cilCall (tokMR getEnvVarRef)
+      objArrToObj = tokTR trObject -- castclass uses TypeRef token directly; runtime accepts compatible array
+      objArrCls = tokTR trObject -- for newarr <object> and stelem.ref of object[]
+      i4Tok = tokTR trInt32
+  -- Locals: [string[], int32, object[], object[]].
+  -- LocalVarSig blob layout: 0x07 prefix | count | (per-local: type encoding).
+  -- string[]: 0x1D 0x0E. int32: 0x08. object[]: 0x1D 0x1C. object[]: 0x1D 0x1C.
+  localTok <-
+    addLocalSigBytes
+      [ 0x07,
+        0x04, -- 4 locals
+        etSZArray,
+        etString,
+        0x08, -- ELEMENT_TYPE_I4
+        etSZArray,
+        etObject,
+        etSZArray,
+        etObject
+      ]
+  -- Bytecode pieces. Compute branch offsets after the pieces are sized.
+  let nilTag = cilLdcI4 (ptNil ptags) <> cilBox i4Tok
+      consTag = cilLdcI4 (ptCons ptags) <> cilBox i4Tok
+      rightTagPush = cilLdcI4 (ptRight ptags)
+      buildNil =
+        cilLdcI4_1
+          <> cilNewarr objArrCls
+          <> cilDup
+          <> cilLdcI4_0
+          <> nilTag
+          <> cilStelemRef
+      header =
+        cilCall (tokMR getCmdArgsRef) -- argv := GetCommandLineArgs()
+          <> cilStloc 0
+          <> buildNil
+          <> cilStloc 2
+          <> cilLdloc 0
+          <> cilLdlen
+          <> cilConvI4
+          <> cilStloc 1
+      checkExit ofs =
+        cilLdloc 1
+          <> cilLdcI4_1
+          <> cilBleS ofs -- branch to done block if i <= 1 (skips argv[0])
+      decAndValidate =
+        cilLdloc 1
+          <> cilLdcI4_1
+          <> cilSub
+          <> cilStloc 1
+          <> cilLdloc 0
+          <> cilLdloc 1
+          <> cilLdelemRef
           <> cilCall entryArgEitherTok
+          <> cilCastclass objArrToObj -- runtime cast Object → Object[]
+          <> cilStloc 3
+      checkTag ofs =
+        cilLdloc 3
+          <> cilLdcI4_0
+          <> cilLdelemRef
+          <> cilUnboxAny i4Tok
+          <> rightTagPush
+          <> cilBneUnS ofs -- branch to Left-return if tag != Right
+      buildCons =
+        cilLdcI4 3
+          <> cilNewarr objArrCls
+          <> cilDup
+          <> cilLdcI4_0
+          <> consTag
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4_1
+          <> cilLdloc 3
+          <> cilLdcI4_1
+          <> cilLdelemRef
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4 2
+          <> cilLdloc 2
+          <> cilStelemRef
+          <> cilStloc 2
+      leftReturn = cilLdloc 3 <> cilRet
+      doneBlock =
+        cilLdcI4 2
+          <> cilNewarr objArrCls
+          <> cilDup
+          <> cilLdcI4_0
+          <> rightTagPush
+          <> cilBox i4Tok
+          <> cilStelemRef
+          <> cilDup
+          <> cilLdcI4_1
+          <> cilLdloc 2
+          <> cilStelemRef
           <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 1}
+      -- Sizes of every fixed-length piece for offset computation.
+      checkExitSize = length (checkExit 0)
+      decValidateSize = length decAndValidate
+      checkTagSize = length (checkTag 0)
+      buildConsSize = length buildCons
+      backEdgeSize = length (cilBrS 0)
+      leftReturnSize = length leftReturn
+      -- After 'checkExit', the loop fall-through is decAndValidate +
+      -- checkTag + buildCons + backEdge + leftReturn before the done
+      -- block. ble.s target offset is measured from the byte AFTER
+      -- the ble.s instruction itself.
+      ofExit = decValidateSize + checkTagSize + buildConsSize + backEdgeSize + leftReturnSize
+      -- After 'checkTag', if tag != Right we jump to leftReturn (skips
+      -- buildCons + backEdge).
+      ofLeft = buildConsSize + backEdgeSize
+      -- back-edge from after backEdge to the start of checkExit.
+      loopLen = checkExitSize + decValidateSize + checkTagSize + buildConsSize + backEdgeSize
+      ofBack = negate loopLen
+      checkExitFinal = checkExit (fromIntegral (ofExit :: Int))
+      checkTagFinal = checkTag (fromIntegral (ofLeft :: Int))
+      backEdge = cilBrS (fromIntegral (ofBack :: Int))
+      code = header <> checkExitFinal <> decAndValidate <> checkTagFinal <> buildCons <> backEdge <> leftReturn <> doneBlock
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 5}
 
 -- | __stdinReadAll: zero-arg helper for
 --   'BuiltIn.internalStdinReadAllAsUtf16'. Wraps 'Console.OpenStandardInput()'
@@ -3091,7 +3213,6 @@ mkMain tokMap = do
   ni <- w16 <$> addStr "Main"
   si <- w16 <$> addBlob [0x00, 0x01, etVoid, etSZArray, etString]
   ps <- addParams 1
-  emptyTok <- addUS ""
   -- Force stdout to UTF-8 before any user code runs. See the IL-text
   -- 'mainMethod' for the rationale (Windows ANSI fallback mangles
   -- supplementary code points to '?' per UTF-16 unit when stdout is
@@ -3103,50 +3224,15 @@ mkMain tokMap = do
   let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
   getUtf8Ref <- addMemberRef (mrpTR trEncoding) "get_UTF8" ([0x00, 0x00] <> encodingClass)
   setOutEncRef <- addMemberRef (mrpTR trConsole) "set_OutputEncoding" ([0x00, 0x01, etVoid] <> encodingClass)
-  -- One local slot of type 'object' to hold argv[0] across the
-  -- 'SetEnvironmentVariable' caching call. Stash + reload pattern is
-  -- needed because CIL has no direct 'swap' opcode.
-  localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
-  -- 'SetEnvironmentVariable' caches argv[0] so 'BuiltIn.internalGetArgs'
-  -- can re-read it via 'GetEnvironmentVariable' from inside 'runIO''s
-  -- 'IOGetArgs' arm. See 'mkGetArgs' for the read side.
-  trEnvironment <- addTypeRef (resScopeAR 1) "Environment" "System"
-  setEnvVarRef <-
-    addMemberRef
-      (mrpTR trEnvironment)
-      "SetEnvironmentVariable"
-      [0x00, 0x02, etVoid, etString, etString]
-  argvKeyTok <- addUS "awsum.argv0"
-  trString <- addTypeRef (resScopeAR 1) "String" "System"
-  let stringTypeTok = tokTR trString
   let vMainTok = fromMaybe (error "no v_main") (Map.lookup (mangle "main") tokMap)
       vRunIOTok = fromMaybe (error "no v_runIO") (Map.lookup (mangle "runIO") tokMap)
-      -- After the encoding-setup prologue, push argv[0] (or "") onto
-      -- the stack and cache it via SetEnvironmentVariable so
-      -- 'BuiltIn.internalGetArgs' can read it later from inside
-      -- 'runIO''s 'IOGetArgs' arm. 'main' itself takes no arguments.
+      -- '__getArgs' reads 'Environment.GetCommandLineArgs()' on demand,
+      -- so 'Main' doesn't have to stash anything. 'main' itself takes
+      -- no Awsum-level arguments (signature 'IO Never Unit'); user
+      -- code reads argv through 'IO.Args.getArgs' inside the IO chain.
       code =
         cilCall (tokMR getUtf8Ref) -- push UTF-8 Encoding instance
           <> cilCall (tokMR setOutEncRef) -- Console.OutputEncoding = it
-          <> cilLdarg 0 -- 0
-          <> cilLdlen -- 1
-          <> cilConvI4 -- 2
-          <> cilLdcI4_1 -- 3
-          <> cilBgeS 7 -- 4–5
-          <> cilLdstr emptyTok -- 6–10
-          <> cilBrS 3 -- 11–12
-          <> cilLdarg 0 -- 13 (has_arg)
-          <> cilLdcI4_0 -- 14
-          <> cilLdelemRef -- 15
-          -- call_main: input on top of stack. Cache it via
-          -- SetEnvironmentVariable. CIL has no direct 'swap' opcode
-          -- so route through local slot 0: stloc.0; ldstr; ldloc.0;
-          -- castclass; call SetEnv (returns void).
-          <> cilStloc 0
-          <> cilLdstr argvKeyTok
-          <> cilLdloc 0
-          <> cilCastclass stringTypeTok
-          <> cilCall (tokMR setEnvVarRef)
           -- v_main is a zero-arg value (CValDef): build the IO tree.
           <> cilCall vMainTok
           -- v_main returned an IO tree on the stack; hand it to runIO
@@ -3155,7 +3241,7 @@ mkMain tokMap = do
           <> cilCall vRunIOTok
           <> cilPop
           <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods

@@ -232,6 +232,8 @@ data PreludeTags = PreludeTags
     ptFalse :: !Int,
     ptUnit :: !Int,
     ptTuple2 :: !Int,
+    ptNil :: !Int,
+    ptCons :: !Int,
     ptUnderflowError :: !Int,
     ptOverflowError :: !Int,
     ptParseError :: !Int,

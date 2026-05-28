@@ -11,7 +11,8 @@ declare i32 @snprintf(ptr, i64, ptr, ...)
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
+@.cli_argc = internal global i64 0
+@.cli_argv = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -310,24 +311,41 @@ entry:
   %argc_slot = alloca i32
   %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)
   %argc_w = load i32, ptr %argc_slot
-  %has_arg = icmp sgt i32 %argc_w, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %arg_w_slot = getelementptr ptr, ptr %argv_w, i64 1
-  %arg_w = load ptr, ptr %arg_w_slot
-  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr null, i32 0, ptr null, ptr null)
+  %argc_w64 = sext i32 %argc_w to i64
+  store i64 %argc_w64, ptr @.cli_argc
+  %arr_bytes = mul i64 %argc_w64, 8
+  %u8arr = call ptr @__alloc(i64 %arr_bytes, i32 0)
+  store ptr %u8arr, ptr @.cli_argv
+  store ptr getelementptr inbounds (i8, ptr @.empty, i64 12), ptr %u8arr
+  %ci.slot = alloca i64
+  store i64 1, ptr %ci.slot
+  br label %conv_loop
+conv_loop:
+  %ci = load i64, ptr %ci.slot
+  %conv_done = icmp sge i64 %ci, %argc_w64
+  br i1 %conv_done, label %call_main, label %conv_body
+conv_body:
+  %argw_slot = getelementptr ptr, ptr %argv_w, i64 %ci
+  %argw = load ptr, ptr %argw_slot
+  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr null, i32 0, ptr null, ptr null)
   %need_ok = icmp sgt i32 %needed, 0
-  br i1 %need_ok, label %do_convert, label %no_arg
-do_convert:
+  br i1 %need_ok, label %conv_do, label %conv_empty
+conv_do:
   %needed64 = sext i32 %needed to i64
   %buf = call ptr @__alloc(i64 %needed64, i32 0)
-  %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)
-  br label %call_main
-no_arg:
-  br label %call_main
+  call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)
+  %dst_slot = getelementptr ptr, ptr %u8arr, i64 %ci
+  store ptr %buf, ptr %dst_slot
+  %ci.next = add i64 %ci, 1
+  store i64 %ci.next, ptr %ci.slot
+  br label %conv_loop
+conv_empty:
+  %dst_slot_e = getelementptr ptr, ptr %u8arr, i64 %ci
+  store ptr getelementptr inbounds (i8, ptr @.empty, i64 12), ptr %dst_slot_e
+  %ci.next_e = add i64 %ci, 1
+  store i64 %ci.next_e, ptr %ci.slot
+  br label %conv_loop
 call_main:
-  %input = phi ptr [%buf, %do_convert], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

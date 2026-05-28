@@ -167,7 +167,6 @@ blocktypeI32 = valtypeI32
 
 data WasmInfo = WasmInfo
   { wiStringPool :: Map Text Int, -- string -> memory offset
-    wiEmptyOff :: Int, -- offset of "" in pool
     wiHeapStart :: Int,
     wiValDefs :: Set Text,
     wiFunDefs :: Set Text,
@@ -208,18 +207,18 @@ importCount = 4
 -- __subUInt8, __mulUInt8, __addUInt32, __subUInt32, __mulUInt32,
 -- __splitOnFirst, __parseInt32, __parseUInt8, __parseUInt32,
 -- __lengthCodePoints, __lengthUtf16CodeUnits, __lengthUtf8Bytes,
--- __get_arg, __entryArgEither, __utf16_of_range, __getArgs,
+-- __entryArgEither, __utf16_of_range, __getArgs,
 -- __stdinReadAll, __alloc_shaped, __inc_ref, __free_recursive,
 -- __free_worklist_push, __memcmp, __eqString
 runtimeCount :: Word32
-runtimeCount = 43
+runtimeCount = 42
 
 -- Runtime helper function indices (after imports). '$__free' slots
 -- in right after '$__alloc'. The RC helpers (@__alloc_shaped,
 -- __inc_ref, __free_recursive, __free_worklist_push@) sit at the
 -- end so the earlier indices stay stable when new helpers are
 -- appended.
-idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxGetArg, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxStdinReadAll, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush, idxMemcmp, idxEqString :: Word32
+idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxStdinReadAll, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush, idxMemcmp, idxEqString :: Word32
 idxAlloc = importCount
 idxFree = importCount + 1
 idxMemcpy = importCount + 2
@@ -252,21 +251,20 @@ idxParseU32 = importCount + 28
 idxLengthCodePoints = importCount + 29
 idxLengthUtf16CodeUnits = importCount + 30
 idxLengthBytesAsUtf8 = importCount + 31
-idxGetArg = importCount + 32
-idxEntryArgEither = importCount + 33
-idxUtf16OfRange = importCount + 34
-idxGetArgs = importCount + 35
-idxStdinReadAll = importCount + 36
-idxAllocShaped = importCount + 37
-idxIncRef = importCount + 38
-idxFreeRecursive = importCount + 39
-idxFreeWorklistPush = importCount + 40
-idxMemcmp = importCount + 41
-idxEqString = importCount + 42
+idxEntryArgEither = importCount + 32
+idxUtf16OfRange = importCount + 33
+idxGetArgs = importCount + 34
+idxStdinReadAll = importCount + 35
+idxAllocShaped = importCount + 36
+idxIncRef = importCount + 37
+idxFreeRecursive = importCount + 38
+idxFreeWorklistPush = importCount + 39
+idxMemcmp = importCount + 40
+idxEqString = importCount + 41
 
 buildInfo :: PreludeTags -> CoreProgram -> WasmInfo
 buildInfo ptags prog@(CoreProgram decls) =
-  let (pool, emptyOff, heapStart) = buildStringPool prog
+  let (pool, _emptyOff, heapStart) = buildStringPool prog
       valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
@@ -281,7 +279,6 @@ buildInfo ptags prog@(CoreProgram decls) =
       funcIdx = Map.fromList $ allDecls <> [("_start", startIdx)]
    in WasmInfo
         { wiStringPool = pool,
-          wiEmptyOff = emptyOff,
           wiHeapStart = heapStart,
           wiValDefs = valNames,
           wiFunDefs = funNames,
@@ -414,8 +411,7 @@ buildTypeSection info (CoreProgram decls) =
                FuncType 3 False, -- __memcpy(i32,i32,i32)->void
                FuncType 2 True, -- __concat (dedup with args_sizes_get)
                FuncType 1 True, -- __print (dedup with __alloc)
-               FuncType 0 True, -- __get_arg()->i32
-               FuncType 0 True, -- __getArgs()->i32 (dedup with __get_arg)
+               FuncType 0 True, -- __getArgs()->i32
                FuncType 2 True, -- __utf16_of_range(p, len) (dedup with __concat)
                FuncType 2 True, -- __alloc_shaped(size, shape)->i32 (dedup with __concat)
                FuncType 1 False, -- __inc_ref(p)->void (dedup with __free)
@@ -509,7 +505,6 @@ buildFunctionSection _info typeMap (CoreProgram decls) =
           lookupType (FuncType 1 True) typeMap, -- __lengthCodePoints
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf16CodeUnits
           lookupType (FuncType 1 True) typeMap, -- __lengthUtf8Bytes
-          lookupType (FuncType 0 True) typeMap, -- __get_arg
           lookupType (FuncType 2 True) typeMap, -- __entryArgEither(ptr, len)
           lookupType (FuncType 2 True) typeMap, -- __utf16_of_range
           lookupType (FuncType 0 True) typeMap, -- __getArgs
@@ -668,10 +663,9 @@ buildCodeSection info typeMap (CoreProgram decls) =
           codeLengthCodePoints,
           codeLengthUtf16CodeUnits,
           codeLengthBytesAsUtf8,
-          codeGetArg info,
           codeEntryArgEither info,
           codeUtf16OfRange,
-          codeGetArgs,
+          codeGetArgs (wiTags info),
           codeStdinReadAll,
           codeAllocShaped,
           codeIncRef,
@@ -5049,37 +5043,135 @@ codeLengthUtf16CodeUnits =
       ]
 
 -- __getArgs() -> i32. Zero-arg helper for 'BuiltIn.internalGetArgs',
--- called from 'runIO''s 'IOGetArgs' arm. Re-reads argv via WASI
--- 'args_get' through '__get_arg', measures its byte length via an
--- inline NUL scan, and routes the @(arg, len)@ pair through the
--- length-aware '__entryArgEither'. The NUL terminator at @arg[len]@
--- is the readable byte the decoder relies on for its one-past-end
--- surrogate peek.
+-- called from 'runIO''s 'IOGetArgs' arm. Reads the full argv via WASI
+-- 'args_sizes_get' / 'args_get' and walks it from index argc-1 down to
+-- 1 (index 0 is the program name, skipped), validating each element
+-- via '__entryArgEither' and consing it onto a prelude 'List String'.
+-- All-or-nothing error semantics — the first failing element
+-- short-circuits with its 'Left'. On success the list is wrapped in
+-- 'Right'. Walked right-to-left so order is preserved at the head; an
+-- argv of just [exe] yields 'Right Nil'. Mirrors the WAT 'rtGetArgs'
+-- in 'Awsum.Codegen.WASM' byte-for-byte.
 --
--- Locals: 0 = a (the argv[1] pointer), 1 = l (its byte length).
-codeGetArgs :: [Word8]
-codeGetArgs =
+-- Locals (10, all i32): 0 = argc, 1 = ptrs, 2 = buf, 3 = i,
+-- 4 = p (current arg pointer), 5 = l (its byte length),
+-- 6 = cell (Either from __entryArgEither), 7 = head (String ptr),
+-- 8 = acc (list accumulator), 9 = consC.
+codeGetArgs :: PreludeTags -> [Word8]
+codeGetArgs ptags =
   encodeBody
-    (encodeLocals 2)
+    (encodeLocals 10)
     $ concat
-      [ -- a = __get_arg()
+      [ -- acc = __alloc_shaped(4, 0); store ptNil
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Const],
+        encodeSLEB128 0,
         [opCall],
-        encodeULEB128 idxGetArg,
+        encodeULEB128 idxAllocShaped,
+        [opLocalSet],
+        encodeULEB128 8,
+        [opLocalGet],
+        encodeULEB128 8,
+        [opI32Const],
+        encodeSLEB128 (fromIntegral (ptNil ptags) :: Int32),
+        [opI32Store, 0x02, 0x00],
+        -- drop(args_sizes_get(12, 16))
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Const],
+        encodeSLEB128 16,
+        [opCall],
+        encodeULEB128 1, -- args_sizes_get (import index 1)
+        [opDrop],
+        -- argc = i32.load(12)
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Load, 0x02, 0x0C],
         [opLocalSet],
         encodeULEB128 0,
+        -- if (argc >= 2)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opI32GeU],
+        [opIf, blocktypeVoid],
+        -- buf = __alloc(i32.load(16))
+        [opI32Const],
+        encodeSLEB128 0,
+        [opI32Load, 0x02, 0x10],
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 2,
+        -- ptrs = __alloc(argc * 4)
+        [opLocalGet],
+        encodeULEB128 0,
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Mul],
+        [opCall],
+        encodeULEB128 idxAlloc,
+        [opLocalSet],
+        encodeULEB128 1,
+        -- drop(args_get(ptrs, buf))
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 2,
+        [opCall],
+        encodeULEB128 2, -- args_get (import index 2)
+        [opDrop],
+        -- i = argc
+        [opLocalGet],
+        encodeULEB128 0,
+        [opLocalSet],
+        encodeULEB128 3,
+        -- block $break / loop $loop
+        [opBlock, blocktypeVoid],
+        [opLoop, blocktypeVoid],
+        -- br_if $break (i <= 1)   [break is depth 1 from inside $loop]
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32LeU],
+        [opBrIf],
+        encodeULEB128 1,
+        -- i = i - 1
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opI32Sub],
+        [opLocalSet],
+        encodeULEB128 3,
+        -- p = i32.load(ptrs + i*4)
+        [opLocalGet],
+        encodeULEB128 1,
+        [opLocalGet],
+        encodeULEB128 3,
+        [opI32Const],
+        encodeSLEB128 4,
+        [opI32Mul],
+        [opI32Add],
+        [opI32Load, 0x02, 0x00],
+        [opLocalSet],
+        encodeULEB128 4,
         -- l = 0
         [opI32Const],
         encodeSLEB128 0,
         [opLocalSet],
-        encodeULEB128 1,
-        -- block $break / loop $scan: scan until NUL
+        encodeULEB128 5,
+        -- block $scanbrk / loop $scan: strlen(p)
         [opBlock, blocktypeVoid],
         [opLoop, blocktypeVoid],
-        -- if arg[l] == 0 br $break (depth 1)
+        -- br_if $scanbrk (p[l] == 0)   [scanbrk is depth 1 from inside $scan]
         [opLocalGet],
-        encodeULEB128 0,
+        encodeULEB128 4,
         [opLocalGet],
-        encodeULEB128 1,
+        encodeULEB128 5,
         [opI32Add],
         [opI32Load8U, 0x00, 0x00],
         [opI32Eqz],
@@ -5087,23 +5179,104 @@ codeGetArgs =
         encodeULEB128 1,
         -- l += 1
         [opLocalGet],
-        encodeULEB128 1,
+        encodeULEB128 5,
         [opI32Const],
         encodeSLEB128 1,
         [opI32Add],
         [opLocalSet],
-        encodeULEB128 1,
+        encodeULEB128 5,
         [opBr],
         encodeULEB128 0,
-        [opEnd],
-        [opEnd],
-        -- call __entryArgEither(a, l)
+        [opEnd], -- end loop $scan
+        [opEnd], -- end block $scanbrk
+        -- cell = __entryArgEither(p, l)
         [opLocalGet],
-        encodeULEB128 0,
+        encodeULEB128 4,
         [opLocalGet],
-        encodeULEB128 1,
+        encodeULEB128 5,
         [opCall],
-        encodeULEB128 idxEntryArgEither
+        encodeULEB128 idxEntryArgEither,
+        [opLocalSet],
+        encodeULEB128 6,
+        -- if (load cell == ptLeft) return cell
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Load, 0x02, 0x00],
+        [opI32Const],
+        encodeSLEB128 (fromIntegral (ptLeft ptags) :: Int32),
+        [opI32Eq],
+        [opIf, blocktypeVoid],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opReturn],
+        [opEnd],
+        -- head = load offset=4 cell
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Load, 0x02, 0x04],
+        [opLocalSet],
+        encodeULEB128 7,
+        -- free the Either box (non-recursive; String transferred to Cons)
+        [opLocalGet],
+        encodeULEB128 6,
+        [opCall],
+        encodeULEB128 idxFree,
+        -- consC = __alloc_shaped(12, 2); store ptCons; head; acc
+        [opI32Const],
+        encodeSLEB128 12,
+        [opI32Const],
+        encodeSLEB128 2,
+        [opCall],
+        encodeULEB128 idxAllocShaped,
+        [opLocalSet],
+        encodeULEB128 9,
+        [opLocalGet],
+        encodeULEB128 9,
+        [opI32Const],
+        encodeSLEB128 (fromIntegral (ptCons ptags) :: Int32),
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 9,
+        [opLocalGet],
+        encodeULEB128 7,
+        [opI32Store, 0x02, 0x04],
+        [opLocalGet],
+        encodeULEB128 9,
+        [opLocalGet],
+        encodeULEB128 8,
+        [opI32Store, 0x02, 0x08],
+        -- acc = consC
+        [opLocalGet],
+        encodeULEB128 9,
+        [opLocalSet],
+        encodeULEB128 8,
+        [opBr],
+        encodeULEB128 0, -- br $loop
+        [opEnd], -- end loop $loop
+        [opEnd], -- end block $break
+        [opEnd], -- end if (argc >= 2)
+        -- cell = __alloc_shaped(8, 1); store ptRight; acc
+        [opI32Const],
+        encodeSLEB128 8,
+        [opI32Const],
+        encodeSLEB128 1,
+        [opCall],
+        encodeULEB128 idxAllocShaped,
+        [opLocalSet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 6,
+        [opI32Const],
+        encodeSLEB128 (fromIntegral (ptRight ptags) :: Int32),
+        [opI32Store, 0x02, 0x00],
+        [opLocalGet],
+        encodeULEB128 6,
+        [opLocalGet],
+        encodeULEB128 8,
+        [opI32Store, 0x02, 0x04],
+        -- return cell (implicit)
+        [opLocalGet],
+        encodeULEB128 6
       ]
 
 -- __stdinReadAll() -> i32. Zero-arg helper for
@@ -5117,7 +5290,7 @@ codeGetArgs =
 -- rest of the program — bounded waste, doubling strategy.
 --
 -- iovec scratch at address 16/20 (ptr, len), nread_out at 12. These
--- overlap with '__get_arg's argv-size scratch but the two helpers
+-- overlap with '__getArgs's args-size scratch but the two helpers
 -- never run concurrently (WASM is single-threaded).
 --
 -- Locals: 0=buf, 1=cap, 2=total, 3=remain, 4=newbuf, 5=newcap, 6=got.
@@ -5272,68 +5445,6 @@ codeStdinReadAll =
         encodeULEB128 2,
         [opCall],
         encodeULEB128 idxEntryArgEither
-      ]
-
--- __get_arg() -> i32
--- locals: $argv_buf(0), $ptrs(1)
-codeGetArg :: WasmInfo -> [Word8]
-codeGetArg info =
-  encodeBody
-    (encodeLocals 2)
-    $ concat
-      [ -- drop(args_sizes_get(12, 16))
-        [opI32Const],
-        encodeSLEB128 12,
-        [opI32Const],
-        encodeSLEB128 16,
-        [opCall],
-        encodeULEB128 1, -- args_sizes_get (import index 1)
-        [opDrop],
-        -- if (i32.load(12) < 2)
-        [opI32Const],
-        encodeSLEB128 0,
-        [opI32Load, 0x02, 0x0C], -- align=2, offset=12 (loads argc)
-        [opI32Const],
-        encodeSLEB128 2,
-        [opI32LtU],
-        [opIf, blocktypeI32],
-        -- then: return empty string offset
-        [opI32Const],
-        encodeSLEB128 (fromIntegral info.wiEmptyOff),
-        [opElse],
-        -- else: alloc argv_buf, alloc ptrs, call args_get, return argv[1]
-        -- argv_buf = __alloc(i32.load(16))  -- argv_buf_size
-        [opI32Const],
-        encodeSLEB128 0,
-        [opI32Load, 0x02, 0x10], -- align=2, offset=16
-        [opCall],
-        encodeULEB128 idxAlloc,
-        [opLocalSet],
-        encodeULEB128 0, -- argv_buf
-        -- ptrs = __alloc(argc * 4)
-        [opI32Const],
-        encodeSLEB128 0,
-        [opI32Load, 0x02, 0x0C], -- argc
-        [opI32Const],
-        encodeSLEB128 4,
-        [opI32Mul],
-        [opCall],
-        encodeULEB128 idxAlloc,
-        [opLocalSet],
-        encodeULEB128 1, -- ptrs
-        -- drop(args_get(ptrs, argv_buf))
-        [opLocalGet],
-        encodeULEB128 1,
-        [opLocalGet],
-        encodeULEB128 0,
-        [opCall],
-        encodeULEB128 2, -- args_get (import index 2)
-        [opDrop],
-        -- return i32.load(ptrs + 4)  -- argv[1]
-        [opLocalGet],
-        encodeULEB128 1,
-        [opI32Load, 0x02, 0x04], -- align=2, offset=4
-        [opEnd]
       ]
 
 -- __entryArgEither(arg: i32, len: i32) -> i32
@@ -5855,14 +5966,10 @@ codeUserDecl info typeMap = \case
             }
      in encodeBody (encodeLocals nExtraLocals) (emitExpr ctx rhs)
 
--- _start: wraps __get_arg() result in `Right input` (tag=1, one field)
--- and hands it to v_main, dropping the result.
---
--- Layout matches CCon emit on WASM: alloc(4 * (1 + nFields)), i32 tag at
--- offset 0, fields at offsets 4..  Two extra locals: $input (slot 0) and
-
--- $right_box (slot 1).
-
+-- _start: builds the IO tree via v_main and hands it to v_runIO,
+-- dropping the Unit result. 'main' takes no arguments; user code reads
+-- argv through 'IO.Args.getArgs' inside the IO chain (lowers to an
+-- 'IOGetArgs' constructor whose runIO arm calls '__getArgs').
 codeStart :: WasmInfo -> [Word8]
 codeStart info =
   let mainIdx = fromMaybe 0 (Map.lookup "main" info.wiFuncIdx)

@@ -13,7 +13,8 @@ declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
 @.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
+@.cli_argc = internal global i64 0
+@.cli_argv = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -144,7 +145,8 @@ done:
 
 @.str.0 = private unnamed_addr constant {i32, i32, i32, i32, i32, [24 x i8]} { i32 0, i32 0, i32 0, i32 24, i32 24, [24 x i8] c"UNPAIRED_UTF16_SURROGATE" }
 @.str.1 = private unnamed_addr constant {i32, i32, i32, i32, i32, [15 x i8]} { i32 0, i32 0, i32 0, i32 15, i32 15, [15 x i8] c"STRING_TOO_LONG" }
-@.str.2 = private unnamed_addr constant {i32, i32, i32, i32, i32, [11 x i8]} { i32 0, i32 0, i32 0, i32 11, i32 11, [11 x i8] c"PARSE_ERROR" }
+@.str.2 = private unnamed_addr constant {i32, i32, i32, i32, i32, [6 x i8]} { i32 0, i32 0, i32 0, i32 6, i32 6, [6 x i8] c"NO_ARG" }
+@.str.3 = private unnamed_addr constant {i32, i32, i32, i32, i32, [11 x i8]} { i32 0, i32 0, i32 0, i32 11, i32 11, [11 x i8] c"PARSE_ERROR" }
 
 define internal ptr @__print(ptr %s) {
   %byte_count = load i32, ptr %s
@@ -327,10 +329,55 @@ unpaired:
 
 
 define internal ptr @__getArgs() {
-  %arg = load ptr, ptr @.cli_arg
+  %argc = load i64, ptr @.cli_argc
+  %argv = load ptr, ptr @.cli_argv
+  %i.slot = alloca i64
+  %acc.slot = alloca ptr
+  %nilC = call ptr @__alloc(i64 8, i32 0)
+  %nilC_tag = inttoptr i64 12 to ptr
+  store ptr %nilC_tag, ptr %nilC
+  store ptr %nilC, ptr %acc.slot
+  store i64 %argc, ptr %i.slot
+  br label %getargs_loop
+getargs_loop:
+  %i = load i64, ptr %i.slot
+  %at_end = icmp sle i64 %i, 1
+  br i1 %at_end, label %getargs_done, label %getargs_body
+getargs_body:
+  %i.next = sub i64 %i, 1
+  store i64 %i.next, ptr %i.slot
+  %arg_slot = getelementptr ptr, ptr %argv, i64 %i.next
+  %arg = load ptr, ptr %arg_slot
   %len = call i64 @strlen(ptr %arg)
   %either = call ptr @__entryArgEither(ptr %arg, i64 %len)
+  %either_tag_ptr = load ptr, ptr %either
+  %either_tag = ptrtoint ptr %either_tag_ptr to i64
+  %is_left = icmp eq i64 %either_tag, 3
+  br i1 %is_left, label %getargs_left, label %getargs_cons
+getargs_cons:
+  %head_slot = getelementptr ptr, ptr %either, i32 1
+  %head = load ptr, ptr %head_slot
+  call void @__free(ptr %either)
+  %acc = load ptr, ptr %acc.slot
+  %consC = call ptr @__alloc(i64 24, i32 2)
+  %consC_tag = inttoptr i64 13 to ptr
+  store ptr %consC_tag, ptr %consC
+  %consC_head_slot = getelementptr ptr, ptr %consC, i32 1
+  store ptr %head, ptr %consC_head_slot
+  %consC_tail_slot = getelementptr ptr, ptr %consC, i32 2
+  store ptr %acc, ptr %consC_tail_slot
+  store ptr %consC, ptr %acc.slot
+  br label %getargs_loop
+getargs_left:
   ret ptr %either
+getargs_done:
+  %acc.final = load ptr, ptr %acc.slot
+  %rightC = call ptr @__alloc(i64 16, i32 1)
+  %rightC_tag = inttoptr i64 4 to ptr
+  store ptr %rightC_tag, ptr %rightC
+  %rightC_field = getelementptr ptr, ptr %rightC, i32 1
+  store ptr %acc.final, ptr %rightC_field
+  ret ptr %rightC
 }
 
 
@@ -473,6 +520,40 @@ tco.case.default.8:
 tco.exit.1:
   %t33 = load ptr, ptr %t2
   ret ptr %t33
+}
+
+define internal ptr @v_headList(ptr %v_xs) {
+  %t0 = getelementptr ptr, ptr %v_xs, i32 0
+  %t1 = load ptr, ptr %t0
+  %t2 = ptrtoint ptr %t1 to i64
+  switch i64 %t2, label %case.default.3 [ i64 12, label %case.arm.12.4 i64 13, label %case.arm.13.8 ]
+case.arm.12.4:
+  %t5 = call ptr @__alloc(i64 8, i32 0)
+  %t6 = inttoptr i64 10 to ptr
+  %t7 = getelementptr ptr, ptr %t5, i32 0
+  store ptr %t6, ptr %t7
+  call void @__free_recursive(ptr %v_xs)
+  ret ptr %t5
+case.arm.13.8:
+  %t9 = getelementptr ptr, ptr %v_xs, i32 1
+  %t10 = load ptr, ptr %t9
+  call void @__inc_ref(ptr %t10)
+  %t11 = getelementptr ptr, ptr %v_xs, i32 2
+  %t12 = load ptr, ptr %t11
+  call void @__inc_ref(ptr %t12)
+  %t13 = call ptr @__alloc(i64 16, i32 1)
+  %t14 = inttoptr i64 11 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  call void @__inc_ref(ptr %t10)
+  %t16 = getelementptr ptr, ptr %t13, i32 1
+  store ptr %t10, ptr %t16
+  call void @__free_recursive(ptr %t12)
+  call void @__free_recursive(ptr %t10)
+  call void @__free_recursive(ptr %v_xs)
+  ret ptr %t13
+case.default.3:
+  unreachable
 }
 
 define internal ptr @v_opTuple(ptr %v__wild0) {
@@ -680,6 +761,49 @@ case.arm.589989748.19:
   call void @__free_recursive(ptr %v_e)
   ret ptr %t22
 case.default.3:
+  unreachable
+}
+
+define internal ptr @v_processArgs(ptr %v_args) {
+  call void @__inc_ref(ptr %v_args)
+  %t0 = call ptr @v_headList(ptr %v_args)
+  %t1 = getelementptr ptr, ptr %t0, i32 0
+  %t2 = load ptr, ptr %t1
+  %t3 = ptrtoint ptr %t2 to i64
+  switch i64 %t3, label %case.default.4 [ i64 10, label %case.arm.10.5 i64 11, label %case.arm.11.18 ]
+case.arm.10.5:
+  %t6 = call ptr @__alloc(i64 24, i32 2)
+  %t7 = inttoptr i64 7 to ptr
+  %t8 = getelementptr ptr, ptr %t6, i32 0
+  store ptr %t7, ptr %t8
+  %t9 = getelementptr ptr, ptr %t6, i32 1
+  store ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t9
+  %t10 = call ptr @__alloc(i64 16, i32 1)
+  %t11 = inttoptr i64 5 to ptr
+  %t12 = getelementptr ptr, ptr %t10, i32 0
+  store ptr %t11, ptr %t12
+  %t13 = call ptr @__alloc(i64 8, i32 0)
+  %t14 = inttoptr i64 0 to ptr
+  %t15 = getelementptr ptr, ptr %t13, i32 0
+  store ptr %t14, ptr %t15
+  %t16 = getelementptr ptr, ptr %t10, i32 1
+  store ptr %t13, ptr %t16
+  %t17 = getelementptr ptr, ptr %t6, i32 2
+  store ptr %t10, ptr %t17
+  call void @__free_recursive(ptr %t0)
+  call void @__free_recursive(ptr %v_args)
+  ret ptr %t6
+case.arm.11.18:
+  %t19 = getelementptr ptr, ptr %t0, i32 1
+  %t20 = load ptr, ptr %t19
+  call void @__inc_ref(ptr %t20)
+  call void @__inc_ref(ptr %t20)
+  %t21 = call ptr @v_processInput(ptr %t20)
+  call void @__free_recursive(ptr %t0)
+  call void @__free_recursive(ptr %t20)
+  call void @__free_recursive(ptr %v_args)
+  ret ptr %t21
+case.default.4:
   unreachable
 }
 
@@ -944,7 +1068,7 @@ case.arm.3.4:
   %t9 = getelementptr ptr, ptr %t7, i32 0
   store ptr %t8, ptr %t9
   %t10 = getelementptr ptr, ptr %t7, i32 1
-  store ptr getelementptr inbounds (i8, ptr @.str.2, i64 12), ptr %t10
+  store ptr getelementptr inbounds (i8, ptr @.str.3, i64 12), ptr %t10
   %t11 = call ptr @__alloc(i64 16, i32 1)
   %t12 = inttoptr i64 5 to ptr
   %t13 = getelementptr ptr, ptr %t11, i32 0
@@ -1286,7 +1410,7 @@ tco.case.arm.5.11:
   call void @__inc_ref(ptr %t13)
   call void @__inc_ref(ptr %t6)
   call void @__inc_ref(ptr %t13)
-  %t14 = call ptr @v_processInput(ptr %t13)
+  %t14 = call ptr @v_processArgs(ptr %t13)
   %t15 = call ptr @v__lift_1(ptr %t14)
   %t16 = call ptr @v__apply__df_andThenIO_3(ptr %t6, ptr %t15)
   call void @__free_recursive(ptr %t13)
@@ -2152,17 +2276,9 @@ define internal ptr @v__apply1(ptr %v__cl, ptr %v__arg0) {
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
+  %argc64 = sext i32 %argc to i64
+  store i64 %argc64, ptr @.cli_argc
+  store ptr %argv, ptr @.cli_argv
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

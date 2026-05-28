@@ -47,6 +47,11 @@ handleInputError _e = IO.Stdout.print "INPUT_ERROR"
 printInput : String -> IO Never Unit
 printInput s = IO.Stdout.print s
 
+printFirstArg : List String -> IO Never Unit
+printFirstArg args = case headList args of
+  Nothing -> IO.Stdout.print "NO_ARG"
+  Just first -> printInput first
+
 -- Line comment before main
 
 main : IO Never Unit -- Sig trailing
@@ -54,7 +59,7 @@ main : IO Never Unit -- Sig trailing
 -- Line comment between sig and def
 
 main = IO.Args.getArgs
-  |> andThenIO printInput
+  |> andThenIO printFirstArg
   |> handleErrorIO handleInputError
 
 -- Trailing line comment at EOF

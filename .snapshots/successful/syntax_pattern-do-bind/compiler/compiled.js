@@ -3,7 +3,7 @@
 function __print(s){ process.stdout.write(String(s)); return [0]; }
 function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [17]]]; if (s < -2147483648) return [3, [3768445577, [16]]]; return [4, s|0]; }
 function __entryArgEither(arg){ if (arg.length > 134217728) return [3, [589989748, [18]]]; for (let i = 0; i < arg.length; i++) { const c = arg.charCodeAt(i); if (c >= 0xD800 && c <= 0xDBFF) { if (i + 1 >= arg.length) return [3, [502975519, [19]]]; const next = arg.charCodeAt(i + 1); if (next < 0xDC00 || next > 0xDFFF) return [3, [502975519, [19]]]; i++; } else if (c >= 0xDC00 && c <= 0xDFFF) return [3, [502975519, [19]]]; } return [4, arg]; }
-function __getArgs(){ return __entryArgEither(process.argv[2] ?? ""); }
+function __getArgs(){ const args = process.argv.slice(2); let list = [12]; for (let i = args.length - 1; i >= 0; i--) { const v = __entryArgEither(args[i]); if (v[0] !== 4) return v; list = [13, v[1], list]; } return [4, list]; }
 function __stdinReadAll(){ return __entryArgEither(require('fs').readFileSync(0).toString('utf-8')); }
 
 const v_pureEither = (v_x) => {
@@ -12,6 +12,22 @@ const v_pureEither = (v_x) => {
 
 const v_opTuple = (v__wild0) => {
     return [4, [15, (1|0), (2|0), (3|0)]];
+};
+
+const v_headList = (v_xs) => {
+    {
+      const __s = v_xs;
+      switch (__s[0]) {
+        case 12: {
+          return [10];
+        }
+        case 13: {
+          const v_h = __s[1];
+          const v__t = __s[2];
+          return [11, v_h];
+        }
+      }
+    }
 };
 
 const v_handleInputErr = (v_e) => {
@@ -48,6 +64,21 @@ const v__let_12 = (v_res) => {
 
 const v_processInput = (v_raw) => {
     return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 15: { const v_a = s[1]; const v_b = s[2]; const v_c = s[3]; return (v_pureEither)(((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return v_c; } case 4: { const v_ab = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___w0 = s[1]; return v_c; } case 4: { const v_abc = s[1]; return v_abc; } } })(__addInt32(v_ab, v_c)); } } })(__addInt32(v_a, v_b))); } } })(v___p0); } } })((v_opTuple)(v_raw)));
+};
+
+const v_processArgs = (v_args) => {
+    {
+      const __s = (v_headList)(v_args);
+      switch (__s[0]) {
+        case 10: {
+          return [7, "NO_ARG", [5, [0]]];
+        }
+        case 11: {
+          const v_first = __s[1];
+          return (v_processInput)(v_first);
+        }
+      }
+    }
 };
 
 const v__io_getargs_cont = (v_result) => {
@@ -222,7 +253,7 @@ const v__cps__df_andThenIO_3 = (v_io, v__k) => {
       switch (__s[0]) {
         case 5: {
           const v_a = __s[1];
-          return (v__apply__df_andThenIO_3)(v__k, (v__lift_1)((v_processInput)(v_a)));
+          return (v__apply__df_andThenIO_3)(v__k, (v__lift_1)((v_processArgs)(v_a)));
         }
         case 6: {
           const v_e = __s[1];

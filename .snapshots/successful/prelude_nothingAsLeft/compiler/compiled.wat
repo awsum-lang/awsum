@@ -335,28 +335,45 @@
             (local.get $cell))))))
 
 
-  (func $__get_arg (result i32)
-    (local $argv_buf i32) (local $ptrs i32)
-    (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
-    (if (result i32) (i32.lt_u (i32.load (i32.const 12)) (i32.const 2))
-      (then (i32.const 76))
-      (else
-        (local.set $argv_buf (call $__alloc (i32.load (i32.const 16))))
-        (local.set $ptrs (call $__alloc (i32.mul (i32.load (i32.const 12)) (i32.const 4))))
-        (drop (call $args_get (local.get $ptrs) (local.get $argv_buf)))
-        (i32.load (i32.add (local.get $ptrs) (i32.const 4))))))
-
-
   (func $__getArgs (result i32)
-    (local $a i32) (local $l i32)
-    (local.set $a (call $__get_arg))
-    (local.set $l (i32.const 0))
-    (block $break
-      (loop $scan
-        (br_if $break (i32.eqz (i32.load8_u (i32.add (local.get $a) (local.get $l)))))
-        (local.set $l (i32.add (local.get $l) (i32.const 1)))
-        (br $scan)))
-    (call $__entryArgEither (local.get $a) (local.get $l)))
+    (local $argc i32) (local $ptrs i32) (local $buf i32) (local $i i32)
+    (local $p i32) (local $l i32) (local $cell i32) (local $head i32) (local $acc i32) (local $consC i32)
+    (local.set $acc (call $__alloc_shaped (i32.const 4) (i32.const 0)))
+    (i32.store (local.get $acc) (i32.const 12))
+    (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
+    (local.set $argc (i32.load (i32.const 12)))
+    (if (i32.ge_u (local.get $argc) (i32.const 2))
+      (then
+        (local.set $buf (call $__alloc (i32.load (i32.const 16))))
+        (local.set $ptrs (call $__alloc (i32.mul (local.get $argc) (i32.const 4))))
+        (drop (call $args_get (local.get $ptrs) (local.get $buf)))
+        (local.set $i (local.get $argc))
+        (block $break
+          (loop $loop
+            (br_if $break (i32.le_u (local.get $i) (i32.const 1)))
+            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+            (local.set $p (i32.load (i32.add (local.get $ptrs) (i32.mul (local.get $i) (i32.const 4)))))
+            (local.set $l (i32.const 0))
+            (block $scanbrk
+              (loop $scan
+                (br_if $scanbrk (i32.eqz (i32.load8_u (i32.add (local.get $p) (local.get $l)))))
+                (local.set $l (i32.add (local.get $l) (i32.const 1)))
+                (br $scan)))
+            (local.set $cell (call $__entryArgEither (local.get $p) (local.get $l)))
+            (if (i32.eq (i32.load (local.get $cell)) (i32.const 3))
+              (then (return (local.get $cell))))
+            (local.set $head (i32.load offset=4 (local.get $cell)))
+            (call $__free (local.get $cell))
+            (local.set $consC (call $__alloc_shaped (i32.const 12) (i32.const 2)))
+            (i32.store (local.get $consC) (i32.const 13))
+            (i32.store offset=4 (local.get $consC) (local.get $head))
+            (i32.store offset=8 (local.get $consC) (local.get $acc))
+            (local.set $acc (local.get $consC))
+            (br $loop)))))
+    (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
+    (i32.store (local.get $cell) (i32.const 4))
+    (i32.store offset=4 (local.get $cell) (local.get $acc))
+    (local.get $cell))
 
 
   (func $__stdinReadAll (result i32)
