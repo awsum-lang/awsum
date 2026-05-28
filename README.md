@@ -42,7 +42,7 @@ Build from source: see [CONTRIBUTING.md](CONTRIBUTING.md).
 Commands that go through the typechecker (`build`, `run`, `check`, `core`, `asm`) take a mandatory `--program-type cli` flag (currently the only supported program type; see [docs/prelude.md](docs/prelude.md)). Purely syntactic commands (`ast`, `format`, `symbols`) don't.
 
 - `awsum build --program-type cli -t llvm|jvm|clr|wasm|js [-o OUT] FILE` — compile to target and write to file (or stdout). For JVM, CLR, and WASM, outputs binary (`.class`/`.dll`/`.wasm`).
-- `awsum run --program-type cli -t llvm|jvm|clr|wasm|js [--input TEXT] FILE` — compile to a temp file and execute with the system runtime. `--input TEXT` is passed as `argv[1]` (readable from `IO.Args.getArgs`); the child inherits `awsum`'s stdin, so `echo … | awsum run …` and `awsum run … < file` reach `IO.Stdin.readAll` verbatim. The two channels are independent and can be used together.
+- `awsum run --program-type cli -t llvm|jvm|clr|wasm|js FILE [-- ARG …]` — compile to a temp file and execute with the system runtime. Everything after `--` is forwarded as command-line arguments and read with `IO.Args.getArgs` as a `List String` (empty list when omitted: `Right Nil`); the child inherits `awsum`'s stdin, so `echo … | awsum run …` and `awsum run … < file` reach `IO.Stdin.readAll` verbatim. The two channels are independent and can be used together.
 - `awsum check --program-type cli [--json] [--strict] FILE` — parse and typecheck; prints `OK`, warnings (yellow), or an error. With `--json`, outputs an array of diagnostics: `[{"severity":"error"|"warning","startLine":3,"startCol":5,"endLine":3,"endCol":12,"message":"...","fixes":[{"title":"…","edits":[{"startLine":…,"startCol":…,"endLine":…,"endCol":…,"newText":"…"}]}]}]`. With `--strict`, any warning causes a non-zero exit code (CI-friendly).
 - `awsum format [-i|--in-place] FILE` — `render . parse` with stable formatting. Preserves comments (including trailing inline), keeps a blank line between top-level blocks, and ends the file with a trailing newline.
 - `awsum ast FILE` — pretty-print the surface AST (for debugging).
@@ -65,11 +65,11 @@ awsum asm --program-type cli -t jvm  test/sources/successful/smoke_hello/code/Ma
 awsum asm --program-type cli -t clr  test/sources/successful/smoke_hello/code/Main.aww   # CIL text (for inspection)
 awsum asm --program-type cli -t wasm test/sources/successful/smoke_hello/code/Main.aww   # WAT text (for inspection)
 
-awsum run --program-type cli -t llvm --input "world" test/sources/successful/smoke_hello/code/Main.aww
-awsum run --program-type cli -t jvm  --input "world" test/sources/successful/smoke_hello/code/Main.aww
-awsum run --program-type cli -t clr  --input "world" test/sources/successful/smoke_hello/code/Main.aww
-awsum run --program-type cli -t wasm --input "world" test/sources/successful/smoke_hello/code/Main.aww
-awsum run --program-type cli -t js   --input "world" test/sources/successful/smoke_hello/code/Main.aww
+awsum run --program-type cli -t llvm test/sources/successful/smoke_hello/code/Main.aww -- "world"
+awsum run --program-type cli -t jvm  test/sources/successful/smoke_hello/code/Main.aww -- "world"
+awsum run --program-type cli -t clr  test/sources/successful/smoke_hello/code/Main.aww -- "world"
+awsum run --program-type cli -t wasm test/sources/successful/smoke_hello/code/Main.aww -- "world"
+awsum run --program-type cli -t js   test/sources/successful/smoke_hello/code/Main.aww -- "world"
 
 printf '1:1' | awsum run --program-type cli -t llvm test/sources/property/and-commutative/code/Main.aww
 printf '1:1' | awsum run --program-type cli -t jvm  test/sources/property/and-commutative/code/Main.aww
