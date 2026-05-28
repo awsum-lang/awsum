@@ -3,16 +3,8 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
-declare i32 @snprintf(ptr, i64, ptr, ...)
 
-@.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_argc = internal global i64 0
-@.cli_argv = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -24,18 +16,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -539,9 +519,6 @@ case.join.6:
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %argc64 = sext i32 %argc to i64
-  store i64 %argc64, ptr @.cli_argc
-  store ptr %argv, ptr @.cli_argv
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

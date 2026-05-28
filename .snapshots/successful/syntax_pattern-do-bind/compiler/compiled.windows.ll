@@ -3,15 +3,13 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
+declare i64 @strlen(ptr)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 declare i64 @read(i32, ptr, i64)
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
 @.cli_argc = internal global i64 0
 @.cli_argv = internal global ptr null

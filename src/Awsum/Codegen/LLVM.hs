@@ -144,11 +144,11 @@ codegenLLVM host ptags prog@(CoreProgram decls) =
       builtIns = usedBuiltIns prog
    in T.intercalate
         "\n"
-        [ header builtIns,
+        [ header host builtIns,
           emitStringConstants pool,
           runtime ptags builtIns,
           userCode,
-          footer host
+          footer host builtIns
         ]
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -331,30 +331,37 @@ llvmEscapeString = T.concat . map escByte . BS.unpack . encodeUtf8
 -- Header: external declarations + format strings
 -- ════════════════════════════════════════════════════════════════════════════
 
-header :: Set Name -> Text
-header builtIns =
+header :: LLVMHost -> Set Name -> Text
+header host builtIns =
   unlines
     $ [ "; External C declarations",
         "declare ptr @malloc(i64)",
         "declare ptr @realloc(ptr, i64)",
         "declare void @free(ptr)",
         "declare ptr @memcpy(ptr, ptr, i64)",
-        -- 'strlen' is used only at the boundary between OS argv[1]
-        -- (a C-string from libc) and our internal length-prefixed layout
-        -- — see 'rtEntryArgEither'. None of the regular runtime helpers
-        -- depend on null termination anymore; they read length from the
-        -- string's 8-byte header.
-        "declare i64 @strlen(ptr)",
         -- 'write(2)' is used by '__print' to stream payload bytes to fd 1
         -- regardless of NUL bytes inside (which 'printf(\"%s\", …)' /
         -- 'printf(\"%.*s\", n, …)' would silently truncate at). On macOS
         -- and Linux libc the symbol is 'write'; mingw libc also exposes
         -- it. MSVC's CRT exposes '_write' instead — that variant is not
         -- yet wired through and is tracked as a Windows-host follow-up.
-        "declare i64 @write(i32, ptr, i64)",
-        "declare i32 @printf(ptr, ...)",
-        "declare i32 @snprintf(ptr, i64, ptr, ...)"
+        "declare i64 @write(i32, ptr, i64)"
       ]
+    <> [ -- 'strlen' is used only by 'rtGetArgs', at the boundary between
+       -- OS argv[i] (NUL-terminated C-strings from libc) and our internal
+       -- length-prefixed layout. Gated so programs without
+       -- 'IO.Args.getArgs' don't pin libc 'strlen'.
+       "declare i64 @strlen(ptr)"
+       | Set.member "internalGetArgs" builtIns
+       ]
+    <> [ -- 'snprintf' formats Int32 / UInt8 / UInt32 into decimal in
+       -- '__showInt32' / '__showUInt8' / '__showUInt32'. Gated so programs
+       -- that show no integers don't pin it.
+       "declare i32 @snprintf(ptr, i64, ptr, ...)"
+       | Set.member "showInt32" builtIns
+           || Set.member "showUInt8" builtIns
+           || Set.member "showUInt32" builtIns
+       ]
     <> [ -- 'read(2)' is used by '__stdinReadAll' to consume fd 0 to EOF
        -- regardless of NUL bytes in the input. macOS / Linux / mingw
        -- libc all expose it as 'read'; MSVC's CRT exposes '_read'
@@ -382,30 +389,39 @@ header builtIns =
     -- string-allocating helper), and 'rtSplitOnFirst' walks the
     -- length-prefixed payload via i32 loads + index arithmetic instead
     -- of libc's null-aware 'strstr'.
-    <> [ "",
-         "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\"",
-         "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\"",
-         -- '@.empty' is the language-fixed empty string in length-prefixed
-         -- form. The 4-byte 'i32 flag = 0' prefix
-         -- tells '@__free' this is a literal — passing the user-pointer
-         -- through 'CDrop' is safe and no-ops. The user pointer is
-         -- '@.empty + 4'; existing readers see byte_count at user_ptr+0
-         -- and utf16 at user_ptr+4 unchanged.
-         "@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }",
-         -- '@.cli_argc' / '@.cli_argv' cache the entry-point's @argc@ and
-         -- @argv@ (an array of NUL-terminated UTF-8 C-strings) so
-         -- 'BuiltIn.internalGetArgs' can walk every element from the
-         -- prelude's 'runIO' arm without threading @argc@/@argv@ through
-         -- the IO tree. On POSIX these are the libc @main@ arguments
-         -- verbatim; on Windows the entry builds a UTF-8 array from the
-         -- wide command line (see 'footerWindows'). Argv is invariant
-         -- during program execution, so a single store at entry is
-         -- enough — the no-memoisation principle is on the Awsum side
-         -- (each 'IO.Args.getArgs' call rebuilds the list), not the
-         -- C-level argv read.
-         "@.cli_argc = internal global i64 0",
-         "@.cli_argv = internal global ptr null",
-         -- '__alloc' / '__free' wrap libc 'malloc' / 'free' with a
+    <> [""]
+    -- '@.fmt_i32' / '@.fmt_u8' are the decimal format strings for the
+    -- integer 'show' helpers, gated next to their sole readers
+    -- ('__showInt32' / '__showUInt8' / '__showUInt32') so a program that
+    -- shows no integers carries neither.
+    <> [ "@.fmt_i32 = private unnamed_addr constant [3 x i8] c\"%d\\00\""
+       | Set.member "showInt32" builtIns
+       ]
+    <> [ "@.fmt_u8 = private unnamed_addr constant [3 x i8] c\"%u\\00\""
+       | Set.member "showUInt8" builtIns || Set.member "showUInt32" builtIns
+       ]
+    -- '@.empty' is the language-fixed empty string in length-prefixed form
+    -- (4-byte 'i32 flag = 0' literal prefix; the user pointer is
+    -- '@.empty + 12'). Its only reader is the Windows entry's argv[0] slot
+    -- in 'footerWindows', which itself only runs when the program reads
+    -- argv — so it is gated on Windows ∧ 'internalGetArgs'.
+    <> [ "@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }"
+       | host == LLVMWindows && Set.member "internalGetArgs" builtIns
+       ]
+    -- '@.cli_argc' / '@.cli_argv' cache the entry-point's @argc@ and
+    -- @argv@ (an array of NUL-terminated UTF-8 C-strings) so
+    -- 'BuiltIn.internalGetArgs' can walk every element from the prelude's
+    -- 'runIO' arm without threading @argc@/@argv@ through the IO tree.
+    -- Read only by '__getArgs' and stored only by the entry footer, both
+    -- gated on 'internalGetArgs' — so the globals are gated to match.
+    <> ( if Set.member "internalGetArgs" builtIns
+           then
+             [ "@.cli_argc = internal global i64 0",
+               "@.cli_argv = internal global ptr null"
+             ]
+           else []
+       )
+    <> [ -- '__alloc' wraps libc 'malloc' with a
          -- 12-byte header: each block is prefixed
          -- with @flag@ (4 bytes: 1 for heap, 0 for string literals
          -- which carry the same prefix in their global layout — see
@@ -418,12 +434,12 @@ header builtIns =
          -- pointer always points 12 bytes past the malloc'd block, so
          -- existing readers (string headers at user_ptr+0/+4, ADT
          -- cells at user_ptr+0 for tag, …) keep working without offset
-         -- shifts. '__free' reads the flag and only releases when it
-         -- is 1, making @call __free@ safe on literal pointers (no-op)
-         -- as well as heap pointers. 'CDrop' lowers to
-         -- '__free_recursive' in emitExpr / emitTail so the refcount
-         -- decrements and the shape-driven cascade fires; '__free'
-         -- itself is the per-block release the cascade ends in.
+         -- shifts. 'CDrop' lowers to '__free_recursive' in emitExpr /
+         -- emitTail so the refcount decrements and the shape-driven
+         -- cascade fires; the cascade releases each dead block through
+         -- libc 'free' directly. (The separate flag-guarded single-block
+         -- '@__free' wrapper is emitted only for the argv path — see its
+         -- gated definition below.)
          "",
          "define internal ptr @__alloc(i64 %sz, i32 %shape) {",
          "  %total = add i64 %sz, 12",
@@ -435,20 +451,30 @@ header builtIns =
          "  store i32 %shape, ptr %shape_p",
          "  %user = getelementptr i8, ptr %raw, i64 12",
          "  ret ptr %user",
-         "}",
-         "",
-         "define internal void @__free(ptr %p) {",
-         "  %hdr_ptr = getelementptr i8, ptr %p, i64 -12",
-         "  %flag = load i32, ptr %hdr_ptr",
-         "  %is_heap = icmp eq i32 %flag, 1",
-         "  br i1 %is_heap, label %do_free, label %skip",
-         "do_free:",
-         "  call void @free(ptr %hdr_ptr)",
-         "  br label %skip",
-         "skip:",
-         "  ret void",
-         "}",
-         "",
+         "}"
+       ]
+    -- '@__free' is the per-block libc-'free' wrapper. Its only caller is
+    -- 'rtGetArgs' (releasing the 16-byte Either box per decoded argv
+    -- element); '__free_recursive''s cascade ends in libc 'free' directly,
+    -- not here. Gated on 'internalGetArgs'.
+    <> ( if Set.member "internalGetArgs" builtIns
+           then
+             [ "",
+               "define internal void @__free(ptr %p) {",
+               "  %hdr_ptr = getelementptr i8, ptr %p, i64 -12",
+               "  %flag = load i32, ptr %hdr_ptr",
+               "  %is_heap = icmp eq i32 %flag, 1",
+               "  br i1 %is_heap, label %do_free, label %skip",
+               "do_free:",
+               "  call void @free(ptr %hdr_ptr)",
+               "  br label %skip",
+               "skip:",
+               "  ret void",
+               "}"
+             ]
+           else []
+       )
+    <> [ "",
          -- '@__inc_ref' increments the refcount of the cell
          -- at @user_ptr@. Literals (flag == 0) are unaffected — their
          -- refcount field stays at 0 and they never get freed.
@@ -2378,39 +2404,47 @@ runtime ptags builtIns =
 --   supplementary code points to @?@; the Windows entry replaces it with
 --   a UTF-16-clean path that pulls the command line from shell32 and
 --   converts to UTF-8 before handing off to @v_main@.
-footer :: LLVMHost -> Text
-footer = \case
-  LLVMPosix -> footerPosix
-  LLVMWindows -> footerWindows
+footer :: LLVMHost -> Set Name -> Text
+footer host builtIns = case host of
+  LLVMPosix -> footerPosix builtIns
+  LLVMWindows -> footerWindows builtIns
 
-footerPosix :: Text
-footerPosix =
+footerPosix :: Set Name -> Text
+footerPosix builtIns =
   unlines
-    [ "",
-      "define i32 @main(i32 %argc, ptr %argv) {",
-      -- Cache @argc@/@argv@ for 'BuiltIn.internalGetArgs' (called from
-      -- 'runIO''s 'IOGetArgs' arm). 'main' itself takes no arguments
-      -- (its signature is 'IO Never Unit'); user code that wants the
-      -- argv reads it through 'IO.Args.getArgs', which lowers to the
-      -- 'IOGetArgs' constructor and goes through '__getArgs' (which
-      -- walks the cached array) when 'runIO' walks the IO tree. POSIX
-      -- @argv@ is already an array of NUL-terminated UTF-8 C-strings, so
-      -- no conversion is needed; argv is invariant for the lifetime of
-      -- the process, so one store at entry is enough.
-      "  %argc64 = sext i32 %argc to i64",
-      "  store i64 %argc64, ptr @.cli_argc",
-      "  store ptr %argv, ptr @.cli_argv",
-      -- v_main is a zero-arg value (CValDef) that builds the IO tree;
-      -- `runIO` walks it to execute the effects. `runIO` is a regular
-      -- Awsum function emitted via the standard CFunDef path, so it
-      -- goes through TCO and ends up as a bounded-stack loop. The IO
-      -- value itself is a heap-allocated ptr-tagged ADT cell, same
-      -- shape as user ADTs.
-      "  %io = call ptr @v_main()",
-      "  call ptr @v_runIO(ptr %io)",
-      "  ret i32 0",
-      "}"
-    ]
+    $ [ "",
+        "define i32 @main(i32 %argc, ptr %argv) {"
+      ]
+    -- Cache @argc@/@argv@ for 'BuiltIn.internalGetArgs' (called from
+    -- 'runIO''s 'IOGetArgs' arm). 'main' itself takes no arguments (its
+    -- signature is 'IO Never Unit'); user code that wants the argv reads
+    -- it through 'IO.Args.getArgs', which lowers to the 'IOGetArgs'
+    -- constructor and goes through '__getArgs' (which walks the cached
+    -- array) when 'runIO' walks the IO tree. POSIX @argv@ is already an
+    -- array of NUL-terminated UTF-8 C-strings, so no conversion is needed;
+    -- argv is invariant for the lifetime of the process, so one store at
+    -- entry is enough. Gated on 'internalGetArgs' — when the program never
+    -- reads argv, the '@.cli_*' globals aren't declared and the stores
+    -- would dangle.
+    <> ( if Set.member "internalGetArgs" builtIns
+           then
+             [ "  %argc64 = sext i32 %argc to i64",
+               "  store i64 %argc64, ptr @.cli_argc",
+               "  store ptr %argv, ptr @.cli_argv"
+             ]
+           else []
+       )
+    <> [ -- v_main is a zero-arg value (CValDef) that builds the IO tree;
+         -- `runIO` walks it to execute the effects. `runIO` is a regular
+         -- Awsum function emitted via the standard CFunDef path, so it
+         -- goes through TCO and ends up as a bounded-stack loop. The IO
+         -- value itself is a heap-allocated ptr-tagged ADT cell, same
+         -- shape as user ADTs.
+         "  %io = call ptr @v_main()",
+         "  call ptr @v_runIO(ptr %io)",
+         "  ret i32 0",
+         "}"
+       ]
 
 -- | Windows entry: ignore the POSIX-shape @argc@/@argv@ that MSVCRT
 --   hands us (those are ANSI-code-page-mangled), and re-fetch the
@@ -2441,73 +2475,97 @@ footerPosix =
 --   Returns the previous mode; we discard it. Idempotent on backends
 --   whose CRT already opens stdio in binary mode (e.g. some mingw-w64
 --   link configurations).
-footerWindows :: Text
-footerWindows =
+footerWindows :: Set Name -> Text
+footerWindows builtIns =
   unlines
-    [ "",
-      "declare i32 @_setmode(i32, i32)",
-      "declare ptr @GetCommandLineW()",
-      "declare ptr @CommandLineToArgvW(ptr, ptr)",
-      "declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)",
-      "",
-      "define i32 @main(i32 %argc_posix, ptr %argv_posix) {",
-      "entry:",
-      "  call i32 @_setmode(i32 1, i32 32768)",
-      "  call i32 @_setmode(i32 0, i32 32768)",
-      "  %cmdline = call ptr @GetCommandLineW()",
-      "  %argc_slot = alloca i32",
-      "  %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)",
-      "  %argc_w = load i32, ptr %argc_slot",
-      "  %argc_w64 = sext i32 %argc_w to i64",
-      "  store i64 %argc_w64, ptr @.cli_argc",
-      -- Allocate a UTF-8 ptr array of length @argc_w@ (8 bytes/slot) and
-      -- publish it as '@.cli_argv'. Index 0 (the program name) is left
-      -- as the empty-string pointer — '__getArgs' never reads it — and
-      -- indices 1.. are filled with per-arg UTF-8 conversions below.
-      "  %arr_bytes = mul i64 %argc_w64, 8",
-      "  %u8arr = call ptr @__alloc(i64 %arr_bytes, i32 0)",
-      "  store ptr %u8arr, ptr @.cli_argv",
-      "  store ptr " <> emptyStringUserPtr <> ", ptr %u8arr",
-      "  %ci.slot = alloca i64",
-      "  store i64 1, ptr %ci.slot",
-      "  br label %conv_loop",
-      "conv_loop:",
-      "  %ci = load i64, ptr %ci.slot",
-      "  %conv_done = icmp sge i64 %ci, %argc_w64",
-      "  br i1 %conv_done, label %call_main, label %conv_body",
-      "conv_body:",
-      "  %argw_slot = getelementptr ptr, ptr %argv_w, i64 %ci",
-      "  %argw = load ptr, ptr %argw_slot",
-      -- First call queries required UTF-8 byte count (incl. terminating NUL,
-      -- because cchWideChar = -1 means "process the null-terminator too").
-      -- 65001 = CP_UTF8.
-      "  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr null, i32 0, ptr null, ptr null)",
-      "  %need_ok = icmp sgt i32 %needed, 0",
-      "  br i1 %need_ok, label %conv_do, label %conv_empty",
-      "conv_do:",
-      "  %needed64 = sext i32 %needed to i64",
-      "  %buf = call ptr @__alloc(i64 %needed64, i32 0)",
-      "  call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)",
-      "  %dst_slot = getelementptr ptr, ptr %u8arr, i64 %ci",
-      "  store ptr %buf, ptr %dst_slot",
-      "  %ci.next = add i64 %ci, 1",
-      "  store i64 %ci.next, ptr %ci.slot",
-      "  br label %conv_loop",
-      "conv_empty:",
-      -- Conversion reported 0 bytes (degenerate; keeps the array fully
-      -- initialised so '__getArgs'/'strlen' stay well-defined).
-      "  %dst_slot_e = getelementptr ptr, ptr %u8arr, i64 %ci",
-      "  store ptr " <> emptyStringUserPtr <> ", ptr %dst_slot_e",
-      "  %ci.next_e = add i64 %ci, 1",
-      "  store i64 %ci.next_e, ptr %ci.slot",
-      "  br label %conv_loop",
-      "call_main:",
-      -- Same IO-tree handoff as the POSIX path; see footerPosix.
-      "  %io = call ptr @v_main()",
-      "  call ptr @v_runIO(ptr %io)",
-      "  ret i32 0",
-      "}"
-    ]
+    $ [ "",
+        "declare i32 @_setmode(i32, i32)"
+      ]
+    -- argv-construction imports: only needed when the program reads argv
+    -- (see the gated body below).
+    <> ( if usesArgs
+           then
+             [ "declare ptr @GetCommandLineW()",
+               "declare ptr @CommandLineToArgvW(ptr, ptr)",
+               "declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)"
+             ]
+           else []
+       )
+    <> [ "",
+         "define i32 @main(i32 %argc_posix, ptr %argv_posix) {",
+         "entry:",
+         "  call i32 @_setmode(i32 1, i32 32768)",
+         "  call i32 @_setmode(i32 0, i32 32768)"
+       ]
+    -- Re-fetch the command line and build a UTF-8 argv array for
+    -- 'BuiltIn.internalGetArgs'; gated so a Windows program that never
+    -- reads argv emits neither this block, the '@.cli_*' globals, nor
+    -- '@.empty'. '_setmode' (above) and the 'v_main'/'runIO' handoff
+    -- (below) stay unconditional.
+    <> ( if usesArgs
+           then
+             [ "  %cmdline = call ptr @GetCommandLineW()",
+               "  %argc_slot = alloca i32",
+               "  %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)",
+               "  %argc_w = load i32, ptr %argc_slot",
+               "  %argc_w64 = sext i32 %argc_w to i64",
+               "  store i64 %argc_w64, ptr @.cli_argc",
+               -- Allocate a UTF-8 ptr array of length @argc_w@ (8 bytes/slot) and
+               -- publish it as '@.cli_argv'. Index 0 (the program name) is left
+               -- as the empty-string pointer — '__getArgs' never reads it — and
+               -- indices 1.. are filled with per-arg UTF-8 conversions below.
+               "  %arr_bytes = mul i64 %argc_w64, 8",
+               "  %u8arr = call ptr @__alloc(i64 %arr_bytes, i32 0)",
+               "  store ptr %u8arr, ptr @.cli_argv",
+               "  store ptr " <> emptyStringUserPtr <> ", ptr %u8arr",
+               "  %ci.slot = alloca i64",
+               "  store i64 1, ptr %ci.slot",
+               "  br label %conv_loop",
+               "conv_loop:",
+               "  %ci = load i64, ptr %ci.slot",
+               "  %conv_done = icmp sge i64 %ci, %argc_w64",
+               "  br i1 %conv_done, label %call_main, label %conv_body",
+               "conv_body:",
+               "  %argw_slot = getelementptr ptr, ptr %argv_w, i64 %ci",
+               "  %argw = load ptr, ptr %argw_slot",
+               -- First call queries required UTF-8 byte count (incl. terminating NUL,
+               -- because cchWideChar = -1 means "process the null-terminator too").
+               -- 65001 = CP_UTF8.
+               "  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr null, i32 0, ptr null, ptr null)",
+               "  %need_ok = icmp sgt i32 %needed, 0",
+               "  br i1 %need_ok, label %conv_do, label %conv_empty",
+               "conv_do:",
+               "  %needed64 = sext i32 %needed to i64",
+               "  %buf = call ptr @__alloc(i64 %needed64, i32 0)",
+               "  call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)",
+               "  %dst_slot = getelementptr ptr, ptr %u8arr, i64 %ci",
+               "  store ptr %buf, ptr %dst_slot",
+               "  %ci.next = add i64 %ci, 1",
+               "  store i64 %ci.next, ptr %ci.slot",
+               "  br label %conv_loop",
+               "conv_empty:",
+               -- Conversion reported 0 bytes (degenerate; keeps the array fully
+               -- initialised so '__getArgs'/'strlen' stay well-defined).
+               "  %dst_slot_e = getelementptr ptr, ptr %u8arr, i64 %ci",
+               "  store ptr " <> emptyStringUserPtr <> ", ptr %dst_slot_e",
+               "  %ci.next_e = add i64 %ci, 1",
+               "  store i64 %ci.next_e, ptr %ci.slot",
+               "  br label %conv_loop",
+               "call_main:"
+             ]
+           else []
+       )
+    <> [ -- Same IO-tree handoff as the POSIX path; see footerPosix. With
+         -- argv this is the loop exit ('call_main:'); without it the block
+         -- above is absent and these instructions run straight off
+         -- 'entry:' (no 'call_main:' label is emitted).
+         "  %io = call ptr @v_main()",
+         "  call ptr @v_runIO(ptr %io)",
+         "  ret i32 0",
+         "}"
+       ]
+  where
+    usesArgs = Set.member "internalGetArgs" builtIns
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Declarations
