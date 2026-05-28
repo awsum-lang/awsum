@@ -1,0 +1,24 @@
+{- Direct test of `nothingAsLeft`: `Nothing` becomes `Left e`, `Just a`
+   becomes `Right a`. -}
+
+import IO.Stdout
+
+type Missing = Missing
+
+show : Either Missing String -> Either StringTooLong String
+show r = case r of
+  Left Missing -> Right "Left Missing"
+  Right s -> "Right " ++ s
+
+main : IO Never Unit
+main =
+  let fromNothing : Either Missing String = nothingAsLeft Missing Nothing
+      fromJust : Either Missing String = nothingAsLeft Missing (Just "hi")
+      msg : Either StringTooLong String = do
+        a <- show fromNothing
+        b <- show fromJust
+        sep <- a ++ "|"
+        sep ++ b
+   in case msg of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

@@ -1,0 +1,239 @@
+CoreProgram
+    { cdecls =
+        [ CFunDef "nothingAsLeft"
+            [ "e"
+            , "m"
+            ]
+            ( CCase
+                ( CVar "m" )
+                [
+                    ( 10
+                    , []
+                    , CCon 3
+                        [ CVar "e" ]
+                    )
+                ,
+                    ( 11
+                    , [ "a" ]
+                    , CDrop DropFreeUnchecked "a"
+                        ( CCon 4
+                            [ CVar "a" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "runIO" [ "io" ]
+            ( CLoop
+                ( CCase
+                    ( CVar "io" )
+                    [
+                        ( 5
+                        , [ "u" ]
+                        , CDrop DropFreeUnchecked "u"
+                            ( CVar "u" )
+                        )
+                    ,
+                        ( 7
+                        ,
+                            [ "s"
+                            , "next"
+                            ]
+                        , CDrop DropFreeUnchecked "s"
+                            ( CDrop DropFreeUnchecked "next"
+                                ( CCase
+                                    ( CCall
+                                        ( CBuiltIn "internalStdoutPrint" )
+                                        [ CVar "s" ]
+                                    )
+                                    [
+                                        ( 0
+                                        , []
+                                        , CDrop DropFreeUnchecked "io"
+                                            ( CContinue
+                                                [ CVar "next" ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        , CFunDef "show" [ "r" ]
+            ( CCase
+                ( CVar "r" )
+                [
+                    ( 3
+                    , [ "__p0" ]
+                    , CDrop DropFreeUnchecked "__p0"
+                        ( CCase
+                            ( CVar "__p0" )
+                            [
+                                ( 22
+                                , []
+                                , CCon 4
+                                    [ CString "Left Missing" ]
+                                )
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCall
+                            ( CBuiltIn "concatString" )
+                            [ CString "Right "
+                            , CVar "s"
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CValDef "main"
+            ( CCall
+                ( CVar "$let$15" )
+                [ CCall
+                    ( CVar "nothingAsLeft" )
+                    [ CCon 22 []
+                    , CCall
+                        ( CVar "$lift$14" )
+                        [ CCon 10 [] ]
+                    ]
+                ]
+            )
+        , CFunDef "$let$12" [ "msg" ]
+            ( CCase
+                ( CVar "msg" )
+                [
+                    ( 3
+                    , [ "__w0" ]
+                    , CDrop DropFreeUnchecked "__w0"
+                        ( CCon 7
+                            [ CString "STRING_TOO_LONG"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ,
+                    ( 4
+                    , [ "s" ]
+                    , CDrop DropFreeUnchecked "s"
+                        ( CCon 7
+                            [ CVar "s"
+                            , CCon 5
+                                [ CCon 0 [] ]
+                            ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$13"
+            [ "fromNothing"
+            , "fromJust"
+            ]
+            ( CCall
+                ( CVar "$let$12" )
+                [ CCase
+                    ( CCall
+                        ( CVar "show" )
+                        [ CVar "fromNothing" ]
+                    )
+                    [
+                        ( 3
+                        , [ "$do_e_2" ]
+                        , CDrop DropFreeUnchecked "$do_e_2"
+                            ( CCon 3
+                                [ CVar "$do_e_2" ]
+                            )
+                        )
+                    ,
+                        ( 4
+                        , [ "a" ]
+                        , CDrop DropFreeUnchecked "a"
+                            ( CCase
+                                ( CCall
+                                    ( CVar "show" )
+                                    [ CVar "fromJust" ]
+                                )
+                                [
+                                    ( 3
+                                    , [ "$do_e_1" ]
+                                    , CDrop DropFreeUnchecked "$do_e_1"
+                                        ( CCon 3
+                                            [ CVar "$do_e_1" ]
+                                        )
+                                    )
+                                ,
+                                    ( 4
+                                    , [ "b" ]
+                                    , CDrop DropFreeUnchecked "b"
+                                        ( CCase
+                                            ( CCall
+                                                ( CBuiltIn "concatString" )
+                                                [ CVar "a"
+                                                , CString "|"
+                                                ]
+                                            )
+                                            [
+                                                ( 3
+                                                , [ "$do_e_0" ]
+                                                , CDrop DropFreeUnchecked "$do_e_0"
+                                                    ( CCon 3
+                                                        [ CVar "$do_e_0" ]
+                                                    )
+                                                )
+                                            ,
+                                                ( 4
+                                                , [ "sep" ]
+                                                , CDrop DropFreeUnchecked "sep"
+                                                    ( CCall
+                                                        ( CBuiltIn "concatString" )
+                                                        [ CVar "sep"
+                                                        , CVar "b"
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                ]
+            )
+        , CFunDef "$lift$14" [ "__input" ]
+            ( CCase
+                ( CVar "__input" )
+                [
+                    ( 10
+                    , []
+                    , CCon 10 []
+                    )
+                ,
+                    ( 11
+                    , [ "__f0" ]
+                    , CDrop DropFreeUnchecked "__f0"
+                        ( CCon 11
+                            [ CVar "__f0" ]
+                        )
+                    )
+                ]
+            )
+        , CFunDef "$let$15" [ "fromNothing" ]
+            ( CCall
+                ( CVar "$let$13" )
+                [ CVar "fromNothing"
+                , CCall
+                    ( CVar "nothingAsLeft" )
+                    [ CCon 22 []
+                    , CCon 11
+                        [ CString "hi" ]
+                    ]
+                ]
+            )
+        ]
+    }

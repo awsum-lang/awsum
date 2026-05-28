@@ -1,0 +1,26 @@
+{- Direct test of `headList`: Nothing on the noElems list, Just (first
+   element) on every non-noElems list (single-element and longer). -}
+
+import IO.Stdout
+
+show : Maybe String -> Either StringTooLong String
+show m = case m of
+  Nothing -> Right "Nothing"
+  Just s -> "Just " ++ s
+
+main : IO Never Unit
+main =
+  let noElems : Maybe String = headList Nil
+      single : Maybe String = headList (Cons "a" Nil)
+      multi : Maybe String = headList (Cons "a" (Cons "b" (Cons "c" Nil)))
+      msg : Either StringTooLong String = do
+        a <- show noElems
+        b <- show single
+        c <- show multi
+        s0 <- a ++ "|"
+        s1 <- s0 ++ b
+        s2 <- s1 ++ "|"
+        s2 ++ c
+   in case msg of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s

@@ -1,0 +1,36 @@
+{- Direct test of `tailList`: Nothing on the noElems list, Just Nil on
+   a single-element list, Just (rest) on a longer list. -}
+
+import IO.Stdout
+
+showList : List String -> Either StringTooLong String
+showList xs = case xs of
+  Nil -> Right "Nil"
+  Cons h t -> do
+    rest <- showList t
+    hc <- h ++ ","
+    hc ++ rest
+
+show : Maybe (List String) -> Either StringTooLong String
+show m = case m of
+  Nothing -> Right "Nothing"
+  Just xs -> do
+    rendered <- showList xs
+    "Just " ++ rendered
+
+main : IO Never Unit
+main =
+  let noElems : Maybe (List String) = tailList Nil
+      single : Maybe (List String) = tailList (Cons "a" Nil)
+      multi : Maybe (List String) = tailList (Cons "a" (Cons "b" (Cons "c" Nil)))
+      msg : Either StringTooLong String = do
+        a <- show noElems
+        b <- show single
+        c <- show multi
+        s0 <- a ++ "|"
+        s1 <- s0 ++ b
+        s2 <- s1 ++ "|"
+        s2 ++ c
+   in case msg of
+        Left _ -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s
