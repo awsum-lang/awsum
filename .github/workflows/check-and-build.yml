@@ -180,12 +180,12 @@ jobs:
       # Pin Java to 11 — the documented JVM target floor (see
       # docs/platform-version-policy.md). The assembler emits class
       # version 55.0 (Java 11); JDK 11 understands it natively, and on
-      # any JDK ≥ 11 the same .class loads. Zulu distribution kept for
-      # consistency across the four runners.
+      # any JDK ≥ 11 the same .class loads. Temurin (Eclipse Adoptium)
+      # distribution kept for consistency across the four runners.
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          distribution: "zulu"
+          distribution: "temurin"
           java-version: "11"
 
       - name: Set up .NET
