@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "t" )
                 [
-                    ( 20
+                    ( 22
                     ,
                         [ "a"
                         , "b"
@@ -68,7 +68,7 @@ CoreProgram
                 ( CVar "$let$12" )
                 [ CCall
                     ( CVar "showTriple" )
-                    [ CCon 20
+                    [ CCon 22
                         [ CString "one"
                         , CString "two"
                         , CString "three"

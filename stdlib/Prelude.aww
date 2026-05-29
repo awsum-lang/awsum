@@ -172,6 +172,15 @@ mapLeft x f = case x of
   Left e -> Left (f e)
   Right a -> Right a
 
+{- Convert a `Maybe a` to an `Either e a`, supplying the error to use
+   on `Nothing`. `Just a` becomes `Right a`; `Nothing` becomes
+   `Left e`. Lets `Maybe`-returning helpers (`headList`, `tailList`,
+   `splitOnFirst`) chain inside a `do`-block on `Either`. -}
+nothingAsLeft : e -> Maybe a -> Either e a
+nothingAsLeft e m = case m of
+  Nothing -> Left e
+  Just a -> Right a
+
 -- ---------------------- IO
 
 {- A description of an effect that the runtime may execute. An
@@ -196,7 +205,7 @@ type IO e a
   = IOPure a
   | IOFail e
   | IOStdoutPrint String (IO e a)
-  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e a)
   | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 
 {- Lift a pure value into IO. -}
@@ -223,7 +232,7 @@ bindIO io k = case io of
 
 {- Internal helper for `bindIO`'s `IOGetArgs` arm; top-level so the
    typechecker pins `cont`'s type via the signature. -}
-bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO (e1 | e2) b
+bindIOAfterArgs : (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e1 a) -> (a -> IO e2 b) -> Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO (e1 | e2) b
 bindIOAfterArgs cont k result = bindIO (cont result) k
 
 {- Internal helper for `bindIO`'s `IOStdinReadAll` arm; top-level so the
@@ -295,6 +304,31 @@ runIO io = case io of
    being an error (e.g. a lookup). When the /reason/ for no value
    matters, reach for `Either` instead. -}
 type Maybe a = Nothing | Just a
+
+-- ---------------------- List
+
+{- Singly-linked list: either empty (`Nil`) or a head `a` followed by a
+   `List a` tail. The minimum needed to represent a sequence of values
+   without committing to a literal syntax or a particular set of
+   helpers — operate on it with ordinary recursion (the compiler lowers
+   self- and mutually-recursive walks to stack-safe loops on every
+   backend).
+
+   No `[1, 2, 3]` syntax and no `(::)` infix constructor exist today:
+   build values with explicit `Cons h t` and `Nil`. -}
+type List a = Nil | Cons a (List a)
+
+{- First element, or `Nothing` for the empty list. -}
+headList : List a -> Maybe a
+headList xs = case xs of
+  Nil -> Nothing
+  Cons h _t -> Just h
+
+{- All elements except the first, or `Nothing` for the empty list. -}
+tailList : List a -> Maybe (List a)
+tailList xs = case xs of
+  Nil -> Nothing
+  Cons _h t -> Just t
 
 -- ---------------------- Tuple2
 

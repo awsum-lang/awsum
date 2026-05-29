@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 20
+                    ( 22
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
@@ -62,7 +62,7 @@ CoreProgram
                 ]
             )
         , CFunDef "$con$Box" [ "$x0" ]
-            ( CCon 20
+            ( CCon 22
                 [ CVar "$x0" ]
             )
         , CFunDef "$df$wrap$0" [ "x" ]

@@ -1758,7 +1758,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.s 5
@@ -1791,7 +1791,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 17
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.s 5
@@ -1823,13 +1823,78 @@
 
   .method private hidebysig static object __getArgs() cil managed
   {
-    .maxstack 1
-    ldstr "awsum.argv0"
-    call string [System.Runtime]System.Environment::GetEnvironmentVariable(string)
+    .maxstack 5
+    .locals init (string[] argv, int32 i, object[] list, object[] validated)
+    call string[] [System.Runtime]System.Environment::GetCommandLineArgs()
+    stloc.0
+    ldc.i4.1
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 12
+    box [System.Runtime]System.Int32
+    stelem.ref
+    stloc.2
+    ldloc.0
+    ldlen
+    conv.i4
+    stloc.1
+  IL_args_loop:
+    ldloc.1
+    ldc.i4.1
+    ble IL_args_done
+    ldloc.1
+    ldc.i4.1
+    sub
+    stloc.1
+    ldloc.0
+    ldloc.1
+    ldelem.ref
     call object AwsumMain::__entryArgEither(object)
+    castclass object[]
+    stloc.3
+    ldloc.3
+    ldc.i4.0
+    ldelem.ref
+    unbox.any [System.Runtime]System.Int32
+    ldc.i4 4
+    bne.un IL_args_left
+    ldc.i4.3
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4 13
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.3
+    ldc.i4.1
+    ldelem.ref
+    stelem.ref
+    dup
+    ldc.i4.2
+    ldloc.2
+    stelem.ref
+    stloc.2
+    br IL_args_loop
+  IL_args_left:
+    ldloc.3
+    ret
+  IL_args_done:
+    ldc.i4.2
+    newarr [System.Runtime]System.Object
+    dup
+    ldc.i4.0
+    ldc.i4.4
+    box [System.Runtime]System.Int32
+    stelem.ref
+    dup
+    ldc.i4.1
+    ldloc.2
+    stelem.ref
     ret
   }
-
   .method private hidebysig static object __stdinReadAll() cil managed
   {
     .maxstack 3
@@ -1844,26 +1909,8 @@
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
-    .locals init (object input)
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
     call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
-    ldarg.0
-    ldlen
-    conv.i4
-    ldc.i4.1
-    bge.s has_arg
-    ldstr ""
-    br.s call_main
-  has_arg:
-    ldarg.0
-    ldc.i4.0
-    ldelem.ref
-  call_main:
-    stloc.0
-    ldstr "awsum.argv0"
-    ldloc.0
-    castclass string
-    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)
     call object AwsumMain::v_main()
     call object AwsumMain::v_runIO(object)
     pop

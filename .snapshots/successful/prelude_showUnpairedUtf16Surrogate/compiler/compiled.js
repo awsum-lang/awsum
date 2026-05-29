@@ -35,7 +35,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const main = [7, (v_showUnpairedUtf16Surrogate)([17]), [5, [0]]];
+const main = [7, (v_showUnpairedUtf16Surrogate)([19]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

@@ -3,6 +3,7 @@
 .bytecode 55.0
 .class public AwsumMain
 .super java/lang/Object
+.field private static __argv [Ljava/lang/String;
 
 .method <init>()V
   aload_0
@@ -142,8 +143,6 @@ L_tco_arm_0:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_arm_20
-    21: L_arm_21
     22: L_arm_22
     23: L_arm_23
     24: L_arm_24
@@ -442,27 +441,9 @@ L_tco_arm_0:
     317: L_arm_317
     318: L_arm_318
     319: L_arm_319
-    default: L_arm_20
-L_arm_20:
-  pop
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  goto L_join
-L_arm_21:
-  pop
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  iconst_1
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  goto L_join
+    320: L_arm_320
+    321: L_arm_321
+    default: L_arm_22
 L_arm_22:
   pop
   iconst_1
@@ -3443,28 +3424,32 @@ L_arm_319:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   goto L_join
+L_arm_320:
+  pop
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  goto L_join
+L_arm_321:
+  pop
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  iconst_1
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  goto L_join
 L_join:
   areturn
 .end method
 
 
 .method static v_res()Ljava/lang/Object;
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 20
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  invokestatic AwsumMain/v_un(Ljava/lang/Object;)Ljava/lang/Object;
-  iconst_1
-  anewarray java/lang/Object
-  dup
-  iconst_0
-  bipush 21
-  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
-  aastore
-  invokestatic AwsumMain/v_un(Ljava/lang/Object;)Ljava/lang/Object;
   iconst_1
   anewarray java/lang/Object
   dup
@@ -5849,6 +5834,22 @@ L_join:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   invokestatic AwsumMain/v_un(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  sipush 320
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  invokestatic AwsumMain/v_un(Ljava/lang/Object;)Ljava/lang/Object;
+  iconst_1
+  anewarray java/lang/Object
+  dup
+  iconst_0
+  sipush 321
+  invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
+  aastore
+  invokestatic AwsumMain/v_un(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -6200,21 +6201,7 @@ L_join:
   invokespecial java/io/PrintStream/<init>(Ljava/io/OutputStream;ZLjava/lang/String;)V
   invokestatic java/lang/System/setOut(Ljava/io/PrintStream;)V
   aload_0
-  arraylength
-  iconst_1
-  if_icmpge has_arg
-  ldc ""
-  goto call_main
-has_arg:
-  aload_0
-  iconst_0
-  aaload
-call_main:
-  checkcast java/lang/String
-  ldc "awsum.argv0"
-  swap
-  invokestatic java/lang/System/setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-  pop
+  putstatic AwsumMain/__argv [Ljava/lang/String;
   invokestatic AwsumMain/v_main()Ljava/lang/Object;
   invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop

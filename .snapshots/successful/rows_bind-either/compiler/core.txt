@@ -44,7 +44,7 @@ CoreProgram
             )
         , CFunDef "opB" [ "_n" ]
             ( CCon 3
-                [ CCon 21 [] ]
+                [ CCon 23 [] ]
             )
         , CFunDef "run" [ "x" ]
             ( CCase
@@ -92,7 +92,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 20
+                                            ( 22
                                             , []
                                             , CCon 4
                                                 [ CString "ErrA" ]
@@ -107,7 +107,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 21
+                                            ( 23
                                             , []
                                             , CCon 4
                                                 [ CString "ErrB" ]

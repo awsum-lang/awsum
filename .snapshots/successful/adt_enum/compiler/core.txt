@@ -42,17 +42,17 @@ CoreProgram
             ( CCase
                 ( CVar "c" )
                 [
-                    ( 20
+                    ( 22
                     , []
                     , CString "Red"
                     )
                 ,
-                    ( 21
+                    ( 23
                     , []
                     , CString "Green"
                     )
                 ,
-                    ( 22
+                    ( 24
                     , []
                     , CString "Blue"
                     )
@@ -66,7 +66,7 @@ CoreProgram
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "show" )
-                            [ CCon 20 [] ]
+                            [ CCon 22 [] ]
                         , CString ", "
                         ]
                     )
@@ -85,7 +85,7 @@ CoreProgram
                                 [ CVar "s0"
                                 , CCall
                                     ( CVar "show" )
-                                    [ CCon 21 [] ]
+                                    [ CCon 23 [] ]
                                 ]
                             )
                             [
@@ -118,7 +118,7 @@ CoreProgram
                                             [ CVar "s2"
                                             , CCall
                                                 ( CVar "show" )
-                                                [ CCon 22 [] ]
+                                                [ CCon 24 [] ]
                                             ]
                                         )
                                     ]

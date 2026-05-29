@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -126,7 +126,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 15
+    ldc.i4.s 17
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -147,7 +147,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.3
@@ -232,7 +232,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 12
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -254,7 +254,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 12
+    ldc.i4.s 14
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -278,8 +278,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_12)
-  IL_arm_12:
+    switch (IL_arm_14)
+  IL_arm_14:
     dup
     ldc.i4.1
     ldelem.ref
@@ -504,26 +504,8 @@
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
-    .locals init (object input)
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
     call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
-    ldarg.0
-    ldlen
-    conv.i4
-    ldc.i4.1
-    bge.s has_arg
-    ldstr ""
-    br.s call_main
-  has_arg:
-    ldarg.0
-    ldc.i4.0
-    ldelem.ref
-  call_main:
-    stloc.0
-    ldstr "awsum.argv0"
-    ldloc.0
-    castclass string
-    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)
     call object AwsumMain::v_main()
     call object AwsumMain::v_runIO(object)
     pop

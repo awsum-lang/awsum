@@ -3,6 +3,7 @@
 .bytecode 55.0
 .class public AwsumMain
 .super java/lang/Object
+.field private static __argv [Ljava/lang/String;
 
 .method <init>()V
   aload_0
@@ -38,7 +39,7 @@
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -162,7 +163,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 20
+  bipush 22
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -171,7 +172,7 @@ L_tco_arm_0:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 21
+  bipush 23
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   aastore
@@ -284,12 +285,12 @@ L_tco_loop:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    22: L_tco_arm_22
-    23: L_tco_arm_23
     24: L_tco_arm_24
     25: L_tco_arm_25
-    default: L_tco_arm_22
-L_tco_arm_22:
+    26: L_tco_arm_26
+    27: L_tco_arm_27
+    default: L_tco_arm_24
+L_tco_arm_24:
   dup
   iconst_1
   aaload
@@ -306,15 +307,15 @@ L_tco_arm_22:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    21: L_tco_arm_21
-    default: L_tco_arm_21
-L_tco_arm_21:
+    23: L_tco_arm_23
+    default: L_tco_arm_23
+L_tco_arm_23:
   pop
   iconst_2
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 23
+  bipush 25
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -329,7 +330,7 @@ L_tco_arm_21:
   astore_1
   astore_0
   goto L_tco_loop
-L_tco_arm_23:
+L_tco_arm_25:
   dup
   iconst_1
   aaload
@@ -339,7 +340,7 @@ L_tco_arm_23:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 25
+  bipush 27
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -350,7 +351,7 @@ L_tco_arm_23:
   astore_1
   astore_0
   goto L_tco_loop
-L_tco_arm_24:
+L_tco_arm_26:
   dup
   iconst_1
   aaload
@@ -434,9 +435,9 @@ L_tco_arm_4:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    20: L_tco_arm_20
-    default: L_tco_arm_20
-L_tco_arm_20:
+    22: L_tco_arm_22
+    default: L_tco_arm_22
+L_tco_arm_22:
   dup
   iconst_1
   aaload
@@ -446,7 +447,7 @@ L_tco_arm_20:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 22
+  bipush 24
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -467,7 +468,7 @@ L_tco_arm_20:
   astore_1
   astore_0
   goto L_tco_loop
-L_tco_arm_25:
+L_tco_arm_27:
   dup
   iconst_1
   aaload
@@ -548,7 +549,7 @@ L_tco_arm_4:
   checkcast [Ljava/lang/Object;
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -569,7 +570,7 @@ L_tco_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 24
+  bipush 26
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -592,21 +593,7 @@ L_tco_arm_4:
   invokespecial java/io/PrintStream/<init>(Ljava/io/OutputStream;ZLjava/lang/String;)V
   invokestatic java/lang/System/setOut(Ljava/io/PrintStream;)V
   aload_0
-  arraylength
-  iconst_1
-  if_icmpge has_arg
-  ldc ""
-  goto call_main
-has_arg:
-  aload_0
-  iconst_0
-  aaload
-call_main:
-  checkcast java/lang/String
-  ldc "awsum.argv0"
-  swap
-  invokestatic java/lang/System/setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-  pop
+  putstatic AwsumMain/__argv [Ljava/lang/String;
   invokestatic AwsumMain/v_main()Ljava/lang/Object;
   invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop

@@ -43,19 +43,19 @@ CoreProgram
                 ( CCase
                     ( CVar "x" )
                     [
-                        ( 20
-                        , []
-                        , CContinue
-                            [ CReuse "x" 21 [] ]
-                        )
-                    ,
-                        ( 21
-                        , []
-                        , CContinue
-                            [ CReuse "x" 22 [] ]
-                        )
-                    ,
                         ( 22
+                        , []
+                        , CContinue
+                            [ CReuse "x" 23 [] ]
+                        )
+                    ,
+                        ( 23
+                        , []
+                        , CContinue
+                            [ CReuse "x" 24 [] ]
+                        )
+                    ,
+                        ( 24
                         , []
                         , CString "Done!"
                         )
@@ -66,7 +66,7 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "advanceStep" )
-                    [ CCon 20 [] ]
+                    [ CCon 22 [] ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

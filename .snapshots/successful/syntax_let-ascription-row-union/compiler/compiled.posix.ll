@@ -3,15 +3,10 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -23,18 +18,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -356,8 +339,8 @@ case.arm.2252990199.11:
   %t14 = getelementptr ptr, ptr %t13, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %case.default.17 [ i64 20, label %case.arm.20.18 ]
-case.arm.20.18:
+  switch i64 %t16, label %case.default.17 [ i64 22, label %case.arm.22.18 ]
+case.arm.22.18:
   %t19 = call ptr @__alloc(i64 24, i32 2)
   %t20 = inttoptr i64 7 to ptr
   %t21 = getelementptr ptr, ptr %t19, i32 0
@@ -389,8 +372,8 @@ case.arm.2269767818.31:
   %t34 = getelementptr ptr, ptr %t33, i32 0
   %t35 = load ptr, ptr %t34
   %t36 = ptrtoint ptr %t35 to i64
-  switch i64 %t36, label %case.default.37 [ i64 21, label %case.arm.21.38 ]
-case.arm.21.38:
+  switch i64 %t36, label %case.default.37 [ i64 23, label %case.arm.23.38 ]
+case.arm.23.38:
   %t39 = call ptr @__alloc(i64 24, i32 2)
   %t40 = inttoptr i64 7 to ptr
   %t41 = getelementptr ptr, ptr %t39, i32 0
@@ -449,17 +432,6 @@ case.default.3:
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

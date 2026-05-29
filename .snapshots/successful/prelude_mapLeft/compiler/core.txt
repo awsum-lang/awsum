@@ -40,7 +40,7 @@ CoreProgram
             )
         , CValDef "bad"
             ( CCon 3
-                [ CCon 20 [] ]
+                [ CCon 22 [] ]
             )
         , CValDef "good"
             ( CCon 4
@@ -82,7 +82,7 @@ CoreProgram
                 ]
             )
         , CFunDef "$lam$13" [ "_a" ]
-            ( CCon 21 [] )
+            ( CCon 23 [] )
         , CFunDef "$let$14"
             [ "renamedBad"
             , "renamedGood"
@@ -98,7 +98,7 @@ CoreProgram
                             ( CCase
                                 ( CVar "__p0" )
                                 [
-                                    ( 21
+                                    ( 23
                                     , []
                                     , CCase
                                         ( CVar "renamedGood" )
@@ -109,7 +109,7 @@ CoreProgram
                                                 ( CCase
                                                     ( CVar "__p0" )
                                                     [
-                                                        ( 21
+                                                        ( 23
                                                         , []
                                                         , CCon 4
                                                             [ CString "bad-Left bad-Left" ]
@@ -147,7 +147,7 @@ CoreProgram
                 ]
             )
         , CFunDef "$lam$15" [ "_a" ]
-            ( CCon 21 [] )
+            ( CCon 23 [] )
         , CFunDef "$let$16" [ "renamedBad" ]
             ( CCall
                 ( CVar "$let$14" )

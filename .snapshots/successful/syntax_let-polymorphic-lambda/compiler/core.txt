@@ -42,7 +42,7 @@ CoreProgram
             ( CCase
                 ( CVar "t" )
                 [
-                    ( 20
+                    ( 22
                     , []
                     , CString "A"
                     )
@@ -67,7 +67,7 @@ CoreProgram
                     ( CVar "threeTypes" )
                     [ CIntLit 42 TInt32
                     , CString "hello"
-                    , CCon 20 []
+                    , CCon 22 []
                     ]
                 ]
             )

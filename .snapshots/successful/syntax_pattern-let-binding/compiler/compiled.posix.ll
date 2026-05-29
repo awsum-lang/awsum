@@ -3,16 +3,11 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 declare {i32, i1} @llvm.smul.with.overflow.i32(i32, i32)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -24,18 +19,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -160,7 +143,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -331,7 +314,7 @@ case.arm.3.6:
   %t8 = load ptr, ptr %t7
   call void @__inc_ref(ptr %t8)
   %t9 = call ptr @__alloc(i64 24, i32 2)
-  %t10 = inttoptr i64 12 to ptr
+  %t10 = inttoptr i64 14 to ptr
   %t11 = getelementptr ptr, ptr %t9, i32 0
   store ptr %t10, ptr %t11
   call void @__inc_ref(ptr %v_n)
@@ -349,7 +332,7 @@ case.arm.4.14:
   %t16 = load ptr, ptr %t15
   call void @__inc_ref(ptr %t16)
   %t17 = call ptr @__alloc(i64 24, i32 2)
-  %t18 = inttoptr i64 12 to ptr
+  %t18 = inttoptr i64 14 to ptr
   %t19 = getelementptr ptr, ptr %t17, i32 0
   store ptr %t18, ptr %t19
   call void @__inc_ref(ptr %v_n)
@@ -370,8 +353,8 @@ define internal ptr @v_show(ptr %v_pair) {
   %t0 = getelementptr ptr, ptr %v_pair, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
-  switch i64 %t2, label %case.default.3 [ i64 12, label %case.arm.12.4 ]
-case.arm.12.4:
+  switch i64 %t2, label %case.default.3 [ i64 14, label %case.arm.14.4 ]
+case.arm.14.4:
   %t5 = getelementptr ptr, ptr %v_pair, i32 1
   %t6 = load ptr, ptr %t5
   call void @__inc_ref(ptr %t6)
@@ -560,17 +543,6 @@ case.default.3:
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

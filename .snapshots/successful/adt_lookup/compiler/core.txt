@@ -42,13 +42,13 @@ CoreProgram
             ( CCase
                 ( CVar "x" )
                 [
-                    ( 20
+                    ( 22
                     , [ "value" ]
                     , CDrop DropFreeUnchecked "value"
                         ( CVar "value" )
                     )
                 ,
-                    ( 21
+                    ( 23
                     , []
                     , CString "not found"
                     )
@@ -62,7 +62,7 @@ CoreProgram
                         ( CBuiltIn "concatString" )
                         [ CCall
                             ( CVar "unwrap" )
-                            [ CCon 20
+                            [ CCon 22
                                 [ CString "hello" ]
                             ]
                         , CString ", "
@@ -84,7 +84,7 @@ CoreProgram
                                 ( CVar "unwrap" )
                                 [ CCall
                                     ( CVar "$lift$12" )
-                                    [ CCon 21 [] ]
+                                    [ CCon 23 [] ]
                                 ]
                             ]
                         )
@@ -95,17 +95,17 @@ CoreProgram
             ( CCase
                 ( CVar "__input" )
                 [
-                    ( 20
+                    ( 22
                     , [ "__f0" ]
                     , CDrop DropFreeUnchecked "__f0"
-                        ( CCon 20
+                        ( CCon 22
                             [ CVar "__f0" ]
                         )
                     )
                 ,
-                    ( 21
+                    ( 23
                     , []
-                    , CCon 21 []
+                    , CCon 23 []
                     )
                 ]
             )

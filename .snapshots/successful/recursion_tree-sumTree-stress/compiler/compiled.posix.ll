@@ -3,16 +3,11 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -24,18 +19,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -176,7 +159,7 @@ define internal ptr @__predInt32(ptr %p) {
   br i1 %is_min, label %overflow, label %ok
 overflow:
   %oe = call ptr @__alloc(i64 8, i32 0)
-  %oe_tag = inttoptr i64 14 to ptr
+  %oe_tag = inttoptr i64 16 to ptr
   store ptr %oe_tag, ptr %oe
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -223,7 +206,7 @@ define internal ptr @__addInt32(ptr %pa, ptr %pb) {
 err:
   %is_pos = icmp sge i32 %a, 0
   %row_tag_idx = select i1 %is_pos, i64 882564211, i64 3768445577
-  %inner_tag_idx = select i1 %is_pos, i64 15, i64 14
+  %inner_tag_idx = select i1 %is_pos, i64 17, i64 16
   %inner = call ptr @__alloc(i64 8, i32 0)
   %inner_tag = inttoptr i64 %inner_tag_idx to ptr
   store ptr %inner_tag, ptr %inner
@@ -366,7 +349,7 @@ tco.case.arm.4.31:
   %t33 = load ptr, ptr %t32
   call void @__inc_ref(ptr %t33)
   %t34 = call ptr @__alloc(i64 32, i32 3)
-  %t35 = inttoptr i64 21 to ptr
+  %t35 = inttoptr i64 23 to ptr
   %t36 = getelementptr ptr, ptr %t34, i32 0
   store ptr %t35, ptr %t36
   call void @__inc_ref(ptr %t6)
@@ -377,7 +360,7 @@ tco.case.arm.4.31:
   %t39 = getelementptr ptr, ptr %t34, i32 2
   store ptr %t38, ptr %t39
   %t40 = call ptr @__alloc(i64 8, i32 0)
-  %t41 = inttoptr i64 20 to ptr
+  %t41 = inttoptr i64 22 to ptr
   %t42 = getelementptr ptr, ptr %t40, i32 0
   store ptr %t41, ptr %t42
   %t43 = getelementptr ptr, ptr %t34, i32 3
@@ -435,7 +418,7 @@ define internal ptr @v_sumTree(ptr %v_t, ptr %v_acc) {
   call void @__inc_ref(ptr %v_t)
   call void @__inc_ref(ptr %v_acc)
   %t0 = call ptr @__alloc(i64 8, i32 0)
-  %t1 = inttoptr i64 22 to ptr
+  %t1 = inttoptr i64 24 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @v__cps_sumTree(ptr %v_t, ptr %v_acc, ptr %t0)
@@ -448,7 +431,7 @@ define internal ptr @v_main() {
   %t0 = call ptr @__alloc(i64 4, i32 0)
   store i32 100000, ptr %t0
   %t1 = call ptr @__alloc(i64 8, i32 0)
-  %t2 = inttoptr i64 20 to ptr
+  %t2 = inttoptr i64 22 to ptr
   %t3 = getelementptr ptr, ptr %t1, i32 0
   store ptr %t2, ptr %t3
   %t4 = call ptr @v_buildLeft(ptr %t0, ptr %t1)
@@ -530,8 +513,8 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 24, label %tco.case.arm.24.9 i64 25, label %tco.case.arm.25.30 ]
-tco.case.arm.24.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 26, label %tco.case.arm.26.9 i64 27, label %tco.case.arm.27.30 ]
+tco.case.arm.26.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   call void @__inc_ref(ptr %t11)
@@ -541,13 +524,13 @@ tco.case.arm.24.9:
   %t14 = getelementptr ptr, ptr %t11, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %tco.case.default.17 [ i64 22, label %tco.case.arm.22.18 i64 23, label %tco.case.arm.23.19 ]
-tco.case.arm.22.18:
+  switch i64 %t16, label %tco.case.default.17 [ i64 24, label %tco.case.arm.24.18 i64 25, label %tco.case.arm.25.19 ]
+tco.case.arm.24.18:
   call void @__free_recursive(ptr %t11)
   call void @__free_recursive(ptr %t4)
   store ptr %t13, ptr %t2
   br label %tco.exit.1
-tco.case.arm.23.19:
+tco.case.arm.25.19:
   %t20 = getelementptr ptr, ptr %t11, i32 1
   %t21 = load ptr, ptr %t20
   call void @__inc_ref(ptr %t21)
@@ -555,7 +538,7 @@ tco.case.arm.23.19:
   %t23 = load ptr, ptr %t22
   call void @__inc_ref(ptr %t23)
   %t24 = call ptr @__alloc(i64 32, i32 3)
-  %t25 = inttoptr i64 25 to ptr
+  %t25 = inttoptr i64 27 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
   call void @__inc_ref(ptr %t23)
@@ -576,7 +559,7 @@ tco.case.arm.23.19:
   br label %tco.loop.0
 tco.case.default.17:
   unreachable
-tco.case.arm.25.30:
+tco.case.arm.27.30:
   %t31 = getelementptr ptr, ptr %t4, i32 1
   %t32 = load ptr, ptr %t31
   call void @__inc_ref(ptr %t32)
@@ -589,10 +572,10 @@ tco.case.arm.25.30:
   %t37 = getelementptr ptr, ptr %t32, i32 0
   %t38 = load ptr, ptr %t37
   %t39 = ptrtoint ptr %t38 to i64
-  switch i64 %t39, label %tco.case.default.40 [ i64 20, label %tco.case.arm.20.41 i64 21, label %tco.case.arm.21.47 ]
-tco.case.arm.20.41:
+  switch i64 %t39, label %tco.case.default.40 [ i64 22, label %tco.case.arm.22.41 i64 23, label %tco.case.arm.23.47 ]
+tco.case.arm.22.41:
   %t42 = call ptr @__alloc(i64 24, i32 2)
-  %t43 = inttoptr i64 24 to ptr
+  %t43 = inttoptr i64 26 to ptr
   %t44 = getelementptr ptr, ptr %t42, i32 0
   store ptr %t43, ptr %t44
   call void @__inc_ref(ptr %t36)
@@ -607,7 +590,7 @@ tco.case.arm.20.41:
   call void @__free_recursive(ptr %t32)
   store ptr %t42, ptr %t3
   br label %tco.loop.0
-tco.case.arm.21.47:
+tco.case.arm.23.47:
   %t48 = getelementptr ptr, ptr %t32, i32 1
   %t49 = load ptr, ptr %t48
   call void @__inc_ref(ptr %t49)
@@ -621,7 +604,7 @@ tco.case.arm.21.47:
   call void @__inc_ref(ptr %t51)
   %t54 = call ptr @v_addOr0(ptr %t34, ptr %t51)
   %t55 = call ptr @__alloc(i64 24, i32 2)
-  %t56 = inttoptr i64 23 to ptr
+  %t56 = inttoptr i64 25 to ptr
   %t57 = getelementptr ptr, ptr %t55, i32 0
   store ptr %t56, ptr %t57
   call void @__inc_ref(ptr %t36)
@@ -644,7 +627,7 @@ reuse.in_place.63:
   %t70 = getelementptr ptr, ptr %t4, i32 3
   %t71 = load ptr, ptr %t70
   call void @__free_recursive(ptr %t71)
-  %t75 = inttoptr i64 25 to ptr
+  %t75 = inttoptr i64 27 to ptr
   %t76 = getelementptr ptr, ptr %t4, i32 0
   store ptr %t75, ptr %t76
   call void @__inc_ref(ptr %t49)
@@ -657,7 +640,7 @@ reuse.in_place.63:
   br label %reuse.join.65
 reuse.copy.64:
   %t77 = call ptr @__alloc(i64 32, i32 3)
-  %t78 = inttoptr i64 25 to ptr
+  %t78 = inttoptr i64 27 to ptr
   %t79 = getelementptr ptr, ptr %t77, i32 0
   store ptr %t78, ptr %t79
   call void @__inc_ref(ptr %t49)
@@ -690,7 +673,7 @@ tco.exit.1:
 
 define internal ptr @v__cps_sumTree(ptr %v_t, ptr %v_acc, ptr %v__k) {
   %t0 = call ptr @__alloc(i64 32, i32 3)
-  %t1 = inttoptr i64 25 to ptr
+  %t1 = inttoptr i64 27 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   call void @__inc_ref(ptr %v_t)
@@ -710,17 +693,6 @@ define internal ptr @v__cps_sumTree(ptr %v_t, ptr %v_acc, ptr %v__k) {
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

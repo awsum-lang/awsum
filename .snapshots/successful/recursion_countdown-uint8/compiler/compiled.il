@@ -50,7 +50,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 16
+    ldc.i4.s 18
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.0
@@ -97,7 +97,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 14
+    ldc.i4.s 16
     box [System.Runtime]System.Int32
     stelem.ref
     stloc.1
@@ -218,7 +218,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 17
+    ldc.i4.s 19
     box [System.Runtime]System.Int32
     stelem.ref
     call object AwsumMain::v__cps_countDown(object, object)
@@ -305,7 +305,7 @@
     newarr [System.Runtime]System.Object
     dup
     ldc.i4.0
-    ldc.i4.s 18
+    ldc.i4.s 20
     box [System.Runtime]System.Int32
     stelem.ref
     dup
@@ -335,12 +335,12 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_17, IL_tco_arm_18)
-  IL_tco_arm_17:
+    switch (IL_tco_arm_19, IL_tco_arm_20)
+  IL_tco_arm_19:
     pop
     ldarg.1
     ret
-  IL_tco_arm_18:
+  IL_tco_arm_20:
     dup
     ldc.i4.1
     ldelem.ref
@@ -489,8 +489,8 @@
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_16)
-  IL_arm_16:
+    switch (IL_arm_18)
+  IL_arm_18:
     pop
     ldc.i4.2
     newarr [System.Runtime]System.Object
@@ -636,26 +636,8 @@
   .method private hidebysig static void Main(string[]) cil managed
   {
     .entrypoint
-    .locals init (object input)
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
     call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
-    ldarg.0
-    ldlen
-    conv.i4
-    ldc.i4.1
-    bge.s has_arg
-    ldstr ""
-    br.s call_main
-  has_arg:
-    ldarg.0
-    ldc.i4.0
-    ldelem.ref
-  call_main:
-    stloc.0
-    ldstr "awsum.argv0"
-    ldloc.0
-    castclass string
-    call void [System.Runtime]System.Environment::SetEnvironmentVariable(string, string)
     call object AwsumMain::v_main()
     call object AwsumMain::v_runIO(object)
     pop

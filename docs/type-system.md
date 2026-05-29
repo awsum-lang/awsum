@@ -623,7 +623,7 @@ type IO e a
   = IOPure a
   | IOFail e
   | IOStdoutPrint String (IO e a)
-  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
+  | IOGetArgs (Either (StringTooLong | UnpairedUtf16Surrogate) (List String) -> IO e a)
   | IOStdinReadAll (Either (StringTooLong | UnpairedUtf16Surrogate) String -> IO e a)
 ```
 
@@ -639,16 +639,25 @@ main =
 
 The error row `e` works exactly like the error row of `Either`: each primitive declares its failure type explicitly. `main`'s required signature is `IO Never Unit`: any non-`Never` error row must be eliminated by the user before `main` returns it (handle the failure value, don't pretend it can't happen) — typically via `|> handleErrorIO h` at the tail of the chain.
 
-### Reading the command-line argument
+### Reading command-line arguments
 
-`IO.Args.getArgs : IO (StringTooLong | UnpairedUtf16Surrogate) String` is a CLI platform built-in (registered when `--program-type cli` and `import IO.Args` are both present). The IO chain reads the program's command-line argument from inside the chain rather than as a `main` parameter:
+`IO.Args.getArgs : IO (StringTooLong | UnpairedUtf16Surrogate) (List String)` is a CLI platform built-in (registered when `--program-type cli` and `import IO.Args` are both present). The IO chain reads every command-line argument as a prelude `List String` rather than as a `main` parameter. Error semantics is all-or-nothing — if any one element fails to decode, the whole call returns `Left`:
 
 ```awsum
 import IO.Stdout
 import IO.Args
 
-greet : String -> IO Never Unit
-greet name = IO.Stdout.print name
+type NoArg = NoArg
+
+greet : List String -> IO Never Unit
+greet args =
+  let res : Either (NoArg | StringTooLong) String = do
+        first <- nothingAsLeft NoArg (headList args)
+        "hi " ++ first
+   in case res of
+        Left (_n : NoArg) -> IO.Stdout.print "NO_ARG"
+        Left (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
+        Right s -> IO.Stdout.print s
 
 handleInputErr : (StringTooLong | UnpairedUtf16Surrogate) -> IO Never Unit
 handleInputErr e = case e of
@@ -662,7 +671,7 @@ main =
     |> handleErrorIO handleInputErr
 ```
 
-Both decoding failures (length cap and unpaired UTF-16 surrogate) live in the IO error row, so they compose with `handleErrorIO` like any other IO failure. There is no entry-point parameter to pattern-match against.
+`headList` and `nothingAsLeft` (both in the prelude) lift the typical "I want argument N" pattern out of the case-chain. The two decoding failures (length cap and unpaired UTF-16 surrogate) live in the IO error row, so they compose with `handleErrorIO` like any other IO failure. There is no entry-point parameter to pattern-match against.
 
 ### Reading stdin
 

@@ -44,7 +44,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 20
+                    ( 22
                     , [ "__w0" ]
                     , CDrop DropFreeUnchecked "__w0"
                         ( CString "unwrapped" )
@@ -55,7 +55,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 20
+                    ( 22
                     , [ "_v" ]
                     , CDrop DropFreeUnchecked "_v"
                         ( CString "unwrapped-named" )
@@ -66,7 +66,7 @@ CoreProgram
             ( CCase
                 ( CVar "p" )
                 [
-                    ( 21
+                    ( 23
                     ,
                         [ "__w0"
                         , "__w1"
@@ -105,7 +105,7 @@ CoreProgram
                                 [ CVar "s0"
                                 , CCall
                                     ( CVar "unwrapBox" )
-                                    [ CCon 20
+                                    [ CCon 22
                                         [ CString "a" ]
                                     ]
                                 ]
@@ -141,7 +141,7 @@ CoreProgram
                                                 [ CVar "s2"
                                                 , CCall
                                                     ( CVar "unwrapBoxNamed" )
-                                                    [ CCon 20
+                                                    [ CCon 22
                                                         [ CString "b" ]
                                                     ]
                                                 ]
@@ -176,7 +176,7 @@ CoreProgram
                                                             [ CVar "s4"
                                                             , CCall
                                                                 ( CVar "showPair" )
-                                                                [ CCon 21
+                                                                [ CCon 23
                                                                     [ CString "l"
                                                                     , CString "r"
                                                                     ]

@@ -3,15 +3,10 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -23,18 +18,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -223,7 +206,7 @@ define internal ptr @v_main() {
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   %t3 = call ptr @__alloc(i64 8, i32 0)
-  %t4 = inttoptr i64 21 to ptr
+  %t4 = inttoptr i64 23 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
   %t6 = call ptr @v_parseExpr(ptr %t3)
@@ -256,8 +239,8 @@ tco.loop.0:
   %t5 = getelementptr ptr, ptr %t4, i32 0
   %t6 = load ptr, ptr %t5
   %t7 = ptrtoint ptr %t6 to i64
-  switch i64 %t7, label %tco.case.default.8 [ i64 22, label %tco.case.arm.22.9 i64 23, label %tco.case.arm.23.28 ]
-tco.case.arm.22.9:
+  switch i64 %t7, label %tco.case.default.8 [ i64 24, label %tco.case.arm.24.9 i64 25, label %tco.case.arm.25.28 ]
+tco.case.arm.24.9:
   %t10 = getelementptr ptr, ptr %t4, i32 1
   %t11 = load ptr, ptr %t10
   call void @__inc_ref(ptr %t11)
@@ -267,8 +250,8 @@ tco.case.arm.22.9:
   %t14 = getelementptr ptr, ptr %t11, i32 0
   %t15 = load ptr, ptr %t14
   %t16 = ptrtoint ptr %t15 to i64
-  switch i64 %t16, label %tco.case.default.17 [ i64 20, label %tco.case.arm.20.18 i64 21, label %tco.case.arm.21.20 ]
-tco.case.arm.20.18:
+  switch i64 %t16, label %tco.case.default.17 [ i64 22, label %tco.case.arm.22.18 i64 23, label %tco.case.arm.23.20 ]
+tco.case.arm.22.18:
   %t19 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t19
   call void @__free_recursive(ptr %t13)
@@ -276,13 +259,13 @@ tco.case.arm.20.18:
   call void @__free_recursive(ptr %t4)
   store ptr %t19, ptr %t2
   br label %tco.exit.1
-tco.case.arm.21.20:
+tco.case.arm.23.20:
   %t21 = call ptr @__alloc(i64 16, i32 1)
-  %t22 = inttoptr i64 23 to ptr
+  %t22 = inttoptr i64 25 to ptr
   %t23 = getelementptr ptr, ptr %t21, i32 0
   store ptr %t22, ptr %t23
   %t24 = call ptr @__alloc(i64 8, i32 0)
-  %t25 = inttoptr i64 20 to ptr
+  %t25 = inttoptr i64 22 to ptr
   %t26 = getelementptr ptr, ptr %t24, i32 0
   store ptr %t25, ptr %t26
   %t27 = getelementptr ptr, ptr %t21, i32 1
@@ -294,24 +277,24 @@ tco.case.arm.21.20:
   br label %tco.loop.0
 tco.case.default.17:
   unreachable
-tco.case.arm.23.28:
+tco.case.arm.25.28:
   %t29 = getelementptr ptr, ptr %t4, i32 1
   %t30 = load ptr, ptr %t29
   call void @__inc_ref(ptr %t30)
   %t31 = getelementptr ptr, ptr %t30, i32 0
   %t32 = load ptr, ptr %t31
   %t33 = ptrtoint ptr %t32 to i64
-  switch i64 %t33, label %tco.case.default.34 [ i64 20, label %tco.case.arm.20.35 i64 21, label %tco.case.arm.21.37 ]
-tco.case.arm.20.35:
+  switch i64 %t33, label %tco.case.default.34 [ i64 22, label %tco.case.arm.22.35 i64 23, label %tco.case.arm.23.37 ]
+tco.case.arm.22.35:
   %t36 = call ptr @__alloc(i64 4, i32 0)
   store i32 0, ptr %t36
   call void @__free_recursive(ptr %t30)
   call void @__free_recursive(ptr %t4)
   store ptr %t36, ptr %t2
   br label %tco.exit.1
-tco.case.arm.21.37:
+tco.case.arm.23.37:
   %t38 = call ptr @__alloc(i64 24, i32 2)
-  %t39 = inttoptr i64 22 to ptr
+  %t39 = inttoptr i64 24 to ptr
   %t40 = getelementptr ptr, ptr %t38, i32 0
   store ptr %t39, ptr %t40
   call void @__inc_ref(ptr %t30)
@@ -336,7 +319,7 @@ tco.exit.1:
 
 define internal ptr @v_parseExpr(ptr %v_tok) {
   %t0 = call ptr @__alloc(i64 16, i32 1)
-  %t1 = inttoptr i64 23 to ptr
+  %t1 = inttoptr i64 25 to ptr
   %t2 = getelementptr ptr, ptr %t0, i32 0
   store ptr %t1, ptr %t2
   call void @__inc_ref(ptr %v_tok)
@@ -348,17 +331,6 @@ define internal ptr @v_parseExpr(ptr %v_tok) {
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

@@ -81,7 +81,7 @@ CoreProgram
             ( CCase
                 ( CVar "b" )
                 [
-                    ( 20
+                    ( 22
                     , [ "f" ]
                     , CDrop DropFreeUnchecked "f"
                         ( CCall
@@ -97,8 +97,8 @@ CoreProgram
             ( CCase
                 ( CCall
                     ( CVar "callBox" )
-                    [ CCon 20
-                        [ CCon 21 [] ]
+                    [ CCon 22
+                        [ CCon 23 [] ]
                     , CIntLit 7 TInt32
                     ]
                 )
@@ -114,8 +114,8 @@ CoreProgram
                     , CCase
                         ( CCall
                             ( CVar "callBox" )
-                            [ CCon 20
-                                [ CCon 22 [] ]
+                            [ CCon 22
+                                [ CCon 24 [] ]
                             , CIntLit 7 TInt32
                             ]
                         )
@@ -192,14 +192,14 @@ CoreProgram
             ( CCase
                 ( CVar "$cl" )
                 [
-                    ( 21
+                    ( 23
                     , []
                     , CCall
                         ( CVar "double" )
                         [ CVar "$arg0" ]
                     )
                 ,
-                    ( 22
+                    ( 24
                     , []
                     , CCall
                         ( CVar "triple" )

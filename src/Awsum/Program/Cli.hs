@@ -27,8 +27,10 @@ cliPlatformTable =
       ( QName ["IO", "Stdout"] "print",
         TyArrow noSpan stringTy ioNeverUnitTy
       ),
-      -- Read program command-line argument as an Awsum 'String'
-      -- (strict UTF-16). The error-row carries the two decoding
+      -- Read every program command-line argument as a prelude
+      -- 'List String' (each element strict UTF-16). All-or-nothing
+      -- error semantics: if any element fails to decode, the whole
+      -- call returns 'Left'. The error-row carries the two decoding
       -- failures the entry-point validator rejects: 'StringTooLong'
       -- (over 'maxStringLengthUtf16CodeUnits' = 2^27 UTF-16 code
       -- units) and 'UnpairedUtf16Surrogate' (any high surrogate
@@ -39,7 +41,7 @@ cliPlatformTable =
       -- and 'Right' to 'IOPure'; 'runIO' walks the cell and fires
       -- the cached argv read at that point.
       ( QName ["IO", "Args"] "getArgs",
-        ioInputDecodeStringTy
+        ioInputDecodeListStringTy
       ),
       -- Read stdin to EOF as an Awsum 'String' (strict UTF-16). Same
       -- error row as 'IO.Args.getArgs' — the two decoding failures the
@@ -71,12 +73,10 @@ cliPlatformTable =
         noSpan
         (TyApp noSpan (TyCon noSpan "IO") (TyEmpty noSpan "Never"))
         (TyCon noSpan "Unit")
-    -- 'IO (StringTooLong | UnpairedUtf16Surrogate) String' — the
-    -- shared result shape of every CLI input primitive that reads
-    -- platform-encoded text and may fail with either decoding error.
-    -- Used by 'IO.Args.getArgs' and 'IO.Stdin.readAll'; mirrors the
-    -- 'inputDecodeRowTy' in 'Awsum.BuiltIn' that types the matching
-    -- low-level 'internalGetArgs' / 'internalStdinReadAllAsUtf16'.
+    -- 'IO (StringTooLong | UnpairedUtf16Surrogate) String' — used by
+    -- 'IO.Stdin.readAll'. Mirrors the 'inputDecodeRowTy' in
+    -- 'Awsum.BuiltIn' that types the matching low-level
+    -- 'internalStdinReadAllAsUtf16'.
     ioInputDecodeStringTy =
       TyApp
         noSpan
@@ -86,3 +86,18 @@ cliPlatformTable =
             (TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy)
         )
         stringTy
+    -- 'IO (StringTooLong | UnpairedUtf16Surrogate) (List String)' —
+    -- used by 'IO.Args.getArgs'. Same error row as the singleton
+    -- variant above; the result is the prelude 'List String' carrying
+    -- every argv element. Mirrors the 'internalGetArgs' signature in
+    -- 'Awsum.BuiltIn'.
+    listStringTy = TyApp noSpan (TyCon noSpan "List") stringTy
+    ioInputDecodeListStringTy =
+      TyApp
+        noSpan
+        ( TyApp
+            noSpan
+            (TyCon noSpan "IO")
+            (TyOr noSpan stringTooLongTy unpairedUtf16SurrogateTy)
+        )
+        listStringTy

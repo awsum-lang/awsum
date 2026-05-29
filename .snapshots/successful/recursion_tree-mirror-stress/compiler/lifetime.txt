@@ -28,10 +28,10 @@ $scc$$apply$mirror_$cps$mirror:
   param           $args                           count=5
   case-pattern    $k                              count=0
   case-pattern    $x                              count=0
-  case-pattern    $pk_24                          count=0
+  case-pattern    $pk_26                          count=0
   case-pattern    $rcv_0                          count=0
   case-pattern    v                               count=0
-  case-pattern    $pk_23                          count=0
+  case-pattern    $pk_25                          count=0
   case-pattern    l                               count=0
   case-pattern    v                               count=0
   case-pattern    t                               count=0

@@ -26,7 +26,12 @@ handleInputErr e = case e of
   (_l : StringTooLong) -> IO.Stdout.print "STRING_TOO_LONG"
   (_u : UnpairedUtf16Surrogate) -> IO.Stdout.print "UNPAIRED_UTF16_SURROGATE"
 
+processArgs : List String -> IO Never Unit
+processArgs args = case headList args of
+  Nothing -> IO.Stdout.print "NO_ARG"
+  Just first -> processInput first
+
 main : IO Never Unit
 main = IO.Args.getArgs
-  |> andThenIO processInput
+  |> andThenIO processArgs
   |> handleErrorIO handleInputErr

@@ -6,7 +6,7 @@ const v_unwrap = (v_b) => {
     {
       const __s = v_b;
       switch (__s[0]) {
-        case 20: {
+        case 22: {
           const v_value = __s[1];
           return v_value;
         }
@@ -44,7 +44,7 @@ const v_runIO = (v_io) => {
 };
 
 const v__con_Box = (v__x0) => {
-    return [20, v__x0];
+    return [22, v__x0];
 };
 
 const v__df_wrap_0 = (v_x) => {

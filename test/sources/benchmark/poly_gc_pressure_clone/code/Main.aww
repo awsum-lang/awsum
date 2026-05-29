@@ -14,8 +14,6 @@ import IO.Stdout
 zero : Int32
 zero = 0
 
-type List a = Nil | Cons a (List a)
-
 repeat : Int32 -> Int32 -> List Int32
 repeat n value = case eqInt32 n zero of
   True -> Nil

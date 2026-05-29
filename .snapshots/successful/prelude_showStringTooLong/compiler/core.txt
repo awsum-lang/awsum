@@ -44,7 +44,7 @@ CoreProgram
             ( CCon 7
                 [ CCall
                     ( CVar "showStringTooLong" )
-                    [ CCon 16 [] ]
+                    [ CCon 18 [] ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]

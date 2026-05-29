@@ -166,7 +166,7 @@ CoreProgram
                                     ( CCase
                                         ( CVar "__rw" )
                                         [
-                                            ( 16
+                                            ( 18
                                             , []
                                             , CCon 4
                                                 [ CString "STRING_TOO_LONG" ]

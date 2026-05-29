@@ -1,7 +1,7 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 
 const v_runIO = (v_io) => {
   while (true) {
@@ -58,7 +58,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 20: {
+                    case 22: {
                       return [4, "ErrA"];
                     }
                   }
@@ -69,7 +69,7 @@ const v_describe = (v_r) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 21: {
+                    case 23: {
                       return [4, "ErrB"];
                     }
                   }

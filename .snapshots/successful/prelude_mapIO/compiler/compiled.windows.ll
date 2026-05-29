@@ -3,16 +3,13 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
-declare i32 @snprintf(ptr, i64, ptr, ...)
+declare i64 @strlen(ptr)
 declare i64 @read(i32, ptr, i64)
 
-@.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
 @.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
+@.cli_argc = internal global i64 0
+@.cli_argv = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -238,7 +235,7 @@ fits:
   ret ptr %right
 too_long:
   %tl_inner = call ptr @__alloc(i64 8, i32 0)
-  %tl_inner_tag = inttoptr i64 16 to ptr
+  %tl_inner_tag = inttoptr i64 18 to ptr
   store ptr %tl_inner_tag, ptr %tl_inner
   %tl_row = call ptr @__alloc(i64 16, i32 1)
   %tl_row_tag = inttoptr i64 589989748 to ptr
@@ -253,7 +250,7 @@ too_long:
   ret ptr %tl_left
 unpaired:
   %us_inner = call ptr @__alloc(i64 8, i32 0)
-  %us_inner_tag = inttoptr i64 17 to ptr
+  %us_inner_tag = inttoptr i64 19 to ptr
   store ptr %us_inner_tag, ptr %us_inner
   %us_row = call ptr @__alloc(i64 16, i32 1)
   %us_row_tag = inttoptr i64 502975519 to ptr
@@ -270,10 +267,55 @@ unpaired:
 
 
 define internal ptr @__getArgs() {
-  %arg = load ptr, ptr @.cli_arg
+  %argc = load i64, ptr @.cli_argc
+  %argv = load ptr, ptr @.cli_argv
+  %i.slot = alloca i64
+  %acc.slot = alloca ptr
+  %nilC = call ptr @__alloc(i64 8, i32 0)
+  %nilC_tag = inttoptr i64 12 to ptr
+  store ptr %nilC_tag, ptr %nilC
+  store ptr %nilC, ptr %acc.slot
+  store i64 %argc, ptr %i.slot
+  br label %getargs_loop
+getargs_loop:
+  %i = load i64, ptr %i.slot
+  %at_end = icmp sle i64 %i, 1
+  br i1 %at_end, label %getargs_done, label %getargs_body
+getargs_body:
+  %i.next = sub i64 %i, 1
+  store i64 %i.next, ptr %i.slot
+  %arg_slot = getelementptr ptr, ptr %argv, i64 %i.next
+  %arg = load ptr, ptr %arg_slot
   %len = call i64 @strlen(ptr %arg)
   %either = call ptr @__entryArgEither(ptr %arg, i64 %len)
+  %either_tag_ptr = load ptr, ptr %either
+  %either_tag = ptrtoint ptr %either_tag_ptr to i64
+  %is_left = icmp eq i64 %either_tag, 3
+  br i1 %is_left, label %getargs_left, label %getargs_cons
+getargs_cons:
+  %head_slot = getelementptr ptr, ptr %either, i32 1
+  %head = load ptr, ptr %head_slot
+  call void @__free(ptr %either)
+  %acc = load ptr, ptr %acc.slot
+  %consC = call ptr @__alloc(i64 24, i32 2)
+  %consC_tag = inttoptr i64 13 to ptr
+  store ptr %consC_tag, ptr %consC
+  %consC_head_slot = getelementptr ptr, ptr %consC, i32 1
+  store ptr %head, ptr %consC_head_slot
+  %consC_tail_slot = getelementptr ptr, ptr %consC, i32 2
+  store ptr %acc, ptr %consC_tail_slot
+  store ptr %consC, ptr %acc.slot
+  br label %getargs_loop
+getargs_left:
   ret ptr %either
+getargs_done:
+  %acc.final = load ptr, ptr %acc.slot
+  %rightC = call ptr @__alloc(i64 16, i32 1)
+  %rightC_tag = inttoptr i64 4 to ptr
+  store ptr %rightC_tag, ptr %rightC
+  %rightC_field = getelementptr ptr, ptr %rightC, i32 1
+  store ptr %acc.final, ptr %rightC_field
+  ret ptr %rightC
 }
 
 
@@ -1717,24 +1759,41 @@ entry:
   %argc_slot = alloca i32
   %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)
   %argc_w = load i32, ptr %argc_slot
-  %has_arg = icmp sgt i32 %argc_w, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %arg_w_slot = getelementptr ptr, ptr %argv_w, i64 1
-  %arg_w = load ptr, ptr %arg_w_slot
-  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr null, i32 0, ptr null, ptr null)
+  %argc_w64 = sext i32 %argc_w to i64
+  store i64 %argc_w64, ptr @.cli_argc
+  %arr_bytes = mul i64 %argc_w64, 8
+  %u8arr = call ptr @__alloc(i64 %arr_bytes, i32 0)
+  store ptr %u8arr, ptr @.cli_argv
+  store ptr getelementptr inbounds (i8, ptr @.empty, i64 12), ptr %u8arr
+  %ci.slot = alloca i64
+  store i64 1, ptr %ci.slot
+  br label %conv_loop
+conv_loop:
+  %ci = load i64, ptr %ci.slot
+  %conv_done = icmp sge i64 %ci, %argc_w64
+  br i1 %conv_done, label %call_main, label %conv_body
+conv_body:
+  %argw_slot = getelementptr ptr, ptr %argv_w, i64 %ci
+  %argw = load ptr, ptr %argw_slot
+  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr null, i32 0, ptr null, ptr null)
   %need_ok = icmp sgt i32 %needed, 0
-  br i1 %need_ok, label %do_convert, label %no_arg
-do_convert:
+  br i1 %need_ok, label %conv_do, label %conv_empty
+conv_do:
   %needed64 = sext i32 %needed to i64
   %buf = call ptr @__alloc(i64 %needed64, i32 0)
-  %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)
-  br label %call_main
-no_arg:
-  br label %call_main
+  call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %argw, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)
+  %dst_slot = getelementptr ptr, ptr %u8arr, i64 %ci
+  store ptr %buf, ptr %dst_slot
+  %ci.next = add i64 %ci, 1
+  store i64 %ci.next, ptr %ci.slot
+  br label %conv_loop
+conv_empty:
+  %dst_slot_e = getelementptr ptr, ptr %u8arr, i64 %ci
+  store ptr getelementptr inbounds (i8, ptr @.empty, i64 12), ptr %dst_slot_e
+  %ci.next_e = add i64 %ci, 1
+  store i64 %ci.next_e, ptr %ci.slot
+  br label %conv_loop
 call_main:
-  %input = phi ptr [%buf, %do_convert], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

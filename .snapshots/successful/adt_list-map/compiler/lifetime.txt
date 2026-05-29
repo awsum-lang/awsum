@@ -19,7 +19,7 @@ $cps$$lift$12:
 $apply$$lift$12:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_25                          count=0
+  case-pattern    $pk_17                          count=0
   case-pattern    __f0                            count=0
 
 $let$13:
@@ -39,7 +39,7 @@ $cps$$df$map$0:
 $apply$$df$map$0:
   param           $k                              count=2
   param           $x                              count=1
-  case-pattern    $pk_27                          count=0
+  case-pattern    $pk_19                          count=0
   case-pattern    head                            count=0
 
 $scc$show_showCons:
@@ -59,7 +59,7 @@ $cps$$scc$show_showCons:
 $apply$$scc$show_showCons:
   param           $k                              count=1
   param           $x                              count=4
-  case-pattern    $pk_29                          count=0
+  case-pattern    $pk_21                          count=0
   case-pattern    hStr                            count=0
   case-pattern    $do_e_1                         count=0
   case-pattern    rest                            count=0

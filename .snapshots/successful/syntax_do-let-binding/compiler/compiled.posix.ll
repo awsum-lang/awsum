@@ -3,17 +3,12 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
 declare i32 @snprintf(ptr, i64, ptr, ...)
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
 declare {i32, i1} @llvm.smul.with.overflow.i32(i32, i32)
 
 @.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -25,18 +20,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -161,7 +144,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -237,7 +220,7 @@ define internal ptr @__addInt32(ptr %pa, ptr %pb) {
 err:
   %is_pos = icmp sge i32 %a, 0
   %row_tag_idx = select i1 %is_pos, i64 882564211, i64 3768445577
-  %inner_tag_idx = select i1 %is_pos, i64 15, i64 14
+  %inner_tag_idx = select i1 %is_pos, i64 17, i64 16
   %inner = call ptr @__alloc(i64 8, i32 0)
   %inner_tag = inttoptr i64 %inner_tag_idx to ptr
   store ptr %inner_tag, ptr %inner
@@ -498,8 +481,8 @@ case.arm.589989748.4:
   %t7 = getelementptr ptr, ptr %t6, i32 0
   %t8 = load ptr, ptr %t7
   %t9 = ptrtoint ptr %t8 to i64
-  switch i64 %t9, label %case.default.10 [ i64 16, label %case.arm.16.11 ]
-case.arm.16.11:
+  switch i64 %t9, label %case.default.10 [ i64 18, label %case.arm.18.11 ]
+case.arm.18.11:
   %t12 = call ptr @__alloc(i64 16, i32 1)
   %t13 = inttoptr i64 4 to ptr
   %t14 = getelementptr ptr, ptr %t12, i32 0
@@ -682,17 +665,6 @@ case.default.4:
 }
 
 define i32 @main(i32 %argc, ptr %argv) {
-  %has_arg = icmp sgt i32 %argc, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %argptr = getelementptr ptr, ptr %argv, i64 1
-  %arg = load ptr, ptr %argptr
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%arg, %with_arg], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

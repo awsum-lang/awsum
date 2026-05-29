@@ -3,15 +3,8 @@ declare ptr @malloc(i64)
 declare ptr @realloc(ptr, i64)
 declare void @free(ptr)
 declare ptr @memcpy(ptr, ptr, i64)
-declare i64 @strlen(ptr)
 declare i64 @write(i32, ptr, i64)
-declare i32 @printf(ptr, ...)
-declare i32 @snprintf(ptr, i64, ptr, ...)
 
-@.fmt_i32 = private unnamed_addr constant [3 x i8] c"%d\00"
-@.fmt_u8 = private unnamed_addr constant [3 x i8] c"%u\00"
-@.empty = private unnamed_addr constant {i32, i32, i32, i32, i32} { i32 0, i32 0, i32 0, i32 0, i32 0 }
-@.cli_arg = internal global ptr null
 
 define internal ptr @__alloc(i64 %sz, i32 %shape) {
   %total = add i64 %sz, 12
@@ -23,18 +16,6 @@ define internal ptr @__alloc(i64 %sz, i32 %shape) {
   store i32 %shape, ptr %shape_p
   %user = getelementptr i8, ptr %raw, i64 12
   ret ptr %user
-}
-
-define internal void @__free(ptr %p) {
-  %hdr_ptr = getelementptr i8, ptr %p, i64 -12
-  %flag = load i32, ptr %hdr_ptr
-  %is_heap = icmp eq i32 %flag, 1
-  br i1 %is_heap, label %do_free, label %skip
-do_free:
-  call void @free(ptr %hdr_ptr)
-  br label %skip
-skip:
-  ret void
 }
 
 define internal void @__inc_ref(ptr %p) {
@@ -162,7 +143,7 @@ define internal ptr @__concat(ptr %a, ptr %b) {
   br i1 %over, label %too_long, label %ok
 too_long:
   %stl = call ptr @__alloc(i64 8, i32 0)
-  %stl_tag = inttoptr i64 16 to ptr
+  %stl_tag = inttoptr i64 18 to ptr
   store ptr %stl_tag, ptr %stl
   %left = call ptr @__alloc(i64 16, i32 1)
   %left_tag = inttoptr i64 3 to ptr
@@ -733,36 +714,11 @@ case.default.3:
 }
 
 declare i32 @_setmode(i32, i32)
-declare ptr @GetCommandLineW()
-declare ptr @CommandLineToArgvW(ptr, ptr)
-declare i32 @WideCharToMultiByte(i32, i32, ptr, i32, ptr, i32, ptr, ptr)
 
 define i32 @main(i32 %argc_posix, ptr %argv_posix) {
 entry:
   call i32 @_setmode(i32 1, i32 32768)
   call i32 @_setmode(i32 0, i32 32768)
-  %cmdline = call ptr @GetCommandLineW()
-  %argc_slot = alloca i32
-  %argv_w = call ptr @CommandLineToArgvW(ptr %cmdline, ptr %argc_slot)
-  %argc_w = load i32, ptr %argc_slot
-  %has_arg = icmp sgt i32 %argc_w, 1
-  br i1 %has_arg, label %with_arg, label %no_arg
-with_arg:
-  %arg_w_slot = getelementptr ptr, ptr %argv_w, i64 1
-  %arg_w = load ptr, ptr %arg_w_slot
-  %needed = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr null, i32 0, ptr null, ptr null)
-  %need_ok = icmp sgt i32 %needed, 0
-  br i1 %need_ok, label %do_convert, label %no_arg
-do_convert:
-  %needed64 = sext i32 %needed to i64
-  %buf = call ptr @__alloc(i64 %needed64, i32 0)
-  %written = call i32 @WideCharToMultiByte(i32 65001, i32 0, ptr %arg_w, i32 -1, ptr %buf, i32 %needed, ptr null, ptr null)
-  br label %call_main
-no_arg:
-  br label %call_main
-call_main:
-  %input = phi ptr [%buf, %do_convert], [getelementptr inbounds (i8, ptr @.empty, i64 12), %no_arg]
-  store ptr %input, ptr @.cli_arg
   %io = call ptr @v_main()
   call ptr @v_runIO(ptr %io)
   ret i32 0

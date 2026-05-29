@@ -1,0 +1,80 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+tailList:
+  param           xs                              count=1
+  case-pattern    _h                              count=0
+  case-pattern    t                               count=0
+
+showList:
+  param           xs                              count=1
+
+$cps$showList:
+  param           xs                              count=2
+  param           $k                              count=1
+  case-pattern    h                               count=0
+  case-pattern    t                               count=0
+
+$apply$showList:
+  param           $k                              count=1
+  param           $x                              count=4
+  case-pattern    $pk_15                          count=0
+  case-pattern    h                               count=0
+  case-pattern    $do_e_1                         count=0
+  case-pattern    rest                            count=0
+  case-pattern    $do_e_0                         count=0
+  case-pattern    hc                              count=0
+
+show:
+  param           m                               count=1
+  case-pattern    xs                              count=0
+  case-pattern    $do_e_2                         count=0
+  case-pattern    rendered                        count=0
+
+$let$12:
+  param           msg                             count=1
+  case-pattern    __w0                            count=0
+  case-pattern    s                               count=0
+
+$lift$13:
+  param           __input                         count=1
+
+$cps$$lift$13:
+  param           __input                         count=2
+  param           $k                              count=1
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+
+$apply$$lift$13:
+  param           $k                              count=2
+  param           $x                              count=1
+  case-pattern    $pk_17                          count=0
+  case-pattern    __f0                            count=0
+
+$let$14:
+  param           noElems                         count=1
+  param           single                          count=1
+  param           multi                           count=1
+  case-pattern    $do_e_8                         count=0
+  case-pattern    a                               count=0
+  case-pattern    $do_e_7                         count=0
+  case-pattern    b                               count=0
+  case-pattern    $do_e_6                         count=0
+  case-pattern    c                               count=0
+  case-pattern    $do_e_5                         count=0
+  case-pattern    s0                              count=0
+  case-pattern    $do_e_4                         count=0
+  case-pattern    s1                              count=0
+  case-pattern    $do_e_3                         count=0
+  case-pattern    s2                              count=0
+
+$let$15:
+  param           noElems                         count=1
+  param           single                          count=1
+
+$let$16:
+  param           noElems                         count=1
+

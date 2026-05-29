@@ -1,8 +1,6 @@
-{- Recursive ADT (List) with recursive show. -}
+{- Recursive `show` over the prelude's `List a`. -}
 
 import IO.Stdout
-
-type List a = Cons a (List a) | Nil
 
 show : List String -> Either StringTooLong String
 show xs = case xs of

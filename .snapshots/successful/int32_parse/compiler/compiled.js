@@ -1,8 +1,8 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
-function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [3, [18]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [3, [18]]; return [4, n | 0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
+function __parseInt32(s){ if (!/^-?[0-9]+$/.test(s)) return [3, [20]]; const n = Number(s); if (n < -2147483648 || n > 2147483647) return [3, [20]]; return [4, n | 0]; }
 
 const v_runIO = (v_io) => {
   while (true) {

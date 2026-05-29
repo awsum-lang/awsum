@@ -3,6 +3,7 @@
 .bytecode 55.0
 .class public AwsumMain
 .super java/lang/Object
+.field private static __argv [Ljava/lang/String;
 
 .method <init>()V
   aload_0
@@ -48,7 +49,7 @@ L_concat_too_long:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 16
+  bipush 18
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -114,7 +115,7 @@ L_muli32_split:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 15
+  bipush 17
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -135,7 +136,7 @@ L_muli32_under:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 14
+  bipush 16
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   astore_2
@@ -249,7 +250,7 @@ L_arm_3:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 12
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -271,7 +272,7 @@ L_arm_4:
   anewarray java/lang/Object
   dup
   iconst_0
-  bipush 12
+  bipush 14
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
   dup
@@ -296,9 +297,9 @@ L_join:
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
   lookupswitch
-    12: L_arm_12
-    default: L_arm_12
-L_arm_12:
+    14: L_arm_14
+    default: L_arm_14
+L_arm_14:
   dup
   iconst_1
   aaload
@@ -548,21 +549,7 @@ L_join:
   invokespecial java/io/PrintStream/<init>(Ljava/io/OutputStream;ZLjava/lang/String;)V
   invokestatic java/lang/System/setOut(Ljava/io/PrintStream;)V
   aload_0
-  arraylength
-  iconst_1
-  if_icmpge has_arg
-  ldc ""
-  goto call_main
-has_arg:
-  aload_0
-  iconst_0
-  aaload
-call_main:
-  checkcast java/lang/String
-  ldc "awsum.argv0"
-  swap
-  invokestatic java/lang/System/setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-  pop
+  putstatic AwsumMain/__argv [Ljava/lang/String;
   invokestatic AwsumMain/v_main()Ljava/lang/Object;
   invokestatic AwsumMain/v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
   pop

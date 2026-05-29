@@ -6,7 +6,7 @@ const v_unwrap = (v_r) => {
     {
       const __s = v_r;
       switch (__s[0]) {
-        case 21: {
+        case 23: {
           const v_value = __s[1];
           return v_value;
         }
@@ -43,7 +43,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const main = [7, (v_unwrap)([21, "hello"]), [5, [0]]];
+const main = [7, (v_unwrap)([23, "hello"]), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

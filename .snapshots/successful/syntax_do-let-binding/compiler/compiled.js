@@ -1,9 +1,9 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [15]]]; if (s < -2147483648) return [3, [3768445577, [14]]]; return [4, s|0]; }
-function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [3, [882564211, [15]]]; if (p < -2147483648) return [3, [3768445577, [14]]]; return [4, p|0]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __addInt32(a, b){ const s = a + b; if (s > 2147483647) return [3, [882564211, [17]]]; if (s < -2147483648) return [3, [3768445577, [16]]]; return [4, s|0]; }
+function __mulInt32(a, b){ const p = a * b; if (p > 2147483647) return [3, [882564211, [17]]]; if (p < -2147483648) return [3, [3768445577, [16]]]; return [4, p|0]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 
 const v_step2 = (v_n) => {
     {
@@ -75,7 +75,7 @@ const v_renderErr = (v_e) => {
           {
             const __s = v___rw;
             switch (__s[0]) {
-              case 16: {
+              case 18: {
                 return [4, "STRING_TOO_LONG"];
               }
             }

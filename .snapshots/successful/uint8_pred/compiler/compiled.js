@@ -1,8 +1,8 @@
 "use strict";
 (function () {
 function __print(s){ process.stdout.write(String(s)); return [0]; }
-function __predUInt8(x){ return x === 0 ? [3, [14]] : [4, ((x - 1) & 0xFF)]; }
-function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [16]] : [4, a + b]; }
+function __predUInt8(x){ return x === 0 ? [3, [16]] : [4, ((x - 1) & 0xFF)]; }
+function __concat(a, b){ return (a.length + b.length > 134217728) ? [3, [18]] : [4, a + b]; }
 
 const v_showUnderflowError = (v__wild0) => {
     return "UnderflowError";

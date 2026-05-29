@@ -1,8 +1,6 @@
-{- HOF over recursive ADT; case branches reconstruct the parametric type. -}
+{- HOF over the prelude's `List a`; case branches reconstruct the parametric type. -}
 
 import IO.Stdout
-
-type List a = Cons a (List a) | Nil
 
 map : (String -> Either StringTooLong String) -> List String -> List (Either StringTooLong String)
 map f list = case list of

@@ -28,7 +28,9 @@ import Relude
 assembleJVM :: PreludeTags -> CoreProgram -> BS.ByteString
 assembleJVM ptags prog =
   let (methods, finalSt) = runState (doAssemble prog) (emptyPool ptags)
-   in toStrict (B.toLazyByteString (buildClassFile finalSt methods))
+      argvFieldNameIdx = fromMaybe (error "assembleJVM: missing __argv name") (Map.lookup (KUtf8 "__argv") finalSt.cache)
+      argvFieldDescIdx = fromMaybe (error "assembleJVM: missing __argv descriptor") (Map.lookup (KUtf8 "[Ljava/lang/String;") finalSt.cache)
+   in toStrict (B.toLazyByteString (buildClassFile finalSt argvFieldNameIdx argvFieldDescIdx methods))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Constant pool types
@@ -345,6 +347,12 @@ doAssemble prog@(CoreProgram decls) = do
   void $ addClass "AwsumMain"
   void $ addClass "java/lang/Object"
   void $ addUtf8 "Code"
+  -- Static field '__argv : [Ljava/lang/String;' — set by 'mkMain' to
+  -- the 'args' array, read by 'mkGetArgs' to build a prelude 'List
+  -- String'. Always declared so the class layout stays stable across
+  -- programs that touch / don't touch 'IO.Args.getArgs'.
+  void $ addUtf8 "__argv"
+  void $ addUtf8 "[Ljava/lang/String;"
 
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
@@ -3304,31 +3312,195 @@ mkParseUInt8 = do
       }
 
 -- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'.
---   Reads the cached argv[0] from the "awsum.argv0" system property
---   ('mkMain' stashed it via 'setProperty' on entry) and routes it
---   through '__entryArgEither' for strict-UTF-16 validation. Per the
---   no-memoisation decision each call yields a fresh Either cell;
---   argv is invariant during execution so repeat calls are
---   deterministically equal.
+--   Reads the 'args' array stashed in the '__argv' static field by
+--   'mkMain' and builds a prelude 'List String' on demand. Each
+--   element is routed through '__entryArgEither' for strict-UTF-16
+--   validation; the error semantics is all-or-nothing — the first
+--   failing element short-circuits the entire call with its 'Left'.
+--   Walked right-to-left so the cons chain is built bottom-up
+--   without recursion. Per the no-memoisation decision each call
+--   returns a fresh chain; argv is invariant during execution so
+--   repeat calls are deterministically equal.
+--
+--   Local slots: 0 = argv (String[]), 1 = i (int loop counter),
+--   2 = list (Object[] accumulator), 3 = validated element (Object[]).
 mkGetArgs :: AsmM MInfo
 mkGetArgs = do
   ni <- addUtf8 "__getArgs"
   di <- addUtf8 "()Ljava/lang/Object;"
-  argvKeyIdx <- addStr "awsum.argv0"
-  getPropertyRef <- addMRef "java/lang/System" "getProperty" "(Ljava/lang/String;)Ljava/lang/String;"
+  argvFieldRef <- addFRef "AwsumMain" "__argv" "[Ljava/lang/String;"
   entryArgEitherRef <- addMRef "AwsumMain" "__entryArgEither" "(Ljava/lang/Object;)Ljava/lang/Object;"
+  objCls <- addClass "java/lang/Object"
+  intCls <- addClass "java/lang/Integer"
+  intValueRef <- addMRef "java/lang/Integer" "intValue" "()I"
+  intValueOfRef <- addMRef "java/lang/Integer" "valueOf" "(I)Ljava/lang/Integer;"
+  arrCls <- addClass "[Ljava/lang/Object;"
+  smtNameIdx <- addUtf8 "StackMapTable"
+  ptags <- askPreludeTags
+  ldcNilTag <- bcLoadInt32 (fromIntegral (ptNil ptags))
+  ldcConsTag <- bcLoadInt32 (fromIntegral (ptCons ptags))
+  ldcRightTag <- bcLoadInt32 (fromIntegral (ptRight ptags))
+  -- Helper: build Object[1] = {Integer(nilTag)} for the empty list.
+  let buildNilCell :: [Word8]
+      buildNilCell =
+        [0x04] -- iconst_1
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59, 0x03] -- dup, iconst_0
+          <> ldcNilTag
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef] -- invokestatic Integer.valueOf
+          <> [0x53] -- aastore
+          -- Body layout (all offsets relative to method start):
+          --   0..(prologueLen-1): stash argv into slot 0, build initial Nil
+          --     into slot 2, set i := argv.length into slot 1.
+  let body =
+        -- argv := __argv (slot 0)
+        [0xB2, hi8 argvFieldRef, lo8 argvFieldRef] -- getstatic __argv
+          <> bcAstore 0
+          -- list := Nil cell (slot 2)
+          <> buildNilCell
+          <> bcAstore 2
+          -- i := argv.length (slot 1)
+          <> bcAload 0
+          <> [0xBE] -- arraylength
+          <> bcIstore 1
+  let loopHeadOff = length body -- bci where L_args_loop frame applies
+  -- Loop head: if i <= 0 goto done.
+      loopHead =
+        bcIload 1
+          <> [0x9E, 0, 0] -- ifle <delta> (placeholder, patched below)
+          -- Decrement i, validate argv[i], check tag. __entryArgEither's
+          -- declared return type is Object but the runtime always returns
+          -- the Object[] of an Either CCon shape (tag + 1 field); we
+          -- checkcast to Object[] and store it back to slot 3 so the
+          -- StackMapTable frame at the branch targets can declare slot 3
+          -- as Object[] (free at runtime — same reference, type narrowing).
+      decAndValidate =
+        bcIload 1
+          <> [0x04] -- iconst_1
+          <> [0x64] -- isub
+          <> bcIstore 1
+          <> bcAload 0
+          <> bcIload 1
+          <> [0x32] -- aaload
+          <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
+          <> [0xC0, hi8 arrCls, lo8 arrCls] -- checkcast Object[]
+          <> bcAstore 3 -- slot 3 = Object[] from here on
+          <> bcAload 3
+          <> [0x03] -- iconst_0
+          <> [0x32] -- aaload
+          <> [0xC0, hi8 intCls, lo8 intCls] -- checkcast Integer
+          <> [0xB6, hi8 intValueRef, lo8 intValueRef] -- invokevirtual intValue
+          <> ldcRightTag
+          <> [0xA0, 0, 0] -- if_icmpne <delta> (placeholder, patched below)
+          -- list := Cons (validated[1]) list (slot 2)
+      buildCons =
+        [0x06] -- iconst_3
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59, 0x03] -- dup, iconst_0
+          <> ldcConsTag
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef] -- invokestatic Integer.valueOf
+          <> [0x53] -- aastore
+          <> [0x59, 0x04] -- dup, iconst_1
+          <> bcAload 3 -- already Object[] (slot 3 was retyped in decAndValidate)
+          <> [0x04] -- iconst_1 (field 1 of validated = the decoded String)
+          <> [0x32] -- aaload
+          <> [0x53] -- aastore
+          <> [0x59, 0x05] -- dup, iconst_2
+          <> bcAload 2
+          <> [0x53] -- aastore
+          <> bcAstore 2
+          <> [0xA7, 0, 0] -- goto <delta-back> (placeholder, patched below)
+      leftReturn =
+        bcAload 3
+          <> [0xB0] -- areturn
+      doneBody =
+        -- Wrap list (slot 2) in Right cell.
+        [0x05] -- iconst_2
+          <> [0xBD, hi8 objCls, lo8 objCls] -- anewarray Object
+          <> [0x59, 0x03] -- dup, iconst_0
+          <> ldcRightTag
+          <> [0xB8, hi8 intValueOfRef, lo8 intValueOfRef]
+          <> [0x53] -- aastore
+          <> [0x59, 0x04] -- dup, iconst_1
+          <> bcAload 2
+          <> [0x53] -- aastore
+          <> [0xB0] -- areturn
+          -- Compute branch offsets.
+      ifleAt = loopHeadOff + length (bcIload 1) -- bci of ifle opcode
+      decAndValidateOff = loopHeadOff + length loopHead
+      icmpneAt = decAndValidateOff + length decAndValidate - 3 -- bci of if_icmpne opcode
+      buildConsOff = decAndValidateOff + length decAndValidate
+      leftReturnOff = buildConsOff + length buildCons
+      doneOff = leftReturnOff + length leftReturn
+      ifleDelta = doneOff - ifleAt
+      icmpneDelta = leftReturnOff - icmpneAt
+      gotoBackAt = buildConsOff + length buildCons - 3
+      gotoBackDelta = loopHeadOff - gotoBackAt
+      -- Patch the placeholders.
+      patchedLoopHead =
+        bcIload 1
+          <> [0x9E, fromIntegral (ifleDelta `div` 256 `mod` 256), fromIntegral (ifleDelta `mod` 256)]
+      patchedDecAndValidate =
+        take (length decAndValidate - 3) decAndValidate
+          <> [0xA0, fromIntegral (icmpneDelta `div` 256 `mod` 256), fromIntegral (icmpneDelta `mod` 256)]
+      patchedBuildCons =
+        take (length buildCons - 3) buildCons
+          <> [0xA7, fromIntegral (gotoBackDelta `div` 256 `mod` 256), fromIntegral (gotoBackDelta `mod` 256)]
+      finalCode = body <> patchedLoopHead <> patchedDecAndValidate <> patchedBuildCons <> leftReturn <> doneBody
+      -- StackMapTable frames at three branch targets:
+      --   loopHeadOff: locals = [argv:[Object;, i:int, list:[Object;], stack = {}
+      --   leftReturnOff: locals = [argv, i, list, validated:[Object;], stack = {}
+      --   doneOff: locals = [argv, i, list], stack = {} (validated is killed)
+      -- Encode all three as full_frame for simplicity (frame_type = 255).
+      strArrCls = arrCls
+      objArrEntry :: [Word8]
+      objArrEntry = [0x07, hi8 strArrCls, lo8 strArrCls]
+      intEntry :: [Word8]
+      intEntry = [0x01]
+      loopHeadFrame =
+        [255]
+          <> [fromIntegral (loopHeadOff `div` 256), fromIntegral (loopHeadOff `mod` 256)]
+          <> [0, 3]
+          <> objArrEntry -- locals[0] = String[]/Object[] — we treat as [Ljava/lang/String;
+          <> intEntry -- locals[1] = int (i)
+          <> objArrEntry -- locals[2] = Object[] (list cell)
+          <> [0, 0] -- stack = {}
+          -- Frame at leftReturnOff: 4 locals (argv, i, list, validated).
+      leftReturnDelta = leftReturnOff - loopHeadOff - 1
+      leftReturnFrame =
+        [255]
+          <> [fromIntegral (leftReturnDelta `div` 256), fromIntegral (leftReturnDelta `mod` 256)]
+          <> [0, 4]
+          <> objArrEntry
+          <> intEntry
+          <> objArrEntry
+          <> objArrEntry -- locals[3] = Object[] (validated)
+          <> [0, 0]
+      doneDelta = doneOff - leftReturnOff - 1
+      doneFrame =
+        [255]
+          <> [fromIntegral (doneDelta `div` 256), fromIntegral (doneDelta `mod` 256)]
+          <> [0, 3]
+          <> objArrEntry
+          <> intEntry
+          <> objArrEntry
+          <> [0, 0]
+      smtEntries = loopHeadFrame <> leftReturnFrame <> doneFrame
+      smtEntriesLen = length smtEntries
+      smtAttr =
+        [hi8 smtNameIdx, lo8 smtNameIdx]
+          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
+              in [fromIntegral (totalLen `div` 16777216), fromIntegral ((totalLen `div` 65536) `mod` 256), fromIntegral ((totalLen `div` 256) `mod` 256), fromIntegral (totalLen `mod` 256)]
+                   <> [0, 3]
+                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0008,
         mName = ni,
         mDesc = di,
-        mCode =
-          bcLdc argvKeyIdx
-            <> [0xB8, hi8 getPropertyRef, lo8 getPropertyRef] -- invokestatic getProperty
-            <> [0xB8, hi8 entryArgEitherRef, lo8 entryArgEitherRef] -- invokestatic __entryArgEither
-            <> [0xB0], -- areturn
-        mCodeAttrCount = 0,
-        mCodeAttrs = [],
+        mCode = finalCode,
+        mCodeAttrCount = 1,
+        mCodeAttrs = smtAttr,
         mMaxStack = 256,
         mMaxLocals = 256
       }
@@ -3724,22 +3896,17 @@ mkMain :: AsmM MInfo
 mkMain = do
   ni <- addUtf8 "main"
   di <- addUtf8 "([Ljava/lang/String;)V"
-  emptyIdx <- addStr ""
   vMainRef <- addMRef "AwsumMain" (mangle "main") (objMethodDesc 0)
   -- `runIO` is the prelude's IO-tree walker; we hand `v_main`'s return
   -- value to it so any effects are performed. It returns Unit which we
   -- discard.
   vRunIORef <- addMRef "AwsumMain" (mangle "runIO") (objMethodDesc 1)
-  -- 'System.setProperty' caches argv[0] so 'BuiltIn.internalGetArgs'
-  -- can re-read it via 'System.getProperty' from inside 'runIO''s
-  -- 'IOGetArgs' arm. See 'mkGetArgs' for the read side. Argv is
-  -- invariant for the JVM process lifetime; one cache at entry is
-  -- enough.
-  setPropertyRef <- addMRef "java/lang/System" "setProperty" "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-  argvKeyIdx <- addStr "awsum.argv0"
-  strClsForArgv <- addClass "java/lang/String"
-  smtNameIdx <- addUtf8 "StackMapTable"
-  objClsIdx <- addClass "java/lang/Object"
+  -- 'putstatic __argv' stashes the entire 'args' array so
+  -- 'BuiltIn.internalGetArgs' can walk it later from 'runIO''s
+  -- 'IOGetArgs' arm and build a prelude 'List String'. See
+  -- 'mkGetArgs' for the read side. Argv is invariant for the JVM
+  -- process lifetime; one stash at entry is enough.
+  argvFieldRef <- addFRef "AwsumMain" "__argv" "[Ljava/lang/String;"
   -- Refs for the System.out → UTF-8 swap. See the IL-text 'mainMethod'
   -- for the rationale (JVM bakes the host's default charset into the
   -- startup PrintStream wrapping FileDescriptor.out, mangling
@@ -3756,16 +3923,7 @@ mkMain = do
   utf8StrIdx <- addStr "UTF-8"
   psInitRef <- addMRef "java/io/PrintStream" "<init>" "(Ljava/io/OutputStream;ZLjava/lang/String;)V"
   setOutRef <- addMRef "java/lang/System" "setOut" "(Ljava/io/PrintStream;)V"
-  let ldcEmpty = bcLdc emptyIdx
-      ldcLen = length ldcEmpty
-      ldcUtf8 = bcLdc utf8StrIdx
-      -- Stdout-UTF-8 prologue: build a PrintStream wrapping a
-      -- FileOutputStream over FileDescriptor.out with autoFlush=true and
-      -- "UTF-8" encoding, then assign it via System.setOut. The block
-      -- is balanced (peak depth 5, ends at 0), and uses no locals
-      -- beyond the method parameter, so the original argv-handling
-      -- code below verifies identically — it just sits 'prologueLen'
-      -- bytes further into the method.
+  let ldcUtf8 = bcLdc utf8StrIdx
       prologue =
         [0xBB, hi8 psClassIdx, lo8 psClassIdx] -- new PrintStream
           <> [0x59] -- dup
@@ -3777,33 +3935,6 @@ mkMain = do
           <> ldcUtf8 -- ldc "UTF-8" (2 bytes if cpool idx < 256, else 3 via ldc_w)
           <> [0xB7, hi8 psInitRef, lo8 psInitRef] -- invokespecial PrintStream.<init>
           <> [0xB8, hi8 setOutRef, lo8 setOutRef] -- invokestatic System.setOut
-      prologueLen = length prologue
-      -- Wrap argv[1] in `Right input` (tag=1, one field) before calling
-      -- v_main. Layout matches CCon emit on JVM: Object[1+nFields] with
-      -- boxed Integer tag at index 0, fields at indices 1..
-      --
-      -- Layout (all offsets relative to method start; the prologue
-      -- contributes 'prologueLen' bytes before any of this):
-      ifAt = prologueLen + 3
-      gotoAt = prologueLen + 6 + ldcLen
-      hasArg = gotoAt + 3
-      callMain = hasArg + 3
-      ifRel = hasArg - ifAt :: Int
-      gotoRel = callMain - gotoAt :: Int
-      -- StackMapTable: two frames at branch targets (has_arg, call_main).
-      -- Note: same_frame's frame_type field is 1 byte and ranges over
-      -- [0, 63] for offset_delta. With ldcLen ≤ 3 and the prologue,
-      -- hasArg stays ≤ 36 — still inside same_frame's encoding range.
-      smtEntries =
-        [fromIntegral hasArg]
-          <> [66, 7, hi8 objClsIdx, lo8 objClsIdx]
-      smtEntriesLen = length smtEntries
-      smtAttr =
-        [hi8 smtNameIdx, lo8 smtNameIdx]
-          <> let totalLen = fromIntegral (2 + smtEntriesLen) :: Word32
-              in [fromIntegral (totalLen `div` 16777216), fromIntegral ((totalLen `div` 65536) `mod` 256), fromIntegral ((totalLen `div` 256) `mod` 256), fromIntegral (totalLen `mod` 256)]
-                   <> [0, 2]
-                   <> smtEntries
   pure
     MInfo
       { mFlags = 0x0009,
@@ -3811,27 +3942,13 @@ mkMain = do
         mDesc = di,
         mCode =
           prologue
+            -- Stash 'args' reference into '__argv' so '__getArgs' can
+            -- walk every element when invoked from 'runIO''s 'IOGetArgs'
+            -- arm. No branches needed: an empty 'args' array yields a
+            -- 'List String' of Nil; user code handles that case via
+            -- 'headList' / pattern matching.
             <> bcAload 0
-            <> [0xBE] -- arraylength
-            <> [0x04] -- iconst_1
-            <> [0xA2, fromIntegral (ifRel `div` 256), fromIntegral (ifRel `mod` 256)] -- if_icmpge
-            <> ldcEmpty
-            <> [0xA7, fromIntegral (gotoRel `div` 256), fromIntegral (gotoRel `mod` 256)] -- goto
-            <> bcAload 0 -- has_arg
-            <> [0x03] -- iconst_0
-            <> [0x32] -- aaload
-            -- call_main: input on top of stack. 'main' itself takes
-            -- no arguments; user code reads argv via 'IO.Args.getArgs'
-            -- inside the IO chain. We just cache the input via
-            -- System.setProperty so 'BuiltIn.internalGetArgs' can
-            -- read it later from 'runIO''s 'IOGetArgs' arm. The
-            -- 'aaload' returned Object — checkcast to String for the
-            -- 'setProperty(String, String)' signature.
-            <> [0xC0, hi8 strClsForArgv, lo8 strClsForArgv] -- checkcast String
-            <> bcLdc argvKeyIdx -- ldc "awsum.argv0"
-            <> [0x5F] -- swap
-            <> [0xB8, hi8 setPropertyRef, lo8 setPropertyRef] -- invokestatic setProperty
-            <> [0x57] -- pop the previous-value return
+            <> [0xB3, hi8 argvFieldRef, lo8 argvFieldRef] -- putstatic __argv
             -- v_main is a zero-arg value (CValDef): build the IO tree.
             <> bcInvokeStatic vMainRef
             -- v_main returned an IO tree on the stack; hand it to runIO
@@ -3840,8 +3957,9 @@ mkMain = do
             <> bcInvokeStatic vRunIORef
             <> [0x57] -- pop
             <> [0xB1], -- return
-        mCodeAttrCount = 1,
-        mCodeAttrs = smtAttr,
+            -- No branches in this method, so no StackMapTable needed.
+        mCodeAttrCount = 0,
+        mCodeAttrs = [],
         mMaxStack = 256,
         mMaxLocals = 256
       }
@@ -3856,7 +3974,16 @@ data ECtx = ECtx
     cValDefs :: Set Text,
     cFunDefs :: Set Text,
     cArities :: Map Text Int,
-    cNextLocal :: Int
+    cNextLocal :: Int,
+    -- | Slots reserved by an enclosing 'emitArgsViaLocals' that have
+    -- not yet been written by the @astore@ at the end of their arg.
+    -- These slots are below 'cNextLocal' (so the case codegen sees
+    -- them inside the 'btLocals' range of its branch-target frames)
+    -- but the verifier knows them as @top@ at the case bci — so the
+    -- StackMapTable must declare @top@ here too. Without this we'd
+    -- declare them as 'Object' (positional default) and fail
+    -- verification.
+    cUninitSlots :: Set Int
   }
 
 -- | Number of *additional* local slots a body needs beyond its
@@ -3883,13 +4010,44 @@ exprMaxLocals = \case
         armMax = foldl' max 0 [exprMaxLocals b | (_, _, b) <- alts]
      in thisLevel + armMax
   CRow _ v -> exprMaxLocals v
-  CCall f xs -> foldl' max 0 (exprMaxLocals f : map exprMaxLocals xs)
+  CCall f xs ->
+    -- A 'CCase' nested in an argument position would push StackMapTable
+    -- frames whose declared (empty) stack disagrees with the verifier-
+    -- derived stack (which still holds prior args). 'emitExpr' / 'CCall'
+    -- routes each argument through a fresh local when this happens —
+    -- 'length xs' slots — plus one more for the function value on the
+    -- indirect-call path. Conservative: charge @length xs + 1@ whenever
+    -- either side has a case, since 'exprMaxLocals' has no context to
+    -- distinguish the direct and indirect paths.
+    let save =
+          if exprContainsCase f || any exprContainsCase xs
+            then length xs + 1
+            else 0
+     in save + foldl' max 0 (exprMaxLocals f : map exprMaxLocals xs)
   CCon _ fields -> foldl' max 0 (map exprMaxLocals fields)
   CLoop b -> exprMaxLocals b
   CContinue xs -> foldl' max 0 (map exprMaxLocals xs)
   CDrop _ _ b -> exprMaxLocals b
   CReuse _ _ fs -> foldl' max 0 (map exprMaxLocals fs)
   _ -> 0
+
+-- | Does the expression contain a 'CCase' (or 'CRowCase') anywhere?
+-- 'CCall' (and any other multi-sub-expr emitter that leaves prior
+-- values on the operand stack) needs to know this so it can route
+-- each argument through a fresh local instead of leaving prior args
+-- exposed when a nested case's StackMapTable kicks in.
+exprContainsCase :: CExpr -> Bool
+exprContainsCase = \case
+  CCase {} -> True
+  CRowCase {} -> True
+  CRow _ v -> exprContainsCase v
+  CCall f xs -> exprContainsCase f || any exprContainsCase xs
+  CCon _ fs -> any exprContainsCase fs
+  CDrop _ _ b -> exprContainsCase b
+  CReuse _ _ fs -> any exprContainsCase fs
+  CLoop b -> exprContainsCase b
+  CContinue xs -> any exprContainsCase xs
+  _ -> False
 
 -- | Maximum operand-stack depth a body ever reaches. Mirrors the
 -- emission shape: 'CCon' uses a dup/stelem chain so each nesting
@@ -3958,7 +4116,15 @@ data BranchTarget = BranchTarget
     btLocals :: Int, -- number of local variables at this point
     btArrSlot :: Int, -- slot number for the array local (if applicable)
     btTagSlot :: Int, -- slot number for the tag local (if applicable)
-    btIsJoinPoint :: Bool -- True for join points (gotos), False for if_icmpne targets
+    btIsJoinPoint :: Bool, -- True for join points (gotos), False for if_icmpne targets
+
+    -- | Slots described by 'btLocals' that the verifier sees as
+    -- @top@ at this bci. Populated from 'ECtx.cUninitSlots' when the
+    -- branch target is created; an enclosing 'emitArgsViaLocals' reserves
+    -- save slots below 'cNextLocal' that aren't written until after the
+    -- case completes, so the StackMapTable must declare them as @top@
+    -- rather than the positional 'Object' default.
+    btUninitSlots :: Set Int
   }
   deriving stock (Show, Eq)
 
@@ -3984,18 +4150,92 @@ data CodeWithMeta = CodeWithMeta
 cwm :: [Word8] -> [BranchTarget] -> CodeWithMeta
 cwm code bts = CodeWithMeta code bts []
 
+-- | Shift every branch target's @btOffset@ by @n@ bytes. Used at every
+-- concatenation point that places a sub-expression somewhere other than
+-- offset 0 of the enclosing code, so the offsets the verifier sees in
+-- the StackMapTable match the actual branch destinations.
+shiftBranchTargets :: Int -> [BranchTarget] -> [BranchTarget]
+shiftBranchTargets 0 = id
+shiftBranchTargets n = map (\bt -> bt {btOffset = bt.btOffset + n})
+
+-- | Concatenate sub-expression metas, shifting each meta's branch
+-- targets by the cumulative byte length of preceding metas so they end
+-- up relative to the start of the returned byte sequence. Pairs with
+-- 'shiftBranchTargets' for the case where the concatenated block itself
+-- starts at a non-zero offset within its parent.
+concatMetas :: [CodeWithMeta] -> ([Word8], [BranchTarget], [Int])
+concatMetas = go 0
+  where
+    go _ [] = ([], [], [])
+    go off (m : rest) =
+      let (restCode, restTargets, restInts) = go (off + length m.cwCode) rest
+       in ( m.cwCode <> restCode,
+            shiftBranchTargets off m.cwBranchTargets ++ restTargets,
+            m.cwIntSlots ++ restInts
+          )
+
 -- | Glue together one or more sub-expression metas plus a suffix
 -- bytecode (typically @invokestatic@ / @invokevirtual@ for a builtin
--- call). Concatenates code, propagates branch targets and int slots
--- from every sub-expression. Lets call sites stop hand-wiring three
--- fields per emitter.
+-- call). Each sub-meta's branch targets are shifted by the cumulative
+-- length of preceding sub-metas — required for nested 'CCase' / 'CRow'
+-- whose internal targets are meta-relative; an unshifted concat
+-- silently misplaces every StackMapTable frame whenever a multi-arg
+-- builtin is called with anything but the first arg being a leaf.
 cwmWrap :: [Word8] -> [CodeWithMeta] -> CodeWithMeta
 cwmWrap suffix metas =
-  CodeWithMeta
-    { cwCode = concatMap cwCode metas <> suffix,
-      cwBranchTargets = concatMap cwBranchTargets metas,
-      cwIntSlots = concatMap cwIntSlots metas
-    }
+  let (code, targets, ints) = concatMetas metas
+   in CodeWithMeta
+        { cwCode = code <> suffix,
+          cwBranchTargets = targets,
+          cwIntSlots = ints
+        }
+
+-- | Evaluate each expression in @args@ with the operand stack empty at
+-- its start, by routing the result of every prior arg through a fresh
+-- local. After every arg is in a local, the saved values are loaded
+-- back in order, leaving them on the stack ready for an
+-- @invokestatic@ / @invokevirtual@. Required when any arg contains a
+-- 'CCase' — without it, the case's StackMapTable frames disagree with
+-- the verifier-derived stack (which still holds the prior args).
+--
+-- The first save slot is @ctx.cNextLocal@; each arg is emitted with
+-- @cNextLocal@ advanced past all save slots, so nested case-locals
+-- never collide. 'exprMaxLocals' adds the same reservation so the
+-- @max_locals@ field of the Code attribute stays in sync.
+emitArgsViaLocals :: ECtx -> [CExpr] -> AsmM CodeWithMeta
+emitArgsViaLocals ctx args = do
+  let firstSlot = ctx.cNextLocal
+      nArgs = length args
+      saveSlots = take nArgs [firstSlot ..]
+  -- Emit each arg with the still-uninitialized save slots in
+  -- 'cUninitSlots'. Slot i is uninit until just after arg i's @astore@,
+  -- so arg i sees {save_i, save_(i+1), ..., save_(N-1)} as uninit.
+  argMetas <- forM (zip args [0 ..]) $ \(arg, i) -> do
+    let uninitForArg = Set.fromList (drop i saveSlots) `Set.union` ctx.cUninitSlots
+        ctx' =
+          ctx
+            { cNextLocal = firstSlot + nArgs,
+              cUninitSlots = uninitForArg
+            }
+    emitExpr ctx' arg
+  let combine :: Int -> [(CodeWithMeta, Int)] -> ([Word8], [BranchTarget], [Int])
+      combine _ [] = ([], [], [])
+      combine off ((m, slot) : rest) =
+        let astore = bcAstore slot
+            blockLen = length m.cwCode + length astore
+            (restCode, restTargets, restInts) = combine (off + blockLen) rest
+         in ( m.cwCode <> astore <> restCode,
+              shiftBranchTargets off m.cwBranchTargets ++ restTargets,
+              m.cwIntSlots ++ restInts
+            )
+      (savedCode, savedTargets, savedInts) = combine 0 (zip argMetas saveSlots)
+      loadsCode = concatMap bcAload saveSlots
+  pure
+    CodeWithMeta
+      { cwCode = savedCode <> loadsCode,
+        cwBranchTargets = savedTargets,
+        cwIntSlots = savedInts
+      }
 
 mkDecl :: Set Text -> Set Text -> Map Text Int -> CDecl -> AsmM MInfo
 mkDecl valDefs funDefs arities = \case
@@ -4014,7 +4254,8 @@ mkDecl valDefs funDefs arities = \case
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
-              cNextLocal = length args
+              cNextLocal = length args,
+              cUninitSlots = Set.empty
             }
         maxLocals = fromIntegral (length args + exprMaxLocals body) :: Word16
         maxStack = fromIntegral (max 1 (exprMaxStack body)) :: Word16
@@ -4033,7 +4274,8 @@ mkDecl valDefs funDefs arities = \case
               btLocals = length args,
               btArrSlot = -1,
               btTagSlot = -1,
-              btIsJoinPoint = False
+              btIsJoinPoint = False,
+              btUninitSlots = Set.empty
             }
     (smtCount, smtBytes) <- caseSMT ctx (tcoLoopTarget : codeMeta.cwBranchTargets) codeMeta.cwIntSlots
     pure MInfo {mFlags = 0x0008, mName = ni, mDesc = di, mCode = codeMeta.cwCode, mCodeAttrCount = smtCount, mCodeAttrs = smtBytes, mMaxStack = maxStack, mMaxLocals = maxLocals}
@@ -4046,7 +4288,8 @@ mkDecl valDefs funDefs arities = \case
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
-              cNextLocal = length args
+              cNextLocal = length args,
+              cUninitSlots = Set.empty
             }
         maxLocals = fromIntegral (length args + exprMaxLocals body) :: Word16
         maxStack = fromIntegral (max 1 (exprMaxStack body)) :: Word16
@@ -4063,7 +4306,8 @@ mkDecl valDefs funDefs arities = \case
               cValDefs = valDefs,
               cFunDefs = funDefs,
               cArities = arities,
-              cNextLocal = 0
+              cNextLocal = 0,
+              cUninitSlots = Set.empty
             }
         maxLocals = fromIntegral (exprMaxLocals rhs) :: Word16
         maxStack = fromIntegral (max 1 (exprMaxStack rhs)) :: Word16
@@ -4129,16 +4373,19 @@ emitExpr ctx = \case
             <> [0x53] -- aastore
     fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
       fldMeta <- emitExpr ctx fld
+      let prefix = [0x59] <> bcIconst i -- dup + iconst i
+          fldShift = length prefix
       pure
         CodeWithMeta
-          { cwCode = [0x59] <> bcIconst i <> fldMeta.cwCode <> [0x53],
-            cwBranchTargets = fldMeta.cwBranchTargets,
+          { cwCode = prefix <> fldMeta.cwCode <> [0x53], -- ... + aastore
+            cwBranchTargets = shiftBranchTargets fldShift fldMeta.cwBranchTargets,
             cwIntSlots = fldMeta.cwIntSlots
           }
-    let allTargets = concatMap cwBranchTargets fieldMetas
-        allCode = allocCode <> storeTag <> concatMap cwCode fieldMetas
-        allIntSlots = concatMap cwIntSlots fieldMetas
-    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+    let (fieldsCode, fieldsTargets, fieldsInts) = concatMetas fieldMetas
+        baseOff = length allocCode + length storeTag
+        allCode = allocCode <> storeTag <> fieldsCode
+        allTargets = shiftBranchTargets baseOff fieldsTargets
+    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = fieldsInts}
   CCase scrut alts -> do
     intCls <- addClass "java/lang/Integer"
     intValRef <- addMRef "java/lang/Integer" "intValue" "()I"
@@ -4243,7 +4490,7 @@ emitExpr ctx = \case
               gotoOffset = restLen + gotoLen
               cmpCode = loadTag <> tagPush <> [0xA0, fromIntegral (skipOffset `div` 256), fromIntegral (skipOffset `mod` 256)]
               gotoCode = [0xA7, fromIntegral (gotoOffset `div` 256), fromIntegral (gotoOffset `mod` 256)]
-              myTarget = BranchTarget nextBranchOffset bindSlotStart arrSlot tagSlot False -- if_icmpne target
+              myTarget = BranchTarget nextBranchOffset bindSlotStart arrSlot tagSlot False ctx.cUninitSlots -- if_icmpne target
               -- Adjust nested branch target offsets: body starts after cmpCode + bindCode
               armBodyStartOffset = offset + loadLen + iconLen + 3 + bindLen
               adjustedArmTargets = map (\bt -> bt {btOffset = bt.btOffset + armBodyStartOffset}) armMeta.cwBranchTargets
@@ -4256,7 +4503,7 @@ emitExpr ctx = \case
         hasMultipleArms = length sorted > 1
         joinPointOffset = preambleLen + length chainCode
         maxLocals = bindSlotStart + maxBindingsCount
-        joinPointTarget = ([BranchTarget joinPointOffset maxLocals arrSlot tagSlot True | hasMultipleArms]) -- join point
+        joinPointTarget = ([BranchTarget joinPointOffset maxLocals arrSlot tagSlot True ctx.cUninitSlots | hasMultipleArms]) -- join point
         allTargets = scrutMeta.cwBranchTargets ++ branchTargets ++ joinPointTarget
         finalCode = scrutMeta.cwCode <> extractAndStore <> chainCode
         -- 'tagSlot' itself is stored as an int by 'extractAndStore'; it's
@@ -4393,22 +4640,64 @@ emitExpr ctx = \case
       CBuiltIn n ->
         error ("JVM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n | n `Set.member` ctx.cFunDefs -> do
-        -- Direct call to known function
-        argMetas <- traverse (emitExpr ctx) xs
+        -- Direct call to known function. When any arg contains a 'CCase',
+        -- evaluate args through fresh locals so the case sees an empty
+        -- operand stack (see 'emitArgsViaLocals' for the why).
         ref <- addMRef "AwsumMain" (mangle n) (objMethodDesc (length xs))
-        pure $ cwmWrap (bcInvokeStatic ref) argMetas
+        let invoke = bcInvokeStatic ref
+        if any exprContainsCase xs
+          then do
+            argsMeta <- emitArgsViaLocals ctx xs
+            pure
+              CodeWithMeta
+                { cwCode = argsMeta.cwCode <> invoke,
+                  cwBranchTargets = argsMeta.cwBranchTargets,
+                  cwIntSlots = argsMeta.cwIntSlots
+                }
+          else do
+            argMetas <- traverse (emitExpr ctx) xs
+            pure $ cwmWrap invoke argMetas
       _ -> do
         -- Indirect call via MethodHandle
         -- Stack layout: MethodHandle arg1 arg2 ...
-        fMeta <- emitExpr ctx f
         mhCls <- addClass "java/lang/invoke/MethodHandle"
-        argMetas <- traverse (emitExpr ctx) xs
         let invokeDesc = objMethodDesc (length xs)
         ref <- addMRef "java/lang/invoke/MethodHandle" "invoke" invokeDesc
-        let allCode = fMeta.cwCode <> bcCheckCast mhCls <> concatMap cwCode argMetas <> bcInvokeVirtual ref
-            allTargets = fMeta.cwBranchTargets ++ concatMap cwBranchTargets argMetas
-            allIntSlots = fMeta.cwIntSlots ++ concatMap cwIntSlots argMetas
-        pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+        let mhCast = bcCheckCast mhCls
+            invoke = bcInvokeVirtual ref
+        if exprContainsCase f || any exprContainsCase xs
+          then do
+            -- Route the function value and every arg through fresh
+            -- locals so the case sees stack=0; load and call at the end.
+            fSlot <- pure ctx.cNextLocal
+            let ctxAfterF = ctx {cNextLocal = fSlot + 1}
+            fMeta <- emitExpr ctxAfterF f
+            argsMeta <- emitArgsViaLocals ctxAfterF xs
+            let fStore = bcAstore fSlot
+                fLoad = bcAload fSlot
+                fBlockLen = length fMeta.cwCode + length fStore
+                argsShift = fBlockLen
+                allCode =
+                  fMeta.cwCode
+                    <> fStore
+                    <> argsMeta.cwCode
+                    <> fLoad
+                    <> mhCast
+                    <> invoke
+                allTargets =
+                  fMeta.cwBranchTargets
+                    ++ shiftBranchTargets argsShift argsMeta.cwBranchTargets
+                allIntSlots = fMeta.cwIntSlots ++ argsMeta.cwIntSlots
+            pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+          else do
+            fMeta <- emitExpr ctx f
+            argMetas <- traverse (emitExpr ctx) xs
+            let (argsCode, argsTargets, argsInts) = concatMetas argMetas
+                argsBaseOff = length fMeta.cwCode + length mhCast
+                allCode = fMeta.cwCode <> mhCast <> argsCode <> invoke
+                allTargets = fMeta.cwBranchTargets ++ shiftBranchTargets argsBaseOff argsTargets
+                allIntSlots = fMeta.cwIntSlots ++ argsInts
+            pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
   -- Row injection / dispatch share the runtime layout with one-field
   -- 'CCon' / 'CCase', so delegate.
   CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
@@ -4451,16 +4740,19 @@ emitExpr ctx = \case
             <> [0x53] -- aastore
     fieldMetas <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
       fldMeta <- emitExpr ctx fld
+      let prefix = [0x59] <> bcIconst i -- dup + iconst i
+          fldShift = length prefix
       pure
         CodeWithMeta
-          { cwCode = [0x59] <> bcIconst i <> fldMeta.cwCode <> [0x53],
-            cwBranchTargets = fldMeta.cwBranchTargets,
+          { cwCode = prefix <> fldMeta.cwCode <> [0x53], -- ... + aastore
+            cwBranchTargets = shiftBranchTargets fldShift fldMeta.cwBranchTargets,
             cwIntSlots = fldMeta.cwIntSlots
           }
-    let allTargets = concatMap cwBranchTargets fieldMetas
-        allCode = loadCell <> storeTag <> concatMap cwCode fieldMetas
-        allIntSlots = concatMap cwIntSlots fieldMetas
-    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = allIntSlots}
+    let (fieldsCode, fieldsTargets, fieldsInts) = concatMetas fieldMetas
+        baseOff = length loadCell + length storeTag
+        allCode = loadCell <> storeTag <> fieldsCode
+        allTargets = shiftBranchTargets baseOff fieldsTargets
+    pure CodeWithMeta {cwCode = allCode, cwBranchTargets = allTargets, cwIntSlots = fieldsInts}
 
 -- | Emit @body@ in tail position under the implicit @L_tco_loop:@ label
 -- at method offset 0. 'CContinue' evaluates new parameter values onto
@@ -4521,12 +4813,13 @@ emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
     emitContinue :: ECtx -> Int -> [Text] -> [CExpr] -> AsmM CodeWithMeta
     emitContinue ctx offset pending newArgs = do
       argMetas <- traverse (emitExpr ctx) newArgs
-      let argBytes = concatMap cwCode argMetas
-          -- Nested branch targets inside arg evaluations would need offset
-          -- adjustment, but in practice argument expressions rarely contain
-          -- CCase; the existing CCon/CCall paths also pass them through
-          -- without adjustment, so we match that convention.
-          argTargets = concatMap cwBranchTargets argMetas
+      let (argBytes, argTargetsRel, argIntSlots) = concatMetas argMetas
+          -- Tail-position emitters carry absolute method offsets, but
+          -- 'emitExpr' returns meta-relative ones; shift by 'offset'
+          -- (the absolute bci where 'argBytes' begins) so any nested
+          -- 'CCase' inside a 'CContinue' arg gets its StackMapTable
+          -- frame at the right absolute position.
+          argTargets = shiftBranchTargets offset argTargetsRel
           freeBytes :: [Word8]
           freeBytes = pendingDropBytes ctx pending
           paramSlots :: [Int]
@@ -4544,7 +4837,6 @@ emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
           delta :: Int
           delta = negate gotoStart
           gotoBytes = bcGoto delta
-          argIntSlots = concatMap cwIntSlots argMetas
       pure
         CodeWithMeta
           { cwCode = argBytes <> freeBytes <> astoreBytes <> gotoBytes,
@@ -4675,7 +4967,8 @@ emitTailBin ctx0 params offset0 = goTop ctx0 offset0 []
                       btLocals = bindSlotStart,
                       btArrSlot = arrSlot,
                       btTagSlot = tagSlot,
-                      btIsJoinPoint = False
+                      btIsJoinPoint = False,
+                      btUninitSlots = ctx.cUninitSlots
                     }
             (restBytes, restTargets, restIntSlots) <- goArms nextArmOffset rest
             pure
@@ -4775,14 +5068,16 @@ caseSMT _ctx targets intSlots
         buildLocalsTypes allArrTagPairs bt =
           let n = bt.btLocals
               -- Resolve each slot's verifier type. Order of checks
-              -- matters: arr/tag/intSlot are determined by the case
-              -- shape and override any positional default. The
-              -- positional default is /Object/ (used for params and
-              -- ordinary pattern bindings). For 'CValDef' the
-              -- scrutinee array can land on slot 0 — same lookup
-              -- still picks @Object[]@ because @arr == 0@ matches
-              -- the @allArrTagPairs@ entry.
+              -- matters: 'btUninitSlots' wins first (an enclosing
+              -- 'emitArgsViaLocals' reserved this slot but its @astore@
+              -- hasn't executed yet, so the verifier sees @top@); then
+              -- arr/tag/intSlot determined by the case shape; the
+              -- positional default 'Object' covers params and ordinary
+              -- pattern bindings. For 'CValDef' the scrutinee array can
+              -- land on slot 0 — same lookup still picks @Object[]@
+              -- because @arr == 0@ matches the @allArrTagPairs@ entry.
               slotType i
+                | i `Set.member` bt.btUninitSlots = [0x00] -- ITEM_Top
                 | any (\(arr, _) -> arr == i) allArrTagPairs =
                     [0x07, hi8 arrClsIdx, lo8 arrClsIdx]
                 | any (\(_, tag) -> tag == i) allArrTagPairs = [0x01]
@@ -4823,12 +5118,19 @@ objMethodDesc n =
 -- Class file serialization
 -- ════════════════════════════════════════════════════════════════════════════
 
-buildClassFile :: Pool -> [MInfo] -> B.Builder
-buildClassFile st methods =
+buildClassFile :: Pool -> Word16 -> Word16 -> [MInfo] -> B.Builder
+buildClassFile st argvFieldNameIdx argvFieldDescIdx methods =
   let cpList = reverse st.entries
       thisCls = lkup (KClass "AwsumMain")
       superCls = lkup (KClass "java/lang/Object")
       codeUtf8 = lkup (KUtf8 "Code")
+      -- One static field: 'private static __argv [Ljava/lang/String;'.
+      -- ACC_PRIVATE | ACC_STATIC = 0x000A. Zero attributes.
+      argvField =
+        B.word16BE 0x000A
+          <> B.word16BE argvFieldNameIdx
+          <> B.word16BE argvFieldDescIdx
+          <> B.word16BE 0
    in mconcat
         [ B.word32BE 0xCAFEBABE,
           B.word16BE 0, -- minor version
@@ -4839,7 +5141,8 @@ buildClassFile st methods =
           B.word16BE thisCls,
           B.word16BE superCls,
           B.word16BE 0, -- interfaces
-          B.word16BE 0, -- fields
+          B.word16BE 1, -- fields
+          argvField,
           B.word16BE (fromIntegral (length methods)),
           foldMap (encodeMethod codeUtf8) methods,
           B.word16BE 0 -- class attributes

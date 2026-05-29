@@ -53,7 +53,7 @@ const v__let_12 = (v_res) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 20: {
+                    case 22: {
                       return [7, "ERR_A", [5, [0]]];
                     }
                   }
@@ -64,7 +64,7 @@ const v__let_12 = (v_res) => {
                 {
                   const __s = v___rw;
                   switch (__s[0]) {
-                    case 21: {
+                    case 23: {
                       return [7, "ERR_B", [5, [0]]];
                     }
                   }

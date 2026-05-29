@@ -6,13 +6,13 @@ import IO.Stdout
 
 type ErrA = ErrA
 
-type Lst a = Nil | Cons a (Lst a)
+type Lst a = LNil | LCons a (Lst a)
 
 defaultJust : Maybe Bool
 defaultJust = Just True
 
 defaultBools : Lst Bool
-defaultBools = Cons True (Cons False Nil)
+defaultBools = LCons True (LCons False LNil)
 
 defaultRight : Either ErrA (Maybe Bool)
 defaultRight = Right (Just False)
@@ -31,8 +31,8 @@ describeMaybe m = case m of
 
 describeLst : Lst (Bool | Unit) -> Either StringTooLong String
 describeLst xs = case xs of
-  Nil -> Right ""
-  Cons h t -> do
+  LNil -> Right ""
+  LCons h t -> do
     rest <- describeLst t
     dispatchInner h ++ rest
 

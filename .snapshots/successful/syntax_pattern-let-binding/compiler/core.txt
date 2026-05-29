@@ -50,7 +50,7 @@ CoreProgram
                     ( 3
                     , [ "__w0" ]
                     , CDrop DropFreeUnchecked "__w0"
-                        ( CCon 12
+                        ( CCon 14
                             [ CVar "n"
                             , CVar "n"
                             ]
@@ -60,7 +60,7 @@ CoreProgram
                     ( 4
                     , [ "d" ]
                     , CDrop DropFreeUnchecked "d"
-                        ( CCon 12
+                        ( CCon 14
                             [ CVar "n"
                             , CVar "d"
                             ]
@@ -72,7 +72,7 @@ CoreProgram
             ( CCase
                 ( CVar "pair" )
                 [
-                    ( 12
+                    ( 14
                     ,
                         [ "a"
                         , "b"
