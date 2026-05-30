@@ -31,45 +31,46 @@
 
   .method private hidebysig static object v_runIO(object) cil managed
   {
+    .maxstack 3
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
   IL_tco_loop:
     ldarg.0
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_5, IL_tco_arm_7)
-  IL_tco_arm_5:
     dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
+    ldc.i4.5
+    bne.un IL_c0
     pop
     ldloc.0
-    ret
-  IL_tco_arm_7:
-    dup
     ldc.i4.1
-    ldelem.ref
-    stloc.0
-    dup
-    ldc.i4.2
     ldelem.ref
     stloc.1
+    ldloc.1
+    ret
+  IL_c0:
     pop
     ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldloc.1
     call object AwsumMain::__print(object)
-    dup
+    stloc.3
+    ldloc.3
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_0)
-  IL_tco_arm_0:
     pop
-    ldloc.1
+    ldloc.2
     ldnull
     starg.s 0
-
-
     starg.s 0
     br IL_tco_loop
   }
@@ -77,7 +78,8 @@
 
   .method private hidebysig static object v_answer() cil managed
   {
-    ldc.i4 42
+    .maxstack 1
+    ldc.i4.s 42
     box [System.Runtime]System.Int32
     ret
   }
@@ -85,6 +87,7 @@
 
   .method private hidebysig static object v_captureFn(object) cil managed
   {
+    .maxstack 2
     call object AwsumMain::v_answer()
     ldarg.0
     call object AwsumMain::v__df_apply_0(object, object)
@@ -94,53 +97,63 @@
 
   .method private hidebysig static object v_main() cil managed
   {
+    .maxstack 7
+    .locals init (object[] V_0, object V_1, object V_2)
     ldc.i4.3
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.7
     box [System.Runtime]System.Int32
     stelem.ref
-    dup
+    ldloc.0
     ldc.i4.1
-    ldc.i4 7
+    ldc.i4.7
     box [System.Runtime]System.Int32
     call object AwsumMain::v_captureFn(object)
     callvirt instance string [System.Runtime]System.Object::ToString()
     stelem.ref
-    dup
+    ldloc.0
     ldc.i4.2
     ldc.i4.2
     newarr [System.Runtime]System.Object
-    dup
+    stloc.1
+    ldloc.1
     ldc.i4.0
     ldc.i4.5
     box [System.Runtime]System.Int32
     stelem.ref
-    dup
+    ldloc.1
     ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.2
+    ldloc.2
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.2
     stelem.ref
+    ldloc.1
     stelem.ref
+    ldloc.0
     ret
   }
 
 
-  .method private hidebysig static object v__lam_12(object, object) cil managed
+  .method private hidebysig static object v__lam_12(object,object) cil managed
   {
+    .maxstack 1
     ldarg.0
     ret
   }
 
 
-  .method private hidebysig static object v__df_apply_0(object, object) cil managed
+  .method private hidebysig static object v__df_apply_0(object,object) cil managed
   {
+    .maxstack 2
     ldarg.1
     ldarg.0
     call object AwsumMain::v__lam_12(object, object)
@@ -149,7 +162,7 @@
 
   .method private hidebysig static void Main(string[]) cil managed
   {
-    .entrypoint
+    .maxstack 1
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
     call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
     call object AwsumMain::v_main()
