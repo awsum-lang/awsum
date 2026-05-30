@@ -8,11 +8,18 @@
 --
 -- The PE file is assembled directly in Haskell — no ilasm, no csc, no MSBuild.
 -- Only @dotnet@ is needed to run the output.
-module Awsum.Codegen.CLR.Assemble (assembleCLR) where
+module Awsum.Codegen.CLR.Assemble
+  ( assembleCLR,
+    -- Exposed for the text renderer ('Awsum.Codegen.CLR') so both projections
+    -- share one Core→CilMethod lowering for user declarations.
+    ECtx (..),
+    emitExprI,
+    declCilMethod,
+  )
+where
 
+import Awsum.Codegen.CLR.Instr (CilInstr (..), CilMemberRef (..), CilMethod (..), CilTypeRef (..), LabelId (..), SigElem (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, int32Ref, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, maxStackOf, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, objectRef, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Core
-import Awsum.HM (rowTag)
-import Awsum.Syntax (Type' (..), noSpan)
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as B
@@ -82,7 +89,11 @@ data Pool = Pool
     -- Globally unique constructor tags for prelude types, threaded
     -- in through 'assembleCLR' so the runtime helpers built here
     -- match the user's CCon/CCase encoding.
-    pTags :: PreludeTags
+    pTags :: PreludeTags,
+    -- Name → MethodDef token map (set once, before any method is
+    -- emitted). 'assembleCilMethod' resolves a 'CallNamed' to its token
+    -- through this; the call stays symbolic until then.
+    pTokMap :: Map Text Word32
   }
 
 type AsmM = State Pool
@@ -116,7 +127,8 @@ emptyPool ptags =
       pPMn = 0,
       pSAS = [],
       pSASn = 0,
-      pTags = ptags
+      pTags = ptags,
+      pTokMap = Map.empty
     }
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -240,23 +252,6 @@ addLocalSigBytes blob = do
   put st {pSAS = st.pSAS <> [w16 bi], pSASn = row}
   pure (0x11000000 .|. row)
 
--- | Add a StandAloneSig row for a LocalVarSig.
--- nLocals = number of locals: local 0 is object[], rest are object.
--- Returns the metadata token (table 0x11 << 24 | row).
---
--- The Count field is a *compressed* unsigned integer per
--- ECMA-335 §II.23.2 (1, 2, or 4 bytes); plain @fromIntegral@ would
--- silently truncate for nLocals ≥ 128 and produce a malformed
--- signature that the runtime rejects with @InvalidProgramException@.
-addLocalSig :: Int -> AsmM Word32
-addLocalSig nLocals = do
-  let -- LocalVarSig: 0x07, count, types...
-      -- local 0: object[] (SZARRAY + OBJECT), rest: object
-      localTypes = [0x1D, 0x1C] <> replicate (nLocals - 1) 0x1C
-      countBytes = compressU (fromIntegral nLocals)
-      blob = (0x07 : countBytes) <> localTypes
-  addLocalSigBytes blob
-
 -- | Count the number of local variable slots needed for a CExpr.
 -- A 'CCase' consumes @1@ slot for its array plus room for its widest
 -- arm-binding set; nested cases inside an arm body need the SAME slot
@@ -286,61 +281,6 @@ exprLocalsNeeded = \case
   CReuse _ _ fs -> 1 + foldl' max 0 (map exprLocalsNeeded fs)
   _ -> 0
 
--- | Maximum operand-stack depth needed by 'emitExpr' / 'emitTailBin'
--- for this expression. Used to fill the @MaxStack@ field of the fat
--- method header (ECMA-335 §II.25.4.3) — the verifier rejects methods
--- whose actual depth exceeds the declared @MaxStack@. A safe upper
--- bound on every code path; not an exact peak.
-exprStackDepth :: CExpr -> Int
-exprStackDepth = \case
-  CString _ -> 1
-  CIntLit _ _ -> 1
-  CBuiltIn _ -> 1
-  -- CVar in fundef position emits ldnull + ldftn + newobj, peaking at 2.
-  CVar _ -> 2
-  -- After the temp-local rewrite: stloc empties the stack between
-  -- field stores, so the peak per level is max(3 for the tag store,
-  -- 2 + field depth for each field). Nested CCons no longer compound.
-  CCon _ fields ->
-    let maxFld = foldl' max 0 (map exprStackDepth fields)
-     in max 3 (2 + maxFld)
-  -- scrut peak (emit), stloc → 0, ldloc/ldc/ldelem/unbox → 2 (tag on stack at depth 1),
-  -- chain dup/ldc/bne → 3, then arms at depth 0.
-  CCase scrut alts ->
-    let scrutD = exprStackDepth scrut
-        armMax = foldl' max 0 [exprStackDepth b | (_, _, b) <- alts]
-     in foldl' max 0 [scrutD, 3, armMax]
-  -- Row dispatch: same emission shape as 'CCase'; mirror the bound.
-  CRowCase scrut alts ->
-    let scrutD = exprStackDepth scrut
-        armMax = foldl' max 0 [exprStackDepth b | (_, _, b) <- alts]
-     in foldl' max 0 [scrutD, 3, armMax]
-  -- Row injection: same emission as a one-field 'CCon'.
-  CRow _ v -> max 3 (2 + exprStackDepth v)
-  -- Args emitted sequentially. A first-class CCall additionally
-  -- pushes the callee before evaluating args, hence the +1 for
-  -- the non-builtin / non-direct path. The result occupies one slot.
-  CCall f xs ->
-    let argDepths = map exprStackDepth xs
-        fD = exprStackDepth f
-        nXs = length xs
-        seqArgs base = foldl' max base [base + i + d | (i, d) <- zip [0 :: Int ..] argDepths]
-     in case f of
-          CBuiltIn _ -> max (seqArgs 0) 1
-          CVar _ -> max (seqArgs 0) (max nXs 1)
-          _ -> max fD (max (seqArgs 1) (nXs + 1))
-  CLoop b -> exprStackDepth b
-  CContinue xs ->
-    let argDepths = map exprStackDepth xs
-     in foldl' max 0 [i + d | (i, d) <- zip [0 :: Int ..] argDepths]
-  -- Liveness annotation; codegen-transparent (no extra stack slots).
-  -- Stack budget == wrapped body's.
-  CDrop _ _ b -> exprStackDepth b
-  -- Cell reuse: forwarded to CCon emission.
-  CReuse _ _ fields ->
-    let maxFld = foldl' max 0 (map exprStackDepth fields)
-     in max 3 (2 + maxFld)
-
 -- ════════════════════════════════════════════════════════════════════════════
 -- Coded index helpers
 -- ════════════════════════════════════════════════════════════════════════════
@@ -357,27 +297,17 @@ tdorTR row = fromIntegral ((row `shiftL` 2) .|. 0x01)
 mrpTR :: Word32 -> Word16
 mrpTR row = fromIntegral ((row `shiftL` 3) .|. 0x01)
 
-mrpTS :: Word32 -> Word16
-mrpTS row = fromIntegral ((row `shiftL` 3) .|. 0x04)
-
 -- ════════════════════════════════════════════════════════════════════════════
 -- Signature construction
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- Element types
-etVoid, etString, etObject, etNativeInt :: Word8
+etVoid, etString, etObject :: Word8
 etVoid = 0x01
 etString = 0x0E
 etObject = 0x1C
-etNativeInt = 0x18
-
-etSZArray :: Word8
-etSZArray = 0x1D
 
 -- | Static method sig: DEFAULT, N params (all object), returns retType.
-sigStatic :: Word8 -> Int -> [Word8]
-sigStatic retType n = [0x00, fromIntegral n, retType] <> replicate n etObject
-
 -- | Instance method sig: HASTHIS, paramTypes, returns retType.
 sigInstance :: Word8 -> [Word8] -> [Word8]
 sigInstance retType pts = [0x20, fromIntegral (length pts), retType] <> pts
@@ -414,29 +344,19 @@ cilLdarg n
   | n <= 255 = [0x0E, fromIntegral n]
   | otherwise = [0xFE, 0x09] <> w16le (fromIntegral n)
 
-cilLdstr, cilCall, cilCallvirt, cilNewobj, cilCastclass, cilLdftn :: Word32 -> [Word8]
+cilLdstr, cilCall, cilCallvirt, cilNewobj, cilCastclass :: Word32 -> [Word8]
 cilLdstr tok = 0x72 : w32le tok
 cilCall tok = 0x28 : w32le tok
 cilCallvirt tok = 0x6F : w32le tok
 cilNewobj tok = 0x73 : w32le tok
 cilCastclass tok = 0x74 : w32le tok
-cilLdftn tok = [0xFE, 0x06] <> w32le tok
 
-cilRet, cilPop, cilLdnull, cilLdlen, cilConvI4, cilLdcI4_0, cilLdcI4_1, cilLdelemRef :: [Word8]
+cilRet, cilPop, cilLdnull, cilLdlen, cilConvI4 :: [Word8]
 cilRet = [0x2A]
 cilPop = [0x26]
 cilLdnull = [0x14]
 cilLdlen = [0x8E]
 cilConvI4 = [0x69]
-cilLdcI4_0 = [0x16]
-cilLdcI4_1 = [0x17]
-cilLdelemRef = [0x9A]
-
-cilBrS, cilBneUnS, cilBltS, cilBleS :: Word8 -> [Word8]
-cilBrS off = [0x2B, off]
-cilBneUnS off = [0x33, off] -- bne.un.s: 1-byte signed offset
-cilBltS off = [0x32, off] -- blt.s: 1-byte signed offset
-cilBleS off = [0x31, off] -- ble.s: 1-byte signed offset
 
 cilXor, cilAnd :: [Word8]
 cilXor = [0x61]
@@ -452,17 +372,21 @@ cilBr off = 0x38 : w32le (fromIntegral off :: Word32)
 cilBneUn :: Int32 -> [Word8]
 cilBneUn off = 0x40 : w32le (fromIntegral off :: Word32)
 
-cilBrfalse, cilBrtrue, cilBeq, cilBge, cilBgt, cilBlt :: Int32 -> [Word8]
+cilBrfalse, cilBrtrue, cilBeq, cilBge, cilBgt, cilBlt, cilBle, cilBgtUn, cilBltUn :: Int32 -> [Word8]
 cilBrfalse off = 0x39 : w32le (fromIntegral off :: Word32)
 cilBrtrue off = 0x3A : w32le (fromIntegral off :: Word32)
 cilBeq off = 0x3B : w32le (fromIntegral off :: Word32)
 cilBge off = 0x3C : w32le (fromIntegral off :: Word32)
 cilBgt off = 0x3D : w32le (fromIntegral off :: Word32)
 cilBlt off = 0x3F : w32le (fromIntegral off :: Word32)
+cilBle off = 0x3E : w32le (fromIntegral off :: Word32) -- ble: signed <=, 4-byte offset
+cilBgtUn off = 0x42 : w32le (fromIntegral off :: Word32) -- bgt.un: unsigned >, 4-byte offset
+cilBltUn off = 0x44 : w32le (fromIntegral off :: Word32) -- blt.un: unsigned <, 4-byte offset
 
-cilNeg, cilMul, cilConvI8, cilShl, cilConvU8, cilConvU4 :: [Word8]
+cilNeg, cilMul, cilDiv, cilConvI8, cilShl, cilConvU8, cilConvU4 :: [Word8]
 cilNeg = [0x65]
 cilMul = [0x5A]
+cilDiv = [0x5B] -- div: signed integer division
 cilConvI8 = [0x6A]
 cilShl = [0x62]
 cilConvU8 = [0x6E] -- conv.u8: zero-extend top of stack to uint64
@@ -473,11 +397,6 @@ cilConvU4 = [0x6D] -- conv.u4: truncate / unsigned-narrow to uint32
 -- relying on a CPLong-style indirection.
 cilLdcI8 :: Int64 -> [Word8]
 cilLdcI8 n = 0x21 : w64le (fromIntegral n :: Word64)
-
--- | Unsigned compare branches with 1-byte signed offset.
-cilBgtUnS, cilBltUnS :: Word8 -> [Word8]
-cilBgtUnS off = [0x35, off]
-cilBltUnS off = [0x37, off]
 
 -- | @starg.s <n>@ / long form — stores the top of stack into argument
 -- slot @n@. Used by 'CContinue' to rebind parameters in place before
@@ -503,32 +422,6 @@ cilLdcI4 n
   | n == -1 = [0x15] -- ldc.i4.m1
   | n >= -128 && n <= 127 = [0x1F, fromIntegral n] -- ldc.i4.s
   | otherwise = 0x20 : w32le (fromIntegral n) -- ldc.i4
-
--- | FNV-1a 32-bit row tags for the prelude's nominal labels used by
---   the Int32 arithmetic builtins. Computed via 'rowTag' so the
---   runtime helpers stay in lockstep with 'Awsum.HM.canonicalLabel'.
---   Cast to 'Int' (signed) so the bit pattern fits 'cilLdcI4' which
---   takes 'Int' — at the CIL level @ldc.i4@ stores the lower 32 bits
---   bit-for-bit, which is what user-side dispatch compares against.
-underflowRowTagInt :: Int
-underflowRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "UnderflowError")) :: Int32)
-
-overflowRowTagInt :: Int
-overflowRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "OverflowError")) :: Int32)
-
--- | StringTooLong row tag, used at the entry-point glue when argv[1]
---   exceeds the language-fixed length cap and user code receives
---   'Left StringTooLong' through the row
---   '(StringTooLong | UnpairedUtf16Surrogate)'.
-stringTooLongRowTagInt :: Int
-stringTooLongRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "StringTooLong")) :: Int32)
-
--- | UnpairedUtf16Surrogate row tag, used at the entry-point glue when
---   '__entryArgEither' detects a high surrogate not followed by a low
---   (or a standalone low, or a trailing high) in argv[1] — the user's
---   'main' receives 'Left UnpairedUtf16Surrogate'.
-unpairedSurrogateRowTagInt :: Int
-unpairedSurrogateRowTagInt = fromIntegral (fromIntegral (rowTag (TyCon noSpan "UnpairedUtf16Surrogate")) :: Int32)
 
 cilStloc :: Int -> [Word8]
 cilStloc n
@@ -676,25 +569,32 @@ doAssemble (CoreProgram decls) = do
                  ],
                keep
              ]
-      -- '__entryArgEither' wraps argv[1] in 'Either (StringTooLong | …)
-      -- String' for the user's 'main' (cap pre-check). Always emitted —
-      -- 'Main' calls it unconditionally on the input. '__getArgs' is
-      -- the read side of the argv cache (set by 'Main' via
-      -- SetEnvironmentVariable, read here by 'BuiltIn.internalGetArgs');
-      -- emitted only when 'runIO' or user code references that built-in.
+      -- '__entryArgEither' validates a UTF-8 argv/stdin byte run into
+      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String'. Its only
+      -- callers are '__getArgs' and '__stdinReadAll' — 'Main' does not call
+      -- it — so it is gated on the union of their predicates, matching the
+      -- text codegen ('Awsum.Codegen.CLR'). 'allNames' assigns the method
+      -- tokens (0x06000001…), so it and the method table below must gate it
+      -- together or the user/Main tokens would shift apart.
+      usesArgsOrStdin =
+        Set.member "internalGetArgs" builtIns
+          || Set.member "internalStdinReadAllAsUtf16" builtIns
       allNames =
         helperNames
-          <> ["__entryArgEither"]
+          <> [n | (n, keep) <- [("__entryArgEither", usesArgsOrStdin)], keep]
           <> [n | (n, keep) <- [("__getArgs", Set.member "internalGetArgs" builtIns)], keep]
           <> [n | (n, keep) <- [("__stdinReadAll", Set.member "internalStdinReadAllAsUtf16" builtIns)], keep]
           <> userNames
           <> ["Main"]
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
 
+  -- Make the name→token map available to 'assembleCilMethod' (resolves
+  -- 'CallNamed' in emitted user methods). Set once, before any method.
+  modify (\p -> p {pTokMap = tokMap})
   let valNames = Set.fromList [n | CValDef n _ <- decls]
       funNames = Set.fromList [n | CFunDef n _ _ <- decls]
       arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
-      ctx = ECtx {eParams = Map.empty, eLocals = Map.empty, eNextScratch = 0, eValDefs = valNames, eFunDefs = funNames, eArities = arities, eToks = tokMap}
+      ctx = ECtx {eParams = Map.empty, eLocals = Map.empty, eNextScratch = 0, eValDefs = valNames, eFunDefs = funNames, eArities = arities}
 
   m0 <- mkInit
   m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
@@ -705,9 +605,9 @@ doAssemble (CoreProgram decls) = do
   m3sI <- if Set.member "succInt32" builtIns then (: []) <$> mkSuccInt32 else pure []
   m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
   m3u32s <- if Set.member "succUInt32" builtIns then (: []) <$> mkSuccUInt32 else pure []
-  m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" else pure []
-  m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" else pure []
-  m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" else pure []
+  m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" "IL_eq_i32" else pure []
+  m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" "IL_eq_u8" else pure []
+  m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" "IL_eq_u32" else pure []
   m5str <- if Set.member "eqString" builtIns then (: []) <$> mkEqString else pure []
   m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
   m6sub <- if Set.member "subInt32" builtIns then (: []) <$> mkSubInt32 else pure []
@@ -727,17 +627,21 @@ doAssemble (CoreProgram decls) = do
   mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
   mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
   mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
-  mEntryArg <- mkEntryArgEither
+  mEntryArg <- if usesArgsOrStdin then (: []) <$> mkEntryArgEither else pure []
   mGetArgs <-
     if Set.member "internalGetArgs" builtIns
       then do
         ptags <- askPreludeTags
-        (: []) <$> mkGetArgs ptags tokMap
+        (: []) <$> assembleCilMethod (getArgsSpec (ptRight ptags) (ptNil ptags) (ptCons ptags))
       else pure []
-  mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll tokMap else pure []
-  userMs <- traverse (mkDecl ctx) decls
-  mEntry <- mkMain tokMap
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m5str <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> [mEntryArg] <> mGetArgs <> mStdinReadAll <> userMs <> [mEntry])
+  mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> assembleCilMethod stdinReadAllSpec else pure []
+  -- Every user declaration goes through 'declCilMethod'. First-class function
+  -- values (closures) are the only Core shape it does not lower — but
+  -- 'LowerClosures' removes them all before codegen, so 'emitExprI' errors
+  -- rather than handling them (a probe confirmed 0 occurrences across the suite).
+  userMs <- traverse (assembleCilMethod . declCilMethod ctx) decls
+  mEntry <- assembleCilMethod mainSpec
+  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m5str <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> mEntryArg <> mGetArgs <> mStdinReadAll <> userMs <> [mEntry])
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -760,79 +664,8 @@ mkInit = do
 --   (concat result, or StringTooLong cell across the Left build).
 mkConcat :: AsmM MInfo
 mkConcat = do
-  ni <- w16 <$> addStr "__concat"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  -- LocalVarSig: 0x07, count=1, ELEMENT_TYPE_OBJECT (0x1C)
-  localTok <- addLocalSigBytes [0x07, 0x01, 0x1C]
   ptags <- askPreludeTags
-  let castStr = cilCastclass (tokTR trStr)
-      callLen = cilCallvirt (tokMR lengthRef)
-      boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      preamble =
-        cilLdarg 0
-          <> castStr
-          <> callLen
-          <> cilConvI8
-          <> cilLdarg 1
-          <> castStr
-          <> callLen
-          <> cilConvI8
-          <> [0x58] -- add
-          -- maxStringLengthUtf16CodeUnits = 134217728 = 2^27.
-          -- Keep in sync with 'maxStringLengthUtf16CodeUnits' in
-          -- 'stdlib/Prelude.aww' and the matching constants in
-          -- 'Awsum.Codegen.{LLVM,JVM,WASM,JS}'.
-          <> cilLdcI8 134217728
-      okBlock =
-        cilLdarg 0
-          <> cilLdarg 1
-          <> cilCall (tokMR 2) -- MemberRef 2 = String.Concat
-          <> cilStloc 0
-          -- Right(result): object[2] = [box(rightTag), result]
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilStelemRef
-          <> cilRet
-      tooLongBlock =
-        -- StringTooLong cell: object[1] = [box(stlTag)]
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptStringTooLong ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 0
-          -- Left cell: object[2] = [box(leftTag), StringTooLong cell]
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilStelemRef
-          <> cilRet
-      bgtOff = fromIntegral (length okBlock) :: Word8
-      code = preamble <> cilBgtUnS bgtOff <> okBlock <> tooLongBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (concatSpec (ptRight ptags) (ptLeft ptags) (ptStringTooLong ptags))
 
 -- | __print: low-level platform primitive driven by the prelude's
 --   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
@@ -841,25 +674,8 @@ mkConcat = do
 --   tag check.
 mkPrint :: AsmM MInfo
 mkPrint = do
-  ni <- w16 <$> addStr "__print"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      -- Build Unit value: object[1] = [boxed Int32(unitTag)]
-      buildUnit =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptUnit ptags)
-          <> boxInt32
-          <> cilStelemRef
-      code = cilLdarg 0 <> cilCall (tokMR 3) <> buildUnit <> cilRet -- MemberRef 3 = Console.Write
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  assembleCilMethod (printSpec (ptUnit ptags))
 
 -- | predInt32: Int32 -> Either UnderflowError Int32.
 --   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predInt32Method'.
@@ -867,125 +683,14 @@ mkPrint = do
 --   instance held across the Left-array build).
 mkPredInt32 :: AsmM MInfo
 mkPredInt32 = do
-  ni <- w16 <$> addStr "__predInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- LocalVarSig: 0x07, count=2, ELEMENT_TYPE_I4 (0x08), ELEMENT_TYPE_OBJECT (0x1C)
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptUnderflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdcI4 1
-          <> cilSub
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 (-2147483648)
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (predInt32Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | predUInt8: UInt8 -> Either UnderflowError UInt8.
 mkPredUInt8 :: AsmM MInfo
 mkPredUInt8 = do
-  ni <- w16 <$> addStr "__predUInt8"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptUnderflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdcI4 1
-          <> cilSub
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 0
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (predUInt8Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | succInt32: Int32 -> Either OverflowError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.succInt32Method'. Mirror of
@@ -994,63 +699,8 @@ mkPredUInt8 = do
 --   so the Left-branch encoding is identical.
 mkSuccInt32 :: AsmM MInfo
 mkSuccInt32 = do
-  ni <- w16 <$> addStr "__succInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdcI4 1
-          <> cilAdd
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 2147483647
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (succInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | succUInt8: UInt8 -> Either OverflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.succUInt8Method'. Same local
@@ -1058,101 +708,19 @@ mkSuccInt32 = do
 --   'ldc.i4' since it's outside the signed-byte range of 'ldc.i4.s').
 mkSuccUInt8 :: AsmM MInfo
 mkSuccUInt8 = do
-  ni <- w16 <$> addStr "__succUInt8"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdcI4 1
-          <> cilAdd
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 255
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (succUInt8Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | eqInt32 / eqUInt8: two integers of the same type → Bool.
 --   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.eqMethod'.
 --   Both Int32 and UInt8 are boxed as System.Int32 (how CIntLit emits
 --   them), so the two methods share a single builder parameterised by
 --   name. No locals — both args are unboxed directly onto the eval
---   stack before 'bne.un.s', so mLocalSigTok = 0 (tiny header is fine).
-mkEq :: Text -> AsmM MInfo
-mkEq methodName = do
-  ni <- w16 <$> addStr methodName
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
+--   stack before 'bne.un', so mLocalSigTok = 0 (tiny header is fine).
+mkEq :: Text -> Text -> AsmM MInfo
+mkEq methodName lbl = do
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      boolBox tagVal =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 tagVal
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      equalBlock = boolBox (ptTrue ptags)
-      notEqualBlock = boolBox (ptFalse ptags)
-      branchOffset = fromIntegral (length equalBlock) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilBneUnS branchOffset
-          <> equalBlock
-          <> notEqualBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  assembleCilMethod (eqSpec methodName lbl (ptTrue ptags) (ptFalse ptags))
 
 -- | eqString : String -> String -> Bool.
 --   Binary equivalent of 'Awsum.Codegen.CLR.eqStringMethod'. Inputs are
@@ -1163,211 +731,31 @@ mkEq methodName = do
 --   shape (no locals, no try/catch).
 mkEqString :: AsmM MInfo
 mkEqString = do
-  ni <- w16 <$> addStr "__eqString"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  -- Signature: DEFAULT (0x00), 2 params, returns BOOLEAN (0x02), both
-  -- params STRING (0x0E). System.String::op_Equality(string, string).
-  opEqRef <- addMemberRef (mrpTR trStr) "op_Equality" [0x00, 0x02, 0x02, etString, etString]
   ptags <- askPreludeTags
-  let castStr = cilCastclass (tokTR trStr)
-      boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      boolBox tagVal =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 tagVal
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      equalBlock = boolBox (ptTrue ptags)
-      notEqualBlock = boolBox (ptFalse ptags)
-      branchOffset = fromIntegral (length equalBlock) :: Int32
-      code =
-        cilLdarg 0
-          <> castStr
-          <> cilLdarg 1
-          <> castStr
-          <> cilCall (tokMR opEqRef)
-          <> cilBrfalse branchOffset
-          <> equalBlock
-          <> notEqualBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  assembleCilMethod (eqStringSpec (ptTrue ptags) (ptFalse ptags))
 
 -- | addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.addInt32Method'. Locals
 --   layout: V_0/V_1 = unboxed int operands, V_2 = wrapping sum,
 --   V_3 = inner @CCon@ Object[1], V_4 = row Object[2]. Overflow
---   detection uses the XOR trick — same logic as the JVM 'mkAddInt32',
---   single-block, no try/catch. The error side wraps three nested
+--   detection uses the int sign-bit XOR trick, single-block, no
+--   try/catch. The error side wraps three nested
 --   Object[]s: inner (single-ctor tag 0), row (FNV-1a tag of label),
 --   outer Left (tag 0). Mirrors what surface @Left UnderflowError@
 --   would lower to.
 mkAddInt32 :: AsmM MInfo
 mkAddInt32 = do
-  ni <- w16 <$> addStr "__addInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x08, 0x1C, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      makeLeft innerTag rowTagBytes =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 innerTag
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 3
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> rowTagBytes
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 3
-          <> cilStelemRef
-          <> cilStloc 4
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 4
-          <> cilStelemRef
-          <> cilRet
-      overBlock = makeLeft (ptOverflowError ptags) (cilLdcI4 overflowRowTagInt)
-      underBlock = makeLeft (ptUnderflowError ptags) (cilLdcI4 underflowRowTagInt)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 2
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      blt2Off = fromIntegral (length overBlock) :: Word8
-      overSplit =
-        cilLdloc 0
-          <> cilLdcI4 0
-          <> cilBltS blt2Off
-      blt1Off = fromIntegral (length okBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 1
-          <> cilLdloc 0
-          <> cilLdloc 1
-          <> cilAdd
-          <> cilStloc 2
-          <> cilLdloc 0
-          <> cilLdloc 2
-          <> cilXor
-          <> cilLdloc 1
-          <> cilLdloc 2
-          <> cilXor
-          <> cilAnd
-          <> cilLdcI4 0
-          <> cilBltS blt1Off -- if (a^sum)&(b^sum) < 0 → overSplit
-      code =
-        preamble
-          <> okBlock
-          <> overSplit
-          <> overBlock
-          <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (addInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags))
 
 -- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.addUInt8Method'. Both
 --   inputs are 0..255 so 'add' yields 0..510 in i32 and a single
---   'ble.s' against 255 picks the branch — no widening needed.
+--   'ble' against 255 picks the branch — no widening needed.
 mkAddUInt8 :: AsmM MInfo
 mkAddUInt8 = do
-  ni <- w16 <$> addStr "__addUInt8"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      overBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      bleOff = fromIntegral (length overBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilAdd
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 255
-          <> cilBleS bleOff
-      code =
-        preamble
-          <> overBlock
-          <> okBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (addUInt8Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
 
 -- | subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.subInt32Method'. Same XOR
@@ -1375,97 +763,8 @@ mkAddUInt8 = do
 --   the preamble. Same row-tagged error encoding.
 mkSubInt32 :: AsmM MInfo
 mkSubInt32 = do
-  ni <- w16 <$> addStr "__subInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x08, 0x1C, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      makeLeft innerTag rowTagBytes =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 innerTag
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 3
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> rowTagBytes
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 3
-          <> cilStelemRef
-          <> cilStloc 4
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 4
-          <> cilStelemRef
-          <> cilRet
-      overBlock = makeLeft (ptOverflowError ptags) (cilLdcI4 overflowRowTagInt)
-      underBlock = makeLeft (ptUnderflowError ptags) (cilLdcI4 underflowRowTagInt)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 2
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      blt2Off = fromIntegral (length overBlock) :: Word8
-      overSplit =
-        cilLdloc 0
-          <> cilLdcI4 0
-          <> cilBltS blt2Off
-      blt1Off = fromIntegral (length okBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 1
-          <> cilLdloc 0
-          <> cilLdloc 1
-          <> cilSub
-          <> cilStloc 2
-          <> cilLdloc 0
-          <> cilLdloc 1
-          <> cilXor
-          <> cilLdloc 0
-          <> cilLdloc 2
-          <> cilXor
-          <> cilAnd
-          <> cilLdcI4 0
-          <> cilBltS blt1Off -- if (a^b)&(a^diff) < 0 → overSplit
-      code =
-        preamble
-          <> okBlock
-          <> overSplit
-          <> overBlock
-          <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (subInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags))
 
 -- | mulInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.mulInt32Method'. Both
@@ -1476,103 +775,8 @@ mkSubInt32 = do
 --   V_3 = inner @CCon@ Object[1], V_4 = row Object[2].
 mkMulInt32 :: AsmM MInfo
 mkMulInt32 = do
-  ni <- w16 <$> addStr "__mulInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x05, 0x08, 0x08, 0x0A, 0x1C, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      makeLeft innerTag rowTagBytes =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 innerTag
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 3
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> rowTagBytes
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 3
-          <> cilStelemRef
-          <> cilStloc 4
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 4
-          <> cilStelemRef
-          <> cilRet
-      overBlock = makeLeft (ptOverflowError ptags) (cilLdcI4 overflowRowTagInt)
-      underBlock = makeLeft (ptUnderflowError ptags) (cilLdcI4 underflowRowTagInt)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 2
-          <> [0x69]
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      -- After the second 'blt' branch (which can take us to underBlock),
-      -- the next bytes are the ok block. To reach overBlock we have to
-      -- step past okBlock; to reach underBlock we step past okBlock and
-      -- overBlock. Both branches use the 4-byte forms (cilBgt/cilBlt)
-      -- since their relative offsets can exceed 1 byte.
-      bltUnderOff = fromIntegral (length okBlock + length overBlock) :: Int32
-      checkLower =
-        cilLdloc 2
-          <> cilLdcI4 (-2147483648)
-          <> cilConvI8
-          <> cilBlt bltUnderOff
-      bgtOverOff = fromIntegral (length checkLower + length okBlock) :: Int32
-      checkUpper =
-        cilLdloc 2
-          <> cilLdcI4 2147483647
-          <> cilConvI8
-          <> cilBgt bgtOverOff
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 1
-          <> cilLdloc 0
-          <> cilConvI8
-          <> cilLdloc 1
-          <> cilConvI8
-          <> cilMul
-          <> cilStloc 2
-      code =
-        preamble
-          <> checkUpper
-          <> checkLower
-          <> okBlock
-          <> overBlock
-          <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (mulInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags))
 
 -- | negInt32: Int32 -> Either OverflowError Int32.
 --   Binary equivalent of 'Awsum.Codegen.CLR.negInt32Method'. Mirror of
@@ -1581,129 +785,17 @@ mkMulInt32 = do
 --   the Left-branch encoding is identical to 'mkSuccInt32'.
 mkNegInt32 :: AsmM MInfo
 mkNegInt32 = do
-  ni <- w16 <$> addStr "__negInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilNeg
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 (-2147483648)
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (negInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.subUInt8Method'. Both
 --   inputs are 0..255 so 'sub' yields a value in -255..255 in i32 and
---   a single 'blt.s' against 0 picks the underflow branch.
+--   a single 'blt' against 0 picks the underflow branch.
 mkSubUInt8 :: AsmM MInfo
 mkSubUInt8 = do
-  ni <- w16 <$> addStr "__subUInt8"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      underBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptUnderflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      bltOff = fromIntegral (length okBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilSub
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 0
-          <> cilBltS bltOff
-      code =
-        preamble
-          <> okBlock
-          <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (subUInt8Spec (ptRight ptags) (ptUnderflowError ptags) (ptLeft ptags))
 
 -- | mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
 --   Binary equivalent of 'Awsum.Codegen.CLR.mulUInt8Method'. Same shape
@@ -1711,66 +803,8 @@ mkSubUInt8 = do
 --   value in 0..65025 in i32 from inputs in 0..255.
 mkMulUInt8 :: AsmM MInfo
 mkMulUInt8 = do
-  ni <- w16 <$> addStr "__mulUInt8"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      overBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      bleOff = fromIntegral (length overBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilMul
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 255
-          <> cilBleS bleOff
-      code =
-        preamble
-          <> overBlock
-          <> okBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (mulUInt8Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
 
 -- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
 --   Binary equivalent of 'Awsum.Codegen.CLR.splitOnFirstMethod'. Defers
@@ -1788,308 +822,19 @@ mkMulUInt8 = do
 --   prefix/suffix, 5 = boxed Tuple2 held before the Just wrap.
 mkSplitOnFirst :: AsmM MInfo
 mkSplitOnFirst = do
-  ni <- w16 <$> addStr "__splitOnFirst"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  trStrCmp <- addTypeRef (resScopeAR 1) "StringComparison" "System"
-  -- IndexOf(string, valuetype StringComparison): build the sig blob by
-  -- hand because 'sigInstance' takes one byte per param, and a
-  -- valuetype param is encoded as ELEMENT_TYPE_VALUETYPE (0x11) followed
-  -- by a compressed TypeDefOrRefOrSpecEncoded token (TypeRef tag = 1,
-  -- so the encoded value is `(row << 2) | 1`).
-  let strCmpEnc = compressU ((trStrCmp `shiftL` 2) .|. 1)
-      indexOfSig = [0x20, 2, 0x08, etString, 0x11] <> strCmpEnc
-  indexOfRef <- addMemberRef (mrpTR trStr) "IndexOf" indexOfSig
-  substring2Ref <- addMemberRef (mrpTR trStr) "Substring" (sigInstance etString [0x08, 0x08])
-  substring1Ref <- addMemberRef (mrpTR trStr) "Substring" (sigInstance etString [0x08])
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  -- locals: 6 (string V_0, string V_1, int32 V_2, string V_3, string V_4, object V_5)
-  localTok <- addLocalSigBytes [0x07, 0x06, etString, etString, 0x08, etString, etString, etObject]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      castStr = cilCastclass (tokTR trStr)
-      nothingBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptNothing ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      foundBlock =
-        cilLdloc 1
-          <> cilLdcI4 0
-          <> cilLdloc 2
-          <> cilCallvirt (tokMR substring2Ref)
-          <> cilStloc 3
-          <> cilLdloc 1
-          <> cilLdloc 2
-          <> cilLdloc 0
-          <> cilCallvirt (tokMR lengthRef)
-          <> cilAdd
-          <> cilCallvirt (tokMR substring1Ref)
-          <> cilStloc 4
-          <> cilLdcI4 3
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptTuple2 ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 3
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 2
-          <> cilLdloc 4
-          <> cilStelemRef
-          <> cilStloc 5
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptJust ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 5
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length nothingBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> castStr
-          <> cilStloc 0
-          <> cilLdarg 1
-          <> castStr
-          <> cilStloc 1
-          <> cilLdloc 1
-          <> cilLdloc 0
-          <> cilLdcI4 4 -- StringComparison.Ordinal
-          <> cilCallvirt (tokMR indexOfRef)
-          <> cilStloc 2
-          <> cilLdloc 2
-          <> cilLdcI4 (-1)
-          <> cilBneUnS branchOffset
-      code = preamble <> nothingBlock <> foundBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (splitOnFirstSpec (ptNothing ptags) (ptTuple2 ptags) (ptJust ptags))
 
 -- | parseInt32: String -> Either ParseError Int32. Binary equivalent
---   of 'Awsum.Codegen.CLR.parseInt32Method'. Same handrolled algorithm
---   as the JVM and LLVM helpers — int64 accumulator capped at the
---   magnitude `|minInt32|`. The constant 2147483648 is built with the
---   shift trick `1 << 31`.
+--   of 'Awsum.Codegen.CLR.parseInt32Method'. A handrolled decimal parser
+--   — int64 accumulator capped at the magnitude `|minInt32|`. The
+--   constant 2147483648 is built with the shift trick `1 << 31`.
 --   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int neg,
 --   4 = int64 acc, 5 = int c, 6 = object (Left payload on fail).
 mkParseInt32 :: AsmM MInfo
 mkParseInt32 = do
-  ni <- w16 <$> addStr "__parseInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  localTok <- addLocalSigBytes [0x07, 0x07, etString, 0x08, 0x08, 0x08, 0x0A, 0x08, etObject]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      castStr = cilCastclass (tokTR trStr)
-      callLength = cilCallvirt (tokMR lengthRef)
-      callChars = cilCallvirt (tokMR charsRef)
-      -- ───── code blocks (offsets computed bottom-up) ─────
-      -- A: load arg → s, get length → len
-      blockA =
-        cilLdarg 0
-          <> castStr
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> callLength
-          <> cilStloc 1
-      lenA = length blockA
-      -- B: ldloc len; brfalse L_fail
-      blockB = cilLdloc 1
-      lenB = length blockB
-      brfalse1At = lenA + lenB
-      after1 = brfalse1At + 5
-      -- C: i=0; neg=0
-      blockC = cilLdcI4 0 <> cilStloc 2 <> cilLdcI4 0 <> cilStloc 3
-      lenC = length blockC
-      -- D: charAt(0); push 45
-      blockD =
-        cilLdloc 0
-          <> cilLdcI4 0
-          <> callChars
-          <> cilLdcI4 45
-      lenD = length blockD
-      bneAt = after1 + lenC + lenD
-      after2 = bneAt + 2
-      -- F: minus path setup
-      blockF =
-        cilLdcI4 1
-          <> cilStloc 3
-          <> cilLdcI4 1
-          <> cilStloc 2
-          <> cilLdloc 1
-          <> cilLdcI4 1
-      lenF = length blockF
-      beq1At = after2 + lenF
-      initAccAt = beq1At + 5
-      -- H: acc = 0L
-      blockH = cilLdcI4 0 <> cilConvI8 <> cilStloc 4
-      lenH = length blockH
-      loopAt = initAccAt + lenH
-      -- I: ldloc i; ldloc len
-      blockI = cilLdloc 2 <> cilLdloc 1
-      lenI = length blockI
-      bgeAfterAt = loopAt + lenI
-      afterBge = bgeAfterAt + 5
-      -- K: charAt(i); stloc 5
-      blockK = cilLdloc 0 <> cilLdloc 2 <> callChars <> cilStloc 5
-      lenK = length blockK
-      -- L: ldloc 5; ldc 48
-      blockL = cilLdloc 5 <> cilLdcI4 48
-      lenL = length blockL
-      bltLowAt = afterBge + lenK + lenL
-      afterBltLow = bltLowAt + 5
-      -- N: ldloc 5; ldc 57
-      blockN = cilLdloc 5 <> cilLdcI4 57
-      lenN = length blockN
-      bgtHighAt = afterBltLow + lenN
-      afterBgtHigh = bgtHighAt + 5
-      -- P: acc = acc * 10 + (c - '0')
-      blockP =
-        cilLdloc 4
-          <> cilLdcI4 10
-          <> cilConvI8
-          <> cilMul
-          <> cilLdloc 5
-          <> cilLdcI4 48
-          <> cilSub
-          <> cilConvI8
-          <> cilAdd
-          <> cilStloc 4
-      lenP = length blockP
-      -- Q: ldloc acc; (1 << 31)L
-      blockQ =
-        cilLdloc 4
-          <> cilLdcI4 1
-          <> cilConvI8
-          <> cilLdcI4 31
-          <> cilShl
-      lenQ = length blockQ
-      bgtAccAt = afterBgtHigh + lenP + lenQ
-      afterBgtAcc = bgtAccAt + 5
-      -- S: i++
-      blockS = cilLdloc 2 <> cilLdcI4 1 <> cilAdd <> cilStloc 2
-      lenS = length blockS
-      brLoopAt = afterBgtAcc + lenS
-      afterBrLoop = brLoopAt + 5
-      -- T (after_loop): ldloc neg
-      blockT = cilLdloc 3
-      lenT = length blockT
-      brfalseNegAt = afterBrLoop + lenT
-      afterBrfalseNeg = brfalseNegAt + 5
-      -- U: acc = -acc
-      blockU = cilLdloc 4 <> cilNeg <> cilStloc 4
-      lenU = length blockU
-      brBuildAt = afterBrfalseNeg + lenU
-      posCheckAt = brBuildAt + 5
-      -- V: ldloc acc; INT_MAX as long
-      blockV = cilLdloc 4 <> cilLdcI4 2147483647 <> cilConvI8
-      lenV = length blockV
-      bgtPosAt = posCheckAt + lenV
-      buildRightAt = bgtPosAt + 5
-      -- X: build Right
-      blockX =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 4
-          <> cilConvI4
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      lenX = length blockX
-      failAt = buildRightAt + lenX
-      blockY =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptParseError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 6
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 6
-          <> cilStelemRef
-          <> cilRet
-      -- Branch offsets (from byte after the branch to target)
-      brfalse1Off = fromIntegral (failAt - after1) :: Int32
-      bneOff = fromIntegral (initAccAt - after2) :: Word8
-      beq1Off = fromIntegral (failAt - initAccAt) :: Int32
-      bgeAfterOff = fromIntegral (afterBrLoop - afterBge) :: Int32
-      bltLowOff = fromIntegral (failAt - afterBltLow) :: Int32
-      bgtHighOff = fromIntegral (failAt - afterBgtHigh) :: Int32
-      bgtAccOff = fromIntegral (failAt - afterBgtAcc) :: Int32
-      brLoopOff = fromIntegral (loopAt - afterBrLoop) :: Int32
-      brfalseNegOff = fromIntegral (posCheckAt - afterBrfalseNeg) :: Int32
-      brBuildOff = fromIntegral (buildRightAt - (brBuildAt + 5)) :: Int32
-      bgtPosOff = fromIntegral (failAt - buildRightAt) :: Int32
-      code =
-        blockA
-          <> blockB
-          <> cilBrfalse brfalse1Off
-          <> blockC
-          <> blockD
-          <> cilBneUnS bneOff
-          <> blockF
-          <> cilBeq beq1Off
-          <> blockH
-          <> blockI
-          <> cilBge bgeAfterOff
-          <> blockK
-          <> blockL
-          <> cilBlt bltLowOff
-          <> blockN
-          <> cilBgt bgtHighOff
-          <> blockP
-          <> blockQ
-          <> cilBgt bgtAccOff
-          <> blockS
-          <> cilBr brLoopOff
-          <> blockT
-          <> cilBrfalse brfalseNegOff
-          <> blockU
-          <> cilBr brBuildOff
-          <> blockV
-          <> cilBgt bgtPosOff
-          <> blockX
-          <> blockY
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (parseInt32Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags))
 
 -- | parseUInt8: String -> Either ParseError UInt8. Same shape as
 --   'mkParseInt32' minus the sign handling — UInt8 cannot represent a
@@ -2099,218 +844,217 @@ mkParseInt32 = do
 --   4 = int c, 5 = object (Left payload on fail).
 mkParseUInt8 :: AsmM MInfo
 mkParseUInt8 = do
-  ni <- w16 <$> addStr "__parseUInt8"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  localTok <- addLocalSigBytes [0x07, 0x06, etString, 0x08, 0x08, 0x08, 0x08, etObject]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      castStr = cilCastclass (tokTR trStr)
-      callLength = cilCallvirt (tokMR lengthRef)
-      callChars = cilCallvirt (tokMR charsRef)
-      blockA =
-        cilLdarg 0
-          <> castStr
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> callLength
-          <> cilStloc 1
-      lenA = length blockA
-      blockB = cilLdloc 1
-      lenB = length blockB
-      brfalse1At = lenA + lenB
-      after1 = brfalse1At + 5
-      blockC = cilLdcI4 0 <> cilStloc 2 <> cilLdcI4 0 <> cilStloc 3
-      lenC = length blockC
-      loopAt = after1 + lenC
-      blockI = cilLdloc 2 <> cilLdloc 1
-      lenI = length blockI
-      bgeAt = loopAt + lenI
-      afterBge = bgeAt + 5
-      blockK = cilLdloc 0 <> cilLdloc 2 <> callChars <> cilStloc 4
-      lenK = length blockK
-      blockL = cilLdloc 4 <> cilLdcI4 48
-      lenL = length blockL
-      bltAt = afterBge + lenK + lenL
-      afterBlt = bltAt + 5
-      blockN = cilLdloc 4 <> cilLdcI4 57
-      lenN = length blockN
-      bgtCharAt = afterBlt + lenN
-      afterBgtChar = bgtCharAt + 5
-      blockP =
-        cilLdloc 3
-          <> cilLdcI4 10
-          <> cilMul
-          <> cilLdloc 4
-          <> cilLdcI4 48
-          <> cilSub
-          <> cilAdd
-          <> cilStloc 3
-      lenP = length blockP
-      blockQ = cilLdloc 3 <> cilLdcI4 255
-      lenQ = length blockQ
-      bgtAccAt = afterBgtChar + lenP + lenQ
-      afterBgtAcc = bgtAccAt + 5
-      blockS = cilLdloc 2 <> cilLdcI4 1 <> cilAdd <> cilStloc 2
-      lenS = length blockS
-      brLoopAt = afterBgtAcc + lenS
-      okAt = brLoopAt + 5
-      blockX =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 3
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      lenX = length blockX
-      failAt = okAt + lenX
-      blockY =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptParseError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 5
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 5
-          <> cilStelemRef
-          <> cilRet
-      brfalse1Off = fromIntegral (failAt - after1) :: Int32
-      bgeOff = fromIntegral (okAt - afterBge) :: Int32
-      bltOff = fromIntegral (failAt - afterBlt) :: Int32
-      bgtCharOff = fromIntegral (failAt - afterBgtChar) :: Int32
-      bgtAccOff = fromIntegral (failAt - afterBgtAcc) :: Int32
-      brLoopOff = fromIntegral (loopAt - okAt) :: Int32
-      code =
-        blockA
-          <> blockB
-          <> cilBrfalse brfalse1Off
-          <> blockC
-          <> blockI
-          <> cilBge bgeOff
-          <> blockK
-          <> blockL
-          <> cilBlt bltOff
-          <> blockN
-          <> cilBgt bgtCharOff
-          <> blockP
-          <> blockQ
-          <> cilBgt bgtAccOff
-          <> blockS
-          <> cilBr brLoopOff
-          <> blockX
-          <> blockY
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (parseUInt8Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags))
+
+-- | Byte projection of a 'CilMethod' (the binary counterpart of
+--   'Awsum.Codegen.CLR.Instr.renderCilMethod'): resolve every symbolic operand
+--   to its metadata token and emit the CIL byte stream + 'MInfo'. @.maxstack@
+--   comes from the spec (derived by 'maxStackOf').
+assembleCilMethod :: CilMethod -> AsmM MInfo
+assembleCilMethod m = do
+  ni <- w16 <$> addStr (cmName m)
+  retBytes <- sigElemBytes (cmRet m)
+  paramBytes <- concat <$> traverse sigElemBytes (cmParams m)
+  si <- w16 <$> addBlob ([0x00, fromIntegral (length (cmParams m))] <> retBytes <> paramBytes)
+  ps <- addParams (length (cmParams m))
+  localTok <-
+    if null (cmLocals m)
+      then pure 0
+      else do
+        localBytes <- concat <$> traverse sigElemBytes (cmLocals m)
+        addLocalSigBytes ((0x07 : compressU (fromIntegral (length (cmLocals m)))) <> localBytes)
+  code <- emitBody (cmBody m)
+  pure
+    MInfo
+      { mImplFlags = 0,
+        mFlags = 0x0091,
+        mName = ni,
+        mSig = si,
+        mParamList = ps,
+        mCode = code,
+        mLocalSigTok = localTok,
+        mMaxStack = fromIntegral (maxStackOf (cmBody m))
+      }
+  where
+    -- A signature element as blob bytes. Flat element types are a single byte;
+    -- @class@ / @valuetype@ are 0x12 / 0x11 followed by a compressed
+    -- TypeDefOrRef-coded token (so this is monadic — it interns the typeref).
+    sigElemBytes :: SigElem -> AsmM [Word8]
+    sigElemBytes = \case
+      SeObject -> pure [0x1C]
+      SeString -> pure [0x0E]
+      SeInt32 -> pure [0x08]
+      SeInt64 -> pure [0x0A]
+      SeChar -> pure [0x03]
+      SeBool -> pure [0x02]
+      SeVoid -> pure [0x01]
+      SeClass tr -> tdorBytes 0x12 tr
+      SeValueType tr -> tdorBytes 0x11 tr
+      SeSZArray e -> (0x1D :) <$> sigElemBytes e
+      where
+        tdorBytes prefix (CilTypeRef asm ns name) = do
+          r <- addTypeRef (resScopeAR (fromIntegral asm)) name ns
+          pure (prefix : compressU (fromIntegral (tdorTR r)))
+    trTok :: CilTypeRef -> AsmM Word32
+    trTok (CilTypeRef asm ns name) = tokTR <$> addTypeRef (resScopeAR (fromIntegral asm)) name ns
+    mrTok :: CilMemberRef -> AsmM Word32
+    mrTok (CilMemberRef parent name isInst ret params) = do
+      pr <- addTypeRef (resScopeAR (fromIntegral parent.ctrAsm)) parent.ctrName parent.ctrNs
+      retB <- sigElemBytes ret
+      paramBs <- concat <$> traverse sigElemBytes params
+      let sig = [if isInst then 0x20 else 0x00, fromIntegral (length params)] <> retB <> paramBs
+      tokMR <$> addMemberRef (mrpTR pr) name sig
+    -- Pure byte length of one instruction. Token-bearing instructions are a
+    -- fixed 5 bytes regardless of the resolved token, so branch-offset
+    -- resolution needs no metadata-table state.
+    instrLen :: CilInstr -> Int
+    instrLen = \case
+      Ldarg n -> if n <= 3 then 1 else if n <= 255 then 2 else 4
+      Ldloc n -> if n <= 3 then 1 else if n <= 255 then 2 else 4
+      Stloc n -> if n <= 3 then 1 else if n <= 255 then 2 else 4
+      Starg n -> if n <= 255 then 2 else 4
+      LdcI4 n
+        | (n >= 0 && n <= 8) || n == -1 -> 1
+        | n >= -128 && n <= 127 -> 2
+        | otherwise -> 5
+      Dup -> 1
+      Pop -> 1
+      Newarr _ -> 5
+      StelemRef -> 1
+      LdelemRef -> 1
+      Box _ -> 5
+      UnboxAny _ -> 5
+      Castclass _ -> 5
+      CastObjArr -> 5
+      Call _ -> 5
+      Callvirt _ -> 5
+      Newobj _ -> 5
+      Ldlen -> 1
+      Ldstr _ -> 5
+      Ldnull -> 1
+      CallNamed _ _ -> 5
+      Add -> 1
+      Sub -> 1
+      Neg -> 1
+      Mul -> 1
+      Div -> 1
+      Xor -> 1
+      And -> 1
+      Shl -> 1
+      ConvI4 -> 1
+      ConvI8 -> 1
+      ConvU4 -> 1
+      ConvU8 -> 1
+      LdcI8 _ -> 9
+      BneUn _ -> 5
+      Brfalse _ -> 5
+      Brtrue _ -> 5
+      Br _ -> 5
+      Beq _ -> 5
+      Bge _ -> 5
+      Blt _ -> 5
+      Ble _ -> 5
+      Bgt _ -> 5
+      BgtUn _ -> 5
+      BltUn _ -> 5
+      Label _ -> 0
+      Ret -> 1
+    -- Byte offset of every label within the method body (labels are 0-width).
+    labelOffsets :: Map Text Int
+    labelOffsets = go 0 (cmBody m)
+      where
+        go _ [] = mempty
+        go off (Label (LabelId l) : rest) = Map.insert l off (go off rest)
+        go off (i : rest) = go (off + instrLen i) rest
+    -- A long branch's operand is the signed delta from the byte *after* the
+    -- 5-byte branch to the target label.
+    branchOff :: Int -> LabelId -> Int32
+    branchOff off (LabelId l) = case Map.lookup l labelOffsets of
+      Just tgt -> fromIntegral (tgt - (off + 5))
+      Nothing -> error ("CLR.Assemble.assembleCilMethod: undefined branch label " <> l)
+    emitBody :: [CilInstr] -> AsmM [Word8]
+    emitBody = go 0
+      where
+        go _ [] = pure []
+        go off (i : rest) = do
+          bs <- asmInstr off i
+          (bs <>) <$> go (off + instrLen i) rest
+    asmInstr :: Int -> CilInstr -> AsmM [Word8]
+    asmInstr off = \case
+      Ldarg n -> pure (cilLdarg n)
+      Ldloc n -> pure (cilLdloc n)
+      Stloc n -> pure (cilStloc n)
+      Starg n -> pure (cilStarg n)
+      LdcI4 n -> pure (cilLdcI4 n)
+      Dup -> pure cilDup
+      Pop -> pure cilPop
+      Newarr tr -> cilNewarr <$> trTok tr
+      StelemRef -> pure cilStelemRef
+      LdelemRef -> pure cilLdelemRef'
+      Box tr -> cilBox <$> trTok tr
+      UnboxAny tr -> cilUnboxAny <$> trTok tr
+      Castclass tr -> cilCastclass <$> trTok tr
+      CastObjArr -> cilCastclass . tokTS <$> addTypeSpec [0x1D, 0x1C]
+      Call mr -> cilCall <$> mrTok mr
+      Callvirt mr -> cilCallvirt <$> mrTok mr
+      Newobj mr -> cilNewobj <$> mrTok mr
+      Ldlen -> pure cilLdlen
+      Ldstr s -> cilLdstr <$> addUS s
+      Ldnull -> pure cilLdnull
+      CallNamed name _ -> do
+        tm <- gets pTokMap
+        pure (cilCall (fromMaybe (error ("CLR.Assemble: no token for " <> name)) (Map.lookup name tm)))
+      Add -> pure cilAdd
+      Sub -> pure cilSub
+      Neg -> pure cilNeg
+      Mul -> pure cilMul
+      Div -> pure cilDiv
+      Xor -> pure cilXor
+      And -> pure cilAnd
+      Shl -> pure cilShl
+      ConvI4 -> pure cilConvI4
+      ConvI8 -> pure cilConvI8
+      ConvU4 -> pure cilConvU4
+      ConvU8 -> pure cilConvU8
+      LdcI8 n -> pure (cilLdcI8 n)
+      BneUn l -> pure (cilBneUn (branchOff off l))
+      Brfalse l -> pure (cilBrfalse (branchOff off l))
+      Brtrue l -> pure (cilBrtrue (branchOff off l))
+      Br l -> pure (cilBr (branchOff off l))
+      Beq l -> pure (cilBeq (branchOff off l))
+      Bge l -> pure (cilBge (branchOff off l))
+      Blt l -> pure (cilBlt (branchOff off l))
+      Ble l -> pure (cilBle (branchOff off l))
+      Bgt l -> pure (cilBgt (branchOff off l))
+      BgtUn l -> pure (cilBgtUn (branchOff off l))
+      BltUn l -> pure (cilBltUn (branchOff off l))
+      Label _ -> pure []
+      Ret -> pure cilRet
 
 -- | showUInt32: UInt32 -> String. Re-box the Int32-shaped argument as
 --   System.UInt32 (bit pattern preserved) and call the virtual ToString
 --   override on the boxed value, which prints the unsigned-decimal
 --   representation. Avoids a long-arith dance by leaning on the BCL.
 mkShowUInt32 :: AsmM MInfo
-mkShowUInt32 = do
-  ni <- w16 <$> addStr "__showUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trUInt32 <- addTypeRef (resScopeAR 1) "UInt32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  toStringRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
-  let code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilBox (tokTR trUInt32)
-          <> cilCallvirt (tokMR toStringRef)
-          <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+mkShowUInt32 = assembleCilMethod showUInt32Spec
 
 -- | lengthCodePoints: String -> UInt32. UTF-32 byte count divided by 4
 --   gives the code-point count exactly. Binary equivalent of
 --   'Awsum.Codegen.CLR.lengthCodePointsMethod'.
 mkLengthCodePoints :: AsmM MInfo
-mkLengthCodePoints = do
-  ni <- w16 <$> addStr "__lengthCodePoints"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  trEncoding <- addTypeRef (resScopeAR 1) "Encoding" "System.Text"
-  let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
-  getUtf32Ref <- addMemberRef (mrpTR trEncoding) "get_UTF32" ([0x00, 0x00] <> encodingClass)
-  getByteCountRef <- addMemberRef (mrpTR trEncoding) "GetByteCount" (sigInstance 0x08 [etString])
-  let code =
-        cilCall (tokMR getUtf32Ref)
-          <> cilLdarg 0
-          <> cilCastclass (tokTR trStr)
-          <> cilCallvirt (tokMR getByteCountRef)
-          <> cilLdcI4 4
-          <> [0x5B] -- div
-          <> cilBox (tokTR trInt32)
-          <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+mkLengthCodePoints = assembleCilMethod lengthCodePointsSpec
 
 -- | lengthUtf16CodeUnits: String -> UInt32. .NET strings are UTF-16
 --   internally, so 'String.Length' is the code-unit count by definition.
 mkLengthUtf16CodeUnits :: AsmM MInfo
-mkLengthUtf16CodeUnits = do
-  ni <- w16 <$> addStr "__lengthUtf16CodeUnits"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  let code =
-        cilLdarg 0
-          <> cilCastclass (tokTR trStr)
-          <> cilCallvirt (tokMR lengthRef)
-          <> cilBox (tokTR trInt32)
-          <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+mkLengthUtf16CodeUnits = assembleCilMethod lengthUtf16CodeUnitsSpec
 
 -- | lengthUtf8Bytes: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
 --   without materialising the bytes. Binary equivalent of
 --   'Awsum.Codegen.CLR.lengthUtf8BytesMethod'.
 mkLengthBytesAsUtf8 :: AsmM MInfo
-mkLengthBytesAsUtf8 = do
-  ni <- w16 <$> addStr "__lengthUtf8Bytes"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  trEncoding <- addTypeRef (resScopeAR 1) "Encoding" "System.Text"
-  let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
-  getUtf8Ref <- addMemberRef (mrpTR trEncoding) "get_UTF8" ([0x00, 0x00] <> encodingClass)
-  getByteCountRef <- addMemberRef (mrpTR trEncoding) "GetByteCount" (sigInstance 0x08 [etString])
-  let code =
-        cilCall (tokMR getUtf8Ref)
-          <> cilLdarg 0
-          <> cilCastclass (tokTR trStr)
-          <> cilCallvirt (tokMR getByteCountRef)
-          <> cilBox (tokTR trInt32)
-          <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+mkLengthBytesAsUtf8 = assembleCilMethod lengthUtf8BytesSpec
 
 -- | predUInt32: UInt32 -> Either UnderflowError UInt32. Boundary check is
 --   against 0 (same as 'mkPredUInt8'); the binary body is bit-identical
@@ -2318,63 +1062,8 @@ mkLengthBytesAsUtf8 = do
 --   but on the ok path v >= 1, so the result is in [0, 2^32-2] — no wrap.
 mkPredUInt32 :: AsmM MInfo
 mkPredUInt32 = do
-  ni <- w16 <$> addStr "__predUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptUnderflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdcI4 1
-          <> cilSub
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 0
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (predUInt32Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
 --   encoded as 'cilLdcI4 (-1)' (= 'ldc.i4.m1', identical bit pattern as
@@ -2382,198 +1071,28 @@ mkPredUInt32 = do
 --   is in [1, 2^32-1] — no wrap.
 mkSuccUInt32 :: AsmM MInfo
 mkSuccUInt32 = do
-  ni <- w16 <$> addStr "__succUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      overflow =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      okBranch =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdcI4 1
-          <> cilAdd
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      branchOffset = fromIntegral (length overflow) :: Word8
-      code =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI4 (-1)
-          <> cilBneUnS branchOffset
-          <> overflow
-          <> okBranch
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (succUInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
 
 -- | addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
 --   both operands to uint64 via 'conv.u8' (zero-extends a u32 bit pattern),
---   add, then 'bgt.un.s' against 4294967295L. The sum lives in
+--   add, then 'bgt.un' against 4294967295L. The sum lives in
 --   [0, 2*2^32-2] so the i64 add doesn't itself overflow.
 --   Locals: V_0 = int64 sum, V_1 = object (Left payload).
 mkAddUInt32 :: AsmM MInfo
 mkAddUInt32 = do
-  ni <- w16 <$> addStr "__addUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x0A, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilConvU4
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      overBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      bgtOff = fromIntegral (length okBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilConvU8
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilConvU8
-          <> cilAdd
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI8 4294967295
-          <> cilBgtUnS bgtOff
-      code = preamble <> okBlock <> overBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (addUInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
 
 -- | subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
---   @a < b@ unsigned via 'blt.un.s' on i32 stack values; on the ok path
+--   @a < b@ unsigned via 'blt.un' on i32 stack values; on the ok path
 --   'sub' at i32 gives the correct u32 difference (bit pattern of
 --   @a - b mod 2^32@ equals @a - b@ when a >= b unsigned).
 --   Locals: V_0 = int32 a, V_1 = int32 b, V_2 = object (Left payload).
 mkSubUInt32 :: AsmM MInfo
 mkSubUInt32 = do
-  ni <- w16 <$> addStr "__subUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x03, 0x08, 0x08, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilLdloc 1
-          <> cilSub
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      underBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptUnderflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 2
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 2
-          <> cilStelemRef
-          <> cilRet
-      bltOff = fromIntegral (length okBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 0
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilStloc 1
-          <> cilLdloc 0
-          <> cilLdloc 1
-          <> cilBltUnS bltOff
-      code = preamble <> okBlock <> underBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (subUInt32Spec (ptRight ptags) (ptUnderflowError ptags) (ptLeft ptags))
 
 -- | mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
 --   both operands to uint64 via 'conv.u8', multiply at int64-stack
@@ -2583,66 +1102,8 @@ mkSubUInt32 = do
 --   Locals: V_0 = int64 product, V_1 = object (Left payload).
 mkMulUInt32 :: AsmM MInfo
 mkMulUInt32 = do
-  ni <- w16 <$> addStr "__mulUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 2)
-  ps <- addParams 2
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  localTok <- addLocalSigBytes [0x07, 0x02, 0x0A, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 0
-          <> cilConvU4
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      overBlock =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptOverflowError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 1
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 1
-          <> cilStelemRef
-          <> cilRet
-      bgtOff = fromIntegral (length okBlock) :: Word8
-      preamble =
-        cilLdarg 0
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilConvU8
-          <> cilLdarg 1
-          <> cilUnboxAny (tokTR trInt32)
-          <> cilConvU8
-          <> cilMul
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilLdcI8 4294967295
-          <> cilBgtUnS bgtOff
-      code = preamble <> okBlock <> overBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (mulUInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
 
 -- | parseUInt32: String -> Either ParseError UInt32. Same shape as
 --   'mkParseUInt8' but with an int64 accumulator and a > 4294967295L
@@ -2652,134 +1113,8 @@ mkMulUInt32 = do
 --   4 = int c, 5 = object (Left payload on fail).
 mkParseUInt32 :: AsmM MInfo
 mkParseUInt32 = do
-  ni <- w16 <$> addStr "__parseUInt32"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  localTok <- addLocalSigBytes [0x07, 0x06, etString, 0x08, 0x08, 0x0A, 0x08, etObject]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      castStr = cilCastclass (tokTR trStr)
-      callLength = cilCallvirt (tokMR lengthRef)
-      callChars = cilCallvirt (tokMR charsRef)
-      blockA =
-        cilLdarg 0
-          <> castStr
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> callLength
-          <> cilStloc 1
-      lenA = length blockA
-      blockB = cilLdloc 1
-      lenB = length blockB
-      brfalse1At = lenA + lenB
-      after1 = brfalse1At + 5
-      blockC = cilLdcI4 0 <> cilStloc 2 <> cilLdcI4 0 <> cilConvI8 <> cilStloc 3
-      lenC = length blockC
-      loopAt = after1 + lenC
-      blockI = cilLdloc 2 <> cilLdloc 1
-      lenI = length blockI
-      bgeAt = loopAt + lenI
-      afterBge = bgeAt + 5
-      blockK = cilLdloc 0 <> cilLdloc 2 <> callChars <> cilStloc 4
-      lenK = length blockK
-      blockL = cilLdloc 4 <> cilLdcI4 48
-      lenL = length blockL
-      bltAt = afterBge + lenK + lenL
-      afterBlt = bltAt + 5
-      blockN = cilLdloc 4 <> cilLdcI4 57
-      lenN = length blockN
-      bgtCharAt = afterBlt + lenN
-      afterBgtChar = bgtCharAt + 5
-      blockP =
-        cilLdloc 3
-          <> cilLdcI4 10
-          <> cilConvI8
-          <> cilMul
-          <> cilLdloc 4
-          <> cilLdcI4 48
-          <> cilSub
-          <> cilConvI8
-          <> cilAdd
-          <> cilStloc 3
-      lenP = length blockP
-      blockQ = cilLdloc 3 <> cilLdcI8 4294967295
-      lenQ = length blockQ
-      bgtAccAt = afterBgtChar + lenP + lenQ
-      afterBgtAcc = bgtAccAt + 5
-      blockS = cilLdloc 2 <> cilLdcI4 1 <> cilAdd <> cilStloc 2
-      lenS = length blockS
-      brLoopAt = afterBgtAcc + lenS
-      okAt = brLoopAt + 5
-      blockX =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 3
-          <> cilConvU4
-          <> boxInt32
-          <> cilStelemRef
-          <> cilRet
-      lenX = length blockX
-      failAt = okAt + lenX
-      blockY =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptParseError ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 5
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 5
-          <> cilStelemRef
-          <> cilRet
-      brfalse1Off = fromIntegral (failAt - after1) :: Int32
-      bgeOff = fromIntegral (okAt - afterBge) :: Int32
-      bltOff = fromIntegral (failAt - afterBlt) :: Int32
-      bgtCharOff = fromIntegral (failAt - afterBgtChar) :: Int32
-      bgtAccOff = fromIntegral (failAt - afterBgtAcc) :: Int32
-      brLoopOff = fromIntegral (loopAt - okAt) :: Int32
-      code =
-        blockA
-          <> blockB
-          <> cilBrfalse brfalse1Off
-          <> blockC
-          <> blockI
-          <> cilBge bgeOff
-          <> blockK
-          <> blockL
-          <> cilBlt bltOff
-          <> blockN
-          <> cilBgt bgtCharOff
-          <> blockP
-          <> blockQ
-          <> cilBgt bgtAccOff
-          <> blockS
-          <> cilBr brLoopOff
-          <> blockX
-          <> blockY
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
+  assembleCilMethod (parseUInt32Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags))
 
 -- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
 --   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
@@ -2797,451 +1132,13 @@ mkParseUInt32 = do
 --     V_0 = string (after castclass), V_1 = length, V_2 = i,
 --     V_3 = expecting_low (0/1), V_4 = c & 0xFC00,
 --     V_5 = inner (transient), V_6 = row (transient).
---   No StackMapTable equivalent on CLR — the verifier infers types from
---   instruction history, so only the bytecode and the LocalVarSig matter.
+--   The verifier infers stack types from instruction history, so only the
+--   bytecode and the LocalVarSig matter — there are no per-label type frames
+--   to emit.
 mkEntryArgEither :: AsmM MInfo
 mkEntryArgEither = do
-  ni <- w16 <$> addStr "__entryArgEither"
-  si <- w16 <$> addBlob (sigStatic etObject 1)
-  ps <- addParams 1
-  trStr <- addTypeRef (resScopeAR 1) "String" "System"
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-  lengthRef <- addMemberRef (mrpTR trStr) "get_Length" (sigInstance 0x08 [])
-  charsRef <- addMemberRef (mrpTR trStr) "get_Chars" (sigInstance 0x03 [0x08])
-  -- LocalVarSig: 7 slots — V_0=String (0x0E), V_1..V_4=int32 (0x08), V_5..V_6=object (0x1C).
-  localTok <- addLocalSigBytes [0x07, 0x07, 0x0E, 0x08, 0x08, 0x08, 0x08, 0x1C, 0x1C]
   ptags <- askPreludeTags
-  let boxInt32 = cilBox (tokTR trInt32)
-      newarrObj = cilNewarr (tokTR trObj)
-      preamble =
-        cilLdarg 0
-          <> cilCastclass (tokTR trStr)
-          <> cilStloc 0
-          <> cilLdloc 0
-          <> cilCallvirt (tokMR lengthRef)
-          <> cilStloc 1
-          <> cilLdloc 1
-          -- maxStringLengthUtf16CodeUnits = 134217728 (= 2^27).
-          <> cilLdcI4 134217728
-      preLen :: Int
-      preLen = length preamble
-      ifGtLen :: Int
-      ifGtLen = 5 -- cilBgt long form
-      scanInit :: [Word8]
-      scanInit =
-        cilLdcI4 0
-          <> cilStloc 2
-          <> cilLdcI4 0
-          <> cilStloc 3
-      scanInitLen :: Int
-      scanInitLen = length scanInit
-      lScan :: Int
-      lScan = preLen + ifGtLen + scanInitLen
-      -- scanEntry: ldloc.2, ldloc.1, bge L_scan_done
-      scanEntryLen :: Int
-      scanEntryLen = 1 + 1 + 5
-      -- scanCharLoad: ldloc.0, ldloc.2, callvirt charsRef (5),
-      --               ldcI4 64512 (5), and (1), stloc.s 4 (2)
-      scanCharLoadLen :: Int
-      scanCharLoadLen = 1 + 1 + 5 + 5 + 1 + 2
-      -- scanDispatch: ldloc.3 (1), brtrue L_check_low (5)
-      scanDispatchLen :: Int
-      scanDispatchLen = 1 + 5
-      -- noLowExpected: ldloc.s 4 (2), ldcI4 56320 (5), beq L_unpaired (5),
-      --                ldloc.s 4 (2), ldcI4 55296 (5), bne.un L_inc (5),
-      --                ldcI4 1 (1), stloc 3 (1), br L_inc (5)
-      noLowExpectedLen :: Int
-      noLowExpectedLen = 2 + 5 + 5 + 2 + 5 + 5 + 1 + 1 + 5
-      lCheckLow :: Int
-      lCheckLow = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen + noLowExpectedLen
-      -- checkLowBlock: ldloc.s 4 (2), ldcI4 56320 (5), bne.un L_unpaired (5),
-      --                ldcI4 0 (1), stloc 3 (1), br L_inc (5)
-      checkLowLen :: Int
-      checkLowLen = 2 + 5 + 5 + 1 + 1 + 5
-      lInc :: Int
-      lInc = lCheckLow + checkLowLen
-      -- incBlock: ldloc.2 (1), ldcI4 1 (1), add (1), stloc.2 (1), br L_scan (5)
-      incLen :: Int
-      incLen = 1 + 1 + 1 + 1 + 5
-      lScanDone :: Int
-      lScanDone = lInc + incLen
-      -- trailingCheck: ldloc.3 (1), brtrue L_unpaired (5)
-      trailingCheckLen :: Int
-      trailingCheckLen = 1 + 5
-      okStart :: Int
-      okStart = lScanDone + trailingCheckLen
-      okBlock :: [Word8]
-      okBlock =
-        cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptRight ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdarg 0
-          <> cilStelemRef
-          <> cilRet
-      okLen :: Int
-      okLen = length okBlock
-      lTooLong :: Int
-      lTooLong = okStart + okLen
-      buildLeftBlock :: Int -> [Word8] -> [Word8]
-      buildLeftBlock innerCCon rowTagBytes =
-        cilLdcI4 1
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 innerCCon
-          <> boxInt32
-          <> cilStelemRef
-          <> cilStloc 5
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> rowTagBytes
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 5
-          <> cilStelemRef
-          <> cilStloc 6
-          <> cilLdcI4 2
-          <> newarrObj
-          <> cilDup
-          <> cilLdcI4 0
-          <> cilLdcI4 (ptLeft ptags)
-          <> boxInt32
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 1
-          <> cilLdloc 6
-          <> cilStelemRef
-          <> cilRet
-      tooLongBlock :: [Word8]
-      tooLongBlock = buildLeftBlock (ptStringTooLong ptags) (cilLdcI4 stringTooLongRowTagInt)
-      tooLongLen :: Int
-      tooLongLen = length tooLongBlock
-      lUnpaired :: Int
-      lUnpaired = lTooLong + tooLongLen
-      unpairedBlock :: [Word8]
-      unpairedBlock = buildLeftBlock (ptUnpairedUtf16Surrogate ptags) (cilLdcI4 unpairedSurrogateRowTagInt)
-      -- Branch offsets — CIL relative offset is from the byte AFTER the
-      -- branch instruction, so offset = target - (sourceStart + 5) for
-      -- the long-form 5-byte branches.
-      ifGtRel = fromIntegral (lTooLong - (preLen + ifGtLen)) :: Int32
-      scanEntryBgeAt = lScan + 2
-      scanEntryBgeRel = fromIntegral (lScanDone - (scanEntryBgeAt + 5)) :: Int32
-      scanDispatchBrtrueAt = lScan + scanEntryLen + scanCharLoadLen + 1
-      scanDispatchBrtrueRel = fromIntegral (lCheckLow - (scanDispatchBrtrueAt + 5)) :: Int32
-      noLowStart = lScan + scanEntryLen + scanCharLoadLen + scanDispatchLen
-      noLowBeqAt = noLowStart + 2 + 5
-      noLowBeqRel = fromIntegral (lUnpaired - (noLowBeqAt + 5)) :: Int32
-      noLowBneAt = noLowBeqAt + 5 + 2 + 5
-      noLowBneRel = fromIntegral (lInc - (noLowBneAt + 5)) :: Int32
-      noLowBrAt = noLowBneAt + 5 + 1 + 1
-      noLowBrRel = fromIntegral (lInc - (noLowBrAt + 5)) :: Int32
-      checkLowBneAt = lCheckLow + 2 + 5
-      checkLowBneRel = fromIntegral (lUnpaired - (checkLowBneAt + 5)) :: Int32
-      checkLowBrAt = checkLowBneAt + 5 + 1 + 1
-      checkLowBrRel = fromIntegral (lInc - (checkLowBrAt + 5)) :: Int32
-      incBrAt = lInc + 1 + 1 + 1 + 1
-      incBrRel = fromIntegral (lScan - (incBrAt + 5)) :: Int32
-      trailingBrtrueAt = lScanDone + 1
-      trailingBrtrueRel = fromIntegral (lUnpaired - (trailingBrtrueAt + 5)) :: Int32
-      ifGtSeg = cilBgt ifGtRel
-      scanEntrySeg = cilLdloc 2 <> cilLdloc 1 <> cilBge scanEntryBgeRel
-      scanCharLoadSeg =
-        cilLdloc 0
-          <> cilLdloc 2
-          <> cilCallvirt (tokMR charsRef)
-          <> cilLdcI4 64512
-          <> cilAnd
-          <> cilStloc 4
-      scanDispatchSeg = cilLdloc 3 <> cilBrtrue scanDispatchBrtrueRel
-      noLowExpectedSeg =
-        cilLdloc 4
-          <> cilLdcI4 56320
-          <> cilBeq noLowBeqRel
-          <> cilLdloc 4
-          <> cilLdcI4 55296
-          <> cilBneUn noLowBneRel
-          <> cilLdcI4 1
-          <> cilStloc 3
-          <> cilBr noLowBrRel
-      checkLowSeg =
-        cilLdloc 4
-          <> cilLdcI4 56320
-          <> cilBneUn checkLowBneRel
-          <> cilLdcI4 0
-          <> cilStloc 3
-          <> cilBr checkLowBrRel
-      incSeg =
-        cilLdloc 2
-          <> cilLdcI4 1
-          <> cilAdd
-          <> cilStloc 2
-          <> cilBr incBrRel
-      trailingCheckSeg = cilLdloc 3 <> cilBrtrue trailingBrtrueRel
-      code =
-        preamble
-          <> ifGtSeg
-          <> scanInit
-          <> scanEntrySeg
-          <> scanCharLoadSeg
-          <> scanDispatchSeg
-          <> noLowExpectedSeg
-          <> checkLowSeg
-          <> incSeg
-          <> trailingCheckSeg
-          <> okBlock
-          <> tooLongBlock
-          <> unpairedBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 16}
-
--- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'. Reads
---   'System.Environment.GetCommandLineArgs()' (which returns
---   @[exe path, arg1, arg2, ...]@) and walks from the end down to (but
---   excluding) index 0, validating each element via '__entryArgEither'
---   and consing it onto a prelude 'List String'. All-or-nothing
---   error semantics — the first failing element short-circuits with
---   its 'Left'.
---
---   Locals: 0 = string[] argv, 1 = int32 i, 2 = object[] list,
---   3 = object[] validated.
-mkGetArgs :: PreludeTags -> Map Text Word32 -> AsmM MInfo
-mkGetArgs ptags tokMap = do
-  ni <- w16 <$> addStr "__getArgs"
-  si <- w16 <$> addBlob (sigStatic etObject 0)
-  ps <- addParams 0
-  trEnvironment <- addTypeRef (resScopeAR 1) "Environment" "System"
-  trObject <- addTypeRef (resScopeAR 1) "Object" "System"
-  trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-  -- Environment.GetCommandLineArgs() : string[] — static, 0 args.
-  -- Sig blob: 0x00 (default cc) | 0x00 (paramCount=0) | 0x1D (SZArray) | 0x0E (String).
-  getCmdArgsRef <-
-    addMemberRef
-      (mrpTR trEnvironment)
-      "GetCommandLineArgs"
-      [0x00, 0x00, etSZArray, etString]
-  let entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
-      objArrToObj = tokTR trObject -- castclass uses TypeRef token directly; runtime accepts compatible array
-      objArrCls = tokTR trObject -- for newarr <object> and stelem.ref of object[]
-      i4Tok = tokTR trInt32
-  -- Locals: [string[], int32, object[], object[]].
-  -- LocalVarSig blob layout: 0x07 prefix | count | (per-local: type encoding).
-  -- string[]: 0x1D 0x0E. int32: 0x08. object[]: 0x1D 0x1C. object[]: 0x1D 0x1C.
-  localTok <-
-    addLocalSigBytes
-      [ 0x07,
-        0x04, -- 4 locals
-        etSZArray,
-        etString,
-        0x08, -- ELEMENT_TYPE_I4
-        etSZArray,
-        etObject,
-        etSZArray,
-        etObject
-      ]
-  -- Bytecode pieces. Compute branch offsets after the pieces are sized.
-  let nilTag = cilLdcI4 (ptNil ptags) <> cilBox i4Tok
-      consTag = cilLdcI4 (ptCons ptags) <> cilBox i4Tok
-      rightTagPush = cilLdcI4 (ptRight ptags)
-      buildNil =
-        cilLdcI4_1
-          <> cilNewarr objArrCls
-          <> cilDup
-          <> cilLdcI4_0
-          <> nilTag
-          <> cilStelemRef
-      header =
-        cilCall (tokMR getCmdArgsRef) -- argv := GetCommandLineArgs()
-          <> cilStloc 0
-          <> buildNil
-          <> cilStloc 2
-          <> cilLdloc 0
-          <> cilLdlen
-          <> cilConvI4
-          <> cilStloc 1
-      checkExit ofs =
-        cilLdloc 1
-          <> cilLdcI4_1
-          <> cilBleS ofs -- branch to done block if i <= 1 (skips argv[0])
-      decAndValidate =
-        cilLdloc 1
-          <> cilLdcI4_1
-          <> cilSub
-          <> cilStloc 1
-          <> cilLdloc 0
-          <> cilLdloc 1
-          <> cilLdelemRef
-          <> cilCall entryArgEitherTok
-          <> cilCastclass objArrToObj -- runtime cast Object → Object[]
-          <> cilStloc 3
-      checkTag ofs =
-        cilLdloc 3
-          <> cilLdcI4_0
-          <> cilLdelemRef
-          <> cilUnboxAny i4Tok
-          <> rightTagPush
-          <> cilBneUnS ofs -- branch to Left-return if tag != Right
-      buildCons =
-        cilLdcI4 3
-          <> cilNewarr objArrCls
-          <> cilDup
-          <> cilLdcI4_0
-          <> consTag
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4_1
-          <> cilLdloc 3
-          <> cilLdcI4_1
-          <> cilLdelemRef
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4 2
-          <> cilLdloc 2
-          <> cilStelemRef
-          <> cilStloc 2
-      leftReturn = cilLdloc 3 <> cilRet
-      doneBlock =
-        cilLdcI4 2
-          <> cilNewarr objArrCls
-          <> cilDup
-          <> cilLdcI4_0
-          <> rightTagPush
-          <> cilBox i4Tok
-          <> cilStelemRef
-          <> cilDup
-          <> cilLdcI4_1
-          <> cilLdloc 2
-          <> cilStelemRef
-          <> cilRet
-      -- Sizes of every fixed-length piece for offset computation.
-      checkExitSize = length (checkExit 0)
-      decValidateSize = length decAndValidate
-      checkTagSize = length (checkTag 0)
-      buildConsSize = length buildCons
-      backEdgeSize = length (cilBrS 0)
-      leftReturnSize = length leftReturn
-      -- After 'checkExit', the loop fall-through is decAndValidate +
-      -- checkTag + buildCons + backEdge + leftReturn before the done
-      -- block. ble.s target offset is measured from the byte AFTER
-      -- the ble.s instruction itself.
-      ofExit = decValidateSize + checkTagSize + buildConsSize + backEdgeSize + leftReturnSize
-      -- After 'checkTag', if tag != Right we jump to leftReturn (skips
-      -- buildCons + backEdge).
-      ofLeft = buildConsSize + backEdgeSize
-      -- back-edge from after backEdge to the start of checkExit.
-      loopLen = checkExitSize + decValidateSize + checkTagSize + buildConsSize + backEdgeSize
-      ofBack = negate loopLen
-      checkExitFinal = checkExit (fromIntegral (ofExit :: Int))
-      checkTagFinal = checkTag (fromIntegral (ofLeft :: Int))
-      backEdge = cilBrS (fromIntegral (ofBack :: Int))
-      code = header <> checkExitFinal <> decAndValidate <> checkTagFinal <> buildCons <> backEdge <> leftReturn <> doneBlock
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = 5}
-
--- | __stdinReadAll: zero-arg helper for
---   'BuiltIn.internalStdinReadAllAsUtf16'. Wraps 'Console.OpenStandardInput()'
---   in a 'StreamReader' with an explicit UTF-8 'Encoding' and reads
---   to EOF, then routes the resulting 'string' through '__entryArgEither'
---   for the strict-UTF-16 validation 'getArgs' uses.
---
---   Stack discipline (max 3 needed for the 'StreamReader.ctor' call,
---   which consumes new-StreamReader-uninit + Stream + Encoding):
---     OpenStandardInput     → [Stream]
---     get_UTF8              → [Stream, Encoding]
---     newobj StreamReader   → [StreamReader]
---     callvirt ReadToEnd    → [string]
---     call __entryArgEither → [object]
---     ret                   → returned to caller
-mkStdinReadAll :: Map Text Word32 -> AsmM MInfo
-mkStdinReadAll tokMap = do
-  ni <- w16 <$> addStr "__stdinReadAll"
-  si <- w16 <$> addBlob (sigStatic etObject 0)
-  ps <- addParams 0
-  -- Type refs: Stream, StreamReader (System.Runtime, namespace System.IO);
-  -- Encoding (System.Runtime, namespace System.Text);
-  -- Console (System.Console, namespace System).
-  trStream <- addTypeRef (resScopeAR 1) "Stream" "System.IO"
-  trStreamReader <- addTypeRef (resScopeAR 1) "StreamReader" "System.IO"
-  trEncoding <- addTypeRef (resScopeAR 1) "Encoding" "System.Text"
-  trConsole <- addTypeRef (resScopeAR 2) "Console" "System"
-  let streamClass = [0x12] <> compressU (fromIntegral (tdorTR trStream))
-      encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
-  -- Console.OpenStandardInput() : Stream — static, 0 args.
-  openStdinRef <-
-    addMemberRef
-      (mrpTR trConsole)
-      "OpenStandardInput"
-      ([0x00, 0x00] <> streamClass)
-  -- Encoding.get_UTF8() : Encoding — static, 0 args.
-  getUtf8Ref <-
-    addMemberRef
-      (mrpTR trEncoding)
-      "get_UTF8"
-      ([0x00, 0x00] <> encodingClass)
-  -- StreamReader::.ctor(Stream, Encoding) : void — HASTHIS, 2 args.
-  streamReaderCtorRef <-
-    addMemberRef
-      (mrpTR trStreamReader)
-      ".ctor"
-      ([0x20, 0x02, etVoid] <> streamClass <> encodingClass)
-  -- StreamReader::ReadToEnd() : string — HASTHIS, 0 args.
-  readToEndRef <-
-    addMemberRef
-      (mrpTR trStreamReader)
-      "ReadToEnd"
-      [0x20, 0x00, etString]
-  let entryArgEitherTok = fromMaybe (error "no __entryArgEither") (Map.lookup "__entryArgEither" tokMap)
-      code =
-        cilCall (tokMR openStdinRef)
-          <> cilCall (tokMR getUtf8Ref)
-          <> cilNewobj (tokMR streamReaderCtorRef)
-          <> cilCallvirt (tokMR readToEndRef)
-          <> cilCall entryArgEitherTok
-          <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 3}
-
-mkMain :: Map Text Word32 -> AsmM MInfo
-mkMain tokMap = do
-  ni <- w16 <$> addStr "Main"
-  si <- w16 <$> addBlob [0x00, 0x01, etVoid, etSZArray, etString]
-  ps <- addParams 1
-  -- Force stdout to UTF-8 before any user code runs. See the IL-text
-  -- 'mainMethod' for the rationale (Windows ANSI fallback mangles
-  -- supplementary code points to '?' per UTF-16 unit when stdout is
-  -- piped). 'addTypeRef' / 'addMemberRef' deduplicate, so the existing
-  -- Console TypeRef (row 2) and any Encoding TypeRef pre-registered by
-  -- the length built-ins are reused.
-  trConsole <- addTypeRef (resScopeAR 2) "Console" "System"
-  trEncoding <- addTypeRef (resScopeAR 1) "Encoding" "System.Text"
-  let encodingClass = [0x12] <> compressU (fromIntegral (tdorTR trEncoding))
-  getUtf8Ref <- addMemberRef (mrpTR trEncoding) "get_UTF8" ([0x00, 0x00] <> encodingClass)
-  setOutEncRef <- addMemberRef (mrpTR trConsole) "set_OutputEncoding" ([0x00, 0x01, etVoid] <> encodingClass)
-  let vMainTok = fromMaybe (error "no v_main") (Map.lookup (mangle "main") tokMap)
-      vRunIOTok = fromMaybe (error "no v_runIO") (Map.lookup (mangle "runIO") tokMap)
-      -- '__getArgs' reads 'Environment.GetCommandLineArgs()' on demand,
-      -- so 'Main' doesn't have to stash anything. 'main' itself takes
-      -- no Awsum-level arguments (signature 'IO Never Unit'); user
-      -- code reads argv through 'IO.Args.getArgs' inside the IO chain.
-      code =
-        cilCall (tokMR getUtf8Ref) -- push UTF-8 Encoding instance
-          <> cilCall (tokMR setOutEncRef) -- Console.OutputEncoding = it
-          -- v_main is a zero-arg value (CValDef): build the IO tree.
-          <> cilCall vMainTok
-          -- v_main returned an IO tree on the stack; hand it to runIO
-          -- to walk and execute the effects. runIO returns Unit which
-          -- we discard before returning from main.
-          <> cilCall vRunIOTok
-          <> cilPop
-          <> cilRet
-  pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
+  assembleCilMethod (entryArgEitherSpec (ptRight ptags) (ptStringTooLong ptags) (ptUnpairedUtf16Surrogate ptags) (ptLeft ptags))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods
@@ -3261,516 +1158,274 @@ data ECtx = ECtx
     eNextScratch :: Int,
     eValDefs :: Set Text,
     eFunDefs :: Set Text,
-    eArities :: Map Text Int,
-    eToks :: Map Text Word32
+    eArities :: Map Text Int
   }
 
-mkDecl :: ECtx -> CDecl -> AsmM MInfo
-mkDecl baseCtx = \case
-  -- TCO-wrapped body. The method's argument slots are already mutable,
-  -- so 'CContinue' evaluates new args onto the stack, pops them back
-  -- into slots via @starg@ (reverse order, stack is LIFO), and branches
-  -- to offset 0 (the method's first byte) via a 4-byte @br@. Tail value
-  -- arms emit their own @ret@; no trailing fallthrough @ret@ is added.
-  CFunDef nm args (CLoop body) -> do
-    let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..])}
-        nLocals = exprLocalsNeeded body
-        maxStack = fromIntegral (max 1 (exprStackDepth body)) :: Word16
-    ni <- w16 <$> addStr (mangle nm)
-    si <- w16 <$> addBlob (sigStatic etObject (length args))
-    ps <- addParams (length args)
-    localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
-    code <- emitTailBin ctx args body
-    pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = localTok, mMaxStack = maxStack}
-  CFunDef nm args body -> do
-    let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..])}
-        nLocals = exprLocalsNeeded body
-        maxStack = fromIntegral (max 1 (exprStackDepth body)) :: Word16
-    ni <- w16 <$> addStr (mangle nm)
-    si <- w16 <$> addBlob (sigStatic etObject (length args))
-    ps <- addParams (length args)
-    localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
-    code <- emitExpr ctx body
-    pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok, mMaxStack = maxStack}
-  CValDef nm rhs -> do
-    let ctx = baseCtx {eParams = Map.empty}
-        nLocals = exprLocalsNeeded rhs
-        maxStack = fromIntegral (max 1 (exprStackDepth rhs)) :: Word16
-    ni <- w16 <$> addStr (mangle nm)
-    si <- w16 <$> addBlob (sigStatic etObject 0)
-    ps <- addParams 0
-    localTok <- if nLocals > 0 then addLocalSig nLocals else pure 0
-    code <- emitExpr ctx rhs
-    pure MInfo {mImplFlags = 0, mFlags = 0x0091, mName = ni, mSig = si, mParamList = ps, mCode = code <> cilRet, mLocalSigTok = localTok, mMaxStack = maxStack}
-
 -- ════════════════════════════════════════════════════════════════════════════
--- Expression codegen
+-- Unified text+binary emitter for user declarations
 -- ════════════════════════════════════════════════════════════════════════════
 
-emitExpr :: ECtx -> CExpr -> AsmM [Word8]
-emitExpr ctx = \case
-  CString s -> do
-    tok <- addUS s
-    pure (cilLdstr tok)
+-- | The static helper name for each prelude built-in (the key in the
+-- name→token map). Identity-ish for arithmetic, but several differ.
+builtinHelperName :: Map Text Text
+builtinHelperName =
+  Map.fromList
+    [ ("internalStdoutPrint", "__print"),
+      ("internalGetArgs", "__getArgs"),
+      ("internalStdinReadAllAsUtf16", "__stdinReadAll"),
+      ("showUInt32", "__showUInt32"),
+      ("predInt32", "__predInt32"),
+      ("predUInt8", "__predUInt8"),
+      ("predUInt32", "__predUInt32"),
+      ("succInt32", "__succInt32"),
+      ("succUInt8", "__succUInt8"),
+      ("succUInt32", "__succUInt32"),
+      ("negInt32", "__negInt32"),
+      ("eqInt32", "__eqInt32"),
+      ("eqUInt8", "__eqUInt8"),
+      ("eqUInt32", "__eqUInt32"),
+      ("eqString", "__eqString"),
+      ("addInt32", "__addInt32"),
+      ("addUInt8", "__addUInt8"),
+      ("addUInt32", "__addUInt32"),
+      ("subInt32", "__subInt32"),
+      ("subUInt8", "__subUInt8"),
+      ("subUInt32", "__subUInt32"),
+      ("mulInt32", "__mulInt32"),
+      ("mulUInt8", "__mulUInt8"),
+      ("mulUInt32", "__mulUInt32"),
+      ("concatString", "__concat"),
+      ("splitOnFirst", "__splitOnFirst"),
+      ("parseInt32", "__parseInt32"),
+      ("parseUInt8", "__parseUInt8"),
+      ("parseUInt32", "__parseUInt32"),
+      ("lengthCodePoints", "__lengthCodePoints"),
+      ("lengthUtf16CodeUnits", "__lengthUtf16CodeUnits"),
+      ("lengthUtf8Bytes", "__lengthUtf8Bytes")
+    ]
+
+-- | A fresh, method-scoped label name. The counter is the 'State Int'; each
+-- method's body is emitted starting from 0 ('declCilMethod'), and labels are
+-- resolved per-method by 'assembleCilMethod', so there is no cross-method clash.
+freshLabel :: State Int Text
+freshLabel = do
+  n <- get
+  put (n + 1)
+  pure ("IL_c" <> show n)
+
+-- | Emitter for the first-order subset of Core. Produces symbolic
+-- '[CilInstr]' — operands resolved later by
+-- 'assembleCilMethod' (tokens) / 'renderCilMethod' (text); the only effect is
+-- fresh-label allocation.
+emitExprI :: ECtx -> CExpr -> State Int [CilInstr]
+emitExprI ctx = \case
+  CString s -> pure [Ldstr s]
   CVar n
-    | Just slot <- Map.lookup n ctx.eLocals ->
-        pure (cilLdloc slot)
-    | Just slot <- Map.lookup n ctx.eParams ->
-        pure (cilLdarg slot)
-    | n `Set.member` ctx.eValDefs ->
-        let tok = lkTok ctx (mangle n)
-         in pure (cilCall tok)
+    | Just slot <- Map.lookup n ctx.eLocals -> pure [Ldloc slot]
+    | Just slot <- Map.lookup n ctx.eParams -> pure [Ldarg slot]
+    | n `Set.member` ctx.eValDefs -> pure [CallNamed (mangle n) 0]
+    | n `Set.member` ctx.eFunDefs ->
+        error ("CLR codegen: first-class function value " <> n <> " — LowerClosures should have eliminated it")
+    | otherwise -> pure [Ldnull]
+  CBuiltIn _ -> pure [Ldnull]
+  CIntLit n _ -> pure [LdcI4 (fromIntegral (fromInteger n :: Int32)), Box int32Ref]
+  CCon tag fields -> emitCellI ctx tag fields
+  CRow tag v -> emitCellI ctx (fromIntegral tag) [v]
+  CReuse n tag fields -> emitReuseI ctx n tag fields
+  CDrop _ _ body -> emitExprI ctx body
+  CCall f xs -> emitCallI ctx f xs
+  CCase scrut alts -> emitCaseI ctx scrut alts
+  CRowCase scrut alts -> emitCaseI ctx scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+  other -> error ("CLR.Assemble.emitExprI: ungated form " <> show other)
+
+-- | A 'CCon'/'CRow' cell: @object[1+n]@ with the boxed tag at slot 0 and each
+-- field at slot i+1. Allocated into a scratch local so the operand stack stays
+-- flat regardless of field nesting.
+emitCellI :: ECtx -> Int -> [CExpr] -> State Int [CilInstr]
+emitCellI ctx tag fields = do
+  let nSlots = 1 + length fields
+      tmpSlot = ctx.eNextScratch
+      ctx' = ctx {eNextScratch = tmpSlot + 1}
+  fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+    fc <- emitExprI ctx' fld
+    pure ([Ldloc tmpSlot, LdcI4 i] <> fc <> [StelemRef])
+  pure
+    ( [LdcI4 nSlots, Newarr objectRef, Stloc tmpSlot]
+        <> [Ldloc tmpSlot, LdcI4 0, LdcI4 tag, Box int32Ref, StelemRef]
+        <> concat fieldCodes
+        <> [Ldloc tmpSlot]
+    )
+
+-- | 'CReuse' — in-place rewrite of the @object[]@ at binder @n@'s slot (Lean-4
+-- style cell reuse). Like 'emitCellI' but instead of @newarr@ it loads the
+-- binder, @castclass object[]@s it (slots are typed plain @object@), and stashes
+-- it; then re-stores the tag and fields in place.
+emitReuseI :: ECtx -> Text -> Int -> [CExpr] -> State Int [CilInstr]
+emitReuseI ctx n tag fields = do
+  let tmpSlot = ctx.eNextScratch
+      ctx' = ctx {eNextScratch = tmpSlot + 1}
+      loadN = case Map.lookup n ctx.eLocals of
+        Just s -> Ldloc s
+        Nothing -> case Map.lookup n ctx.eParams of
+          Just s -> Ldarg s
+          Nothing -> error ("CLR.Assemble.emitReuseI: unknown binder " <> show n)
+  fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
+    fc <- emitExprI ctx' fld
+    pure ([Ldloc tmpSlot, LdcI4 i] <> fc <> [StelemRef])
+  pure
+    ( [loadN, CastObjArr, Stloc tmpSlot]
+        <> [Ldloc tmpSlot, LdcI4 0, LdcI4 tag, Box int32Ref, StelemRef]
+        <> concat fieldCodes
+        <> [Ldloc tmpSlot]
+    )
+
+-- | A 'CCall': built-ins dispatch to their @__helper@ (or @ToString@ for
+-- @show{Int32,UInt8}@); a direct named-function call to @v_name@.
+emitCallI :: ECtx -> CExpr -> [CExpr] -> State Int [CilInstr]
+emitCallI ctx f xs = case f of
+  CBuiltIn name
+    | name == "showInt32" || name == "showUInt8",
+      [x] <- xs -> do
+        cx <- emitExprI ctx x
+        pure (cx <> [Callvirt (CilMemberRef objectRef "ToString" True SeString [])])
+  CBuiltIn name
+    | Just helper <- Map.lookup name builtinHelperName -> do
+        argCodes <- traverse (emitExprI ctx) xs
+        pure (concat argCodes <> [CallNamed helper (length xs)])
+  CBuiltIn n ->
+    error ("CLR codegen: unknown builtin '" <> n <> "' reached emitExprI")
+  CVar n
     | n `Set.member` ctx.eFunDefs -> do
-        let arity = fromMaybe 0 (Map.lookup n ctx.eArities)
-            tok = lkTok ctx (mangle n)
-        (_, ctorTok, _) <- funcTokens arity
-        pure (cilLdnull <> cilLdftn tok <> cilNewobj ctorTok)
-    | otherwise ->
-        pure cilLdnull
-  CBuiltIn _ -> pure cilLdnull -- invariant: not a standalone term; dispatched from CCall
-  CIntLit n it -> do
-    -- Both Int32 and UInt8 are represented as boxed System.Int32 on the CLR,
-    -- matching the JVM treatment (boxed Integer). Avoids a separate boxing
-    -- path for unsigned widths while keeping the value space correct — the
-    -- typechecker has already validated 'n' against the declared range.
-    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-    let n32 = fromInteger n :: Int32
-        _ = it
-    pure (cilLdcI4 (fromIntegral n32) <> cilBox (tokTR trInt32))
-  CCon tag fields -> do
-    -- Create Object[] container: [tag_as_boxed_Int32, field1, field2, ...].
-    -- Strategy: allocate the array, stash it in a per-CCon temp local,
-    -- then for each slot reload from the local before stelem.ref. Keeps
-    -- the operand stack flat (peak ~3) regardless of how deeply fields
-    -- nest — `Right (Right (Right ...))` of arbitrary depth no longer
-    -- linearly grows the stack and so no longer trips the verifier's
-    -- @MaxStack@ check (ECMA-335 §II.25.4.3). The naïve dup-and-stelem
-    -- chain we used to emit pinned the partially built array on the
-    -- stack across each field's evaluation, peaking at ~2N for depth N.
-    let nSlots = 1 + length fields
-        tmpSlot = ctx.eNextScratch
-        ctx' = ctx {eNextScratch = tmpSlot + 1}
-    trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-    let allocAndStash = cilLdcI4 nSlots <> cilNewarr (tokTR trObj) <> cilStloc tmpSlot
-        storeTag =
-          cilLdloc tmpSlot
-            <> cilLdcI4 0
-            <> cilLdcI4 tag
-            <> cilBox (tokTR trInt32)
-            <> cilStelemRef
-    fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
-      fldCode <- emitExpr ctx' fld
-      pure (cilLdloc tmpSlot <> cilLdcI4 i <> fldCode <> cilStelemRef)
-    pure (allocAndStash <> storeTag <> concat fieldCodes <> cilLdloc tmpSlot)
-  -- Row injection / dispatch: delegate to CCon / CCase emit.
-  CRow tag v -> emitExpr ctx (CCon (fromIntegral tag) [v])
-  CRowCase scrut alts ->
-    emitExpr ctx (CCase scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts])
-  CCase scrut alts -> do
-    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-    scrutCode <- emitExpr ctx scrut
-    let sorted = sortWith (\(t, _, _) -> t) alts
-        -- Allocate fresh slots beyond anything currently in scope so
-        -- nested 'CCase's never clobber outer arm bindings. The outer
-        -- array in slot 'arrSlot' stays live for the duration of the
-        -- arm body. 'eNextScratch' is the canonical "next free slot"
-        -- counter — it accounts for outer 'arrSlot's and 'CCon' tmps
-        -- that 'eLocals' doesn't track. Slot demand matches
-        -- 'exprLocalsNeeded'.
-        arrSlot = ctx.eNextScratch
-        maxBindings = foldl' max 0 [length vs | (_, vs, _) <- sorted]
-        bindSlotStart = arrSlot + 1
-        nextScratch' = bindSlotStart + maxBindings
-    -- Emit arm bodies with bound variables
-    armCodes <- forM sorted $ \(_, vars, body) -> do
-      let bindings = zip vars [bindSlotStart ..]
-          ctx' =
-            ctx
-              { eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings,
-                eNextScratch = nextScratch'
-              }
-          -- Extract bound vars: for each, ldloc arr, ldc index, ldelem.ref, stloc slot
-          bindCode =
-            concatMap
-              ( \((_, slot), i) ->
-                  cilLdloc arrSlot <> cilLdcI4 (i :: Int) <> cilLdelemRef' <> cilStloc slot
-              )
-              (zip bindings [1 :: Int ..])
-      bodyCode <- emitExpr ctx' body
-      pure (bindCode <> bodyCode)
-    let tags = [t | (t, _, _) <- sorted]
-        -- Extract tag: stloc arr; ldloc arr; ldc 0; ldelem.ref; unbox.any Int32
-        extractAndStore =
-          cilStloc arrSlot
-            <> cilLdloc arrSlot
-            <> cilLdcI4 0
-            <> cilLdelemRef'
-            <> cilUnboxAny (tokTR trInt32)
-        -- Build if/else chain on the int tag value
-        i32le :: Int -> [Word8]
-        i32le n = w32le (fromIntegral n :: Word32)
-        buildChain :: [(Int, [Word8])] -> [Word8]
-        buildChain [] = cilLdnull
-        buildChain [(_, armCode)] = [0x26] <> armCode -- pop tag int, emit body
-        buildChain ((tag', armCode) : rest) =
-          let restCode = buildChain rest
-              popLen :: Int
-              popLen = 1
-              brLen :: Int
-              brLen = 5 -- br (1 opcode + 4 offset)
-              skipLen = popLen + length armCode + brLen
-              joinLen = length restCode
-           in [0x25] -- dup
-                <> cilLdcI4 tag'
-                <> [0x40]
-                <> i32le skipLen -- bne.un
-                <> [0x26] -- pop
-                <> armCode
-                <> [0x38]
-                <> i32le joinLen -- br
-                <> restCode
-        chainCode = buildChain (zip tags armCodes)
-    pure (scrutCode <> extractAndStore <> chainCode)
-  CCall f xs -> case f of
-    CBuiltIn "internalStdoutPrint" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__print"))
-    -- 'BuiltIn.internalGetArgs' — call AwsumMain::__getArgs (token
-    -- looked up via the precomputed map). The helper reads the cached
-    -- argv[0] from the "awsum.argv0" environment variable and routes
-    -- it through '__entryArgEither'.
-    CBuiltIn "internalGetArgs"
-      | [] <- xs ->
-          pure (cilCall (lkTok ctx "__getArgs"))
-    -- 'BuiltIn.internalStdinReadAllAsUtf16' — call AwsumMain::__stdinReadAll.
-    -- Consumes stdin via 'Console.OpenStandardInput()' + 'StreamReader'
-    -- and routes the decoded UTF-8 through '__entryArgEither'.
-    CBuiltIn "internalStdinReadAllAsUtf16"
-      | [] <- xs ->
-          pure (cilCall (lkTok ctx "__stdinReadAll"))
-    CBuiltIn name
-      | name == "showInt32" || name == "showUInt8",
-        [x] <- xs -> do
-          -- Call 'object::ToString()' virtually: boxed Int32 dispatches to
-          -- System.Int32.ToString(), producing the culture-invariant decimal
-          -- representation (culture only affects floats, which we do not emit).
-          cx <- emitExpr ctx x
-          trObj <- addTypeRef (resScopeAR 1) "Object" "System"
-          toStrRef <- addMemberRef (mrpTR trObj) "ToString" (sigInstance etString [])
-          pure (cx <> cilCallvirt (tokMR toStrRef))
-    CBuiltIn "showUInt32" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__showUInt32"))
-    CBuiltIn "predInt32" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__predInt32"))
-    CBuiltIn "predUInt8" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__predUInt8"))
-    CBuiltIn "predUInt32" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__predUInt32"))
-    CBuiltIn "succInt32" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__succInt32"))
-    CBuiltIn "succUInt8" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__succUInt8"))
-    CBuiltIn "succUInt32" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__succUInt32"))
-    CBuiltIn name
-      | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32" || name == "eqString",
-        [a, b] <- xs -> do
-          ca <- emitExpr ctx a
-          cb <- emitExpr ctx b
-          let fn = case name of
-                "eqInt32" -> "__eqInt32"
-                "eqUInt8" -> "__eqUInt8"
-                "eqUInt32" -> "__eqUInt32"
-                _ -> "__eqString"
-          pure (ca <> cb <> cilCall (lkTok ctx fn))
-    CBuiltIn name
-      | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
-        [a, b] <- xs -> do
-          ca <- emitExpr ctx a
-          cb <- emitExpr ctx b
-          let fn = case name of
-                "addInt32" -> "__addInt32"
-                "addUInt8" -> "__addUInt8"
-                "addUInt32" -> "__addUInt32"
-                "subInt32" -> "__subInt32"
-                "subUInt8" -> "__subUInt8"
-                "subUInt32" -> "__subUInt32"
-                "mulInt32" -> "__mulInt32"
-                "mulUInt32" -> "__mulUInt32"
-                _ -> "__mulUInt8"
-          pure (ca <> cb <> cilCall (lkTok ctx fn))
-    CBuiltIn "negInt32" | [x] <- xs -> do
-      cx <- emitExpr ctx x
-      pure (cx <> cilCall (lkTok ctx "__negInt32"))
-    CBuiltIn "concatString" | [a, b] <- xs -> do
-      ca <- emitExpr ctx a
-      cb <- emitExpr ctx b
-      pure (ca <> cb <> cilCall (lkTok ctx "__concat"))
-    CBuiltIn "splitOnFirst" | [a, b] <- xs -> do
-      ca <- emitExpr ctx a
-      cb <- emitExpr ctx b
-      pure (ca <> cb <> cilCall (lkTok ctx "__splitOnFirst"))
-    CBuiltIn name
-      | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32",
-        [x] <- xs -> do
-          cx <- emitExpr ctx x
-          let fn = case name of
-                "parseInt32" -> "__parseInt32"
-                "parseUInt32" -> "__parseUInt32"
-                _ -> "__parseUInt8"
-          pure (cx <> cilCall (lkTok ctx fn))
-    CBuiltIn name
-      | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
-        [x] <- xs -> do
-          cx <- emitExpr ctx x
-          let fn = case name of
-                "lengthCodePoints" -> "__lengthCodePoints"
-                "lengthUtf16CodeUnits" -> "__lengthUtf16CodeUnits"
-                _ -> "__lengthUtf8Bytes"
-          pure (cx <> cilCall (lkTok ctx fn))
-    CBuiltIn n ->
-      error ("CLR codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
-    CVar n | n `Set.member` ctx.eFunDefs -> do
-      argCodes <- traverse (emitExpr ctx) xs
-      pure (concat argCodes <> cilCall (lkTok ctx (mangle n)))
-    _ -> do
-      fCode <- emitExpr ctx f
-      let arity = length xs
-      (tsTok, _, invTok) <- funcTokens arity
-      argCodes <- traverse (emitExpr ctx) xs
-      pure (fCode <> cilCastclass tsTok <> concat argCodes <> cilCallvirt invTok)
-  CLoop _ -> error "CLR Assemble: CLoop reached emitExpr (non-tail position)"
-  CContinue _ -> error "CLR Assemble: CContinue reached emitExpr (non-tail position)"
-  -- Liveness annotation; codegen-transparent — the managed GC
-  -- handles reclaim.
-  CDrop _ _ body -> emitExpr ctx body
-  -- Cell reuse. In-place mutation of the 'object[]' at
-  -- the binder slot of @n@. Stash the loaded reference into a
-  -- scratch local (typed 'object' in 'addLocalSig'; the verifier
-  -- accepts 'stelem.ref' against it because all locals after
-  -- slot 0 are 'object'-typed and CIL §III.4.26 allows 'stelem.ref'
-  -- against any reference-typed array at runtime). Then for each
-  -- slot reload the local before 'stelem.ref' — keeps the operand
-  -- stack flat at ~3 regardless of field depth.
-  --
-  -- Invariant from 'Awsum.Reuse.rewriteFirstCCon': @length fields@
-  -- equals the matched arm's pattern arity, so the array has at
-  -- least @1 + length fields@ slots.
-  CReuse n tag fields -> do
-    let tmpSlot = ctx.eNextScratch
-        ctx' = ctx {eNextScratch = tmpSlot + 1}
-    trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-    -- TypeSpec for 'object[]' (SZARRAY OBJECT). Needed because
-    -- 'stelem.ref' demands a statically-array-typed value on the
-    -- stack; param/local slots are typed plain 'object' so we
-    -- 'castclass object[]' on initial load before stashing.
-    objArrTSRow <- addTypeSpec [0x1D, 0x1C]
-    let trObjArr = tokTS objArrTSRow
-        loadNToStash =
-          ( case Map.lookup n ctx.eLocals of
-              Just slot -> cilLdloc slot
-              Nothing -> case Map.lookup n ctx.eParams of
-                Just slot -> cilLdarg slot
-                Nothing -> error $ "CLR Assemble: CReuse on unknown binder " <> show n
+        argCodes <- traverse (emitExprI ctx) xs
+        pure (concat argCodes <> [CallNamed (mangle n) (length xs)])
+  _ -> error "CLR.Assemble.emitExprI: first-class call reached (should be gated)"
+
+-- | Non-tail 'CCase' dispatch (the binary if-chain, not the text's switch).
+-- Store the scrutinee, extract the boxed tag, and walk a dup/bne.un chain:
+-- each non-final arm pops the tag, binds its fields, runs its body, and jumps
+-- to the join; the final arm pops and runs, falling through to the join. Every
+-- arm leaves its result on the stack, so the join is entered at depth 1+.
+emitCaseI :: ECtx -> CExpr -> [(Int, [Text], CExpr)] -> State Int [CilInstr]
+emitCaseI ctx scrut alts = do
+  scrutI <- emitExprI ctx scrut
+  let sorted = sortWith (\(t, _, _) -> t) alts
+      arrSlot = ctx.eNextScratch
+      bindSlotStart = arrSlot + 1
+      nextScratch' = bindSlotStart + foldl' max 0 [length vs | (_, vs, _) <- sorted]
+      extractAndStore = [Stloc arrSlot, Ldloc arrSlot, LdcI4 0, LdelemRef, UnboxAny int32Ref]
+      emitArm vars body = do
+        let bindings = zip vars [bindSlotStart ..]
+            bindCode = concat [[Ldloc arrSlot, LdcI4 i, LdelemRef, Stloc slot] | ((_, slot), i) <- zip bindings [1 :: Int ..]]
+            ctx' = ctx {eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings, eNextScratch = nextScratch'}
+        bodyCode <- emitExprI ctx' body
+        pure (bindCode <> bodyCode)
+  joinLbl <- freshLabel
+  let buildChain [] = pure [Ldnull]
+      buildChain [(_, vars, body)] = do
+        armCode <- emitArm vars body
+        pure (Pop : armCode)
+      buildChain ((tag, vars, body) : rest) = do
+        armCode <- emitArm vars body
+        nextLbl <- freshLabel
+        restCode <- buildChain rest
+        pure
+          ( [Dup, LdcI4 tag, BneUn (LabelId nextLbl), Pop]
+              <> armCode
+              <> [Br (LabelId joinLbl), Label (LabelId nextLbl)]
+              <> restCode
           )
-            <> cilCastclass trObjArr
-            <> cilStloc tmpSlot
-        storeTag =
-          cilLdloc tmpSlot
-            <> cilLdcI4 0
-            <> cilLdcI4 tag
-            <> cilBox (tokTR trInt32)
-            <> cilStelemRef
-    fieldCodes <- forM (zip fields [1 :: Int ..]) $ \(fld, i) -> do
-      fldCode <- emitExpr ctx' fld
-      pure (cilLdloc tmpSlot <> cilLdcI4 i <> fldCode <> cilStelemRef)
-    pure (loadNToStash <> storeTag <> concat fieldCodes <> cilLdloc tmpSlot)
+  chain <- buildChain sorted
+  pure (scrutI <> extractAndStore <> chain <> [Label (LabelId joinLbl)])
 
--- | Emit @body@ in tail position under @IL_tco_loop:@ (offset 0 of the
--- method code). 'CContinue' evaluates new argument values, pops them
--- into argument slots with @starg.s@ (reverse order — stack is LIFO),
--- and emits a 4-byte @br@ back to offset 0; the offset is computed
--- relative to the byte position of the @br@ itself, which we track by
--- threading a running offset through the traversal. Tail value shapes
--- end with their own @ret@; 'CCase' dispatches via a dup/bne chain
--- where each arm self-terminates, so no join / fallthrough is needed.
--- The binary emitter threads a 'pending' parameter-drop list through
--- every tail-position emit. Each drop becomes @ldnull; starg.s
--- <slot>@; CIL stack net-effect zero per pair, so the buffered-arg
--- ordering survives. Mirrors 'emitTailText' in 'Awsum.Codegen.CLR'.
-emitTailBin :: ECtx -> [Text] -> CExpr -> AsmM [Word8]
-emitTailBin ctx0 params = fmap fst . goTop ctx0 0 []
+-- | Tail-position emitter for a 'CLoop' body. The loop head is @loopLbl@
+-- (placed at the method start by 'declCilMethod'); 'CContinue' evaluates the
+-- new args, drains pending parameter-drops (@ldnull; starg@), rebinds the
+-- parameters with @starg@ in reverse (stack is LIFO), and @br@s back to the
+-- head. Tail values end in @ret@; a tail 'CCase' dispatches like the non-tail
+-- one but each arm self-terminates (recursive tail emit) — no join. @pending@
+-- is the buffered list of dropped parameter names, drained at each terminator.
+emitTailI :: ECtx -> [Text] -> Text -> CExpr -> State Int [CilInstr]
+emitTailI baseCtx params loopLbl = go baseCtx []
   where
-    -- 'CDrop' on a function parameter nullifies that 'starg' slot
-    -- (early GC root snip). 'CDrop' on a case-arm
-    -- binder is a no-op on managed runtimes — the local slot
-    -- dies when the arm body exits and the GC collects naturally.
-    paramSlotOf :: ECtx -> Text -> Maybe Int
-    paramSlotOf ctx n = Map.lookup n ctx.eParams
-
-    pendingDropBytes :: ECtx -> [Text] -> [Word8]
-    pendingDropBytes ctx =
-      concatMap
-        ( \n -> case paramSlotOf ctx n of
-            Just s -> cilLdnull <> cilStarg s
-            Nothing -> []
-        )
-
-    goTop :: ECtx -> Int -> [Text] -> CExpr -> AsmM ([Word8], Int)
-    goTop ctx offset pending = \case
-      CContinue newArgs -> emitContinue ctx offset pending newArgs
-      CCase scrut alts -> emitTailCase ctx offset pending scrut alts
-      CRowCase scrut alts ->
-        emitTailCase ctx offset pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
-      -- Push the drop onto 'pending'; drain at next terminator.
-      CDrop _ n body -> goTop ctx offset (n : pending) body
-      other -> emitTailValue ctx offset pending other
-
-    emitContinue :: ECtx -> Int -> [Text] -> [CExpr] -> AsmM ([Word8], Int)
-    emitContinue ctx offset pending newArgs = do
-      argCodes <- traverse (emitExpr ctx) newArgs
-      let paramSlots :: [Int]
-          paramSlots =
-            [ fromMaybe (error $ "CLR Assemble: no arg slot for " <> show p) (Map.lookup p ctx.eParams)
-            | p <- params
-            ]
-          stargBytes :: [Word8]
-          stargBytes = concat [cilStarg s | s <- reverse paramSlots]
-          argBytes :: [Word8]
-          argBytes = concat argCodes
-          freeBytes :: [Word8]
-          freeBytes = pendingDropBytes ctx pending
-          brStart :: Int
-          brStart = offset + length argBytes + length freeBytes + length stargBytes
-          brLen :: Int
-          brLen = 5
-          delta :: Int32
-          delta = fromIntegral (negate (brStart + brLen))
-          brBytes = cilBr delta
-      pure (argBytes <> freeBytes <> stargBytes <> brBytes, brStart + brLen)
-
-    emitTailValue :: ECtx -> Int -> [Text] -> CExpr -> AsmM ([Word8], Int)
-    emitTailValue ctx offset pending expr = do
-      code <- emitExpr ctx expr
-      let freeBytes = pendingDropBytes ctx pending
-          bytes = code <> freeBytes <> cilRet
-      pure (bytes, offset + length bytes)
-
-    emitTailCase :: ECtx -> Int -> [Text] -> CExpr -> [(Int, [Text], CExpr)] -> AsmM ([Word8], Int)
-    emitTailCase ctx offset pending scrut alts = do
-      trInt32 <- addTypeRef (resScopeAR 1) "Int32" "System"
-      scrutCode <- emitExpr ctx scrut
+    drainDrops :: ECtx -> [Text] -> [CilInstr]
+    drainDrops ctx pending = concat [[Ldnull, Starg s] | n <- pending, Just s <- [Map.lookup n ctx.eParams]]
+    go :: ECtx -> [Text] -> CExpr -> State Int [CilInstr]
+    go ctx pending = \case
+      CContinue newArgs -> do
+        argCodes <- traverse (emitExprI ctx) newArgs
+        let paramSlots = [fromMaybe (error ("CLR.Assemble.emitTailI: no arg slot for " <> show p)) (Map.lookup p ctx.eParams) | p <- params]
+            stargs = concatMap (\s -> [Starg s]) (reverse paramSlots)
+        pure (concat argCodes <> drainDrops ctx pending <> stargs <> [Br (LabelId loopLbl)])
+      CCase scrut alts -> tailCase ctx pending scrut alts
+      CRowCase scrut alts -> tailCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
+      CDrop _ n body -> go ctx (n : pending) body
+      other -> do
+        code <- emitExprI ctx other
+        pure (code <> drainDrops ctx pending <> [Ret])
+    tailCase :: ECtx -> [Text] -> CExpr -> [(Int, [Text], CExpr)] -> State Int [CilInstr]
+    tailCase ctx pending scrut alts = do
+      scrutI <- emitExprI ctx scrut
       let sorted = sortWith (\(t, _, _) -> t) alts
-          -- Mirror non-tail 'CCase': pull arrSlot and bindSlotStart from
-          -- 'eNextScratch' so nested constructs (CCase or CCon) inside an
-          -- arm body see a counter that already accounts for outer
-          -- scratch slots. See the comment on 'emitExpr' for 'CCase'.
           arrSlot = ctx.eNextScratch
-          maxBindings = foldl' max 0 [length vs | (_, vs, _) <- sorted]
           bindSlotStart = arrSlot + 1
-          nextScratch' = bindSlotStart + maxBindings
-          extractAndStore =
-            cilStloc arrSlot
-              <> cilLdloc arrSlot
-              <> cilLdcI4 0
-              <> cilLdelemRef'
-              <> cilUnboxAny (tokTR trInt32)
-          prefix = scrutCode <> extractAndStore
-          chainStartOffset = offset + length prefix
-      (chainBytes, endOffset) <- buildTailChain ctx arrSlot nextScratch' chainStartOffset pending sorted bindSlotStart
-      pure (prefix <> chainBytes, endOffset)
+          nextScratch' = bindSlotStart + foldl' max 0 [length vs | (_, vs, _) <- sorted]
+          extractAndStore = [Stloc arrSlot, Ldloc arrSlot, LdcI4 0, LdelemRef, UnboxAny int32Ref]
+          armTail vars body = do
+            let bindings = zip vars [bindSlotStart ..]
+                bindCode = concat [[Ldloc arrSlot, LdcI4 i, LdelemRef, Stloc slot] | ((_, slot), i) <- zip bindings [1 :: Int ..]]
+                ctx' = ctx {eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings, eNextScratch = nextScratch'}
+            tc <- go ctx' pending body
+            pure (bindCode <> tc)
+          buildChain [] = pure [Ldnull, Ret]
+          buildChain [(_, vars, body)] = (Pop :) <$> armTail vars body
+          buildChain ((tag, vars, body) : rest) = do
+            at <- armTail vars body
+            nextLbl <- freshLabel
+            rc <- buildChain rest
+            pure ([Dup, LdcI4 tag, BneUn (LabelId nextLbl), Pop] <> at <> [Label (LabelId nextLbl)] <> rc)
+      chain <- buildChain sorted
+      pure (scrutI <> extractAndStore <> chain)
 
-    buildTailChain :: ECtx -> Int -> Int -> Int -> [Text] -> [(Int, [Text], CExpr)] -> Int -> AsmM ([Word8], Int)
-    buildTailChain _ _ _ offset _ [] _ =
-      pure (cilLdnull <> cilRet, offset + length cilLdnull + length cilRet)
-    buildTailChain ctx arrSlot nextScratch' offset pending [(_, vars, armBody)] bindStart = do
-      let bindings = zip vars [bindStart ..]
-          ctx' =
-            ctx
-              { eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings,
-                eNextScratch = nextScratch'
-              }
-          bindCode :: [Word8]
-          bindCode =
-            concatMap
-              ( \((_, slot), i) ->
-                  cilLdloc arrSlot <> cilLdcI4 (i :: Int) <> cilLdelemRef' <> cilStloc slot
-              )
-              (zip bindings [1 :: Int ..])
-          popTag :: [Word8]
-          popTag = cilPop
-          armPrefix = popTag <> bindCode
-          armStart = offset + length armPrefix
-      (armBytes, endOff) <- goTop ctx' armStart pending armBody
-      pure (armPrefix <> armBytes, endOff)
-    buildTailChain ctx arrSlot nextScratch' offset pending ((tag, vars, armBody) : rest) bindStart = do
-      let dupCode :: [Word8]
-          dupCode = [0x25] -- dup
-          ldcCode :: [Word8]
-          ldcCode = cilLdcI4 tag
-          bneLen :: Int
-          bneLen = 5
-          bindings = zip vars [bindStart ..]
-          ctx' =
-            ctx
-              { eLocals = foldl' (\m (v, s) -> Map.insert v s m) ctx.eLocals bindings,
-                eNextScratch = nextScratch'
-              }
-          bindCode :: [Word8]
-          bindCode =
-            concatMap
-              ( \((_, slot), i) ->
-                  cilLdloc arrSlot <> cilLdcI4 (i :: Int) <> cilLdelemRef' <> cilStloc slot
-              )
-              (zip bindings [1 :: Int ..])
-          popTag :: [Word8]
-          popTag = cilPop
-          armPrefixLen = length dupCode + length ldcCode + bneLen
-          armStart = offset + armPrefixLen + length popTag + length bindCode
-      (armBytes, armEnd) <- goTop ctx' armStart pending armBody
-      let skipLen = length popTag + length bindCode + length armBytes
-      (restBytes, restEnd) <- buildTailChain ctx arrSlot nextScratch' armEnd pending rest bindStart
-      let bne = cilBneUn (fromIntegral skipLen)
-      pure
-        ( dupCode <> ldcCode <> bne <> popTag <> bindCode <> armBytes <> restBytes,
-          restEnd
-        )
-
-lkTok :: ECtx -> Text -> Word32
-lkTok ctx n = fromMaybe (error $ "no token: " <> n) (Map.lookup n ctx.eToks)
-
--- ════════════════════════════════════════════════════════════════════════════
--- Higher-order function support (Func delegates)
--- ════════════════════════════════════════════════════════════════════════════
-
--- | Get (typeSpecToken, ctorToken, invokeToken) for Func delegate of given arity.
-funcTokens :: Int -> AsmM (Word32, Word32, Word32)
-funcTokens arity = do
-  -- TypeRef for System.Func`(arity+1) in System.Runtime
-  let funcName = "Func`" <> show (arity + 1)
-  trRow <- addTypeRef (resScopeAR 1) funcName "System"
-
-  -- TypeSpec: GENERICINST CLASS TypeDefOrRef GenArgCount GenArgs
-  let coded = tdorTR trRow
-      tsSig = [0x15, 0x12] <> compressU (fromIntegral coded) <> [fromIntegral (arity + 1)] <> replicate (arity + 1) etObject
-  tsRow <- addTypeSpec tsSig
-
-  -- MemberRef: .ctor(object, native int) on TypeSpec
-  ctorRow <- addMemberRef (mrpTS tsRow) ".ctor" (sigInstance etVoid [etObject, etNativeInt])
-  -- MemberRef: Invoke(!0, ..., !(N-1)) -> !N on TypeSpec (uses generic type vars)
-  let etVar i = [0x13] <> compressU (fromIntegral i)
-      invokeSig = [0x20, fromIntegral arity] <> etVar arity <> concatMap etVar [0 .. arity - 1]
-  invokeRow <- addMemberRef (mrpTS tsRow) "Invoke" invokeSig
-
-  pure (tokTS tsRow, tokMR ctorRow, tokMR invokeRow)
+-- | Lower a first-order 'CDecl' to a 'CilMethod' (the value both
+-- projections consume). Pure: all operands stay symbolic; the only state is the
+-- per-method fresh-label counter (started at 0). Locals layout — slot 0 is
+-- @object[]@ (the 'CCon' scratch), the rest @object@.
+declCilMethod :: ECtx -> CDecl -> CilMethod
+declCilMethod baseCtx = \case
+  CFunDef nm args (CLoop body) ->
+    let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..]), eLocals = Map.empty, eNextScratch = 0}
+        loopLbl = "IL_tco_loop" :: Text
+     in CilMethod
+          { cmName = mangle nm,
+            cmRet = SeObject,
+            cmParams = replicate (length args) SeObject,
+            cmLocals = userLocals (exprLocalsNeeded body),
+            -- Loop head at the start; tail arms/values self-terminate, so no
+            -- trailing Ret.
+            cmBody = Label (LabelId loopLbl) : evalState (emitTailI ctx args loopLbl body) 0
+          }
+  CFunDef nm args body ->
+    let ctx = baseCtx {eParams = Map.fromList (zip args [0 ..]), eLocals = Map.empty, eNextScratch = 0}
+     in CilMethod
+          { cmName = mangle nm,
+            cmRet = SeObject,
+            cmParams = replicate (length args) SeObject,
+            cmLocals = userLocals (exprLocalsNeeded body),
+            cmBody = evalState (emitExprI ctx body) 0 <> [Ret]
+          }
+  CValDef nm rhs ->
+    let ctx = baseCtx {eParams = Map.empty, eLocals = Map.empty, eNextScratch = 0}
+     in CilMethod
+          { cmName = mangle nm,
+            cmRet = SeObject,
+            cmParams = [],
+            cmLocals = userLocals (exprLocalsNeeded rhs),
+            cmBody = evalState (emitExprI ctx rhs) 0 <> [Ret]
+          }
+  where
+    userLocals n
+      | n <= 0 = []
+      | otherwise = SeSZArray SeObject : replicate (n - 1) SeObject
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Method body encoding
@@ -3781,9 +1436,9 @@ funcTokens arity = do
 -- the method is short and has no locals, in which case we have already
 -- verified the actual stack depth fits. The fat header (12 bytes)
 -- carries an explicit @MaxStack@; we emit the per-method value passed
--- in @maxStack@. Hardcoding @MaxStack = 16@ here, as this code did
--- before, was the root cause of @System.InvalidProgramException@ when
--- a single method's stack peaked above 16 — see ECMA-335 §II.25.4.3.
+-- in @maxStack@. It must be ≥ the method's true stack peak, or the runtime
+-- rejects the method with @System.InvalidProgramException@ — see
+-- ECMA-335 §II.25.4.3.
 encodeBody :: Word32 -> Word16 -> [Word8] -> [Word8]
 encodeBody localSigTok maxStack code
   | len < 64 && localSigTok == 0 && maxStack <= 8 = fromIntegral ((len `shiftL` 2) .|. 0x02) : code -- tiny

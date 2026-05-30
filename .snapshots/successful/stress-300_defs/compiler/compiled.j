@@ -12,6 +12,8 @@
 .end method
 
 .method static __print(Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 1
   getstatic java/lang/System/out Ljava/io/PrintStream;
   aload_0
   invokevirtual java/io/PrintStream/print(Ljava/lang/Object;)V
@@ -26,22 +28,23 @@
 .end method
 
 .method static v_and(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 4
   aload_0
-  dup
+  checkcast [Ljava/lang/Object;
+  astore_2
+  aload_2
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    1: L_arm_1
-    2: L_arm_2
-    default: L_arm_1
-L_arm_1:
-  pop
+  istore_3
+  iload_3
+  iconst_1
+  if_icmpne L_arm1
   aload_1
-  goto L_join
-L_arm_2:
-  pop
+  goto L_join0
+L_arm1:
   iconst_1
   anewarray java/lang/Object
   dup
@@ -49,93 +52,95 @@ L_arm_2:
   iconst_2
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  goto L_join
-L_join:
+L_join0:
   areturn
 .end method
 
 
 .method static v_showBool(Ljava/lang/Object;)Ljava/lang/Object;
+  .limit stack 3
+  .limit locals 3
   aload_0
-  dup
+  checkcast [Ljava/lang/Object;
+  astore_1
+  aload_1
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    1: L_arm_1
-    2: L_arm_2
-    default: L_arm_1
-L_arm_1:
-  pop
+  istore_2
+  iload_2
+  iconst_1
+  if_icmpne L_arm3
   ldc "True"
-  goto L_join
-L_arm_2:
-  pop
+  goto L_join2
+L_arm3:
   ldc "False"
-  goto L_join
-L_join:
+L_join2:
   areturn
 .end method
 
 
 .method static v_runIO(Ljava/lang/Object;)Ljava/lang/Object;
-L_tco_loop:
+  .limit stack 3
+  .limit locals 7
+L_tco4:
   aload_0
-  dup
+  checkcast [Ljava/lang/Object;
+  astore_1
+  aload_1
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    5: L_tco_arm_5
-    7: L_tco_arm_7
-    default: L_tco_arm_5
-L_tco_arm_5:
-  dup
-  iconst_1
-  aaload
-  astore_1
-  pop
+  istore_2
+  iload_2
+  iconst_5
+  if_icmpne L_tarm5
   aload_1
-  aconst_null
-  astore_1
-  areturn
-L_tco_arm_7:
-  dup
   iconst_1
   aaload
-  astore_1
-  dup
+  astore_3
+  aconst_null
+  astore 4
+  aload_3
+  aconst_null
+  astore_3
+  areturn
+L_tarm5:
+  aload_1
+  iconst_1
+  aaload
+  astore_3
+  aload_1
   iconst_2
   aaload
-  astore_2
-  pop
-  aload_1
+  astore 4
+  aload_3
   invokestatic AwsumMain/__print(Ljava/lang/Object;)Ljava/lang/Object;
-  dup
+  checkcast [Ljava/lang/Object;
+  astore 5
+  aload 5
   iconst_0
   aaload
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/intValue()I
-  lookupswitch
-    0: L_tco_arm_0
-    default: L_tco_arm_0
-L_tco_arm_0:
-  pop
-  aload_2
+  istore 6
+  aload 4
   aconst_null
   astore_0
   aconst_null
-  astore_2
+  astore 4
   aconst_null
-  astore_1
+  astore_3
   astore_0
-  goto L_tco_loop
+  goto L_tco4
 .end method
 
 
 .method static v_b1()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -148,6 +153,8 @@ L_tco_arm_0:
 
 
 .method static v_b2()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -160,6 +167,8 @@ L_tco_arm_0:
 
 
 .method static v_b3()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -172,6 +181,8 @@ L_tco_arm_0:
 
 
 .method static v_b4()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -184,6 +195,8 @@ L_tco_arm_0:
 
 
 .method static v_b5()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -196,6 +209,8 @@ L_tco_arm_0:
 
 
 .method static v_b6()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -208,6 +223,8 @@ L_tco_arm_0:
 
 
 .method static v_b7()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -220,6 +237,8 @@ L_tco_arm_0:
 
 
 .method static v_b8()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -232,6 +251,8 @@ L_tco_arm_0:
 
 
 .method static v_b9()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -244,6 +265,8 @@ L_tco_arm_0:
 
 
 .method static v_b10()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -256,6 +279,8 @@ L_tco_arm_0:
 
 
 .method static v_b11()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -268,6 +293,8 @@ L_tco_arm_0:
 
 
 .method static v_b12()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -280,6 +307,8 @@ L_tco_arm_0:
 
 
 .method static v_b13()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -292,6 +321,8 @@ L_tco_arm_0:
 
 
 .method static v_b14()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -304,6 +335,8 @@ L_tco_arm_0:
 
 
 .method static v_b15()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -316,6 +349,8 @@ L_tco_arm_0:
 
 
 .method static v_b16()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -328,6 +363,8 @@ L_tco_arm_0:
 
 
 .method static v_b17()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -340,6 +377,8 @@ L_tco_arm_0:
 
 
 .method static v_b18()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -352,6 +391,8 @@ L_tco_arm_0:
 
 
 .method static v_b19()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -364,6 +405,8 @@ L_tco_arm_0:
 
 
 .method static v_b20()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -376,6 +419,8 @@ L_tco_arm_0:
 
 
 .method static v_b21()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -388,6 +433,8 @@ L_tco_arm_0:
 
 
 .method static v_b22()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -400,6 +447,8 @@ L_tco_arm_0:
 
 
 .method static v_b23()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -412,6 +461,8 @@ L_tco_arm_0:
 
 
 .method static v_b24()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -424,6 +475,8 @@ L_tco_arm_0:
 
 
 .method static v_b25()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -436,6 +489,8 @@ L_tco_arm_0:
 
 
 .method static v_b26()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -448,6 +503,8 @@ L_tco_arm_0:
 
 
 .method static v_b27()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -460,6 +517,8 @@ L_tco_arm_0:
 
 
 .method static v_b28()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -472,6 +531,8 @@ L_tco_arm_0:
 
 
 .method static v_b29()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -484,6 +545,8 @@ L_tco_arm_0:
 
 
 .method static v_b30()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -496,6 +559,8 @@ L_tco_arm_0:
 
 
 .method static v_b31()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -508,6 +573,8 @@ L_tco_arm_0:
 
 
 .method static v_b32()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -520,6 +587,8 @@ L_tco_arm_0:
 
 
 .method static v_b33()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -532,6 +601,8 @@ L_tco_arm_0:
 
 
 .method static v_b34()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -544,6 +615,8 @@ L_tco_arm_0:
 
 
 .method static v_b35()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -556,6 +629,8 @@ L_tco_arm_0:
 
 
 .method static v_b36()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -568,6 +643,8 @@ L_tco_arm_0:
 
 
 .method static v_b37()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -580,6 +657,8 @@ L_tco_arm_0:
 
 
 .method static v_b38()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -592,6 +671,8 @@ L_tco_arm_0:
 
 
 .method static v_b39()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -604,6 +685,8 @@ L_tco_arm_0:
 
 
 .method static v_b40()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -616,6 +699,8 @@ L_tco_arm_0:
 
 
 .method static v_b41()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -628,6 +713,8 @@ L_tco_arm_0:
 
 
 .method static v_b42()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -640,6 +727,8 @@ L_tco_arm_0:
 
 
 .method static v_b43()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -652,6 +741,8 @@ L_tco_arm_0:
 
 
 .method static v_b44()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -664,6 +755,8 @@ L_tco_arm_0:
 
 
 .method static v_b45()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -676,6 +769,8 @@ L_tco_arm_0:
 
 
 .method static v_b46()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -688,6 +783,8 @@ L_tco_arm_0:
 
 
 .method static v_b47()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -700,6 +797,8 @@ L_tco_arm_0:
 
 
 .method static v_b48()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -712,6 +811,8 @@ L_tco_arm_0:
 
 
 .method static v_b49()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -724,6 +825,8 @@ L_tco_arm_0:
 
 
 .method static v_b50()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -736,6 +839,8 @@ L_tco_arm_0:
 
 
 .method static v_b51()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -748,6 +853,8 @@ L_tco_arm_0:
 
 
 .method static v_b52()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -760,6 +867,8 @@ L_tco_arm_0:
 
 
 .method static v_b53()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -772,6 +881,8 @@ L_tco_arm_0:
 
 
 .method static v_b54()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -784,6 +895,8 @@ L_tco_arm_0:
 
 
 .method static v_b55()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -796,6 +909,8 @@ L_tco_arm_0:
 
 
 .method static v_b56()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -808,6 +923,8 @@ L_tco_arm_0:
 
 
 .method static v_b57()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -820,6 +937,8 @@ L_tco_arm_0:
 
 
 .method static v_b58()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -832,6 +951,8 @@ L_tco_arm_0:
 
 
 .method static v_b59()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -844,6 +965,8 @@ L_tco_arm_0:
 
 
 .method static v_b60()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -856,6 +979,8 @@ L_tco_arm_0:
 
 
 .method static v_b61()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -868,6 +993,8 @@ L_tco_arm_0:
 
 
 .method static v_b62()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -880,6 +1007,8 @@ L_tco_arm_0:
 
 
 .method static v_b63()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -892,6 +1021,8 @@ L_tco_arm_0:
 
 
 .method static v_b64()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -904,6 +1035,8 @@ L_tco_arm_0:
 
 
 .method static v_b65()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -916,6 +1049,8 @@ L_tco_arm_0:
 
 
 .method static v_b66()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -928,6 +1063,8 @@ L_tco_arm_0:
 
 
 .method static v_b67()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -940,6 +1077,8 @@ L_tco_arm_0:
 
 
 .method static v_b68()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -952,6 +1091,8 @@ L_tco_arm_0:
 
 
 .method static v_b69()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -964,6 +1105,8 @@ L_tco_arm_0:
 
 
 .method static v_b70()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -976,6 +1119,8 @@ L_tco_arm_0:
 
 
 .method static v_b71()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -988,6 +1133,8 @@ L_tco_arm_0:
 
 
 .method static v_b72()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1000,6 +1147,8 @@ L_tco_arm_0:
 
 
 .method static v_b73()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1012,6 +1161,8 @@ L_tco_arm_0:
 
 
 .method static v_b74()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1024,6 +1175,8 @@ L_tco_arm_0:
 
 
 .method static v_b75()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1036,6 +1189,8 @@ L_tco_arm_0:
 
 
 .method static v_b76()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1048,6 +1203,8 @@ L_tco_arm_0:
 
 
 .method static v_b77()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1060,6 +1217,8 @@ L_tco_arm_0:
 
 
 .method static v_b78()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1072,6 +1231,8 @@ L_tco_arm_0:
 
 
 .method static v_b79()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1084,6 +1245,8 @@ L_tco_arm_0:
 
 
 .method static v_b80()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1096,6 +1259,8 @@ L_tco_arm_0:
 
 
 .method static v_b81()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1108,6 +1273,8 @@ L_tco_arm_0:
 
 
 .method static v_b82()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1120,6 +1287,8 @@ L_tco_arm_0:
 
 
 .method static v_b83()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1132,6 +1301,8 @@ L_tco_arm_0:
 
 
 .method static v_b84()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1144,6 +1315,8 @@ L_tco_arm_0:
 
 
 .method static v_b85()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1156,6 +1329,8 @@ L_tco_arm_0:
 
 
 .method static v_b86()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1168,6 +1343,8 @@ L_tco_arm_0:
 
 
 .method static v_b87()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1180,6 +1357,8 @@ L_tco_arm_0:
 
 
 .method static v_b88()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1192,6 +1371,8 @@ L_tco_arm_0:
 
 
 .method static v_b89()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1204,6 +1385,8 @@ L_tco_arm_0:
 
 
 .method static v_b90()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1216,6 +1399,8 @@ L_tco_arm_0:
 
 
 .method static v_b91()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1228,6 +1413,8 @@ L_tco_arm_0:
 
 
 .method static v_b92()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1240,6 +1427,8 @@ L_tco_arm_0:
 
 
 .method static v_b93()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1252,6 +1441,8 @@ L_tco_arm_0:
 
 
 .method static v_b94()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1264,6 +1455,8 @@ L_tco_arm_0:
 
 
 .method static v_b95()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1276,6 +1469,8 @@ L_tco_arm_0:
 
 
 .method static v_b96()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1288,6 +1483,8 @@ L_tco_arm_0:
 
 
 .method static v_b97()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1300,6 +1497,8 @@ L_tco_arm_0:
 
 
 .method static v_b98()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1312,6 +1511,8 @@ L_tco_arm_0:
 
 
 .method static v_b99()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1324,6 +1525,8 @@ L_tco_arm_0:
 
 
 .method static v_b100()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1336,6 +1539,8 @@ L_tco_arm_0:
 
 
 .method static v_b101()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1348,6 +1553,8 @@ L_tco_arm_0:
 
 
 .method static v_b102()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1360,6 +1567,8 @@ L_tco_arm_0:
 
 
 .method static v_b103()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1372,6 +1581,8 @@ L_tco_arm_0:
 
 
 .method static v_b104()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1384,6 +1595,8 @@ L_tco_arm_0:
 
 
 .method static v_b105()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1396,6 +1609,8 @@ L_tco_arm_0:
 
 
 .method static v_b106()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1408,6 +1623,8 @@ L_tco_arm_0:
 
 
 .method static v_b107()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1420,6 +1637,8 @@ L_tco_arm_0:
 
 
 .method static v_b108()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1432,6 +1651,8 @@ L_tco_arm_0:
 
 
 .method static v_b109()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1444,6 +1665,8 @@ L_tco_arm_0:
 
 
 .method static v_b110()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1456,6 +1679,8 @@ L_tco_arm_0:
 
 
 .method static v_b111()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1468,6 +1693,8 @@ L_tco_arm_0:
 
 
 .method static v_b112()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1480,6 +1707,8 @@ L_tco_arm_0:
 
 
 .method static v_b113()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1492,6 +1721,8 @@ L_tco_arm_0:
 
 
 .method static v_b114()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1504,6 +1735,8 @@ L_tco_arm_0:
 
 
 .method static v_b115()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1516,6 +1749,8 @@ L_tco_arm_0:
 
 
 .method static v_b116()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1528,6 +1763,8 @@ L_tco_arm_0:
 
 
 .method static v_b117()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1540,6 +1777,8 @@ L_tco_arm_0:
 
 
 .method static v_b118()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1552,6 +1791,8 @@ L_tco_arm_0:
 
 
 .method static v_b119()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1564,6 +1805,8 @@ L_tco_arm_0:
 
 
 .method static v_b120()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1576,6 +1819,8 @@ L_tco_arm_0:
 
 
 .method static v_b121()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1588,6 +1833,8 @@ L_tco_arm_0:
 
 
 .method static v_b122()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1600,6 +1847,8 @@ L_tco_arm_0:
 
 
 .method static v_b123()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1612,6 +1861,8 @@ L_tco_arm_0:
 
 
 .method static v_b124()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1624,6 +1875,8 @@ L_tco_arm_0:
 
 
 .method static v_b125()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1636,6 +1889,8 @@ L_tco_arm_0:
 
 
 .method static v_b126()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1648,6 +1903,8 @@ L_tco_arm_0:
 
 
 .method static v_b127()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1660,6 +1917,8 @@ L_tco_arm_0:
 
 
 .method static v_b128()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1672,6 +1931,8 @@ L_tco_arm_0:
 
 
 .method static v_b129()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1684,6 +1945,8 @@ L_tco_arm_0:
 
 
 .method static v_b130()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1696,6 +1959,8 @@ L_tco_arm_0:
 
 
 .method static v_b131()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1708,6 +1973,8 @@ L_tco_arm_0:
 
 
 .method static v_b132()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1720,6 +1987,8 @@ L_tco_arm_0:
 
 
 .method static v_b133()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1732,6 +2001,8 @@ L_tco_arm_0:
 
 
 .method static v_b134()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1744,6 +2015,8 @@ L_tco_arm_0:
 
 
 .method static v_b135()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1756,6 +2029,8 @@ L_tco_arm_0:
 
 
 .method static v_b136()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1768,6 +2043,8 @@ L_tco_arm_0:
 
 
 .method static v_b137()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1780,6 +2057,8 @@ L_tco_arm_0:
 
 
 .method static v_b138()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1792,6 +2071,8 @@ L_tco_arm_0:
 
 
 .method static v_b139()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1804,6 +2085,8 @@ L_tco_arm_0:
 
 
 .method static v_b140()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1816,6 +2099,8 @@ L_tco_arm_0:
 
 
 .method static v_b141()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1828,6 +2113,8 @@ L_tco_arm_0:
 
 
 .method static v_b142()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1840,6 +2127,8 @@ L_tco_arm_0:
 
 
 .method static v_b143()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1852,6 +2141,8 @@ L_tco_arm_0:
 
 
 .method static v_b144()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1864,6 +2155,8 @@ L_tco_arm_0:
 
 
 .method static v_b145()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1876,6 +2169,8 @@ L_tco_arm_0:
 
 
 .method static v_b146()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1888,6 +2183,8 @@ L_tco_arm_0:
 
 
 .method static v_b147()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1900,6 +2197,8 @@ L_tco_arm_0:
 
 
 .method static v_b148()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1912,6 +2211,8 @@ L_tco_arm_0:
 
 
 .method static v_b149()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1924,6 +2225,8 @@ L_tco_arm_0:
 
 
 .method static v_b150()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1936,6 +2239,8 @@ L_tco_arm_0:
 
 
 .method static v_b151()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1948,6 +2253,8 @@ L_tco_arm_0:
 
 
 .method static v_b152()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1960,6 +2267,8 @@ L_tco_arm_0:
 
 
 .method static v_b153()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1972,6 +2281,8 @@ L_tco_arm_0:
 
 
 .method static v_b154()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1984,6 +2295,8 @@ L_tco_arm_0:
 
 
 .method static v_b155()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -1996,6 +2309,8 @@ L_tco_arm_0:
 
 
 .method static v_b156()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2008,6 +2323,8 @@ L_tco_arm_0:
 
 
 .method static v_b157()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2020,6 +2337,8 @@ L_tco_arm_0:
 
 
 .method static v_b158()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2032,6 +2351,8 @@ L_tco_arm_0:
 
 
 .method static v_b159()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2044,6 +2365,8 @@ L_tco_arm_0:
 
 
 .method static v_b160()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2056,6 +2379,8 @@ L_tco_arm_0:
 
 
 .method static v_b161()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2068,6 +2393,8 @@ L_tco_arm_0:
 
 
 .method static v_b162()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2080,6 +2407,8 @@ L_tco_arm_0:
 
 
 .method static v_b163()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2092,6 +2421,8 @@ L_tco_arm_0:
 
 
 .method static v_b164()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2104,6 +2435,8 @@ L_tco_arm_0:
 
 
 .method static v_b165()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2116,6 +2449,8 @@ L_tco_arm_0:
 
 
 .method static v_b166()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2128,6 +2463,8 @@ L_tco_arm_0:
 
 
 .method static v_b167()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2140,6 +2477,8 @@ L_tco_arm_0:
 
 
 .method static v_b168()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2152,6 +2491,8 @@ L_tco_arm_0:
 
 
 .method static v_b169()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2164,6 +2505,8 @@ L_tco_arm_0:
 
 
 .method static v_b170()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2176,6 +2519,8 @@ L_tco_arm_0:
 
 
 .method static v_b171()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2188,6 +2533,8 @@ L_tco_arm_0:
 
 
 .method static v_b172()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2200,6 +2547,8 @@ L_tco_arm_0:
 
 
 .method static v_b173()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2212,6 +2561,8 @@ L_tco_arm_0:
 
 
 .method static v_b174()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2224,6 +2575,8 @@ L_tco_arm_0:
 
 
 .method static v_b175()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2236,6 +2589,8 @@ L_tco_arm_0:
 
 
 .method static v_b176()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2248,6 +2603,8 @@ L_tco_arm_0:
 
 
 .method static v_b177()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2260,6 +2617,8 @@ L_tco_arm_0:
 
 
 .method static v_b178()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2272,6 +2631,8 @@ L_tco_arm_0:
 
 
 .method static v_b179()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2284,6 +2645,8 @@ L_tco_arm_0:
 
 
 .method static v_b180()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2296,6 +2659,8 @@ L_tco_arm_0:
 
 
 .method static v_b181()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2308,6 +2673,8 @@ L_tco_arm_0:
 
 
 .method static v_b182()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2320,6 +2687,8 @@ L_tco_arm_0:
 
 
 .method static v_b183()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2332,6 +2701,8 @@ L_tco_arm_0:
 
 
 .method static v_b184()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2344,6 +2715,8 @@ L_tco_arm_0:
 
 
 .method static v_b185()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2356,6 +2729,8 @@ L_tco_arm_0:
 
 
 .method static v_b186()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2368,6 +2743,8 @@ L_tco_arm_0:
 
 
 .method static v_b187()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2380,6 +2757,8 @@ L_tco_arm_0:
 
 
 .method static v_b188()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2392,6 +2771,8 @@ L_tco_arm_0:
 
 
 .method static v_b189()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2404,6 +2785,8 @@ L_tco_arm_0:
 
 
 .method static v_b190()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2416,6 +2799,8 @@ L_tco_arm_0:
 
 
 .method static v_b191()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2428,6 +2813,8 @@ L_tco_arm_0:
 
 
 .method static v_b192()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2440,6 +2827,8 @@ L_tco_arm_0:
 
 
 .method static v_b193()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2452,6 +2841,8 @@ L_tco_arm_0:
 
 
 .method static v_b194()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2464,6 +2855,8 @@ L_tco_arm_0:
 
 
 .method static v_b195()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2476,6 +2869,8 @@ L_tco_arm_0:
 
 
 .method static v_b196()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2488,6 +2883,8 @@ L_tco_arm_0:
 
 
 .method static v_b197()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2500,6 +2897,8 @@ L_tco_arm_0:
 
 
 .method static v_b198()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2512,6 +2911,8 @@ L_tco_arm_0:
 
 
 .method static v_b199()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2524,6 +2925,8 @@ L_tco_arm_0:
 
 
 .method static v_b200()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2536,6 +2939,8 @@ L_tco_arm_0:
 
 
 .method static v_b201()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2548,6 +2953,8 @@ L_tco_arm_0:
 
 
 .method static v_b202()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2560,6 +2967,8 @@ L_tco_arm_0:
 
 
 .method static v_b203()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2572,6 +2981,8 @@ L_tco_arm_0:
 
 
 .method static v_b204()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2584,6 +2995,8 @@ L_tco_arm_0:
 
 
 .method static v_b205()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2596,6 +3009,8 @@ L_tco_arm_0:
 
 
 .method static v_b206()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2608,6 +3023,8 @@ L_tco_arm_0:
 
 
 .method static v_b207()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2620,6 +3037,8 @@ L_tco_arm_0:
 
 
 .method static v_b208()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2632,6 +3051,8 @@ L_tco_arm_0:
 
 
 .method static v_b209()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2644,6 +3065,8 @@ L_tco_arm_0:
 
 
 .method static v_b210()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2656,6 +3079,8 @@ L_tco_arm_0:
 
 
 .method static v_b211()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2668,6 +3093,8 @@ L_tco_arm_0:
 
 
 .method static v_b212()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2680,6 +3107,8 @@ L_tco_arm_0:
 
 
 .method static v_b213()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2692,6 +3121,8 @@ L_tco_arm_0:
 
 
 .method static v_b214()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2704,6 +3135,8 @@ L_tco_arm_0:
 
 
 .method static v_b215()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2716,6 +3149,8 @@ L_tco_arm_0:
 
 
 .method static v_b216()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2728,6 +3163,8 @@ L_tco_arm_0:
 
 
 .method static v_b217()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2740,6 +3177,8 @@ L_tco_arm_0:
 
 
 .method static v_b218()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2752,6 +3191,8 @@ L_tco_arm_0:
 
 
 .method static v_b219()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2764,6 +3205,8 @@ L_tco_arm_0:
 
 
 .method static v_b220()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2776,6 +3219,8 @@ L_tco_arm_0:
 
 
 .method static v_b221()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2788,6 +3233,8 @@ L_tco_arm_0:
 
 
 .method static v_b222()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2800,6 +3247,8 @@ L_tco_arm_0:
 
 
 .method static v_b223()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2812,6 +3261,8 @@ L_tco_arm_0:
 
 
 .method static v_b224()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2824,6 +3275,8 @@ L_tco_arm_0:
 
 
 .method static v_b225()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2836,6 +3289,8 @@ L_tco_arm_0:
 
 
 .method static v_b226()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2848,6 +3303,8 @@ L_tco_arm_0:
 
 
 .method static v_b227()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2860,6 +3317,8 @@ L_tco_arm_0:
 
 
 .method static v_b228()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2872,6 +3331,8 @@ L_tco_arm_0:
 
 
 .method static v_b229()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2884,6 +3345,8 @@ L_tco_arm_0:
 
 
 .method static v_b230()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2896,6 +3359,8 @@ L_tco_arm_0:
 
 
 .method static v_b231()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2908,6 +3373,8 @@ L_tco_arm_0:
 
 
 .method static v_b232()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2920,6 +3387,8 @@ L_tco_arm_0:
 
 
 .method static v_b233()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2932,6 +3401,8 @@ L_tco_arm_0:
 
 
 .method static v_b234()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2944,6 +3415,8 @@ L_tco_arm_0:
 
 
 .method static v_b235()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2956,6 +3429,8 @@ L_tco_arm_0:
 
 
 .method static v_b236()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2968,6 +3443,8 @@ L_tco_arm_0:
 
 
 .method static v_b237()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2980,6 +3457,8 @@ L_tco_arm_0:
 
 
 .method static v_b238()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -2992,6 +3471,8 @@ L_tco_arm_0:
 
 
 .method static v_b239()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3004,6 +3485,8 @@ L_tco_arm_0:
 
 
 .method static v_b240()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3016,6 +3499,8 @@ L_tco_arm_0:
 
 
 .method static v_b241()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3028,6 +3513,8 @@ L_tco_arm_0:
 
 
 .method static v_b242()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3040,6 +3527,8 @@ L_tco_arm_0:
 
 
 .method static v_b243()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3052,6 +3541,8 @@ L_tco_arm_0:
 
 
 .method static v_b244()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3064,6 +3555,8 @@ L_tco_arm_0:
 
 
 .method static v_b245()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3076,6 +3569,8 @@ L_tco_arm_0:
 
 
 .method static v_b246()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3088,6 +3583,8 @@ L_tco_arm_0:
 
 
 .method static v_b247()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3100,6 +3597,8 @@ L_tco_arm_0:
 
 
 .method static v_b248()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3112,6 +3611,8 @@ L_tco_arm_0:
 
 
 .method static v_b249()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3124,6 +3625,8 @@ L_tco_arm_0:
 
 
 .method static v_b250()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3136,6 +3639,8 @@ L_tco_arm_0:
 
 
 .method static v_b251()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3148,6 +3653,8 @@ L_tco_arm_0:
 
 
 .method static v_b252()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3160,6 +3667,8 @@ L_tco_arm_0:
 
 
 .method static v_b253()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3172,6 +3681,8 @@ L_tco_arm_0:
 
 
 .method static v_b254()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3184,6 +3695,8 @@ L_tco_arm_0:
 
 
 .method static v_b255()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3196,6 +3709,8 @@ L_tco_arm_0:
 
 
 .method static v_b256()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3208,6 +3723,8 @@ L_tco_arm_0:
 
 
 .method static v_b257()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3220,6 +3737,8 @@ L_tco_arm_0:
 
 
 .method static v_b258()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3232,6 +3751,8 @@ L_tco_arm_0:
 
 
 .method static v_b259()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3244,6 +3765,8 @@ L_tco_arm_0:
 
 
 .method static v_b260()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3256,6 +3779,8 @@ L_tco_arm_0:
 
 
 .method static v_b261()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3268,6 +3793,8 @@ L_tco_arm_0:
 
 
 .method static v_b262()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3280,6 +3807,8 @@ L_tco_arm_0:
 
 
 .method static v_b263()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3292,6 +3821,8 @@ L_tco_arm_0:
 
 
 .method static v_b264()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3304,6 +3835,8 @@ L_tco_arm_0:
 
 
 .method static v_b265()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3316,6 +3849,8 @@ L_tco_arm_0:
 
 
 .method static v_b266()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3328,6 +3863,8 @@ L_tco_arm_0:
 
 
 .method static v_b267()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3340,6 +3877,8 @@ L_tco_arm_0:
 
 
 .method static v_b268()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3352,6 +3891,8 @@ L_tco_arm_0:
 
 
 .method static v_b269()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3364,6 +3905,8 @@ L_tco_arm_0:
 
 
 .method static v_b270()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3376,6 +3919,8 @@ L_tco_arm_0:
 
 
 .method static v_b271()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3388,6 +3933,8 @@ L_tco_arm_0:
 
 
 .method static v_b272()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3400,6 +3947,8 @@ L_tco_arm_0:
 
 
 .method static v_b273()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3412,6 +3961,8 @@ L_tco_arm_0:
 
 
 .method static v_b274()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3424,6 +3975,8 @@ L_tco_arm_0:
 
 
 .method static v_b275()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3436,6 +3989,8 @@ L_tco_arm_0:
 
 
 .method static v_b276()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3448,6 +4003,8 @@ L_tco_arm_0:
 
 
 .method static v_b277()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3460,6 +4017,8 @@ L_tco_arm_0:
 
 
 .method static v_b278()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3472,6 +4031,8 @@ L_tco_arm_0:
 
 
 .method static v_b279()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3484,6 +4045,8 @@ L_tco_arm_0:
 
 
 .method static v_b280()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3496,6 +4059,8 @@ L_tco_arm_0:
 
 
 .method static v_b281()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3508,6 +4073,8 @@ L_tco_arm_0:
 
 
 .method static v_b282()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3520,6 +4087,8 @@ L_tco_arm_0:
 
 
 .method static v_b283()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3532,6 +4101,8 @@ L_tco_arm_0:
 
 
 .method static v_b284()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3544,6 +4115,8 @@ L_tco_arm_0:
 
 
 .method static v_b285()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3556,6 +4129,8 @@ L_tco_arm_0:
 
 
 .method static v_b286()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3568,6 +4143,8 @@ L_tco_arm_0:
 
 
 .method static v_b287()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3580,6 +4157,8 @@ L_tco_arm_0:
 
 
 .method static v_b288()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3592,6 +4171,8 @@ L_tco_arm_0:
 
 
 .method static v_b289()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3604,6 +4185,8 @@ L_tco_arm_0:
 
 
 .method static v_b290()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3616,6 +4199,8 @@ L_tco_arm_0:
 
 
 .method static v_b291()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3628,6 +4213,8 @@ L_tco_arm_0:
 
 
 .method static v_b292()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3640,6 +4227,8 @@ L_tco_arm_0:
 
 
 .method static v_b293()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3652,6 +4241,8 @@ L_tco_arm_0:
 
 
 .method static v_b294()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3664,6 +4255,8 @@ L_tco_arm_0:
 
 
 .method static v_b295()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3676,6 +4269,8 @@ L_tco_arm_0:
 
 
 .method static v_b296()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3688,6 +4283,8 @@ L_tco_arm_0:
 
 
 .method static v_b297()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3700,6 +4297,8 @@ L_tco_arm_0:
 
 
 .method static v_b298()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3712,6 +4311,8 @@ L_tco_arm_0:
 
 
 .method static v_b299()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3724,6 +4325,8 @@ L_tco_arm_0:
 
 
 .method static v_b300()Ljava/lang/Object;
+  .limit stack 4
+  .limit locals 0
   iconst_1
   anewarray java/lang/Object
   dup
@@ -3736,6 +4339,8 @@ L_tco_arm_0:
 
 
 .method static v_res()Ljava/lang/Object;
+  .limit stack 599
+  .limit locals 0
   invokestatic AwsumMain/v_b1()Ljava/lang/Object;
   invokestatic AwsumMain/v_b2()Ljava/lang/Object;
   invokestatic AwsumMain/v_b3()Ljava/lang/Object;
@@ -4340,6 +4945,8 @@ L_tco_arm_0:
 
 
 .method static v_main()Ljava/lang/Object;
+  .limit stack 10
+  .limit locals 0
   iconst_3
   anewarray java/lang/Object
   dup
@@ -4376,6 +4983,8 @@ L_tco_arm_0:
 .end method
 
 .method public static main([Ljava/lang/String;)V
+  .limit stack 5
+  .limit locals 1
   new java/io/PrintStream
   dup
   new java/io/FileOutputStream

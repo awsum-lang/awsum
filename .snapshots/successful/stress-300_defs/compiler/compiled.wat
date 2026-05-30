@@ -18,1882 +18,5474 @@
   (table 3 funcref)
   (elem (i32.const 0) $v_and $v_showBool $v_runIO)
 
-;; ──────────────────────────────────────────────────────────────
-;; Per-size-bin freelist allocator with 12-byte header.
-;;
-;; Each block carries a 12-byte header:
-;;   block[0..4]  = flag (size class for heap, 0 for literal)
-;;   block[4..8]  = refcount (1 on alloc, dec on drop, 0 → free)
-;;   block[8..12] = shape (#ptr fields starting at slot 1; 0 by
-;;                  default — strings/boxed/nullary keep it,
-;;                  CCon/CRow emit override it to arity)
-;; flag values:
-;;   flag == 0           — literal (data-section string), no reclaim
-;;   flag == 8|16|…|4096 — heap, size class encoded in flag
-;;   flag >  4096        — heap, too large for any bin (leaks on free)
-;; user_ptr = block + 12. Existing readers (byte_count at
-;; user_ptr+0, ADT tag at user_ptr+0, payload at user_ptr+8, …)
-;; keep working unchanged.
-;;
-;; Bin freelist heads live in linear memory at offsets 24, 28,
-;; 32, …, 60 (10 i32 slots for size classes 8, 16, 32, 64, 128,
-;; 256, 512, 1024, 2048, 4096). Memory is zero-initialised by the
-;; WASM runtime so all bins start empty. Bytes 0..19 stay
-;; reserved for WASI scratch (see '$__drop_tmp' comment).
-;;
-;; Free block layout: block[0..4] flag preserved across free→alloc;
-;; block[8..12] re-used to hold next-ptr in freelist while free.
-;; (Using slot 8 not slot 4 because refcount at slot 4 sits in the
-;; user-visible area and pollutes future user reads if not cleared.)
-  (func $__alloc (param $size i32) (result i32)
-    (return (call $__alloc_shaped (local.get $size) (i32.const 0))))
-  (func $__alloc_shaped (param $size i32) (param $shape i32) (result i32)
-    (local $rounded i32)
-    (local $bin_addr i32)
-    (local $head i32)
-    (local $ptr i32)
-    ;; Round up to next power-of-2 (min 8): 1 << (32 - clz(size - 1)).
-    (local.set $rounded
-      (i32.shl (i32.const 1)
-        (i32.sub (i32.const 32) (i32.clz (i32.sub (local.get $size) (i32.const 1))))))
-    (if (i32.lt_u (local.get $rounded) (i32.const 8))
-      (then (local.set $rounded (i32.const 8))))
-    ;; If rounded ≤ 4096 try popping the matching bin first.
-    (if (i32.le_u (local.get $rounded) (i32.const 4096))
-      (then
-        ;; bin_addr = 24 + (ctz(rounded) - 3) * 4
-        (local.set $bin_addr
-          (i32.add (i32.const 24)
-            (i32.shl (i32.sub (i32.ctz (local.get $rounded)) (i32.const 3)) (i32.const 2))))
-        (local.set $head (i32.load (local.get $bin_addr)))
-        (if (local.get $head)
-          (then
-            ;; Pop: bin head := next-ptr stashed in block[8..12] while
-            ;; the block was free. Flag at head[0] still equals
-            ;; 'rounded'. Re-initialise refcount=1, shape=$shape.
-            (i32.store (local.get $bin_addr)
-              (i32.load (i32.add (local.get $head) (i32.const 8))))
-            (i32.store (i32.add (local.get $head) (i32.const 4)) (i32.const 1))
-            (i32.store (i32.add (local.get $head) (i32.const 8)) (local.get $shape))
-            (return (i32.add (local.get $head) (i32.const 12)))))))
-    ;; Bump path: 4-byte aligned, store flag/refcount/shape header,
-    ;; grow memory on demand.
-    (local.set $ptr (i32.and (i32.add (global.get $heap) (i32.const 3)) (i32.const -4)))
-    (global.set $heap (i32.add (i32.add (local.get $ptr) (i32.const 12)) (local.get $rounded)))
-    (block $grow_done
-      (loop $grow_loop
-        (br_if $grow_done
-          (i32.le_u (global.get $heap)
-                    (i32.mul (memory.size) (i32.const 65536))))
-        (if (i32.eq (memory.grow (i32.const 1)) (i32.const -1))
-          (then (unreachable)))
-        (br $grow_loop)))
-    (i32.store (local.get $ptr) (local.get $rounded))
-    (i32.store (i32.add (local.get $ptr) (i32.const 4)) (i32.const 1))
-    (i32.store (i32.add (local.get $ptr) (i32.const 8)) (local.get $shape))
-    (i32.add (local.get $ptr) (i32.const 12)))
+  (func $__alloc (param i32) (result i32)
+    local.get 0
+    i32.const 0
+    call 40)
 
+  (func $__alloc_shaped (param i32 i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 1
+    i32.const 32
+    local.get 0
+    i32.const 1
+    i32.sub
+    i32.clz
+    i32.sub
+    i32.shl
+    local.set 2
+    local.get 2
+    i32.const 8
+    i32.lt_u
+    if
+    i32.const 8
+    local.set 2
+    end
+    local.get 2
+    i32.const 4096
+    i32.le_u
+    if
+    i32.const 24
+    local.get 2
+    i32.ctz
+    i32.const 3
+    i32.sub
+    i32.const 2
+    i32.shl
+    i32.add
+    local.set 3
+    local.get 3
+    i32.load
+    local.set 4
+    local.get 4
+    if
+    local.get 3
+    local.get 4
+    i32.const 8
+    i32.add
+    i32.load
+    i32.store
+    local.get 4
+    i32.const 4
+    i32.add
+    i32.const 1
+    i32.store
+    local.get 4
+    i32.const 8
+    i32.add
+    local.get 1
+    i32.store
+    local.get 4
+    i32.const 12
+    i32.add
+    return
+    end
+    end
+    global.get 0
+    i32.const 3
+    i32.add
+    i32.const -4
+    i32.and
+    local.set 5
+    local.get 5
+    i32.const 12
+    i32.add
+    local.get 2
+    i32.add
+    global.set 0
+    loop
+    global.get 0
+    memory.size
+    i32.const 65536
+    i32.mul
+    i32.gt_u
+    if
+    i32.const 1
+    memory.grow
+    i32.const -1
+    i32.eq
+    if
+    unreachable
+    end
+    br 1
+    end
+    end
+    local.get 5
+    local.get 2
+    i32.store
+    local.get 5
+    i32.const 4
+    i32.add
+    i32.const 1
+    i32.store
+    local.get 5
+    i32.const 8
+    i32.add
+    local.get 1
+    i32.store
+    local.get 5
+    i32.const 12
+    i32.add)
 
-;; '$__free' reads the 4-byte flag prefix at (p - 12):
-;;   flag == 0 → literal, no-op (safe to call on '@.empty' / pool ptr).
-;;   flag > 4096 → huge alloc, no bin can hold it, leak.
-;;   otherwise → push block onto bin[flag] freelist. Block's first
-;;     4 bytes (flag) are preserved; next-ptr is stored at slot 8 of
-;;     the user area (= p - 4 in absolute terms, since user starts
-;;     at block + 12 and we want to write at block + 8).
-  (func $__free (param $p i32)
-    (local $flag i32)
-    (local $bin_addr i32)
-    (local $cur i32)
-    (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
-    (if (i32.eqz (local.get $flag)) (then (return)))
-    (if (i32.gt_u (local.get $flag) (i32.const 4096)) (then (return)))
-    (local.set $bin_addr
-      (i32.add (i32.const 24)
-        (i32.shl (i32.sub (i32.ctz (local.get $flag)) (i32.const 3)) (i32.const 2))))
-    (local.set $cur (i32.load (local.get $bin_addr)))
-    (i32.store (i32.sub (local.get $p) (i32.const 4)) (local.get $cur))
-    (i32.store (local.get $bin_addr) (i32.sub (local.get $p) (i32.const 12))))
+  (func $__free (param i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.load
+    local.set 1
+    local.get 1
+    i32.eqz
+    if
+    return
+    end
+    local.get 1
+    i32.const 4096
+    i32.gt_u
+    if
+    return
+    end
+    i32.const 24
+    local.get 1
+    i32.ctz
+    i32.const 3
+    i32.sub
+    i32.const 2
+    i32.shl
+    i32.add
+    local.set 2
+    local.get 2
+    i32.load
+    local.set 3
+    local.get 0
+    i32.const 4
+    i32.sub
+    local.get 3
+    i32.store
+    local.get 2
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.store)
 
+  (func $__inc_ref (param i32)
+    (local i32)
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.load
+    local.set 1
+    local.get 1
+    i32.eqz
+    if
+    return
+    end
+    local.get 0
+    i32.const 8
+    i32.sub
+    local.get 0
+    i32.const 8
+    i32.sub
+    i32.load
+    i32.const 1
+    i32.add
+    i32.store)
 
-  (func $__inc_ref (param $p i32)
-    (local $flag i32)
-    (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
-    (if (i32.eqz (local.get $flag)) (then (return)))
-    (i32.store (i32.sub (local.get $p) (i32.const 8))
-      (i32.add (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1))))
+  (func $__free_worklist_push (param i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    global.get 2
+    local.set 1
+    global.get 3
+    local.set 2
+    local.get 1
+    local.get 2
+    i32.eq
+    if
+    local.get 2
+    i32.eqz
+    if (result i32)
+    i32.const 16
+    else
+    local.get 2
+    i32.const 1
+    i32.shl
+    end
+    local.set 3
+    local.get 3
+    i32.const 2
+    i32.shl
+    i32.const 0
+    call 40
+    local.set 4
+    global.get 1
+    local.set 5
+    i32.const 0
+    local.set 6
+    block
+    loop
+    local.get 6
+    local.get 1
+    i32.ge_u
+    br_if 1
+    local.get 4
+    local.get 6
+    i32.const 2
+    i32.shl
+    i32.add
+    local.get 5
+    local.get 6
+    i32.const 2
+    i32.shl
+    i32.add
+    i32.load
+    i32.store
+    local.get 6
+    i32.const 1
+    i32.add
+    local.set 6
+    br 0
+    end
+    end
+    local.get 5
+    if
+    local.get 5
+    call 5
+    end
+    local.get 4
+    global.set 1
+    local.get 3
+    global.set 3
+    end
+    global.get 1
+    local.get 1
+    i32.const 2
+    i32.shl
+    i32.add
+    local.get 0
+    i32.store
+    local.get 1
+    i32.const 1
+    i32.add
+    global.set 2)
 
+  (func $__free_recursive (param i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    block
+    loop
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.load
+    local.set 1
+    block
+    local.get 1
+    i32.eqz
+    br_if 0
+    local.get 0
+    i32.const 8
+    i32.sub
+    i32.load
+    i32.const 1
+    i32.sub
+    local.set 2
+    local.get 0
+    i32.const 8
+    i32.sub
+    local.get 2
+    i32.store
+    local.get 2
+    br_if 0
+    local.get 0
+    i32.const 4
+    i32.sub
+    i32.load
+    local.set 3
+    local.get 3
+    i32.eqz
+    if
+    local.get 0
+    call 5
+    br 1
+    end
+    i32.const 1
+    local.set 4
+    block
+    loop
+    local.get 4
+    local.get 3
+    i32.ge_u
+    br_if 1
+    local.get 0
+    local.get 4
+    i32.const 2
+    i32.shl
+    i32.add
+    i32.load
+    call 43
+    local.get 4
+    i32.const 1
+    i32.add
+    local.set 4
+    br 0
+    end
+    end
+    local.get 0
+    local.get 3
+    i32.const 2
+    i32.shl
+    i32.add
+    i32.load
+    local.set 4
+    local.get 0
+    call 5
+    local.get 4
+    local.set 0
+    br 1
+    end
+    global.get 2
+    local.set 5
+    local.get 5
+    i32.eqz
+    br_if 1
+    local.get 5
+    i32.const 1
+    i32.sub
+    local.set 5
+    local.get 5
+    global.set 2
+    global.get 1
+    local.get 5
+    i32.const 2
+    i32.shl
+    i32.add
+    i32.load
+    local.set 0
+    br 0
+    end
+    end)
 
-  (func $__free_worklist_push (param $p i32)
-    (local $top i32)
-    (local $cap i32)
-    (local $new_cap i32)
-    (local $new_buf i32)
-    (local $old_buf i32)
-    (local $i i32)
-    (local.set $top (global.get $__wl_top))
-    (local.set $cap (global.get $__wl_cap))
-    (if (i32.eq (local.get $top) (local.get $cap))
-      (then
-        (if (i32.eqz (local.get $cap))
-          (then (local.set $new_cap (i32.const 16)))
-          (else (local.set $new_cap (i32.shl (local.get $cap) (i32.const 1)))))
-        (local.set $new_buf
-          (call $__alloc_shaped (i32.shl (local.get $new_cap) (i32.const 2)) (i32.const 0)))
-        (local.set $old_buf (global.get $__wl_buf))
-        ;; Copy old worklist contents.
-        (local.set $i (i32.const 0))
-        (block $copy_break
-          (loop $copy_loop
-            (br_if $copy_break (i32.ge_u (local.get $i) (local.get $top)))
-            (i32.store
-              (i32.add (local.get $new_buf) (i32.shl (local.get $i) (i32.const 2)))
-              (i32.load
-                (i32.add (local.get $old_buf) (i32.shl (local.get $i) (i32.const 2)))))
-            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-            (br $copy_loop)))
-        (if (local.get $old_buf)
-          (then (call $__free (local.get $old_buf))))
-        (global.set $__wl_buf (local.get $new_buf))
-        (global.set $__wl_cap (local.get $new_cap))))
-    (i32.store
-      (i32.add (global.get $__wl_buf) (i32.shl (local.get $top) (i32.const 2)))
-      (local.get $p))
-    (global.set $__wl_top (i32.add (local.get $top) (i32.const 1))))
+  (func $__memcpy (param i32 i32 i32)
+    (local i32)
+    i32.const 0
+    local.set 3
+    block
+    loop
+    local.get 3
+    local.get 2
+    i32.ge_u
+    br_if 1
+    local.get 0
+    local.get 3
+    i32.add
+    local.get 1
+    local.get 3
+    i32.add
+    i32.load8_u
+    i32.store8
+    local.get 3
+    i32.const 1
+    i32.add
+    local.set 3
+    br 0
+    end
+    end)
 
+  (func $__print (param i32) (result i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    i32.load
+    local.set 1
+    i32.const 0
+    local.get 0
+    i32.const 8
+    i32.add
+    i32.store
+    i32.const 0
+    local.get 1
+    i32.store offset=4
+    i32.const 1
+    i32.const 0
+    i32.const 1
+    i32.const 8
+    call 0
+    drop
+    i32.const 4
+    call 4
+    local.set 2
+    local.get 2
+    i32.const 0
+    i32.store
+    local.get 0
+    call 42
+    local.get 2)
 
-  (func $__free_recursive (param $p i32)
-    (local $flag i32)
-    (local $rc i32)
-    (local $shape i32)
-    (local $i i32)
-    (local $top i32)
-    (block $done
-      (loop $outer
-        (local.set $flag (i32.load (i32.sub (local.get $p) (i32.const 12))))
-        (block $next
-          (br_if $next (i32.eqz (local.get $flag)))
-          (local.set $rc
-            (i32.sub (i32.load (i32.sub (local.get $p) (i32.const 8))) (i32.const 1)))
-          (i32.store (i32.sub (local.get $p) (i32.const 8)) (local.get $rc))
-          (br_if $next (local.get $rc))
-          (local.set $shape (i32.load (i32.sub (local.get $p) (i32.const 4))))
-          (if (i32.eqz (local.get $shape))
-            (then
-              (call $__free (local.get $p))
-              (br $next)))
-          ;; Push non-last children (slots 1..shape-1) onto the worklist.
-          (local.set $i (i32.const 1))
-          (block $push_break
-            (loop $push_loop
-              (br_if $push_break (i32.ge_u (local.get $i) (local.get $shape)))
-              (call $__free_worklist_push
-                (i32.load
-                  (i32.add (local.get $p) (i32.shl (local.get $i) (i32.const 2)))))
-              (local.set $i (i32.add (local.get $i) (i32.const 1)))
-              (br $push_loop)))
-          ;; Last slot: consume iteratively as the new $p, free the
-          ;; current block, re-enter $outer with $p := child.
-          (local.set $i
-            (i32.load
-              (i32.add (local.get $p) (i32.shl (local.get $shape) (i32.const 2)))))
-          (call $__free (local.get $p))
-          (local.set $p (local.get $i))
-          (br $outer))
-        ;; Pop the next pending pointer; exit on empty.
-        (local.set $top (global.get $__wl_top))
-        (br_if $done (i32.eqz (local.get $top)))
-        (local.set $top (i32.sub (local.get $top) (i32.const 1)))
-        (global.set $__wl_top (local.get $top))
-        (local.set $p
-          (i32.load
-            (i32.add (global.get $__wl_buf) (i32.shl (local.get $top) (i32.const 2)))))
-        (br $outer))))
-
-
-  (func $__memcpy (param $dst i32) (param $src i32) (param $len i32)
-    (local $i i32)
-    (local.set $i (i32.const 0))
-    (block $break
-      (loop $loop
-        (br_if $break (i32.ge_u (local.get $i) (local.get $len)))
-        (i32.store8 (i32.add (local.get $dst) (local.get $i))
-                    (i32.load8_u (i32.add (local.get $src) (local.get $i))))
-        (local.set $i (i32.add (local.get $i) (i32.const 1)))
-        (br $loop))))
-
-
-  (func $__print (param $s i32) (result i32)
-    (local $len i32)
-    (local $unit i32)
-    (local.set $len (i32.load (local.get $s)))
-    (i32.store (i32.const 0) (i32.add (local.get $s) (i32.const 8)))
-    (i32.store (i32.const 4) (local.get $len))
-    (drop (call $fd_write (i32.const 1) (i32.const 0) (i32.const 1) (i32.const 8)))
-    (local.set $unit (call $__alloc (i32.const 4)))
-    (i32.store (local.get $unit) (i32.const 0))
-    (call $__free_recursive (local.get $s))
-    (local.get $unit))
-
-
-  (func $__entryArgEither (param $arg i32) (param $len i32) (result i32)
-    (local $i i32) (local $n i32) (local $b i32) (local $surr i32)
-    (local $inner i32) (local $row i32) (local $cell i32)
-    (local $wrapped i32)
-    (local.set $i (i32.const 0))
-    (local.set $n (i32.const 0))
-    (local.set $surr (i32.const 0))
-    (block $break_scan
-      (loop $scan_loop
-        (br_if $break_scan (i32.eq (local.get $i) (local.get $len)))
-        (local.set $b (i32.load8_u (i32.add (local.get $arg) (local.get $i))))
-        (if (i32.ne (i32.and (local.get $b) (i32.const 0xC0)) (i32.const 0x80))
-          (then
-            (if (i32.eq (local.get $b) (i32.const 0xED))
-              (then
-                (if (i32.eq (i32.and (i32.load8_u (i32.add (local.get $arg) (i32.add (local.get $i) (i32.const 1)))) (i32.const 0xE0)) (i32.const 0xA0))
-                  (then (local.set $surr (i32.const 1))))))
-            (if (i32.eq (i32.and (local.get $b) (i32.const 0xF8)) (i32.const 0xF0))
-              (then (local.set $n (i32.add (local.get $n) (i32.const 2))))
-              (else (local.set $n (i32.add (local.get $n) (i32.const 1)))))
-            (br_if $break_scan (i32.gt_u (local.get $n) (i32.const 134217728)))))
-        (local.set $i (i32.add (local.get $i) (i32.const 1)))
-        (br $scan_loop)))
-    (if (result i32) (i32.gt_u (local.get $n) (i32.const 134217728))
-      (then
-        (local.set $inner (call $__alloc (i32.const 4)))
-        (i32.store (local.get $inner) (i32.const 18))
-        (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-        (i32.store (local.get $row) (i32.const 589989748))
-        (i32.store offset=4 (local.get $row) (local.get $inner))
-        (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-        (i32.store (local.get $cell) (i32.const 3))
-        (i32.store offset=4 (local.get $cell) (local.get $row))
-        (local.get $cell))
-      (else
-        (if (result i32) (local.get $surr)
-          (then
-            (local.set $inner (call $__alloc (i32.const 4)))
-            (i32.store (local.get $inner) (i32.const 19))
-            (local.set $row (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-            (i32.store (local.get $row) (i32.const 502975519))
-            (i32.store offset=4 (local.get $row) (local.get $inner))
-            (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-            (i32.store (local.get $cell) (i32.const 3))
-            (i32.store offset=4 (local.get $cell) (local.get $row))
-            (local.get $cell))
-          (else
-            (local.set $wrapped (call $__alloc (i32.add (local.get $i) (i32.const 8))))
-            (i32.store (local.get $wrapped) (local.get $i))
-            (i32.store offset=4 (local.get $wrapped) (local.get $n))
-            (call $__memcpy (i32.add (local.get $wrapped) (i32.const 8)) (local.get $arg) (local.get $i))
-            (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-            (i32.store (local.get $cell) (i32.const 4))
-            (i32.store offset=4 (local.get $cell) (local.get $wrapped))
-            (local.get $cell))))))
-
+  (func $__entryArgEither (param i32 i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 0
+    local.set 2
+    i32.const 0
+    local.set 3
+    i32.const 0
+    local.set 5
+    block
+    loop
+    local.get 2
+    local.get 1
+    i32.eq
+    br_if 1
+    local.get 0
+    local.get 2
+    i32.add
+    i32.load8_u
+    local.set 4
+    local.get 4
+    i32.const 192
+    i32.and
+    i32.const 128
+    i32.ne
+    if
+    local.get 4
+    i32.const 237
+    i32.eq
+    if
+    local.get 0
+    local.get 2
+    i32.const 1
+    i32.add
+    i32.add
+    i32.load8_u
+    i32.const 224
+    i32.and
+    i32.const 160
+    i32.eq
+    if
+    i32.const 1
+    local.set 5
+    end
+    end
+    local.get 4
+    i32.const 248
+    i32.and
+    i32.const 240
+    i32.eq
+    if
+    local.get 3
+    i32.const 2
+    i32.add
+    local.set 3
+    else
+    local.get 3
+    i32.const 1
+    i32.add
+    local.set 3
+    end
+    local.get 3
+    i32.const 134217728
+    i32.gt_u
+    br_if 2
+    end
+    local.get 2
+    i32.const 1
+    i32.add
+    local.set 2
+    br 0
+    end
+    end
+    local.get 3
+    i32.const 134217728
+    i32.gt_u
+    if (result i32)
+    i32.const 4
+    call 4
+    local.set 6
+    local.get 6
+    i32.const 18
+    i32.store
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 7
+    local.get 7
+    i32.const 589989748
+    i32.store
+    local.get 7
+    local.get 6
+    i32.store offset=4
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 8
+    local.get 8
+    i32.const 3
+    i32.store
+    local.get 8
+    local.get 7
+    i32.store offset=4
+    local.get 8
+    else
+    local.get 5
+    if (result i32)
+    i32.const 4
+    call 4
+    local.set 6
+    local.get 6
+    i32.const 19
+    i32.store
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 7
+    local.get 7
+    i32.const 502975519
+    i32.store
+    local.get 7
+    local.get 6
+    i32.store offset=4
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 8
+    local.get 8
+    i32.const 3
+    i32.store
+    local.get 8
+    local.get 7
+    i32.store offset=4
+    local.get 8
+    else
+    local.get 2
+    i32.const 8
+    i32.add
+    call 4
+    local.set 9
+    local.get 9
+    local.get 2
+    i32.store
+    local.get 9
+    local.get 3
+    i32.store offset=4
+    local.get 9
+    i32.const 8
+    i32.add
+    local.get 0
+    local.get 2
+    call 6
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 8
+    local.get 8
+    i32.const 4
+    i32.store
+    local.get 8
+    local.get 9
+    i32.store offset=4
+    local.get 8
+    end
+    end)
 
   (func $__getArgs (result i32)
-    (local $argc i32) (local $ptrs i32) (local $buf i32) (local $i i32)
-    (local $p i32) (local $l i32) (local $cell i32) (local $head i32) (local $acc i32) (local $consC i32)
-    (local.set $acc (call $__alloc_shaped (i32.const 4) (i32.const 0)))
-    (i32.store (local.get $acc) (i32.const 12))
-    (drop (call $args_sizes_get (i32.const 12) (i32.const 16)))
-    (local.set $argc (i32.load (i32.const 12)))
-    (if (i32.ge_u (local.get $argc) (i32.const 2))
-      (then
-        (local.set $buf (call $__alloc (i32.load (i32.const 16))))
-        (local.set $ptrs (call $__alloc (i32.mul (local.get $argc) (i32.const 4))))
-        (drop (call $args_get (local.get $ptrs) (local.get $buf)))
-        (local.set $i (local.get $argc))
-        (block $break
-          (loop $loop
-            (br_if $break (i32.le_u (local.get $i) (i32.const 1)))
-            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
-            (local.set $p (i32.load (i32.add (local.get $ptrs) (i32.mul (local.get $i) (i32.const 4)))))
-            (local.set $l (i32.const 0))
-            (block $scanbrk
-              (loop $scan
-                (br_if $scanbrk (i32.eqz (i32.load8_u (i32.add (local.get $p) (local.get $l)))))
-                (local.set $l (i32.add (local.get $l) (i32.const 1)))
-                (br $scan)))
-            (local.set $cell (call $__entryArgEither (local.get $p) (local.get $l)))
-            (if (i32.eq (i32.load (local.get $cell)) (i32.const 3))
-              (then (return (local.get $cell))))
-            (local.set $head (i32.load offset=4 (local.get $cell)))
-            (call $__free (local.get $cell))
-            (local.set $consC (call $__alloc_shaped (i32.const 12) (i32.const 2)))
-            (i32.store (local.get $consC) (i32.const 13))
-            (i32.store offset=4 (local.get $consC) (local.get $head))
-            (i32.store offset=8 (local.get $consC) (local.get $acc))
-            (local.set $acc (local.get $consC))
-            (br $loop)))))
-    (local.set $cell (call $__alloc_shaped (i32.const 8) (i32.const 1)))
-    (i32.store (local.get $cell) (i32.const 4))
-    (i32.store offset=4 (local.get $cell) (local.get $acc))
-    (local.get $cell))
-
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 8
+    local.get 8
+    i32.const 12
+    i32.store
+    i32.const 12
+    i32.const 16
+    call 1
+    drop
+    i32.const 0
+    i32.load offset=12
+    local.set 0
+    local.get 0
+    i32.const 2
+    i32.ge_u
+    if
+    i32.const 0
+    i32.load offset=16
+    call 4
+    local.set 2
+    local.get 0
+    i32.const 4
+    i32.mul
+    call 4
+    local.set 1
+    local.get 1
+    local.get 2
+    call 2
+    drop
+    local.get 0
+    local.set 3
+    block
+    loop
+    local.get 3
+    i32.const 1
+    i32.le_u
+    br_if 1
+    local.get 3
+    i32.const 1
+    i32.sub
+    local.set 3
+    local.get 1
+    local.get 3
+    i32.const 4
+    i32.mul
+    i32.add
+    i32.load
+    local.set 4
+    i32.const 0
+    local.set 5
+    block
+    loop
+    local.get 4
+    local.get 5
+    i32.add
+    i32.load8_u
+    i32.eqz
+    br_if 1
+    local.get 5
+    i32.const 1
+    i32.add
+    local.set 5
+    br 0
+    end
+    end
+    local.get 4
+    local.get 5
+    call 36
+    local.set 6
+    local.get 6
+    i32.load
+    i32.const 3
+    i32.eq
+    if
+    local.get 6
+    return
+    end
+    local.get 6
+    i32.load offset=4
+    local.set 7
+    local.get 6
+    call 5
+    i32.const 12
+    i32.const 2
+    call 40
+    local.set 9
+    local.get 9
+    i32.const 13
+    i32.store
+    local.get 9
+    local.get 7
+    i32.store offset=4
+    local.get 9
+    local.get 8
+    i32.store offset=8
+    local.get 9
+    local.set 8
+    br 0
+    end
+    end
+    end
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 6
+    local.get 6
+    i32.const 4
+    i32.store
+    local.get 6
+    local.get 8
+    i32.store offset=4
+    local.get 6)
 
   (func $__stdinReadAll (result i32)
-    (local $buf i32) (local $cap i32) (local $total i32)
-    (local $remain i32) (local $newbuf i32) (local $newcap i32)
-    (local $got i32)
-    (local.set $cap (i32.const 4096))
-    (local.set $buf (call $__alloc (local.get $cap)))
-    (local.set $total (i32.const 0))
-    (block $break_read
-      (loop $read_loop
-        (local.set $remain (i32.sub (local.get $cap) (local.get $total)))
-        (if (i32.lt_u (local.get $remain) (i32.const 4096))
-          (then
-            (local.set $newcap (i32.mul (local.get $cap) (i32.const 2)))
-            (local.set $newbuf (call $__alloc (local.get $newcap)))
-            (call $__memcpy (local.get $newbuf) (local.get $buf) (local.get $total))
-            (local.set $buf (local.get $newbuf))
-            (local.set $cap (local.get $newcap))
-            (local.set $remain (i32.sub (local.get $cap) (local.get $total)))))
-        (i32.store (i32.const 16) (i32.add (local.get $buf) (local.get $total)))
-        (i32.store (i32.const 20) (local.get $remain))
-        (drop (call $fd_read (i32.const 0) (i32.const 16) (i32.const 1) (i32.const 12)))
-        (local.set $got (i32.load (i32.const 12)))
-        (br_if $break_read (i32.eqz (local.get $got)))
-        (local.set $total (i32.add (local.get $total) (local.get $got)))
-        (br $read_loop)))
-    (i32.store8 (i32.add (local.get $buf) (local.get $total)) (i32.const 0))
-    (call $__entryArgEither (local.get $buf) (local.get $total)))
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4096
+    local.set 1
+    local.get 1
+    call 4
+    local.set 0
+    i32.const 0
+    local.set 2
+    block
+    loop
+    local.get 1
+    local.get 2
+    i32.sub
+    local.set 3
+    local.get 3
+    i32.const 4096
+    i32.lt_u
+    if
+    local.get 1
+    i32.const 2
+    i32.mul
+    local.set 5
+    local.get 5
+    call 4
+    local.set 4
+    local.get 4
+    local.get 0
+    local.get 2
+    call 6
+    local.get 4
+    local.set 0
+    local.get 5
+    local.set 1
+    local.get 1
+    local.get 2
+    i32.sub
+    local.set 3
+    end
+    i32.const 16
+    local.get 0
+    local.get 2
+    i32.add
+    i32.store
+    i32.const 20
+    local.get 3
+    i32.store
+    i32.const 0
+    i32.const 16
+    i32.const 1
+    i32.const 12
+    call 3
+    drop
+    i32.const 0
+    i32.load offset=12
+    local.set 6
+    local.get 6
+    i32.eqz
+    br_if 1
+    local.get 2
+    local.get 6
+    i32.add
+    local.set 2
+    br 0
+    end
+    end
+    local.get 0
+    local.get 2
+    i32.add
+    i32.const 0
+    i32.store8
+    local.get 0
+    local.get 2
+    call 36)
+  (func $v_and (param i32 i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    local.set 3
+    local.get 3
+    i32.load
+    i32.const 1
+    i32.eq
+    if (result i32)
+    block (result i32)
+    local.get 1
+    local.set 4
+    local.get 0
+    call 42
+    local.get 4
+    end
+    else
+    block (result i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 2
+    local.get 2
+    i32.const 2
+    i32.store
+    local.get 2
+    local.set 4
+    local.get 0
+    call 42
+    local.get 1
+    call 42
+    local.get 4
+    end
+    end)
 
-  (func $v_and (param $v_a i32) (param $v_b i32) (result i32)
-    (local $__con_0 i32)
-    (local $__scrut i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (local.set $__scrut (local.get $v_a)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (local.get $v_b)) (else (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 2)) (local.get $__con_0))))))
+  (func $v_showBool (param i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    local.set 1
+    local.get 1
+    i32.load
+    i32.const 1
+    i32.eq
+    if (result i32)
+    block (result i32)
+    i32.const 96
+    local.set 2
+    local.get 0
+    call 42
+    local.get 2
+    end
+    else
+    block (result i32)
+    i32.const 120
+    local.set 2
+    local.get 0
+    call 42
+    local.get 2
+    end
+    end)
 
-  (func $v_showBool (param $v_b i32) (result i32)
-    (local $__scrut i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (local.set $__scrut (local.get $v_b)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 1)) (then (i32.const 96)) (else (i32.const 120)))))
-
-  (func $v_runIO (param $v_io i32) (result i32)
-    (local $v_next i32)
-    (local $v_s i32)
-    (local $v_u i32)
-    (local $__scrut i32)
-    (local $__drop_tmp i32)
-    (local $__k0 i32)
-    (loop $tco_top (result i32) (block (result i32) (local.set $__scrut (local.get $v_io)) (if (result i32) (i32.eq (i32.load (local.get $__scrut)) (i32.const 5)) (then (local.set $v_u (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_u)) (block (result i32) (local.set $__drop_tmp (local.get $v_u)) (call $__free_recursive (local.get $v_io)) (local.get $__drop_tmp))) (else (local.set $v_s (i32.load offset=4 (local.get $__scrut))) (call $__inc_ref (local.get $v_s)) (local.set $v_next (i32.load offset=8 (local.get $__scrut))) (call $__inc_ref (local.get $v_next)) (block (result i32) (local.set $__scrut (call $__print (block (result i32) (local.set $__inc_tmp (local.get $v_s)) (call $__inc_ref (local.get $__inc_tmp)) (local.get $__inc_tmp)))) (local.set $__k0 (local.get $v_next)) (call $__inc_ref (local.get $__k0)) (call $__free_recursive (local.get $v_io)) (call $__free_recursive (local.get $v_next)) (call $__free_recursive (local.get $v_s)) (local.set $v_io (local.get $__k0)) (br $tco_top)))))))
+  (func $v_runIO (param i32) (result i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    loop (result i32)
+    local.get 0
+    local.set 1
+    local.get 1
+    i32.load
+    i32.const 5
+    i32.eq
+    if (result i32)
+    local.get 1
+    i32.load offset=4
+    local.set 2
+    local.get 2
+    call 41
+    block (result i32)
+    local.get 2
+    local.set 5
+    local.get 0
+    call 42
+    local.get 5
+    end
+    else
+    local.get 1
+    i32.load offset=4
+    local.set 2
+    local.get 2
+    call 41
+    local.get 1
+    i32.load offset=8
+    local.set 3
+    local.get 3
+    call 41
+    local.get 2
+    local.tee 6
+    call 41
+    local.get 6
+    call 8
+    local.tee 7
+    local.set 1
+    local.get 3
+    local.set 4
+    local.get 4
+    call 41
+    local.get 7
+    call 42
+    local.get 0
+    call 42
+    local.get 3
+    call 42
+    local.get 2
+    call 42
+    local.get 4
+    local.set 0
+    br 1
+    end
+    end)
 
   (func $v_b1 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b2 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b3 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b4 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b5 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b6 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b7 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b8 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b9 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b10 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b11 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b12 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b13 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b14 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b15 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b16 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b17 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b18 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b19 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b20 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b21 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b22 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b23 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b24 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b25 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b26 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b27 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b28 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b29 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b30 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b31 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b32 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b33 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b34 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b35 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b36 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b37 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b38 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b39 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b40 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b41 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b42 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b43 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b44 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b45 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b46 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b47 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b48 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b49 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b50 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b51 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b52 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b53 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b54 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b55 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b56 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b57 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b58 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b59 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b60 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b61 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b62 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b63 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b64 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b65 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b66 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b67 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b68 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b69 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b70 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b71 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b72 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b73 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b74 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b75 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b76 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b77 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b78 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b79 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b80 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b81 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b82 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b83 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b84 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b85 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b86 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b87 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b88 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b89 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b90 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b91 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b92 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b93 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b94 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b95 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b96 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b97 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b98 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b99 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b100 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b101 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b102 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b103 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b104 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b105 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b106 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b107 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b108 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b109 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b110 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b111 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b112 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b113 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b114 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b115 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b116 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b117 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b118 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b119 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b120 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b121 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b122 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b123 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b124 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b125 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b126 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b127 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b128 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b129 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b130 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b131 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b132 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b133 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b134 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b135 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b136 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b137 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b138 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b139 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b140 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b141 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b142 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b143 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b144 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b145 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b146 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b147 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b148 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b149 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b150 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b151 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b152 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b153 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b154 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b155 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b156 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b157 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b158 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b159 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b160 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b161 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b162 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b163 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b164 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b165 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b166 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b167 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b168 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b169 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b170 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b171 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b172 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b173 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b174 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b175 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b176 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b177 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b178 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b179 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b180 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b181 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b182 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b183 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b184 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b185 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b186 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b187 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b188 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b189 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b190 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b191 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b192 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b193 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b194 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b195 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b196 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b197 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b198 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b199 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b200 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b201 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b202 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b203 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b204 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b205 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b206 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b207 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b208 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b209 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b210 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b211 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b212 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b213 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b214 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b215 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b216 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b217 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b218 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b219 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b220 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b221 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b222 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b223 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b224 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b225 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b226 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b227 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b228 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b229 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b230 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b231 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b232 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b233 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b234 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b235 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b236 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b237 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b238 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b239 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b240 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b241 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b242 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b243 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b244 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b245 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b246 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b247 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b248 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b249 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b250 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b251 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b252 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b253 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b254 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b255 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b256 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b257 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b258 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b259 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b260 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b261 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b262 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b263 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b264 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b265 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b266 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b267 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b268 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b269 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b270 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b271 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b272 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b273 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b274 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b275 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b276 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b277 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b278 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b279 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b280 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b281 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b282 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b283 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b284 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b285 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b286 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b287 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b288 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b289 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b290 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b291 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b292 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b293 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b294 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b295 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b296 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b297 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b298 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b299 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_b300 (result i32)
-    (local $__con_0 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 1)) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 1
+    i32.store
+    local.get 0)
 
   (func $v_res (result i32)
-    (local $__drop_tmp i32)
-    (call $v_and (call $v_b1) (call $v_and (call $v_b2) (call $v_and (call $v_b3) (call $v_and (call $v_b4) (call $v_and (call $v_b5) (call $v_and (call $v_b6) (call $v_and (call $v_b7) (call $v_and (call $v_b8) (call $v_and (call $v_b9) (call $v_and (call $v_b10) (call $v_and (call $v_b11) (call $v_and (call $v_b12) (call $v_and (call $v_b13) (call $v_and (call $v_b14) (call $v_and (call $v_b15) (call $v_and (call $v_b16) (call $v_and (call $v_b17) (call $v_and (call $v_b18) (call $v_and (call $v_b19) (call $v_and (call $v_b20) (call $v_and (call $v_b21) (call $v_and (call $v_b22) (call $v_and (call $v_b23) (call $v_and (call $v_b24) (call $v_and (call $v_b25) (call $v_and (call $v_b26) (call $v_and (call $v_b27) (call $v_and (call $v_b28) (call $v_and (call $v_b29) (call $v_and (call $v_b30) (call $v_and (call $v_b31) (call $v_and (call $v_b32) (call $v_and (call $v_b33) (call $v_and (call $v_b34) (call $v_and (call $v_b35) (call $v_and (call $v_b36) (call $v_and (call $v_b37) (call $v_and (call $v_b38) (call $v_and (call $v_b39) (call $v_and (call $v_b40) (call $v_and (call $v_b41) (call $v_and (call $v_b42) (call $v_and (call $v_b43) (call $v_and (call $v_b44) (call $v_and (call $v_b45) (call $v_and (call $v_b46) (call $v_and (call $v_b47) (call $v_and (call $v_b48) (call $v_and (call $v_b49) (call $v_and (call $v_b50) (call $v_and (call $v_b51) (call $v_and (call $v_b52) (call $v_and (call $v_b53) (call $v_and (call $v_b54) (call $v_and (call $v_b55) (call $v_and (call $v_b56) (call $v_and (call $v_b57) (call $v_and (call $v_b58) (call $v_and (call $v_b59) (call $v_and (call $v_b60) (call $v_and (call $v_b61) (call $v_and (call $v_b62) (call $v_and (call $v_b63) (call $v_and (call $v_b64) (call $v_and (call $v_b65) (call $v_and (call $v_b66) (call $v_and (call $v_b67) (call $v_and (call $v_b68) (call $v_and (call $v_b69) (call $v_and (call $v_b70) (call $v_and (call $v_b71) (call $v_and (call $v_b72) (call $v_and (call $v_b73) (call $v_and (call $v_b74) (call $v_and (call $v_b75) (call $v_and (call $v_b76) (call $v_and (call $v_b77) (call $v_and (call $v_b78) (call $v_and (call $v_b79) (call $v_and (call $v_b80) (call $v_and (call $v_b81) (call $v_and (call $v_b82) (call $v_and (call $v_b83) (call $v_and (call $v_b84) (call $v_and (call $v_b85) (call $v_and (call $v_b86) (call $v_and (call $v_b87) (call $v_and (call $v_b88) (call $v_and (call $v_b89) (call $v_and (call $v_b90) (call $v_and (call $v_b91) (call $v_and (call $v_b92) (call $v_and (call $v_b93) (call $v_and (call $v_b94) (call $v_and (call $v_b95) (call $v_and (call $v_b96) (call $v_and (call $v_b97) (call $v_and (call $v_b98) (call $v_and (call $v_b99) (call $v_and (call $v_b100) (call $v_and (call $v_b101) (call $v_and (call $v_b102) (call $v_and (call $v_b103) (call $v_and (call $v_b104) (call $v_and (call $v_b105) (call $v_and (call $v_b106) (call $v_and (call $v_b107) (call $v_and (call $v_b108) (call $v_and (call $v_b109) (call $v_and (call $v_b110) (call $v_and (call $v_b111) (call $v_and (call $v_b112) (call $v_and (call $v_b113) (call $v_and (call $v_b114) (call $v_and (call $v_b115) (call $v_and (call $v_b116) (call $v_and (call $v_b117) (call $v_and (call $v_b118) (call $v_and (call $v_b119) (call $v_and (call $v_b120) (call $v_and (call $v_b121) (call $v_and (call $v_b122) (call $v_and (call $v_b123) (call $v_and (call $v_b124) (call $v_and (call $v_b125) (call $v_and (call $v_b126) (call $v_and (call $v_b127) (call $v_and (call $v_b128) (call $v_and (call $v_b129) (call $v_and (call $v_b130) (call $v_and (call $v_b131) (call $v_and (call $v_b132) (call $v_and (call $v_b133) (call $v_and (call $v_b134) (call $v_and (call $v_b135) (call $v_and (call $v_b136) (call $v_and (call $v_b137) (call $v_and (call $v_b138) (call $v_and (call $v_b139) (call $v_and (call $v_b140) (call $v_and (call $v_b141) (call $v_and (call $v_b142) (call $v_and (call $v_b143) (call $v_and (call $v_b144) (call $v_and (call $v_b145) (call $v_and (call $v_b146) (call $v_and (call $v_b147) (call $v_and (call $v_b148) (call $v_and (call $v_b149) (call $v_and (call $v_b150) (call $v_and (call $v_b151) (call $v_and (call $v_b152) (call $v_and (call $v_b153) (call $v_and (call $v_b154) (call $v_and (call $v_b155) (call $v_and (call $v_b156) (call $v_and (call $v_b157) (call $v_and (call $v_b158) (call $v_and (call $v_b159) (call $v_and (call $v_b160) (call $v_and (call $v_b161) (call $v_and (call $v_b162) (call $v_and (call $v_b163) (call $v_and (call $v_b164) (call $v_and (call $v_b165) (call $v_and (call $v_b166) (call $v_and (call $v_b167) (call $v_and (call $v_b168) (call $v_and (call $v_b169) (call $v_and (call $v_b170) (call $v_and (call $v_b171) (call $v_and (call $v_b172) (call $v_and (call $v_b173) (call $v_and (call $v_b174) (call $v_and (call $v_b175) (call $v_and (call $v_b176) (call $v_and (call $v_b177) (call $v_and (call $v_b178) (call $v_and (call $v_b179) (call $v_and (call $v_b180) (call $v_and (call $v_b181) (call $v_and (call $v_b182) (call $v_and (call $v_b183) (call $v_and (call $v_b184) (call $v_and (call $v_b185) (call $v_and (call $v_b186) (call $v_and (call $v_b187) (call $v_and (call $v_b188) (call $v_and (call $v_b189) (call $v_and (call $v_b190) (call $v_and (call $v_b191) (call $v_and (call $v_b192) (call $v_and (call $v_b193) (call $v_and (call $v_b194) (call $v_and (call $v_b195) (call $v_and (call $v_b196) (call $v_and (call $v_b197) (call $v_and (call $v_b198) (call $v_and (call $v_b199) (call $v_and (call $v_b200) (call $v_and (call $v_b201) (call $v_and (call $v_b202) (call $v_and (call $v_b203) (call $v_and (call $v_b204) (call $v_and (call $v_b205) (call $v_and (call $v_b206) (call $v_and (call $v_b207) (call $v_and (call $v_b208) (call $v_and (call $v_b209) (call $v_and (call $v_b210) (call $v_and (call $v_b211) (call $v_and (call $v_b212) (call $v_and (call $v_b213) (call $v_and (call $v_b214) (call $v_and (call $v_b215) (call $v_and (call $v_b216) (call $v_and (call $v_b217) (call $v_and (call $v_b218) (call $v_and (call $v_b219) (call $v_and (call $v_b220) (call $v_and (call $v_b221) (call $v_and (call $v_b222) (call $v_and (call $v_b223) (call $v_and (call $v_b224) (call $v_and (call $v_b225) (call $v_and (call $v_b226) (call $v_and (call $v_b227) (call $v_and (call $v_b228) (call $v_and (call $v_b229) (call $v_and (call $v_b230) (call $v_and (call $v_b231) (call $v_and (call $v_b232) (call $v_and (call $v_b233) (call $v_and (call $v_b234) (call $v_and (call $v_b235) (call $v_and (call $v_b236) (call $v_and (call $v_b237) (call $v_and (call $v_b238) (call $v_and (call $v_b239) (call $v_and (call $v_b240) (call $v_and (call $v_b241) (call $v_and (call $v_b242) (call $v_and (call $v_b243) (call $v_and (call $v_b244) (call $v_and (call $v_b245) (call $v_and (call $v_b246) (call $v_and (call $v_b247) (call $v_and (call $v_b248) (call $v_and (call $v_b249) (call $v_and (call $v_b250) (call $v_and (call $v_b251) (call $v_and (call $v_b252) (call $v_and (call $v_b253) (call $v_and (call $v_b254) (call $v_and (call $v_b255) (call $v_and (call $v_b256) (call $v_and (call $v_b257) (call $v_and (call $v_b258) (call $v_and (call $v_b259) (call $v_and (call $v_b260) (call $v_and (call $v_b261) (call $v_and (call $v_b262) (call $v_and (call $v_b263) (call $v_and (call $v_b264) (call $v_and (call $v_b265) (call $v_and (call $v_b266) (call $v_and (call $v_b267) (call $v_and (call $v_b268) (call $v_and (call $v_b269) (call $v_and (call $v_b270) (call $v_and (call $v_b271) (call $v_and (call $v_b272) (call $v_and (call $v_b273) (call $v_and (call $v_b274) (call $v_and (call $v_b275) (call $v_and (call $v_b276) (call $v_and (call $v_b277) (call $v_and (call $v_b278) (call $v_and (call $v_b279) (call $v_and (call $v_b280) (call $v_and (call $v_b281) (call $v_and (call $v_b282) (call $v_and (call $v_b283) (call $v_and (call $v_b284) (call $v_and (call $v_b285) (call $v_and (call $v_b286) (call $v_and (call $v_b287) (call $v_and (call $v_b288) (call $v_and (call $v_b289) (call $v_and (call $v_b290) (call $v_and (call $v_b291) (call $v_and (call $v_b292) (call $v_and (call $v_b293) (call $v_and (call $v_b294) (call $v_and (call $v_b295) (call $v_and (call $v_b296) (call $v_and (call $v_b297) (call $v_and (call $v_b298) (call $v_and (call $v_b299) (call $v_b300)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+    (local i32)
+    (local i32)
+    call 49
+    call 50
+    call 51
+    call 52
+    call 53
+    call 54
+    call 55
+    call 56
+    call 57
+    call 58
+    call 59
+    call 60
+    call 61
+    call 62
+    call 63
+    call 64
+    call 65
+    call 66
+    call 67
+    call 68
+    call 69
+    call 70
+    call 71
+    call 72
+    call 73
+    call 74
+    call 75
+    call 76
+    call 77
+    call 78
+    call 79
+    call 80
+    call 81
+    call 82
+    call 83
+    call 84
+    call 85
+    call 86
+    call 87
+    call 88
+    call 89
+    call 90
+    call 91
+    call 92
+    call 93
+    call 94
+    call 95
+    call 96
+    call 97
+    call 98
+    call 99
+    call 100
+    call 101
+    call 102
+    call 103
+    call 104
+    call 105
+    call 106
+    call 107
+    call 108
+    call 109
+    call 110
+    call 111
+    call 112
+    call 113
+    call 114
+    call 115
+    call 116
+    call 117
+    call 118
+    call 119
+    call 120
+    call 121
+    call 122
+    call 123
+    call 124
+    call 125
+    call 126
+    call 127
+    call 128
+    call 129
+    call 130
+    call 131
+    call 132
+    call 133
+    call 134
+    call 135
+    call 136
+    call 137
+    call 138
+    call 139
+    call 140
+    call 141
+    call 142
+    call 143
+    call 144
+    call 145
+    call 146
+    call 147
+    call 148
+    call 149
+    call 150
+    call 151
+    call 152
+    call 153
+    call 154
+    call 155
+    call 156
+    call 157
+    call 158
+    call 159
+    call 160
+    call 161
+    call 162
+    call 163
+    call 164
+    call 165
+    call 166
+    call 167
+    call 168
+    call 169
+    call 170
+    call 171
+    call 172
+    call 173
+    call 174
+    call 175
+    call 176
+    call 177
+    call 178
+    call 179
+    call 180
+    call 181
+    call 182
+    call 183
+    call 184
+    call 185
+    call 186
+    call 187
+    call 188
+    call 189
+    call 190
+    call 191
+    call 192
+    call 193
+    call 194
+    call 195
+    call 196
+    call 197
+    call 198
+    call 199
+    call 200
+    call 201
+    call 202
+    call 203
+    call 204
+    call 205
+    call 206
+    call 207
+    call 208
+    call 209
+    call 210
+    call 211
+    call 212
+    call 213
+    call 214
+    call 215
+    call 216
+    call 217
+    call 218
+    call 219
+    call 220
+    call 221
+    call 222
+    call 223
+    call 224
+    call 225
+    call 226
+    call 227
+    call 228
+    call 229
+    call 230
+    call 231
+    call 232
+    call 233
+    call 234
+    call 235
+    call 236
+    call 237
+    call 238
+    call 239
+    call 240
+    call 241
+    call 242
+    call 243
+    call 244
+    call 245
+    call 246
+    call 247
+    call 248
+    call 249
+    call 250
+    call 251
+    call 252
+    call 253
+    call 254
+    call 255
+    call 256
+    call 257
+    call 258
+    call 259
+    call 260
+    call 261
+    call 262
+    call 263
+    call 264
+    call 265
+    call 266
+    call 267
+    call 268
+    call 269
+    call 270
+    call 271
+    call 272
+    call 273
+    call 274
+    call 275
+    call 276
+    call 277
+    call 278
+    call 279
+    call 280
+    call 281
+    call 282
+    call 283
+    call 284
+    call 285
+    call 286
+    call 287
+    call 288
+    call 289
+    call 290
+    call 291
+    call 292
+    call 293
+    call 294
+    call 295
+    call 296
+    call 297
+    call 298
+    call 299
+    call 300
+    call 301
+    call 302
+    call 303
+    call 304
+    call 305
+    call 306
+    call 307
+    call 308
+    call 309
+    call 310
+    call 311
+    call 312
+    call 313
+    call 314
+    call 315
+    call 316
+    call 317
+    call 318
+    call 319
+    call 320
+    call 321
+    call 322
+    call 323
+    call 324
+    call 325
+    call 326
+    call 327
+    call 328
+    call 329
+    call 330
+    call 331
+    call 332
+    call 333
+    call 334
+    call 335
+    call 336
+    call 337
+    call 338
+    call 339
+    call 340
+    call 341
+    call 342
+    call 343
+    call 344
+    call 345
+    call 346
+    call 347
+    call 348
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46
+    call 46)
 
   (func $v_main (result i32)
-    (local $__con_0 i32)
-    (local $__con_1 i32)
-    (local $__con_2 i32)
-    (local $__drop_tmp i32)
-    (block (result i32) (i32.store (local.tee $__con_0 (call $__alloc_shaped (i32.const 12) (i32.const 2))) (i32.const 7)) (i32.store offset=4 (local.get $__con_0) (call $v_showBool (call $v_res))) (i32.store offset=8 (local.get $__con_0) (block (result i32) (i32.store (local.tee $__con_1 (call $__alloc_shaped (i32.const 8) (i32.const 1))) (i32.const 5)) (i32.store offset=4 (local.get $__con_1) (block (result i32) (i32.store (local.tee $__con_2 (call $__alloc_shaped (i32.const 4) (i32.const 0))) (i32.const 0)) (local.get $__con_2))) (local.get $__con_1))) (local.get $__con_0)))
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    i32.const 12
+    i32.const 2
+    call 40
+    local.set 0
+    local.get 0
+    i32.const 7
+    i32.store
+    local.get 0
+    call 349
+    call 47
+    i32.store offset=4
+    local.get 0
+    i32.const 8
+    i32.const 1
+    call 40
+    local.set 1
+    local.get 1
+    i32.const 5
+    i32.store
+    local.get 1
+    i32.const 4
+    i32.const 0
+    call 40
+    local.set 2
+    local.get 2
+    i32.const 0
+    i32.store
+    local.get 2
+    i32.store offset=4
+    local.get 1
+    i32.store offset=8
+    local.get 0)
 
-  (func $_start (export "_start")
-    (drop (call $v_runIO (call $v_main))))
-
+  (func $_start
+    call 350
+    call 48
+    drop)
 )

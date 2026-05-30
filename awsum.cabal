@@ -51,12 +51,15 @@ library
       Awsum.Codegen
       Awsum.Codegen.CLR
       Awsum.Codegen.CLR.Assemble
+      Awsum.Codegen.CLR.Instr
       Awsum.Codegen.JS
       Awsum.Codegen.JVM
       Awsum.Codegen.JVM.Assemble
+      Awsum.Codegen.JVM.Instr
       Awsum.Codegen.LLVM
       Awsum.Codegen.WASM
       Awsum.Codegen.WASM.Assemble
+      Awsum.Codegen.WASM.Instr
       Awsum.Core
       Awsum.Cps
       Awsum.Defunctionalize

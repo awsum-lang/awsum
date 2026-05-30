@@ -29,95 +29,104 @@
     ret
   }
 
-  .method private hidebysig static object v_and(object, object) cil managed
+  .method private hidebysig static object v_and(object,object) cil managed
   {
+    .maxstack 3
+    .locals init (object[] V_0, object V_1)
     ldarg.0
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_1, IL_arm_2)
-  IL_arm_1:
+    dup
+    ldc.i4.1
+    bne.un IL_c1
     pop
     ldarg.1
-    br.s IL_join
-  IL_arm_2:
+    br IL_c0
+  IL_c1:
     pop
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.1
+    ldloc.1
     ldc.i4.0
     ldc.i4.2
     box [System.Runtime]System.Int32
     stelem.ref
-    br.s IL_join
-  IL_join:
+    ldloc.1
+  IL_c0:
     ret
   }
 
 
   .method private hidebysig static object v_showBool(object) cil managed
   {
+    .maxstack 3
+    .locals init (object[] V_0)
     ldarg.0
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_arm_1, IL_arm_2)
-  IL_arm_1:
+    dup
+    ldc.i4.1
+    bne.un IL_c1
     pop
     ldstr "True"
-    br.s IL_join
-  IL_arm_2:
+    br IL_c0
+  IL_c1:
     pop
     ldstr "False"
-    br.s IL_join
-  IL_join:
+  IL_c0:
     ret
   }
 
 
   .method private hidebysig static object v_runIO(object) cil managed
   {
+    .maxstack 3
+    .locals init (object[] V_0, object V_1, object V_2, object V_3)
   IL_tco_loop:
     ldarg.0
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_5, IL_tco_arm_7)
-  IL_tco_arm_5:
     dup
-    ldc.i4.1
-    ldelem.ref
-    stloc.0
+    ldc.i4.5
+    bne.un IL_c0
     pop
     ldloc.0
-    ret
-  IL_tco_arm_7:
-    dup
     ldc.i4.1
-    ldelem.ref
-    stloc.0
-    dup
-    ldc.i4.2
     ldelem.ref
     stloc.1
+    ldloc.1
+    ret
+  IL_c0:
     pop
     ldloc.0
+    ldc.i4.1
+    ldelem.ref
+    stloc.1
+    ldloc.0
+    ldc.i4.2
+    ldelem.ref
+    stloc.2
+    ldloc.1
     call object AwsumMain::__print(object)
-    dup
+    stloc.3
+    ldloc.3
     ldc.i4.0
     ldelem.ref
     unbox.any [System.Runtime]System.Int32
-    switch (IL_tco_arm_0)
-  IL_tco_arm_0:
     pop
-    ldloc.1
+    ldloc.2
     ldnull
     starg.s 0
-
-
     starg.s 0
     br IL_tco_loop
   }
@@ -125,59 +134,73 @@
 
   .method private hidebysig static object v_main() cil managed
   {
+    .maxstack 7
+    .locals init (object[] V_0, object V_1, object V_2)
     ldc.i4.3
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.7
     box [System.Runtime]System.Int32
     stelem.ref
-    dup
+    ldloc.0
     ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.1
+    ldloc.1
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.1
     call object AwsumMain::v_f1(object)
     call object AwsumMain::v_showBool(object)
     stelem.ref
-    dup
+    ldloc.0
     ldc.i4.2
     ldc.i4.2
     newarr [System.Runtime]System.Object
-    dup
+    stloc.1
+    ldloc.1
     ldc.i4.0
     ldc.i4.5
     box [System.Runtime]System.Int32
     stelem.ref
-    dup
+    ldloc.1
     ldc.i4.1
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.2
+    ldloc.2
     ldc.i4.0
     ldc.i4.0
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.2
     stelem.ref
+    ldloc.1
     stelem.ref
+    ldloc.0
     ret
   }
 
 
   .method private hidebysig static object v_f1(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f2(object)
     ret
@@ -186,14 +209,18 @@
 
   .method private hidebysig static object v_f2(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f3(object)
     ret
@@ -202,14 +229,18 @@
 
   .method private hidebysig static object v_f3(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f4(object)
     ret
@@ -218,14 +249,18 @@
 
   .method private hidebysig static object v_f4(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f5(object)
     ret
@@ -234,14 +269,18 @@
 
   .method private hidebysig static object v_f5(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f6(object)
     ret
@@ -250,14 +289,18 @@
 
   .method private hidebysig static object v_f6(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f7(object)
     ret
@@ -266,14 +309,18 @@
 
   .method private hidebysig static object v_f7(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f8(object)
     ret
@@ -282,14 +329,18 @@
 
   .method private hidebysig static object v_f8(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f9(object)
     ret
@@ -298,14 +349,18 @@
 
   .method private hidebysig static object v_f9(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f10(object)
     ret
@@ -314,14 +369,18 @@
 
   .method private hidebysig static object v_f10(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f11(object)
     ret
@@ -330,14 +389,18 @@
 
   .method private hidebysig static object v_f11(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f12(object)
     ret
@@ -346,14 +409,18 @@
 
   .method private hidebysig static object v_f12(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f13(object)
     ret
@@ -362,14 +429,18 @@
 
   .method private hidebysig static object v_f13(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f14(object)
     ret
@@ -378,14 +449,18 @@
 
   .method private hidebysig static object v_f14(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f15(object)
     ret
@@ -394,14 +469,18 @@
 
   .method private hidebysig static object v_f15(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f16(object)
     ret
@@ -410,14 +489,18 @@
 
   .method private hidebysig static object v_f16(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f17(object)
     ret
@@ -426,14 +509,18 @@
 
   .method private hidebysig static object v_f17(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f18(object)
     ret
@@ -442,14 +529,18 @@
 
   .method private hidebysig static object v_f18(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f19(object)
     ret
@@ -458,14 +549,18 @@
 
   .method private hidebysig static object v_f19(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f20(object)
     ret
@@ -474,14 +569,18 @@
 
   .method private hidebysig static object v_f20(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f21(object)
     ret
@@ -490,14 +589,18 @@
 
   .method private hidebysig static object v_f21(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f22(object)
     ret
@@ -506,14 +609,18 @@
 
   .method private hidebysig static object v_f22(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f23(object)
     ret
@@ -522,14 +629,18 @@
 
   .method private hidebysig static object v_f23(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f24(object)
     ret
@@ -538,14 +649,18 @@
 
   .method private hidebysig static object v_f24(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f25(object)
     ret
@@ -554,14 +669,18 @@
 
   .method private hidebysig static object v_f25(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f26(object)
     ret
@@ -570,14 +689,18 @@
 
   .method private hidebysig static object v_f26(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f27(object)
     ret
@@ -586,14 +709,18 @@
 
   .method private hidebysig static object v_f27(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f28(object)
     ret
@@ -602,14 +729,18 @@
 
   .method private hidebysig static object v_f28(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f29(object)
     ret
@@ -618,14 +749,18 @@
 
   .method private hidebysig static object v_f29(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f30(object)
     ret
@@ -634,14 +769,18 @@
 
   .method private hidebysig static object v_f30(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f31(object)
     ret
@@ -650,14 +789,18 @@
 
   .method private hidebysig static object v_f31(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f32(object)
     ret
@@ -666,14 +809,18 @@
 
   .method private hidebysig static object v_f32(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f33(object)
     ret
@@ -682,14 +829,18 @@
 
   .method private hidebysig static object v_f33(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f34(object)
     ret
@@ -698,14 +849,18 @@
 
   .method private hidebysig static object v_f34(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f35(object)
     ret
@@ -714,14 +869,18 @@
 
   .method private hidebysig static object v_f35(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f36(object)
     ret
@@ -730,14 +889,18 @@
 
   .method private hidebysig static object v_f36(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f37(object)
     ret
@@ -746,14 +909,18 @@
 
   .method private hidebysig static object v_f37(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f38(object)
     ret
@@ -762,14 +929,18 @@
 
   .method private hidebysig static object v_f38(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f39(object)
     ret
@@ -778,14 +949,18 @@
 
   .method private hidebysig static object v_f39(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f40(object)
     ret
@@ -794,14 +969,18 @@
 
   .method private hidebysig static object v_f40(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f41(object)
     ret
@@ -810,14 +989,18 @@
 
   .method private hidebysig static object v_f41(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f42(object)
     ret
@@ -826,14 +1009,18 @@
 
   .method private hidebysig static object v_f42(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f43(object)
     ret
@@ -842,14 +1029,18 @@
 
   .method private hidebysig static object v_f43(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f44(object)
     ret
@@ -858,14 +1049,18 @@
 
   .method private hidebysig static object v_f44(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f45(object)
     ret
@@ -874,14 +1069,18 @@
 
   .method private hidebysig static object v_f45(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f46(object)
     ret
@@ -890,14 +1089,18 @@
 
   .method private hidebysig static object v_f46(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f47(object)
     ret
@@ -906,14 +1109,18 @@
 
   .method private hidebysig static object v_f47(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f48(object)
     ret
@@ -922,14 +1129,18 @@
 
   .method private hidebysig static object v_f48(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f49(object)
     ret
@@ -938,14 +1149,18 @@
 
   .method private hidebysig static object v_f49(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f50(object)
     ret
@@ -954,14 +1169,18 @@
 
   .method private hidebysig static object v_f50(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f51(object)
     ret
@@ -970,14 +1189,18 @@
 
   .method private hidebysig static object v_f51(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f52(object)
     ret
@@ -986,14 +1209,18 @@
 
   .method private hidebysig static object v_f52(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f53(object)
     ret
@@ -1002,14 +1229,18 @@
 
   .method private hidebysig static object v_f53(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f54(object)
     ret
@@ -1018,14 +1249,18 @@
 
   .method private hidebysig static object v_f54(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f55(object)
     ret
@@ -1034,14 +1269,18 @@
 
   .method private hidebysig static object v_f55(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f56(object)
     ret
@@ -1050,14 +1289,18 @@
 
   .method private hidebysig static object v_f56(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f57(object)
     ret
@@ -1066,14 +1309,18 @@
 
   .method private hidebysig static object v_f57(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f58(object)
     ret
@@ -1082,14 +1329,18 @@
 
   .method private hidebysig static object v_f58(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f59(object)
     ret
@@ -1098,14 +1349,18 @@
 
   .method private hidebysig static object v_f59(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f60(object)
     ret
@@ -1114,14 +1369,18 @@
 
   .method private hidebysig static object v_f60(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f61(object)
     ret
@@ -1130,14 +1389,18 @@
 
   .method private hidebysig static object v_f61(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f62(object)
     ret
@@ -1146,14 +1409,18 @@
 
   .method private hidebysig static object v_f62(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f63(object)
     ret
@@ -1162,14 +1429,18 @@
 
   .method private hidebysig static object v_f63(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f64(object)
     ret
@@ -1178,14 +1449,18 @@
 
   .method private hidebysig static object v_f64(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f65(object)
     ret
@@ -1194,14 +1469,18 @@
 
   .method private hidebysig static object v_f65(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f66(object)
     ret
@@ -1210,14 +1489,18 @@
 
   .method private hidebysig static object v_f66(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f67(object)
     ret
@@ -1226,14 +1509,18 @@
 
   .method private hidebysig static object v_f67(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f68(object)
     ret
@@ -1242,14 +1529,18 @@
 
   .method private hidebysig static object v_f68(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f69(object)
     ret
@@ -1258,14 +1549,18 @@
 
   .method private hidebysig static object v_f69(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f70(object)
     ret
@@ -1274,14 +1569,18 @@
 
   .method private hidebysig static object v_f70(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f71(object)
     ret
@@ -1290,14 +1589,18 @@
 
   .method private hidebysig static object v_f71(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f72(object)
     ret
@@ -1306,14 +1609,18 @@
 
   .method private hidebysig static object v_f72(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f73(object)
     ret
@@ -1322,14 +1629,18 @@
 
   .method private hidebysig static object v_f73(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f74(object)
     ret
@@ -1338,14 +1649,18 @@
 
   .method private hidebysig static object v_f74(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f75(object)
     ret
@@ -1354,14 +1669,18 @@
 
   .method private hidebysig static object v_f75(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f76(object)
     ret
@@ -1370,14 +1689,18 @@
 
   .method private hidebysig static object v_f76(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f77(object)
     ret
@@ -1386,14 +1709,18 @@
 
   .method private hidebysig static object v_f77(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f78(object)
     ret
@@ -1402,14 +1729,18 @@
 
   .method private hidebysig static object v_f78(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f79(object)
     ret
@@ -1418,14 +1749,18 @@
 
   .method private hidebysig static object v_f79(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f80(object)
     ret
@@ -1434,14 +1769,18 @@
 
   .method private hidebysig static object v_f80(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f81(object)
     ret
@@ -1450,14 +1789,18 @@
 
   .method private hidebysig static object v_f81(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f82(object)
     ret
@@ -1466,14 +1809,18 @@
 
   .method private hidebysig static object v_f82(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f83(object)
     ret
@@ -1482,14 +1829,18 @@
 
   .method private hidebysig static object v_f83(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f84(object)
     ret
@@ -1498,14 +1849,18 @@
 
   .method private hidebysig static object v_f84(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f85(object)
     ret
@@ -1514,14 +1869,18 @@
 
   .method private hidebysig static object v_f85(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f86(object)
     ret
@@ -1530,14 +1889,18 @@
 
   .method private hidebysig static object v_f86(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f87(object)
     ret
@@ -1546,14 +1909,18 @@
 
   .method private hidebysig static object v_f87(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f88(object)
     ret
@@ -1562,14 +1929,18 @@
 
   .method private hidebysig static object v_f88(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f89(object)
     ret
@@ -1578,14 +1949,18 @@
 
   .method private hidebysig static object v_f89(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f90(object)
     ret
@@ -1594,14 +1969,18 @@
 
   .method private hidebysig static object v_f90(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f91(object)
     ret
@@ -1610,14 +1989,18 @@
 
   .method private hidebysig static object v_f91(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f92(object)
     ret
@@ -1626,14 +2009,18 @@
 
   .method private hidebysig static object v_f92(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f93(object)
     ret
@@ -1642,14 +2029,18 @@
 
   .method private hidebysig static object v_f93(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f94(object)
     ret
@@ -1658,14 +2049,18 @@
 
   .method private hidebysig static object v_f94(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f95(object)
     ret
@@ -1674,14 +2069,18 @@
 
   .method private hidebysig static object v_f95(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f96(object)
     ret
@@ -1690,14 +2089,18 @@
 
   .method private hidebysig static object v_f96(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f97(object)
     ret
@@ -1706,14 +2109,18 @@
 
   .method private hidebysig static object v_f97(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f98(object)
     ret
@@ -1722,14 +2129,18 @@
 
   .method private hidebysig static object v_f98(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f99(object)
     ret
@@ -1738,14 +2149,18 @@
 
   .method private hidebysig static object v_f99(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f100(object)
     ret
@@ -1754,14 +2169,18 @@
 
   .method private hidebysig static object v_f100(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f101(object)
     ret
@@ -1770,14 +2189,18 @@
 
   .method private hidebysig static object v_f101(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f102(object)
     ret
@@ -1786,14 +2209,18 @@
 
   .method private hidebysig static object v_f102(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f103(object)
     ret
@@ -1802,14 +2229,18 @@
 
   .method private hidebysig static object v_f103(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f104(object)
     ret
@@ -1818,14 +2249,18 @@
 
   .method private hidebysig static object v_f104(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f105(object)
     ret
@@ -1834,14 +2269,18 @@
 
   .method private hidebysig static object v_f105(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f106(object)
     ret
@@ -1850,14 +2289,18 @@
 
   .method private hidebysig static object v_f106(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f107(object)
     ret
@@ -1866,14 +2309,18 @@
 
   .method private hidebysig static object v_f107(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f108(object)
     ret
@@ -1882,14 +2329,18 @@
 
   .method private hidebysig static object v_f108(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f109(object)
     ret
@@ -1898,14 +2349,18 @@
 
   .method private hidebysig static object v_f109(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f110(object)
     ret
@@ -1914,14 +2369,18 @@
 
   .method private hidebysig static object v_f110(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f111(object)
     ret
@@ -1930,14 +2389,18 @@
 
   .method private hidebysig static object v_f111(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f112(object)
     ret
@@ -1946,14 +2409,18 @@
 
   .method private hidebysig static object v_f112(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f113(object)
     ret
@@ -1962,14 +2429,18 @@
 
   .method private hidebysig static object v_f113(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f114(object)
     ret
@@ -1978,14 +2449,18 @@
 
   .method private hidebysig static object v_f114(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f115(object)
     ret
@@ -1994,14 +2469,18 @@
 
   .method private hidebysig static object v_f115(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f116(object)
     ret
@@ -2010,14 +2489,18 @@
 
   .method private hidebysig static object v_f116(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f117(object)
     ret
@@ -2026,14 +2509,18 @@
 
   .method private hidebysig static object v_f117(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f118(object)
     ret
@@ -2042,14 +2529,18 @@
 
   .method private hidebysig static object v_f118(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f119(object)
     ret
@@ -2058,14 +2549,18 @@
 
   .method private hidebysig static object v_f119(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f120(object)
     ret
@@ -2074,14 +2569,18 @@
 
   .method private hidebysig static object v_f120(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f121(object)
     ret
@@ -2090,14 +2589,18 @@
 
   .method private hidebysig static object v_f121(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f122(object)
     ret
@@ -2106,14 +2609,18 @@
 
   .method private hidebysig static object v_f122(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f123(object)
     ret
@@ -2122,14 +2629,18 @@
 
   .method private hidebysig static object v_f123(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f124(object)
     ret
@@ -2138,14 +2649,18 @@
 
   .method private hidebysig static object v_f124(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f125(object)
     ret
@@ -2154,14 +2669,18 @@
 
   .method private hidebysig static object v_f125(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f126(object)
     ret
@@ -2170,14 +2689,18 @@
 
   .method private hidebysig static object v_f126(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f127(object)
     ret
@@ -2186,14 +2709,18 @@
 
   .method private hidebysig static object v_f127(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f128(object)
     ret
@@ -2202,14 +2729,18 @@
 
   .method private hidebysig static object v_f128(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f129(object)
     ret
@@ -2218,14 +2749,18 @@
 
   .method private hidebysig static object v_f129(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f130(object)
     ret
@@ -2234,14 +2769,18 @@
 
   .method private hidebysig static object v_f130(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f131(object)
     ret
@@ -2250,14 +2789,18 @@
 
   .method private hidebysig static object v_f131(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f132(object)
     ret
@@ -2266,14 +2809,18 @@
 
   .method private hidebysig static object v_f132(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f133(object)
     ret
@@ -2282,14 +2829,18 @@
 
   .method private hidebysig static object v_f133(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f134(object)
     ret
@@ -2298,14 +2849,18 @@
 
   .method private hidebysig static object v_f134(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f135(object)
     ret
@@ -2314,14 +2869,18 @@
 
   .method private hidebysig static object v_f135(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f136(object)
     ret
@@ -2330,14 +2889,18 @@
 
   .method private hidebysig static object v_f136(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f137(object)
     ret
@@ -2346,14 +2909,18 @@
 
   .method private hidebysig static object v_f137(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f138(object)
     ret
@@ -2362,14 +2929,18 @@
 
   .method private hidebysig static object v_f138(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f139(object)
     ret
@@ -2378,14 +2949,18 @@
 
   .method private hidebysig static object v_f139(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f140(object)
     ret
@@ -2394,14 +2969,18 @@
 
   .method private hidebysig static object v_f140(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f141(object)
     ret
@@ -2410,14 +2989,18 @@
 
   .method private hidebysig static object v_f141(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f142(object)
     ret
@@ -2426,14 +3009,18 @@
 
   .method private hidebysig static object v_f142(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f143(object)
     ret
@@ -2442,14 +3029,18 @@
 
   .method private hidebysig static object v_f143(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f144(object)
     ret
@@ -2458,14 +3049,18 @@
 
   .method private hidebysig static object v_f144(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f145(object)
     ret
@@ -2474,14 +3069,18 @@
 
   .method private hidebysig static object v_f145(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f146(object)
     ret
@@ -2490,14 +3089,18 @@
 
   .method private hidebysig static object v_f146(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f147(object)
     ret
@@ -2506,14 +3109,18 @@
 
   .method private hidebysig static object v_f147(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f148(object)
     ret
@@ -2522,14 +3129,18 @@
 
   .method private hidebysig static object v_f148(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f149(object)
     ret
@@ -2538,14 +3149,18 @@
 
   .method private hidebysig static object v_f149(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f150(object)
     ret
@@ -2554,14 +3169,18 @@
 
   .method private hidebysig static object v_f150(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f151(object)
     ret
@@ -2570,14 +3189,18 @@
 
   .method private hidebysig static object v_f151(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f152(object)
     ret
@@ -2586,14 +3209,18 @@
 
   .method private hidebysig static object v_f152(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f153(object)
     ret
@@ -2602,14 +3229,18 @@
 
   .method private hidebysig static object v_f153(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f154(object)
     ret
@@ -2618,14 +3249,18 @@
 
   .method private hidebysig static object v_f154(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f155(object)
     ret
@@ -2634,14 +3269,18 @@
 
   .method private hidebysig static object v_f155(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f156(object)
     ret
@@ -2650,14 +3289,18 @@
 
   .method private hidebysig static object v_f156(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f157(object)
     ret
@@ -2666,14 +3309,18 @@
 
   .method private hidebysig static object v_f157(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f158(object)
     ret
@@ -2682,14 +3329,18 @@
 
   .method private hidebysig static object v_f158(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f159(object)
     ret
@@ -2698,14 +3349,18 @@
 
   .method private hidebysig static object v_f159(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f160(object)
     ret
@@ -2714,14 +3369,18 @@
 
   .method private hidebysig static object v_f160(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f161(object)
     ret
@@ -2730,14 +3389,18 @@
 
   .method private hidebysig static object v_f161(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f162(object)
     ret
@@ -2746,14 +3409,18 @@
 
   .method private hidebysig static object v_f162(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f163(object)
     ret
@@ -2762,14 +3429,18 @@
 
   .method private hidebysig static object v_f163(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f164(object)
     ret
@@ -2778,14 +3449,18 @@
 
   .method private hidebysig static object v_f164(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f165(object)
     ret
@@ -2794,14 +3469,18 @@
 
   .method private hidebysig static object v_f165(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f166(object)
     ret
@@ -2810,14 +3489,18 @@
 
   .method private hidebysig static object v_f166(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f167(object)
     ret
@@ -2826,14 +3509,18 @@
 
   .method private hidebysig static object v_f167(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f168(object)
     ret
@@ -2842,14 +3529,18 @@
 
   .method private hidebysig static object v_f168(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f169(object)
     ret
@@ -2858,14 +3549,18 @@
 
   .method private hidebysig static object v_f169(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f170(object)
     ret
@@ -2874,14 +3569,18 @@
 
   .method private hidebysig static object v_f170(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f171(object)
     ret
@@ -2890,14 +3589,18 @@
 
   .method private hidebysig static object v_f171(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f172(object)
     ret
@@ -2906,14 +3609,18 @@
 
   .method private hidebysig static object v_f172(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f173(object)
     ret
@@ -2922,14 +3629,18 @@
 
   .method private hidebysig static object v_f173(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f174(object)
     ret
@@ -2938,14 +3649,18 @@
 
   .method private hidebysig static object v_f174(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f175(object)
     ret
@@ -2954,14 +3669,18 @@
 
   .method private hidebysig static object v_f175(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f176(object)
     ret
@@ -2970,14 +3689,18 @@
 
   .method private hidebysig static object v_f176(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f177(object)
     ret
@@ -2986,14 +3709,18 @@
 
   .method private hidebysig static object v_f177(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f178(object)
     ret
@@ -3002,14 +3729,18 @@
 
   .method private hidebysig static object v_f178(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f179(object)
     ret
@@ -3018,14 +3749,18 @@
 
   .method private hidebysig static object v_f179(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f180(object)
     ret
@@ -3034,14 +3769,18 @@
 
   .method private hidebysig static object v_f180(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f181(object)
     ret
@@ -3050,14 +3789,18 @@
 
   .method private hidebysig static object v_f181(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f182(object)
     ret
@@ -3066,14 +3809,18 @@
 
   .method private hidebysig static object v_f182(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f183(object)
     ret
@@ -3082,14 +3829,18 @@
 
   .method private hidebysig static object v_f183(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f184(object)
     ret
@@ -3098,14 +3849,18 @@
 
   .method private hidebysig static object v_f184(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f185(object)
     ret
@@ -3114,14 +3869,18 @@
 
   .method private hidebysig static object v_f185(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f186(object)
     ret
@@ -3130,14 +3889,18 @@
 
   .method private hidebysig static object v_f186(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f187(object)
     ret
@@ -3146,14 +3909,18 @@
 
   .method private hidebysig static object v_f187(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f188(object)
     ret
@@ -3162,14 +3929,18 @@
 
   .method private hidebysig static object v_f188(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f189(object)
     ret
@@ -3178,14 +3949,18 @@
 
   .method private hidebysig static object v_f189(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f190(object)
     ret
@@ -3194,14 +3969,18 @@
 
   .method private hidebysig static object v_f190(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f191(object)
     ret
@@ -3210,14 +3989,18 @@
 
   .method private hidebysig static object v_f191(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f192(object)
     ret
@@ -3226,14 +4009,18 @@
 
   .method private hidebysig static object v_f192(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f193(object)
     ret
@@ -3242,14 +4029,18 @@
 
   .method private hidebysig static object v_f193(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f194(object)
     ret
@@ -3258,14 +4049,18 @@
 
   .method private hidebysig static object v_f194(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f195(object)
     ret
@@ -3274,14 +4069,18 @@
 
   .method private hidebysig static object v_f195(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f196(object)
     ret
@@ -3290,14 +4089,18 @@
 
   .method private hidebysig static object v_f196(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f197(object)
     ret
@@ -3306,14 +4109,18 @@
 
   .method private hidebysig static object v_f197(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f198(object)
     ret
@@ -3322,14 +4129,18 @@
 
   .method private hidebysig static object v_f198(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f199(object)
     ret
@@ -3338,14 +4149,18 @@
 
   .method private hidebysig static object v_f199(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f200(object)
     ret
@@ -3354,14 +4169,18 @@
 
   .method private hidebysig static object v_f200(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f201(object)
     ret
@@ -3370,14 +4189,18 @@
 
   .method private hidebysig static object v_f201(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f202(object)
     ret
@@ -3386,14 +4209,18 @@
 
   .method private hidebysig static object v_f202(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f203(object)
     ret
@@ -3402,14 +4229,18 @@
 
   .method private hidebysig static object v_f203(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f204(object)
     ret
@@ -3418,14 +4249,18 @@
 
   .method private hidebysig static object v_f204(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f205(object)
     ret
@@ -3434,14 +4269,18 @@
 
   .method private hidebysig static object v_f205(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f206(object)
     ret
@@ -3450,14 +4289,18 @@
 
   .method private hidebysig static object v_f206(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f207(object)
     ret
@@ -3466,14 +4309,18 @@
 
   .method private hidebysig static object v_f207(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f208(object)
     ret
@@ -3482,14 +4329,18 @@
 
   .method private hidebysig static object v_f208(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f209(object)
     ret
@@ -3498,14 +4349,18 @@
 
   .method private hidebysig static object v_f209(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f210(object)
     ret
@@ -3514,14 +4369,18 @@
 
   .method private hidebysig static object v_f210(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f211(object)
     ret
@@ -3530,14 +4389,18 @@
 
   .method private hidebysig static object v_f211(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f212(object)
     ret
@@ -3546,14 +4409,18 @@
 
   .method private hidebysig static object v_f212(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f213(object)
     ret
@@ -3562,14 +4429,18 @@
 
   .method private hidebysig static object v_f213(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f214(object)
     ret
@@ -3578,14 +4449,18 @@
 
   .method private hidebysig static object v_f214(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f215(object)
     ret
@@ -3594,14 +4469,18 @@
 
   .method private hidebysig static object v_f215(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f216(object)
     ret
@@ -3610,14 +4489,18 @@
 
   .method private hidebysig static object v_f216(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f217(object)
     ret
@@ -3626,14 +4509,18 @@
 
   .method private hidebysig static object v_f217(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f218(object)
     ret
@@ -3642,14 +4529,18 @@
 
   .method private hidebysig static object v_f218(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f219(object)
     ret
@@ -3658,14 +4549,18 @@
 
   .method private hidebysig static object v_f219(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f220(object)
     ret
@@ -3674,14 +4569,18 @@
 
   .method private hidebysig static object v_f220(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f221(object)
     ret
@@ -3690,14 +4589,18 @@
 
   .method private hidebysig static object v_f221(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f222(object)
     ret
@@ -3706,14 +4609,18 @@
 
   .method private hidebysig static object v_f222(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f223(object)
     ret
@@ -3722,14 +4629,18 @@
 
   .method private hidebysig static object v_f223(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f224(object)
     ret
@@ -3738,14 +4649,18 @@
 
   .method private hidebysig static object v_f224(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f225(object)
     ret
@@ -3754,14 +4669,18 @@
 
   .method private hidebysig static object v_f225(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f226(object)
     ret
@@ -3770,14 +4689,18 @@
 
   .method private hidebysig static object v_f226(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f227(object)
     ret
@@ -3786,14 +4709,18 @@
 
   .method private hidebysig static object v_f227(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f228(object)
     ret
@@ -3802,14 +4729,18 @@
 
   .method private hidebysig static object v_f228(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f229(object)
     ret
@@ -3818,14 +4749,18 @@
 
   .method private hidebysig static object v_f229(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f230(object)
     ret
@@ -3834,14 +4769,18 @@
 
   .method private hidebysig static object v_f230(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f231(object)
     ret
@@ -3850,14 +4789,18 @@
 
   .method private hidebysig static object v_f231(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f232(object)
     ret
@@ -3866,14 +4809,18 @@
 
   .method private hidebysig static object v_f232(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f233(object)
     ret
@@ -3882,14 +4829,18 @@
 
   .method private hidebysig static object v_f233(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f234(object)
     ret
@@ -3898,14 +4849,18 @@
 
   .method private hidebysig static object v_f234(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f235(object)
     ret
@@ -3914,14 +4869,18 @@
 
   .method private hidebysig static object v_f235(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f236(object)
     ret
@@ -3930,14 +4889,18 @@
 
   .method private hidebysig static object v_f236(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f237(object)
     ret
@@ -3946,14 +4909,18 @@
 
   .method private hidebysig static object v_f237(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f238(object)
     ret
@@ -3962,14 +4929,18 @@
 
   .method private hidebysig static object v_f238(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f239(object)
     ret
@@ -3978,14 +4949,18 @@
 
   .method private hidebysig static object v_f239(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f240(object)
     ret
@@ -3994,14 +4969,18 @@
 
   .method private hidebysig static object v_f240(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f241(object)
     ret
@@ -4010,14 +4989,18 @@
 
   .method private hidebysig static object v_f241(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f242(object)
     ret
@@ -4026,14 +5009,18 @@
 
   .method private hidebysig static object v_f242(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f243(object)
     ret
@@ -4042,14 +5029,18 @@
 
   .method private hidebysig static object v_f243(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f244(object)
     ret
@@ -4058,14 +5049,18 @@
 
   .method private hidebysig static object v_f244(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f245(object)
     ret
@@ -4074,14 +5069,18 @@
 
   .method private hidebysig static object v_f245(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f246(object)
     ret
@@ -4090,14 +5089,18 @@
 
   .method private hidebysig static object v_f246(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f247(object)
     ret
@@ -4106,14 +5109,18 @@
 
   .method private hidebysig static object v_f247(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f248(object)
     ret
@@ -4122,14 +5129,18 @@
 
   .method private hidebysig static object v_f248(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f249(object)
     ret
@@ -4138,14 +5149,18 @@
 
   .method private hidebysig static object v_f249(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f250(object)
     ret
@@ -4154,14 +5169,18 @@
 
   .method private hidebysig static object v_f250(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f251(object)
     ret
@@ -4170,14 +5189,18 @@
 
   .method private hidebysig static object v_f251(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f252(object)
     ret
@@ -4186,14 +5209,18 @@
 
   .method private hidebysig static object v_f252(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f253(object)
     ret
@@ -4202,14 +5229,18 @@
 
   .method private hidebysig static object v_f253(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f254(object)
     ret
@@ -4218,14 +5249,18 @@
 
   .method private hidebysig static object v_f254(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f255(object)
     ret
@@ -4234,14 +5269,18 @@
 
   .method private hidebysig static object v_f255(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f256(object)
     ret
@@ -4250,14 +5289,18 @@
 
   .method private hidebysig static object v_f256(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f257(object)
     ret
@@ -4266,14 +5309,18 @@
 
   .method private hidebysig static object v_f257(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f258(object)
     ret
@@ -4282,14 +5329,18 @@
 
   .method private hidebysig static object v_f258(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f259(object)
     ret
@@ -4298,14 +5349,18 @@
 
   .method private hidebysig static object v_f259(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f260(object)
     ret
@@ -4314,14 +5369,18 @@
 
   .method private hidebysig static object v_f260(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f261(object)
     ret
@@ -4330,14 +5389,18 @@
 
   .method private hidebysig static object v_f261(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f262(object)
     ret
@@ -4346,14 +5409,18 @@
 
   .method private hidebysig static object v_f262(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f263(object)
     ret
@@ -4362,14 +5429,18 @@
 
   .method private hidebysig static object v_f263(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f264(object)
     ret
@@ -4378,14 +5449,18 @@
 
   .method private hidebysig static object v_f264(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f265(object)
     ret
@@ -4394,14 +5469,18 @@
 
   .method private hidebysig static object v_f265(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f266(object)
     ret
@@ -4410,14 +5489,18 @@
 
   .method private hidebysig static object v_f266(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f267(object)
     ret
@@ -4426,14 +5509,18 @@
 
   .method private hidebysig static object v_f267(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f268(object)
     ret
@@ -4442,14 +5529,18 @@
 
   .method private hidebysig static object v_f268(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f269(object)
     ret
@@ -4458,14 +5549,18 @@
 
   .method private hidebysig static object v_f269(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f270(object)
     ret
@@ -4474,14 +5569,18 @@
 
   .method private hidebysig static object v_f270(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f271(object)
     ret
@@ -4490,14 +5589,18 @@
 
   .method private hidebysig static object v_f271(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f272(object)
     ret
@@ -4506,14 +5609,18 @@
 
   .method private hidebysig static object v_f272(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f273(object)
     ret
@@ -4522,14 +5629,18 @@
 
   .method private hidebysig static object v_f273(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f274(object)
     ret
@@ -4538,14 +5649,18 @@
 
   .method private hidebysig static object v_f274(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f275(object)
     ret
@@ -4554,14 +5669,18 @@
 
   .method private hidebysig static object v_f275(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f276(object)
     ret
@@ -4570,14 +5689,18 @@
 
   .method private hidebysig static object v_f276(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f277(object)
     ret
@@ -4586,14 +5709,18 @@
 
   .method private hidebysig static object v_f277(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f278(object)
     ret
@@ -4602,14 +5729,18 @@
 
   .method private hidebysig static object v_f278(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f279(object)
     ret
@@ -4618,14 +5749,18 @@
 
   .method private hidebysig static object v_f279(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f280(object)
     ret
@@ -4634,14 +5769,18 @@
 
   .method private hidebysig static object v_f280(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f281(object)
     ret
@@ -4650,14 +5789,18 @@
 
   .method private hidebysig static object v_f281(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f282(object)
     ret
@@ -4666,14 +5809,18 @@
 
   .method private hidebysig static object v_f282(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f283(object)
     ret
@@ -4682,14 +5829,18 @@
 
   .method private hidebysig static object v_f283(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f284(object)
     ret
@@ -4698,14 +5849,18 @@
 
   .method private hidebysig static object v_f284(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f285(object)
     ret
@@ -4714,14 +5869,18 @@
 
   .method private hidebysig static object v_f285(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f286(object)
     ret
@@ -4730,14 +5889,18 @@
 
   .method private hidebysig static object v_f286(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f287(object)
     ret
@@ -4746,14 +5909,18 @@
 
   .method private hidebysig static object v_f287(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f288(object)
     ret
@@ -4762,14 +5929,18 @@
 
   .method private hidebysig static object v_f288(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f289(object)
     ret
@@ -4778,14 +5949,18 @@
 
   .method private hidebysig static object v_f289(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f290(object)
     ret
@@ -4794,14 +5969,18 @@
 
   .method private hidebysig static object v_f290(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f291(object)
     ret
@@ -4810,14 +5989,18 @@
 
   .method private hidebysig static object v_f291(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f292(object)
     ret
@@ -4826,14 +6009,18 @@
 
   .method private hidebysig static object v_f292(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f293(object)
     ret
@@ -4842,14 +6029,18 @@
 
   .method private hidebysig static object v_f293(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f294(object)
     ret
@@ -4858,14 +6049,18 @@
 
   .method private hidebysig static object v_f294(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f295(object)
     ret
@@ -4874,14 +6069,18 @@
 
   .method private hidebysig static object v_f295(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f296(object)
     ret
@@ -4890,14 +6089,18 @@
 
   .method private hidebysig static object v_f296(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f297(object)
     ret
@@ -4906,14 +6109,18 @@
 
   .method private hidebysig static object v_f297(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f298(object)
     ret
@@ -4922,14 +6129,18 @@
 
   .method private hidebysig static object v_f298(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f299(object)
     ret
@@ -4938,14 +6149,18 @@
 
   .method private hidebysig static object v_f299(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     call object AwsumMain::v_f300(object)
     ret
@@ -4954,21 +6169,25 @@
 
   .method private hidebysig static object v_f300(object) cil managed
   {
+    .maxstack 4
+    .locals init (object[] V_0)
     ldarg.0
     ldc.i4.1
     newarr [System.Runtime]System.Object
-    dup
+    stloc.0
+    ldloc.0
     ldc.i4.0
     ldc.i4.1
     box [System.Runtime]System.Int32
     stelem.ref
+    ldloc.0
     call object AwsumMain::v_and(object, object)
     ret
   }
 
   .method private hidebysig static void Main(string[]) cil managed
   {
-    .entrypoint
+    .maxstack 1
     call class [System.Runtime]System.Text.Encoding [System.Runtime]System.Text.Encoding::get_UTF8()
     call void [System.Console]System.Console::set_OutputEncoding(class [System.Runtime]System.Text.Encoding)
     call object AwsumMain::v_main()

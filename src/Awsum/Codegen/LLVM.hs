@@ -5,8 +5,8 @@
 --   * Keep a tiny C-based runtime: @malloc@/@free@/@write@ plus a
 --     refcount-aware allocator layer ('__alloc_shaped',
 --     '__inc_ref', '__free_recursive').
---   * Mirror JS / JVM / CLR / WASM backend semantics for cross-backend
---     equivalence; identical stdout is verified on every commit.
+--   * Uphold cross-target equivalence — identical stdout to every other
+--     backend.
 --
 -- Semantics & assumptions:
 --   * All values are opaque pointers (@ptr@, LLVM 15+).
@@ -57,17 +57,17 @@ import System.Info qualified as Info
 --   ignores that argv (MSVCRT mangles it through the ANSI code page)
 --   and re-fetches the UTF-16 command line through @GetCommandLineW@ /
 --   @CommandLineToArgvW@ before handing off to @v_main@. macOS and
---   Linux share the POSIX variant — the footer is byte-identical for
+--   Linux share the POSIX variant — the footer is identical for
 --   both. The link-host axis (which linker flags @clang@ needs) is
 --   tracked separately by 'LLVMLinkHost' because there macOS and Linux
 --   diverge. The CLI derives this from 'System.Info.os' once via
 --   'llvmHostFromSystem'; the snapshot test framework iterates all
---   values so per-host IR is asserted on every CI host.
+--   values, covering every host's IR.
 data LLVMHost = LLVMPosix | LLVMWindows
   deriving stock (Eq, Ord, Show, Enum, Bounded)
 
 -- | Every supported host, used by snapshot tests to assert one IR file
---   per host on every test run regardless of which host is doing the run.
+--   per host, regardless of which host is doing the run.
 allLLVMHosts :: [LLVMHost]
 allLLVMHosts = universe
 
@@ -2023,10 +2023,9 @@ runtime ptags builtIns =
     --   * Left StringTooLong       on cap overflow (regardless of surrogates)
     --   * Left UnpairedUtf16Surrogate on surrogates with cap respected
     --
-    -- Cap value (134217728 = 2^27) and FNV-1a row tags for "StringTooLong"
-    -- / "UnpairedUtf16Surrogate" must stay in sync with
-    -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww' and the
-    -- matching constants in 'Awsum.Codegen.{JVM,CLR,WASM,JS}'.
+    -- The cap value (134217728 = 2^27) and FNV-1a row tags for
+    -- "StringTooLong" / "UnpairedUtf16Surrogate" must stay in sync with
+    -- 'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
     --
     -- Layout of the returned Either cell (identical for both Left arms,
     -- only the row tag differs):
