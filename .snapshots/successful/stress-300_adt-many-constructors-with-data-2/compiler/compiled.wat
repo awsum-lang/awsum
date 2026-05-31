@@ -21,7 +21,80 @@
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
-    call 40)
+    call 7)
+
+  (func $__free (param i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.load
+    local.set 1
+    local.get 1
+    i32.eqz
+    if
+    return
+    end
+    local.get 1
+    i32.const 4096
+    i32.gt_u
+    if
+    return
+    end
+    i32.const 24
+    local.get 1
+    i32.ctz
+    i32.const 3
+    i32.sub
+    i32.const 2
+    i32.shl
+    i32.add
+    local.set 2
+    local.get 2
+    i32.load
+    local.set 3
+    local.get 0
+    i32.const 4
+    i32.sub
+    local.get 3
+    i32.store
+    local.get 2
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.store)
+
+  (func $__print (param i32) (result i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    i32.load
+    local.set 1
+    i32.const 0
+    local.get 0
+    i32.const 8
+    i32.add
+    i32.store
+    i32.const 0
+    local.get 1
+    i32.store offset=4
+    i32.const 1
+    i32.const 0
+    i32.const 1
+    i32.const 8
+    call 0
+    drop
+    i32.const 4
+    call 4
+    local.set 2
+    local.get 2
+    i32.const 0
+    i32.store
+    local.get 0
+    call 9
+    local.get 2)
 
   (func $__alloc_shaped (param i32 i32) (result i32)
     (local i32)
@@ -130,49 +203,6 @@
     i32.const 12
     i32.add)
 
-  (func $__free (param i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    i32.const 12
-    i32.sub
-    i32.load
-    local.set 1
-    local.get 1
-    i32.eqz
-    if
-    return
-    end
-    local.get 1
-    i32.const 4096
-    i32.gt_u
-    if
-    return
-    end
-    i32.const 24
-    local.get 1
-    i32.ctz
-    i32.const 3
-    i32.sub
-    i32.const 2
-    i32.shl
-    i32.add
-    local.set 2
-    local.get 2
-    i32.load
-    local.set 3
-    local.get 0
-    i32.const 4
-    i32.sub
-    local.get 3
-    i32.store
-    local.get 2
-    local.get 0
-    i32.const 12
-    i32.sub
-    i32.store)
-
   (func $__inc_ref (param i32)
     (local i32)
     local.get 0
@@ -195,88 +225,6 @@
     i32.const 1
     i32.add
     i32.store)
-
-  (func $__free_worklist_push (param i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    global.get 2
-    local.set 1
-    global.get 3
-    local.set 2
-    local.get 1
-    local.get 2
-    i32.eq
-    if
-    local.get 2
-    i32.eqz
-    if (result i32)
-    i32.const 16
-    else
-    local.get 2
-    i32.const 1
-    i32.shl
-    end
-    local.set 3
-    local.get 3
-    i32.const 2
-    i32.shl
-    i32.const 0
-    call 40
-    local.set 4
-    global.get 1
-    local.set 5
-    i32.const 0
-    local.set 6
-    block
-    loop
-    local.get 6
-    local.get 1
-    i32.ge_u
-    br_if 1
-    local.get 4
-    local.get 6
-    i32.const 2
-    i32.shl
-    i32.add
-    local.get 5
-    local.get 6
-    i32.const 2
-    i32.shl
-    i32.add
-    i32.load
-    i32.store
-    local.get 6
-    i32.const 1
-    i32.add
-    local.set 6
-    br 0
-    end
-    end
-    local.get 5
-    if
-    local.get 5
-    call 5
-    end
-    local.get 4
-    global.set 1
-    local.get 3
-    global.set 3
-    end
-    global.get 1
-    local.get 1
-    i32.const 2
-    i32.shl
-    i32.add
-    local.get 0
-    i32.store
-    local.get 1
-    i32.const 1
-    i32.add
-    global.set 2)
 
   (func $__free_recursive (param i32)
     (local i32)
@@ -335,7 +283,7 @@
     i32.shl
     i32.add
     i32.load
-    call 43
+    call 10
     local.get 4
     i32.const 1
     i32.add
@@ -378,440 +326,87 @@
     end
     end)
 
-  (func $__memcpy (param i32 i32 i32)
-    (local i32)
-    i32.const 0
-    local.set 3
-    block
-    loop
-    local.get 3
-    local.get 2
-    i32.ge_u
-    br_if 1
-    local.get 0
-    local.get 3
-    i32.add
-    local.get 1
-    local.get 3
-    i32.add
-    i32.load8_u
-    i32.store8
-    local.get 3
-    i32.const 1
-    i32.add
-    local.set 3
-    br 0
-    end
-    end)
-
-  (func $__print (param i32) (result i32)
+  (func $__free_worklist_push (param i32)
     (local i32)
     (local i32)
-    local.get 0
-    i32.load
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    global.get 2
     local.set 1
-    i32.const 0
-    local.get 0
-    i32.const 8
-    i32.add
-    i32.store
-    i32.const 0
-    local.get 1
-    i32.store offset=4
-    i32.const 1
-    i32.const 0
-    i32.const 1
-    i32.const 8
-    call 0
-    drop
-    i32.const 4
-    call 4
+    global.get 3
     local.set 2
-    local.get 2
-    i32.const 0
-    i32.store
-    local.get 0
-    call 42
-    local.get 2)
-
-  (func $__entryArgEither (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    i32.const 0
-    local.set 2
-    i32.const 0
-    local.set 3
-    i32.const 0
-    local.set 5
-    block
-    loop
-    local.get 2
-    local.get 1
-    i32.eq
-    br_if 1
-    local.get 0
-    local.get 2
-    i32.add
-    i32.load8_u
-    local.set 4
-    local.get 4
-    i32.const 192
-    i32.and
-    i32.const 128
-    i32.ne
-    if
-    local.get 4
-    i32.const 237
-    i32.eq
-    if
-    local.get 0
-    local.get 2
-    i32.const 1
-    i32.add
-    i32.add
-    i32.load8_u
-    i32.const 224
-    i32.and
-    i32.const 160
-    i32.eq
-    if
-    i32.const 1
-    local.set 5
-    end
-    end
-    local.get 4
-    i32.const 248
-    i32.and
-    i32.const 240
-    i32.eq
-    if
-    local.get 3
-    i32.const 2
-    i32.add
-    local.set 3
-    else
-    local.get 3
-    i32.const 1
-    i32.add
-    local.set 3
-    end
-    local.get 3
-    i32.const 134217728
-    i32.gt_u
-    br_if 2
-    end
-    local.get 2
-    i32.const 1
-    i32.add
-    local.set 2
-    br 0
-    end
-    end
-    local.get 3
-    i32.const 134217728
-    i32.gt_u
-    if (result i32)
-    i32.const 4
-    call 4
-    local.set 6
-    local.get 6
-    i32.const 18
-    i32.store
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 7
-    local.get 7
-    i32.const 589989748
-    i32.store
-    local.get 7
-    local.get 6
-    i32.store offset=4
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 3
-    i32.store
-    local.get 8
-    local.get 7
-    i32.store offset=4
-    local.get 8
-    else
-    local.get 5
-    if (result i32)
-    i32.const 4
-    call 4
-    local.set 6
-    local.get 6
-    i32.const 19
-    i32.store
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 7
-    local.get 7
-    i32.const 502975519
-    i32.store
-    local.get 7
-    local.get 6
-    i32.store offset=4
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 3
-    i32.store
-    local.get 8
-    local.get 7
-    i32.store offset=4
-    local.get 8
-    else
-    local.get 2
-    i32.const 8
-    i32.add
-    call 4
-    local.set 9
-    local.get 9
-    local.get 2
-    i32.store
-    local.get 9
-    local.get 3
-    i32.store offset=4
-    local.get 9
-    i32.const 8
-    i32.add
-    local.get 0
-    local.get 2
-    call 6
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 4
-    i32.store
-    local.get 8
-    local.get 9
-    i32.store offset=4
-    local.get 8
-    end
-    end)
-
-  (func $__getArgs (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    i32.const 4
-    i32.const 0
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 12
-    i32.store
-    i32.const 12
-    i32.const 16
-    call 1
-    drop
-    i32.const 0
-    i32.load offset=12
-    local.set 0
-    local.get 0
-    i32.const 2
-    i32.ge_u
-    if
-    i32.const 0
-    i32.load offset=16
-    call 4
-    local.set 2
-    local.get 0
-    i32.const 4
-    i32.mul
-    call 4
-    local.set 1
     local.get 1
     local.get 2
-    call 2
-    drop
-    local.get 0
-    local.set 3
-    block
-    loop
-    local.get 3
-    i32.const 1
-    i32.le_u
-    br_if 1
-    local.get 3
-    i32.const 1
-    i32.sub
-    local.set 3
-    local.get 1
-    local.get 3
-    i32.const 4
-    i32.mul
-    i32.add
-    i32.load
-    local.set 4
-    i32.const 0
-    local.set 5
-    block
-    loop
-    local.get 4
-    local.get 5
-    i32.add
-    i32.load8_u
+    i32.eq
+    if
+    local.get 2
     i32.eqz
+    if (result i32)
+    i32.const 16
+    else
+    local.get 2
+    i32.const 1
+    i32.shl
+    end
+    local.set 3
+    local.get 3
+    i32.const 2
+    i32.shl
+    i32.const 0
+    call 7
+    local.set 4
+    global.get 1
+    local.set 5
+    i32.const 0
+    local.set 6
+    block
+    loop
+    local.get 6
+    local.get 1
+    i32.ge_u
     br_if 1
+    local.get 4
+    local.get 6
+    i32.const 2
+    i32.shl
+    i32.add
     local.get 5
+    local.get 6
+    i32.const 2
+    i32.shl
+    i32.add
+    i32.load
+    i32.store
+    local.get 6
     i32.const 1
     i32.add
-    local.set 5
+    local.set 6
     br 0
     end
     end
-    local.get 4
     local.get 5
-    call 36
-    local.set 6
-    local.get 6
-    i32.load
-    i32.const 3
-    i32.eq
     if
-    local.get 6
-    return
-    end
-    local.get 6
-    i32.load offset=4
-    local.set 7
-    local.get 6
+    local.get 5
     call 5
-    i32.const 12
-    i32.const 2
-    call 40
-    local.set 9
-    local.get 9
-    i32.const 13
-    i32.store
-    local.get 9
-    local.get 7
-    i32.store offset=4
-    local.get 9
-    local.get 8
-    i32.store offset=8
-    local.get 9
-    local.set 8
-    br 0
     end
-    end
-    end
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 6
-    local.get 6
-    i32.const 4
-    i32.store
-    local.get 6
-    local.get 8
-    i32.store offset=4
-    local.get 6)
-
-  (func $__stdinReadAll (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    i32.const 4096
-    local.set 1
-    local.get 1
-    call 4
-    local.set 0
-    i32.const 0
-    local.set 2
-    block
-    loop
-    local.get 1
-    local.get 2
-    i32.sub
-    local.set 3
+    local.get 4
+    global.set 1
     local.get 3
-    i32.const 4096
-    i32.lt_u
-    if
+    global.set 3
+    end
+    global.get 1
     local.get 1
     i32.const 2
-    i32.mul
-    local.set 5
-    local.get 5
-    call 4
-    local.set 4
-    local.get 4
+    i32.shl
+    i32.add
     local.get 0
-    local.get 2
-    call 6
-    local.get 4
-    local.set 0
-    local.get 5
-    local.set 1
+    i32.store
     local.get 1
-    local.get 2
-    i32.sub
-    local.set 3
-    end
-    i32.const 16
-    local.get 0
-    local.get 2
-    i32.add
-    i32.store
-    i32.const 20
-    local.get 3
-    i32.store
-    i32.const 0
-    i32.const 16
     i32.const 1
-    i32.const 12
-    call 3
-    drop
-    i32.const 0
-    i32.load offset=12
-    local.set 6
-    local.get 6
-    i32.eqz
-    br_if 1
-    local.get 2
-    local.get 6
     i32.add
-    local.set 2
-    br 0
-    end
-    end
-    local.get 0
-    local.get 2
-    i32.add
-    i32.const 0
-    i32.store8
-    local.get 0
-    local.get 2
-    call 36)
+    global.set 2)
   (func $v_and (param i32 i32) (result i32)
     (local i32)
     (local i32)
@@ -828,14 +423,14 @@
     local.get 1
     local.set 4
     local.get 0
-    call 42
+    call 9
     local.get 4
     end
     else
     block (result i32)
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 2
     local.get 2
     i32.const 2
@@ -843,9 +438,9 @@
     local.get 2
     local.set 4
     local.get 0
-    call 42
+    call 9
     local.get 1
-    call 42
+    call 9
     local.get 4
     end
     end)
@@ -865,7 +460,7 @@
     i32.const 96
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end
     else
@@ -873,7 +468,7 @@
     i32.const 120
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end
     end)
@@ -898,12 +493,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 5
     local.get 0
-    call 42
+    call 9
     local.get 5
     end
     else
@@ -911,31 +506,31 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     local.get 1
     i32.load offset=8
     local.set 3
     local.get 3
-    call 41
+    call 8
     local.get 2
     local.tee 6
-    call 41
-    local.get 6
     call 8
+    local.get 6
+    call 6
     local.tee 7
     local.set 1
     local.get 3
     local.set 4
     local.get 4
-    call 41
+    call 8
     local.get 7
-    call 42
+    call 9
     local.get 0
-    call 42
+    call 9
     local.get 3
-    call 42
+    call 9
     local.get 2
-    call 42
+    call 9
     local.get 4
     local.set 0
     br 1
@@ -958,12 +553,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -976,12 +571,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -994,12 +589,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1012,12 +607,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1030,12 +625,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1048,12 +643,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1066,12 +661,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1084,12 +679,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1102,12 +697,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1120,12 +715,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1138,12 +733,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1156,12 +751,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1174,12 +769,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1192,12 +787,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1210,12 +805,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1228,12 +823,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1246,12 +841,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1264,12 +859,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1282,12 +877,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1300,12 +895,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1318,12 +913,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1336,12 +931,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1354,12 +949,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1372,12 +967,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1390,12 +985,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1408,12 +1003,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1426,12 +1021,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1444,12 +1039,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1462,12 +1057,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1480,12 +1075,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1498,12 +1093,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1516,12 +1111,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1534,12 +1129,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1552,12 +1147,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1570,12 +1165,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1588,12 +1183,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1606,12 +1201,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1624,12 +1219,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1642,12 +1237,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1660,12 +1255,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1678,12 +1273,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1696,12 +1291,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1714,12 +1309,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1732,12 +1327,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1750,12 +1345,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1768,12 +1363,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1786,12 +1381,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1804,12 +1399,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1822,12 +1417,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1840,12 +1435,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1858,12 +1453,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1876,12 +1471,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1894,12 +1489,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1912,12 +1507,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1930,12 +1525,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1948,12 +1543,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1966,12 +1561,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -1984,12 +1579,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2002,12 +1597,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2020,12 +1615,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2038,12 +1633,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2056,12 +1651,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2074,12 +1669,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2092,12 +1687,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2110,12 +1705,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2128,12 +1723,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2146,12 +1741,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2164,12 +1759,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2182,12 +1777,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2200,12 +1795,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2218,12 +1813,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2236,12 +1831,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2254,12 +1849,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2272,12 +1867,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2290,12 +1885,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2308,12 +1903,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2326,12 +1921,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2344,12 +1939,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2362,12 +1957,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2380,12 +1975,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2398,12 +1993,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2416,12 +2011,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2434,12 +2029,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2452,12 +2047,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2470,12 +2065,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2488,12 +2083,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2506,12 +2101,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2524,12 +2119,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2542,12 +2137,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2560,12 +2155,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2578,12 +2173,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2596,12 +2191,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2614,12 +2209,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2632,12 +2227,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2650,12 +2245,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2668,12 +2263,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2686,12 +2281,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2704,12 +2299,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2722,12 +2317,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2740,12 +2335,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2758,12 +2353,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2776,12 +2371,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2794,12 +2389,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2812,12 +2407,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2830,12 +2425,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2848,12 +2443,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2866,12 +2461,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2884,12 +2479,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2902,12 +2497,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2920,12 +2515,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2938,12 +2533,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2956,12 +2551,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2974,12 +2569,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -2992,12 +2587,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3010,12 +2605,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3028,12 +2623,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3046,12 +2641,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3064,12 +2659,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3082,12 +2677,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3100,12 +2695,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3118,12 +2713,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3136,12 +2731,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3154,12 +2749,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3172,12 +2767,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3190,12 +2785,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3208,12 +2803,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3226,12 +2821,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3244,12 +2839,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3262,12 +2857,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3280,12 +2875,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3298,12 +2893,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3316,12 +2911,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3334,12 +2929,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3352,12 +2947,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3370,12 +2965,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3388,12 +2983,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3406,12 +3001,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3424,12 +3019,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3442,12 +3037,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3460,12 +3055,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3478,12 +3073,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3496,12 +3091,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3514,12 +3109,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3532,12 +3127,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3550,12 +3145,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3568,12 +3163,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3586,12 +3181,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3604,12 +3199,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3622,12 +3217,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3640,12 +3235,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3658,12 +3253,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3676,12 +3271,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3694,12 +3289,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3712,12 +3307,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3730,12 +3325,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3748,12 +3343,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3766,12 +3361,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3784,12 +3379,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3802,12 +3397,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3820,12 +3415,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3838,12 +3433,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3856,12 +3451,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3874,12 +3469,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3892,12 +3487,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3910,12 +3505,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3928,12 +3523,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3946,12 +3541,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3964,12 +3559,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -3982,12 +3577,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4000,12 +3595,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4018,12 +3613,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4036,12 +3631,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4054,12 +3649,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4072,12 +3667,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4090,12 +3685,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4108,12 +3703,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4126,12 +3721,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4144,12 +3739,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4162,12 +3757,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4180,12 +3775,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4198,12 +3793,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4216,12 +3811,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4234,12 +3829,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4252,12 +3847,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4270,12 +3865,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4288,12 +3883,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4306,12 +3901,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4324,12 +3919,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4342,12 +3937,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4360,12 +3955,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4378,12 +3973,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4396,12 +3991,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4414,12 +4009,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4432,12 +4027,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4450,12 +4045,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4468,12 +4063,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4486,12 +4081,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4504,12 +4099,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4522,12 +4117,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4540,12 +4135,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4558,12 +4153,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4576,12 +4171,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4594,12 +4189,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4612,12 +4207,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4630,12 +4225,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4648,12 +4243,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4666,12 +4261,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4684,12 +4279,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4702,12 +4297,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4720,12 +4315,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4738,12 +4333,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4756,12 +4351,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4774,12 +4369,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4792,12 +4387,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4810,12 +4405,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4828,12 +4423,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4846,12 +4441,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4864,12 +4459,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4882,12 +4477,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4900,12 +4495,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4918,12 +4513,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4936,12 +4531,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4954,12 +4549,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4972,12 +4567,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -4990,12 +4585,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5008,12 +4603,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5026,12 +4621,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5044,12 +4639,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5062,12 +4657,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5080,12 +4675,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5098,12 +4693,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5116,12 +4711,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5134,12 +4729,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5152,12 +4747,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5170,12 +4765,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5188,12 +4783,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5206,12 +4801,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5224,12 +4819,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5242,12 +4837,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5260,12 +4855,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5278,12 +4873,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5296,12 +4891,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5314,12 +4909,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5332,12 +4927,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5350,12 +4945,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5368,12 +4963,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5386,12 +4981,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5404,12 +4999,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5422,12 +5017,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5440,12 +5035,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5458,12 +5053,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5476,12 +5071,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5494,12 +5089,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5512,12 +5107,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5530,12 +5125,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5548,12 +5143,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5566,12 +5161,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5584,12 +5179,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5602,12 +5197,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5620,12 +5215,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5638,12 +5233,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5656,12 +5251,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5674,12 +5269,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5692,12 +5287,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5710,12 +5305,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5728,12 +5323,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5746,12 +5341,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5764,12 +5359,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5782,12 +5377,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5800,12 +5395,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5818,12 +5413,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5836,12 +5431,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5854,12 +5449,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5872,12 +5467,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5890,12 +5485,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5908,12 +5503,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5926,12 +5521,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5944,12 +5539,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5962,12 +5557,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5980,12 +5575,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -5998,12 +5593,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6016,12 +5611,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6034,12 +5629,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6052,12 +5647,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6070,12 +5665,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6088,12 +5683,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6106,12 +5701,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6124,12 +5719,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6142,12 +5737,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6160,12 +5755,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6178,12 +5773,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6196,12 +5791,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6214,12 +5809,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6232,12 +5827,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6250,12 +5845,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6268,12 +5863,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6286,12 +5881,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6304,12 +5899,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6322,12 +5917,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     else
@@ -6335,12 +5930,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 3
     local.get 0
-    call 42
+    call 9
     local.get 3
     end
     end
@@ -6650,7 +6245,7 @@
     (local i32)
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 22
@@ -6658,7 +6253,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6666,10 +6261,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 23
@@ -6677,7 +6272,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6685,10 +6280,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 24
@@ -6696,7 +6291,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6704,10 +6299,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 25
@@ -6715,7 +6310,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6723,10 +6318,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 26
@@ -6734,7 +6329,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6742,10 +6337,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 27
@@ -6753,7 +6348,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6761,10 +6356,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 28
@@ -6772,7 +6367,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6780,10 +6375,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 29
@@ -6791,7 +6386,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6799,10 +6394,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 30
@@ -6810,7 +6405,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6818,10 +6413,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 31
@@ -6829,7 +6424,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6837,10 +6432,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 32
@@ -6848,7 +6443,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6856,10 +6451,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 33
@@ -6867,7 +6462,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6875,10 +6470,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 34
@@ -6886,7 +6481,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6894,10 +6489,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 35
@@ -6905,7 +6500,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6913,10 +6508,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 36
@@ -6924,7 +6519,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6932,10 +6527,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 37
@@ -6943,7 +6538,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6951,10 +6546,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 38
@@ -6962,7 +6557,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6970,10 +6565,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 39
@@ -6981,7 +6576,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -6989,10 +6584,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 40
@@ -7000,7 +6595,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7008,10 +6603,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 41
@@ -7019,7 +6614,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7027,10 +6622,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 42
@@ -7038,7 +6633,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7046,10 +6641,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 43
@@ -7057,7 +6652,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7065,10 +6660,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 44
@@ -7076,7 +6671,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7084,10 +6679,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 45
@@ -7095,7 +6690,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7103,10 +6698,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 46
@@ -7114,7 +6709,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7122,10 +6717,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 47
@@ -7133,7 +6728,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7141,10 +6736,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 48
@@ -7152,7 +6747,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7160,10 +6755,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 49
@@ -7171,7 +6766,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7179,10 +6774,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 50
@@ -7190,7 +6785,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7198,10 +6793,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 51
@@ -7209,7 +6804,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7217,10 +6812,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 52
@@ -7228,7 +6823,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7236,10 +6831,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 53
@@ -7247,7 +6842,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7255,10 +6850,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 54
@@ -7266,7 +6861,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7274,10 +6869,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 55
@@ -7285,7 +6880,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7293,10 +6888,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 56
@@ -7304,7 +6899,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7312,10 +6907,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 57
@@ -7323,7 +6918,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7331,10 +6926,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 58
@@ -7342,7 +6937,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7350,10 +6945,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 59
@@ -7361,7 +6956,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7369,10 +6964,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 60
@@ -7380,7 +6975,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7388,10 +6983,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 61
@@ -7399,7 +6994,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7407,10 +7002,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 62
@@ -7418,7 +7013,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7426,10 +7021,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 63
@@ -7437,7 +7032,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7445,10 +7040,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 64
@@ -7456,7 +7051,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7464,10 +7059,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 65
@@ -7475,7 +7070,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7483,10 +7078,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 66
@@ -7494,7 +7089,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7502,10 +7097,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 67
@@ -7513,7 +7108,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7521,10 +7116,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 68
@@ -7532,7 +7127,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7540,10 +7135,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 69
@@ -7551,7 +7146,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7559,10 +7154,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 70
@@ -7570,7 +7165,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7578,10 +7173,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 71
@@ -7589,7 +7184,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7597,10 +7192,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 72
@@ -7608,7 +7203,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7616,10 +7211,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 73
@@ -7627,7 +7222,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7635,10 +7230,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 74
@@ -7646,7 +7241,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7654,10 +7249,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 75
@@ -7665,7 +7260,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7673,10 +7268,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 76
@@ -7684,7 +7279,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7692,10 +7287,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 77
@@ -7703,7 +7298,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7711,10 +7306,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 78
@@ -7722,7 +7317,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7730,10 +7325,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 79
@@ -7741,7 +7336,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7749,10 +7344,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 80
@@ -7760,7 +7355,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7768,10 +7363,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 81
@@ -7779,7 +7374,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7787,10 +7382,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 82
@@ -7798,7 +7393,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7806,10 +7401,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 83
@@ -7817,7 +7412,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7825,10 +7420,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 84
@@ -7836,7 +7431,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7844,10 +7439,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 85
@@ -7855,7 +7450,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7863,10 +7458,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 86
@@ -7874,7 +7469,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7882,10 +7477,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 87
@@ -7893,7 +7488,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7901,10 +7496,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 88
@@ -7912,7 +7507,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7920,10 +7515,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 89
@@ -7931,7 +7526,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7939,10 +7534,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 90
@@ -7950,7 +7545,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7958,10 +7553,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 91
@@ -7969,7 +7564,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7977,10 +7572,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 92
@@ -7988,7 +7583,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -7996,10 +7591,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 93
@@ -8007,7 +7602,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8015,10 +7610,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 94
@@ -8026,7 +7621,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8034,10 +7629,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 95
@@ -8045,7 +7640,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8053,10 +7648,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 96
@@ -8064,7 +7659,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8072,10 +7667,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 97
@@ -8083,7 +7678,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8091,10 +7686,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 98
@@ -8102,7 +7697,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8110,10 +7705,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 99
@@ -8121,7 +7716,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8129,10 +7724,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 100
@@ -8140,7 +7735,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8148,10 +7743,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 101
@@ -8159,7 +7754,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8167,10 +7762,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 102
@@ -8178,7 +7773,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8186,10 +7781,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 103
@@ -8197,7 +7792,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8205,10 +7800,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 104
@@ -8216,7 +7811,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8224,10 +7819,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 105
@@ -8235,7 +7830,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8243,10 +7838,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 106
@@ -8254,7 +7849,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8262,10 +7857,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 107
@@ -8273,7 +7868,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8281,10 +7876,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 108
@@ -8292,7 +7887,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8300,10 +7895,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 109
@@ -8311,7 +7906,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8319,10 +7914,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 110
@@ -8330,7 +7925,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8338,10 +7933,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 111
@@ -8349,7 +7944,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8357,10 +7952,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 112
@@ -8368,7 +7963,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8376,10 +7971,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 113
@@ -8387,7 +7982,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8395,10 +7990,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 114
@@ -8406,7 +8001,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8414,10 +8009,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 115
@@ -8425,7 +8020,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8433,10 +8028,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 116
@@ -8444,7 +8039,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8452,10 +8047,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 117
@@ -8463,7 +8058,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8471,10 +8066,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 118
@@ -8482,7 +8077,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8490,10 +8085,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 119
@@ -8501,7 +8096,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8509,10 +8104,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 120
@@ -8520,7 +8115,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8528,10 +8123,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 121
@@ -8539,7 +8134,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8547,10 +8142,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 122
@@ -8558,7 +8153,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8566,10 +8161,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 123
@@ -8577,7 +8172,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8585,10 +8180,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 124
@@ -8596,7 +8191,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8604,10 +8199,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 125
@@ -8615,7 +8210,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8623,10 +8218,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 126
@@ -8634,7 +8229,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8642,10 +8237,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 127
@@ -8653,7 +8248,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8661,10 +8256,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 128
@@ -8672,7 +8267,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8680,10 +8275,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 129
@@ -8691,7 +8286,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8699,10 +8294,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 130
@@ -8710,7 +8305,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8718,10 +8313,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 131
@@ -8729,7 +8324,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8737,10 +8332,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 132
@@ -8748,7 +8343,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8756,10 +8351,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 133
@@ -8767,7 +8362,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8775,10 +8370,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 134
@@ -8786,7 +8381,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8794,10 +8389,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 135
@@ -8805,7 +8400,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8813,10 +8408,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 136
@@ -8824,7 +8419,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8832,10 +8427,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 137
@@ -8843,7 +8438,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8851,10 +8446,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 138
@@ -8862,7 +8457,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8870,10 +8465,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 139
@@ -8881,7 +8476,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8889,10 +8484,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 140
@@ -8900,7 +8495,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8908,10 +8503,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 141
@@ -8919,7 +8514,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8927,10 +8522,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 142
@@ -8938,7 +8533,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8946,10 +8541,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 143
@@ -8957,7 +8552,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8965,10 +8560,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 144
@@ -8976,7 +8571,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -8984,10 +8579,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 145
@@ -8995,7 +8590,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9003,10 +8598,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 146
@@ -9014,7 +8609,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9022,10 +8617,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 147
@@ -9033,7 +8628,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9041,10 +8636,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 148
@@ -9052,7 +8647,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9060,10 +8655,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 149
@@ -9071,7 +8666,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9079,10 +8674,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 150
@@ -9090,7 +8685,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9098,10 +8693,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 151
@@ -9109,7 +8704,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9117,10 +8712,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 152
@@ -9128,7 +8723,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9136,10 +8731,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 153
@@ -9147,7 +8742,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9155,10 +8750,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 154
@@ -9166,7 +8761,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9174,10 +8769,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 155
@@ -9185,7 +8780,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9193,10 +8788,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 156
@@ -9204,7 +8799,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9212,10 +8807,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 157
@@ -9223,7 +8818,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9231,10 +8826,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 158
@@ -9242,7 +8837,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9250,10 +8845,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 159
@@ -9261,7 +8856,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9269,10 +8864,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 160
@@ -9280,7 +8875,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9288,10 +8883,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 161
@@ -9299,7 +8894,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9307,10 +8902,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 162
@@ -9318,7 +8913,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9326,10 +8921,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 163
@@ -9337,7 +8932,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9345,10 +8940,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 164
@@ -9356,7 +8951,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9364,10 +8959,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 165
@@ -9375,7 +8970,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9383,10 +8978,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 166
@@ -9394,7 +8989,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9402,10 +8997,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 167
@@ -9413,7 +9008,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9421,10 +9016,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 168
@@ -9432,7 +9027,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9440,10 +9035,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 169
@@ -9451,7 +9046,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9459,10 +9054,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 170
@@ -9470,7 +9065,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9478,10 +9073,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 171
@@ -9489,7 +9084,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9497,10 +9092,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 172
@@ -9508,7 +9103,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9516,10 +9111,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 173
@@ -9527,7 +9122,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9535,10 +9130,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 174
@@ -9546,7 +9141,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9554,10 +9149,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 175
@@ -9565,7 +9160,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9573,10 +9168,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 176
@@ -9584,7 +9179,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9592,10 +9187,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 177
@@ -9603,7 +9198,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9611,10 +9206,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 178
@@ -9622,7 +9217,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9630,10 +9225,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 179
@@ -9641,7 +9236,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9649,10 +9244,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 180
@@ -9660,7 +9255,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9668,10 +9263,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 181
@@ -9679,7 +9274,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9687,10 +9282,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 182
@@ -9698,7 +9293,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9706,10 +9301,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 183
@@ -9717,7 +9312,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9725,10 +9320,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 184
@@ -9736,7 +9331,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9744,10 +9339,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 185
@@ -9755,7 +9350,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9763,10 +9358,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 186
@@ -9774,7 +9369,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9782,10 +9377,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 187
@@ -9793,7 +9388,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9801,10 +9396,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 188
@@ -9812,7 +9407,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9820,10 +9415,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 189
@@ -9831,7 +9426,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9839,10 +9434,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 190
@@ -9850,7 +9445,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9858,10 +9453,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 191
@@ -9869,7 +9464,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9877,10 +9472,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 192
@@ -9888,7 +9483,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9896,10 +9491,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 193
@@ -9907,7 +9502,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9915,10 +9510,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 194
@@ -9926,7 +9521,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9934,10 +9529,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 195
@@ -9945,7 +9540,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9953,10 +9548,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 196
@@ -9964,7 +9559,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9972,10 +9567,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 197
@@ -9983,7 +9578,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -9991,10 +9586,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 198
@@ -10002,7 +9597,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10010,10 +9605,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 199
@@ -10021,7 +9616,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10029,10 +9624,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 200
@@ -10040,7 +9635,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10048,10 +9643,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 201
@@ -10059,7 +9654,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10067,10 +9662,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 202
@@ -10078,7 +9673,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10086,10 +9681,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 203
@@ -10097,7 +9692,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10105,10 +9700,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 204
@@ -10116,7 +9711,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10124,10 +9719,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 205
@@ -10135,7 +9730,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10143,10 +9738,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 206
@@ -10154,7 +9749,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10162,10 +9757,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 207
@@ -10173,7 +9768,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10181,10 +9776,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 208
@@ -10192,7 +9787,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10200,10 +9795,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 209
@@ -10211,7 +9806,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10219,10 +9814,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 210
@@ -10230,7 +9825,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10238,10 +9833,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 211
@@ -10249,7 +9844,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10257,10 +9852,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 212
@@ -10268,7 +9863,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10276,10 +9871,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 213
@@ -10287,7 +9882,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10295,10 +9890,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 214
@@ -10306,7 +9901,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10314,10 +9909,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 215
@@ -10325,7 +9920,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10333,10 +9928,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 216
@@ -10344,7 +9939,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10352,10 +9947,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 217
@@ -10363,7 +9958,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10371,10 +9966,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 218
@@ -10382,7 +9977,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10390,10 +9985,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 219
@@ -10401,7 +9996,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10409,10 +10004,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 220
@@ -10420,7 +10015,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10428,10 +10023,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 221
@@ -10439,7 +10034,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10447,10 +10042,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 222
@@ -10458,7 +10053,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10466,10 +10061,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 223
@@ -10477,7 +10072,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10485,10 +10080,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 224
@@ -10496,7 +10091,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10504,10 +10099,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 225
@@ -10515,7 +10110,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10523,10 +10118,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 226
@@ -10534,7 +10129,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10542,10 +10137,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 227
@@ -10553,7 +10148,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10561,10 +10156,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 228
@@ -10572,7 +10167,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10580,10 +10175,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 229
@@ -10591,7 +10186,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10599,10 +10194,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 230
@@ -10610,7 +10205,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10618,10 +10213,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 231
@@ -10629,7 +10224,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10637,10 +10232,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 232
@@ -10648,7 +10243,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10656,10 +10251,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 233
@@ -10667,7 +10262,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10675,10 +10270,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 234
@@ -10686,7 +10281,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10694,10 +10289,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 235
@@ -10705,7 +10300,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10713,10 +10308,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 236
@@ -10724,7 +10319,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10732,10 +10327,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 237
@@ -10743,7 +10338,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10751,10 +10346,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 238
@@ -10762,7 +10357,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10770,10 +10365,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 239
@@ -10781,7 +10376,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10789,10 +10384,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 240
@@ -10800,7 +10395,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10808,10 +10403,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 241
@@ -10819,7 +10414,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10827,10 +10422,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 242
@@ -10838,7 +10433,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10846,10 +10441,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 243
@@ -10857,7 +10452,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10865,10 +10460,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 244
@@ -10876,7 +10471,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10884,10 +10479,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 245
@@ -10895,7 +10490,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10903,10 +10498,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 246
@@ -10914,7 +10509,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10922,10 +10517,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 247
@@ -10933,7 +10528,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10941,10 +10536,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 248
@@ -10952,7 +10547,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10960,10 +10555,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 249
@@ -10971,7 +10566,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10979,10 +10574,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 250
@@ -10990,7 +10585,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -10998,10 +10593,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 251
@@ -11009,7 +10604,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11017,10 +10612,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 252
@@ -11028,7 +10623,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11036,10 +10631,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 253
@@ -11047,7 +10642,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11055,10 +10650,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 254
@@ -11066,7 +10661,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11074,10 +10669,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 255
@@ -11085,7 +10680,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11093,10 +10688,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 256
@@ -11104,7 +10699,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11112,10 +10707,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 257
@@ -11123,7 +10718,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11131,10 +10726,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 258
@@ -11142,7 +10737,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11150,10 +10745,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 259
@@ -11161,7 +10756,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11169,10 +10764,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 260
@@ -11180,7 +10775,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11188,10 +10783,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 261
@@ -11199,7 +10794,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11207,10 +10802,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 262
@@ -11218,7 +10813,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11226,10 +10821,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 263
@@ -11237,7 +10832,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11245,10 +10840,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 264
@@ -11256,7 +10851,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11264,10 +10859,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 265
@@ -11275,7 +10870,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11283,10 +10878,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 266
@@ -11294,7 +10889,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11302,10 +10897,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 267
@@ -11313,7 +10908,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11321,10 +10916,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 268
@@ -11332,7 +10927,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11340,10 +10935,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 269
@@ -11351,7 +10946,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11359,10 +10954,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 270
@@ -11370,7 +10965,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11378,10 +10973,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 271
@@ -11389,7 +10984,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11397,10 +10992,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 272
@@ -11408,7 +11003,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11416,10 +11011,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 273
@@ -11427,7 +11022,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11435,10 +11030,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 274
@@ -11446,7 +11041,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11454,10 +11049,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 275
@@ -11465,7 +11060,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11473,10 +11068,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 276
@@ -11484,7 +11079,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11492,10 +11087,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 277
@@ -11503,7 +11098,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11511,10 +11106,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 278
@@ -11522,7 +11117,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11530,10 +11125,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 279
@@ -11541,7 +11136,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11549,10 +11144,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 280
@@ -11560,7 +11155,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11568,10 +11163,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 281
@@ -11579,7 +11174,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11587,10 +11182,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 282
@@ -11598,7 +11193,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11606,10 +11201,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 283
@@ -11617,7 +11212,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11625,10 +11220,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 284
@@ -11636,7 +11231,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11644,10 +11239,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 285
@@ -11655,7 +11250,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11663,10 +11258,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 286
@@ -11674,7 +11269,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11682,10 +11277,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 287
@@ -11693,7 +11288,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11701,10 +11296,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 288
@@ -11712,7 +11307,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11720,10 +11315,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 289
@@ -11731,7 +11326,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11739,10 +11334,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 290
@@ -11750,7 +11345,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11758,10 +11353,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 291
@@ -11769,7 +11364,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11777,10 +11372,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 292
@@ -11788,7 +11383,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11796,10 +11391,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 293
@@ -11807,7 +11402,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11815,10 +11410,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 294
@@ -11826,7 +11421,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11834,10 +11429,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 295
@@ -11845,7 +11440,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11853,10 +11448,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 296
@@ -11864,7 +11459,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11872,10 +11467,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 297
@@ -11883,7 +11478,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11891,10 +11486,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 298
@@ -11902,7 +11497,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11910,10 +11505,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 299
@@ -11921,7 +11516,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11929,10 +11524,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 300
@@ -11940,7 +11535,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11948,10 +11543,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 301
@@ -11959,7 +11554,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11967,10 +11562,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 302
@@ -11978,7 +11573,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -11986,10 +11581,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 303
@@ -11997,7 +11592,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12005,10 +11600,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 304
@@ -12016,7 +11611,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12024,10 +11619,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 305
@@ -12035,7 +11630,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12043,10 +11638,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 306
@@ -12054,7 +11649,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12062,10 +11657,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 307
@@ -12073,7 +11668,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12081,10 +11676,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 308
@@ -12092,7 +11687,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12100,10 +11695,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 309
@@ -12111,7 +11706,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12119,10 +11714,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 310
@@ -12130,7 +11725,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12138,10 +11733,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 311
@@ -12149,7 +11744,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12157,10 +11752,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 312
@@ -12168,7 +11763,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12176,10 +11771,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 313
@@ -12187,7 +11782,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12195,10 +11790,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 314
@@ -12206,7 +11801,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12214,10 +11809,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 315
@@ -12225,7 +11820,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12233,10 +11828,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 316
@@ -12244,7 +11839,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12252,10 +11847,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 317
@@ -12263,7 +11858,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12271,10 +11866,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 318
@@ -12282,7 +11877,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12290,10 +11885,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 319
@@ -12301,7 +11896,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12309,10 +11904,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 320
@@ -12320,7 +11915,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12328,10 +11923,10 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
+    call 14
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 321
@@ -12339,7 +11934,7 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
@@ -12347,306 +11942,306 @@
     local.get 1
     i32.store offset=4
     local.get 0
-    call 49
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46
-    call 46)
+    call 14
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11
+    call 11)
 
   (func $v_main (result i32)
     (local i32)
@@ -12656,19 +12251,19 @@
     (local i32)
     i32.const 12
     i32.const 2
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 7
     i32.store
     local.get 0
-    call 50
-    call 47
+    call 15
+    call 12
     i32.store offset=4
     local.get 0
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 5
@@ -12676,7 +12271,7 @@
     local.get 1
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 2
     local.get 2
     i32.const 0
@@ -12688,7 +12283,7 @@
     local.get 0)
 
   (func $_start
-    call 51
-    call 48
+    call 16
+    call 13
     drop)
 )

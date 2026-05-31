@@ -18,11 +18,15 @@ module Awsum.RunBackend
   )
 where
 
+import Awsum.Codegen.CLR (codegenCLR)
 import Awsum.Codegen.CLR.Assemble (assembleCLR)
 import Awsum.Codegen.JS (codegenJS)
+import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.JVM.Assemble (assembleJVM)
 import Awsum.Codegen.LLVM (LLVMHost, codegenLLVM, llvmHostFromSystem, llvmHostLinkerFlags, llvmLinkHostFromSystem)
+import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Codegen.WASM.Assemble (assembleWASM)
+import Awsum.Core (CoreProgram)
 import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Parser (parseProgram)
 import Awsum.Prelude (withPrelude)
@@ -76,7 +80,15 @@ data CompiledArtifacts = CompiledArtifacts
     caJVMBytes :: ByteString,
     caCLRBytes :: ByteString,
     caWASMBytes :: ByteString,
-    caJS :: Text
+    caJS :: Text,
+    -- The elaborated Core and the JVM/CLR/WASM text, all derived from the
+    -- SAME elaboration as the bytes above. The snapshot spec reads these
+    -- instead of elaborating a second time, so a golden text snapshot is a
+    -- faithful view of the bytes that actually run. Property tests ignore them.
+    caCore :: CoreProgram,
+    caJVMText :: Text,
+    caCLRText :: Text,
+    caWASMText :: Text
   }
 
 -- | Run the compile pipeline (parse → withPrelude → elaborate → codegen)
@@ -105,7 +117,11 @@ compileFromText src = do
         caJVMBytes = assembleJVM ptags core,
         caCLRBytes = assembleCLR ptags core,
         caWASMBytes = assembleWASM ptags core,
-        caJS = codegenJS ProgramCli ptags core
+        caJS = codegenJS ProgramCli ptags core,
+        caCore = core,
+        caJVMText = codegenJVM ptags core,
+        caCLRText = codegenCLR ptags core,
+        caWASMText = codegenWASM ptags core
       }
 
 compileFromFile :: FilePath -> IO CompiledArtifacts

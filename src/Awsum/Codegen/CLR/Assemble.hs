@@ -10,11 +10,11 @@
 -- Only @dotnet@ is needed to run the output.
 module Awsum.Codegen.CLR.Assemble
   ( assembleCLR,
-    -- Exposed for the text renderer ('Awsum.Codegen.CLR') so both projections
-    -- share one Core→CilMethod lowering for user declarations.
-    ECtx (..),
-    emitExprI,
-    declCilMethod,
+    -- The one gated method list both projections render from
+    -- ('Awsum.Codegen.CLR' for text, 'assembleCLR' for bytes).
+    CilModule (..),
+    cilModule,
+    cilModuleMethods,
   )
 where
 
@@ -496,6 +496,81 @@ data MInfo = MInfo
   }
 
 -- ════════════════════════════════════════════════════════════════════════════
+-- Module value (single source for text + bytes)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | The gated, ordered methods of one program's @AwsumMain@ class. Both
+--   'Awsum.Codegen.CLR.codegenCLR' (text) and 'assembleCLR' (bytes) derive from
+--   this one value, so gating is decided once. Grouped so the text renderer
+--   reproduces the existing blank-line layout: 'clmHelpers' and 'clmEntry'
+--   single-spaced, 'clmUserDefs' double-spaced. The @.ctor@ and the class
+--   framing are fixed and live in the renderers. The byte assembler assigns
+--   MethodDef tokens by position in @.ctor@ : 'cilModuleMethods'; @Main@ is
+--   always last, so its entry-point token is stable.
+data CilModule = CilModule
+  { clmHelpers :: [CilMethod],
+    clmUserDefs :: [CilMethod],
+    clmEntry :: [CilMethod]
+  }
+
+-- | The flat method list (helpers, then user declarations, then entry + @Main@).
+cilModuleMethods :: CilModule -> [CilMethod]
+cilModuleMethods m = clmHelpers m <> clmUserDefs m <> clmEntry m
+
+-- | Lower a program to its 'CilModule' — the gating decision, made once.
+cilModule :: PreludeTags -> CoreProgram -> CilModule
+cilModule ptags prog@(CoreProgram decls) =
+  let valNames = Set.fromList [n | CValDef n _ <- decls]
+      funNames = Set.fromList [n | CFunDef n _ _ <- decls]
+      arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
+      ectx = ECtx {eParams = Map.empty, eLocals = Map.empty, eNextScratch = 0, eValDefs = valNames, eFunDefs = funNames, eArities = arities}
+      builtIns = usedBuiltIns prog
+      gate cond ms = if cond then ms else []
+   in CilModule
+        { clmHelpers =
+            concat
+              [ gate (Set.member "concatString" builtIns) [concatSpec (ptRight ptags) (ptLeft ptags) (ptStringTooLong ptags)],
+                gate (Set.member "internalStdoutPrint" builtIns) [printSpec (ptUnit ptags)],
+                gate (Set.member "predInt32" builtIns) [predInt32Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "predUInt8" builtIns) [predUInt8Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "predUInt32" builtIns) [predUInt32Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "succInt32" builtIns) [succInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "succUInt8" builtIns) [succUInt8Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "succUInt32" builtIns) [succUInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "eqInt32" builtIns) [eqSpec "__eqInt32" "IL_eq_i32" (ptTrue ptags) (ptFalse ptags)],
+                gate (Set.member "eqUInt8" builtIns) [eqSpec "__eqUInt8" "IL_eq_u8" (ptTrue ptags) (ptFalse ptags)],
+                gate (Set.member "eqUInt32" builtIns) [eqSpec "__eqUInt32" "IL_eq_u32" (ptTrue ptags) (ptFalse ptags)],
+                gate (Set.member "eqString" builtIns) [eqStringSpec (ptTrue ptags) (ptFalse ptags)],
+                gate (Set.member "addInt32" builtIns) [addInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags)],
+                gate (Set.member "subInt32" builtIns) [subInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags)],
+                gate (Set.member "mulInt32" builtIns) [mulInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags)],
+                gate (Set.member "negInt32" builtIns) [negInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags)],
+                gate (Set.member "addUInt8" builtIns) [addUInt8Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags)],
+                gate (Set.member "subUInt8" builtIns) [subUInt8Spec (ptRight ptags) (ptUnderflowError ptags) (ptLeft ptags)],
+                gate (Set.member "mulUInt8" builtIns) [mulUInt8Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags)],
+                gate (Set.member "addUInt32" builtIns) [addUInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags)],
+                gate (Set.member "subUInt32" builtIns) [subUInt32Spec (ptRight ptags) (ptUnderflowError ptags) (ptLeft ptags)],
+                gate (Set.member "mulUInt32" builtIns) [mulUInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags)],
+                gate (Set.member "showUInt32" builtIns) [showUInt32Spec],
+                gate (Set.member "splitOnFirst" builtIns) [splitOnFirstSpec (ptNothing ptags) (ptTuple2 ptags) (ptJust ptags)],
+                gate (Set.member "lengthCodePoints" builtIns) [lengthCodePointsSpec],
+                gate (Set.member "lengthUtf16CodeUnits" builtIns) [lengthUtf16CodeUnitsSpec],
+                gate (Set.member "lengthUtf8Bytes" builtIns) [lengthUtf8BytesSpec],
+                gate (Set.member "parseInt32" builtIns) [parseInt32Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags)],
+                gate (Set.member "parseUInt8" builtIns) [parseUInt8Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags)],
+                gate (Set.member "parseUInt32" builtIns) [parseUInt32Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags)]
+              ],
+          clmUserDefs = map (declCilMethod ectx) decls,
+          clmEntry =
+            concat
+              [ gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) [entryArgEitherSpec (ptRight ptags) (ptStringTooLong ptags) (ptUnpairedUtf16Surrogate ptags) (ptLeft ptags)],
+                gate (Set.member "internalGetArgs" builtIns) [getArgsSpec (ptRight ptags) (ptNil ptags) (ptCons ptags)],
+                gate (Set.member "internalStdinReadAllAsUtf16" builtIns) [stdinReadAllSpec],
+                [mainSpec]
+              ]
+        }
+
+-- ════════════════════════════════════════════════════════════════════════════
 -- Assembly logic
 -- ════════════════════════════════════════════════════════════════════════════
 
@@ -522,126 +597,27 @@ doAssemble (CoreProgram decls) = do
   void $ addMemberRef (mrpTR 3) "Concat" [0x00, 0x02, etString, etObject, etObject]
   void $ addMemberRef (mrpTR 2) "Write" [0x00, 0x01, etVoid, etObject]
 
-  -- Pre-compute method name → MethodDef token map. Runtime helpers are
-  -- included only when referenced in Core so hello-style programs don't
-  -- carry @__predInt32@ or (eventually) other unused primitives. Token
-  -- numbers stay contiguous — '.ctor' is always row 1, then whichever
-  -- helpers are kept, then user decls, then Main.
-  let prog = CoreProgram decls
-      builtIns = usedBuiltIns prog
-      declName' (CFunDef n _ _) = n
-      declName' (CValDef n _) = n
-      userNames = [mangle (declName' d) | d <- decls]
-      helperNames =
-        [".ctor"]
-          <> [ n
-             | (n, keep) <-
-                 [ ("__concat", Set.member "concatString" builtIns),
-                   ("__print", Set.member "internalStdoutPrint" builtIns),
-                   ("__predInt32", Set.member "predInt32" builtIns),
-                   ("__predUInt8", Set.member "predUInt8" builtIns),
-                   ("__predUInt32", Set.member "predUInt32" builtIns),
-                   ("__succInt32", Set.member "succInt32" builtIns),
-                   ("__succUInt8", Set.member "succUInt8" builtIns),
-                   ("__succUInt32", Set.member "succUInt32" builtIns),
-                   ("__eqInt32", Set.member "eqInt32" builtIns),
-                   ("__eqUInt8", Set.member "eqUInt8" builtIns),
-                   ("__eqUInt32", Set.member "eqUInt32" builtIns),
-                   ("__eqString", Set.member "eqString" builtIns),
-                   ("__addInt32", Set.member "addInt32" builtIns),
-                   ("__subInt32", Set.member "subInt32" builtIns),
-                   ("__mulInt32", Set.member "mulInt32" builtIns),
-                   ("__negInt32", Set.member "negInt32" builtIns),
-                   ("__addUInt8", Set.member "addUInt8" builtIns),
-                   ("__subUInt8", Set.member "subUInt8" builtIns),
-                   ("__mulUInt8", Set.member "mulUInt8" builtIns),
-                   ("__addUInt32", Set.member "addUInt32" builtIns),
-                   ("__subUInt32", Set.member "subUInt32" builtIns),
-                   ("__mulUInt32", Set.member "mulUInt32" builtIns),
-                   ("__showUInt32", Set.member "showUInt32" builtIns),
-                   ("__splitOnFirst", Set.member "splitOnFirst" builtIns),
-                   ("__parseInt32", Set.member "parseInt32" builtIns),
-                   ("__parseUInt8", Set.member "parseUInt8" builtIns),
-                   ("__parseUInt32", Set.member "parseUInt32" builtIns),
-                   ("__lengthCodePoints", Set.member "lengthCodePoints" builtIns),
-                   ("__lengthUtf16CodeUnits", Set.member "lengthUtf16CodeUnits" builtIns),
-                   ("__lengthUtf8Bytes", Set.member "lengthUtf8Bytes" builtIns)
-                 ],
-               keep
-             ]
-      -- '__entryArgEither' validates a UTF-8 argv/stdin byte run into
-      -- 'Either (StringTooLong | UnpairedUtf16Surrogate) String'. Its only
-      -- callers are '__getArgs' and '__stdinReadAll' — 'Main' does not call
-      -- it — so it is gated on the union of their predicates, matching the
-      -- text codegen ('Awsum.Codegen.CLR'). 'allNames' assigns the method
-      -- tokens (0x06000001…), so it and the method table below must gate it
-      -- together or the user/Main tokens would shift apart.
-      usesArgsOrStdin =
-        Set.member "internalGetArgs" builtIns
-          || Set.member "internalStdinReadAllAsUtf16" builtIns
-      allNames =
-        helperNames
-          <> [n | (n, keep) <- [("__entryArgEither", usesArgsOrStdin)], keep]
-          <> [n | (n, keep) <- [("__getArgs", Set.member "internalGetArgs" builtIns)], keep]
-          <> [n | (n, keep) <- [("__stdinReadAll", Set.member "internalStdinReadAllAsUtf16" builtIns)], keep]
-          <> userNames
-          <> ["Main"]
+  -- The gated method list, decided once in 'cilModule'. 'allNames' assigns
+  -- MethodDef tokens by position: '.ctor' is row 1, then each method in
+  -- 'cilModuleMethods' order (helpers, user decls, entry, with 'Main' last).
+  -- Helpers/entry are gated, so hello-style programs don't carry unused
+  -- primitives, and the tokens stay contiguous. The text projection
+  -- ('Awsum.Codegen.CLR') renders the same list.
+  ptags <- askPreludeTags
+  let methodList = cilModuleMethods (cilModule ptags (CoreProgram decls))
+      allNames = ".ctor" : map cmName methodList
       tokMap = Map.fromList [(n, tokMD (fromIntegral i)) | (i, n) <- zip ([1 ..] :: [Int]) allNames]
 
   -- Make the name→token map available to 'assembleCilMethod' (resolves
   -- 'CallNamed' in emitted user methods). Set once, before any method.
   modify (\p -> p {pTokMap = tokMap})
-  let valNames = Set.fromList [n | CValDef n _ <- decls]
-      funNames = Set.fromList [n | CFunDef n _ _ <- decls]
-      arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
-      ctx = ECtx {eParams = Map.empty, eLocals = Map.empty, eNextScratch = 0, eValDefs = valNames, eFunDefs = funNames, eArities = arities}
-
+  -- Every method beyond '.ctor' comes from the one 'cilModule' value. First-class
+  -- function values (closures) are the only Core shape 'declCilMethod' does not
+  -- lower — but 'LowerClosures' removes them all before codegen, so 'emitExprI'
+  -- errors rather than handling them (a probe confirmed 0 occurrences).
   m0 <- mkInit
-  m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member "internalStdoutPrint" builtIns then (: []) <$> mkPrint else pure []
-  m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
-  m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
-  m3u32p <- if Set.member "predUInt32" builtIns then (: []) <$> mkPredUInt32 else pure []
-  m3sI <- if Set.member "succInt32" builtIns then (: []) <$> mkSuccInt32 else pure []
-  m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
-  m3u32s <- if Set.member "succUInt32" builtIns then (: []) <$> mkSuccUInt32 else pure []
-  m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" "IL_eq_i32" else pure []
-  m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" "IL_eq_u8" else pure []
-  m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" "IL_eq_u32" else pure []
-  m5str <- if Set.member "eqString" builtIns then (: []) <$> mkEqString else pure []
-  m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
-  m6sub <- if Set.member "subInt32" builtIns then (: []) <$> mkSubInt32 else pure []
-  m6mul <- if Set.member "mulInt32" builtIns then (: []) <$> mkMulInt32 else pure []
-  m6neg <- if Set.member "negInt32" builtIns then (: []) <$> mkNegInt32 else pure []
-  m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
-  m6usSub <- if Set.member "subUInt8" builtIns then (: []) <$> mkSubUInt8 else pure []
-  m6usMul <- if Set.member "mulUInt8" builtIns then (: []) <$> mkMulUInt8 else pure []
-  m6u32a <- if Set.member "addUInt32" builtIns then (: []) <$> mkAddUInt32 else pure []
-  m6u32sub <- if Set.member "subUInt32" builtIns then (: []) <$> mkSubUInt32 else pure []
-  m6u32mul <- if Set.member "mulUInt32" builtIns then (: []) <$> mkMulUInt32 else pure []
-  m6u32sh <- if Set.member "showUInt32" builtIns then (: []) <$> mkShowUInt32 else pure []
-  m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
-  m8sI <- if Set.member "parseInt32" builtIns then (: []) <$> mkParseInt32 else pure []
-  m8sU <- if Set.member "parseUInt8" builtIns then (: []) <$> mkParseUInt8 else pure []
-  m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
-  mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
-  mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
-  mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
-  mEntryArg <- if usesArgsOrStdin then (: []) <$> mkEntryArgEither else pure []
-  mGetArgs <-
-    if Set.member "internalGetArgs" builtIns
-      then do
-        ptags <- askPreludeTags
-        (: []) <$> assembleCilMethod (getArgsSpec (ptRight ptags) (ptNil ptags) (ptCons ptags))
-      else pure []
-  mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> assembleCilMethod stdinReadAllSpec else pure []
-  -- Every user declaration goes through 'declCilMethod'. First-class function
-  -- values (closures) are the only Core shape it does not lower — but
-  -- 'LowerClosures' removes them all before codegen, so 'emitExprI' errors
-  -- rather than handling them (a probe confirmed 0 occurrences across the suite).
-  userMs <- traverse (assembleCilMethod . declCilMethod ctx) decls
-  mEntry <- assembleCilMethod mainSpec
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m5str <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> mEntryArg <> mGetArgs <> mStdinReadAll <> userMs <> [mEntry])
+  ms <- traverse assembleCilMethod methodList
+  pure (m0 : ms)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -654,198 +630,6 @@ mkInit = do
   ps <- addParams 0
   let code = cilLdarg 0 <> cilCall (tokMR 1) <> cilRet -- MemberRef 1 = Object::.ctor
   pure MInfo {mImplFlags = 0, mFlags = 0x1881, mName = ni, mSig = si, mParamList = ps, mCode = code, mLocalSigTok = 0, mMaxStack = 16}
-
--- | __concat: implements 'BuiltIn.concatString'. Pre-checks the combined
---   UTF-16 length of both inputs against the language-fixed cap; returns
---   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise. The cap
---   value (134217728 = 2^27) must stay in sync with
---   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'. Binary
---   counterpart of 'Awsum.Codegen.CLR.concatMethod'. Locals: V_0 object
---   (concat result, or StringTooLong cell across the Left build).
-mkConcat :: AsmM MInfo
-mkConcat = do
-  ptags <- askPreludeTags
-  assembleCilMethod (concatSpec (ptRight ptags) (ptLeft ptags) (ptStringTooLong ptags))
-
--- | __print: low-level platform primitive driven by the prelude's
---   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
---   (object[1] = [boxed Int32 0]) so the surrounding `case … of Unit
---   -> next` arm in `runIO` dispatches through the standard CCase
---   tag check.
-mkPrint :: AsmM MInfo
-mkPrint = do
-  ptags <- askPreludeTags
-  assembleCilMethod (printSpec (ptUnit ptags))
-
--- | predInt32: Int32 -> Either UnderflowError Int32.
---   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.predInt32Method'.
---   Locals: V_0 int32 (unboxed argument), V_1 object (UnderflowError
---   instance held across the Left-array build).
-mkPredInt32 :: AsmM MInfo
-mkPredInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (predInt32Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | predUInt8: UInt8 -> Either UnderflowError UInt8.
-mkPredUInt8 :: AsmM MInfo
-mkPredUInt8 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (predUInt8Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | succInt32: Int32 -> Either OverflowError Int32.
---   Binary equivalent of 'Awsum.Codegen.CLR.succInt32Method'. Mirror of
---   'mkPredInt32' with INT32_MAX as the boundary and 'cilAdd' for the
---   non-overflow branch. OverflowError shares UnderflowError's tag (0),
---   so the Left-branch encoding is identical.
-mkSuccInt32 :: AsmM MInfo
-mkSuccInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (succInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | succUInt8: UInt8 -> Either OverflowError UInt8.
---   Binary equivalent of 'Awsum.Codegen.CLR.succUInt8Method'. Same local
---   layout as 'mkSuccInt32'; boundary constant is 255 (emits 5-byte long
---   'ldc.i4' since it's outside the signed-byte range of 'ldc.i4.s').
-mkSuccUInt8 :: AsmM MInfo
-mkSuccUInt8 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (succUInt8Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | eqInt32 / eqUInt8: two integers of the same type → Bool.
---   Binary equivalent of the CIL in 'Awsum.Codegen.CLR.eqMethod'.
---   Both Int32 and UInt8 are boxed as System.Int32 (how CIntLit emits
---   them), so the two methods share a single builder parameterised by
---   name. No locals — both args are unboxed directly onto the eval
---   stack before 'bne.un', so mLocalSigTok = 0 (tiny header is fine).
-mkEq :: Text -> Text -> AsmM MInfo
-mkEq methodName lbl = do
-  ptags <- askPreludeTags
-  assembleCilMethod (eqSpec methodName lbl (ptTrue ptags) (ptFalse ptags))
-
--- | eqString : String -> String -> Bool.
---   Binary equivalent of 'Awsum.Codegen.CLR.eqStringMethod'. Inputs are
---   reference types (System.String boxed inside object refs), so cast
---   with 'castclass' and call the static 'String::op_Equality(string,
---   string) bool' — UTF-16 code-unit equality. The boolean drives
---   'brfalse' to skip the True block; mirrors 'mkEq''s frame-free
---   shape (no locals, no try/catch).
-mkEqString :: AsmM MInfo
-mkEqString = do
-  ptags <- askPreludeTags
-  assembleCilMethod (eqStringSpec (ptTrue ptags) (ptFalse ptags))
-
--- | addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
---   Binary equivalent of 'Awsum.Codegen.CLR.addInt32Method'. Locals
---   layout: V_0/V_1 = unboxed int operands, V_2 = wrapping sum,
---   V_3 = inner @CCon@ Object[1], V_4 = row Object[2]. Overflow
---   detection uses the int sign-bit XOR trick, single-block, no
---   try/catch. The error side wraps three nested
---   Object[]s: inner (single-ctor tag 0), row (FNV-1a tag of label),
---   outer Left (tag 0). Mirrors what surface @Left UnderflowError@
---   would lower to.
-mkAddInt32 :: AsmM MInfo
-mkAddInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (addInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags))
-
--- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
---   Binary equivalent of 'Awsum.Codegen.CLR.addUInt8Method'. Both
---   inputs are 0..255 so 'add' yields 0..510 in i32 and a single
---   'ble' against 255 picks the branch — no widening needed.
-mkAddUInt8 :: AsmM MInfo
-mkAddUInt8 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (addUInt8Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
-
--- | subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
---   Binary equivalent of 'Awsum.Codegen.CLR.subInt32Method'. Same XOR
---   overflow trick as 'mkAddInt32', with 'cilSub' replacing 'cilAdd' in
---   the preamble. Same row-tagged error encoding.
-mkSubInt32 :: AsmM MInfo
-mkSubInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (subInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags))
-
--- | mulInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
---   Binary equivalent of 'Awsum.Codegen.CLR.mulInt32Method'. Both
---   operands are widened to int64, multiplied at long width, and the
---   result range-checked against [INT32_MIN, INT32_MAX]. Direction is
---   read off the comparison result — bgt → OverflowError, blt → UnderflowError.
---   Locals: V_0/V_1 = unboxed int operands, V_2 = int64 product,
---   V_3 = inner @CCon@ Object[1], V_4 = row Object[2].
-mkMulInt32 :: AsmM MInfo
-mkMulInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (mulInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptUnderflowError ptags) (ptLeft ptags))
-
--- | negInt32: Int32 -> Either OverflowError Int32.
---   Binary equivalent of 'Awsum.Codegen.CLR.negInt32Method'. Mirror of
---   'mkSuccInt32' with INT32_MIN as the boundary and 'cilNeg' for the
---   ok branch. OverflowError shares the single-constructor tag (0), so
---   the Left-branch encoding is identical to 'mkSuccInt32'.
-mkNegInt32 :: AsmM MInfo
-mkNegInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (negInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
---   Binary equivalent of 'Awsum.Codegen.CLR.subUInt8Method'. Both
---   inputs are 0..255 so 'sub' yields a value in -255..255 in i32 and
---   a single 'blt' against 0 picks the underflow branch.
-mkSubUInt8 :: AsmM MInfo
-mkSubUInt8 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (subUInt8Spec (ptRight ptags) (ptUnderflowError ptags) (ptLeft ptags))
-
--- | mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
---   Binary equivalent of 'Awsum.Codegen.CLR.mulUInt8Method'. Same shape
---   as 'mkAddUInt8' with 'cilMul' replacing 'cilAdd'; both produce a
---   value in 0..65025 in i32 from inputs in 0..255.
-mkMulUInt8 :: AsmM MInfo
-mkMulUInt8 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (mulUInt8Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
-
--- | splitOnFirst: String -> String -> Maybe (Tuple2 String String).
---   Binary equivalent of 'Awsum.Codegen.CLR.splitOnFirstMethod'. Defers
---   substring search to 'String.IndexOf(string, Ordinal)' —
---   culture-sensitive (the no-StringComparison overload's default) goes
---   through ICU's UCA on .NET-on-Unix and silently misses substrings
---   that *are* physically present when the haystack contains
---   supplementary-plane code points. Ordinal compares UTF-16 code units
---   directly, matching what every other backend does (byte/code-unit
---   scan) — so cross-backend equivalence holds. Returns -1 on miss and
---   0 on empty 'sep'; both match the prelude contract directly. On hit
---   the two 'String.Substring' calls allocate fresh strings (CLR
---   strings are immutable; substrings are owning copies, not aliases).
---   Locals: 0..1 = unboxed String operands, 2 = idx, 3..4 =
---   prefix/suffix, 5 = boxed Tuple2 held before the Just wrap.
-mkSplitOnFirst :: AsmM MInfo
-mkSplitOnFirst = do
-  ptags <- askPreludeTags
-  assembleCilMethod (splitOnFirstSpec (ptNothing ptags) (ptTuple2 ptags) (ptJust ptags))
-
--- | parseInt32: String -> Either ParseError Int32. Binary equivalent
---   of 'Awsum.Codegen.CLR.parseInt32Method'. A handrolled decimal parser
---   — int64 accumulator capped at the magnitude `|minInt32|`. The
---   constant 2147483648 is built with the shift trick `1 << 31`.
---   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int neg,
---   4 = int64 acc, 5 = int c, 6 = object (Left payload on fail).
-mkParseInt32 :: AsmM MInfo
-mkParseInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (parseInt32Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags))
-
--- | parseUInt8: String -> Either ParseError UInt8. Same shape as
---   'mkParseInt32' minus the sign handling — UInt8 cannot represent a
---   negative number — and with an i32 accumulator (the running
---   magnitude never exceeds 2559 before the > 255 check fails).
---   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int acc,
---   4 = int c, 5 = object (Left payload on fail).
-mkParseUInt8 :: AsmM MInfo
-mkParseUInt8 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (parseUInt8Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags))
 
 -- | Byte projection of a 'CilMethod' (the binary counterpart of
 --   'Awsum.Codegen.CLR.Instr.renderCilMethod'): resolve every symbolic operand
@@ -1031,114 +815,6 @@ assembleCilMethod m = do
       BltUn l -> pure (cilBltUn (branchOff off l))
       Label _ -> pure []
       Ret -> pure cilRet
-
--- | showUInt32: UInt32 -> String. Re-box the Int32-shaped argument as
---   System.UInt32 (bit pattern preserved) and call the virtual ToString
---   override on the boxed value, which prints the unsigned-decimal
---   representation. Avoids a long-arith dance by leaning on the BCL.
-mkShowUInt32 :: AsmM MInfo
-mkShowUInt32 = assembleCilMethod showUInt32Spec
-
--- | lengthCodePoints: String -> UInt32. UTF-32 byte count divided by 4
---   gives the code-point count exactly. Binary equivalent of
---   'Awsum.Codegen.CLR.lengthCodePointsMethod'.
-mkLengthCodePoints :: AsmM MInfo
-mkLengthCodePoints = assembleCilMethod lengthCodePointsSpec
-
--- | lengthUtf16CodeUnits: String -> UInt32. .NET strings are UTF-16
---   internally, so 'String.Length' is the code-unit count by definition.
-mkLengthUtf16CodeUnits :: AsmM MInfo
-mkLengthUtf16CodeUnits = assembleCilMethod lengthUtf16CodeUnitsSpec
-
--- | lengthUtf8Bytes: String -> UInt32. 'Encoding.UTF8.GetByteCount(s)'
---   without materialising the bytes. Binary equivalent of
---   'Awsum.Codegen.CLR.lengthUtf8BytesMethod'.
-mkLengthBytesAsUtf8 :: AsmM MInfo
-mkLengthBytesAsUtf8 = assembleCilMethod lengthUtf8BytesSpec
-
--- | predUInt32: UInt32 -> Either UnderflowError UInt32. Boundary check is
---   against 0 (same as 'mkPredUInt8'); the binary body is bit-identical
---   to 'mkPredUInt8' modulo the UTF8 method name. (v - 1) wraps in i32
---   but on the ok path v >= 1, so the result is in [0, 2^32-2] — no wrap.
-mkPredUInt32 :: AsmM MInfo
-mkPredUInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (predUInt32Spec (ptUnderflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | succUInt32: UInt32 -> Either OverflowError UInt32. Boundary 4294967295
---   encoded as 'cilLdcI4 (-1)' (= 'ldc.i4.m1', identical bit pattern as
---   u32). On the ok path v + 1 wraps in i32 but since v != -1 the result
---   is in [1, 2^32-1] — no wrap.
-mkSuccUInt32 :: AsmM MInfo
-mkSuccUInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (succUInt32Spec (ptOverflowError ptags) (ptLeft ptags) (ptRight ptags))
-
--- | addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
---   both operands to uint64 via 'conv.u8' (zero-extends a u32 bit pattern),
---   add, then 'bgt.un' against 4294967295L. The sum lives in
---   [0, 2*2^32-2] so the i64 add doesn't itself overflow.
---   Locals: V_0 = int64 sum, V_1 = object (Left payload).
-mkAddUInt32 :: AsmM MInfo
-mkAddUInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (addUInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
-
--- | subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
---   @a < b@ unsigned via 'blt.un' on i32 stack values; on the ok path
---   'sub' at i32 gives the correct u32 difference (bit pattern of
---   @a - b mod 2^32@ equals @a - b@ when a >= b unsigned).
---   Locals: V_0 = int32 a, V_1 = int32 b, V_2 = object (Left payload).
-mkSubUInt32 :: AsmM MInfo
-mkSubUInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (subUInt32Spec (ptRight ptags) (ptUnderflowError ptags) (ptLeft ptags))
-
--- | mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
---   both operands to uint64 via 'conv.u8', multiply at int64-stack
---   width (the bit pattern of the result is the low 64 bits of the
---   true u32*u32 product, which fits exactly in u64). Compare against
---   4294967295L unsigned.
---   Locals: V_0 = int64 product, V_1 = object (Left payload).
-mkMulUInt32 :: AsmM MInfo
-mkMulUInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (mulUInt32Spec (ptRight ptags) (ptOverflowError ptags) (ptLeft ptags))
-
--- | parseUInt32: String -> Either ParseError UInt32. Same shape as
---   'mkParseUInt8' but with an int64 accumulator and a > 4294967295L
---   cap (max running magnitude is 4294967295 * 10 + 9 = 42949672959,
---   fits in i64 signed).
---   Locals: 0 = string s, 1 = int len, 2 = int i, 3 = int64 acc,
---   4 = int c, 5 = object (Left payload on fail).
-mkParseUInt32 :: AsmM MInfo
-mkParseUInt32 = do
-  ptags <- askPreludeTags
-  assembleCilMethod (parseUInt32Spec (ptRight ptags) (ptParseError ptags) (ptLeft ptags))
-
--- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
---   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
---     1. Length cap (134217728 = 2^27) — short-circuits before the
---        surrogate walk.
---     2. UTF-16 surrogate pairing — walks code units; high surrogate
---        (D800..DBFF) must be immediately followed by a low surrogate
---        (DC00..DFFF). Cap-check has priority.
---
---   Cap value and FNV-1a row tags for "StringTooLong" /
---   "UnpairedUtf16Surrogate" must stay in sync with
---   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
---
---   Local slots:
---     V_0 = string (after castclass), V_1 = length, V_2 = i,
---     V_3 = expecting_low (0/1), V_4 = c & 0xFC00,
---     V_5 = inner (transient), V_6 = row (transient).
---   The verifier infers stack types from instruction history, so only the
---   bytecode and the LocalVarSig matter — there are no per-label type frames
---   to emit.
-mkEntryArgEither :: AsmM MInfo
-mkEntryArgEither = do
-  ptags <- askPreludeTags
-  assembleCilMethod (entryArgEitherSpec (ptRight ptags) (ptStringTooLong ptags) (ptUnpairedUtf16Surrogate ptags) (ptLeft ptags))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods

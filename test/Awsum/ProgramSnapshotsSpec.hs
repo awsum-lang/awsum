@@ -1,15 +1,9 @@
 module Awsum.ProgramSnapshotsSpec (spec) where
 
-import Awsum.Codegen.CLR (codegenCLR)
-import Awsum.Codegen.JVM (codegenJVM)
 import Awsum.Codegen.LLVM (allLLVMHosts, llvmHostName)
-import Awsum.Codegen.WASM (codegenWASM)
 import Awsum.Core
-import Awsum.ElaborateLower (elaborateLowerProgram)
 import Awsum.Lifetime (analyzeProgram, renderLifetime)
 import Awsum.Parser (parseProgram)
-import Awsum.Prelude (withPrelude)
-import Awsum.Program (ProgramType (..))
 import Awsum.RunBackend (Backend (..), CompiledArtifacts (..), runOn)
 import Awsum.RunBackend qualified as RB
 import Awsum.Symbols (symbolsOfProgram, symbolsToJson)
@@ -61,20 +55,20 @@ compileAll testName = do
   ast <- case parseProgram src of
     Left e -> error $ "parse failed" <> e
     Right x -> pure x
-  (ptags, core) <- case elaborateLowerProgram ProgramCli (withPrelude ast) of
-    Left err -> error $ "elaborate failed" <> show err
-    Right (_warns, pt, x) -> pure (pt, x)
+  -- One elaboration, inside 'compileFromText': the golden text snapshots
+  -- ('caJVMText' …) and the runnable bytes are both derived from its 'caCore',
+  -- so a text snapshot is a faithful view of what the bytes run.
   artifacts <- RB.compileFromText src
   pure
     CompileResult
       { artifacts = artifacts,
         ast = ast,
-        core = core,
+        core = artifacts.caCore,
         symbolsJson = symbolsToJson (symbolsOfProgram ast),
-        jvmText = codegenJVM ptags core,
-        clrText = codegenCLR ptags core,
-        wasmText = codegenWASM ptags core,
-        lifetimeText = renderLifetime (analyzeProgram core)
+        jvmText = artifacts.caJVMText,
+        clrText = artifacts.caCLRText,
+        wasmText = artifacts.caWASMText,
+        lifetimeText = renderLifetime (analyzeProgram artifacts.caCore)
       }
 
 testProgram :: FilePath -> Spec
