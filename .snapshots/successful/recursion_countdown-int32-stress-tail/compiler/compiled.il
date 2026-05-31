@@ -198,8 +198,6 @@
     unbox.any [System.Runtime]System.Int32
     pop
     ldloc.2
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   }
@@ -284,8 +282,6 @@
     ldelem.ref
     stloc.2
     ldloc.2
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   }

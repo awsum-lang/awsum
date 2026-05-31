@@ -132,8 +132,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -327,8 +325,6 @@ L_tco4:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 4
   astore_1
   astore_0
@@ -350,8 +346,6 @@ L_tarm6:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 4
   astore_1
   astore_0
@@ -372,8 +366,6 @@ L_tarm7:
   aload 4
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 4
   astore_1
@@ -426,8 +418,6 @@ L_tarm5:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 4
   astore_1
   astore_0
@@ -465,8 +455,6 @@ L_tarm9:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 4
   astore_1
   astore_0
@@ -503,8 +491,6 @@ L_tarm10:
   iconst_1
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 4
   astore_1
@@ -587,8 +573,6 @@ L_tarm13:
   aload 7
   aastore
   aconst_null
-  astore_0
-  aconst_null
   astore 7
   aconst_null
   astore 4
@@ -604,10 +588,6 @@ L_tarm16:
   ldc "A"
   aload 7
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_1
-  aconst_null
-  astore_0
   aconst_null
   astore 7
   aconst_null
@@ -652,8 +632,6 @@ L_tarm14:
   aload 7
   aastore
   aconst_null
-  astore_0
-  aconst_null
   astore 7
   aconst_null
   astore 4
@@ -669,10 +647,6 @@ L_tarm17:
   ldc "B"
   aload 7
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_1
-  aconst_null
-  astore_0
   aconst_null
   astore 7
   aconst_null
@@ -714,8 +688,6 @@ L_tarm15:
   aload 7
   aastore
   aconst_null
-  astore_0
-  aconst_null
   astore 7
   aconst_null
   astore 4
@@ -731,10 +703,6 @@ L_tarm18:
   ldc "C"
   aload 7
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_1
-  aconst_null
-  astore_0
   aconst_null
   astore 7
   aconst_null

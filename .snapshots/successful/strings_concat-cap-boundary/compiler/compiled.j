@@ -227,8 +227,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -575,8 +573,6 @@ L_tarm15:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -613,8 +609,6 @@ L_tarm13:
   aload 5
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -693,8 +687,6 @@ L_tarm16:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -734,10 +726,6 @@ L_tarm18:
   aload 4
   aload_1
   invokestatic AwsumMain/v__lift_0(Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_1
-  aconst_null
-  astore_0
   aconst_null
   astore 4
   astore_1

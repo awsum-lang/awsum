@@ -77,8 +77,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -98,8 +96,6 @@ L_tarm2:
   invokestatic AwsumMain/__getArgs()Ljava/lang/Object;
   invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
-  astore_0
-  aconst_null
   astore_3
   astore_0
   goto L_tco0
@@ -113,8 +109,6 @@ L_tarm3:
   aload_3
   invokestatic AwsumMain/__stdinReadAll()Ljava/lang/Object;
   invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_0
   aconst_null
   astore_3
   astore_0
@@ -280,8 +274,6 @@ L_tarm6:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -408,8 +400,6 @@ L_tarm10:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -527,8 +517,6 @@ L_tarm13:
   iconst_2
   aload 4
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -655,8 +643,6 @@ L_tarm17:
   iconst_2
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -788,8 +774,6 @@ L_tarm20:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -916,8 +900,6 @@ L_tarm24:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1027,8 +1009,6 @@ L_tarm27:
   iconst_2
   aload 4
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -1156,8 +1136,6 @@ L_tarm31:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1240,8 +1218,6 @@ L_tco32:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -1274,8 +1250,6 @@ L_tarm41:
   aload 5
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 8
   aconst_null
@@ -1310,8 +1284,6 @@ L_tarm42:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -1344,8 +1316,6 @@ L_tarm43:
   aload 5
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 8
   aconst_null
@@ -1380,8 +1350,6 @@ L_tarm44:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -1414,8 +1382,6 @@ L_tarm45:
   aload 5
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 8
   aconst_null
@@ -1450,8 +1416,6 @@ L_tarm46:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -1481,8 +1445,6 @@ L_tarm47:
   aload 5
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 8
   aconst_null
@@ -1531,8 +1493,6 @@ L_tarm33:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1577,8 +1537,6 @@ L_tarm34:
   iconst_1
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -1625,8 +1583,6 @@ L_tarm35:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1671,8 +1627,6 @@ L_tarm36:
   iconst_1
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -1719,8 +1673,6 @@ L_tarm37:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1765,8 +1717,6 @@ L_tarm38:
   iconst_1
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -1813,8 +1763,6 @@ L_tarm39:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1856,8 +1804,6 @@ L_tarm40:
   iconst_1
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null

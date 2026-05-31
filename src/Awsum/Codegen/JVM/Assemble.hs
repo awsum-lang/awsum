@@ -1298,7 +1298,7 @@ emitCallI ctx f xs = case f of
 
 -- | Tail-position emitter: lowers a tail-form Core expression to '[JvmInstr]'.
 --   @loopLbl@ is the method's entry label (a 'CContinue' loops back to it). 'CContinue' evaluates the new parameter
---   values onto the stack, drains the pending parameter drops, @astore@s the
+--   values onto the stack, drains the drops for binders it does not rebind, @astore@s the
 --   values into the param slots in reverse (LIFO, so cross-parameter reads see
 --   the old bindings), and @goto@s @loopLbl@. A value tail drains drops then
 --   @areturn@s. A tail 'CCase' dispatches via an @if_icmpne@ chain where each
@@ -1321,7 +1321,12 @@ emitTailBinI ctx0 params loopLbl = goTop ctx0 []
       argsI <- concat <$> traverse (emitExprI ctx) newArgs -- gate keeps these case-free
       let paramSlots = [fromMaybe (error ("JVM Assemble: no param slot for " <> p)) (Map.lookup p ctx.cParams) | p <- params]
           astores = concatMap (\s -> [Astore s]) (reverse paramSlots)
-      pure $ argsI <> pendingDrops ctx pending <> astores <> [Goto loopLbl]
+          -- A param this 'CContinue' rebinds needs no null-out: the
+          -- 'astore' overwrites the slot with nothing allocating in
+          -- between, so its old graph is already unreachable on the next
+          -- iteration. Drops on binders not rebound here still drain.
+          dropsNotRebound = filter (`notElem` params) pending
+      pure $ argsI <> pendingDrops ctx dropsNotRebound <> astores <> [Goto loopLbl]
     emitTailValue ctx pending expr = do
       ei <- emitExprI ctx expr
       pure $ ei <> pendingDrops ctx pending <> [AReturn]

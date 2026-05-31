@@ -22,7 +22,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -54,8 +53,6 @@ const v_buildLeft = (v_n, v_acc) => {
                 const v_m = __s[1];
                 const __t0 = v_m;
                 const __t1 = [23, v_acc, (1|0), [22]];
-                v_acc = null;
-                v_n = null;
                 v_n = __t0;
                 v_acc = __t1;
                 continue;
@@ -102,7 +99,6 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
                 const v__pk_25 = __s[1];
                 const v_r = __s[2];
                 const __t0 = [27, v_r, v__x, v__pk_25];
-                v__args = null;
                 v__args = __t0;
                 continue;
               }
@@ -118,7 +114,6 @@ const v__scc__apply_sumTree__cps_sumTree = (v__args) => {
             switch (__s[0]) {
               case 22: {
                 const __t0 = [26, v__k, v_acc];
-                v__args = null;
                 v__args = __t0;
                 continue;
               }

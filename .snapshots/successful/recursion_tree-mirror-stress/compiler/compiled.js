@@ -18,8 +18,6 @@ const v_spineLast = (v_t, v_lastV) => {
           const v__r = __s[3];
           const __t0 = v_l;
           const __t1 = v_v;
-          v_lastV = null;
-          v_t = null;
           v_t = __t0;
           v_lastV = __t1;
           continue;
@@ -46,7 +44,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -78,8 +75,6 @@ const v_buildRight = (v_n, v_acc) => {
                 const v_m = __s[1];
                 const __t0 = v_m;
                 const __t1 = [23, [22], v_n, v_acc];
-                v_acc = null;
-                v_n = null;
                 v_n = __t0;
                 v_acc = __t1;
                 continue;

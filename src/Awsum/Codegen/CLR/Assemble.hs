@@ -1015,7 +1015,7 @@ emitCaseI ctx scrut alts = do
 
 -- | Tail-position emitter for a 'CLoop' body. The loop head is @loopLbl@
 -- (placed at the method start by 'declCilMethod'); 'CContinue' evaluates the
--- new args, drains pending parameter-drops (@ldnull; starg@), rebinds the
+-- new args, drains drops for binders it does not rebind (@ldnull; starg@), rebinds the
 -- parameters with @starg@ in reverse (stack is LIFO), and @br@s back to the
 -- head. Tail values end in @ret@; a tail 'CCase' dispatches like the non-tail
 -- one but each arm self-terminates (recursive tail emit) — no join. @pending@
@@ -1031,7 +1031,12 @@ emitTailI baseCtx params loopLbl = go baseCtx []
         argCodes <- traverse (emitExprI ctx) newArgs
         let paramSlots = [fromMaybe (error ("CLR.Assemble.emitTailI: no arg slot for " <> show p)) (Map.lookup p ctx.eParams) | p <- params]
             stargs = concatMap (\s -> [Starg s]) (reverse paramSlots)
-        pure (concat argCodes <> drainDrops ctx pending <> stargs <> [Br (LabelId loopLbl)])
+            -- A param this 'CContinue' rebinds needs no null-out: the
+            -- 'starg' overwrites the slot with nothing allocating in
+            -- between, so its old graph is already unreachable on the next
+            -- iteration. Drops on binders not rebound here still drain.
+            dropsNotRebound = filter (`notElem` params) pending
+        pure (concat argCodes <> drainDrops ctx dropsNotRebound <> stargs <> [Br (LabelId loopLbl)])
       CCase scrut alts -> tailCase ctx pending scrut alts
       CRowCase scrut alts -> tailCase ctx pending scrut [(fromIntegral t, [v], b) | (t, v, b) <- alts]
       CDrop _ n body -> go ctx (n : pending) body

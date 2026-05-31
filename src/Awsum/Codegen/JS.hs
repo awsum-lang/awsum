@@ -454,19 +454,21 @@ emitDecl = \case
 --     for each arm's body, because any arm might itself be a 'CContinue'.
 --   • Anything else is a final value — we return it.
 -- | Emit @body@ in tail position. Threads a 'pending' stack of
--- 'CDrop'-named parameters; the stack drains at every terminator.
--- For 'CContinue' the drains land between the buffered
--- arg-evaluations and the param updates, so each dropped parameter's
--- old reference is overwritten with @null@ before the next iteration
--- reads the buffered value. (JS variables are GC roots until
--- reassigned; nulling the slot lets V8 collect the old graph one
--- iteration sooner.) For a value-producing tail, the drains fire
--- after the value is captured, then @return@.
+-- 'CDrop'-named parameters, drained at every terminator. A param the
+-- same 'CContinue' rebinds is not nulled: the rebinding already drops
+-- its old reference and nothing allocates between the two writes. A
+-- param dropped without a rebind here — and every drop at a
+-- value-producing tail — is nulled, since a JS variable is a GC root
+-- until reassigned, so snipping the slot lets V8 collect the old graph
+-- one iteration sooner. A value tail nulls after the value is
+-- captured, then @return@s.
 emitStmt :: [Name] -> CExpr -> Text
 emitStmt params = go []
   where
     -- 'CDrop' on a function parameter assigns @null@ to the
-    -- (mutable) param slot — managed-GC early root snip.
+    -- (mutable) param slot — managed-GC early root snip — unless the
+    -- same 'CContinue' immediately rebinds that slot, in which case the
+    -- rebind is the snip and the null is omitted.
     -- 'CDrop' on a 'CCase' arm-binder is a no-op: case-binders
     -- are declared with @const@ (V8 can't reassign), and the
     -- block-scoped slot dies as soon as the arm closes, so GC
@@ -478,13 +480,19 @@ emitStmt params = go []
     go pending = \case
       CContinue newArgs ->
         let temps = ["__t" <> show (i :: Int) | i <- [0 .. length newArgs - 1]]
+            -- A param this 'CContinue' rebinds needs no null-out:
+            -- 'assignLines' overwrites the slot a few statements later
+            -- with nothing allocating in between, so its old graph is
+            -- already unreachable on the next iteration. Drops on binders
+            -- not rebound here still null.
+            dropsNotRebound = filter (`notElem` params) pending
             declLines =
               [ "    const " <> t <> " = " <> emitExpr a <> ";"
               | (t, a) <- zip temps newArgs
               ]
             freeLines =
               [ "    " <> mangle n <> " = null;"
-              | n <- pending,
+              | n <- dropsNotRebound,
                 isParam n
               ]
             assignLines =

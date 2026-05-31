@@ -72,8 +72,6 @@
     unbox.any [System.Runtime]System.Int32
     pop
     ldloc.2
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   IL_c1:
@@ -88,8 +86,6 @@
     ldloc.1
     call object AwsumMain::__getArgs()
     call object AwsumMain::v__apply1(object, object)
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   IL_c2:
@@ -101,8 +97,6 @@
     ldloc.1
     call object AwsumMain::__stdinReadAll()
     call object AwsumMain::v__apply1(object, object)
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   }
@@ -422,8 +416,6 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -546,8 +538,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -709,8 +699,6 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -833,8 +821,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -941,8 +927,6 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1065,8 +1049,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1147,8 +1129,6 @@
     stelem.ref
     ldloc.s 5
     ldarg.1
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1179,8 +1159,6 @@
     stelem.ref
     ldloc.s 5
     ldarg.1
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1211,8 +1189,6 @@
     stelem.ref
     ldloc.s 5
     ldarg.1
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1243,8 +1219,6 @@
     stelem.ref
     ldloc.s 5
     ldarg.1
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1285,8 +1259,6 @@
     stelem.ref
     ldloc.s 5
     ldarg.1
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1314,8 +1286,6 @@
     stelem.ref
     ldloc.s 5
     ldarg.1
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1362,8 +1332,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1410,8 +1378,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1458,8 +1424,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1506,8 +1470,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1554,8 +1516,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1599,8 +1559,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1636,10 +1594,6 @@
     ldloc.1
     ldarg.1
     call object AwsumMain::v__df_handleErrorIO_0(object)
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1655,10 +1609,6 @@
     ldloc.1
     ldarg.1
     call object AwsumMain::v__df_handleErrorIO_0(object)
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1674,10 +1624,6 @@
     ldloc.1
     ldarg.1
     call object AwsumMain::v__df_andThenIO_3(object)
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1693,10 +1639,6 @@
     ldloc.1
     ldarg.1
     call object AwsumMain::v__df_andThenIO_3(object)
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1712,10 +1654,6 @@
     ldloc.1
     ldarg.1
     call object AwsumMain::v__lift_1(object)
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -1728,10 +1666,6 @@
     ldloc.1
     ldarg.1
     call object AwsumMain::v__lift_1(object)
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
