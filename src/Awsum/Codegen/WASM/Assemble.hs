@@ -8,10 +8,10 @@
 module Awsum.Codegen.WASM.Assemble
   ( assembleWASM,
     -- Exposed for the WAT text renderer ('Awsum.Codegen.WASM') so both
-    -- projections resolve calls through one shared name→index map and the
-    -- same user-code 'WasmFunc' specs (no dual emitter).
-    runtimeFuncIdx,
-    WasmInfo,
+    -- projections emit the same gated 'WasmFunc' list and resolve calls
+    -- through one shared name→index map (no dual emitter).
+    funcIdxMap,
+    WasmInfo (wiGatedHelpers),
     buildInfo,
     buildTypeSection,
     userDeclFunc,
@@ -175,7 +175,11 @@ data WasmInfo = WasmInfo
     wiTableMap :: Map Text Int, -- func name -> table index
     wiFunList :: [Text], -- all CFunDef names in decl order
     wiIndirectArities :: Set Int,
-    -- Function indices (imports first, then locals)
+    -- The runtime helpers this program actually needs (reachable from user
+    -- code + _start), in canonical order. Both projections emit exactly these.
+    wiGatedHelpers :: [WasmFunc],
+    -- Function indices (imports, then gated helpers, then user decls, then
+    -- _start). Resolves every 'Call' by name in both projections.
     wiFuncIdx :: Map Text Word32, -- name -> function index
     -- Globally-unique constructor tags for prelude types — runtime
     -- helpers built here construct values of these types out of band
@@ -188,68 +192,6 @@ data WasmInfo = WasmInfo
 importCount :: Word32
 importCount = 4
 
--- Runtime helper count: __alloc, __free, __memcpy,
--- __concat, __print, __box_i32, __show_i32, __show_u32, __predInt32,
--- __predUInt8, __predUInt32, __succInt32, __succUInt8, __succUInt32,
--- __eq_i32, __addInt32, __subInt32, __mulInt32, __negInt32, __addUInt8,
--- __subUInt8, __mulUInt8, __addUInt32, __subUInt32, __mulUInt32,
--- __splitOnFirst, __parseInt32, __parseUInt8, __parseUInt32,
--- __lengthCodePoints, __lengthUtf16CodeUnits, __lengthUtf8Bytes,
--- __entryArgEither, __utf16_of_range, __getArgs,
--- __stdinReadAll, __alloc_shaped, __inc_ref, __free_recursive,
--- __free_worklist_push, __memcmp, __eqString
-runtimeCount :: Word32
-runtimeCount = 42
-
--- Runtime helper function indices (after imports). '$__free' slots
--- in right after '$__alloc'. The RC helpers (@__alloc_shaped,
--- __inc_ref, __free_recursive, __free_worklist_push@) sit at the
--- end so the earlier indices stay stable when new helpers are
--- appended.
-idxAlloc, idxFree, idxMemcpy, idxConcat, idxPrint, idxBoxI32, idxShowI32, idxShowU32, idxPredI32, idxPredU8, idxPredU32, idxSuccI32, idxSuccU8, idxSuccU32, idxEqI32, idxAddI32, idxSubI32, idxMulI32, idxNegI32, idxAddU8, idxSubU8, idxMulU8, idxAddU32, idxSubU32, idxMulU32, idxSplitOnFirst, idxParseI32, idxParseU8, idxParseU32, idxLengthCodePoints, idxLengthUtf16CodeUnits, idxLengthBytesAsUtf8, idxEntryArgEither, idxUtf16OfRange, idxGetArgs, idxStdinReadAll, idxAllocShaped, idxIncRef, idxFreeRecursive, idxFreeWorklistPush, idxMemcmp, idxEqString :: Word32
-idxAlloc = importCount
-idxFree = importCount + 1
-idxMemcpy = importCount + 2
-idxConcat = importCount + 3
-idxPrint = importCount + 4
-idxBoxI32 = importCount + 5
-idxShowI32 = importCount + 6
-idxShowU32 = importCount + 7
-idxPredI32 = importCount + 8
-idxPredU8 = importCount + 9
-idxPredU32 = importCount + 10
-idxSuccI32 = importCount + 11
-idxSuccU8 = importCount + 12
-idxSuccU32 = importCount + 13
-idxEqI32 = importCount + 14
-idxAddI32 = importCount + 15
-idxSubI32 = importCount + 16
-idxMulI32 = importCount + 17
-idxNegI32 = importCount + 18
-idxAddU8 = importCount + 19
-idxSubU8 = importCount + 20
-idxMulU8 = importCount + 21
-idxAddU32 = importCount + 22
-idxSubU32 = importCount + 23
-idxMulU32 = importCount + 24
-idxSplitOnFirst = importCount + 25
-idxParseI32 = importCount + 26
-idxParseU8 = importCount + 27
-idxParseU32 = importCount + 28
-idxLengthCodePoints = importCount + 29
-idxLengthUtf16CodeUnits = importCount + 30
-idxLengthBytesAsUtf8 = importCount + 31
-idxEntryArgEither = importCount + 32
-idxUtf16OfRange = importCount + 33
-idxGetArgs = importCount + 34
-idxStdinReadAll = importCount + 35
-idxAllocShaped = importCount + 36
-idxIncRef = importCount + 37
-idxFreeRecursive = importCount + 38
-idxFreeWorklistPush = importCount + 39
-idxMemcmp = importCount + 40
-idxEqString = importCount + 41
-
 buildInfo :: PreludeTags -> CoreProgram -> WasmInfo
 buildInfo ptags prog@(CoreProgram decls) =
   let (pool, _emptyOff, heapStart) = buildStringPool prog
@@ -259,24 +201,105 @@ buildInfo ptags prog@(CoreProgram decls) =
       funList = [n | CFunDef n _ _ <- decls]
       tableMap = Map.fromList (zip funList [0 :: Int ..])
       indArities = collectIndirectArities prog funNames
-      -- User function indices start after imports + runtime helpers
-      userStart = importCount + runtimeCount
-      allDecls = [(n, fromIntegral i + userStart) | (i, d) <- zip [0 :: Int ..] decls, let n = declName d]
-      -- _start is the last function
+      -- Build the user functions and _start first (they 'Call' helpers by
+      -- name, not index), then keep only the runtime helpers reachable from
+      -- them. 'info0' carries everything 'userDeclFunc' needs except the index
+      -- map, which depends on how many helpers survive gating.
+      info0 =
+        WasmInfo
+          { wiStringPool = pool,
+            wiHeapStart = heapStart,
+            wiValDefs = valNames,
+            wiFunDefs = funNames,
+            wiArities = arities,
+            wiTableMap = tableMap,
+            wiFunList = funList,
+            wiIndirectArities = indArities,
+            wiGatedHelpers = [],
+            wiFuncIdx = Map.empty,
+            wiTags = ptags
+          }
+      typeMap = snd (buildTypeSection info0 prog)
+      userFuncs = [userDeclFunc info0 typeMap d | d <- decls]
+      gated = reachableHelpers (runtimeHelperFuncs ptags) (userFuncs <> [startFunc])
+      userStart = importCount + fromIntegral (length gated)
+      helperIdx = [(wfName f, importCount + fromIntegral i) | (i, f) <- zip [0 :: Int ..] gated]
+      userIdx = [(declName d, userStart + fromIntegral i) | (i, d) <- zip [0 :: Int ..] decls]
       startIdx = userStart + fromIntegral (length decls)
-      funcIdx = Map.fromList $ allDecls <> [("_start", startIdx)]
-   in WasmInfo
-        { wiStringPool = pool,
-          wiHeapStart = heapStart,
-          wiValDefs = valNames,
-          wiFunDefs = funNames,
-          wiArities = arities,
-          wiTableMap = tableMap,
-          wiFunList = funList,
-          wiIndirectArities = indArities,
-          wiFuncIdx = funcIdx,
-          wiTags = ptags
-        }
+      imports = [("fd_write", 0), ("args_sizes_get", 1), ("args_get", 2), ("fd_read", 3)] :: [(Text, Word32)]
+      funcIdx = Map.fromList (imports <> helperIdx <> userIdx <> [("_start", startIdx)])
+   in info0 {wiGatedHelpers = gated, wiFuncIdx = funcIdx}
+
+-- | All runtime helpers, in canonical index order. Each program emits the
+--   reachable subset ('reachableHelpers').
+runtimeHelperFuncs :: PreludeTags -> [WasmFunc]
+runtimeHelperFuncs ptags =
+  [ allocSpec,
+    freeSpec,
+    memcpySpec,
+    concatSpec ptags,
+    printSpec ptags,
+    boxI32Spec,
+    showI32Spec,
+    showU32Spec,
+    predI32Spec ptags,
+    predU8Spec ptags,
+    predU32Spec ptags,
+    succI32Spec ptags,
+    succU8Spec ptags,
+    succU32Spec ptags,
+    eqI32Spec ptags,
+    addI32Spec ptags,
+    subI32Spec ptags,
+    mulI32Spec ptags,
+    negI32Spec ptags,
+    addU8Spec ptags,
+    subU8Spec ptags,
+    mulU8Spec ptags,
+    addU32Spec ptags,
+    subU32Spec ptags,
+    mulU32Spec ptags,
+    splitOnFirstSpec ptags,
+    parseInt32Spec ptags,
+    parseUInt8Spec ptags,
+    parseUInt32Spec ptags,
+    lengthCodePointsSpec,
+    lengthUtf16CodeUnitsSpec,
+    lengthUtf8BytesSpec,
+    entryArgEitherSpec ptags,
+    utf16OfRangeSpec,
+    getArgsSpec ptags,
+    stdinReadAllSpec,
+    allocShapedSpec,
+    incRefSpec,
+    freeRecursiveSpec,
+    freeWorklistPushSpec,
+    memcmpSpec,
+    eqStringSpec ptags
+  ]
+
+-- | The runtime helpers reachable from @roots@ (user functions + @_start@):
+--   every helper a root calls, transitively closed over helper-to-helper
+--   calls. The result keeps the canonical order of @candidates@. Import calls
+--   (WASI) are not helpers and drop out of the intersection.
+reachableHelpers :: [WasmFunc] -> [WasmFunc] -> [WasmFunc]
+reachableHelpers candidates roots =
+  let byName = Map.fromList [(wfName f, f) | f <- candidates]
+      helperNames = Map.keysSet byName
+      callsOf f = Set.fromList [n | Call n <- wfBody f]
+      go acc todo
+        | Set.null todo = acc
+        | otherwise =
+            let acc' = acc <> todo
+                deps = Set.unions [callsOf f | n <- Set.toList todo, Just f <- [Map.lookup n byName]]
+                next = Set.intersection deps helperNames Set.\\ acc'
+             in go acc' next
+      reached = go Set.empty (Set.intersection (Set.unions (map callsOf roots)) helperNames)
+   in filter (\f -> Set.member (wfName f) reached) candidates
+
+-- | A function's WASM type: parameter count + whether it returns a value.
+funcTypeOf :: WasmFunc -> FuncType
+funcTypeOf f = FuncType (length (wfParams f)) (not (null (wfResults f)))
 
 declName :: CDecl -> Text
 declName = \case
@@ -457,57 +480,13 @@ buildImportSection typeMap =
 -- ════════════════════════════════════════════════════════════════════════════
 
 buildFunctionSection :: WasmInfo -> Map FuncType Word32 -> CoreProgram -> [Word8]
-buildFunctionSection _info typeMap (CoreProgram decls) =
-  let -- Local functions: runtime helpers + user decls + _start
+buildFunctionSection info typeMap (CoreProgram decls) =
+  let -- Local functions: gated runtime helpers + user decls + _start, each by
+      -- its type index. The order matches 'buildCodeSection' / 'wiFuncIdx'.
       localTypes =
-        -- Runtime helpers
-        [ lookupType (FuncType 1 True) typeMap, -- __alloc
-          lookupType (FuncType 1 False) typeMap, -- __free
-          lookupType (FuncType 3 False) typeMap, -- __memcpy
-          lookupType (FuncType 2 True) typeMap, -- __concat
-          lookupType (FuncType 1 True) typeMap, -- __print
-          lookupType (FuncType 1 True) typeMap, -- __box_i32
-          lookupType (FuncType 1 True) typeMap, -- __show_i32
-          lookupType (FuncType 1 True) typeMap, -- __show_u32
-          lookupType (FuncType 1 True) typeMap, -- __predInt32
-          lookupType (FuncType 1 True) typeMap, -- __predUInt8
-          lookupType (FuncType 1 True) typeMap, -- __predUInt32
-          lookupType (FuncType 1 True) typeMap, -- __succInt32
-          lookupType (FuncType 1 True) typeMap, -- __succUInt8
-          lookupType (FuncType 1 True) typeMap, -- __succUInt32
-          lookupType (FuncType 2 True) typeMap, -- __eq_i32
-          lookupType (FuncType 2 True) typeMap, -- __addInt32
-          lookupType (FuncType 2 True) typeMap, -- __subInt32
-          lookupType (FuncType 2 True) typeMap, -- __mulInt32
-          lookupType (FuncType 1 True) typeMap, -- __negInt32
-          lookupType (FuncType 2 True) typeMap, -- __addUInt8
-          lookupType (FuncType 2 True) typeMap, -- __subUInt8
-          lookupType (FuncType 2 True) typeMap, -- __mulUInt8
-          lookupType (FuncType 2 True) typeMap, -- __addUInt32
-          lookupType (FuncType 2 True) typeMap, -- __subUInt32
-          lookupType (FuncType 2 True) typeMap, -- __mulUInt32
-          lookupType (FuncType 2 True) typeMap, -- __splitOnFirst
-          lookupType (FuncType 1 True) typeMap, -- __parseInt32
-          lookupType (FuncType 1 True) typeMap, -- __parseUInt8
-          lookupType (FuncType 1 True) typeMap, -- __parseUInt32
-          lookupType (FuncType 1 True) typeMap, -- __lengthCodePoints
-          lookupType (FuncType 1 True) typeMap, -- __lengthUtf16CodeUnits
-          lookupType (FuncType 1 True) typeMap, -- __lengthUtf8Bytes
-          lookupType (FuncType 2 True) typeMap, -- __entryArgEither(ptr, len)
-          lookupType (FuncType 2 True) typeMap, -- __utf16_of_range
-          lookupType (FuncType 0 True) typeMap, -- __getArgs
-          lookupType (FuncType 0 True) typeMap, -- __stdinReadAll
-          lookupType (FuncType 2 True) typeMap, -- __alloc_shaped
-          lookupType (FuncType 1 False) typeMap, -- __inc_ref
-          lookupType (FuncType 1 False) typeMap, -- __free_recursive
-          lookupType (FuncType 1 False) typeMap, -- __free_worklist_push
-          lookupType (FuncType 3 True) typeMap, -- __memcmp
-          lookupType (FuncType 2 True) typeMap -- __eqString
-        ]
-          -- User declarations
+        [lookupType (funcTypeOf f) typeMap | f <- info.wiGatedHelpers]
           <> [lookupType (funcTypeOfDecl d) typeMap | d <- decls]
-          -- _start
-          <> [lookupType (FuncType 0 False) typeMap]
+          <> [lookupType (FuncType 0 False) typeMap] -- _start
       content = encodeVec (map encodeULEB128 localTypes)
    in buildSection 3 content
 
@@ -618,53 +597,10 @@ buildElementSection info
 buildCodeSection :: WasmInfo -> Map FuncType Word32 -> CoreProgram -> [Word8]
 buildCodeSection info typeMap (CoreProgram decls) =
   let bodies =
-        -- Runtime helpers
-        [ codeAlloc,
-          codeFree,
-          codeMemcpy,
-          codeConcat info,
-          codePrint info,
-          codeBoxI32 info,
-          codeShowI32 info,
-          codeShowU32 info,
-          codePredI32 info,
-          codePredU8 info,
-          codePredU32 info,
-          codeSuccI32 info,
-          codeSuccU8 info,
-          codeSuccU32 info,
-          codeEqI32 info,
-          codeAddI32 info,
-          codeSubI32 info,
-          codeMulI32 info,
-          codeNegI32 info,
-          codeAddU8 info,
-          codeSubU8 info,
-          codeMulU8 info,
-          codeAddU32 info,
-          codeSubU32 info,
-          codeMulU32 info,
-          codeSplitOnFirst info,
-          codeParseInt32 info,
-          codeParseUInt8 info,
-          codeParseUInt32 info,
-          codeLengthCodePoints,
-          codeLengthUtf16CodeUnits,
-          codeLengthBytesAsUtf8,
-          codeEntryArgEither info,
-          codeUtf16OfRange,
-          codeGetArgs (wiTags info),
-          codeStdinReadAll,
-          codeAllocShaped,
-          codeIncRef,
-          codeFreeRecursive,
-          codeFreeWorklistPush,
-          codeMemcmp,
-          codeEqString info
-        ]
-          -- User declarations
+        -- Gated runtime helpers, then user declarations, then _start — the same
+        -- order as 'wiFuncIdx' and 'buildFunctionSection'.
+        [assembleFunc (funcIdxMap info) f | f <- info.wiGatedHelpers]
           <> map (codeUserDecl info typeMap) decls
-          -- _start
           <> [codeStart info]
       content = encodeVec bodies
    in buildSection 10 content
@@ -679,29 +615,11 @@ encodeBody locals instrs =
 -- Binary projection of a 'WasmFunc'
 -- ════════════════════════════════════════════════════════════════════════════
 
--- | The shared name→function-index map. Imports occupy 0..3; runtime helpers
---   follow at fixed indices. The assembler resolves a 'Call' target through
---   this, so
---   the WAT text and the @.wasm@ bytes cannot disagree on which function a
---   name denotes.
-runtimeFuncIdx :: Map Text Word32
-runtimeFuncIdx =
-  Map.fromList
-    [ -- WASI host imports occupy indices 0..3.
-      ("fd_write", 0),
-      ("args_sizes_get", 1),
-      ("args_get", 2),
-      ("fd_read", 3),
-      ("__alloc", idxAlloc),
-      ("__alloc_shaped", idxAllocShaped),
-      ("__free", idxFree),
-      ("__free_recursive", idxFreeRecursive),
-      ("__free_worklist_push", idxFreeWorklistPush),
-      ("__memcpy", idxMemcpy),
-      ("__memcmp", idxMemcmp),
-      ("__entryArgEither", idxEntryArgEither),
-      ("__utf16_of_range", idxUtf16OfRange)
-    ]
+-- | The full name→index map for a program (imports, gated runtime helpers,
+--   user declarations, @_start@). Every 'Call' in both projections resolves
+--   through this; helper indices reflect the gated set.
+funcIdxMap :: WasmInfo -> Map Text Word32
+funcIdxMap = wiFuncIdx
 
 -- | Byte projection of a 'WasmFunc' — the code-section entry (locals vector +
 --   linear instruction bytes + @end@), the binary counterpart of
@@ -793,187 +711,11 @@ blockTypeByte = \case
 -- Runtime helper bodies
 -- ════════════════════════════════════════════════════════════════════════════
 
--- '$__alloc(size)' is a thin wrapper that calls
--- '$__alloc_shaped(size, 0)'. Existing helper alloc sites that
--- allocate scalars / strings / nullary cells keep their default
--- shape=0; CCon emit and helpers that build ADT cells with ptr
--- fields call '$__alloc_shaped' directly with the cell's arity.
-codeAlloc :: [Word8]
-codeAlloc = assembleFunc runtimeFuncIdx allocSpec
-
--- '$__alloc_shaped(size, shape)' does the actual bump +
--- per-size-bin freelist work and stores the caller-supplied
--- @shape@ into the cell header at offset 8 (relative to block
--- start).
---
--- Locals (in addition to '$size'=slot 0, '$shape'=slot 1 params):
---   slot 2 = $rounded   — size rounded up to power-of-2, min 8
---   slot 3 = $bin_addr  — linear-memory address of bin head pointer
---   slot 4 = $head      — current bin head (potential reuse block)
---   slot 5 = $ptr       — bump-path block start
---
--- Bin heads live in linear memory at offsets 24..63 (10 size
--- classes, bytes 0..23 reserved for WASI scratch). Free-block
--- layout while in bin: flag at block+0 preserved (size class).
--- Next-ptr stashed at block+8 (the shape slot, repurposed while
--- free). On pop: reload next-ptr, re-init refcount=1, shape=@$shape@.
-codeAllocShaped :: [Word8]
-codeAllocShaped = assembleFunc runtimeFuncIdx allocShapedSpec
-
--- '$__inc_ref(p)' bumps the refcount at @p - 8@ unless
--- the cell is a literal (flag == 0).
-codeIncRef :: [Word8]
-codeIncRef = assembleFunc runtimeFuncIdx incRefSpec
-
--- '$__free_recursive(p)' dec's refcount at @p - 8@. On
--- hitting 0 it reads shape at @p - 4@ and cascades: non-last
--- children are pushed onto the global worklist (see
--- '$__free_worklist_push' / WAT 'rtFreeRecursive' for the matching
--- text-form rationale); the last slot is taken as the new @$p@ in
--- the outer loop and the current block is returned to its bin via
--- '$__free'. When the current cell needs no further work
--- (literal, refcount > 0, or shape == 0) the helper pops the next
--- pending pointer from the worklist; on an empty worklist it
--- returns. The system-stack footprint is O(1) regardless of
--- cascade shape: deep frontiers grow the worklist (heap), not
--- the stack. Awsum immutability keeps the cell graph acyclic so
--- the cascade terminates.
---
--- Locals (in addition to '$p' param at slot 0):
---   slot 1 = $flag
---   slot 2 = $rc
---   slot 3 = $shape
---   slot 4 = $i (push-loop index, then tail-jump child temp)
---   slot 5 = $top (worklist top during pop)
-codeFreeRecursive :: [Word8]
-codeFreeRecursive = assembleFunc runtimeFuncIdx freeRecursiveSpec
-
--- '$__free_worklist_push(p)' appends @$p@ onto the worklist
--- buffer pointed to by '$__wl_buf' (i32 indices: 0=$heap,
--- 1=$__wl_buf, 2=$__wl_top, 3=$__wl_cap). Grows the buffer
--- (initial 16 entries, doubles thereafter) when @$top == $cap@.
--- Old buffers that fit a size class (≤ 4096 bytes ⇔ ≤ 1024
--- entries) are returned to the bin via '$__free' on grow; larger
--- ones leak — total leak stays ≤ 2× current capacity because
--- doubling halves each predecessor.
---
--- Locals (in addition to '$p' param at slot 0):
---   slot 1 = $top
---   slot 2 = $cap
---   slot 3 = $new_cap
---   slot 4 = $new_buf
---   slot 5 = $old_buf
---   slot 6 = $i (copy-loop index)
-codeFreeWorklistPush :: [Word8]
-codeFreeWorklistPush = assembleFunc runtimeFuncIdx freeWorklistPushSpec
-
--- '$__free(p)' returns a block to the matching bin
--- freelist, or no-ops on literal pointers (flag=0). Block layout:
--- block[0..4] preserved as 'flag' (= size class); block[8..12]
--- becomes the next-ptr in the freelist (the shape slot is repurposed
--- while free; '__alloc' re-initialises it to 0 on pop).
---
--- Locals (in addition to '$p' param at slot 0):
---   slot 1 = $flag     — i32 read from p - 12
---   slot 2 = $bin_addr — same arithmetic as in '__alloc'
---   slot 3 = $cur      — current bin head (becomes the new next-ptr)
-codeFree :: [Word8]
-codeFree = assembleFunc runtimeFuncIdx freeSpec
-
--- __memcpy(dst: i32, src: i32, len: i32)
--- local $i: i32
-codeMemcpy :: [Word8]
-codeMemcpy = assembleFunc runtimeFuncIdx memcpySpec
-
--- __memcmp(a: i32, b: i32, len: i32) -> i32
--- Returns 1 iff all 'len' bytes at addresses 'a' and 'b' agree, 0 on
--- first mismatch. Driver for '__eqString' after the byte-count
--- short-circuit. Different shape from libc 'memcmp' (which returns a
--- tri-state ordering): equality alone is enough for string equality
--- and 'opReturn' on first mismatch lets the loop exit early.
--- Locals: $i(3).
-codeMemcmp :: [Word8]
-codeMemcmp = assembleFunc runtimeFuncIdx memcmpSpec
-
--- __eqString(a: i32, b: i32) -> i32
--- eqString : String -> String -> Bool. Strings are length-prefixed
--- (byte_count @ offset 0, utf16_count @ offset 4, payload @ offset 8).
--- Strict-UTF-16 ⇒ equal UTF-16 ⇔ equal UTF-8 bytes, so byte_count
--- check + '__memcmp' on the payload is sufficient. Returns a one-slot
--- Bool container ([tag]); True=0, False=1 per declaration order.
--- Locals: $ba(2) $bb(3) $cell(4) $eq(5).
-codeEqString :: WasmInfo -> [Word8]
-codeEqString info = assembleFunc runtimeFuncIdx (eqStringSpec (wiTags info))
-
--- __utf16_of_range(p: i32, len: i32) -> i32
--- Counts UTF-16 code units in a UTF-8 byte range. Used by
--- '__splitOnFirst' to set the utf16 prefix on each output substring.
--- Locals (after 2 params): $i(2), $n(3), $b(4).
-codeUtf16OfRange :: [Word8]
-codeUtf16OfRange = assembleFunc runtimeFuncIdx utf16OfRangeSpec
-
 -- __concat(a: i32, b: i32) -> i32
 -- Length-prefixed concat. O(1) cap-check via header.
 -- Locals (after 2 params): $ba(2), $bb(3), $ua(4), $ub(5),
 
 -- $usum(6), \$bsum(7), $stl(8), $cell(9), $buf(10).
-
-codeConcat :: WasmInfo -> [Word8]
-codeConcat info = assembleFunc runtimeFuncIdx (concatSpec (wiTags info))
-
--- __print(s: i32) -> i32
--- locals: $len (slot 1), $unit (slot 2)
--- Returns a Unit value (alloc(4); store tag 0) so the surrounding
--- `case … of Unit -> next` arm in the prelude's `runIO` dispatches
--- through the standard CCase tag check.
-codePrint :: WasmInfo -> [Word8]
-codePrint info = assembleFunc runtimeFuncIdx (printSpec (wiTags info))
-
--- __predInt32(p: i32) -> i32
--- predInt32: Int32 -> Either UnderflowError Int32.
---   Container layout matches user CCon emission on WASM: i32 tag at
---   offset 0, i32 fields at offsets 4, 8, ... Tags: Left=0, Right=1,
---   UnderflowError=0. Returns `Left UnderflowError` on INT32_MIN,
---   `Right (v - 1)` otherwise.
--- Locals: $v(1) $ue(2) $box(3) $cell(4)
-codePredI32 :: WasmInfo -> [Word8]
-codePredI32 info = assembleFunc runtimeFuncIdx (predI32Spec (wiTags info))
-
--- __predUInt8(p: i32) -> i32
--- predUInt8: UInt8 -> Either UnderflowError UInt8.
---   Mirrors 'codePredI32' but checks against 0 (via 'i32.eqz') instead
---   of INT32_MIN, and subtracts without masking — (v - 1) is in 0..254
---   when v >= 1, so it stays in UInt8 range naturally. Same locals
---   layout: $v(1) $ue(2) $box(3) $cell(4).
-codePredU8 :: WasmInfo -> [Word8]
-codePredU8 info = assembleFunc runtimeFuncIdx (predU8Spec (wiTags info))
-
--- __succInt32(p: i32) -> i32
--- succInt32: Int32 -> Either OverflowError Int32.
---   Mirrors 'codePredI32' with boundary INT32_MAX and i32.add instead of
---   i32.sub. OverflowError is single-constructor, so its inner-box tag is
---   0 (same as UnderflowError) — encoding is bit-identical to the
---   predecessor case on this axis.
--- Locals: $v(1) $oe(2) $box(3) $cell(4)
-codeSuccI32 :: WasmInfo -> [Word8]
-codeSuccI32 info = assembleFunc runtimeFuncIdx (succI32Spec (wiTags info))
-
--- __succUInt8(p: i32) -> i32
--- succUInt8: UInt8 -> Either OverflowError UInt8.
---   Mirrors 'codeSuccI32' but checks against 255. Masking is unnecessary —
---   (v + 1) is in 1..255 when v <= 254, so the result stays in UInt8 range
---   naturally. Same locals layout: $v(1) $oe(2) $box(3) $cell(4).
-codeSuccU8 :: WasmInfo -> [Word8]
-codeSuccU8 info = assembleFunc runtimeFuncIdx (succU8Spec (wiTags info))
-
--- __eq_i32(a: i32, b: i32) -> i32
--- eqInt32 / eqUInt8: compare two boxed integers, return a Bool container.
---   Int32 and UInt8 both flow as pointers to i32 cells (UInt8 values are
---   stored masked to 0..255), so one helper handles both. True=0, False=1
---   matches declaration order in `type Bool = True | False`.
--- Locals: $cell(2) — single i32 local, in addition to the two params.
-codeEqI32 :: WasmInfo -> [Word8]
-codeEqI32 info = assembleFunc runtimeFuncIdx (eqI32Spec (wiTags info))
 
 -- __addInt32(pa: i32, pb: i32) -> i32
 -- addInt32: Int32 -> Int32 -> Either ArithError Int32. Signed-overflow
@@ -983,27 +725,6 @@ codeEqI32 info = assembleFunc runtimeFuncIdx (eqI32Spec (wiTags info))
 -- positive when a >= 0, negative otherwise. ArithError tags follow
 -- Prelude.aww declaration order: Underflow=0, Overflow=1.
 -- Locals: $a(2) $b(3) $s(4) $ae(5) $box(6) $cell(7).
-
-codeAddI32 :: WasmInfo -> [Word8]
-codeAddI32 info = assembleFunc runtimeFuncIdx (addI32Spec (wiTags info))
-
--- __addUInt8(pa: i32, pb: i32) -> i32
--- addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8. Sum is in
--- 0..510 so a single 'i32.gt_u 255' check picks the branch — no
--- widening, no mask on the ok path.
--- Locals: $s(2) $oe(3) $box(4) $cell(5).
-codeAddU8 :: WasmInfo -> [Word8]
-codeAddU8 info = assembleFunc runtimeFuncIdx (addU8Spec (wiTags info))
-
--- __subInt32(pa: i32, pb: i32) -> i32
--- subInt32: Int32 -> Int32 -> Either ArithError Int32. Same XOR-based
--- signed-overflow detection as 'codeAddI32', with i32.sub replacing
--- i32.add and the second XOR comparing 'a' vs 'diff' (the standard
--- subtraction overflow check). Direction (over vs under) is read off
--- 'a >= 0', identical to 'codeAddI32'.
--- Locals: $a(2) $b(3) $d(4) $ae(5) $box(6) $cell(7).
-codeSubI32 :: WasmInfo -> [Word8]
-codeSubI32 info = assembleFunc runtimeFuncIdx (subI32Spec (wiTags info))
 
 -- __mulInt32(pa: i32, pb: i32) -> i32
 -- mulInt32: Int32 -> Int32 -> Either ArithError Int32. Both operands
@@ -1016,78 +737,6 @@ codeSubI32 info = assembleFunc runtimeFuncIdx (subI32Spec (wiTags info))
 
 -- $ae(i32, slot 3), $box(i32, slot 4), $cell(i32, slot 5).
 
-codeMulI32 :: WasmInfo -> [Word8]
-codeMulI32 info = assembleFunc runtimeFuncIdx (mulI32Spec (wiTags info))
-
--- __negInt32(p: i32) -> i32
--- negInt32: Int32 -> Either OverflowError Int32. Mirror of 'codeSuccI32'
--- with INT32_MIN as the boundary and 'i32.sub 0 v' for the ok branch.
--- Locals: $v(1) $oe(2) $box(3) $cell(4).
-codeNegI32 :: WasmInfo -> [Word8]
-codeNegI32 info = assembleFunc runtimeFuncIdx (negI32Spec (wiTags info))
-
--- __subUInt8(pa: i32, pb: i32) -> i32
--- subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8. The i32
--- difference is in -255..255; one 'i32.lt_s 0' check picks the underflow
--- branch — no widening or mask needed.
--- Locals: $d(2) $ue(3) $box(4) $cell(5).
-codeSubU8 :: WasmInfo -> [Word8]
-codeSubU8 info = assembleFunc runtimeFuncIdx (subU8Spec (wiTags info))
-
--- __mulUInt8(pa: i32, pb: i32) -> i32
--- mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8. Inputs in
--- 0..255 give an i32 product in 0..65025 — well within i32 range. A
--- single 'i32.gt_u 255' check picks the branch.
--- Locals: $p(2) $oe(3) $box(4) $cell(5).
-codeMulU8 :: WasmInfo -> [Word8]
-codeMulU8 info = assembleFunc runtimeFuncIdx (mulU8Spec (wiTags info))
-
--- __predUInt32(p: i32) -> i32
--- predUInt32: UInt32 -> Either UnderflowError UInt32. Identical body
--- to 'codePredU8' — the underflow boundary is also 0 and i32.eqz / i32.sub
--- work bit-pattern-identically for u32.
--- Locals: $v(1) $ue(2) $box(3) $cell(4).
-codePredU32 :: WasmInfo -> [Word8]
-codePredU32 info = assembleFunc runtimeFuncIdx (predU32Spec (wiTags info))
-
--- __succUInt32(p: i32) -> i32
--- succUInt32: UInt32 -> Either OverflowError UInt32. Mirrors 'codeSuccU8'
--- but checks against 4294967295 — encoded as 'i32.const -1' (same bit
--- pattern). On the ok path '(v + 1)' wraps modulo 2^32, but since v is
--- already known to be < 4294967295, the result fits in u32 without wrap.
--- Locals: $v(1) $oe(2) $box(3) $cell(4).
-codeSuccU32 :: WasmInfo -> [Word8]
-codeSuccU32 info = assembleFunc runtimeFuncIdx (succU32Spec (wiTags info))
-
--- __addUInt32(pa: i32, pb: i32) -> i32
--- addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
--- both operands to i64 (extend_i32_u, unsigned), sum at 64-bit width,
--- compare against 4294967295. The sum fits in i64 signed (max ~2*2^32),
--- so 'i64.gt_s' is equivalent to 'i64.gt_u' here — but keep gt_u for
--- semantic clarity with 'codeMulU32'.
--- Locals: 1 i64 ($s) + 4 i32 ($oe, $box, $cell, padding) — slots 2..5
--- with the i64 in slot 2.
-codeAddU32 :: WasmInfo -> [Word8]
-codeAddU32 info = assembleFunc runtimeFuncIdx (addU32Spec (wiTags info))
-
--- __subUInt32(pa: i32, pb: i32) -> i32
--- subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
--- 'a <u b' at i32 width (treats both stored cells as unsigned), then
--- 'i32.sub' produces the correct difference on the ok path.
--- Locals: $a(2) $b(3) $ue(4) $box(5) $cell(6).
-codeSubU32 :: WasmInfo -> [Word8]
-codeSubU32 info = assembleFunc runtimeFuncIdx (subU32Spec (wiTags info))
-
--- __mulUInt32(pa: i32, pb: i32) -> i32
--- mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
--- both operands to i64 unsigned, multiply at 64-bit width, compare
--- against 4294967295 with 'i64.gt_u'. The product (2^32-1)^2 ≈ 1.8 *
--- 2^63 fits in u64 but not in i64 signed, so we *must* use 'i64.gt_u'
--- here (where 'codeAddU32' could use either).
--- Locals: 1 i64 ($p) + 3 i32 ($oe, $box, $cell) — i64 in slot 2.
-codeMulU32 :: WasmInfo -> [Word8]
-codeMulU32 info = assembleFunc runtimeFuncIdx (mulU32Spec (wiTags info))
-
 -- __splitOnFirst(sep: i32, str: i32) -> i32
 -- splitOnFirst: String -> String -> Maybe (Tuple2 String String). Hand-
 -- rolled byte scan since WASM has no built-in substring search. The
@@ -1097,28 +746,6 @@ codeMulU32 info = assembleFunc runtimeFuncIdx (mulU32Spec (wiTags info))
 -- pos(6) $match(7) $prefix(8) $suffix(9) $tuple(10) $cell(11)
 
 -- $suf_len(12) \$u16(13).
-
-codeSplitOnFirst :: WasmInfo -> [Word8]
-codeSplitOnFirst info = assembleFunc runtimeFuncIdx (splitOnFirstSpec (wiTags info))
-
--- __parseInt32(s: i32) -> i32
--- parseInt32: String -> Either ParseError Int32. Hand-rolled byte
--- scan; the int64 accumulator is capped at the magnitude `|minInt32|`
--- using the shift trick `(1 << 31)L`. On any failure path we set
--- `$failed = 1` and `br $exit`; the final `if` after the block builds
--- Right or Left ParseError.
--- Locals (beyond the param): $len(1) $i(2) $neg(3) $c(4) $box(5)
--- cell(6) $pe(7) $failed(8) $acc(9 — i64).
-codeParseInt32 :: WasmInfo -> [Word8]
-codeParseInt32 info = assembleFunc runtimeFuncIdx (parseInt32Spec (wiTags info))
-
--- __parseUInt8(s: i32) -> i32
--- Same shape as 'codeParseInt32' minus the sign handling, with an i32
--- accumulator (the running magnitude never exceeds 2559 before the
--- > 255 check fails the parse).
--- Locals: $len(1) $i(2) $acc(3) $c(4) $box(5) $cell(6) $pe(7) $failed(8).
-codeParseUInt8 :: WasmInfo -> [Word8]
-codeParseUInt8 info = assembleFunc runtimeFuncIdx (parseUInt8Spec (wiTags info))
 
 -- __parseUInt32(s: i32) -> i32
 -- Same shape as 'codeParseUInt8' but with an i64 accumulator (running
@@ -1130,94 +757,10 @@ codeParseUInt8 info = assembleFunc runtimeFuncIdx (parseUInt8Spec (wiTags info))
 
 -- $pe(6, i32) $failed(7, i32) $acc(8, i64).
 
-codeParseUInt32 :: WasmInfo -> [Word8]
-codeParseUInt32 info = assembleFunc runtimeFuncIdx (parseUInt32Spec (wiTags info))
-
--- __box_i32(v: i32) -> i32
--- Allocate a 4-byte cell, store v, return pointer.
--- local $p: i32 (slot 1)
-codeBoxI32 :: WasmInfo -> [Word8]
-codeBoxI32 _info = assembleFunc runtimeFuncIdx boxI32Spec
-
--- __show_i32(p: i32) -> i32
--- Read value from box, render decimal representation in fresh 16-byte buffer
--- (worst case: "-2147483648" = 11 chars + null). Returns a pointer to the
--- first character. Same routine handles Int32 (signed) and UInt8 (always
--- positive 0..255) — i32.lt_s is false for the UInt8 value space.
---
--- Locals: $v(1) $buf(2) $pos(3) $neg(4) $mag(5) $digit(6)
--- (param p is slot 0)
-codeShowI32 :: WasmInfo -> [Word8]
-codeShowI32 _info = assembleFunc runtimeFuncIdx showI32Spec
-
--- __show_u32(p: i32) -> i32
--- Render an unsigned 32-bit value as decimal. Mirrors 'codeShowI32' but
--- skips the negative-sign branch — the input bit pattern is treated as
--- unsigned end-to-end (i32.div_u / i32.rem_u), so values 2^31..2^32-1
--- render correctly without an erroneous '-' prefix.
---
--- Locals: $v(1) $buf(2) $pos(3) $digit(4)
-codeShowU32 :: WasmInfo -> [Word8]
-codeShowU32 _info = assembleFunc runtimeFuncIdx showU32Spec
-
--- __lengthUtf8Bytes(s: i32) -> i32
--- The stored UTF-8 byte count is the header word at s+0 (O(1) load); box the
--- result in a 4-byte cell. Locals: $box(1).
-codeLengthBytesAsUtf8 :: [Word8]
-codeLengthBytesAsUtf8 = assembleFunc runtimeFuncIdx lengthUtf8BytesSpec
-
--- __lengthCodePoints(s: i32) -> i32
--- Walks UTF-8 bytes; counts every byte whose top two bits are not 10.
--- Bound is header byte_count (offset 0); payload starts at offset 8.
--- Locals: $i(1), $n(2), $b(3), $box(4), $len(5), $payload(6).
-codeLengthCodePoints :: [Word8]
-codeLengthCodePoints = assembleFunc runtimeFuncIdx lengthCodePointsSpec
-
 -- __lengthUtf16CodeUnits(s: i32) -> i32
 -- Walks UTF-8 bytes; counts 1 for every codepoint start except 4-byte
 -- starts (top five bits = 11110), which need a UTF-16 surrogate pair
 -- and contribute 2. Continuation bytes are skipped. Locals:
-
--- O(1): the utf16 count is cached in the second i32 of the header.
-codeLengthUtf16CodeUnits :: [Word8]
-codeLengthUtf16CodeUnits = assembleFunc runtimeFuncIdx lengthUtf16CodeUnitsSpec
-
--- __getArgs() -> i32. Zero-arg helper for 'BuiltIn.internalGetArgs',
--- called from 'runIO''s 'IOGetArgs' arm. Reads the full argv via WASI
--- 'args_sizes_get' / 'args_get' and walks it from index argc-1 down to
--- 1 (index 0 is the program name, skipped), validating each element
--- via '__entryArgEither' and consing it onto a prelude 'List String'.
--- All-or-nothing error semantics — the first failing element
--- short-circuits with its 'Left'. On success the list is wrapped in
--- 'Right'. Walked right-to-left so order is preserved at the head; an
--- argv of just [exe] yields 'Right Nil'. Both the WAT text
--- ('Awsum.Codegen.WASM') and these bytes render from the shared
--- 'getArgsSpec', so they cannot disagree.
---
--- Locals (10, all i32): 0 = argc, 1 = ptrs, 2 = buf, 3 = i,
--- 4 = p (current arg pointer), 5 = l (its byte length),
--- 6 = cell (Either from __entryArgEither), 7 = head (String ptr),
--- 8 = acc (list accumulator), 9 = consC.
-codeGetArgs :: PreludeTags -> [Word8]
-codeGetArgs ptags = assembleFunc runtimeFuncIdx (getArgsSpec ptags)
-
--- __stdinReadAll() -> i32. Zero-arg helper for
--- 'BuiltIn.internalStdinReadAllAsUtf16'. Reads fd 0 via WASI 'fd_read'
--- in chunks into a growing '__alloc'-managed buffer (start 4 KiB,
--- double on full), then writes a 0 sentinel past the data and routes
--- the (buf, len) pair through the length-aware '__entryArgEither'.
---
--- WASM has no realloc; growing means '__alloc' a bigger cell and
--- '__memcpy' the existing bytes over. The old cell leaks for the
--- rest of the program — bounded waste, doubling strategy.
---
--- iovec scratch at address 16/20 (ptr, len), nread_out at 12. These
--- overlap with '__getArgs's args-size scratch but the two helpers
--- never run concurrently (WASM is single-threaded).
---
--- Locals: 0=buf, 1=cap, 2=total, 3=remain, 4=newbuf, 5=newcap, 6=got.
-codeStdinReadAll :: [Word8]
-codeStdinReadAll = assembleFunc runtimeFuncIdx stdinReadAllSpec
 
 -- __entryArgEither(arg: i32, len: i32) -> i32
 -- Length-aware UTF-8 byte scanner running two checks:
@@ -1242,9 +785,6 @@ codeStdinReadAll = assembleFunc runtimeFuncIdx stdinReadAllSpec
 --
 -- Params: arg(0) len(1).
 -- Locals: i(2) n(3) b(4) surr(5) inner(6) row(7) cell(8) wrapped(9).
-
-codeEntryArgEither :: WasmInfo -> [Word8]
-codeEntryArgEither info = assembleFunc runtimeFuncIdx (entryArgEitherSpec (wiTags info))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration code
@@ -1325,20 +865,18 @@ exprMaxFreshScrutDepth = \case
 --   IO tree; @runIO@ walks it for effects and returns Unit (discarded). User
 --   code reads argv through @IO.Args.getArgs@ inside the chain (an @IOGetArgs@
 --   constructor whose runIO arm calls @__getArgs@). Void result.
-startFunc :: WasmInfo -> WasmFunc
-startFunc info =
-  let mainIdx = fromMaybe 0 (Map.lookup "main" info.wiFuncIdx)
-      runIOIdx = fromMaybe (error "no v_runIO") (Map.lookup "runIO" info.wiFuncIdx)
-   in WasmFunc
-        { wfName = "_start",
-          wfParams = [],
-          wfResults = [],
-          wfLocals = [],
-          wfBody = [CallIdx (fromIntegral mainIdx), CallIdx (fromIntegral runIOIdx), Drop]
-        }
+startFunc :: WasmFunc
+startFunc =
+  WasmFunc
+    { wfName = "_start",
+      wfParams = [],
+      wfResults = [],
+      wfLocals = [],
+      wfBody = [Call "main", Call "runIO", Drop]
+    }
 
 codeStart :: WasmInfo -> [Word8]
-codeStart info = assembleFunc runtimeFuncIdx (startFunc info)
+codeStart info = assembleFunc (funcIdxMap info) startFunc
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Expression code generation
@@ -1352,7 +890,6 @@ data ExprCtx = ExprCtx
     ecArities :: Map Text Int,
     ecStringPool :: Map Text Int,
     ecTableMap :: Map Text Int,
-    ecFuncIdx :: Map Text Word32,
     ecTypeMap :: Map FuncType Word32,
     ecIndirectArities :: Set Int,
     ecConBaseSlot :: Word32, -- first local slot for $__con_N
@@ -1506,8 +1043,7 @@ emitExprI ctx = \case
     | Just slot <- Map.lookup n ctx.ecParams ->
         [LocalGet (fromIntegral slot)]
     | n `Set.member` ctx.ecValDefs ->
-        let fIdx = fromMaybe 0 (Map.lookup n ctx.ecFuncIdx)
-         in [CallIdx (fromIntegral fIdx)]
+        [Call n]
     | n `Set.member` ctx.ecFunDefs ->
         let tblIdx = fromMaybe 0 (Map.lookup n ctx.ecTableMap)
          in [I32Const tblIdx]
@@ -1518,7 +1054,7 @@ emitExprI ctx = \case
   CIntLit n _ ->
     let n32 = fromInteger n :: Int32
      in [I32Const (fromIntegral n32)]
-          <> [CallIdx (fromIntegral idxBoxI32)]
+          <> [Call "__box_i32"]
   CCon tag fields ->
     let nSlots = 1 + length fields
         nFields = length fields
@@ -1529,7 +1065,7 @@ emitExprI ctx = \case
         allocCode =
           [I32Const (nSlots * 4)]
             <> [I32Const nFields]
-            <> [CallIdx (fromIntegral idxAllocShaped)]
+            <> [Call "__alloc_shaped"]
             <> [LocalSet (fromIntegral conSlot)]
         -- store tag at offset 0
         tagCode =
@@ -1559,111 +1095,93 @@ emitExprI ctx = \case
       CBuiltIn "internalStdoutPrint"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxPrint)]
+              <> [Call "__print"]
       -- 'BuiltIn.internalGetArgs' — call '__getArgs', which re-reads
       -- argv via WASI 'args_get' and routes the result through
       -- '__entryArgEither'.
       CBuiltIn "internalGetArgs"
         | [] <- xs ->
-            [CallIdx (fromIntegral idxGetArgs)]
+            [Call "__getArgs"]
       -- 'BuiltIn.internalStdinReadAllAsUtf16' — call '__stdinReadAll',
       -- which consumes fd 0 to EOF via WASI 'fd_read' and routes the
       -- bytes through '__entryArgEither'.
       CBuiltIn "internalStdinReadAllAsUtf16"
         | [] <- xs ->
-            [CallIdx (fromIntegral idxStdinReadAll)]
+            [Call "__stdinReadAll"]
       CBuiltIn name
         | name == "showInt32" || name == "showUInt8",
           [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxShowI32)]
+              <> [Call "__show_i32"]
       CBuiltIn "showUInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxShowU32)]
+              <> [Call "__show_u32"]
       CBuiltIn "predInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxPredI32)]
+              <> [Call "__predInt32"]
       CBuiltIn "predUInt8"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxPredU8)]
+              <> [Call "__predUInt8"]
       CBuiltIn "predUInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxPredU32)]
+              <> [Call "__predUInt32"]
       CBuiltIn "succInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxSuccI32)]
+              <> [Call "__succInt32"]
       CBuiltIn "succUInt8"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxSuccU8)]
+              <> [Call "__succUInt8"]
       CBuiltIn "succUInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxSuccU32)]
+              <> [Call "__succUInt32"]
       CBuiltIn name
         | name == "eqInt32" || name == "eqUInt8" || name == "eqUInt32",
           [a, b] <- xs ->
             emitArgWithIncI ctx a
               <> emitArgWithIncI ctx b
-              <> [CallIdx (fromIntegral idxEqI32)]
+              <> [Call "__eq_i32"]
       CBuiltIn "eqString"
         | [a, b] <- xs ->
             emitArgWithIncI ctx a
               <> emitArgWithIncI ctx b
-              <> [CallIdx (fromIntegral idxEqString)]
+              <> [Call "__eqString"]
       CBuiltIn name
         | name == "addInt32" || name == "addUInt8" || name == "addUInt32" || name == "subInt32" || name == "subUInt8" || name == "subUInt32" || name == "mulUInt8" || name == "mulUInt32" || name == "mulInt32",
           [a, b] <- xs ->
-            let idx = case name of
-                  "addInt32" -> idxAddI32
-                  "addUInt8" -> idxAddU8
-                  "addUInt32" -> idxAddU32
-                  "subInt32" -> idxSubI32
-                  "subUInt8" -> idxSubU8
-                  "subUInt32" -> idxSubU32
-                  "mulInt32" -> idxMulI32
-                  "mulUInt32" -> idxMulU32
-                  _ -> idxMulU8
-             in emitArgWithIncI ctx a
-                  <> emitArgWithIncI ctx b
-                  <> [CallIdx (fromIntegral idx)]
+            emitArgWithIncI ctx a
+              <> emitArgWithIncI ctx b
+              <> [Call ("__" <> name)]
       CBuiltIn "negInt32"
         | [x] <- xs ->
             emitArgWithIncI ctx x
-              <> [CallIdx (fromIntegral idxNegI32)]
+              <> [Call "__negInt32"]
       CBuiltIn "splitOnFirst"
         | [a, b] <- xs ->
             emitArgWithIncI ctx a
               <> emitArgWithIncI ctx b
-              <> [CallIdx (fromIntegral idxSplitOnFirst)]
+              <> [Call "__splitOnFirst"]
       CBuiltIn name
         | name == "parseInt32" || name == "parseUInt8" || name == "parseUInt32",
           [x] <- xs ->
-            let idx = case name of
-                  "parseInt32" -> idxParseI32
-                  "parseUInt32" -> idxParseU32
-                  _ -> idxParseU8
-             in emitArgWithIncI ctx x
-                  <> [CallIdx (fromIntegral idx)]
+            emitArgWithIncI ctx x
+              <> [Call ("__" <> name)]
       CBuiltIn name
         | name == "lengthCodePoints" || name == "lengthUtf16CodeUnits" || name == "lengthUtf8Bytes",
           [x] <- xs ->
-            let idx = case name of
-                  "lengthCodePoints" -> idxLengthCodePoints
-                  "lengthUtf16CodeUnits" -> idxLengthUtf16CodeUnits
-                  _ -> idxLengthBytesAsUtf8
-             in emitArgWithIncI ctx x
-                  <> [CallIdx (fromIntegral idx)]
+            emitArgWithIncI ctx x
+              <> [Call ("__" <> name)]
       CBuiltIn "concatString"
         | [a, b] <- xs ->
             emitArgWithIncI ctx a
               <> emitArgWithIncI ctx b
-              <> [CallIdx (fromIntegral idxConcat)]
+              <> [Call "__concat"]
       CBuiltIn n ->
         error ("WASM codegen: unknown builtin '" <> n <> "' reached CCall (typecheck should have rejected it)")
       CVar n
@@ -1672,9 +1190,8 @@ emitExprI ctx = \case
             -- ptr-arg (borrow that needs its own ref for the
             -- callee's param slot). Builtins above bypass this:
             -- they only READ args, never store them.
-            let fIdx = fromMaybe 0 (Map.lookup n ctx.ecFuncIdx)
-             in concatMap (emitArgWithIncI ctx) xs
-                  <> [CallIdx (fromIntegral fIdx)]
+            concatMap (emitArgWithIncI ctx) xs
+              <> [Call n]
       _ ->
         -- Indirect user CCall (HOF dispatched through $applyN
         -- after Cps/LowerClosures). Same caller-side inc rule.
@@ -1698,14 +1215,14 @@ emitExprI ctx = \case
           Just m
             | m == n ->
                 [LocalGet (fromIntegral ctx.ecDropTmpSlot)]
-                  <> [CallIdx (fromIntegral idxIncRef)]
+                  <> [Call "__inc_ref"]
           _ -> []
      in [Block BtI32]
           <> bodyBytes
           <> [LocalSet (fromIntegral ctx.ecDropTmpSlot)]
           <> moveInc
           <> [LocalGet (fromIntegral slot)]
-          <> [CallIdx (fromIntegral idxFreeRecursive)]
+          <> [Call "__free_recursive"]
           <> [LocalGet (fromIntegral ctx.ecDropTmpSlot)]
           <> [End]
   -- Cell reuse. In-place mutation of the user-pointer
@@ -1741,7 +1258,7 @@ emitExprI ctx = \case
           | otherwise =
               [LocalGet (fromIntegral nSlot)]
                 <> [I32Load (MemArg 2 ((i + 1) * 4 :: Int))]
-                <> [CallIdx (fromIntegral idxFreeRecursive)]
+                <> [Call "__free_recursive"]
         decOldCode = concatMap decOldSlot [0 .. nFields - 1]
         -- store tag at offset 0
         tagCode =
@@ -1773,7 +1290,7 @@ incStoredFieldI ctx conSlot slotIdx fld
   | isHeapBorrow ctx fld =
       [LocalGet (fromIntegral conSlot)]
         <> [I32Load (MemArg 2 (slotIdx * 4 :: Int))]
-        <> [CallIdx (fromIntegral idxIncRef)]
+        <> [Call "__inc_ref"]
   | otherwise = []
 
 -- | Emit a value and, when its tail is a heap-borrow
@@ -1786,7 +1303,7 @@ emitArgWithIncI ctx fld
   | isHeapBorrow ctx fld =
       emitExprI ctx fld
         <> [LocalTee (fromIntegral ctx.ecIncRefTempSlot)]
-        <> [CallIdx (fromIntegral idxIncRef)]
+        <> [Call "__inc_ref"]
         <> [LocalGet (fromIntegral ctx.ecIncRefTempSlot)]
   | otherwise = emitExprI ctx fld
 
@@ -1813,7 +1330,7 @@ scrutDecAfterBindI :: ExprCtx -> Bool -> [WasmInstr]
 scrutDecAfterBindI ctx scrutFresh
   | scrutFresh =
       [LocalGet (fromIntegral ctx.ecScrutSlot)]
-        <> [CallIdx (fromIntegral idxFreeRecursive)]
+        <> [Call "__free_recursive"]
   | otherwise = []
 
 -- | Emit the if/else chain for case arms (scrutinee already in $__scrut).
@@ -1871,7 +1388,7 @@ bindArmVarsI ctx vars =
                 <> [I32Load (MemArg 2 offset)]
                 <> [LocalSet (fromIntegral slot)]
                 <> [LocalGet (fromIntegral slot)]
-                <> [CallIdx (fromIntegral idxIncRef)]
+                <> [Call "__inc_ref"]
          in (bc, (v, slot))
       results = zipWith bindOne vars [0 :: Int ..]
       code = concatMap fst results
@@ -1894,7 +1411,7 @@ emitFreshScrutDecsI :: ExprCtx -> Int -> [WasmInstr]
 emitFreshScrutDecsI ctx freshScrutDepth =
   concat
     [ [LocalGet (fromIntegral (ctx.ecFreshScrutBase + fromIntegral i))]
-        <> [CallIdx (fromIntegral idxFreeRecursive)]
+        <> [Call "__free_recursive"]
     | i <- [0 .. freshScrutDepth - 1]
     ]
 
@@ -1991,7 +1508,7 @@ emitTailPendingI tcoTempBase params depth ctx pending freshScrutDepth = \case
             [ case sourceCVarBin a of
                 Just _ ->
                   [LocalGet (fromIntegral (tcoTempBase + fromIntegral i))]
-                    <> [CallIdx (fromIntegral idxIncRef)]
+                    <> [Call "__inc_ref"]
                 Nothing -> []
             | (i, a) <- zip [0 :: Int ..] newArgs
             ]
@@ -2067,7 +1584,7 @@ emitFreeOfI :: ExprCtx -> Text -> [WasmInstr]
 emitFreeOfI ctx n =
   let slot = lookupBinderSlot ctx n
    in [LocalGet (fromIntegral slot)]
-        <> [CallIdx (fromIntegral idxFreeRecursive)]
+        <> [Call "__free_recursive"]
 
 -- | Tail version of 'emitArmChainI': each arm is emitted in tail form so
 -- it either produces an @i32@ result or terminates with a @br@ back to
@@ -2202,7 +1719,6 @@ userExprCtx info typeMap paramMap conBaseSlot scrutSlot boundBase dropTmpSlot in
       ecArities = info.wiArities,
       ecStringPool = info.wiStringPool,
       ecTableMap = info.wiTableMap,
-      ecFuncIdx = info.wiFuncIdx,
       ecTypeMap = typeMap,
       ecIndirectArities = info.wiIndirectArities,
       ecConBaseSlot = conBaseSlot,
@@ -2219,4 +1735,4 @@ userExprCtx info typeMap paramMap conBaseSlot scrutSlot boundBase dropTmpSlot in
 --   text projection ('Awsum.Codegen.WASM') renders the same 'userDeclFunc'
 --   value, so the two cannot diverge.
 codeUserDecl :: WasmInfo -> Map FuncType Word32 -> CDecl -> [Word8]
-codeUserDecl info typeMap decl = assembleFunc runtimeFuncIdx (userDeclFunc info typeMap decl)
+codeUserDecl info typeMap decl = assembleFunc (funcIdxMap info) (userDeclFunc info typeMap decl)

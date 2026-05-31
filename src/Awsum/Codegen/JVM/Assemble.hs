@@ -6,7 +6,7 @@
 --
 -- All values are @java\/lang\/Object@; strings are @java\/lang\/String@;
 -- function references are @java\/lang\/invoke\/MethodHandle@; @IO Unit@ is @null@.
-module Awsum.Codegen.JVM.Assemble (assembleJVM, userJvmMethods) where
+module Awsum.Codegen.JVM.Assemble (assembleJVM, userJvmMethods, JvmModule (..), jvmModule, jvmModuleMethods) where
 
 import Awsum.Codegen.JVM.Instr (ClassRef (..), FieldRef (..), Frame (..), JvmInstr (..), JvmMethod (..), LabelId (..), MethodRef (..), VType (..), addInt32Spec, addUInt32Spec, addUInt8Spec, concatSpec, entryArgEitherSpec, eqSpec, eqStringSpec, getArgsSpec, lengthCodePointsSpec, lengthUtf16CodeUnitsSpec, lengthUtf8BytesSpec, mainSpec, mulInt32Spec, mulUInt32Spec, mulUInt8Spec, negInt32Spec, parseInt32Spec, parseUInt32Spec, parseUInt8Spec, predInt32Spec, predUInt32Spec, predUInt8Spec, printSpec, showUInt32Spec, splitOnFirstSpec, stdinReadAllSpec, subInt32Spec, subUInt32Spec, subUInt8Spec, succInt32Spec, succUInt32Spec, succUInt8Spec)
 import Awsum.Core
@@ -572,11 +572,85 @@ buildStackMapTable classMap entryLocals nameIdx frames =
       ]
 
 -- ════════════════════════════════════════════════════════════════════════════
+-- Module value (single source for text + bytes)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- | The gated, ordered methods of one program's @AwsumMain@ class. Both
+--   'Awsum.Codegen.JVM.codegenJVM' (text) and 'assembleJVM' (bytes) derive from
+--   this one value, so gating is decided once and the two cannot disagree on
+--   which methods exist. Grouped so the text renderer reproduces the existing
+--   blank-line layout: 'jmHelpers' and 'jmEntry' single-spaced, 'jmUserDefs'
+--   double-spaced. The @<init>@ method and the class framing are fixed and live
+--   in the renderers. (The byte assembler emits the flat 'jvmModuleMethods'; the
+--   methods-table order does not affect execution.)
+data JvmModule = JvmModule
+  { jmHelpers :: [JvmMethod],
+    jmUserDefs :: [JvmMethod],
+    jmEntry :: [JvmMethod]
+  }
+
+-- | The flat method list (helpers, then user declarations, then entry + @main@).
+jvmModuleMethods :: JvmModule -> [JvmMethod]
+jvmModuleMethods m = jmHelpers m <> jmUserDefs m <> jmEntry m
+
+-- | Lower a program to its 'JvmModule' — the gating decision, made once.
+jvmModule :: PreludeTags -> CoreProgram -> JvmModule
+jvmModule ptags prog@(CoreProgram decls) =
+  let valNames = Set.fromList [n | CValDef n _ <- decls]
+      funNames = Set.fromList [n | CFunDef n _ _ <- decls]
+      arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
+      builtIns = usedBuiltIns prog
+      gate cond ms = if cond then ms else []
+   in JvmModule
+        { jmHelpers =
+            concat
+              [ gate (Set.member "concatString" builtIns) [concatSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags)],
+                gate (Set.member "internalStdoutPrint" builtIns) [printSpec (ptUnit ptags)],
+                gate (Set.member "predInt32" builtIns) [predInt32Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "predUInt8" builtIns) [predUInt8Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "predUInt32" builtIns) [predUInt32Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "succInt32" builtIns) [succInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "succUInt8" builtIns) [succUInt8Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "succUInt32" builtIns) [succUInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "eqInt32" builtIns) [eqSpec "__eqInt32" "L_eq_i32" (ptTrue ptags, ptFalse ptags)],
+                gate (Set.member "eqUInt8" builtIns) [eqSpec "__eqUInt8" "L_eq_u8" (ptTrue ptags, ptFalse ptags)],
+                gate (Set.member "eqUInt32" builtIns) [eqSpec "__eqUInt32" "L_eq_u32" (ptTrue ptags, ptFalse ptags)],
+                gate (Set.member "eqString" builtIns) [eqStringSpec (ptTrue ptags, ptFalse ptags)],
+                gate (Set.member "addInt32" builtIns) [addInt32Spec (ptOverflowError ptags, ptUnderflowError ptags, ptLeft ptags, ptRight ptags, overflowRowTag, underflowRowTag)],
+                gate (Set.member "subInt32" builtIns) [subInt32Spec (ptOverflowError ptags, ptUnderflowError ptags, ptLeft ptags, ptRight ptags, overflowRowTag, underflowRowTag)],
+                gate (Set.member "mulInt32" builtIns) [mulInt32Spec (ptOverflowError ptags, ptUnderflowError ptags, ptLeft ptags, ptRight ptags, overflowRowTag, underflowRowTag)],
+                gate (Set.member "negInt32" builtIns) [negInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "addUInt8" builtIns) [addUInt8Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "subUInt8" builtIns) [subUInt8Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "mulUInt8" builtIns) [mulUInt8Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "addUInt32" builtIns) [addUInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "subUInt32" builtIns) [subUInt32Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "mulUInt32" builtIns) [mulUInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "showUInt32" builtIns) [showUInt32Spec],
+                gate (Set.member "splitOnFirst" builtIns) [splitOnFirstSpec (ptNothing ptags, ptTuple2 ptags, ptJust ptags)],
+                gate (Set.member "lengthCodePoints" builtIns) [lengthCodePointsSpec],
+                gate (Set.member "lengthUtf16CodeUnits" builtIns) [lengthUtf16CodeUnitsSpec],
+                gate (Set.member "lengthUtf8Bytes" builtIns) [lengthUtf8BytesSpec],
+                gate (Set.member "parseInt32" builtIns) [parseInt32Spec (ptParseError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "parseUInt8" builtIns) [parseUInt8Spec (ptParseError ptags, ptLeft ptags, ptRight ptags)],
+                gate (Set.member "parseUInt32" builtIns) [parseUInt32Spec (ptParseError ptags, ptLeft ptags, ptRight ptags)]
+              ],
+          jmUserDefs = userJvmMethods ptags valNames funNames arities decls,
+          jmEntry =
+            concat
+              [ gate (Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns) [entryArgEitherSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags, ptUnpairedUtf16Surrogate ptags, stringTooLongRowTag, unpairedSurrogateRowTag)],
+                gate (Set.member "internalGetArgs" builtIns) [getArgsSpec (ptNil ptags, ptCons ptags, ptRight ptags)],
+                gate (Set.member "internalStdinReadAllAsUtf16" builtIns) [stdinReadAllSpec],
+                [mainSpec (mangle "main") (mangle "runIO")]
+              ]
+        }
+
+-- ════════════════════════════════════════════════════════════════════════════
 -- Full assembly
 -- ════════════════════════════════════════════════════════════════════════════
 
 doAssemble :: CoreProgram -> AsmM [MInfo]
-doAssemble prog@(CoreProgram decls) = do
+doAssemble prog = do
   -- Ensure required CP entries exist
   void $ addClass "AwsumMain"
   void $ addClass "java/lang/Object"
@@ -588,57 +662,13 @@ doAssemble prog@(CoreProgram decls) = do
   void $ addUtf8 "__argv"
   void $ addUtf8 "[Ljava/lang/String;"
 
-  let valNames = Set.fromList [n | CValDef n _ <- decls]
-      funNames = Set.fromList [n | CFunDef n _ _ <- decls]
-      arities = Map.fromList [(n, length as) | CFunDef n as _ <- decls]
-      builtIns = usedBuiltIns prog
-
+  ptags <- askPreludeTags
   m0 <- mkInit
-  -- Runtime helpers are emitted only when referenced in Core, so hello-world
-  -- style programs that never call 'showInt32' or 'predInt32' don't pay for them.
-  m1s <- if Set.member "concatString" builtIns then (: []) <$> mkConcat else pure []
-  m2s <- if Set.member "internalStdoutPrint" builtIns then (: []) <$> mkPrint else pure []
-  m3s <- if Set.member "predInt32" builtIns then (: []) <$> mkPredInt32 else pure []
-  m3us <- if Set.member "predUInt8" builtIns then (: []) <$> mkPredUInt8 else pure []
-  m3u32p <- if Set.member "predUInt32" builtIns then (: []) <$> mkPredUInt32 else pure []
-  m3sI <- if Set.member "succInt32" builtIns then (: []) <$> mkSuccInt32 else pure []
-  m3sU <- if Set.member "succUInt8" builtIns then (: []) <$> mkSuccUInt8 else pure []
-  m3u32s <- if Set.member "succUInt32" builtIns then (: []) <$> mkSuccUInt32 else pure []
-  m4s <- if Set.member "eqInt32" builtIns then (: []) <$> mkEq "__eqInt32" "L_eq_i32" else pure []
-  m5s <- if Set.member "eqUInt8" builtIns then (: []) <$> mkEq "__eqUInt8" "L_eq_u8" else pure []
-  m5u32 <- if Set.member "eqUInt32" builtIns then (: []) <$> mkEq "__eqUInt32" "L_eq_u32" else pure []
-  m5str <- if Set.member "eqString" builtIns then (: []) <$> mkEqString else pure []
-  m6s <- if Set.member "addInt32" builtIns then (: []) <$> mkAddInt32 else pure []
-  m6sub <- if Set.member "subInt32" builtIns then (: []) <$> mkSubInt32 else pure []
-  m6mul <- if Set.member "mulInt32" builtIns then (: []) <$> mkMulInt32 else pure []
-  m6neg <- if Set.member "negInt32" builtIns then (: []) <$> mkNegInt32 else pure []
-  m6us <- if Set.member "addUInt8" builtIns then (: []) <$> mkAddUInt8 else pure []
-  m6usSub <- if Set.member "subUInt8" builtIns then (: []) <$> mkSubUInt8 else pure []
-  m6usMul <- if Set.member "mulUInt8" builtIns then (: []) <$> mkMulUInt8 else pure []
-  m6u32a <- if Set.member "addUInt32" builtIns then (: []) <$> mkAddUInt32 else pure []
-  m6u32sub <- if Set.member "subUInt32" builtIns then (: []) <$> mkSubUInt32 else pure []
-  m6u32mul <- if Set.member "mulUInt32" builtIns then (: []) <$> mkMulUInt32 else pure []
-  m6u32sh <- if Set.member "showUInt32" builtIns then (: []) <$> mkShowUInt32 else pure []
-  m7s <- if Set.member "splitOnFirst" builtIns then (: []) <$> mkSplitOnFirst else pure []
-  m8sI <- if Set.member "parseInt32" builtIns then (: []) <$> mkParseInt32 else pure []
-  m8sU <- if Set.member "parseUInt8" builtIns then (: []) <$> mkParseUInt8 else pure []
-  m8u32p <- if Set.member "parseUInt32" builtIns then (: []) <$> mkParseUInt32 else pure []
-  mLcp <- if Set.member "lengthCodePoints" builtIns then (: []) <$> mkLengthCodePoints else pure []
-  mLcu <- if Set.member "lengthUtf16CodeUnits" builtIns then (: []) <$> mkLengthUtf16CodeUnits else pure []
-  mLb <- if Set.member "lengthUtf8Bytes" builtIns then (: []) <$> mkLengthBytesAsUtf8 else pure []
-  userMs <- traverse (mkDecl valNames funNames arities) decls
-  -- '__entryArgEither' is only invoked by '__getArgs' / '__stdinReadAll'
-  -- ('Main' does not call it), so it is gated on the same predicate as the
-  -- text codegen ('Awsum.Codegen.JVM'). Emitting it unconditionally left
-  -- the '.class' carrying a method the '.j' snapshot omits.
-  mEntryArg <-
-    if Set.member "internalGetArgs" builtIns || Set.member "internalStdinReadAllAsUtf16" builtIns
-      then (: []) <$> mkEntryArgEither
-      else pure []
-  mGetArgs <- if Set.member "internalGetArgs" builtIns then (: []) <$> mkGetArgs else pure []
-  mStdinReadAll <- if Set.member "internalStdinReadAllAsUtf16" builtIns then (: []) <$> mkStdinReadAll else pure []
-  mEntry <- mkMain
-  pure (m0 : m1s <> m2s <> m3s <> m3us <> m3u32p <> m3sI <> m3sU <> m3u32s <> m4s <> m5s <> m5u32 <> m5str <> m6s <> m6sub <> m6mul <> m6neg <> m6us <> m6usSub <> m6usMul <> m6u32a <> m6u32sub <> m6u32mul <> m6u32sh <> m7s <> m8sI <> m8sU <> m8u32p <> mLcp <> mLcu <> mLb <> userMs <> mEntryArg <> mGetArgs <> mStdinReadAll <> [mEntry])
+  -- Every method beyond '<init>' comes from the one 'jvmModule' value, so the
+  -- gating and ordering match the text projection ('Awsum.Codegen.JVM') exactly.
+  -- The methods-table order does not affect execution.
+  ms <- traverse assembleMethod (jvmModuleMethods (jvmModule ptags prog))
+  pure (m0 : ms)
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- Fixed methods
@@ -663,397 +693,6 @@ mkInit = do
         mMaxStack = 256,
         mMaxLocals = 256
       }
-
--- | __concat: implements 'BuiltIn.concatString'. Pre-checks the combined
---   UTF-16 length of both inputs against the language-fixed cap; returns
---   'Right (a + b)' if it fits, 'Left StringTooLong' otherwise. The cap
---   value (134217728 = 2^27) must stay in sync with
---   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'. The body shape
---   lives in 'concatSpec'; the L_too_long branch offset and its StackMapTable
---   frame are resolved by 'assembleBody'.
-mkConcat :: AsmM MInfo
-mkConcat = do
-  ptags <- askPreludeTags
-  assembleMethod (concatSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags))
-
--- | __print: low-level platform primitive driven by the prelude's
---   `runIO` via `BuiltIn.internalStdoutPrint`. Returns a Unit value
---   (Object[1] = [Integer(0)]) so the surrounding `case … of Unit ->
---   next` arm in `runIO` dispatches through the standard CCase tag
---   check.
-mkPrint :: AsmM MInfo
-mkPrint = do
-  ptags <- askPreludeTags
-  assembleMethod (printSpec (ptUnit ptags))
-
--- | predInt32: Int32 -> Either UnderflowError Int32.
---   Layout on the JVM: containers are 'Object[]' with a boxed Integer
---   tag at [0] and fields at [1..], matching user CCon emission. Tags:
---   Left=0 (first Either constructor), Right=1, UnderflowError=0.
---   The method unboxes the Integer argument, compares against
---   INT32_MIN via 'if_icmpne', and branches to build either
---   'Left UnderflowError' or 'Right Integer.valueOf(v - 1)'.
---   A StackMapTable entry at the ok-branch target is required because
---   classfile v51+ demands one for any branch.
-mkPredInt32 :: AsmM MInfo
-mkPredInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (predInt32Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | predUInt8: UInt8 -> Either UnderflowError UInt8.
---   Mirrors 'mkPredInt32' except the zero check uses 'ifne' (opcode 0x9A,
---   "branch if int != 0") instead of 'if_icmpne' against a pushed
---   constant — no extra push is needed, so the preamble is 9 bytes
---   (aload_0 + checkcast + invokevirtual + istore_1 + iload_1) instead
---   of 12. No mask on (v - 1): when v >= 1 the result is 0..254.
-mkPredUInt8 :: AsmM MInfo
-mkPredUInt8 = do
-  ptags <- askPreludeTags
-  assembleMethod (predUInt8Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | succInt32: Int32 -> Either OverflowError Int32.
---   Mirror of 'mkPredInt32' with boundary INT32_MAX and 'iadd' (0x60)
---   instead of 'isub' (0x64). OverflowError is single-constructor, so
---   its boxed-tag is 0 — the Left-branch encoding is identical to
---   the UnderflowError case.
-mkSuccInt32 :: AsmM MInfo
-mkSuccInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (succInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | succUInt8: UInt8 -> Either OverflowError UInt8.
---   Mirror of 'mkSuccInt32' with boundary 255 ('sipush 255' = 3-byte
---   inline constant, no constant-pool entry) and no mask on (v + 1),
---   which stays in 1..255 when v <= 254.
-mkSuccUInt8 :: AsmM MInfo
-mkSuccUInt8 = do
-  ptags <- askPreludeTags
-  assembleMethod (succUInt8Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | eqInt32 / eqUInt8: two values of the same integer type → Bool.
---   On the JVM both Int32 and UInt8 are boxed as 'java.lang.Integer',
---   so the two methods share a single builder parameterised by name.
---   Returns a one-slot 'Object[]' with boxed tag 0 (True) on equal, 1
---   (False) otherwise — matching declaration order in
---   `type Bool = True | False` and user-code CCon emission.
---   Classfile v51+ requires a StackMapTable at the if_icmpne target;
---   locals don't change across the branch (two Object params, no new
---   stores), so a same_frame is sufficient.
-mkEq :: Text -> Text -> AsmM MInfo
-mkEq methodName labelBase = do
-  ptags <- askPreludeTags
-  assembleMethod (eqSpec methodName labelBase (ptTrue ptags, ptFalse ptags))
-
--- | eqString : String -> String -> Bool. Inputs are java.lang.String;
---   delegates to String.equals (Object) which compares UTF-16 code-unit
---   sequences — exactly the language-level semantics. The boolean it
---   leaves on the stack drives a single 'ifeq' into the True/False
---   one-slot Object[] block, mirroring 'mkEq''s frame shape.
---
---   Frame: preamble pushes (after the equals) one int on stack; ifeq
---   pops it. Both branches build a one-slot Object[] and 'areturn'.
---   notEqAt's locals match entry ([Object, Object]) and stack is
---   empty — same_frame applies (delta < 64).
-mkEqString :: AsmM MInfo
-mkEqString = do
-  ptags <- askPreludeTags
-  assembleMethod (eqStringSpec (ptTrue ptags, ptFalse ptags))
-
--- | addInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
---   The signed-overflow check is done with the classical XOR trick — sum
---   wraps modulo 2^32, then `((a ^ sum) & (b ^ sum)) < 0` is true iff
---   the carry into the sign bit differs from the carry out, which is
---   exactly when signed overflow happens. Direction (over vs under) is
---   read off `a >= 0`: same-sign overflow is positive when `a >= 0`
---   (→ OverflowError), negative otherwise (→ UnderflowError). Error-
---   side encoding is three nested Object[]s: inner @CCon@ (single-ctor
---   tag 0), row wrap (FNV-1a tag of label name), outer @Left@.
-mkAddInt32 :: AsmM MInfo
-mkAddInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (addInt32Spec (ptOverflowError ptags, ptUnderflowError ptags, ptLeft ptags, ptRight ptags, overflowRowTag, underflowRowTag))
-
--- | addUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
---   Both operands are 0..255, so 'iadd' produces 0..510 and a single
---   `if_icmple 255` selects the branch. No widening or masking is
---   needed; on the ok path the sum fits in UInt8 by construction.
-mkAddUInt8 :: AsmM MInfo
-mkAddUInt8 = do
-  ptags <- askPreludeTags
-  assembleMethod (addUInt8Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | subInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
---   Detects signed-subtraction overflow with the XOR trick:
---   '((a ^ b) & (a ^ diff)) < 0' is true iff signed overflow occurred.
---   Direction is read off 'a >= 0' (when subtraction overflows the signs
---   of @a@ and @b@ must differ, so @a >= 0@ implies @b < 0@ which implies
---   positive overflow → OverflowError). Same row-tagged error encoding
---   as 'mkAddInt32'.
-mkSubInt32 :: AsmM MInfo
-mkSubInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (subInt32Spec (ptOverflowError ptags, ptUnderflowError ptags, ptLeft ptags, ptRight ptags, overflowRowTag, underflowRowTag))
-
--- | mulInt32: Int32 -> Int32 -> Either (UnderflowError | OverflowError) Int32.
---   Promote both operands to long, multiply at long width, range-check
---   the result against [INT32_MIN, INT32_MAX]. The binary assembler has
---   no CPLong slot (the constant pool only holds CPInteger), so the
---   long bounds are materialised via @ldc N; i2l@ rather than @ldc2_w@.
---   Direction is read off lcmp's result: ifgt → positive overflow
---   (OverflowError), iflt → negative overflow (UnderflowError). Same
---   row-tagged error encoding as 'mkAddInt32': inner @CCon@ (tag 0),
---   row wrap (FNV-1a tag of label name), outer @Left@.
-mkMulInt32 :: AsmM MInfo
-mkMulInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (mulInt32Spec (ptOverflowError ptags, ptUnderflowError ptags, ptLeft ptags, ptRight ptags, overflowRowTag, underflowRowTag))
-
--- | negInt32: Int32 -> Either OverflowError Int32.
---   Mirror of 'mkSuccInt32' with INT32_MIN as the boundary and 'ineg'
---   (0x74) instead of 'iadd 1'. Only minInt32 overflows on negation
---   (its absolute value is one above maxInt32 in two's complement);
---   every other input flips sign exactly. OverflowError is single-
---   constructor, so its boxed-tag is 0 and the Left-branch encoding
---   is identical to predInt32.
-mkNegInt32 :: AsmM MInfo
-mkNegInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (negInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | subUInt8: UInt8 -> UInt8 -> Either UnderflowError UInt8.
---   Both operands are 0..255, so 'isub' produces a value in -255..255 with
---   no JVM-level overflow; one 'iflt' picks the underflow branch. On the
---   ok path the result is already a valid UInt8 — no mask needed.
---   Slot layout: 0/1 = Object params, 2 = int diff (or Object UE on the
---   underflow path). One frame at L_under: locals = [Object, Object, int]
---   appended from entry, frame_type 252 (append_frame +1, ITEM_Integer).
-mkSubUInt8 :: AsmM MInfo
-mkSubUInt8 = do
-  ptags <- askPreludeTags
-  assembleMethod (subUInt8Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | mulUInt8: UInt8 -> UInt8 -> Either OverflowError UInt8.
---   Both operands are 0..255 so 'imul' produces 0..65025 in i32 with no
---   overflow at the JVM level. Same single-block shape as 'mkAddUInt8'
---   with 'imul' (0x68) replacing 'iadd' (0x60); the SMT layout is
---   identical (one append_frame at the ok target, locals grow by +1
---   for the int slot 2 = product).
-mkMulUInt8 :: AsmM MInfo
-mkMulUInt8 = do
-  ptags <- askPreludeTags
-  assembleMethod (mulUInt8Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | showUInt32: UInt32 -> String. Render the value as an unsigned
---   decimal via 'Integer.toUnsignedString' (Java 8+, on our Java 11
---   floor) — handles the 2^31..2^32-1 range that signed
---   'Integer.toString' would print as negative.
--- | Assembled from the unified instruction IR
---   ('Awsum.Codegen.JVM.Instr.showUInt32Spec') — the same value the text
---   renderer prints, so the two cannot diverge. (The guarantee is behavioural,
---   verified by identical cross-backend stdout, not byte-identity with any
---   prior version.)
-mkShowUInt32 :: AsmM MInfo
-mkShowUInt32 = assembleMethod showUInt32Spec
-
--- | predUInt32: UInt32 -> Either UnderflowError UInt32. The boundary
---   check is also against 0 (same as 'mkPredUInt8'), so the bytecode is
---   structurally identical to 'mkPredUInt8' — only the UTF8 method name
---   differs. Wrap-around on @v - 1@ is impossible on the ok path since
---   v >= 1 there.
--- | @__predUInt32@ — both projections of
---   'Awsum.Codegen.JVM.Instr.predUInt32Spec' (branch offset + StackMapTable
---   resolved by 'assembleBody'). @max_stack@/@max_locals@ are the honest
---   @5/3@ from the spec.
-mkPredUInt32 :: AsmM MInfo
-mkPredUInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (predUInt32Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | @__succUInt32@ — both projections of
---   'Awsum.Codegen.JVM.Instr.succUInt32Spec'; the branch offset and
---   StackMapTable are resolved by 'assembleBody'. Honest @5/3@ limits.
-mkSuccUInt32 :: AsmM MInfo
-mkSuccUInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (succUInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | addUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Promote
---   both operands to unsigned long via 'Integer.toUnsignedLong' (Java
---   8+, on our Java 11 floor); sum lives in [0, 2^33-2].
---   'Long.compareUnsigned' against 4294967295L names the boundary check
---   directly. Locals layout: slot 0,1 = arg pointers; slots 2-3 = long
---   sum (saved via lstore_2); slot 4 = scratch Object.
-mkAddUInt32 :: AsmM MInfo
-mkAddUInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (addUInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | subUInt32: UInt32 -> UInt32 -> Either UnderflowError UInt32. Compare
---   @a < b@ as unsigned via 'Integer.compareUnsigned' (Java 8+, on our
---   Java 11 floor) — negative result means underflow. On the ok path
---   'isub' at int width gives the correct u32 difference (bit pattern
---   matches u32 subtraction when a >= b unsigned).
---   Locals: slot 0,1 = args; slot 2 = int a; slot 3 = int b; slot 4 =
---   scratch Object.
-mkSubUInt32 :: AsmM MInfo
-mkSubUInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (subUInt32Spec (ptUnderflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | mulUInt32: UInt32 -> UInt32 -> Either OverflowError UInt32. Product
---   @(2^32-1)^2@ exceeds @Long.MAX_VALUE@, so signed 'lcmp' against
---   4294967295L would misclassify some overflowing products.
---   'Long.compareUnsigned' (Java 8+, on our Java 11 floor) compares the
---   product to the u32 boundary correctly across the full u64 range;
---   both operands are widened via 'Integer.toUnsignedLong'.
---   Locals: slot 0,1 = args; slots 2-3 = long product.
-mkMulUInt32 :: AsmM MInfo
-mkMulUInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (mulUInt32Spec (ptOverflowError ptags, ptLeft ptags, ptRight ptags))
-
--- | parseUInt32: String -> Either ParseError UInt32. Same shape as
---   'mkParseUInt8' minus the @> 255@ cap, with a long accumulator and
---   a @> 4294967295L@ cap (max running magnitude is
---   4294967295 * 10 + 9 = 42949672959, fits in long-signed).
---   Locals: 0 = arg, 1 = String s, 2 = int len, 3 = int i, 4-5 = long
---   acc (later reused: slot 4 as Object on fail path, slot 5 as scratch),
---   6 = int c.
-mkParseUInt32 :: AsmM MInfo
-mkParseUInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (parseUInt32Spec (ptParseError ptags, ptLeft ptags, ptRight ptags))
-
--- | splitOnFirst: String -> String -> Maybe (Tuple2 String String). Defers
---   substring search to 'String.indexOf(String)I' which returns -1 on
---   miss and 0 on empty separator — both behaviours match the Prelude
---   contract directly. On hit the two 'String.substring' calls allocate
---   fresh String objects (no aliasing into the input). One stack-map
---   frame at the L_split_found target: locals grow by +1 (slot 2 = int).
-mkSplitOnFirst :: AsmM MInfo
-mkSplitOnFirst = do
-  ptags <- askPreludeTags
-  assembleMethod (splitOnFirstSpec (ptNothing ptags, ptTuple2 ptags, ptJust ptags))
-
--- | lengthCodePoints: String -> UInt32. Walks the UTF-16 buffer once via
---   'String.codePointCount(int, int)' so a surrogate pair is counted
---   exactly once. Binary equivalent of
---   'Awsum.Codegen.JVM.lengthCodePointsMethod'.
-mkLengthCodePoints :: AsmM MInfo
-mkLengthCodePoints = assembleMethod lengthCodePointsSpec
-
--- | lengthUtf16CodeUnits: String -> UInt32. JVM strings are UTF-16
---   internally, so 'String.length()' is exactly the code-unit count.
---   Binary equivalent of 'Awsum.Codegen.JVM.lengthUtf16CodeUnitsMethod'.
-mkLengthUtf16CodeUnits :: AsmM MInfo
-mkLengthUtf16CodeUnits = assembleMethod lengthUtf16CodeUnitsSpec
-
--- | lengthUtf8Bytes: String -> UInt32. Encodes via
---   'String.getBytes(Charset)' with 'StandardCharsets.UTF_8' (standard,
---   not modified UTF-8) and reports the resulting array length. The
---   intermediate byte array is dropped on the next instruction; if
---   profiling ever flags this, swap in a manual scan over the chars
---   that sums 1/2/3/4-byte contributions per code point.
---   Binary equivalent of 'Awsum.Codegen.JVM.lengthUtf8BytesMethod'.
-mkLengthBytesAsUtf8 :: AsmM MInfo
-mkLengthBytesAsUtf8 = assembleMethod lengthUtf8BytesSpec
-
--- | parseInt32: String -> Either ParseError Int32. Binary equivalent of
---   'Awsum.Codegen.JVM.parseInt32Method'. A handrolled decimal parser — long
---   accumulator capped at the magnitude `|minInt32|`. The constant
---   2147483648L is built with the shift trick `iconst_1 i2l bipush 31 lshl`
---   (no CPLong slot needed). INT_MAX (2147483647) is loaded via 'bcLoadInt32'
---   and widened with i2l.
---   Locals: 0 = arg, 1 = String s, 2 = int len, 3 = int i, 4 = int neg
---   (later reused as Object slot for the boxed ParseError on the fail
---   path), 5-6 = long acc, 7 = int c.
-mkParseInt32 :: AsmM MInfo
-mkParseInt32 = do
-  ptags <- askPreludeTags
-  assembleMethod (parseInt32Spec (ptParseError ptags, ptLeft ptags, ptRight ptags))
-
--- | parseUInt8: String -> Either ParseError UInt8. Binary equivalent of
---   'Awsum.Codegen.JVM.parseUInt8Method'. Same handrolled shape as
---   'mkParseInt32' minus the sign handling — UInt8 cannot be negative
---   — and with an i32 accumulator (the running magnitude never exceeds
---   2559 before the > 255 check fails the parse).
---   Locals: 0 = arg, 1 = String s, 2 = int len, 3 = int i, 4 = int acc
---   (later reused as Object on fail path), 5 = int c.
-mkParseUInt8 :: AsmM MInfo
-mkParseUInt8 = do
-  ptags <- askPreludeTags
-  assembleMethod (parseUInt8Spec (ptParseError ptags, ptLeft ptags, ptRight ptags))
-
--- | __getArgs: zero-arg helper for 'BuiltIn.internalGetArgs'.
---   Reads the 'args' array stashed in the '__argv' static field by
---   'mkMain' and builds a prelude 'List String' on demand. Each
---   element is routed through '__entryArgEither' for strict-UTF-16
---   validation; the error semantics is all-or-nothing — the first
---   failing element short-circuits the entire call with its 'Left'.
---   Walked right-to-left so the cons chain is built bottom-up
---   without recursion. Per the no-memoisation decision each call
---   returns a fresh chain; argv is invariant during execution so
---   repeat calls are deterministically equal.
---
---   Local slots: 0 = argv (String[]), 1 = i (int loop counter),
---   2 = list (Object[] accumulator), 3 = validated element (Object[]).
-mkGetArgs :: AsmM MInfo
-mkGetArgs = do
-  ptags <- askPreludeTags
-  assembleMethod (getArgsSpec (ptNil ptags, ptCons ptags, ptRight ptags))
-
--- | __entryArgEither: wraps argv[1] in 'Either (StringTooLong |
---   UnpairedUtf16Surrogate) String' for the user's 'main'. Two checks:
---     1. Length cap (134217728 = 2^27) — short-circuits before the
---        surrogate walk.
---     2. UTF-16 surrogate pairing — walks code units; high surrogate
---        (D800..DBFF) must be immediately followed by a low surrogate
---        (DC00..DFFF). Cap-check has priority.
---
---   Cap value and FNV-1a row tags for "StringTooLong" /
---   "UnpairedUtf16Surrogate" must stay in sync with
---   'maxStringLengthUtf16CodeUnits' in 'stdlib/Prelude.aww'.
---
---   Local slots:
---     V_0 = arg, V_1 = string, V_2 = length, V_3 = i,
---     V_4 = expecting_low (0/1), V_5 = c & 0xFC00,
---     V_6 = inner (transient), V_7 = row (transient).
---
---   Six frame-carrying labels (L_scan, L_check_low, L_inc, L_scan_done,
---   L_too_long, L_unpaired); the assembler's classifier derives each frame's
---   kind (same/append/chop/full) from the deltas.
-mkEntryArgEither :: AsmM MInfo
-mkEntryArgEither = do
-  ptags <- askPreludeTags
-  assembleMethod (entryArgEitherSpec (ptRight ptags, ptLeft ptags, ptStringTooLong ptags, ptUnpairedUtf16Surrogate ptags, stringTooLongRowTag, unpairedSurrogateRowTag))
-
--- | __stdinReadAll: zero-arg helper for
---   'BuiltIn.internalStdinReadAllAsUtf16', called from 'runIO''s
---   'IOStdinReadAll' arm. Consumes 'System.in' to EOF into a
---   'ByteArrayOutputStream', decodes the bytes via
---   @new String(byte[], StandardCharsets.UTF_8)@, then routes the
---   result through '__entryArgEither' for the strict-UTF-16
---   validation 'getArgs' uses.
---
---   The explicit @StandardCharsets.UTF_8@ avoids depending on the
---   JVM default charset. 'System.in' is not affected by
---   @sun.jnu.encoding@ — that knob only mangles 'argv'. This is the
---   reason 'IO.Stdin.readAll' on Windows×JVM round-trips
---   supplementary-plane characters that 'IO.Args.getArgs' silently
---   replaces with @?@.
---
---   Two frame-carrying labels: @L_stdin_loop@ (top of the read loop) and
---   @L_stdin_done@ (post-EOF); the assembler classifies each frame's kind.
---   @[B@ is the JVM class name for the byte[] verification type carried in
---   slot 1.
---
---   Local slots: 0 = ByteArrayOutputStream, 1 = byte[] (buf during
---   loop, the final byte[] after toByteArray), 2 = int (got).
-mkStdinReadAll :: AsmM MInfo
-mkStdinReadAll = assembleMethod stdinReadAllSpec
-
-mkMain :: AsmM MInfo
-mkMain = assembleMethod (mainSpec (mangle "main") (mangle "runIO"))
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- User declaration methods
@@ -1365,10 +1004,6 @@ declJvmMethod valDefs funDefs arities = \case
           jmMaxLocals = nParams + exprMaxLocals body,
           jmBody = instrs
         }
-
-mkDecl :: Set Text -> Set Text -> Map Text Int -> CDecl -> AsmM MInfo
-mkDecl valDefs funDefs arities decl =
-  declJvmMethod valDefs funDefs arities decl >>= assembleMethod
 
 -- | The user-declaration 'JvmMethod's for a program, in order. The text
 --   renderer ('Awsum.Codegen.JVM') projects these with 'renderMethod' and the

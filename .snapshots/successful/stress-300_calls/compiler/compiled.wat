@@ -21,7 +21,80 @@
   (func $__alloc (param i32) (result i32)
     local.get 0
     i32.const 0
-    call 40)
+    call 7)
+
+  (func $__free (param i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.load
+    local.set 1
+    local.get 1
+    i32.eqz
+    if
+    return
+    end
+    local.get 1
+    i32.const 4096
+    i32.gt_u
+    if
+    return
+    end
+    i32.const 24
+    local.get 1
+    i32.ctz
+    i32.const 3
+    i32.sub
+    i32.const 2
+    i32.shl
+    i32.add
+    local.set 2
+    local.get 2
+    i32.load
+    local.set 3
+    local.get 0
+    i32.const 4
+    i32.sub
+    local.get 3
+    i32.store
+    local.get 2
+    local.get 0
+    i32.const 12
+    i32.sub
+    i32.store)
+
+  (func $__print (param i32) (result i32)
+    (local i32)
+    (local i32)
+    local.get 0
+    i32.load
+    local.set 1
+    i32.const 0
+    local.get 0
+    i32.const 8
+    i32.add
+    i32.store
+    i32.const 0
+    local.get 1
+    i32.store offset=4
+    i32.const 1
+    i32.const 0
+    i32.const 1
+    i32.const 8
+    call 0
+    drop
+    i32.const 4
+    call 4
+    local.set 2
+    local.get 2
+    i32.const 0
+    i32.store
+    local.get 0
+    call 9
+    local.get 2)
 
   (func $__alloc_shaped (param i32 i32) (result i32)
     (local i32)
@@ -130,49 +203,6 @@
     i32.const 12
     i32.add)
 
-  (func $__free (param i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    local.get 0
-    i32.const 12
-    i32.sub
-    i32.load
-    local.set 1
-    local.get 1
-    i32.eqz
-    if
-    return
-    end
-    local.get 1
-    i32.const 4096
-    i32.gt_u
-    if
-    return
-    end
-    i32.const 24
-    local.get 1
-    i32.ctz
-    i32.const 3
-    i32.sub
-    i32.const 2
-    i32.shl
-    i32.add
-    local.set 2
-    local.get 2
-    i32.load
-    local.set 3
-    local.get 0
-    i32.const 4
-    i32.sub
-    local.get 3
-    i32.store
-    local.get 2
-    local.get 0
-    i32.const 12
-    i32.sub
-    i32.store)
-
   (func $__inc_ref (param i32)
     (local i32)
     local.get 0
@@ -195,88 +225,6 @@
     i32.const 1
     i32.add
     i32.store)
-
-  (func $__free_worklist_push (param i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    global.get 2
-    local.set 1
-    global.get 3
-    local.set 2
-    local.get 1
-    local.get 2
-    i32.eq
-    if
-    local.get 2
-    i32.eqz
-    if (result i32)
-    i32.const 16
-    else
-    local.get 2
-    i32.const 1
-    i32.shl
-    end
-    local.set 3
-    local.get 3
-    i32.const 2
-    i32.shl
-    i32.const 0
-    call 40
-    local.set 4
-    global.get 1
-    local.set 5
-    i32.const 0
-    local.set 6
-    block
-    loop
-    local.get 6
-    local.get 1
-    i32.ge_u
-    br_if 1
-    local.get 4
-    local.get 6
-    i32.const 2
-    i32.shl
-    i32.add
-    local.get 5
-    local.get 6
-    i32.const 2
-    i32.shl
-    i32.add
-    i32.load
-    i32.store
-    local.get 6
-    i32.const 1
-    i32.add
-    local.set 6
-    br 0
-    end
-    end
-    local.get 5
-    if
-    local.get 5
-    call 5
-    end
-    local.get 4
-    global.set 1
-    local.get 3
-    global.set 3
-    end
-    global.get 1
-    local.get 1
-    i32.const 2
-    i32.shl
-    i32.add
-    local.get 0
-    i32.store
-    local.get 1
-    i32.const 1
-    i32.add
-    global.set 2)
 
   (func $__free_recursive (param i32)
     (local i32)
@@ -335,7 +283,7 @@
     i32.shl
     i32.add
     i32.load
-    call 43
+    call 10
     local.get 4
     i32.const 1
     i32.add
@@ -378,440 +326,87 @@
     end
     end)
 
-  (func $__memcpy (param i32 i32 i32)
-    (local i32)
-    i32.const 0
-    local.set 3
-    block
-    loop
-    local.get 3
-    local.get 2
-    i32.ge_u
-    br_if 1
-    local.get 0
-    local.get 3
-    i32.add
-    local.get 1
-    local.get 3
-    i32.add
-    i32.load8_u
-    i32.store8
-    local.get 3
-    i32.const 1
-    i32.add
-    local.set 3
-    br 0
-    end
-    end)
-
-  (func $__print (param i32) (result i32)
+  (func $__free_worklist_push (param i32)
     (local i32)
     (local i32)
-    local.get 0
-    i32.load
+    (local i32)
+    (local i32)
+    (local i32)
+    (local i32)
+    global.get 2
     local.set 1
-    i32.const 0
-    local.get 0
-    i32.const 8
-    i32.add
-    i32.store
-    i32.const 0
-    local.get 1
-    i32.store offset=4
-    i32.const 1
-    i32.const 0
-    i32.const 1
-    i32.const 8
-    call 0
-    drop
-    i32.const 4
-    call 4
+    global.get 3
     local.set 2
-    local.get 2
-    i32.const 0
-    i32.store
-    local.get 0
-    call 42
-    local.get 2)
-
-  (func $__entryArgEither (param i32 i32) (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    i32.const 0
-    local.set 2
-    i32.const 0
-    local.set 3
-    i32.const 0
-    local.set 5
-    block
-    loop
-    local.get 2
-    local.get 1
-    i32.eq
-    br_if 1
-    local.get 0
-    local.get 2
-    i32.add
-    i32.load8_u
-    local.set 4
-    local.get 4
-    i32.const 192
-    i32.and
-    i32.const 128
-    i32.ne
-    if
-    local.get 4
-    i32.const 237
-    i32.eq
-    if
-    local.get 0
-    local.get 2
-    i32.const 1
-    i32.add
-    i32.add
-    i32.load8_u
-    i32.const 224
-    i32.and
-    i32.const 160
-    i32.eq
-    if
-    i32.const 1
-    local.set 5
-    end
-    end
-    local.get 4
-    i32.const 248
-    i32.and
-    i32.const 240
-    i32.eq
-    if
-    local.get 3
-    i32.const 2
-    i32.add
-    local.set 3
-    else
-    local.get 3
-    i32.const 1
-    i32.add
-    local.set 3
-    end
-    local.get 3
-    i32.const 134217728
-    i32.gt_u
-    br_if 2
-    end
-    local.get 2
-    i32.const 1
-    i32.add
-    local.set 2
-    br 0
-    end
-    end
-    local.get 3
-    i32.const 134217728
-    i32.gt_u
-    if (result i32)
-    i32.const 4
-    call 4
-    local.set 6
-    local.get 6
-    i32.const 18
-    i32.store
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 7
-    local.get 7
-    i32.const 589989748
-    i32.store
-    local.get 7
-    local.get 6
-    i32.store offset=4
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 3
-    i32.store
-    local.get 8
-    local.get 7
-    i32.store offset=4
-    local.get 8
-    else
-    local.get 5
-    if (result i32)
-    i32.const 4
-    call 4
-    local.set 6
-    local.get 6
-    i32.const 19
-    i32.store
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 7
-    local.get 7
-    i32.const 502975519
-    i32.store
-    local.get 7
-    local.get 6
-    i32.store offset=4
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 3
-    i32.store
-    local.get 8
-    local.get 7
-    i32.store offset=4
-    local.get 8
-    else
-    local.get 2
-    i32.const 8
-    i32.add
-    call 4
-    local.set 9
-    local.get 9
-    local.get 2
-    i32.store
-    local.get 9
-    local.get 3
-    i32.store offset=4
-    local.get 9
-    i32.const 8
-    i32.add
-    local.get 0
-    local.get 2
-    call 6
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 4
-    i32.store
-    local.get 8
-    local.get 9
-    i32.store offset=4
-    local.get 8
-    end
-    end)
-
-  (func $__getArgs (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    i32.const 4
-    i32.const 0
-    call 40
-    local.set 8
-    local.get 8
-    i32.const 12
-    i32.store
-    i32.const 12
-    i32.const 16
-    call 1
-    drop
-    i32.const 0
-    i32.load offset=12
-    local.set 0
-    local.get 0
-    i32.const 2
-    i32.ge_u
-    if
-    i32.const 0
-    i32.load offset=16
-    call 4
-    local.set 2
-    local.get 0
-    i32.const 4
-    i32.mul
-    call 4
-    local.set 1
     local.get 1
     local.get 2
-    call 2
-    drop
-    local.get 0
-    local.set 3
-    block
-    loop
-    local.get 3
-    i32.const 1
-    i32.le_u
-    br_if 1
-    local.get 3
-    i32.const 1
-    i32.sub
-    local.set 3
-    local.get 1
-    local.get 3
-    i32.const 4
-    i32.mul
-    i32.add
-    i32.load
-    local.set 4
-    i32.const 0
-    local.set 5
-    block
-    loop
-    local.get 4
-    local.get 5
-    i32.add
-    i32.load8_u
+    i32.eq
+    if
+    local.get 2
     i32.eqz
+    if (result i32)
+    i32.const 16
+    else
+    local.get 2
+    i32.const 1
+    i32.shl
+    end
+    local.set 3
+    local.get 3
+    i32.const 2
+    i32.shl
+    i32.const 0
+    call 7
+    local.set 4
+    global.get 1
+    local.set 5
+    i32.const 0
+    local.set 6
+    block
+    loop
+    local.get 6
+    local.get 1
+    i32.ge_u
     br_if 1
+    local.get 4
+    local.get 6
+    i32.const 2
+    i32.shl
+    i32.add
     local.get 5
+    local.get 6
+    i32.const 2
+    i32.shl
+    i32.add
+    i32.load
+    i32.store
+    local.get 6
     i32.const 1
     i32.add
-    local.set 5
+    local.set 6
     br 0
     end
     end
-    local.get 4
     local.get 5
-    call 36
-    local.set 6
-    local.get 6
-    i32.load
-    i32.const 3
-    i32.eq
     if
-    local.get 6
-    return
-    end
-    local.get 6
-    i32.load offset=4
-    local.set 7
-    local.get 6
+    local.get 5
     call 5
-    i32.const 12
-    i32.const 2
-    call 40
-    local.set 9
-    local.get 9
-    i32.const 13
-    i32.store
-    local.get 9
-    local.get 7
-    i32.store offset=4
-    local.get 9
-    local.get 8
-    i32.store offset=8
-    local.get 9
-    local.set 8
-    br 0
     end
-    end
-    end
-    i32.const 8
-    i32.const 1
-    call 40
-    local.set 6
-    local.get 6
-    i32.const 4
-    i32.store
-    local.get 6
-    local.get 8
-    i32.store offset=4
-    local.get 6)
-
-  (func $__stdinReadAll (result i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    (local i32)
-    i32.const 4096
-    local.set 1
-    local.get 1
-    call 4
-    local.set 0
-    i32.const 0
-    local.set 2
-    block
-    loop
-    local.get 1
-    local.get 2
-    i32.sub
-    local.set 3
+    local.get 4
+    global.set 1
     local.get 3
-    i32.const 4096
-    i32.lt_u
-    if
+    global.set 3
+    end
+    global.get 1
     local.get 1
     i32.const 2
-    i32.mul
-    local.set 5
-    local.get 5
-    call 4
-    local.set 4
-    local.get 4
+    i32.shl
+    i32.add
     local.get 0
-    local.get 2
-    call 6
-    local.get 4
-    local.set 0
-    local.get 5
-    local.set 1
+    i32.store
     local.get 1
-    local.get 2
-    i32.sub
-    local.set 3
-    end
-    i32.const 16
-    local.get 0
-    local.get 2
-    i32.add
-    i32.store
-    i32.const 20
-    local.get 3
-    i32.store
-    i32.const 0
-    i32.const 16
     i32.const 1
-    i32.const 12
-    call 3
-    drop
-    i32.const 0
-    i32.load offset=12
-    local.set 6
-    local.get 6
-    i32.eqz
-    br_if 1
-    local.get 2
-    local.get 6
     i32.add
-    local.set 2
-    br 0
-    end
-    end
-    local.get 0
-    local.get 2
-    i32.add
-    i32.const 0
-    i32.store8
-    local.get 0
-    local.get 2
-    call 36)
+    global.set 2)
   (func $v_and (param i32 i32) (result i32)
     (local i32)
     (local i32)
@@ -828,14 +423,14 @@
     local.get 1
     local.set 4
     local.get 0
-    call 42
+    call 9
     local.get 4
     end
     else
     block (result i32)
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 2
     local.get 2
     i32.const 2
@@ -843,9 +438,9 @@
     local.get 2
     local.set 4
     local.get 0
-    call 42
+    call 9
     local.get 1
-    call 42
+    call 9
     local.get 4
     end
     end)
@@ -865,7 +460,7 @@
     i32.const 96
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end
     else
@@ -873,7 +468,7 @@
     i32.const 120
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end
     end)
@@ -898,12 +493,12 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     block (result i32)
     local.get 2
     local.set 5
     local.get 0
-    call 42
+    call 9
     local.get 5
     end
     else
@@ -911,31 +506,31 @@
     i32.load offset=4
     local.set 2
     local.get 2
-    call 41
+    call 8
     local.get 1
     i32.load offset=8
     local.set 3
     local.get 3
-    call 41
+    call 8
     local.get 2
     local.tee 6
-    call 41
-    local.get 6
     call 8
+    local.get 6
+    call 6
     local.tee 7
     local.set 1
     local.get 3
     local.set 4
     local.get 4
-    call 41
+    call 8
     local.get 7
-    call 42
+    call 9
     local.get 0
-    call 42
+    call 9
     local.get 3
-    call 42
+    call 9
     local.get 2
-    call 42
+    call 9
     local.get 4
     local.set 0
     br 1
@@ -950,7 +545,7 @@
     (local i32)
     i32.const 12
     i32.const 2
-    call 40
+    call 7
     local.set 0
     local.get 0
     i32.const 7
@@ -958,19 +553,19 @@
     local.get 0
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 50
-    call 47
+    call 15
+    call 12
     i32.store offset=4
     local.get 0
     i32.const 8
     i32.const 1
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 5
@@ -978,7 +573,7 @@
     local.get 1
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 2
     local.get 2
     i32.const 0
@@ -996,21 +591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 51
+    call 11
+    call 16
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1021,21 +616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 52
+    call 11
+    call 17
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1046,21 +641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 53
+    call 11
+    call 18
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1071,21 +666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 54
+    call 11
+    call 19
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1096,21 +691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 55
+    call 11
+    call 20
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1121,21 +716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 56
+    call 11
+    call 21
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1146,21 +741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 57
+    call 11
+    call 22
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1171,21 +766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 58
+    call 11
+    call 23
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1196,21 +791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 59
+    call 11
+    call 24
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1221,21 +816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 60
+    call 11
+    call 25
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1246,21 +841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 61
+    call 11
+    call 26
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1271,21 +866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 62
+    call 11
+    call 27
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1296,21 +891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 63
+    call 11
+    call 28
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1321,21 +916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 64
+    call 11
+    call 29
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1346,21 +941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 65
+    call 11
+    call 30
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1371,21 +966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 66
+    call 11
+    call 31
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1396,21 +991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 67
+    call 11
+    call 32
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1421,21 +1016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 68
+    call 11
+    call 33
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1446,21 +1041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 69
+    call 11
+    call 34
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1471,21 +1066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 70
+    call 11
+    call 35
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1496,21 +1091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 71
+    call 11
+    call 36
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1521,21 +1116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 72
+    call 11
+    call 37
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1546,21 +1141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 73
+    call 11
+    call 38
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1571,21 +1166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 74
+    call 11
+    call 39
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1596,21 +1191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 75
+    call 11
+    call 40
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1621,21 +1216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 76
+    call 11
+    call 41
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1646,21 +1241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 77
+    call 11
+    call 42
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1671,21 +1266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 78
+    call 11
+    call 43
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1696,21 +1291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 79
+    call 11
+    call 44
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1721,21 +1316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 80
+    call 11
+    call 45
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1746,21 +1341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
+    call 11
     call 46
-    call 81
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1771,21 +1366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 82
+    call 11
+    call 47
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1796,21 +1391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 83
+    call 11
+    call 48
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1821,21 +1416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 84
+    call 11
+    call 49
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1846,21 +1441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 85
+    call 11
+    call 50
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1871,21 +1466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 86
+    call 11
+    call 51
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1896,21 +1491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 87
+    call 11
+    call 52
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1921,21 +1516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 88
+    call 11
+    call 53
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1946,21 +1541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 89
+    call 11
+    call 54
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1971,21 +1566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 90
+    call 11
+    call 55
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -1996,21 +1591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 91
+    call 11
+    call 56
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2021,21 +1616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 92
+    call 11
+    call 57
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2046,21 +1641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 93
+    call 11
+    call 58
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2071,21 +1666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 94
+    call 11
+    call 59
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2096,21 +1691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 95
+    call 11
+    call 60
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2121,21 +1716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 96
+    call 11
+    call 61
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2146,21 +1741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 97
+    call 11
+    call 62
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2171,21 +1766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 98
+    call 11
+    call 63
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2196,21 +1791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 99
+    call 11
+    call 64
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2221,21 +1816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 100
+    call 11
+    call 65
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2246,21 +1841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 101
+    call 11
+    call 66
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2271,21 +1866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 102
+    call 11
+    call 67
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2296,21 +1891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 103
+    call 11
+    call 68
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2321,21 +1916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 104
+    call 11
+    call 69
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2346,21 +1941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 105
+    call 11
+    call 70
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2371,21 +1966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 106
+    call 11
+    call 71
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2396,21 +1991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 107
+    call 11
+    call 72
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2421,21 +2016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 108
+    call 11
+    call 73
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2446,21 +2041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 109
+    call 11
+    call 74
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2471,21 +2066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 110
+    call 11
+    call 75
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2496,21 +2091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 111
+    call 11
+    call 76
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2521,21 +2116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 112
+    call 11
+    call 77
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2546,21 +2141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 113
+    call 11
+    call 78
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2571,21 +2166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 114
+    call 11
+    call 79
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2596,21 +2191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 115
+    call 11
+    call 80
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2621,21 +2216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 116
+    call 11
+    call 81
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2646,21 +2241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 117
+    call 11
+    call 82
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2671,21 +2266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 118
+    call 11
+    call 83
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2696,21 +2291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 119
+    call 11
+    call 84
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2721,21 +2316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 120
+    call 11
+    call 85
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2746,21 +2341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 121
+    call 11
+    call 86
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2771,21 +2366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 122
+    call 11
+    call 87
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2796,21 +2391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 123
+    call 11
+    call 88
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2821,21 +2416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 124
+    call 11
+    call 89
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2846,21 +2441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 125
+    call 11
+    call 90
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2871,21 +2466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 126
+    call 11
+    call 91
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2896,21 +2491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 127
+    call 11
+    call 92
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2921,21 +2516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 128
+    call 11
+    call 93
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2946,21 +2541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 129
+    call 11
+    call 94
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2971,21 +2566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 130
+    call 11
+    call 95
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -2996,21 +2591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 131
+    call 11
+    call 96
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3021,21 +2616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 132
+    call 11
+    call 97
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3046,21 +2641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 133
+    call 11
+    call 98
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3071,21 +2666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 134
+    call 11
+    call 99
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3096,21 +2691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 135
+    call 11
+    call 100
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3121,21 +2716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 136
+    call 11
+    call 101
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3146,21 +2741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 137
+    call 11
+    call 102
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3171,21 +2766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 138
+    call 11
+    call 103
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3196,21 +2791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 139
+    call 11
+    call 104
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3221,21 +2816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 140
+    call 11
+    call 105
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3246,21 +2841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 141
+    call 11
+    call 106
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3271,21 +2866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 142
+    call 11
+    call 107
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3296,21 +2891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 143
+    call 11
+    call 108
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3321,21 +2916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 144
+    call 11
+    call 109
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3346,21 +2941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 145
+    call 11
+    call 110
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3371,21 +2966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 146
+    call 11
+    call 111
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3396,21 +2991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 147
+    call 11
+    call 112
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3421,21 +3016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 148
+    call 11
+    call 113
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3446,21 +3041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 149
+    call 11
+    call 114
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3471,21 +3066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 150
+    call 11
+    call 115
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3496,21 +3091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 151
+    call 11
+    call 116
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3521,21 +3116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 152
+    call 11
+    call 117
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3546,21 +3141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 153
+    call 11
+    call 118
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3571,21 +3166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 154
+    call 11
+    call 119
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3596,21 +3191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 155
+    call 11
+    call 120
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3621,21 +3216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 156
+    call 11
+    call 121
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3646,21 +3241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 157
+    call 11
+    call 122
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3671,21 +3266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 158
+    call 11
+    call 123
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3696,21 +3291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 159
+    call 11
+    call 124
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3721,21 +3316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 160
+    call 11
+    call 125
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3746,21 +3341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 161
+    call 11
+    call 126
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3771,21 +3366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 162
+    call 11
+    call 127
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3796,21 +3391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 163
+    call 11
+    call 128
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3821,21 +3416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 164
+    call 11
+    call 129
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3846,21 +3441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 165
+    call 11
+    call 130
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3871,21 +3466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 166
+    call 11
+    call 131
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3896,21 +3491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 167
+    call 11
+    call 132
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3921,21 +3516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 168
+    call 11
+    call 133
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3946,21 +3541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 169
+    call 11
+    call 134
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3971,21 +3566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 170
+    call 11
+    call 135
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -3996,21 +3591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 171
+    call 11
+    call 136
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4021,21 +3616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 172
+    call 11
+    call 137
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4046,21 +3641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 173
+    call 11
+    call 138
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4071,21 +3666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 174
+    call 11
+    call 139
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4096,21 +3691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 175
+    call 11
+    call 140
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4121,21 +3716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 176
+    call 11
+    call 141
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4146,21 +3741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 177
+    call 11
+    call 142
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4171,21 +3766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 178
+    call 11
+    call 143
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4196,21 +3791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 179
+    call 11
+    call 144
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4221,21 +3816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 180
+    call 11
+    call 145
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4246,21 +3841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 181
+    call 11
+    call 146
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4271,21 +3866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 182
+    call 11
+    call 147
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4296,21 +3891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 183
+    call 11
+    call 148
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4321,21 +3916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 184
+    call 11
+    call 149
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4346,21 +3941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 185
+    call 11
+    call 150
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4371,21 +3966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 186
+    call 11
+    call 151
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4396,21 +3991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 187
+    call 11
+    call 152
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4421,21 +4016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 188
+    call 11
+    call 153
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4446,21 +4041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 189
+    call 11
+    call 154
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4471,21 +4066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 190
+    call 11
+    call 155
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4496,21 +4091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 191
+    call 11
+    call 156
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4521,21 +4116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 192
+    call 11
+    call 157
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4546,21 +4141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 193
+    call 11
+    call 158
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4571,21 +4166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 194
+    call 11
+    call 159
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4596,21 +4191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 195
+    call 11
+    call 160
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4621,21 +4216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 196
+    call 11
+    call 161
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4646,21 +4241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 197
+    call 11
+    call 162
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4671,21 +4266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 198
+    call 11
+    call 163
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4696,21 +4291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 199
+    call 11
+    call 164
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4721,21 +4316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 200
+    call 11
+    call 165
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4746,21 +4341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 201
+    call 11
+    call 166
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4771,21 +4366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 202
+    call 11
+    call 167
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4796,21 +4391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 203
+    call 11
+    call 168
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4821,21 +4416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 204
+    call 11
+    call 169
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4846,21 +4441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 205
+    call 11
+    call 170
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4871,21 +4466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 206
+    call 11
+    call 171
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4896,21 +4491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 207
+    call 11
+    call 172
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4921,21 +4516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 208
+    call 11
+    call 173
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4946,21 +4541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 209
+    call 11
+    call 174
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4971,21 +4566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 210
+    call 11
+    call 175
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -4996,21 +4591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 211
+    call 11
+    call 176
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5021,21 +4616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 212
+    call 11
+    call 177
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5046,21 +4641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 213
+    call 11
+    call 178
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5071,21 +4666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 214
+    call 11
+    call 179
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5096,21 +4691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 215
+    call 11
+    call 180
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5121,21 +4716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 216
+    call 11
+    call 181
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5146,21 +4741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 217
+    call 11
+    call 182
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5171,21 +4766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 218
+    call 11
+    call 183
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5196,21 +4791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 219
+    call 11
+    call 184
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5221,21 +4816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 220
+    call 11
+    call 185
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5246,21 +4841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 221
+    call 11
+    call 186
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5271,21 +4866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 222
+    call 11
+    call 187
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5296,21 +4891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 223
+    call 11
+    call 188
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5321,21 +4916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 224
+    call 11
+    call 189
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5346,21 +4941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 225
+    call 11
+    call 190
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5371,21 +4966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 226
+    call 11
+    call 191
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5396,21 +4991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 227
+    call 11
+    call 192
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5421,21 +5016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 228
+    call 11
+    call 193
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5446,21 +5041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 229
+    call 11
+    call 194
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5471,21 +5066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 230
+    call 11
+    call 195
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5496,21 +5091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 231
+    call 11
+    call 196
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5521,21 +5116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 232
+    call 11
+    call 197
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5546,21 +5141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 233
+    call 11
+    call 198
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5571,21 +5166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 234
+    call 11
+    call 199
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5596,21 +5191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 235
+    call 11
+    call 200
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5621,21 +5216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 236
+    call 11
+    call 201
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5646,21 +5241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 237
+    call 11
+    call 202
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5671,21 +5266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 238
+    call 11
+    call 203
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5696,21 +5291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 239
+    call 11
+    call 204
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5721,21 +5316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 240
+    call 11
+    call 205
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5746,21 +5341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 241
+    call 11
+    call 206
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5771,21 +5366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 242
+    call 11
+    call 207
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5796,21 +5391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 243
+    call 11
+    call 208
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5821,21 +5416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 244
+    call 11
+    call 209
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5846,21 +5441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 245
+    call 11
+    call 210
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5871,21 +5466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 246
+    call 11
+    call 211
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5896,21 +5491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 247
+    call 11
+    call 212
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5921,21 +5516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 248
+    call 11
+    call 213
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5946,21 +5541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 249
+    call 11
+    call 214
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5971,21 +5566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 250
+    call 11
+    call 215
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -5996,21 +5591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 251
+    call 11
+    call 216
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6021,21 +5616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 252
+    call 11
+    call 217
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6046,21 +5641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 253
+    call 11
+    call 218
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6071,21 +5666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 254
+    call 11
+    call 219
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6096,21 +5691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 255
+    call 11
+    call 220
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6121,21 +5716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 256
+    call 11
+    call 221
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6146,21 +5741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 257
+    call 11
+    call 222
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6171,21 +5766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 258
+    call 11
+    call 223
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6196,21 +5791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 259
+    call 11
+    call 224
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6221,21 +5816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 260
+    call 11
+    call 225
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6246,21 +5841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 261
+    call 11
+    call 226
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6271,21 +5866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 262
+    call 11
+    call 227
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6296,21 +5891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 263
+    call 11
+    call 228
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6321,21 +5916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 264
+    call 11
+    call 229
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6346,21 +5941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 265
+    call 11
+    call 230
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6371,21 +5966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 266
+    call 11
+    call 231
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6396,21 +5991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 267
+    call 11
+    call 232
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6421,21 +6016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 268
+    call 11
+    call 233
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6446,21 +6041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 269
+    call 11
+    call 234
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6471,21 +6066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 270
+    call 11
+    call 235
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6496,21 +6091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 271
+    call 11
+    call 236
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6521,21 +6116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 272
+    call 11
+    call 237
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6546,21 +6141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 273
+    call 11
+    call 238
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6571,21 +6166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 274
+    call 11
+    call 239
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6596,21 +6191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 275
+    call 11
+    call 240
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6621,21 +6216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 276
+    call 11
+    call 241
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6646,21 +6241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 277
+    call 11
+    call 242
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6671,21 +6266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 278
+    call 11
+    call 243
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6696,21 +6291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 279
+    call 11
+    call 244
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6721,21 +6316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 280
+    call 11
+    call 245
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6746,21 +6341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 281
+    call 11
+    call 246
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6771,21 +6366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 282
+    call 11
+    call 247
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6796,21 +6391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 283
+    call 11
+    call 248
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6821,21 +6416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 284
+    call 11
+    call 249
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6846,21 +6441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 285
+    call 11
+    call 250
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6871,21 +6466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 286
+    call 11
+    call 251
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6896,21 +6491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 287
+    call 11
+    call 252
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6921,21 +6516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 288
+    call 11
+    call 253
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6946,21 +6541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 289
+    call 11
+    call 254
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6971,21 +6566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 290
+    call 11
+    call 255
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -6996,21 +6591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 291
+    call 11
+    call 256
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7021,21 +6616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 292
+    call 11
+    call 257
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7046,21 +6641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 293
+    call 11
+    call 258
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7071,21 +6666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 294
+    call 11
+    call 259
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7096,21 +6691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 295
+    call 11
+    call 260
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7121,21 +6716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 296
+    call 11
+    call 261
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7146,21 +6741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 297
+    call 11
+    call 262
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7171,21 +6766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 298
+    call 11
+    call 263
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7196,21 +6791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 299
+    call 11
+    call 264
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7221,21 +6816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 300
+    call 11
+    call 265
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7246,21 +6841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 301
+    call 11
+    call 266
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7271,21 +6866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 302
+    call 11
+    call 267
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7296,21 +6891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 303
+    call 11
+    call 268
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7321,21 +6916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 304
+    call 11
+    call 269
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7346,21 +6941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 305
+    call 11
+    call 270
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7371,21 +6966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 306
+    call 11
+    call 271
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7396,21 +6991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 307
+    call 11
+    call 272
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7421,21 +7016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 308
+    call 11
+    call 273
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7446,21 +7041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 309
+    call 11
+    call 274
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7471,21 +7066,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 310
+    call 11
+    call 275
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7496,21 +7091,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 311
+    call 11
+    call 276
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7521,21 +7116,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 312
+    call 11
+    call 277
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7546,21 +7141,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 313
+    call 11
+    call 278
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7571,21 +7166,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 314
+    call 11
+    call 279
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7596,21 +7191,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 315
+    call 11
+    call 280
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7621,21 +7216,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 316
+    call 11
+    call 281
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7646,21 +7241,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 317
+    call 11
+    call 282
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7671,21 +7266,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 318
+    call 11
+    call 283
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7696,21 +7291,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 319
+    call 11
+    call 284
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7721,21 +7316,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 320
+    call 11
+    call 285
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7746,21 +7341,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 321
+    call 11
+    call 286
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7771,21 +7366,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 322
+    call 11
+    call 287
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7796,21 +7391,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 323
+    call 11
+    call 288
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7821,21 +7416,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 324
+    call 11
+    call 289
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7846,21 +7441,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 325
+    call 11
+    call 290
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7871,21 +7466,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 326
+    call 11
+    call 291
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7896,21 +7491,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 327
+    call 11
+    call 292
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7921,21 +7516,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 328
+    call 11
+    call 293
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7946,21 +7541,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 329
+    call 11
+    call 294
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7971,21 +7566,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 330
+    call 11
+    call 295
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -7996,21 +7591,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 331
+    call 11
+    call 296
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8021,21 +7616,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 332
+    call 11
+    call 297
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8046,21 +7641,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 333
+    call 11
+    call 298
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8071,21 +7666,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 334
+    call 11
+    call 299
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8096,21 +7691,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 335
+    call 11
+    call 300
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8121,21 +7716,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 336
+    call 11
+    call 301
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8146,21 +7741,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 337
+    call 11
+    call 302
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8171,21 +7766,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 338
+    call 11
+    call 303
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8196,21 +7791,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 339
+    call 11
+    call 304
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8221,21 +7816,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 340
+    call 11
+    call 305
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8246,21 +7841,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 341
+    call 11
+    call 306
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8271,21 +7866,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 342
+    call 11
+    call 307
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8296,21 +7891,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 343
+    call 11
+    call 308
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8321,21 +7916,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 344
+    call 11
+    call 309
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8346,21 +7941,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 345
+    call 11
+    call 310
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8371,21 +7966,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 346
+    call 11
+    call 311
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8396,21 +7991,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 347
+    call 11
+    call 312
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8421,21 +8016,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 348
+    call 11
+    call 313
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8446,21 +8041,21 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
-    call 349
+    call 11
+    call 314
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
@@ -8471,25 +8066,25 @@
     block (result i32)
     local.get 0
     local.tee 3
-    call 41
+    call 8
     local.get 3
     i32.const 4
     i32.const 0
-    call 40
+    call 7
     local.set 1
     local.get 1
     i32.const 1
     i32.store
     local.get 1
-    call 46
+    call 11
     local.set 2
     local.get 0
-    call 42
+    call 9
     local.get 2
     end)
 
   (func $_start
-    call 49
-    call 48
+    call 14
+    call 13
     drop)
 )
