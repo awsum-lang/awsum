@@ -21,7 +21,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -66,7 +65,6 @@ const v__apply_countWithBox = (v__k, v__x) => {
                 const v_e = __s[1];
                 const __t0 = v__pk_25;
                 const __t1 = (v__x[0] = 3, v__x[1] = v_e, v__x);
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -80,7 +78,6 @@ const v__apply_countWithBox = (v__k, v__x) => {
                       const v_f = __s[1];
                       const __t0 = v__pk_25;
                       const __t1 = (v__x[0] = 4, v__x[1] = (v__apply1)(v_f, v_v), v__x);
-                      v__k = null;
                       v__k = __t0;
                       v__x = __t1;
                       continue;
@@ -117,9 +114,6 @@ const v__cps_countWithBox = (v_b, v_n, v__k) => {
                 const __t0 = v_b;
                 const __t1 = v_m;
                 const __t2 = [25, v__k, v_b];
-                v__k = null;
-                v_n = null;
-                v_b = null;
                 v_b = __t0;
                 v_n = __t1;
                 v__k = __t2;

@@ -196,8 +196,6 @@
     unbox.any [System.Runtime]System.Int32
     pop
     ldloc.2
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   }
@@ -516,8 +514,6 @@
     ldloc.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -569,8 +565,6 @@
     ldarg.1
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 1
     starg.s 1
     starg.s 0
     br IL_tco_loop

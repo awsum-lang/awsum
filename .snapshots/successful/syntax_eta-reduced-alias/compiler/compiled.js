@@ -73,7 +73,6 @@ const v__apply__lift_1 = (v__k, v__x) => {
           const v___f0 = __s[2];
           const __t0 = v__pk_29;
           const __t1 = (v__k[0] = 7, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -101,7 +100,6 @@ const v__cps__lift_1 = (v___input, v__k) => {
           const v___f1 = __s[2];
           const __t0 = v___f1;
           const __t1 = (v___input[0] = 29, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-          v__k = null;
           v___input = __t0;
           v__k = __t1;
           continue;
@@ -136,7 +134,6 @@ const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
           const v_s = __s[2];
           const __t0 = v__pk_31;
           const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
-          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -164,7 +161,6 @@ const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
           const v_next = __s[2];
           const __t0 = v_next;
           const __t1 = (v_io[0] = 31, v_io[1] = v__k, v_io[2] = v_s, v_io);
-          v__k = null;
           v_io = __t0;
           v__k = __t1;
           continue;
@@ -199,7 +195,6 @@ const v__apply__df_andThenIO_3 = (v__k, v__x) => {
           const v_s = __s[2];
           const __t0 = v__pk_33;
           const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
-          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -227,7 +222,6 @@ const v__cps__df_andThenIO_3 = (v_io, v__k) => {
           const v_next = __s[2];
           const __t0 = v_next;
           const __t1 = (v_io[0] = 33, v_io[1] = v__k, v_io[2] = v_s, v_io);
-          v__k = null;
           v_io = __t0;
           v__k = __t1;
           continue;
@@ -261,8 +255,6 @@ const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_
           const v__pk_35 = __s[1];
           const __t0 = v__pk_35;
           const __t1 = (v__df_handleErrorIO_0)(v__x);
-          v__x = null;
-          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -271,8 +263,6 @@ const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_
           const v__pk_36 = __s[1];
           const __t0 = v__pk_36;
           const __t1 = (v__df_handleErrorIO_0)(v__x);
-          v__x = null;
-          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -281,8 +271,6 @@ const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_
           const v__pk_37 = __s[1];
           const __t0 = v__pk_37;
           const __t1 = (v__df_andThenIO_3)(v__x);
-          v__x = null;
-          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -291,8 +279,6 @@ const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_
           const v__pk_38 = __s[1];
           const __t0 = v__pk_38;
           const __t1 = (v__df_andThenIO_3)(v__x);
-          v__x = null;
-          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -301,8 +287,6 @@ const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_
           const v__pk_39 = __s[1];
           const __t0 = v__pk_39;
           const __t1 = (v__lift_1)(v__x);
-          v__x = null;
-          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -311,8 +295,6 @@ const v__apply__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_
           const v__pk_40 = __s[1];
           const __t0 = v__pk_40;
           const __t1 = (v__lift_1)(v__x);
-          v__x = null;
-          v__k = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -337,7 +319,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
                 const v__cap14_0 = __s[1];
                 const __t0 = (v__args[0] = 22, v__args[1] = v__cap14_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -346,7 +327,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
                 const v__cap15_0 = __s[1];
                 const __t0 = (v__args[0] = 23, v__args[1] = v__cap15_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -355,7 +335,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
                 const v__cap16_0 = __s[1];
                 const __t0 = (v__args[0] = 24, v__args[1] = v__cap16_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -364,7 +343,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
                 const v__cap17_0 = __s[1];
                 const __t0 = (v__args[0] = 25, v__args[1] = v__cap17_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -376,7 +354,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
                 const v__cap19_0 = __s[1];
                 const __t0 = (v__args[0] = 26, v__args[1] = v__cap19_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -385,7 +362,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
                 const v__cap20_0 = __s[1];
                 const __t0 = (v__args[0] = 27, v__args[1] = v__cap20_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -398,7 +374,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
           const v_result = __s[2];
           const __t0 = (v__args[0] = 21, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [35, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -408,7 +383,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
           const v_result = __s[2];
           const __t0 = (v__args[0] = 21, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [36, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -418,7 +392,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
           const v_result = __s[2];
           const __t0 = (v__args[0] = 21, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [37, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -428,7 +401,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
           const v_result = __s[2];
           const __t0 = (v__args[0] = 21, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [38, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -438,7 +410,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
           const v___arg = __s[2];
           const __t0 = (v__args[0] = 21, v__args[1] = v___f, v__args[2] = v___arg, v__args);
           const __t1 = [39, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -448,7 +419,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2__df__lam_4_4__df__lam_5_5_
           const v___arg = __s[2];
           const __t0 = (v__args[0] = 21, v__args[1] = v___f, v__args[2] = v___arg, v__args);
           const __t1 = [40, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -483,7 +453,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -493,14 +462,12 @@ const v_runIO = (v_io) => {
         case 8: {
           const v_cont = __s[1];
           const __t0 = (v__apply1)(v_cont, __getArgs());
-          v_io = null;
           v_io = __t0;
           continue;
         }
         case 9: {
           const v_cont = __s[1];
           const __t0 = (v__apply1)(v_cont, __stdinReadAll());
-          v_io = null;
           v_io = __t0;
           continue;
         }

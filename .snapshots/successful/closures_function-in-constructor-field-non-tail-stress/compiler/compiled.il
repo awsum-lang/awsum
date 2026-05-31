@@ -144,8 +144,6 @@
     unbox.any [System.Runtime]System.Int32
     pop
     ldloc.2
-    ldnull
-    starg.s 0
     starg.s 0
     br IL_tco_loop
   }
@@ -272,12 +270,6 @@
     ldarg.0
     stelem.ref
     ldloc.3
-    ldnull
-    starg.s 2
-    ldnull
-    starg.s 1
-    ldnull
-    starg.s 0
     starg.s 2
     starg.s 1
     starg.s 0
@@ -340,8 +332,6 @@
     ldloc.s 4
     stelem.ref
     ldloc.s 5
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop
@@ -378,8 +368,6 @@
     call object AwsumMain::v__apply1(object, object)
     stelem.ref
     ldloc.s 7
-    ldnull
-    starg.s 0
     starg.s 1
     starg.s 0
     br IL_tco_loop

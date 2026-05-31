@@ -132,8 +132,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -417,8 +415,6 @@ L_tarm9:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -475,8 +471,6 @@ L_tarm11:
   iconst_2
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null

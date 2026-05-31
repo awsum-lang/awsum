@@ -20,7 +20,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -65,7 +64,6 @@ const v__apply__scc_handleA_handleB = (v__k, v__x) => {
                 const v__do_e_0 = __s[1];
                 const __t0 = v__pk_29;
                 const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_0, v__x);
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -74,8 +72,6 @@ const v__apply__scc_handleA_handleB = (v__k, v__x) => {
                 const v_rest = __s[1];
                 const __t0 = v__pk_29;
                 const __t1 = __concat("A", v_rest);
-                v__x = null;
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -92,7 +88,6 @@ const v__apply__scc_handleA_handleB = (v__k, v__x) => {
                 const v__do_e_1 = __s[1];
                 const __t0 = v__pk_30;
                 const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_1, v__x);
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -101,8 +96,6 @@ const v__apply__scc_handleA_handleB = (v__k, v__x) => {
                 const v_rest = __s[1];
                 const __t0 = v__pk_30;
                 const __t1 = __concat("B", v_rest);
-                v__x = null;
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -119,7 +112,6 @@ const v__apply__scc_handleA_handleB = (v__k, v__x) => {
                 const v__do_e_2 = __s[1];
                 const __t0 = v__pk_31;
                 const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_2, v__x);
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -128,8 +120,6 @@ const v__apply__scc_handleA_handleB = (v__k, v__x) => {
                 const v_rest = __s[1];
                 const __t0 = v__pk_31;
                 const __t1 = __concat("C", v_rest);
-                v__x = null;
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -155,7 +145,6 @@ const v__cps__scc_handleA_handleB = (v__args, v__k) => {
               case 22: {
                 const __t0 = (v__args[0] = 27, v__args[1] = [23], v__args);
                 const __t1 = [29, v__k];
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -163,7 +152,6 @@ const v__cps__scc_handleA_handleB = (v__args, v__k) => {
               case 23: {
                 const __t0 = (v__args[0] = 27, v__args[1] = v_step, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -171,7 +159,6 @@ const v__cps__scc_handleA_handleB = (v__args, v__k) => {
               case 24: {
                 const __t0 = (v__args[0] = 27, v__args[1] = v_step, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -190,7 +177,6 @@ const v__cps__scc_handleA_handleB = (v__args, v__k) => {
               case 22: {
                 const __t0 = (v__args[0] = 26, v__args[1] = v_step, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -198,7 +184,6 @@ const v__cps__scc_handleA_handleB = (v__args, v__k) => {
               case 23: {
                 const __t0 = (v__args[0] = 26, v__args[1] = [24], v__args);
                 const __t1 = [30, v__k];
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -206,7 +191,6 @@ const v__cps__scc_handleA_handleB = (v__args, v__k) => {
               case 24: {
                 const __t0 = (v__args[0] = 26, v__args[1] = [25], v__args);
                 const __t1 = [31, v__k];
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;

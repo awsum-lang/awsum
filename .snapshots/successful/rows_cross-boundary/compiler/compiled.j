@@ -132,8 +132,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -411,8 +409,6 @@ L_tarm7:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -482,8 +478,6 @@ L_tarm9:
   aload 8
   aastore
   aconst_null
-  astore_0
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -502,10 +496,6 @@ L_tarm10:
   invokestatic AwsumMain/v_dispatchInner(Ljava/lang/Object;)Ljava/lang/Object;
   aload 8
   invokestatic AwsumMain/__concat(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_1
-  aconst_null
-  astore_0
   aconst_null
   astore 8
   aconst_null
@@ -868,8 +858,6 @@ L_tarm26:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -926,8 +914,6 @@ L_tarm28:
   iconst_2
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null
@@ -1066,8 +1052,6 @@ L_tarm32:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -1134,8 +1118,6 @@ L_tarm34:
   iconst_2
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null

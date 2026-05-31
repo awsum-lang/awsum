@@ -95,8 +95,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -116,8 +114,6 @@ L_tarm2:
   invokestatic AwsumMain/__getArgs()Ljava/lang/Object;
   invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null
-  astore_0
-  aconst_null
   astore_3
   astore_0
   goto L_tco0
@@ -131,8 +127,6 @@ L_tarm3:
   aload_3
   invokestatic AwsumMain/__stdinReadAll()Ljava/lang/Object;
   invokestatic AwsumMain/v__apply1(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-  aconst_null
-  astore_0
   aconst_null
   astore_3
   astore_0
@@ -311,8 +305,6 @@ L_tarm6:
   aload 4
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -439,8 +431,6 @@ L_tarm10:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -523,8 +513,6 @@ L_tco11:
   aastore
   aload_1
   aconst_null
-  astore_1
-  aconst_null
   astore 8
   aconst_null
   astore 5
@@ -554,8 +542,6 @@ L_tarm14:
   aload 5
   aastore
   aload_1
-  aconst_null
-  astore_1
   aconst_null
   astore 8
   aconst_null
@@ -604,8 +590,6 @@ L_tarm12:
   aload_1
   aastore
   aconst_null
-  astore_1
-  aconst_null
   astore 5
   aconst_null
   astore 4
@@ -647,8 +631,6 @@ L_tarm13:
   iconst_1
   aload_1
   aastore
-  aconst_null
-  astore_1
   aconst_null
   astore 5
   aconst_null

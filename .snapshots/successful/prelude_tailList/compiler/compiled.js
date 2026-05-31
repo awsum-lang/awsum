@@ -36,7 +36,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -82,7 +81,6 @@ const v__apply_showList = (v__k, v__x) => {
                 const v__do_e_1 = __s[1];
                 const __t0 = v__pk_15;
                 const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_1, v__x);
-                v__k = null;
                 v__k = __t0;
                 v__x = __t1;
                 continue;
@@ -96,7 +94,6 @@ const v__apply_showList = (v__k, v__x) => {
                       const v__do_e_0 = __s[1];
                       const __t0 = v__pk_15;
                       const __t1 = (v__x[0] = 3, v__x[1] = v__do_e_0, v__x);
-                      v__k = null;
                       v__k = __t0;
                       v__x = __t1;
                       continue;
@@ -105,8 +102,6 @@ const v__apply_showList = (v__k, v__x) => {
                       const v_hc = __s[1];
                       const __t0 = v__pk_15;
                       const __t1 = __concat(v_hc, v_rest);
-                      v__x = null;
-                      v__k = null;
                       v__k = __t0;
                       v__x = __t1;
                       continue;
@@ -135,7 +130,6 @@ const v__cps_showList = (v_xs, v__k) => {
           const v_t = __s[2];
           const __t0 = v_t;
           const __t1 = (v_xs[0] = 15, v_xs[1] = v__k, v_xs[2] = v_h, v_xs);
-          v__k = null;
           v_xs = __t0;
           v__k = __t1;
           continue;
@@ -193,7 +187,6 @@ const v__apply__lift_13 = (v__k, v__x) => {
           const v___f0 = __s[2];
           const __t0 = v__pk_17;
           const __t1 = (v__k[0] = 13, v__k[1] = v___f0, v__k[2] = v__x, v__k);
-          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -216,7 +209,6 @@ const v__cps__lift_13 = (v___input, v__k) => {
           const v___f1 = __s[2];
           const __t0 = v___f1;
           const __t1 = (v___input[0] = 17, v___input[1] = v__k, v___input[2] = v___f0, v___input);
-          v__k = null;
           v___input = __t0;
           v__k = __t1;
           continue;

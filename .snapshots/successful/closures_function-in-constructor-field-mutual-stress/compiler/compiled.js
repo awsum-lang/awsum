@@ -21,7 +21,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -48,7 +47,6 @@ const v__scc__apply1__lam_12_a_b = (v__args) => {
             switch (__s[0]) {
               case 23: {
                 const __t0 = [25, v__arg0];
-                v__args = null;
                 v__args = __t0;
                 continue;
               }
@@ -85,7 +83,6 @@ const v__scc__apply1__lam_12_a_b = (v__args) => {
                           case 22: {
                             const v_f = __s[1];
                             const __t0 = [24, v_f, v_m];
-                            v__args = null;
                             v__args = __t0;
                             continue;
                           }

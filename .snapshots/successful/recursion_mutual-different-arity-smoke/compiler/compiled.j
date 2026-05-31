@@ -74,8 +74,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -193,8 +191,6 @@ L_tarm4:
   aastore
   aastore
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -241,8 +237,6 @@ L_tarm5:
   iconst_0
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  aconst_null
-  astore_0
   aconst_null
   astore_3
   astore_0

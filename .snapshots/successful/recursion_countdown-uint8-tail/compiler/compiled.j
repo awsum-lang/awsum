@@ -208,8 +208,6 @@ L_tarm1:
   istore 6
   aload 4
   aconst_null
-  astore_0
-  aconst_null
   astore 4
   aconst_null
   astore_3
@@ -402,10 +400,6 @@ L_tarm6:
   astore 12
   aload 6
   aload 12
-  aconst_null
-  astore_1
-  aconst_null
-  astore_0
   aconst_null
   astore 12
   aconst_null

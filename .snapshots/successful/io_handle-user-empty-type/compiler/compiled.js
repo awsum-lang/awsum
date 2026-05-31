@@ -37,7 +37,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
                 const v__cap23_0 = __s[1];
                 const __t0 = (v__args[0] = 26, v__args[1] = v__cap23_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -46,7 +45,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
                 const v__cap24_0 = __s[1];
                 const __t0 = (v__args[0] = 27, v__args[1] = v__cap24_0, v__args[2] = v__arg0, v__args);
                 const __t1 = v__k;
-                v__k = null;
                 v__args = __t0;
                 v__k = __t1;
                 continue;
@@ -59,7 +57,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
           const v_result = __s[2];
           const __t0 = (v__args[0] = 25, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [31, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -69,7 +66,6 @@ const v__cps__scc__apply1__df__lam_10_1__df__lam_11_2 = (v__args, v__k) => {
           const v_result = __s[2];
           const __t0 = (v__args[0] = 25, v__args[1] = v_cont, v__args[2] = v_result, v__args);
           const __t1 = [32, v__k];
-          v__k = null;
           v__args = __t0;
           v__k = __t1;
           continue;
@@ -104,7 +100,6 @@ const v_runIO = (v_io) => {
             switch (__s[0]) {
               case 0: {
                 const __t0 = v_next;
-                v_io = null;
                 v_io = __t0;
                 continue;
               }
@@ -114,14 +109,12 @@ const v_runIO = (v_io) => {
         case 8: {
           const v_cont = __s[1];
           const __t0 = (v__apply1)(v_cont, __getArgs());
-          v_io = null;
           v_io = __t0;
           continue;
         }
         case 9: {
           const v_cont = __s[1];
           const __t0 = (v__apply1)(v_cont, __stdinReadAll());
-          v_io = null;
           v_io = __t0;
           continue;
         }
@@ -143,7 +136,6 @@ const v__apply__df_handleErrorIO_0 = (v__k, v__x) => {
           const v_s = __s[2];
           const __t0 = v__pk_29;
           const __t1 = (v__k[0] = 7, v__k[1] = v_s, v__k[2] = v__x, v__k);
-          v__x = null;
           v__k = __t0;
           v__x = __t1;
           continue;
@@ -171,7 +163,6 @@ const v__cps__df_handleErrorIO_0 = (v_io, v__k) => {
           const v_next = __s[2];
           const __t0 = v_next;
           const __t1 = (v_io[0] = 29, v_io[1] = v__k, v_io[2] = v_s, v_io);
-          v__k = null;
           v_io = __t0;
           v__k = __t1;
           continue;
