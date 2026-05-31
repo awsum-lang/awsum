@@ -5,11 +5,11 @@ function __entryArgEither(arg){ if (arg.length > 134217728) return [3, [58998974
 function __getArgs(){ const args = process.argv.slice(2); let list = [12]; for (let i = args.length - 1; i >= 0; i--) { const v = __entryArgEither(args[i]); if (v[0] !== 4) return v; list = [13, v[1], list]; } return [4, list]; }
 function __stdinReadAll(){ return __entryArgEither(require('fs').readFileSync(0).toString('utf-8')); }
 
-const v__lam_12 = (v__u) => {
+const v__lam_15 = (v__u) => {
     return [7, "b", [5, [0]]];
 };
 
-const v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3 = (v__args, v__k) => {
+const v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3 = (v__args, v__k) => {
   while (true) {
     {
       const __s = v__args;
@@ -130,12 +130,12 @@ const v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__l
   }
 };
 
-const v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3 = (v__args) => {
-    return (v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3)(v__args, [29]);
+const v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3 = (v__args) => {
+    return (v__cps__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3)(v__args, [29]);
 };
 
 const v__apply1 = (v__cl, v__arg0) => {
-    return (v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_14__lift_15__lift_2__lift_3)([16, v__cl, v__arg0]);
+    return (v__scc__apply1__df__lam_4_1__df__lam_5_2__lift_17__lift_18__lift_2__lift_3)([16, v__cl, v__arg0]);
 };
 
 const v_runIO = (v_io) => {
@@ -178,7 +178,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__apply__lift_13 = (v__k, v__x) => {
+const v__apply__lift_16 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -200,18 +200,18 @@ const v__apply__lift_13 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_13 = (v___input, v__k) => {
+const v__cps__lift_16 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 5: {
           const v___f0 = __s[1];
-          return (v__apply__lift_13)(v__k, [5, v___f0]);
+          return (v__apply__lift_16)(v__k, [5, v___f0]);
         }
         case 6: {
           const v___f0 = __s[1];
-          return (v__apply__lift_13)(v__k, [6, v___f0]);
+          return (v__apply__lift_16)(v__k, [6, v___f0]);
         }
         case 7: {
           const v___f0 = __s[1];
@@ -224,19 +224,19 @@ const v__cps__lift_13 = (v___input, v__k) => {
         }
         case 8: {
           const v___f0 = __s[1];
-          return (v__apply__lift_13)(v__k, [8, [12, v___f0]]);
+          return (v__apply__lift_16)(v__k, [8, [12, v___f0]]);
         }
         case 9: {
           const v___f0 = __s[1];
-          return (v__apply__lift_13)(v__k, [9, [13, v___f0]]);
+          return (v__apply__lift_16)(v__k, [9, [13, v___f0]]);
         }
       }
     }
   }
 };
 
-const v__lift_13 = (v___input) => {
-    return (v__cps__lift_13)(v___input, [25]);
+const v__lift_16 = (v___input) => {
+    return (v__cps__lift_16)(v___input, [25]);
 };
 
 const v__apply__lift_1 = (v__k, v__x) => {
@@ -329,7 +329,7 @@ const v__cps__df_andThenIO_0 = (v_io, v__k) => {
       switch (__s[0]) {
         case 5: {
           const v_a = __s[1];
-          return (v__apply__df_andThenIO_0)(v__k, (v__lift_1)((v__lam_12)(v_a)));
+          return (v__apply__df_andThenIO_0)(v__k, (v__lift_1)((v__lam_15)(v_a)));
         }
         case 6: {
           const v_e = __s[1];
@@ -361,7 +361,7 @@ const v__df_andThenIO_0 = (v_io) => {
     return (v__cps__df_andThenIO_0)(v_io, [27]);
 };
 
-const main = (v__df_andThenIO_0)((v__lift_13)([7, "a", [5, [0]]]));
+const main = (v__df_andThenIO_0)((v__lift_16)([7, "a", [5, [0]]]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

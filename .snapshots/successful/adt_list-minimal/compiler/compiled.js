@@ -31,7 +31,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_13 = (v_res) => {
+const v__let_16 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -144,7 +144,7 @@ const v_show = (v_xs) => {
     return (v__scc_show_showCons)([14, v_xs]);
 };
 
-const v__apply__lift_12 = (v__k, v__x) => {
+const v__apply__lift_15 = (v__k, v__x) => {
   while (true) {
     {
       const __s = v__k;
@@ -166,13 +166,13 @@ const v__apply__lift_12 = (v__k, v__x) => {
   }
 };
 
-const v__cps__lift_12 = (v___input, v__k) => {
+const v__cps__lift_15 = (v___input, v__k) => {
   while (true) {
     {
       const __s = v___input;
       switch (__s[0]) {
         case 12: {
-          return (v__apply__lift_12)(v__k, [12]);
+          return (v__apply__lift_15)(v__k, [12]);
         }
         case 13: {
           const v___f0 = __s[1];
@@ -188,11 +188,11 @@ const v__cps__lift_12 = (v___input, v__k) => {
   }
 };
 
-const v__lift_12 = (v___input) => {
-    return (v__cps__lift_12)(v___input, [16]);
+const v__lift_15 = (v___input) => {
+    return (v__cps__lift_15)(v___input, [16]);
 };
 
-const main = (v__let_13)((v_show)([13, "a", [13, "b", [13, "c", (v__lift_12)([12])]]]));
+const main = (v__let_16)((v_show)([13, "a", [13, "b", [13, "c", (v__lift_15)([12])]]]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

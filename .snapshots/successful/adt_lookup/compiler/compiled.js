@@ -46,7 +46,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__lift_12 = (v___input) => {
+const v__lift_15 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -61,7 +61,7 @@ const v__lift_12 = (v___input) => {
     }
 };
 
-const v__let_13 = (v_res) => {
+const v__let_16 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -77,7 +77,7 @@ const v__let_13 = (v_res) => {
     }
 };
 
-const main = (v__let_13)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)((v__lift_12)([23]))); } } })(__concat((v_unwrap)([22, "hello"]), ", ")));
+const main = (v__let_16)(((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, (v_unwrap)((v__lift_15)([23]))); } } })(__concat((v_unwrap)([22, "hello"]), ", ")));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

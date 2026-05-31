@@ -72,7 +72,7 @@ const v_runIO = (v_io) => {
   }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -178,7 +178,7 @@ const v_countDown = (v_n) => {
     return (v__cps_countDown)(v_n, [19]);
 };
 
-const main = (v__let_12)((v_showResult)((v_countDown)((255 & 0xFF))));
+const main = (v__let_15)((v_showResult)((v_countDown)((255 & 0xFF))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

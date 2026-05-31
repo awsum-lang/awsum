@@ -246,7 +246,7 @@ define internal ptr @v_main() {
   %t4 = inttoptr i64 10 to ptr
   %t5 = getelementptr ptr, ptr %t3, i32 0
   store ptr %t4, ptr %t5
-  %t6 = call ptr @v__lift_12(ptr %t3)
+  %t6 = call ptr @v__lift_15(ptr %t3)
   %t7 = call ptr @v_firstZero(ptr %t6)
   %t8 = call ptr @__showInt32(ptr %t7)
   %t9 = getelementptr ptr, ptr %t0, i32 1
@@ -266,7 +266,7 @@ define internal ptr @v_main() {
   ret ptr %t0
 }
 
-define internal ptr @v__lift_12(ptr %v___input) {
+define internal ptr @v__lift_15(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

@@ -58,7 +58,7 @@ CoreProgram
             )
         , CValDef "viaLambda"
             ( CCall
-                ( CVar "$lam$12" )
+                ( CVar "$lam$15" )
                 [ CVar "n" ]
             )
         , CFunDef "wrap" [ "s" ]
@@ -147,7 +147,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lam$12" [ "i" ]
+        , CFunDef "$lam$15" [ "i" ]
             ( CCall
                 ( CBuiltIn "showInt32" )
                 [ CVar "i" ]

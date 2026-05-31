@@ -512,7 +512,7 @@
     stloc.1
     ldloc.1
     ldstr "answer="
-    call object AwsumMain::v__let_12(object, object)
+    call object AwsumMain::v__let_15(object, object)
   IL_c0:
     ret
   }
@@ -738,7 +738,7 @@
   }
 
 
-  .method private hidebysig static object v__let_12(object,object) cil managed
+  .method private hidebysig static object v__let_15(object,object) cil managed
   {
     .maxstack 5
     .locals init (object[] V_0, object V_1, object V_2, object V_3)

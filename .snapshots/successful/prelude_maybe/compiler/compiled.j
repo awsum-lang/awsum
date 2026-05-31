@@ -236,7 +236,7 @@ L_arm5:
   bipush 10
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_unwrap(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast [Ljava/lang/Object;
   astore 4
@@ -313,12 +313,12 @@ L_join6:
 L_join4:
   astore_0
   aload_0
-  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_16(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 4
   aload_0
@@ -364,7 +364,7 @@ L_join10:
 .end method
 
 
-.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_16(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

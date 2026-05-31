@@ -106,7 +106,7 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CCall
                         ( CBuiltIn "concatString" )
@@ -224,7 +224,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$12" [ "res" ]
+        , CFunDef "$let$15" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

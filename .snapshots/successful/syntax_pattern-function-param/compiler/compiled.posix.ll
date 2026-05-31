@@ -464,11 +464,11 @@ define internal ptr @v_pair() {
 define internal ptr @v_main() {
   %t0 = call ptr @v_triple()
   %t1 = call ptr @v_sumTriple(ptr %t0)
-  %t2 = call ptr @v__let_15(ptr %t1)
+  %t2 = call ptr @v__let_18(ptr %t1)
   ret ptr %t2
 }
 
-define internal ptr @v__let_12(ptr %v_res) {
+define internal ptr @v__let_15(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -528,7 +528,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__lam_13(ptr %v__arg_2) {
+define internal ptr @v__lam_16(ptr %v__arg_2) {
   %t0 = getelementptr ptr, ptr %v__arg_2, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -559,7 +559,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_14(ptr %v_n, ptr %v_m) {
+define internal ptr @v__let_17(ptr %v_n, ptr %v_m) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @__showInt32(ptr %v_n)
   %t1 = call ptr @__concat(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12))
@@ -599,24 +599,24 @@ case.default.5:
 case.join.6:
   %t21 = phi ptr [%t11, %case.end.3.8], [%t20, %case.end.4.16]
   call void @__free_recursive(ptr %t1)
-  %t22 = call ptr @v__let_12(ptr %t21)
+  %t22 = call ptr @v__let_15(ptr %t21)
   call void @__free_recursive(ptr %v_n)
   call void @__free_recursive(ptr %v_m)
   ret ptr %t22
 }
 
-define internal ptr @v__let_15(ptr %v_n) {
+define internal ptr @v__let_18(ptr %v_n) {
   call void @__inc_ref(ptr %v_n)
   %t0 = call ptr @v_pair()
   %t1 = call ptr @v__df_apply_0(ptr %t0)
-  %t2 = call ptr @v__let_14(ptr %v_n, ptr %t1)
+  %t2 = call ptr @v__let_17(ptr %v_n, ptr %t1)
   call void @__free_recursive(ptr %v_n)
   ret ptr %t2
 }
 
 define internal ptr @v__df_apply_0(ptr %v_t) {
   call void @__inc_ref(ptr %v_t)
-  %t0 = call ptr @v__lam_13(ptr %v_t)
+  %t0 = call ptr @v__lam_16(ptr %v_t)
   call void @__free_recursive(ptr %v_t)
   ret ptr %t0
 }

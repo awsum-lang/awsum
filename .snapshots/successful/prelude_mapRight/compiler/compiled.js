@@ -35,7 +35,7 @@ const v_ok = [4, (10|0)];
 
 const v_bad = [3, [22]];
 
-const v__let_12 = (v_msg) => {
+const v__let_15 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -51,15 +51,15 @@ const v__let_12 = (v_msg) => {
     }
 };
 
-const v__let_14 = (v_mappedOk, v_mappedBad) => {
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 22: { return [4, "ok-Err"]; } } })(v___p0); } case 4: { const v_n = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 22: { return __concat("ok-Right ", String(v_n)); } } })(v___p0); } case 4: { const v__m = s[1]; return [4, "bad-Right"]; } } })(v_mappedBad); } } })(v_mappedOk));
+const v__let_17 = (v_mappedOk, v_mappedBad) => {
+    return (v__let_15)(((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 22: { return [4, "ok-Err"]; } } })(v___p0); } case 4: { const v_n = s[1]; return ((s) => { switch(s[0]) { case 3: { const v___p0 = s[1]; return ((s) => { switch(s[0]) { case 22: { return __concat("ok-Right ", String(v_n)); } } })(v___p0); } case 4: { const v__m = s[1]; return [4, "bad-Right"]; } } })(v_mappedBad); } } })(v_mappedOk));
 };
 
-const v__lam_15 = (v_n) => {
+const v__lam_18 = (v_n) => {
     return v_n;
 };
 
-const v__lam_13 = (v_n) => {
+const v__lam_16 = (v_n) => {
     return v_n;
 };
 
@@ -73,14 +73,14 @@ const v__df_mapRight_1 = (v_x) => {
         }
         case 4: {
           const v_a = __s[1];
-          return [4, (v__lam_13)(v_a)];
+          return [4, (v__lam_16)(v_a)];
         }
       }
     }
 };
 
-const v__let_16 = (v_mappedOk) => {
-    return (v__let_14)(v_mappedOk, (v__df_mapRight_1)(v_bad));
+const v__let_19 = (v_mappedOk) => {
+    return (v__let_17)(v_mappedOk, (v__df_mapRight_1)(v_bad));
 };
 
 const v__df_mapRight_0 = (v_x) => {
@@ -93,13 +93,13 @@ const v__df_mapRight_0 = (v_x) => {
         }
         case 4: {
           const v_a = __s[1];
-          return [4, (v__lam_15)(v_a)];
+          return [4, (v__lam_18)(v_a)];
         }
       }
     }
 };
 
-const main = (v__let_16)((v__df_mapRight_0)(v_ok));
+const main = (v__let_19)((v__df_mapRight_0)(v_ok));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

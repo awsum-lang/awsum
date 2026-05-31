@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           awsum
-version:        0.0.4
+version:        0.0.5
 description:    Please see the README on GitHub at <https://github.com/awsum-lang/awsum#readme>
 license:        Apache-2.0
 license-file:   LICENSE

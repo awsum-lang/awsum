@@ -25,13 +25,13 @@ $apply$$lift$1:
   case-pattern    $pk_24                          count=0
   case-pattern    __f0                            count=0
 
-$lam$12:
+$lam$15:
   param           _u                              count=0
 
-$lift$13:
+$lift$16:
   param           __input                         count=1
 
-$cps$$lift$13:
+$cps$$lift$16:
   param           __input                         count=2
   param           $k                              count=4
   case-pattern    __f0                            count=0
@@ -41,7 +41,7 @@ $cps$$lift$13:
   case-pattern    __f0                            count=0
   case-pattern    __f0                            count=0
 
-$apply$$lift$13:
+$apply$$lift$16:
   param           $k                              count=2
   param           $x                              count=1
   case-pattern    $pk_26                          count=0
@@ -66,10 +66,10 @@ $apply$$df$andThenIO$0:
   case-pattern    $pk_28                          count=0
   case-pattern    s                               count=0
 
-$scc$$apply1_$df$$lam$4$1_$df$$lam$5$2_$lift$14_$lift$15_$lift$2_$lift$3:
+$scc$$apply1_$df$$lam$4$1_$df$$lam$5$2_$lift$17_$lift$18_$lift$2_$lift$3:
   param           $args                           count=1
 
-$cps$$scc$$apply1_$df$$lam$4$1_$df$$lam$5$2_$lift$14_$lift$15_$lift$2_$lift$3:
+$cps$$scc$$apply1_$df$$lam$4$1_$df$$lam$5$2_$lift$17_$lift$18_$lift$2_$lift$3:
   param           $args                           count=13
   param           $k                              count=0
   case-pattern    $cl                             count=0

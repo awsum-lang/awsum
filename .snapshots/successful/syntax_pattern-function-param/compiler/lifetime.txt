@@ -21,23 +21,23 @@ sumPair:
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$let$12:
+$let$15:
   param           res                             count=1
   case-pattern    __w0                            count=0
   case-pattern    s                               count=0
 
-$lam$13:
+$lam$16:
   param           $arg_2                          count=1
   case-pattern    a                               count=0
   case-pattern    b                               count=0
 
-$let$14:
+$let$17:
   param           n                               count=1
   param           m                               count=1
   case-pattern    $do_e_3                         count=0
   case-pattern    s0                              count=0
 
-$let$15:
+$let$18:
   param           n                               count=1
 
 $df$apply$0:

@@ -108,7 +108,7 @@ CoreProgram
             )
         , CFunDef "processInput" [ "raw" ]
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CCall
                         ( CVar "opTuple" )
@@ -378,7 +378,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$let$12" [ "res" ]
+        , CFunDef "$let$15" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

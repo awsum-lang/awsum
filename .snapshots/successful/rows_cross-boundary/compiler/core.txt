@@ -48,7 +48,7 @@ CoreProgram
                 , CCon 24
                     [ CCon 2 []
                     , CCall
-                        ( CVar "$lift$12" )
+                        ( CVar "$lift$15" )
                         [ CCon 23 [] ]
                     ]
                 ]
@@ -243,7 +243,7 @@ CoreProgram
                 ( CCall
                     ( CVar "describeMaybe" )
                     [ CCall
-                        ( CVar "$lift$13" )
+                        ( CVar "$lift$16" )
                         [ CVar "defaultJust" ]
                     ]
                 )
@@ -260,7 +260,7 @@ CoreProgram
                         ( CCall
                             ( CVar "describeLst" )
                             [ CCall
-                                ( CVar "$lift$14" )
+                                ( CVar "$lift$17" )
                                 [ CVar "defaultBools" ]
                             ]
                         )
@@ -277,7 +277,7 @@ CoreProgram
                                 ( CCall
                                     ( CVar "describeEither" )
                                     [ CCall
-                                        ( CVar "$lift$15" )
+                                        ( CVar "$lift$18" )
                                         [ CVar "defaultRight" ]
                                     ]
                                 )
@@ -358,17 +358,17 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$16" )
+                ( CVar "$let$19" )
                 [ CVar "summary" ]
             )
-        , CFunDef "$lift$12" [ "__input" ]
+        , CFunDef "$lift$15" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$12" )
+                ( CVar "$cps$$lift$15" )
                 [ CVar "__input"
                 , CCon 27 []
                 ]
             )
-        , CFunDef "$cps$$lift$12"
+        , CFunDef "$cps$$lift$15"
             [ "__input"
             , "$k"
             ]
@@ -379,7 +379,7 @@ CoreProgram
                         ( 23
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$12" )
+                            ( CVar "$apply$$lift$15" )
                             [ CVar "$k"
                             , CCon 23 []
                             ]
@@ -407,7 +407,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$12"
+        , CFunDef "$apply$$lift$15"
             [ "$k"
             , "$x"
             ]
@@ -442,7 +442,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lift$13" [ "__input" ]
+        , CFunDef "$lift$16" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -462,14 +462,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$14" [ "__input" ]
+        , CFunDef "$lift$17" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$14" )
+                ( CVar "$cps$$lift$17" )
                 [ CVar "__input"
                 , CCon 29 []
                 ]
             )
-        , CFunDef "$cps$$lift$14"
+        , CFunDef "$cps$$lift$17"
             [ "__input"
             , "$k"
             ]
@@ -480,7 +480,7 @@ CoreProgram
                         ( 23
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$14" )
+                            ( CVar "$apply$$lift$17" )
                             [ CVar "$k"
                             , CCon 23 []
                             ]
@@ -508,7 +508,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$14"
+        , CFunDef "$apply$$lift$17"
             [ "$k"
             , "$x"
             ]
@@ -544,7 +544,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lift$15" [ "__input" ]
+        , CFunDef "$lift$18" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -561,14 +561,14 @@ CoreProgram
                     , CDrop DropFreeUnchecked "__f0"
                         ( CCon 4
                             [ CCall
-                                ( CVar "$lift$13" )
+                                ( CVar "$lift$16" )
                                 [ CVar "__f0" ]
                             ]
                         )
                     )
                 ]
             )
-        , CFunDef "$let$16" [ "res" ]
+        , CFunDef "$let$19" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

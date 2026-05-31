@@ -16,7 +16,7 @@
   (data (i32.const 84) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\02\00\00\00\f0\9f\92\a9")
   (data (i32.const 108) "\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00\02\00\00\00\f0\9f\94\a5")
   (table 2 funcref)
-  (elem (i32.const 0) $v_runIO $v__let_12)
+  (elem (i32.const 0) $v_runIO $v__let_15)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -510,7 +510,7 @@
     local.get 0
     call 13)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

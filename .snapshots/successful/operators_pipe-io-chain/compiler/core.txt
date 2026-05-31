@@ -76,7 +76,7 @@ CoreProgram
                 [ CCall
                     ( CVar "$df$andThenIO$3" )
                     [ CCall
-                        ( CVar "$lift$13" )
+                        ( CVar "$lift$16" )
                         [ CCon 7
                             [ CString "a"
                             , CCon 5
@@ -210,21 +210,21 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lam$12" [ "_u" ]
+        , CFunDef "$lam$15" [ "_u" ]
             ( CCon 7
                 [ CString "c"
                 , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$13" [ "__input" ]
+        , CFunDef "$lift$16" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$13" )
+                ( CVar "$cps$$lift$16" )
                 [ CVar "__input"
                 , CCon 29 []
                 ]
             )
-        , CFunDef "$cps$$lift$13"
+        , CFunDef "$cps$$lift$16"
             [ "__input"
             , "$k"
             ]
@@ -236,7 +236,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$13" )
+                                ( CVar "$apply$$lift$16" )
                                 [ CVar "$k"
                                 , CCon 5
                                     [ CVar "__f0" ]
@@ -248,7 +248,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$13" )
+                                ( CVar "$apply$$lift$16" )
                                 [ CVar "$k"
                                 , CCon 6
                                     [ CVar "__f0" ]
@@ -280,7 +280,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$13" )
+                                ( CVar "$apply$$lift$16" )
                                 [ CVar "$k"
                                 , CCon 8
                                     [ CCon 14
@@ -294,7 +294,7 @@ CoreProgram
                         , [ "__f0" ]
                         , CDrop DropFreeUnchecked "__f0"
                             ( CCall
-                                ( CVar "$apply$$lift$13" )
+                                ( CVar "$apply$$lift$16" )
                                 [ CVar "$k"
                                 , CCon 9
                                     [ CCon 15
@@ -306,7 +306,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$13"
+        , CFunDef "$apply$$lift$16"
             [ "$k"
             , "$x"
             ]
@@ -341,9 +341,9 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lam$16" [ "_u" ]
+        , CFunDef "$lam$19" [ "_u" ]
             ( CCall
-                ( CVar "$lift$13" )
+                ( CVar "$lift$16" )
                 [ CCon 7
                     [ CString "b"
                     , CCon 5
@@ -375,7 +375,7 @@ CoreProgram
                                 , CCall
                                     ( CVar "$lift$1" )
                                     [ CCall
-                                        ( CVar "$lam$12" )
+                                        ( CVar "$lam$15" )
                                         [ CVar "a" ]
                                     ]
                                 ]
@@ -503,7 +503,7 @@ CoreProgram
                                 , CCall
                                     ( CVar "$lift$1" )
                                     [ CCall
-                                        ( CVar "$lam$16" )
+                                        ( CVar "$lam$19" )
                                         [ CVar "a" ]
                                     ]
                                 ]
@@ -607,14 +607,14 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$14_$lift$15_$lift$2_$lift$3" [ "$args" ]
+        , CFunDef "$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$17_$lift$18_$lift$2_$lift$3" [ "$args" ]
             ( CCall
-                ( CVar "$cps$$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$14_$lift$15_$lift$2_$lift$3" )
+                ( CVar "$cps$$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$17_$lift$18_$lift$2_$lift$3" )
                 [ CVar "$args"
                 , CCon 35 []
                 ]
             )
-        , CFunDef "$cps$$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$14_$lift$15_$lift$2_$lift$3"
+        , CFunDef "$cps$$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$17_$lift$18_$lift$2_$lift$3"
             [ "$args"
             , "$k"
             ]
@@ -931,7 +931,7 @@ CoreProgram
             , "$arg0"
             ]
             ( CCall
-                ( CVar "$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$14_$lift$15_$lift$2_$lift$3" )
+                ( CVar "$scc$$apply1_$df$$lam$4$1_$df$$lam$4$4_$df$$lam$5$2_$df$$lam$5$5_$lift$17_$lift$18_$lift$2_$lift$3" )
                 [ CCon 18
                     [ CVar "$cl"
                     , CVar "$arg0"

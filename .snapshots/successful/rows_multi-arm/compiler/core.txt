@@ -99,7 +99,7 @@ CoreProgram
                 ( CCall
                     ( CVar "whatsInside" )
                     [ CCall
-                        ( CVar "$lift$12" )
+                        ( CVar "$lift$15" )
                         [ CCon 11
                             [ CCon 1 [] ]
                         ]
@@ -118,7 +118,7 @@ CoreProgram
                         ( CCall
                             ( CVar "whatsInside" )
                             [ CCall
-                                ( CVar "$lift$13" )
+                                ( CVar "$lift$16" )
                                 [ CCon 11
                                     [ CCon 0 [] ]
                                 ]
@@ -137,7 +137,7 @@ CoreProgram
                                 ( CCall
                                     ( CVar "whatsInside" )
                                     [ CCall
-                                        ( CVar "$lift$14" )
+                                        ( CVar "$lift$17" )
                                         [ CCon 10 [] ]
                                     ]
                                 )
@@ -218,10 +218,10 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$18" )
                 [ CVar "summary" ]
             )
-        , CFunDef "$lift$12" [ "__input" ]
+        , CFunDef "$lift$15" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -241,7 +241,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$13" [ "__input" ]
+        , CFunDef "$lift$16" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -261,7 +261,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$14" [ "__input" ]
+        , CFunDef "$lift$17" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -279,7 +279,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$15" [ "res" ]
+        , CFunDef "$let$18" [ "res" ]
             ( CCase
                 ( CVar "res" )
                 [

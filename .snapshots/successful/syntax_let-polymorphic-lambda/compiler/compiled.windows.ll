@@ -273,7 +273,7 @@ define internal ptr @v_threeTypes(ptr %v_n, ptr %v_s, ptr %v_b) {
   call void @__inc_ref(ptr %v_b)
   call void @__inc_ref(ptr %v_n)
   call void @__inc_ref(ptr %v_s)
-  %t0 = call ptr @v__df__let_13_0(ptr %v_b, ptr %v_n, ptr %v_s)
+  %t0 = call ptr @v__df__let_16_0(ptr %v_b, ptr %v_n, ptr %v_s)
   call void @__free_recursive(ptr %v_n)
   call void @__free_recursive(ptr %v_s)
   call void @__free_recursive(ptr %v_b)
@@ -288,15 +288,15 @@ define internal ptr @v_main() {
   %t3 = getelementptr ptr, ptr %t1, i32 0
   store ptr %t2, ptr %t3
   %t4 = call ptr @v_threeTypes(ptr %t0, ptr getelementptr inbounds (i8, ptr @.str.1, i64 12), ptr %t1)
-  %t5 = call ptr @v__let_14(ptr %t4)
+  %t5 = call ptr @v__let_17(ptr %t4)
   ret ptr %t5
 }
 
-define internal ptr @v__lam_12(ptr %v_x) {
+define internal ptr @v__lam_15(ptr %v_x) {
   ret ptr %v_x
 }
 
-define internal ptr @v__let_14(ptr %v_res) {
+define internal ptr @v__let_17(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -356,9 +356,9 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__df__let_13_0(ptr %v_b, ptr %v_n, ptr %v_s) {
+define internal ptr @v__df__let_16_0(ptr %v_b, ptr %v_n, ptr %v_s) {
   call void @__inc_ref(ptr %v_n)
-  %t0 = call ptr @v__lam_12(ptr %v_n)
+  %t0 = call ptr @v__lam_15(ptr %v_n)
   %t1 = call ptr @__showInt32(ptr %t0)
   %t2 = call ptr @__concat(ptr %t1, ptr getelementptr inbounds (i8, ptr @.str.3, i64 12))
   %t3 = getelementptr ptr, ptr %t2, i32 0
@@ -388,7 +388,7 @@ case.arm.4.14:
   call void @__inc_ref(ptr %t16)
   call void @__inc_ref(ptr %t16)
   call void @__inc_ref(ptr %v_s)
-  %t17 = call ptr @v__lam_12(ptr %v_s)
+  %t17 = call ptr @v__lam_15(ptr %v_s)
   %t18 = call ptr @__concat(ptr %t16, ptr %t17)
   %t19 = getelementptr ptr, ptr %t18, i32 0
   %t20 = load ptr, ptr %t19
@@ -450,7 +450,7 @@ case.arm.4.45:
   call void @__inc_ref(ptr %t47)
   call void @__inc_ref(ptr %t47)
   call void @__inc_ref(ptr %v_b)
-  %t48 = call ptr @v__lam_12(ptr %v_b)
+  %t48 = call ptr @v__lam_15(ptr %v_b)
   %t49 = call ptr @v_showTri(ptr %t48)
   %t50 = call ptr @__concat(ptr %t47, ptr %t49)
   call void @__free_recursive(ptr %t33)

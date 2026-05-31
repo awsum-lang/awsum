@@ -493,12 +493,12 @@ L_join8:
   .limit locals 0
   invokestatic AwsumMain/v_f()Ljava/lang/Object;
   invokestatic AwsumMain/v_describe(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__let_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

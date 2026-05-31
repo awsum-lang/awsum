@@ -87,7 +87,7 @@ const v_and = (v_a, v_b) => {
     }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -103,7 +103,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s3 = s[1]; return __concat(v_s3, (v_showBool)((v_or)([1], [2]))); } } })(__concat(v_s2, (v_showBool)((v_or)([2], [2])))); } } })(__concat(v_s1, (v_showBool)((v_and)([1], [1])))); } } })(__concat(v_s0, (v_showBool)((v_and)([1], [2])))); } } })(__concat((v_showBool)((v_not)([1])), (v_showBool)((v_not)([2])))));
+const main = (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_2 = s[1]; return [3, v__do_e_2]; } case 4: { const v_s1 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_1 = s[1]; return [3, v__do_e_1]; } case 4: { const v_s2 = s[1]; return ((s) => { switch(s[0]) { case 3: { const v__do_e_0 = s[1]; return [3, v__do_e_0]; } case 4: { const v_s3 = s[1]; return __concat(v_s3, (v_showBool)((v_or)([1], [2]))); } } })(__concat(v_s2, (v_showBool)((v_or)([2], [2])))); } } })(__concat(v_s1, (v_showBool)((v_and)([1], [1])))); } } })(__concat(v_s0, (v_showBool)((v_and)([1], [2])))); } } })(__concat((v_showBool)((v_not)([1])), (v_showBool)((v_not)([2])))));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

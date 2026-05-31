@@ -43,7 +43,7 @@ const v_describe = (v_x) => {
     }
 };
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -59,7 +59,7 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const main = (v__let_12)((v_describe)([1615808600, "hello"]));
+const main = (v__let_15)((v_describe)([1615808600, "hello"]));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

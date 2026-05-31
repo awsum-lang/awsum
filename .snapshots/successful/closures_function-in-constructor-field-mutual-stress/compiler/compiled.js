@@ -34,7 +34,7 @@ const v_runIO = (v_io) => {
 
 const v_bBox = [22, [23]];
 
-const v__scc__apply1__lam_12_a_b = (v__args) => {
+const v__scc__apply1__lam_15_a_b = (v__args) => {
   while (true) {
     {
       const __s = v__args;
@@ -129,7 +129,7 @@ const v__scc__apply1__lam_12_a_b = (v__args) => {
 };
 
 const v_a = (v_n) => {
-    return (v__scc__apply1__lam_12_a_b)([26, v_n]);
+    return (v__scc__apply1__lam_15_a_b)([26, v_n]);
 };
 
 const main = ((s) => { switch(s[0]) { case 3: { const v__e = s[1]; return [7, "underflow", [5, [0]]]; } case 4: { const v_v = s[1]; return [7, String(v_v), [5, [0]]]; } } })((v_a)((1000000|0)));

@@ -53,7 +53,7 @@ const v__lift_0 = (v___input) => {
     }
 };
 
-const v__let_12 = (v_msg) => {
+const v__let_15 = (v_msg) => {
     {
       const __s = v_msg;
       switch (__s[0]) {
@@ -69,8 +69,8 @@ const v__let_12 = (v_msg) => {
     }
 };
 
-const v__let_13 = (v_chained) => {
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v___pa0 = s[1]; return ((s) => { switch(s[0]) { case 2252990199: { const v__a = s[1]; return [4, "ErrA"]; } case 2269767818: { const v__b = s[1]; return [4, "ErrB"]; } } })(v___pa0); } case 4: { const v_n = s[1]; return __concat("Ok ", String(v_n)); } } })(v_chained));
+const v__let_16 = (v_chained) => {
+    return (v__let_15)(((s) => { switch(s[0]) { case 3: { const v___pa0 = s[1]; return ((s) => { switch(s[0]) { case 2252990199: { const v__a = s[1]; return [4, "ErrA"]; } case 2269767818: { const v__b = s[1]; return [4, "ErrB"]; } } })(v___pa0); } case 4: { const v_n = s[1]; return __concat("Ok ", String(v_n)); } } })(v_chained));
 };
 
 const v__df_bindEither_0 = (v_x) => {
@@ -89,7 +89,7 @@ const v__df_bindEither_0 = (v_x) => {
     }
 };
 
-const main = (v__let_13)((v__df_bindEither_0)(v_opA));
+const main = (v__let_16)((v__df_bindEither_0)(v_opA));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

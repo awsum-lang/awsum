@@ -120,17 +120,17 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$18" )
+                ( CVar "$let$21" )
                 [ CCall
                     ( CVar "nothingAsLeft" )
                     [ CCon 22 []
                     , CCall
-                        ( CVar "$lift$17" )
+                        ( CVar "$lift$20" )
                         [ CCon 10 [] ]
                     ]
                 ]
             )
-        , CFunDef "$let$12" [ "msg" ]
+        , CFunDef "$let$15" [ "msg" ]
             ( CCase
                 ( CVar "msg" )
                 [
@@ -157,14 +157,14 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$lift$13" [ "__input" ]
+        , CFunDef "$lift$16" [ "__input" ]
             ( CCall
-                ( CVar "$cps$$lift$13" )
+                ( CVar "$cps$$lift$16" )
                 [ CVar "__input"
                 , CCon 23 []
                 ]
             )
-        , CFunDef "$cps$$lift$13"
+        , CFunDef "$cps$$lift$16"
             [ "__input"
             , "$k"
             ]
@@ -175,7 +175,7 @@ CoreProgram
                         ( 12
                         , []
                         , CCall
-                            ( CVar "$apply$$lift$13" )
+                            ( CVar "$apply$$lift$16" )
                             [ CVar "$k"
                             , CCon 12 []
                             ]
@@ -203,7 +203,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$apply$$lift$13"
+        , CFunDef "$apply$$lift$16"
             [ "$k"
             , "$x"
             ]
@@ -238,7 +238,7 @@ CoreProgram
                     ]
                 )
             )
-        , CFunDef "$lift$14" [ "__input" ]
+        , CFunDef "$lift$17" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -256,13 +256,13 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$15"
+        , CFunDef "$let$18"
             [ "fromJust"
             , "fromNothing"
             , "chained"
             ]
             ( CCall
-                ( CVar "$let$12" )
+                ( CVar "$let$15" )
                 [ CCase
                     ( CCall
                         ( CVar "show" )
@@ -396,12 +396,12 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$let$16"
+        , CFunDef "$let$19"
             [ "fromNothing"
             , "fromJust"
             ]
             ( CCall
-                ( CVar "$let$15" )
+                ( CVar "$let$18" )
                 [ CVar "fromJust"
                 , CVar "fromNothing"
                 , CCase
@@ -409,7 +409,7 @@ CoreProgram
                         ( CVar "nothingAsLeft" )
                         [ CCon 22 []
                         , CCall
-                            ( CVar "$lift$14" )
+                            ( CVar "$lift$17" )
                             [ CCall
                                 ( CVar "headList" )
                                 [ CCon 13
@@ -417,7 +417,7 @@ CoreProgram
                                     , CCon 13
                                         [ CString "second"
                                         , CCall
-                                            ( CVar "$lift$13" )
+                                            ( CVar "$lift$16" )
                                             [ CCon 12 [] ]
                                         ]
                                     ]
@@ -445,7 +445,7 @@ CoreProgram
                     ]
                 ]
             )
-        , CFunDef "$lift$17" [ "__input" ]
+        , CFunDef "$lift$20" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [
@@ -463,9 +463,9 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$18" [ "fromNothing" ]
+        , CFunDef "$let$21" [ "fromNothing" ]
             ( CCall
-                ( CVar "$let$16" )
+                ( CVar "$let$19" )
                 [ CVar "fromNothing"
                 , CCall
                     ( CVar "nothingAsLeft" )

@@ -111,7 +111,7 @@ CoreProgram
                     , [ "a" ]
                     , CDrop DropFreeUnchecked "a"
                         ( CCall
-                            ( CVar "$let$12" )
+                            ( CVar "$let$15" )
                             [ CVar "a"
                             , CString "answer="
                             ]
@@ -195,7 +195,7 @@ CoreProgram
                     )
                 ]
             )
-        , CFunDef "$let$12"
+        , CFunDef "$let$15"
             [ "a"
             , "prefix"
             ]

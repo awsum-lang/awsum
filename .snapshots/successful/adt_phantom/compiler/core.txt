@@ -53,14 +53,14 @@ CoreProgram
                 [ CCall
                     ( CVar "show" )
                     [ CCall
-                        ( CVar "$lift$12" )
+                        ( CVar "$lift$15" )
                         [ CCon 22 [] ]
                     ]
                 , CCon 5
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$12" [ "__input" ]
+        , CFunDef "$lift$15" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [

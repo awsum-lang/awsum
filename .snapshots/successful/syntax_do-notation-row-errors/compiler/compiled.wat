@@ -19,7 +19,7 @@
   (data (i32.const 162) "\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\03\00\00\00Ok ")
   (data (i32.const 185) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (table 4 funcref)
-  (elem (i32.const 0) $v_pureEither $v_runIO $v_describe $v__let_12)
+  (elem (i32.const 0) $v_pureEither $v_runIO $v_describe $v__let_15)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -1093,7 +1093,7 @@
     call 21
     call 23)
 
-  (func $v__let_12 (param i32) (result i32)
+  (func $v__let_15 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

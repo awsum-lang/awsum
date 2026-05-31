@@ -55,8 +55,8 @@ data Command
     CmdCheck FilePath ProgramType Bool Bool
   | -- | file, programType, target, out
     CmdBuild FilePath ProgramType Target (Maybe FilePath)
-  | -- | file, programType, target, inArg
-    CmdRun FilePath ProgramType Target (Maybe Text)
+  | -- | file, programType, target, forwardedArgs
+    CmdRun FilePath ProgramType Target [Text]
   | CmdAST FilePath
   | -- | file, programType
     CmdCore FilePath ProgramType
@@ -134,18 +134,21 @@ optOutputPath =
           <> OA.help "Output file (default: stdout)"
       )
 
--- | Optional: input string passed to 'main' as @argv[1]@. Stdin is a
---   separate, independent channel: 'awsum run' inherits its own stdin to
---   the child process, so @echo \"data\" | awsum run …@ reaches the
---   child's @IO.Stdin.readAll@ verbatim. The two flags can coexist.
-optInputText :: OA.Parser (Maybe Text)
-optInputText =
-  optional
+-- | Command-line arguments forwarded to the program, read back through
+--   'IO.Args.getArgs' as a @List String@. Everything after the @FILE@ —
+--   conventionally after a @--@ separator — is collected here, so
+--   @awsum run … FILE -- a b c@ delivers @["a", "b", "c"]@ and a bare
+--   @awsum run … FILE@ delivers @Nil@. Stdin is a separate, independent
+--   channel: 'awsum run' inherits its own stdin to the child process, so
+--   @echo \"data\" | awsum run …@ reaches the child's @IO.Stdin.readAll@
+--   verbatim. The two channels can be used together.
+argForwardedArgs :: OA.Parser [Text]
+argForwardedArgs =
+  many
     ( (toText :: String -> Text)
-        <$> OA.strOption
-          ( OA.long "input"
-              <> OA.metavar "TEXT"
-              <> OA.help "Input string passed to main as argv[1]"
+        <$> OA.strArgument
+          ( OA.metavar "-- ARGS..."
+              <> OA.help "Arguments forwarded to the program (read via IO.Args.getArgs)"
           )
     )
 
@@ -204,7 +207,7 @@ pCommand =
     <|> OA.hsubparser
       ( subcmd "check" "Parse and typecheck a file" (CmdCheck <$> argFilePath <*> optProgramType <*> optJson <*> optStrict)
           <> subcmd "build" "Compile file to target language" (CmdBuild <$> argFilePath <*> optProgramType <*> optTarget <*> optOutputPath)
-          <> subcmd "run" "Compile and run with given input" (CmdRun <$> argFilePath <*> optProgramType <*> optTarget <*> optInputText)
+          <> subcmd "run" "Compile and run (forward args after --)" (CmdRun <$> argFilePath <*> optProgramType <*> optTarget <*> argForwardedArgs)
           <> subcmd "ast" "Print parsed AST" (CmdAST <$> argFilePath)
           <> subcmd "core" "Print elaborated Core" (CmdCore <$> argFilePath <*> optProgramType)
           <> subcmd "asm" "Print target assembly text (jvm, wasm)" (CmdAsm <$> argFilePath <*> optProgramType <*> optTarget)
@@ -264,9 +267,9 @@ runCommand = \case
         case mOut of
           Nothing -> putTextLn code
           Just out -> writeFileText out code
-  CmdRun filePath progType target mInput -> do
+  CmdRun filePath progType target forwardedArgs -> do
     (ptags, core) <- compileToCoreOrDie progType filePath
-    runOnTarget progType target ptags core (fromMaybe "" mInput)
+    runOnTarget progType target ptags core forwardedArgs
   CmdAST filePath -> do
     prog <- parseFileOrDie filePath
     pPrint prog
@@ -319,8 +322,8 @@ codegenText progType = \case
   TargetJS -> codegenJS progType
 
 -- | Compile Core to target and run using the appropriate system runtime.
-runOnTarget :: ProgramType -> Target -> PreludeTags -> CoreProgram -> Text -> IO ()
-runOnTarget progType target ptags core input = case target of
+runOnTarget :: ProgramType -> Target -> PreludeTags -> CoreProgram -> [Text] -> IO ()
+runOnTarget progType target ptags core args = case target of
   TargetLLVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let llPath = dir </> "out.ll"
@@ -347,40 +350,40 @@ runOnTarget progType target ptags core input = case target of
             <> toText stderrClang
             <> "\nstdout:\n"
             <> toText stdoutClang
-        ExitSuccess -> runChild "runtime error" binPath [toString input]
+        ExitSuccess -> runChild "runtime error" binPath (map toString args)
   TargetJVM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let classPath = dir </> "AwsumMain.class"
       writeFileBS classPath (assembleJVM ptags core)
-      -- Pin the JVM's I/O charsets to UTF-8 so 'argv[1]' survives the
+      -- Pin the JVM's I/O charsets to UTF-8 so 'argv' survives the
       -- startup decode on hosts whose default charset isn't UTF-8 (the
       -- usual Windows case, where 'sun.jnu.encoding' otherwise comes
       -- from the system ANSI code page and supplementary code points
       -- collapse to '?' before our 'main' runs). Stdout side is handled
       -- inside the emitted 'main' itself via a 'System.setOut' prologue.
-      runChild "java error" "java" ["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain", toString input]
+      runChild "java error" "java" (["-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8", "-cp", dir, "AwsumMain"] <> map toString args)
   TargetCLR ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let dllPath = dir </> "AwsumMain.dll"
           rcPath = dir </> "AwsumMain.runtimeconfig.json"
       writeFileBS dllPath (assembleCLR ptags core)
       writeFileText rcPath runtimeConfigJson
-      runChild "dotnet error" "dotnet" [dllPath, toString input]
+      runChild "dotnet error" "dotnet" ([dllPath] <> map toString args)
   TargetWASM ->
     withSystemTempDirectory "awsum" $ \dir -> do
       let wasmPath = dir </> "out.wasm"
       writeFileBS wasmPath (assembleWASM ptags core)
-      runChild "wasmtime error" "wasmtime" [wasmPath, toString input]
+      runChild "wasmtime error" "wasmtime" ([wasmPath] <> map toString args)
   TargetJS ->
-    runText "node" ".js" (codegenJS progType ptags core) input
+    runText "node" ".js" (codegenJS progType ptags core) args
 
 -- | Write text code to a temp file and run with the given interpreter.
-runText :: String -> String -> Text -> Text -> IO ()
-runText cmd ext code input =
+runText :: String -> String -> Text -> [Text] -> IO ()
+runText cmd ext code args =
   withSystemTempDirectory "awsum" $ \dir -> do
     let outPath = dir </> "out" <> ext
     writeFileText outPath code
-    runChild (toText cmd <> " error") cmd [outPath, toString input]
+    runChild (toText cmd <> " error") cmd ([outPath] <> map toString args)
 
 -- | Run a compiled program. The child inherits the calling process's
 --   stdin so 'IO.Stdin.readAll' receives whatever the user piped into

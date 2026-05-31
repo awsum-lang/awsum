@@ -193,7 +193,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__lift_12(object)
+    call object AwsumMain::v__lift_15(object)
     stelem.ref
     ldloc.2
     stelem.ref
@@ -202,12 +202,12 @@
     ldloc.0
     call object AwsumMain::v__df_map_0(object)
     call object AwsumMain::v_show(object)
-    call object AwsumMain::v__let_13(object)
+    call object AwsumMain::v__let_16(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lift_12(object) cil managed
+  .method private hidebysig static object v__lift_15(object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0)
@@ -221,12 +221,12 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.0
-    call object AwsumMain::v__cps__lift_12(object, object)
+    call object AwsumMain::v__cps__lift_15(object, object)
     ret
   }
 
 
-  .method private hidebysig static object v__cps__lift_12(object,object) cil managed
+  .method private hidebysig static object v__cps__lift_15(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -251,7 +251,7 @@
     box [System.Runtime]System.Int32
     stelem.ref
     ldloc.3
-    call object AwsumMain::v__apply__lift_12(object, object)
+    call object AwsumMain::v__apply__lift_15(object, object)
     ret
   IL_c0:
     pop
@@ -287,7 +287,7 @@
   }
 
 
-  .method private hidebysig static object v__apply__lift_12(object,object) cil managed
+  .method private hidebysig static object v__apply__lift_15(object,object) cil managed
   {
     .maxstack 4
     .locals init (object[] V_0, object V_1, object V_2, object V_3)
@@ -338,7 +338,7 @@
   }
 
 
-  .method private hidebysig static object v__let_13(object) cil managed
+  .method private hidebysig static object v__let_16(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)

@@ -155,7 +155,7 @@ L_join2:
   bipush 10
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   aastore
-  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_firstZero(Ljava/lang/Object;)Ljava/lang/Object;
   checkcast java/lang/Integer
   invokevirtual java/lang/Integer/toString()Ljava/lang/String;
@@ -184,7 +184,7 @@ L_join2:
 .end method
 
 
-.method static v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 4
   aload_0

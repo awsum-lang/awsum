@@ -18,7 +18,7 @@
   (data (i32.const 130) "\00\00\00\00\00\00\00\00\00\00\00\00\0f\00\00\00\0f\00\00\00STRING_TOO_LONG")
   (data (i32.const 165) "\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\01\00\00\00/")
   (table 6 funcref)
-  (elem (i32.const 0) $v_runIO $v_showTri $v_threeTypes $v__lam_12 $v__let_14 $v__df__let_13_0)
+  (elem (i32.const 0) $v_runIO $v_showTri $v_threeTypes $v__lam_15 $v__let_17 $v__df__let_16_0)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -774,12 +774,12 @@
     call 17
     call 20)
 
-  (func $v__lam_12 (param i32) (result i32)
+  (func $v__lam_15 (param i32) (result i32)
     (local i32)
     (local i32)
     local.get 0)
 
-  (func $v__let_14 (param i32) (result i32)
+  (func $v__let_17 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -888,7 +888,7 @@
     end
     end)
 
-  (func $v__df__let_13_0 (param i32 i32 i32) (result i32)
+  (func $v__df__let_16_0 (param i32 i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

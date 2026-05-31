@@ -231,7 +231,7 @@ L_arm3:
   astore_3
   aload_3
   invokestatic AwsumMain/v_opB(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
 L_join2:
   areturn
 .end method
@@ -342,12 +342,12 @@ L_join4:
   invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
   invokestatic AwsumMain/v_run(Ljava/lang/Object;)Ljava/lang/Object;
   invokestatic AwsumMain/v_describe(Ljava/lang/Object;)Ljava/lang/Object;
-  invokestatic AwsumMain/v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__let_16(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 
 
-.method static v__lift_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lift_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 7
   .limit locals 4
   aload_0
@@ -409,7 +409,7 @@ L_join8:
 .end method
 
 
-.method static v__let_13(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__let_16(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 10
   .limit locals 4
   aload_0

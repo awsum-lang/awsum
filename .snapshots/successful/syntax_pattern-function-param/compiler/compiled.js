@@ -99,7 +99,7 @@ const v_runIO = (v_io) => {
 
 const v_pair = [14, (100|0), (200|0)];
 
-const v__let_12 = (v_res) => {
+const v__let_15 = (v_res) => {
     {
       const __s = v_res;
       switch (__s[0]) {
@@ -115,11 +115,11 @@ const v__let_12 = (v_res) => {
     }
 };
 
-const v__let_14 = (v_n, v_m) => {
-    return (v__let_12)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
+const v__let_17 = (v_n, v_m) => {
+    return (v__let_15)(((s) => { switch(s[0]) { case 3: { const v__do_e_3 = s[1]; return [3, v__do_e_3]; } case 4: { const v_s0 = s[1]; return __concat(v_s0, String(v_m)); } } })(__concat(String(v_n), " / ")));
 };
 
-const v__lam_13 = (v__arg_2) => {
+const v__lam_16 = (v__arg_2) => {
     {
       const __s = v__arg_2;
       switch (__s[0]) {
@@ -133,14 +133,14 @@ const v__lam_13 = (v__arg_2) => {
 };
 
 const v__df_apply_0 = (v_t) => {
-    return (v__lam_13)(v_t);
+    return (v__lam_16)(v_t);
 };
 
-const v__let_15 = (v_n) => {
-    return (v__let_14)(v_n, (v__df_apply_0)(v_pair));
+const v__let_18 = (v_n) => {
+    return (v__let_17)(v_n, (v__df_apply_0)(v_pair));
 };
 
-const main = (v__let_15)((v_sumTriple)(v_triple));
+const main = (v__let_18)((v_sumTriple)(v_triple));
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);

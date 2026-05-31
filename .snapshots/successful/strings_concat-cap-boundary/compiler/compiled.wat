@@ -20,7 +20,7 @@
   (data (i32.const 587) "\00\00\00\00\00\00\00\00\00\00\00\00\1c\00\00\00\1c\00\00\00FAIL: cap + 1 returned Right")
   (data (i32.const 635) "\00\00\00\00\00\00\00\00\00\00\00\00\27\00\00\00\27\00\00\00FAIL: built string length is not at cap")
   (table 7 funcref)
-  (elem (i32.const 0) $v_runIO $v__lift_0 $v__lift_13 $v__scc__df_andThenEither_0__lam_12_build $v__cps__scc__df_andThenEither_0__lam_12_build $v__apply__scc__df_andThenEither_0__lam_12_build $v_build)
+  (elem (i32.const 0) $v_runIO $v__lift_0 $v__lift_16 $v__scc__df_andThenEither_0__lam_15_build $v__cps__scc__df_andThenEither_0__lam_15_build $v__apply__scc__df_andThenEither_0__lam_15_build $v_build)
 
   (func $__alloc (param i32) (result i32)
     local.get 0
@@ -903,7 +903,7 @@
     end
     end)
 
-  (func $v__lift_13 (param i32) (result i32)
+  (func $v__lift_16 (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -973,7 +973,7 @@
     end
     end)
 
-  (func $v__scc__df_andThenEither_0__lam_12_build (param i32) (result i32)
+  (func $v__scc__df_andThenEither_0__lam_15_build (param i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -997,7 +997,7 @@
     local.get 2
     end)
 
-  (func $v__cps__scc__df_andThenEither_0__lam_12_build (param i32 i32) (result i32)
+  (func $v__cps__scc__df_andThenEither_0__lam_15_build (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)
@@ -1287,7 +1287,7 @@
     end
     end)
 
-  (func $v__apply__scc__df_andThenEither_0__lam_12_build (param i32 i32) (result i32)
+  (func $v__apply__scc__df_andThenEither_0__lam_15_build (param i32 i32) (result i32)
     (local i32)
     (local i32)
     (local i32)

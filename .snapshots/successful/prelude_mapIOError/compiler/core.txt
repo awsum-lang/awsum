@@ -88,15 +88,15 @@ CoreProgram
             )
         , CValDef "main"
             ( CCall
-                ( CVar "$let$13" )
+                ( CVar "$let$16" )
                 [ CCall
                     ( CVar "$df$mapIOError$0" )
                     [ CVar "action" ]
                 ]
             )
-        , CFunDef "$lam$12" [ "_a" ]
+        , CFunDef "$lam$15" [ "_a" ]
             ( CCon 23 [] )
-        , CFunDef "$let$13" [ "renamed" ]
+        , CFunDef "$let$16" [ "renamed" ]
             ( CCall
                 ( CVar "$df$handleErrorIO$3" )
                 [ CVar "renamed" ]
@@ -136,7 +136,7 @@ CoreProgram
                                 [ CVar "$k"
                                 , CCon 6
                                     [ CCall
-                                        ( CVar "$lam$12" )
+                                        ( CVar "$lam$15" )
                                         [ CVar "e" ]
                                     ]
                                 ]

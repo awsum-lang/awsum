@@ -279,7 +279,7 @@ L_join2:
 .end method
 
 
-.method static v__scc__apply1__lam_12_a_b(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__scc__apply1__lam_15_a_b(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 4
   .limit locals 13
 L_tco4:
@@ -579,7 +579,7 @@ L_tarm11:
   iconst_1
   aload_0
   aastore
-  invokestatic AwsumMain/v__scc__apply1__lam_12_a_b(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__scc__apply1__lam_15_a_b(Ljava/lang/Object;)Ljava/lang/Object;
   areturn
 .end method
 

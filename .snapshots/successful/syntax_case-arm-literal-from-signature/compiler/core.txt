@@ -75,7 +75,7 @@ CoreProgram
                     [ CCall
                         ( CVar "firstZero" )
                         [ CCall
-                            ( CVar "$lift$12" )
+                            ( CVar "$lift$15" )
                             [ CCon 10 [] ]
                         ]
                     ]
@@ -83,7 +83,7 @@ CoreProgram
                     [ CCon 0 [] ]
                 ]
             )
-        , CFunDef "$lift$12" [ "__input" ]
+        , CFunDef "$lift$15" [ "__input" ]
             ( CCase
                 ( CVar "__input" )
                 [

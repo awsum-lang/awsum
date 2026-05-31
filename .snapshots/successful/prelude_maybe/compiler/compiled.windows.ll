@@ -304,7 +304,7 @@ case.arm.4.18:
   %t23 = inttoptr i64 10 to ptr
   %t24 = getelementptr ptr, ptr %t22, i32 0
   store ptr %t23, ptr %t24
-  %t25 = call ptr @v__lift_12(ptr %t22)
+  %t25 = call ptr @v__lift_15(ptr %t22)
   %t26 = call ptr @v_unwrap(ptr %t25)
   %t27 = getelementptr ptr, ptr %t26, i32 0
   %t28 = load ptr, ptr %t27
@@ -379,11 +379,11 @@ case.default.8:
 case.join.9:
   %t65 = phi ptr [%t14, %case.end.3.11], [%t64, %case.end.4.19]
   call void @__free_recursive(ptr %t4)
-  %t66 = call ptr @v__let_13(ptr %t65)
+  %t66 = call ptr @v__let_16(ptr %t65)
   ret ptr %t66
 }
 
-define internal ptr @v__lift_12(ptr %v___input) {
+define internal ptr @v__lift_15(ptr %v___input) {
   %t0 = getelementptr ptr, ptr %v___input, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64
@@ -413,7 +413,7 @@ case.default.3:
   unreachable
 }
 
-define internal ptr @v__let_13(ptr %v_res) {
+define internal ptr @v__let_16(ptr %v_res) {
   %t0 = getelementptr ptr, ptr %v_res, i32 0
   %t1 = load ptr, ptr %t0
   %t2 = ptrtoint ptr %t1 to i64

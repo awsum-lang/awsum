@@ -397,7 +397,7 @@ L_tarm10:
 .end method
 
 
-.method static v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
+.method static v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
   .limit stack 1
   .limit locals 1
   ldc "after"
@@ -728,7 +728,7 @@ L_tco18:
   dup
   iconst_1
   aload 4
-  invokestatic AwsumMain/v__lam_12(Ljava/lang/Object;)Ljava/lang/Object;
+  invokestatic AwsumMain/v__lam_15(Ljava/lang/Object;)Ljava/lang/Object;
   aastore
   invokestatic AwsumMain/v__apply__df_mapIO_3(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
   aconst_null

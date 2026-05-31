@@ -184,12 +184,12 @@
     .maxstack 1
     call object AwsumMain::v_ok()
     call object AwsumMain::v__df_mapRight_0(object)
-    call object AwsumMain::v__let_16(object)
+    call object AwsumMain::v__let_19(object)
     ret
   }
 
 
-  .method private hidebysig static object v__let_12(object) cil managed
+  .method private hidebysig static object v__let_15(object) cil managed
   {
     .maxstack 7
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -293,7 +293,7 @@
   }
 
 
-  .method private hidebysig static object v__lam_13(object) cil managed
+  .method private hidebysig static object v__lam_16(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -301,7 +301,7 @@
   }
 
 
-  .method private hidebysig static object v__let_14(object,object) cil managed
+  .method private hidebysig static object v__let_17(object,object) cil managed
   {
     .maxstack 3
     .locals init (object[] V_0, object V_1, object V_2, object V_3, object V_4)
@@ -395,12 +395,12 @@
     ldloc.s 4
   IL_c3:
   IL_c0:
-    call object AwsumMain::v__let_12(object)
+    call object AwsumMain::v__let_15(object)
     ret
   }
 
 
-  .method private hidebysig static object v__lam_15(object) cil managed
+  .method private hidebysig static object v__lam_18(object) cil managed
   {
     .maxstack 1
     ldarg.0
@@ -408,13 +408,13 @@
   }
 
 
-  .method private hidebysig static object v__let_16(object) cil managed
+  .method private hidebysig static object v__let_19(object) cil managed
   {
     .maxstack 2
     ldarg.0
     call object AwsumMain::v_bad()
     call object AwsumMain::v__df_mapRight_1(object)
-    call object AwsumMain::v__let_14(object, object)
+    call object AwsumMain::v__let_17(object, object)
     ret
   }
 
@@ -468,7 +468,7 @@
     ldloc.2
     ldc.i4.1
     ldloc.1
-    call object AwsumMain::v__lam_15(object)
+    call object AwsumMain::v__lam_18(object)
     stelem.ref
     ldloc.2
   IL_c0:
@@ -525,7 +525,7 @@
     ldloc.2
     ldc.i4.1
     ldloc.1
-    call object AwsumMain::v__lam_13(object)
+    call object AwsumMain::v__lam_16(object)
     stelem.ref
     ldloc.2
   IL_c0:

@@ -56,7 +56,7 @@ const v_firstZero = (v_x) => {
     }
 };
 
-const v__lift_12 = (v___input) => {
+const v__lift_15 = (v___input) => {
     {
       const __s = v___input;
       switch (__s[0]) {
@@ -71,7 +71,7 @@ const v__lift_12 = (v___input) => {
     }
 };
 
-const main = [7, String((v_firstZero)((v__lift_12)([10]))), [5, [0]]];
+const main = [7, String((v_firstZero)((v__lift_15)([10]))), [5, [0]]];
 
 if (typeof require !== 'undefined' && require.main === module) {
   if (typeof main !== 'undefined') v_runIO(main);
