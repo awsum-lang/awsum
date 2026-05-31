@@ -297,6 +297,15 @@ runIO io = case io of
   IOGetArgs cont -> runIO (cont BuiltIn.internalGetArgs)
   IOStdinReadAll cont -> runIO (cont BuiltIn.internalStdinReadAllAsUtf16)
 
+{- Lift an `Either` into IO: `Left` becomes a failed action, `Right` a
+   pure success. The error row `e` carries over unchanged, so a fallible
+   pure computation drops into an IO chain and composes with `bindIO` /
+   `handleErrorIO` like any other action. -}
+eitherToIO : Either e a -> IO e a
+eitherToIO x = case x of
+  Left e -> failIO e
+  Right a -> pureIO a
+
 -- ---------------------- Maybe
 
 {- Optional value: `Just x` carries a payload, `Nothing` doesn't. For
