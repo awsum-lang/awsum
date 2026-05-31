@@ -1,0 +1,135 @@
+runIO:
+  param           io                              count=1
+  case-pattern    u                               count=0
+  case-pattern    s                               count=0
+  case-pattern    next                            count=0
+
+showUnderflowError:
+  param           $wild0                          count=0
+
+main:
+  case-pattern    e                               count=1
+  case-pattern    n                               count=1
+
+runDemo:
+  case-pattern    $do_e_1                         count=1
+  case-pattern    tree                            count=1
+  case-pattern    $do_e_0                         count=1
+  case-pattern    mirrored                        count=1
+
+buildTree:
+  param           depth                           count=2
+  case-pattern    $do_e_3                         count=0
+  case-pattern    l                               count=0
+  case-pattern    $do_e_2                         count=0
+  case-pattern    r                               count=0
+
+buildLeft:
+  param           depth                           count=2
+  param           acc                             count=1
+  case-pattern    $do_e_4                         count=0
+  case-pattern    d                               count=0
+
+buildRight:
+  param           depth                           count=2
+  param           acc                             count=1
+  case-pattern    $do_e_5                         count=0
+  case-pattern    d                               count=0
+
+mirror:
+  param           t                               count=1
+
+mirrorN:
+  param           times                           count=2
+  param           t                               count=1
+  case-pattern    $do_e_6                         count=0
+  case-pattern    m                               count=0
+
+$lift$15:
+  param           __input                         count=1
+
+$lift$16:
+  param           __input                         count=1
+
+$scc$deepestLeftA_deepestLeftB_deepestLeftC:
+  param           $args                           count=4
+  case-pattern    lastV                           count=0
+  case-pattern    t                               count=0
+  case-pattern    l                               count=0
+  case-pattern    v                               count=0
+  case-pattern    _r                              count=0
+  case-pattern    lastV                           count=0
+  case-pattern    t                               count=0
+  case-pattern    l                               count=0
+  case-pattern    v                               count=0
+  case-pattern    _r                              count=0
+  case-pattern    lastV                           count=0
+  case-pattern    t                               count=0
+  case-pattern    l                               count=0
+  case-pattern    v                               count=0
+  case-pattern    _r                              count=0
+
+deepestLeftA:
+  param           lastV                           count=1
+  param           t                               count=1
+
+$scc$$apply$mirror_$cps$mirror:
+  param           $args                           count=5
+  case-pattern    $k                              count=0
+  case-pattern    $x                              count=0
+  case-pattern    $pk_29                          count=0
+  case-pattern    $rcv_0                          count=0
+  case-pattern    v                               count=0
+  case-pattern    $pk_28                          count=0
+  case-pattern    l                               count=0
+  case-pattern    v                               count=0
+  case-pattern    t                               count=0
+  case-pattern    $k                              count=0
+  case-pattern    l                               count=0
+  case-pattern    v                               count=0
+  case-pattern    r                               count=0
+
+$cps$mirror:
+  param           t                               count=1
+  param           $k                              count=1
+
+$scc$$apply$$lift$16_$cps$$lift$16:
+  param           $args                           count=5
+  case-pattern    $k                              count=0
+  case-pattern    $x                              count=0
+  case-pattern    $pk_35                          count=0
+  case-pattern    $rcv_0                          count=0
+  case-pattern    __f1                            count=0
+  case-pattern    $pk_34                          count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f2                            count=0
+  case-pattern    __input                         count=0
+  case-pattern    $k                              count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f2                            count=0
+
+$cps$$lift$16:
+  param           __input                         count=1
+  param           $k                              count=1
+
+$scc$$apply$$lift$15_$cps$$lift$15:
+  param           $args                           count=5
+  case-pattern    $k                              count=0
+  case-pattern    $x                              count=0
+  case-pattern    $pk_32                          count=0
+  case-pattern    $rcv_0                          count=0
+  case-pattern    __f1                            count=0
+  case-pattern    $pk_31                          count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f2                            count=0
+  case-pattern    __input                         count=0
+  case-pattern    $k                              count=0
+  case-pattern    __f0                            count=0
+  case-pattern    __f1                            count=0
+  case-pattern    __f2                            count=0
+
+$cps$$lift$15:
+  param           __input                         count=1
+  param           $k                              count=1
+
